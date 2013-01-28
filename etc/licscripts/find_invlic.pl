@@ -51,7 +51,9 @@ sub check_file()
   }
 
   # Only operate on certain files
-  if ( $entry !~ /\.(cpp|h|c|cxx|hpp|ext_h|lua|py)$/ ) {
+  if ( $entry !~ /\.(cpp|h|c|cxx|hpp|ext_h|lua|py)$/ ||
+       $entry =~ /\.pb\.(cpp|h)$/ )
+  {
     return;
   }
 
