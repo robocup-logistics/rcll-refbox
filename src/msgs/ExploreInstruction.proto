@@ -1,0 +1,17 @@
+
+package llsfrb_msgs;
+
+message Pose2D {
+};
+
+message SignalAssignment {
+  required string type = 1;
+  required Pose2D position = 2;
+  required bool red_light = 4;
+  required bool orange_light = 5;
+  required bool green_light = 6;
+}
+
+message ExploreInstruction {
+  repeated SignalAssignment signals = 1;
+}

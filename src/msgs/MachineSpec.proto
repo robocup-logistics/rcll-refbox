@@ -1,0 +1,20 @@
+
+package llsfrb_msgs;
+
+  enum PuckType {
+    S0 = 0;
+    S1 = 1;
+    S2 = 2;
+    S3 = 3;
+  }
+
+message MachineSpec {
+  required string name     = 1;
+  repeated PuckType input  = 2;
+  required PuckType output = 3;
+
+}
+
+message MachineSpecs {
+  repeated MachineSpec machines = 1;
+}

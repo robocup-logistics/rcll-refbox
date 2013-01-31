@@ -1,0 +1,27 @@
+package llsfrb_msgs;
+
+message Order {
+  enum ProductType {
+    P1 = 1;
+    P2 = 2;
+    P3 = 3;
+  }
+  enum DeliveryGate {
+    D1 = 1;
+    D2 = 2;
+    D3 = 3;
+  }
+
+  required string id = 1;
+  required ProductType product = 2;
+
+  required uint32 delivery_window_begin = 3;
+  required uint32 delivery_window_end = 4;
+
+  required DeliveryGate delivery_gate = 5;
+
+  // later: penalty type
+}
+
+message OrderInstruction {
+}

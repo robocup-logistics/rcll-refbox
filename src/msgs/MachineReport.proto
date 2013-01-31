@@ -1,0 +1,11 @@
+
+package llsfrb_msgs;
+
+import "MachineSpec.proto";
+
+message MachineReport {
+  required string id = 1;
+  required string type = 2;
+
+  optional PuckType pucks = 3;
+}
