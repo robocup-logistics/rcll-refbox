@@ -22,22 +22,22 @@ include $(BUILDSYSDIR)/gui.mk
 
 CFLAGS  += $(CFLAGS_GUI)
 LDFLAGS += $(LDFLAGS_GUI)
-
-
-
 LIBS_llsfvis = stdc++ llsfrbcore
 OBJS_llsfvis = llsfvis.o MainWindow.o PlayField.o
 
 
-OBJS_all =	$(OBJS_llsfvis)
-BINS_all =	$(BINDIR)/llsfvis
-
+ifeq ($(HAVE_GTKMM_3),1)
+  OBJS_all =	$(OBJS_llsfvis)
+  BINS_all =	$(BINDIR)/llsfvis
+else
+  WARN_TARGETS += warning_nogtkmm
+endif
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS)
 gui: $(WARN_TARGETS)
-.PHONY: warning_libmodbus
-warning_nolib:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (libmodbus not found)"
+.PHONY: warning_nogtkmm
+warning_nogtkmm:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSFVis$(TNORMAL) (gtkmm-3.0 not found)"
 endif
 
 include $(BUILDSYSDIR)/base.mk
