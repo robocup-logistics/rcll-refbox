@@ -31,6 +31,7 @@ ifeq ($(HAVE_PROTOBUF),1)
 
   PROTOBUF_PROTOC = protoc
   PROTOBUF_LIBDIR = $(LIBDIR)/protobuf
+  LIBDIRS_BASE += $(PROTOBUF_LIBDIR)
 
 ifneq ($(PROTOBUF_all),)
   $(foreach P,$(PROTOBUF_all),							\
