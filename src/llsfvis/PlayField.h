@@ -57,19 +57,25 @@ public:
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
+	static double scale(const double val);
 	void draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 			const Machine& machine);
 	void draw_puck(const Cairo::RefPtr<Cairo::Context>& cr, const Puck& puck);
-	void draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr, int size,
-			int wPos, int hPos, Machine::Orientation orientation);
-	void draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int x, int y,
+	void draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr, double size,
+			double wPos, double hPos, Machine::Orientation orientation);
+	void draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x, double y,
 			std::string text);
+	void draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr);
+	void draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 
 	std::list<const Machine*> _machines;
 	std::list<const Puck*> _pucks;
 
-	static const int MACHINESIZE = 50;
-	static const int PUCKSIZE = 20;
+	static const double MACHINESIZE = 0.50;
+	static const double PUCKSIZE = 0.08;
+	static const double FIELDSIZE = 5.6;
+	static const double ZONEHEIGHT = 0.4;
+	static const double ZONEWIDTH = 1.2;
 };
 
 } /* namespace LLSFVis */

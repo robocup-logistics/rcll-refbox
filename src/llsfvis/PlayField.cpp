@@ -53,9 +53,15 @@ void PlayField::add_puck(Puck* puck) {
 
 bool PlayField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
+	cr->scale(get_allocated_height() / FIELDSIZE,
+			get_allocated_width() / FIELDSIZE);
+
 	//Blackground white
 	cr->set_source_rgb(1, 1, 1);
 	cr->paint();
+
+	draw_delivery_zone(cr);
+	draw_starting_zone(cr);
 
 	//draw machines
 	for (std::list<const Machine*>::iterator iter_machines = _machines.begin();
@@ -77,12 +83,12 @@ void PlayField::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 		const Machine& machine) {
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
-	cr->set_line_width(2.0); //todo move to conffile
+	cr->set_line_width(0.01); //todo move to conffile
 
-	int leftX = machine.getPosX() - MACHINESIZE / 2;
-	int rightX = machine.getPosX() + MACHINESIZE / 2;
-	int upperY = machine.getPosY() - MACHINESIZE / 2;
-	int lowerY = machine.getPosY() + MACHINESIZE / 2;
+	double leftX = machine.getPosX() - MACHINESIZE / 2;
+	double rightX = machine.getPosX() + MACHINESIZE / 2;
+	double upperY = machine.getPosY() - MACHINESIZE / 2;
+	double lowerY = machine.getPosY() + MACHINESIZE / 2;
 
 	cr->move_to(leftX, upperY);
 	cr->line_to(rightX, upperY);
@@ -92,15 +98,15 @@ void PlayField::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 
 	draw_machine_t(cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(),
 			machine.getOrientation());
-	draw_text(cr, machine.getPosX() + MACHINESIZE / 2 + 10,
-			machine.getPosY() + 10, machine.getTextDescription());
+	draw_text(cr, machine.getPosX() + MACHINESIZE / 2 + 0.10,
+			machine.getPosY() + 0.10, machine.getTextDescription());
 	cr->stroke();
 
 	cr->restore();
 }
 
 void PlayField::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
-		int size, int x, int y, Machine::Orientation orientation) {
+		double size, double x, double y, Machine::Orientation orientation) {
 	switch (orientation) {
 	case Machine::NORTH:
 
@@ -137,24 +143,55 @@ void PlayField::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 void PlayField::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
 		const Puck& puck) {
 	cr->save();
-	cr->set_line_width(4);
-	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE / 3, 0.0, 2.0 * M_PI);
+	cr->set_line_width(0.04);
+	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE, 0.0, 2.0 * M_PI);
 	cr->set_source_rgba(0.5, 0, 0, 0.6);
 	cr->fill_preserve();
-	cr->set_source_rgb(1, 0, 0);
+	cr->set_source_rgb(1.0, 0, 0);
 	cr->stroke();
 	cr->restore();
 }
 
-void PlayField::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int x, int y,
-		std::string text) {
+void PlayField::draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr) {
+	cr->save();
+	cr->set_line_width(0.01);
+	cr->move_to(0, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->line_to(ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->line_to(ZONEHEIGHT, FIELDSIZE / 2 + ZONEWIDTH / 2);
+	cr->line_to(0, FIELDSIZE / 2 + ZONEWIDTH / 2);
+	cr->line_to(0, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->set_source_rgb(0.0, 1.0, 0.0);
+	cr->fill_preserve();
+	cr->set_source_rgb(0, 0, 0);
+	cr->stroke();
+	cr->restore();
+}
+
+void PlayField::draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr) {
+	cr->save();
+	cr->set_line_width(0.01);
+	cr->move_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->line_to(FIELDSIZE, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->line_to(FIELDSIZE, FIELDSIZE / 2 + ZONEWIDTH / 2);
+	cr->line_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 + ZONEWIDTH / 2);
+	cr->line_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->set_source_rgb(0.0, 0.0, 1.0);
+	cr->fill_preserve();
+	cr->set_source_rgb(0, 0, 0);
+	cr->stroke();
+	cr->restore();
+}
+
+void PlayField::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x,
+		double y, std::string text) {
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
 	Pango::FontDescription font;
 
 	font.set_family("Monospace");
+	font.set_stretch(Pango::STRETCH_CONDENSED);
 	font.set_weight(Pango::WEIGHT_NORMAL);
-	font.set_size(Pango::SCALE * 8);
+	font.set_size(Pango::SCALE * 0.06);
 
 	Glib::RefPtr<Pango::Layout> layout = create_pango_layout(text);
 	layout->set_font_description(font);

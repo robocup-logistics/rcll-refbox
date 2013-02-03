@@ -46,8 +46,8 @@ MainWindow::MainWindow() {
 	add(*_vPaned);
 	_playField = new PlayField();
 
-	Machine* m = new Machine(100, 100, Machine::NORTH, "bla");
-	Puck* p = new Puck(100,150,"12","raw");
+	Machine* m = new Machine(1.2, 1.0, Machine::NORTH, "machine_1\ntype: T1");
+	Puck* p = new Puck(2.5,2.5,"12","raw");
 
 	_playField->add_machine(m);
 	_playField->add_puck(p);

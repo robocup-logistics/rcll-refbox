@@ -66,7 +66,7 @@ public:
 		_orientation = orientation;
 	}
 
-	int getPosX() const {
+	double getPosX() const {
 		return _posX;
 	}
 
@@ -74,7 +74,7 @@ public:
 		_posX = posX;
 	}
 
-	int getPosY() const {
+	double getPosY() const {
 		return _posY;
 	}
 
@@ -91,8 +91,8 @@ public:
 	}
 
 private:
-	int _posX;
-	int _posY;
+	double _posX;
+	double _posY;
 	Orientation _orientation;
 	std::string _textDescription;
 };

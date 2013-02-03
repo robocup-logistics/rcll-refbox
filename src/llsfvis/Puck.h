@@ -54,19 +54,19 @@ public:
 	}
 	;
 
-	int getPosX() const {
+	double getPosX() const {
 		return _posX;
 	}
 
-	void setPosX(int posX) {
+	void setPosX(double posX) {
 		_posX = posX;
 	}
 
-	int getPosY() const {
+	double getPosY() const {
 		return _posY;
 	}
 
-	void setPosY(int posY) {
+	void setPosY(double posY) {
 		_posY = posY;
 	}
 
@@ -87,8 +87,8 @@ public:
 	}
 
 private:
-	int _posX;
-	int _posY;
+	double _posX;
+	double _posY;
 	std::string _uid;
 	std::string _state;
 };
