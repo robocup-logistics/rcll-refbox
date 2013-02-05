@@ -34,7 +34,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "client.h"
+#include <protobuf_comm/client.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -203,8 +203,9 @@ ProtobufStreamClient::handle_read_message(const boost::system::error_code& error
   if (! error) {
     std::shared_ptr<google::protobuf::Message> m =
       message_register_.deserialize(in_frame_header_, in_data_);
+    uint16_t comp_id   = ntohs(in_frame_header_.component_id);
     uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
-    sig_rcvd_(msg_type, m);
+    sig_rcvd_(comp_id, msg_type, m);
 
     start_recv();
   }

@@ -67,7 +67,8 @@ connected()
 }
 
 void
-handle_message(uint16_t msg_type, std::shared_ptr<google::protobuf::Message> msg)
+handle_message(uint16_t comp_id, uint16_t msg_type,
+	       std::shared_ptr<google::protobuf::Message> msg)
 {
   printf("Received message of type %u\n", msg_type);
   std::shared_ptr<Person> p;

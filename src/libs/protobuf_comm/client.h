@@ -84,7 +84,8 @@ class ProtobufStreamClient
   /** Signal that is invoked when a message has been received.
    * @return signal
    */
-  boost::signals2::signal<void (uint16_t, std::shared_ptr<google::protobuf::Message>)> &
+  boost::signals2::signal<void (uint16_t, uint16_t,
+				std::shared_ptr<google::protobuf::Message>)> &
     signal_received() { return sig_rcvd_; }
 
   /** Signal that is invoked when the connection has been established.
@@ -121,8 +122,8 @@ class ProtobufStreamClient
   boost::asio::ip::tcp::resolver  resolver_;
   boost::asio::ip::tcp::socket    socket_;
 
-  boost::signals2::signal<void (uint16_t, std::shared_ptr<google::protobuf::Message>)>
-    sig_rcvd_;
+  boost::signals2::signal<void (uint16_t, uint16_t,
+				std::shared_ptr<google::protobuf::Message>)>  sig_rcvd_;
   boost::signals2::signal<void ()> sig_connected_;
   boost::signals2::signal<void (const boost::system::error_code &)> sig_disconnected_;
 
