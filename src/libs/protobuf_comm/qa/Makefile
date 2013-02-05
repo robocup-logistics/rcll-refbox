@@ -28,14 +28,19 @@ OBJS_qa_protobuf_comm_server = qa_server.o
 LIBS_qa_protobuf_comm_client = llsf_protobuf_comm llsf_msgs
 OBJS_qa_protobuf_comm_client = qa_client.o
 
+LIBS_qa_protobuf_comm_peer = llsf_protobuf_comm llsf_msgs
+OBJS_qa_protobuf_comm_peer = qa_peer.o
+
 OBJS_all = $(OBJS_qa_protobuf_comm_server) \
-	   $(OBJS_qa_protobuf_comm_client)
+	   $(OBJS_qa_protobuf_comm_client) \
+	   $(OBJS_qa_protobuf_comm_peer)
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   CFLAGS  += $(CFLAGS_PROTOBUF) $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS += $(LDFLAGS_PROTOBUF) $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   BINS_all = $(BINDIR)/qa_protobuf_comm_server \
-	     $(BINDIR)/qa_protobuf_comm_client
+	     $(BINDIR)/qa_protobuf_comm_client \
+	     $(BINDIR)/qa_protobuf_comm_peer
 endif
 
 include $(BUILDSYSDIR)/base.mk
