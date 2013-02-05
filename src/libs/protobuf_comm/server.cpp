@@ -34,7 +34,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "server.h"
+#include <protobuf_comm/server.h>
 
 #include <cstdlib>
 

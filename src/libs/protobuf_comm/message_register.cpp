@@ -34,7 +34,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "message_register.h"
+#include <protobuf_comm/message_register.h>
 
 #include <boost/crc.hpp>
 #include <netinet/in.h>

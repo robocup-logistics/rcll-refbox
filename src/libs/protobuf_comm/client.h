@@ -37,9 +37,9 @@
 #ifndef __PROTOBUF_COMM_CLIENT_H_
 #define __PROTOBUF_COMM_CLIENT_H_
 
-#include "frame_header.h"
-#include "message_register.h"
-#include "queue_entry.h"
+#include <protobuf_comm/frame_header.h>
+#include <protobuf_comm/message_register.h>
+#include <protobuf_comm/queue_entry.h>
 
 #include <boost/asio.hpp>
 #include <boost/signals2.hpp>
