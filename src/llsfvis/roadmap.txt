@@ -1,6 +1,6 @@
 THINGS TO DO:
-[ ] Add a tab to present the refbox log
-[ ] Add a widget for team scores
+[x] Add a tab to present the refbox log
+[x] Add a widget for team scores
 [ ] Integrate protobuf communication lib
 [ ] Add support for configuration file desc. machines
 [ ] ...
