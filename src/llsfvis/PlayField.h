@@ -47,7 +47,7 @@ namespace LLSFVis {
 /**
  * Widget to display the playfield. Takes
  */
-class PlayField: public Gtk::DrawingArea {
+class PlayField: public Gtk::DrawingArea{
 public:
 	PlayField();
 	virtual ~PlayField();

@@ -39,7 +39,6 @@
 namespace LLSFVis {
 
 PlayField::PlayField() {
-	set_size_request(800, 800);
 
 }
 
