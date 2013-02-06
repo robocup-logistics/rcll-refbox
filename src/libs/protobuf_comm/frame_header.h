@@ -61,7 +61,6 @@ typedef struct {
   uint16_t  component_id;	/**< component id */
   uint16_t  msg_type;		/**< message type */
   uint32_t  payload_size;	/**< payload size in bytes */
-  uint32_t  crc32;		/**< Checksum of payload */
 } frame_header_t;
 
 #pragma pack(pop)

@@ -18,7 +18,7 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
-REQ_BOOST_LIBS = thread asio system signals2 crc
+REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 CFLAGS += $(CFLAGS_CPP11)

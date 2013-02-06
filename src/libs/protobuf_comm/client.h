@@ -43,7 +43,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/signals2.hpp>
-#include <boost/crc.hpp>
 #include <google/protobuf/message.h>
 #include <queue>
 #include <string>

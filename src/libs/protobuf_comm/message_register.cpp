@@ -36,7 +36,6 @@
 
 #include <protobuf_comm/message_register.h>
 
-#include <boost/crc.hpp>
 #include <netinet/in.h>
 
 namespace protobuf_comm {
@@ -110,13 +109,9 @@ MessageRegister::serialize(uint16_t component_id, uint16_t msg_type,
 			   frame_header_t &frame_header, std::string &data)
 {
   if (msg.SerializeToString(&data)) {
-    boost::crc_32_type crc32;
-    crc32.process_bytes(data.c_str(), data.size());
-
     frame_header.component_id = htons(component_id);
     frame_header.msg_type     = htons(msg_type);
     frame_header.payload_size = htonl(data.size());
-    frame_header.crc32        = htonl(crc32.checksum());
   } else {
     throw std::runtime_error("Cannot serialize message");
   }
@@ -138,14 +133,6 @@ MessageRegister::deserialize(frame_header_t &frame_header, void *data)
   uint16_t comp_id   = ntohs(frame_header.component_id);
   uint16_t msg_type  = ntohs(frame_header.msg_type);
   size_t   data_size = ntohl(frame_header.payload_size);
-  uint32_t msg_crc32 = ntohl(frame_header.crc32);
-
-  boost::crc_32_type crc32;
-
-  crc32.process_bytes(data, data_size);
-  if (msg_crc32 != crc32.checksum()) {
-    throw std::runtime_error("Checksum mismatch");
-  }
 
   std::shared_ptr<google::protobuf::Message> m =
     new_message_for(comp_id, msg_type);
