@@ -43,11 +43,11 @@ PlayField::PlayField() {
 }
 
 void PlayField::add_machine(Machine* machine) {
-	_machines.push_back(machine);
+	machines_.push_back(machine);
 }
 
 void PlayField::add_puck(Puck* puck) {
-	_pucks.push_back(puck);
+	pucks_.push_back(puck);
 }
 
 bool PlayField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
@@ -63,14 +63,14 @@ bool PlayField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	draw_starting_zone(cr);
 
 	//draw machines
-	for (std::list<const Machine*>::iterator iter_machines = _machines.begin();
-			iter_machines != _machines.end(); ++iter_machines) {
+	for (std::list<const Machine*>::iterator iter_machines = machines_.begin();
+			iter_machines != machines_.end(); ++iter_machines) {
 		draw_machine(cr, **iter_machines);
 	}
 
 	//draw puck
-	for (std::list<const Puck*>::iterator iter_pucks = _pucks.begin();
-			iter_pucks != _pucks.end(); ++iter_pucks) {
+	for (std::list<const Puck*>::iterator iter_pucks = pucks_.begin();
+			iter_pucks != pucks_.end(); ++iter_pucks) {
 		draw_puck(cr, **iter_pucks);
 	}
 

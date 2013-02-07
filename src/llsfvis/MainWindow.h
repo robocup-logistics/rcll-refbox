@@ -48,33 +48,33 @@ public:
 	void add_log_message(std::string msg);
 	void set_score(int score);
 private:
-	Gtk::Notebook _tabs;
-	Gtk::Grid _playFieldTabGrid;
-	Gtk::Paned _loggingTabPaned;
+	Gtk::Notebook tabs_;
+	Gtk::Grid playFieldTabGrid_;
+	Gtk::Paned loggingTabPaned_;
 
-	Gtk::AspectFrame _aspectFrame;
-	PlayField _playField;
-	Gtk::ScrolledWindow _logPreviewScrollWindow;
-	Gtk::TextView _logPreview;
+	Gtk::AspectFrame aspectFrame_;
+	PlayField playField_;
+	Gtk::ScrolledWindow logPreviewScrollWindow_;
+	Gtk::TextView logPreview_;
 
-	Gtk::Box _buttonBoxPlayField;
-	Gtk::Button _playFieldButton1;
-	Gtk::Button _playFieldButton2;
-	Gtk::Button _playFieldButton3;
-	Gtk::Button _playFieldButton4;
+	Gtk::Box buttonBoxPlayField_;
+	Gtk::Button playFieldButton1_;
+	Gtk::Button playFieldButton2_;
+	Gtk::Button playFieldButton3_;
+	Gtk::Button playFieldButton4_;
 
-	Gtk::Box _buttonBoxLogging;
-	Gtk::Button _logButton1;
-	Gtk::Button _logButton2;
-	Gtk::Button _logButton3;
-	Gtk::Button _logButton4;
-	Gtk::ScrolledWindow _logScrollWindow;
-	Gtk::TextView _logView;
+	Gtk::Box buttonBoxLogging_;
+	Gtk::Button logButton1_;
+	Gtk::Button logButton2_;
+	Gtk::Button logButton3_;
+	Gtk::Button logButton4_;
+	Gtk::ScrolledWindow logScrollWindow_;
+	Gtk::TextView logView_;
 
-	StateWidget _stateWidget;
+	StateWidget stateWidget_;
 
-	Glib::RefPtr<Gtk::TextBuffer> _logBuffer;
-	std::string log;
+	Glib::RefPtr<Gtk::TextBuffer> logBuffer_;
+	std::string log_;
 
 
 };

@@ -40,12 +40,12 @@ namespace LLSFVis {
 
 MainWindow::MainWindow() :
 		//_playFieldTabGrid(Gtk::ORIENTATION_HORIZONTAL),
-		_loggingTabPaned(Gtk::ORIENTATION_HORIZONTAL), _buttonBoxPlayField(
-				Gtk::ORIENTATION_VERTICAL), _buttonBoxLogging(
+		loggingTabPaned_(Gtk::ORIENTATION_HORIZONTAL), buttonBoxPlayField_(
+				Gtk::ORIENTATION_VERTICAL), buttonBoxLogging_(
 				Gtk::ORIENTATION_VERTICAL) {
 
 	//INITIALISE DATA
-	_logBuffer = Gtk::TextBuffer::create();
+	logBuffer_ = Gtk::TextBuffer::create();
 	Machine* m = new Machine(1.2, 1.0, Machine::NORTH, "machine_1\ntype: T1");
 	Puck* p = new Puck(2.5, 2.5, "12", "raw");
 
@@ -54,71 +54,71 @@ MainWindow::MainWindow() :
 
 	set_default_size(750, 750);
 	set_position(Gtk::WIN_POS_CENTER);
-	_tabs.set_border_width(10);
+	tabs_.set_border_width(10);
 
 	//the PlayField tab
 
 
-	_playField.add_machine(m);
-	_playField.add_puck(p);
-	_playFieldButton1.set_label("Button1");
-	_playFieldButton2.set_label("Button2");
-	_playFieldButton3.set_label("Button3");
-	_playFieldButton4.set_label("Button4");
+	playField_.add_machine(m);
+	playField_.add_puck(p);
+	playFieldButton1_.set_label("Button1");
+	playFieldButton2_.set_label("Button2");
+	playFieldButton3_.set_label("Button3");
+	playFieldButton4_.set_label("Button4");
 
-	_buttonBoxPlayField.pack_start(_playFieldButton1, Gtk::PACK_SHRINK);
-	_buttonBoxPlayField.pack_start(_playFieldButton2, Gtk::PACK_SHRINK);
-	_buttonBoxPlayField.pack_start(_playFieldButton3, Gtk::PACK_SHRINK);
-	_buttonBoxPlayField.pack_start(_playFieldButton4, Gtk::PACK_SHRINK);
+	buttonBoxPlayField_.pack_start(playFieldButton1_, Gtk::PACK_SHRINK);
+	buttonBoxPlayField_.pack_start(playFieldButton2_, Gtk::PACK_SHRINK);
+	buttonBoxPlayField_.pack_start(playFieldButton3_, Gtk::PACK_SHRINK);
+	buttonBoxPlayField_.pack_start(playFieldButton4_, Gtk::PACK_SHRINK);
 
-	_logPreviewScrollWindow.add(_logPreview);
-	_logPreview.set_buffer(_logBuffer);
+	logPreviewScrollWindow_.add(logPreview_);
+	logPreview_.set_buffer(logBuffer_);
 
-	_playFieldTabGrid.set_row_spacing(5);
-	_playFieldTabGrid.set_column_spacing(5);
-	_playFieldTabGrid.add(_playField);
-	_playFieldTabGrid.attach_next_to(_buttonBoxPlayField, _playField,
+	playFieldTabGrid_.set_row_spacing(5);
+	playFieldTabGrid_.set_column_spacing(5);
+	playFieldTabGrid_.add(playField_);
+	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, playField_,
 			Gtk::POS_RIGHT, 1, 1);
-	_playFieldTabGrid.attach_next_to(_logPreviewScrollWindow, _playField,
+	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, playField_,
 			Gtk::POS_BOTTOM, 1, 1);
-	_playFieldTabGrid.attach_next_to(_stateWidget,_buttonBoxPlayField,Gtk::POS_BOTTOM,1,1);
+	playFieldTabGrid_.attach_next_to(stateWidget_,buttonBoxPlayField_,Gtk::POS_BOTTOM,1,1);
 
 	//Create the logging tab
 
-	_logButton1.set_label("log1");
-	_logButton2.set_label("log2");
-	_logButton3.set_label("log3");
-	_logButton4.set_label("log4");
+	logButton1_.set_label("log1");
+	logButton2_.set_label("log2");
+	logButton3_.set_label("log3");
+	logButton4_.set_label("log4");
 
-	_buttonBoxLogging.pack_start(_logButton1, Gtk::PACK_SHRINK);
-	_buttonBoxLogging.pack_start(_logButton2, Gtk::PACK_SHRINK);
-	_buttonBoxLogging.pack_start(_logButton3, Gtk::PACK_SHRINK);
-	_buttonBoxLogging.pack_start(_logButton4, Gtk::PACK_SHRINK);
+	buttonBoxLogging_.pack_start(logButton1_, Gtk::PACK_SHRINK);
+	buttonBoxLogging_.pack_start(logButton2_, Gtk::PACK_SHRINK);
+	buttonBoxLogging_.pack_start(logButton3_, Gtk::PACK_SHRINK);
+	buttonBoxLogging_.pack_start(logButton4_, Gtk::PACK_SHRINK);
 
-	_logView.set_buffer(_logBuffer);
-	_logScrollWindow.add(_logView);
-	_loggingTabPaned.add1(_logScrollWindow);
-	_loggingTabPaned.add2(_buttonBoxLogging);
+	logView_.set_buffer(logBuffer_);
+	logScrollWindow_.add(logView_);
+	loggingTabPaned_.add1(logScrollWindow_);
+	loggingTabPaned_.add2(buttonBoxLogging_);
 
-	_tabs.append_page(_playFieldTabGrid, "Playfield");
-	_tabs.append_page(_loggingTabPaned, "RefBox Log");
-	add(_tabs);
-	_aspectFrame.set(Gtk::ALIGN_START, Gtk::ALIGN_START, 1, true);
-	_playField.set_size_request(600, 600);
-	_logScrollWindow.set_size_request(600, 600);
-	_logPreviewScrollWindow.set_size_request(0, 150);
-	_buttonBoxPlayField.set_size_request(150, 0);
-	_buttonBoxLogging.set_size_request(150, 0);
+	tabs_.append_page(playFieldTabGrid_, "Playfield");
+	tabs_.append_page(loggingTabPaned_, "RefBox Log");
+	add(tabs_);
+	aspectFrame_.set(Gtk::ALIGN_START, Gtk::ALIGN_START, 1, true);
+	playField_.set_size_request(600, 600);
+	logScrollWindow_.set_size_request(600, 600);
+	logPreviewScrollWindow_.set_size_request(0, 150);
+	buttonBoxPlayField_.set_size_request(150, 0);
+	buttonBoxLogging_.set_size_request(150, 0);
 	show_all_children();
 
-	_stateWidget.set_time(540);
-	_stateWidget.set_score(543);
+	stateWidget_.set_time(540);
+	stateWidget_.set_score(543);
 
 }
 
 void MainWindow::add_log_message(std::string msg){
-	log+=msg;
-	_logBuffer->set_text(log);
+	log_+=msg;
+	logBuffer_->set_text(log_);
 }
 
 void MainWindow::set_score(int score){

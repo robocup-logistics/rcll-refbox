@@ -14,20 +14,20 @@ StateWidget::StateWidget() {
 
 	set_orientation(Gtk::ORIENTATION_VERTICAL);
 
-	_scoreLabel.set_justify(Gtk::JUSTIFY_CENTER);
-	_timeLabel.set_justify(Gtk::JUSTIFY_CENTER);
+	scoreLabel_.set_justify(Gtk::JUSTIFY_CENTER);
+	timeLabel_.set_justify(Gtk::JUSTIFY_CENTER);
 	Pango::FontDescription font;
 	font.set_size(Pango::SCALE * 32);
 	font.set_weight(Pango::WEIGHT_BOLD);
-	_scoreLabel.override_font(font);
-	_timeLabel.override_font(font);
-	_scoreFrame.set_label("Scores");
-	_timeFrame.set_label("Game Time");
+	scoreLabel_.override_font(font);
+	timeLabel_.override_font(font);
+	scoreFrame_.set_label("Scores");
+	timeFrame_.set_label("Game Time");
 
-	_timeFrame.add(_timeLabel);
-	_scoreFrame.add(_scoreLabel);
-	pack_start(_scoreFrame, Gtk::PACK_EXPAND_WIDGET);
-	pack_start(_timeFrame, Gtk::PACK_EXPAND_WIDGET);
+	timeFrame_.add(timeLabel_);
+	scoreFrame_.add(scoreLabel_);
+	pack_start(scoreFrame_, Gtk::PACK_EXPAND_WIDGET);
+	pack_start(timeFrame_, Gtk::PACK_EXPAND_WIDGET);
 
 
 }
@@ -35,7 +35,7 @@ StateWidget::StateWidget() {
 void StateWidget::set_score(int score) {
 	std::ostringstream os;
 	os << score;
-	_scoreLabel.set_text(os.str());
+	scoreLabel_.set_text(os.str());
 }
 
 std::string seconds_to_str(int sec) {
@@ -55,7 +55,7 @@ std::string seconds_to_str(int sec) {
 }
 
 void StateWidget::set_time(int time) {
-	_timeLabel.set_text(seconds_to_str(time));
+	timeLabel_.set_text(seconds_to_str(time));
 }
 
 

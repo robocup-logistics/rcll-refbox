@@ -44,7 +44,7 @@ class Puck {
 public:
 
 	Puck(int posX, int posY, std::string uid, std::string state) :
-			_posX(posX), _posY(posY), _uid(uid), _state(state) {
+			posX_(posX), posY_(posY), uid_(uid), state_(state) {
 
 	}
 	;
@@ -55,42 +55,42 @@ public:
 	;
 
 	double getPosX() const {
-		return _posX;
+		return posX_;
 	}
 
 	void setPosX(double posX) {
-		_posX = posX;
+		posX_ = posX;
 	}
 
 	double getPosY() const {
-		return _posY;
+		return posY_;
 	}
 
 	void setPosY(double posY) {
-		_posY = posY;
+		posY_ = posY;
 	}
 
 	const std::string& getState() const {
-		return _state;
+		return state_;
 	}
 
 	void setState(const std::string& state) {
-		_state = state;
+		state_ = state;
 	}
 
 	const std::string& getUid() const {
-		return _uid;
+		return uid_;
 	}
 
 	void setUid(const std::string& uid) {
-		_uid = uid;
+		uid_ = uid;
 	}
 
 private:
-	double _posX;
-	double _posY;
-	std::string _uid;
-	std::string _state;
+	double posX_;
+	double posY_;
+	std::string uid_;
+	std::string state_;
 };
 
 }/* namespace LLSFVis */

@@ -19,10 +19,10 @@ public:
 	void set_score(int score);
 	void set_time(int score);
 private:
-	Gtk::Label _timeLabel;
-	Gtk::Label _scoreLabel;
-	Gtk::Frame _timeFrame;
-	Gtk::Frame _scoreFrame;
+	Gtk::Label timeLabel_;
+	Gtk::Label scoreLabel_;
+	Gtk::Frame timeFrame_;
+	Gtk::Frame scoreFrame_;
 };
 
 } /* namespace LLSFVis */

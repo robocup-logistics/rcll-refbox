@@ -49,7 +49,7 @@ public:
 	};
 
 	Machine(int posX, int posY, Orientation ori, std::string textDescription) :
-			_posX(posX), _posY(posY), _orientation(ori), _textDescription(
+			posX_(posX), posY_(posY), orientation_(ori), textDescription_(
 					textDescription) {
 	}
 	;
@@ -59,42 +59,42 @@ public:
 	;
 
 	Orientation getOrientation() const {
-		return _orientation;
+		return orientation_;
 	}
 
 	void setOrientation(Orientation orientation) {
-		_orientation = orientation;
+		orientation_ = orientation;
 	}
 
 	double getPosX() const {
-		return _posX;
+		return posX_;
 	}
 
 	void setPosX(int posX) {
-		_posX = posX;
+		posX_ = posX;
 	}
 
 	double getPosY() const {
-		return _posY;
+		return posY_;
 	}
 
 	void setPosY(int posY) {
-		_posY = posY;
+		posY_ = posY;
 	}
 
 	const std::string& getTextDescription() const {
-		return _textDescription;
+		return textDescription_;
 	}
 
 	void setTextDescription(const std::string& textDescription) {
-		_textDescription = textDescription;
+		textDescription_ = textDescription;
 	}
 
 private:
-	double _posX;
-	double _posY;
-	Orientation _orientation;
-	std::string _textDescription;
+	double posX_;
+	double posY_;
+	Orientation orientation_;
+	std::string textDescription_;
 };
 
 } /* namespace LLSFVis */

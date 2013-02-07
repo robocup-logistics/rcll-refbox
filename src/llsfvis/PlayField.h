@@ -68,8 +68,8 @@ private:
 	void draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 	void draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 
-	std::list<const Machine*> _machines;
-	std::list<const Puck*> _pucks;
+	std::list<const Machine*> machines_;
+	std::list<const Puck*> pucks_;
 
 	static const double MACHINESIZE = 0.50;
 	static const double PUCKSIZE = 0.08;
