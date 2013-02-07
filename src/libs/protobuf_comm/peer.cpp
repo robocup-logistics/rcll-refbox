@@ -57,7 +57,7 @@ namespace protobuf_comm {
  * @param address IPv4 broadcast address to send to
  * @param port IPv4 UDP port to listen on and to send to
  */ 
-ProtobufBroadcastPeer::ProtobufBroadcastPeer(const char *address, unsigned short port)
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port)
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port))
 {
@@ -86,7 +86,8 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const char *address, unsigned short
  * @param send_to_port IPv4 UDP port to send data to
  * @param recv_on_port IPv4 UDP port to receive data on
  */
-ProtobufBroadcastPeer::ProtobufBroadcastPeer(const char *address, unsigned short send_to_port,
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
+					     unsigned short send_to_port,
 					     unsigned short recv_on_port)
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port))
