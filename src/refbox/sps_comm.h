@@ -34,6 +34,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __LLSF_REFBOX_SPS_COMM_H_
+#define __LLSF_REFBOX_SPS_COMM_H_
+
 extern "C" {
   typedef struct _modbus modbus_t;
 }
@@ -90,3 +93,5 @@ class SPSComm
 };
 
 } // end of namespace llsfrb
+
+#endif
