@@ -96,6 +96,7 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
   in_data_ = malloc(in_data_size_);
 
   socket_.set_option(socket_base::broadcast(true));
+  socket_.set_option(socket_base::reuse_address(true));
 
   outbound_active_ = true;
   ip::udp::resolver::query query(address, boost::lexical_cast<std::string>(send_to_port));

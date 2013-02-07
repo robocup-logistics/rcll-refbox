@@ -223,6 +223,8 @@ ProtobufStreamServer::ProtobufStreamServer(unsigned short port)
 {
   next_cid_ = 1;
 
+  acceptor_.set_option(socket_base::reuse_address(true));
+
   start_accept();
   asio_thread_ = std::thread(&ProtobufStreamServer::run_asio, this);
 }
