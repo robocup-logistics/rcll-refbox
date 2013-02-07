@@ -38,9 +38,15 @@
 #define __LLSF_REFBOX_REFBOX_H_
 
 #include <boost/asio.hpp>
+#include <google/protobuf/message.h>
+#include <protobuf_comm/server.h>
 
 namespace CLIPS {
   class Environment;
+}
+
+namespace protobuf_comm {
+  class ProtobufBroadcastPeer;
 }
 
 namespace llsfrb {
@@ -64,11 +70,26 @@ class LLSFRefBox
   void start_timer();
   void handle_timer(const boost::system::error_code& error);
   void handle_signal(const boost::system::error_code& error, int signum);
+  void handle_client_connected(protobuf_comm::ProtobufStreamServer::ClientID client);
+  void handle_client_disconnected(protobuf_comm::ProtobufStreamServer::ClientID client,
+				  const boost::system::error_code &error);
+
+  void handle_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
+			 uint16_t component_id, uint16_t msg_type,
+			 std::shared_ptr<google::protobuf::Message> msg);
+
+  void handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
+		       uint16_t component_id, uint16_t msg_type,
+		       std::shared_ptr<google::protobuf::Message> msg);
 
  private: // members
   Configuration *config_;
   SPSComm *sps_;
+  protobuf_comm::ProtobufStreamServer *pbc_server_;
+  protobuf_comm::ProtobufBroadcastPeer *pbc_peer_;
+
   CLIPS::Environment *clips_;
+  std::mutex          clips_mutex_;
 
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;

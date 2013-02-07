@@ -38,9 +38,12 @@
 #include "sps_comm.h"
 
 #include <config/yaml.h>
+#include <protobuf_comm/peer.h>
 #include <clipsmm.h>
 
 #include <boost/bind.hpp>
+
+using namespace protobuf_comm;
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -87,6 +90,29 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     sps_ = NULL;
   }
 
+  try {
+    pbc_server_ = NULL;
+    pbc_peer_   = NULL;
+    pbc_server_ = new ProtobufStreamServer(config_->get_uint("/llsfrb/comm/server-port"));
+    pbc_peer_   = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/peer-host"),
+					    config_->get_uint("/llsfrb/comm/peer-port"));
+
+    pbc_server_->signal_connected()
+      .connect(boost::bind(&LLSFRefBox::handle_client_connected, this, _1));
+    pbc_server_->signal_disconnected()
+      .connect(boost::bind(&LLSFRefBox::handle_client_disconnected, this, _1, _2));
+    pbc_server_->signal_received()
+      .connect(boost::bind(&LLSFRefBox::handle_client_msg, this, _1, _2, _3, _4));
+    pbc_peer_->signal_received()
+      .connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
+  } catch (std::runtime_error &e) {
+    delete config_;
+    delete sps_;
+    delete pbc_server_;
+    delete pbc_peer_;
+    throw;
+  }
+
   printf("Creating CLIPS environment\n");
   clips_ = new CLIPS::Environment();
 }
@@ -95,6 +121,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 LLSFRefBox::~LLSFRefBox()
 {
   timer_.cancel();
+  delete pbc_server_;
+  delete pbc_peer_;
   delete config_;
   delete sps_;
   delete clips_;
@@ -131,6 +159,48 @@ LLSFRefBox::handle_signal(const boost::system::error_code& error, int signum)
 {
   timer_.cancel();
 }
+
+
+void
+LLSFRefBox::handle_client_connected(ProtobufStreamServer::ClientID client)
+{
+}
+
+
+void
+LLSFRefBox::handle_client_disconnected(ProtobufStreamServer::ClientID client,
+				       const boost::system::error_code &error)
+{
+}
+
+
+/** Handle message that came from a client.
+ * @param client client ID
+ * @param component_id component the message was addressed to
+ * @param msg_type type of the message
+ * @param msg the message
+ */
+void
+LLSFRefBox::handle_client_msg(ProtobufStreamServer::ClientID client,
+			      uint16_t component_id, uint16_t msg_type,
+			      std::shared_ptr<google::protobuf::Message> msg)
+{
+}
+
+
+/** Handle message that came from a peer/robot
+ * @param endpoint the endpoint from which the message was received
+ * @param component_id component the message was addressed to
+ * @param msg_type type of the message
+ * @param msg the message
+ */
+void
+LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
+			    uint16_t component_id, uint16_t msg_type,
+			    std::shared_ptr<google::protobuf::Message> msg)
+{
+}
+
 
 /** Run the application.
  * @return return code, 0 if no error, error code otherwise

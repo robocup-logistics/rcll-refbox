@@ -20,6 +20,8 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/clips.mk
 include $(BUILDSYSDIR)/boost.mk
 
+CFLAGS += $(CFLAGS_CPP11)
+
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
@@ -32,7 +34,7 @@ ifeq ($(HAVE_LIBMODBUS),1)
   LDFLAGS_LIBMODBUS = $(shell $(PKGCONFIG) --libs 'libmodbus')
 endif
 
-LIBS_refbox_llsf = stdc++ llsfrbcore llsfrbconfig
+LIBS_refbox_llsf = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm
 OBJS_refbox_llsf = main.o refbox.o sps_comm.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
