@@ -133,6 +133,7 @@ LLSFRefBox::~LLSFRefBox()
 void
 LLSFRefBox::start_timer()
 {
+  timer_last_ = boost::posix_time::microsec_clock::local_time();
   timer_.expires_from_now(boost::posix_time::milliseconds(cfg_timer_interval_));
   timer_.async_wait(boost::bind(&LLSFRefBox::handle_timer, this,
 				boost::asio::placeholders::error));
@@ -145,7 +146,15 @@ void
 LLSFRefBox::handle_timer(const boost::system::error_code& error)
 {
   if (! error) {
-    start_timer();
+    /*
+    boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+    long ms = (now - timer_last_).total_milliseconds();
+    timer_last_ = now;
+    */
+    timer_.expires_at(timer_.expires_at()
+		      + boost::posix_time::milliseconds(cfg_timer_interval_));
+    timer_.async_wait(boost::bind(&LLSFRefBox::handle_timer, this,
+				  boost::asio::placeholders::error));
   }
 }
 

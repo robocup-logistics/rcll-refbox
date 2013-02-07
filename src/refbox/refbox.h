@@ -93,6 +93,7 @@ class LLSFRefBox
 
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
+  boost::posix_time::ptime     timer_last_;
 
   unsigned int cfg_timer_interval_;
 };
