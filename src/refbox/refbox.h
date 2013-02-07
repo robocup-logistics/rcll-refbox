@@ -1,8 +1,8 @@
 
 /***************************************************************************
- *  main.cpp - LLSF RefBox Main Program
+ *  refbox.h - LLSF RefBox main program
  *
- *  Created: Mon Jan 21 14:58:35 2013
+ *  Created: Thu Feb 07 11:02:51 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
@@ -34,13 +34,49 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "refbox.h"
+#ifndef __LLSF_REFBOX_REFBOX_H_
+#define __LLSF_REFBOX_REFBOX_H_
 
-using namespace llsfrb;
+#include <boost/asio.hpp>
 
-int
-main(int argc, char **argv)
-{
-  LLSFRefBox llsfrb(argc, argv);
-  return llsfrb.run();
+namespace CLIPS {
+  class Environment;
 }
+
+namespace llsfrb {
+#if 0 /* just to make Emacs auto-indent happy */
+}
+#endif
+
+class SPSComm;
+class Configuration;
+
+class LLSFRefBox
+{
+ public:
+  LLSFRefBox(int argc, char **argv);
+  ~LLSFRefBox();
+
+  int run();
+
+
+ private: // methods
+  void start_timer();
+  void handle_timer(const boost::system::error_code& error);
+  void handle_signal(const boost::system::error_code& error, int signum);
+
+ private: // members
+  Configuration *config_;
+  SPSComm *sps_;
+  CLIPS::Environment *clips_;
+
+  boost::asio::io_service      io_service_;
+  boost::asio::deadline_timer  timer_;
+
+  unsigned int cfg_timer_interval_;
+};
+
+
+} // end of namespace llsfrb
+
+#endif
