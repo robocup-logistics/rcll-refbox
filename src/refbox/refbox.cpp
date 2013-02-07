@@ -39,7 +39,6 @@
 
 #include <config/yaml.h>
 #include <protobuf_comm/peer.h>
-#include <clipsmm.h>
 
 #include <boost/bind.hpp>
 
@@ -65,6 +64,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
+
+  cfg_clips_dir_ = std::string(SRCDIR) + "/clips/";
 
   try {
     cfg_timer_interval_ = config_->get_uint("/llsfrb/clips/timer-interval");
@@ -113,8 +114,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     throw;
   }
 
-  printf("Creating CLIPS environment\n");
-  clips_ = new CLIPS::Environment();
+  setup_clips();
 }
 
 /** Destructor. */
@@ -127,6 +127,76 @@ LLSFRefBox::~LLSFRefBox()
   delete sps_;
   delete clips_;
 }
+
+
+void
+LLSFRefBox::setup_clips()
+{
+  printf("Creating CLIPS environment\n");
+  clips_ = new CLIPS::Environment();
+
+  clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
+  clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
+  clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
+
+  if (!clips_->batch_evaluate(cfg_clips_dir_ + "init.clp")) {
+    printf("Failed to initialize CLIPS environment, batch file failed.");
+    throw fawkes::Exception("Failed to initialize CLIPS environment, batch file failed.");
+  }
+
+  clips_->assert_fact("(init)");
+  clips_->refresh_agenda();
+  clips_->run();
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_now()
+{
+  CLIPS::Values rv;
+  struct timeval tv;
+  gettimeofday(&tv, 0);
+  rv.push_back(tv.tv_sec);
+  rv.push_back(tv.tv_usec);
+  return rv;
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_get_clips_dirs()
+{
+  CLIPS::Values rv;
+  rv.push_back(cfg_clips_dir_);
+  return rv;
+}
+
+void
+LLSFRefBox::clips_load_config(std::string cfg_prefix)
+{
+  std::auto_ptr<Configuration::ValueIterator> v(config_->search(cfg_prefix.c_str()));
+  while (v->next()) {
+    std::string type = "";
+    std::string value = v->get_as_string();
+
+    if (v->is_float())       type = "FLOAT";
+    else if (v->is_uint())   type = "UINT";
+    else if (v->is_int())    type = "INT";
+    else if (v->is_bool())   type = "BOOL";
+    else if (v->is_string()) {
+      type = "STRING";
+      value = std::string("\"") + value + "\"";
+    } else {
+      printf("Config value at '%s' of unknown type '%s'",
+	     v->path(), v->type());
+    }
+
+    //logger->log_info(name(), "ASSERT (confval (path \"%s\") (type %s) (value %s)",
+    //		     v->path(), type.c_str(), v->get_as_string().c_str());
+    clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
+			 v->path(), type.c_str(), value.c_str());
+  }
+}
+
 
 
 /** Start the timer for another run. */

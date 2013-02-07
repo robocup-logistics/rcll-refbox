@@ -20,6 +20,11 @@ llsfrb:
     # Timer interval, in milliseconds
     timer-interval: 40
 
+    main: refbox
+    debug: false
+    # debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
+    debug-level: 2
+
   comm:
     server-port: !tcp-port 4444
     peer-host: !ipv4 192.168.0.255

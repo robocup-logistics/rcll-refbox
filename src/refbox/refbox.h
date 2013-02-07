@@ -41,9 +41,8 @@
 #include <google/protobuf/message.h>
 #include <protobuf_comm/server.h>
 
-namespace CLIPS {
-  class Environment;
-}
+#include <clipsmm.h>
+#include <mutex>
 
 namespace protobuf_comm {
   class ProtobufBroadcastPeer;
@@ -82,6 +81,12 @@ class LLSFRefBox
 		       uint16_t component_id, uint16_t msg_type,
 		       std::shared_ptr<google::protobuf::Message> msg);
 
+  void          setup_clips();
+  CLIPS::Values clips_now();
+  CLIPS::Values clips_get_clips_dirs();
+  void          clips_load_config(std::string cfg_prefix);
+
+
  private: // members
   Configuration *config_;
   SPSComm *sps_;
@@ -96,6 +101,7 @@ class LLSFRefBox
   boost::posix_time::ptime     timer_last_;
 
   unsigned int cfg_timer_interval_;
+  std::string  cfg_clips_dir_;
 };
 
 
