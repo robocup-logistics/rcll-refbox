@@ -84,6 +84,7 @@ ProtobufStreamServer::Session::~Session()
 void
 ProtobufStreamServer::Session::start()
 {
+  remote_endpoint_ = socket_.remote_endpoint();
   parent_->connected(shared_from_this());
   boost::asio::async_read(socket_,
 			  boost::asio::buffer(&in_frame_header_, sizeof(frame_header_t)),
@@ -270,7 +271,7 @@ void
 ProtobufStreamServer::connected(boost::shared_ptr<Session> session)
 {
   sessions_[session->id()] = session;
-  sig_connected_(session->id());
+  sig_connected_(session->id(), session->remote_endpoint());
 }
 
 void

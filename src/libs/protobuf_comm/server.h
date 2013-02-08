@@ -83,7 +83,7 @@ class ProtobufStreamServer
   /** Signal that is invoked when a new client has connected.
    * @return signal
    */
-  boost::signals2::signal<void (ClientID)> &
+  boost::signals2::signal<void (ClientID, boost::asio::ip::tcp::endpoint &)> &
     signal_connected() { return sig_connected_; }
 
   /** Signal that is invoked when a new client has disconnected.
@@ -107,6 +107,11 @@ class ProtobufStreamServer
     /** Get client ID.
      * @return client ID */
     ClientID id() const { return id_; }
+    /** Get client's endpoint.
+     * @return remote client's endpoint */
+    boost::asio::ip::tcp::endpoint & remote_endpoint()
+    { return remote_endpoint_; }
+
     void start();
     void send(uint16_t component_id, uint16_t msg_type,
 	      google::protobuf::Message &m);
@@ -121,6 +126,7 @@ class ProtobufStreamServer
     ClientID id_;
     ProtobufStreamServer *parent_;
     boost::asio::ip::tcp::socket socket_;
+    boost::asio::ip::tcp::endpoint remote_endpoint_;
 
     frame_header_t in_frame_header_;
     size_t         in_data_size_;
@@ -145,7 +151,7 @@ class ProtobufStreamServer
   boost::asio::ip::tcp::acceptor acceptor_;
   boost::signals2::signal<void (ClientID, uint16_t, uint16_t,
 				std::shared_ptr<google::protobuf::Message>)> sig_rcvd_;
-  boost::signals2::signal<void (ClientID)> sig_connected_;
+  boost::signals2::signal<void (ClientID, boost::asio::ip::tcp::endpoint &)> sig_connected_;
   boost::signals2::signal<void (ClientID, const boost::system::error_code &)>
     sig_disconnected_;
 
