@@ -152,16 +152,76 @@ LLSFRefBox::setup_clips()
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
 
+  clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
+
   if (!clips_->batch_evaluate(cfg_clips_dir_ + "init.clp")) {
     printf("Failed to initialize CLIPS environment, batch file failed.");
     throw fawkes::Exception("Failed to initialize CLIPS environment, batch file failed.");
-  }
+  }  
 
   clips_->assert_fact("(init)");
   clips_->refresh_agenda();
   clips_->run();
 }
 
+
+void
+LLSFRefBox::clips_assert_message(std::pair<std::string, unsigned short> &endpoint,
+				 uint16_t comp_id, uint16_t msg_type,
+				 std::shared_ptr<google::protobuf::Message> &msg,
+				 unsigned int client_id)
+{
+  CLIPS::Template::pointer temp = clips_->get_template("protobuf-msg");
+  if (temp) {
+    void *ptr = new std::shared_ptr<google::protobuf::Message>(msg);
+    CLIPS::Fact::pointer fact = CLIPS::Fact::create(*clips_, temp);
+    fact->set_slot("type", msg->GetTypeName());
+    fact->set_slot("comp-id", comp_id);
+    fact->set_slot("msg-type", msg_type);
+    fact->set_slot("rcvd-via", CLIPS::Value((client_id == 0) ? "BROADCAST" : "STREAM"));
+    CLIPS::Values host_port(2, CLIPS::Value(CLIPS::TYPE_STRING));
+    host_port[0] = endpoint.first;
+    host_port[1] = CLIPS::Value(endpoint.second);
+    fact->set_slot("rcvd-from", host_port);
+    fact->set_slot("ptr", CLIPS::Value(ptr));
+    CLIPS::Fact::pointer new_fact = clips_->assert_fact(fact);
+
+    if (new_fact) {
+      clips_msg_facts_[new_fact->index()] = new_fact;
+    } else {
+      printf("Asserting protobuf-msg fact failed\n");
+      delete static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
+    }
+  } else {
+    printf("Did not get template, did you load protobuf.clp?\n");
+  }
+}
+
+void
+LLSFRefBox::handle_clips_periodic()
+{
+  static std::mutex m;
+  std::lock_guard<std::mutex> lock(m);
+
+  std::queue<int> to_erase;
+  std::map<long int, CLIPS::Fact::pointer>::iterator f;
+  for (f = clips_msg_facts_.begin(); f != clips_msg_facts_.end(); ++f) {
+    CLIPS::Template::pointer temp = f->second->get_template();
+    if (f->second->refcount() == 1) {
+      printf("Fact %li can be erased\n", f->second->index());
+      to_erase.push(f->first);
+    }
+  }
+  while (! to_erase.empty()) {
+    long int index = to_erase.front();
+    CLIPS::Fact::pointer &f = clips_msg_facts_[index];
+    CLIPS::Value v = f->slot_value("ptr")[0];
+    void *ptr = v.as_address();
+    delete static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
+    clips_msg_facts_.erase(index);
+    to_erase.pop();
+  }
+}
 
 CLIPS::Values
 LLSFRefBox::clips_now()
@@ -234,6 +294,9 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     long ms = (now - timer_last_).total_milliseconds();
     timer_last_ = now;
     */
+    clips_->refresh_agenda();
+    clips_->run();
+
     timer_.expires_at(timer_.expires_at()
 		      + boost::posix_time::milliseconds(cfg_timer_interval_));
     timer_.async_wait(boost::bind(&LLSFRefBox::handle_timer, this,
@@ -257,7 +320,10 @@ void
 LLSFRefBox::handle_client_connected(ProtobufStreamServer::ClientID client,
 				    boost::asio::ip::tcp::endpoint &endpoint)
 {
+  std::lock_guard<std::mutex> lock(clips_mutex_);
   client_endpoints_[client] = std::make_pair(endpoint.address().to_string(), endpoint.port());
+  clips_->assert_fact_f("(client-connected %u %s %u)", client,
+			endpoint.address().to_string().c_str(), endpoint.port());
 }
 
 
@@ -265,6 +331,8 @@ void
 LLSFRefBox::handle_client_disconnected(ProtobufStreamServer::ClientID client,
 				       const boost::system::error_code &error)
 {
+  std::lock_guard<std::mutex> lock(clips_mutex_);
+  clips_->assert_fact_f("(client-disconnected %u)", client);
 }
 
 
@@ -279,6 +347,8 @@ LLSFRefBox::handle_client_msg(ProtobufStreamServer::ClientID client,
 			      uint16_t component_id, uint16_t msg_type,
 			      std::shared_ptr<google::protobuf::Message> msg)
 {
+  clips_assert_message(client_endpoints_[client],
+		       component_id, msg_type, msg, client);
 }
 
 
@@ -293,6 +363,9 @@ LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
 			    uint16_t component_id, uint16_t msg_type,
 			    std::shared_ptr<google::protobuf::Message> msg)
 {
+  std::pair<std::string, unsigned short> endpp =
+    std::make_pair(endpoint.address().to_string(), endpoint.port());
+  clips_assert_message(endpp, component_id, msg_type, msg);
 }
 
 

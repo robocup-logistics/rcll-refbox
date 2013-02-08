@@ -85,6 +85,11 @@ class LLSFRefBox
   void setup_protobuf_comm();
 
   void          setup_clips();
+  void          handle_clips_periodic();
+  void          clips_assert_message(std::pair<std::string, unsigned short> &endpoint,
+				     uint16_t comp_id, uint16_t msg_type,
+				     std::shared_ptr<google::protobuf::Message> &msg,
+				     unsigned int client_id = 0);
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
@@ -100,6 +105,7 @@ class LLSFRefBox
 
   CLIPS::Environment *clips_;
   std::mutex          clips_mutex_;
+  std::map<long int, CLIPS::Fact::pointer>  clips_msg_facts_;
 
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
