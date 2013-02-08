@@ -91,6 +91,29 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     sps_ = NULL;
   }
 
+  setup_protobuf_comm();
+
+  setup_clips();
+}
+
+/** Destructor. */
+LLSFRefBox::~LLSFRefBox()
+{
+  timer_.cancel();
+  delete pbc_server_;
+  delete pbc_peer_;
+  delete config_;
+  delete sps_;
+  delete clips_;
+
+  // Delete all global objects allocated by libprotobuf
+  google::protobuf::ShutdownProtobufLibrary();
+}
+
+
+void
+LLSFRefBox::setup_protobuf_comm()
+{
   try {
     pbc_server_ = NULL;
     pbc_peer_   = NULL;
@@ -99,7 +122,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 					    config_->get_uint("/llsfrb/comm/peer-port"));
 
     pbc_server_->signal_connected()
-      .connect(boost::bind(&LLSFRefBox::handle_client_connected, this, _1));
+      .connect(boost::bind(&LLSFRefBox::handle_client_connected, this, _1, _2));
     pbc_server_->signal_disconnected()
       .connect(boost::bind(&LLSFRefBox::handle_client_disconnected, this, _1, _2));
     pbc_server_->signal_received()
@@ -114,20 +137,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     throw;
   }
 
-  setup_clips();
-}
 
-/** Destructor. */
-LLSFRefBox::~LLSFRefBox()
-{
-  timer_.cancel();
-  delete pbc_server_;
-  delete pbc_peer_;
-  delete config_;
-  delete sps_;
-  delete clips_;
+  //MessageRegister &mr = pbc_server_->message_register();
+  //mr.add_message_type<...>(1, 2);
 }
-
 
 void
 LLSFRefBox::setup_clips()
@@ -241,8 +254,10 @@ LLSFRefBox::handle_signal(const boost::system::error_code& error, int signum)
 
 
 void
-LLSFRefBox::handle_client_connected(ProtobufStreamServer::ClientID client)
+LLSFRefBox::handle_client_connected(ProtobufStreamServer::ClientID client,
+				    boost::asio::ip::tcp::endpoint &endpoint)
 {
+  client_endpoints_[client] = std::make_pair(endpoint.address().to_string(), endpoint.port());
 }
 
 
