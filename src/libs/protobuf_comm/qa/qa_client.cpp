@@ -84,7 +84,7 @@ main(int argc, char **argv)
   boost::asio::io_service io_service;
 
   client.signal_connected().connect(connected);
-  client.async_connect("127.0.0.1", 1234);
+  client.async_connect("127.0.0.1", 4444);
 
   MessageRegister & message_register = client.message_register();
   message_register.add_message_type<Person>(1, 2);

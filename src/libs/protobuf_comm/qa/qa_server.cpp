@@ -56,9 +56,11 @@ signal_handler(const boost::system::error_code& error, int signum)
 }
 
 void
-client_connected(ProtobufStreamServer::ClientID client)
+client_connected(ProtobufStreamServer::ClientID client,
+		 boost::asio::ip::tcp::endpoint &endpoint)
 {
-  printf("Client %u connected\n", client);
+  printf("Client %u (%s:%u) connected\n", client,
+	 endpoint.address().to_string().c_str(), endpoint.port());
 }
 
 void
