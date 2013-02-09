@@ -340,6 +340,8 @@ LLSFRefBox::handle_client_connected(ProtobufStreamServer::ClientID client,
   client_endpoints_[client] = std::make_pair(endpoint.address().to_string(), endpoint.port());
   clips_->assert_fact_f("(protobuf-client-connected %u %s %u)", client,
 			endpoint.address().to_string().c_str(), endpoint.port());
+  clips_->refresh_agenda();
+  clips_->run();
 }
 
 
@@ -349,6 +351,8 @@ LLSFRefBox::handle_client_disconnected(ProtobufStreamServer::ClientID client,
 {
   std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
   clips_->assert_fact_f("(protobuf-client-disconnected %u)", client);
+  clips_->refresh_agenda();
+  clips_->run();
 }
 
 
