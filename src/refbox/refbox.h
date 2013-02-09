@@ -93,6 +93,7 @@ class LLSFRefBox
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
+  CLIPS::Value  clips_pb_get_field(void *ptr, std::string field_name);
 
 
  private: // members

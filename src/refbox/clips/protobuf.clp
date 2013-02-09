@@ -16,9 +16,25 @@
   (slot ptr (type EXTERNAL-ADDRESS))
 )
 
+(defrule protobuf-client-connected
+  ?f <- (protobuf-client-connected ?id ?host ?port)
+  =>
+  (retract ?f)
+  (if (debug 2) then
+    (printout t "Protobuf client " ?id " connected from " ?host ":" ?port crlf))
+)
+
+(defrule protobuf-client-disconnected
+  ?f <- (protobuf-client-disconnected ?id)
+  =>
+  (retract ?f)
+  (if (debug 2) then (printout t "Protobuf client " ?id " disconnected" crlf))
+)
+
 (defrule print-protobuf-msg
   ?mf <- (protobuf-msg (type ?t) (ptr ?p))
   =>
   (printout t "Asserted message of type " ?t " (ptr " ?p ")" crlf)
+  (printout t "Value: " (pb-get-field ?p "name") crlf)
   (retract ?mf)
 )

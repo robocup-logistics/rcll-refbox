@@ -40,9 +40,11 @@
 #include <config/yaml.h>
 #include <protobuf_comm/peer.h>
 
+#include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
 
 using namespace protobuf_comm;
+using namespace google::protobuf;
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -151,6 +153,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
+  clips_->add_function("pb-get-field", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_get_field)));
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
@@ -220,6 +223,19 @@ LLSFRefBox::handle_clips_periodic()
     clips_msg_facts_.erase(index);
     to_erase.pop();
   }
+}
+
+CLIPS::Value
+LLSFRefBox::clips_pb_get_field(void *ptr, std::string field_name)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  const Reflection *refl       = (*m)->GetReflection();
+  std::string s = refl->GetString(**m, field);
+  return CLIPS::Value(s);
 }
 
 CLIPS::Values
@@ -322,7 +338,7 @@ LLSFRefBox::handle_client_connected(ProtobufStreamServer::ClientID client,
 {
   std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
   client_endpoints_[client] = std::make_pair(endpoint.address().to_string(), endpoint.port());
-  clips_->assert_fact_f("(client-connected %u %s %u)", client,
+  clips_->assert_fact_f("(protobuf-client-connected %u %s %u)", client,
 			endpoint.address().to_string().c_str(), endpoint.port());
 }
 
