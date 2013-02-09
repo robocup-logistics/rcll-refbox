@@ -103,8 +103,8 @@ class LLSFRefBox
   std::map<protobuf_comm::ProtobufStreamServer::ClientID,
     std::pair<std::string, unsigned short>> client_endpoints_;
 
-  CLIPS::Environment *clips_;
-  std::mutex          clips_mutex_;
+  CLIPS::Environment                       *clips_;
+  std::recursive_mutex                      clips_mutex_;
   std::map<long int, CLIPS::Fact::pointer>  clips_msg_facts_;
 
   boost::asio::io_service      io_service_;

@@ -75,7 +75,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   }
 
   try {
-    printf("Connectiong to SPS\n");
+    printf("Connecting to SPS\n");
     sps_ = NULL;
     if (config_->get_bool("/llsfrb/sps/enable")) {
       sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
@@ -200,8 +200,7 @@ LLSFRefBox::clips_assert_message(std::pair<std::string, unsigned short> &endpoin
 void
 LLSFRefBox::handle_clips_periodic()
 {
-  static std::mutex m;
-  std::lock_guard<std::mutex> lock(m);
+  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
 
   std::queue<int> to_erase;
   std::map<long int, CLIPS::Fact::pointer>::iterator f;
@@ -294,6 +293,7 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     long ms = (now - timer_last_).total_milliseconds();
     timer_last_ = now;
     */
+    std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
     clips_->refresh_agenda();
     clips_->run();
 
@@ -320,7 +320,7 @@ void
 LLSFRefBox::handle_client_connected(ProtobufStreamServer::ClientID client,
 				    boost::asio::ip::tcp::endpoint &endpoint)
 {
-  std::lock_guard<std::mutex> lock(clips_mutex_);
+  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
   client_endpoints_[client] = std::make_pair(endpoint.address().to_string(), endpoint.port());
   clips_->assert_fact_f("(client-connected %u %s %u)", client,
 			endpoint.address().to_string().c_str(), endpoint.port());
@@ -331,8 +331,8 @@ void
 LLSFRefBox::handle_client_disconnected(ProtobufStreamServer::ClientID client,
 				       const boost::system::error_code &error)
 {
-  std::lock_guard<std::mutex> lock(clips_mutex_);
-  clips_->assert_fact_f("(client-disconnected %u)", client);
+  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  clips_->assert_fact_f("(protobuf-client-disconnected %u)", client);
 }
 
 
