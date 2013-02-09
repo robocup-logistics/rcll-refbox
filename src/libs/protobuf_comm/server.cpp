@@ -77,20 +77,27 @@ ProtobufStreamServer::Session::~Session()
   free(in_data_);
 }
 
-/** Start communication on this session.
+/** Do processing required to start a session.
+ */
+void
+ProtobufStreamServer::Session::start_session()
+{
+  remote_endpoint_ = socket_.remote_endpoint();
+}
+
+/** Start reading a message on this session.
  * This sets up a read handler to read incoming messages. It also notifies
  * the parent server of the initiated connection.
  */
 void
-ProtobufStreamServer::Session::start()
+ProtobufStreamServer::Session::start_read()
 {
-  remote_endpoint_ = socket_.remote_endpoint();
-  parent_->connected(shared_from_this());
   boost::asio::async_read(socket_,
 			  boost::asio::buffer(&in_frame_header_, sizeof(frame_header_t)),
 			  boost::bind(&ProtobufStreamServer::Session::handle_read_header,
 				      shared_from_this(), boost::asio::placeholders::error));
 }
+
 
 /** Send a message.
  * @param component_id ID of the component to address
@@ -200,7 +207,7 @@ ProtobufStreamServer::Session::handle_read_message(const boost::system::error_co
     uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
     parent_->sig_rcvd_(id_, comp_id, msg_type, m);
 
-    start();
+    start_read();
   } else {
     parent_->disconnected(shared_from_this(), error);
   }
@@ -268,13 +275,6 @@ ProtobufStreamServer::start_accept()
 }
 
 void
-ProtobufStreamServer::connected(boost::shared_ptr<Session> session)
-{
-  sessions_[session->id()] = session;
-  sig_connected_(session->id(), session->remote_endpoint());
-}
-
-void
 ProtobufStreamServer::disconnected(boost::shared_ptr<Session> session,
 				   const boost::system::error_code &error)
 {
@@ -287,7 +287,10 @@ ProtobufStreamServer::handle_accept(Session::Ptr new_session,
 				    const boost::system::error_code& error)
 {
   if (!error) {
-    new_session->start();
+    new_session->start_session();
+    sessions_[new_session->id()] = new_session;
+    sig_connected_(new_session->id(), new_session->remote_endpoint());
+    new_session->start_read();
   }
 
   start_accept();

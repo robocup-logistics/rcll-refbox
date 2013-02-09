@@ -46,6 +46,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <google/protobuf/message.h>
 
+#define _GLIBCXX_USE_SCHED_YIELD
 #include <thread>
 #include <mutex>
 #include <queue>
@@ -112,7 +113,8 @@ class ProtobufStreamServer
     boost::asio::ip::tcp::endpoint & remote_endpoint()
     { return remote_endpoint_; }
 
-    void start();
+    void start_session();
+    void start_read();
     void send(uint16_t component_id, uint16_t msg_type,
 	      google::protobuf::Message &m);
 
@@ -142,7 +144,6 @@ class ProtobufStreamServer
   void start_accept();
   void handle_accept(Session::Ptr new_session, const boost::system::error_code& error);
 
-  void connected(boost::shared_ptr<Session> session);
   void disconnected(boost::shared_ptr<Session> session,
 		    const boost::system::error_code &error);
 
