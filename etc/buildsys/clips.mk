@@ -20,9 +20,10 @@ endif
 ifndef __buildsys_clips_mk_
 __buildsys_clips_mk_ := 1
 
+CLIPS_MIN_VERSION=0.3.0
 
 ifneq ($(PKGCONFIG),)
-  HAVE_CLIPS = $(if $(shell $(PKGCONFIG) --exists 'clipsmm-1.0'; echo $${?/1/}),1,0)
+  HAVE_CLIPS = $(if $(shell $(PKGCONFIG) --atleast-version=$(CLIPS_MIN_VERSION) 'clipsmm-1.0'; echo $${?/1/}),1,0)
 endif
 
 ifeq ($(HAVE_CLIPS),1)
