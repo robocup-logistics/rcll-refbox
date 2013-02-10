@@ -41,12 +41,14 @@
 
 #include <type_traits>
 #include <google/protobuf/message.h>
+#include <google/protobuf/descriptor.h>
 #include <boost/utility.hpp>
 
 #include <map>
 #include <cstdint>
 #include <stdexcept>
 #include <memory>
+#include <limits>
 
 namespace protobuf_comm {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -70,6 +72,42 @@ class MessageRegister : boost::noncopyable
   add_message_type(uint16_t component_id, uint16_t msg_type)
   {
     KeyType key(component_id, msg_type);
+    if (message_types_.find(key) != message_types_.end()) {
+      throw std::runtime_error("Message type already registered");
+    }
+    message_types_[key] = new MT();
+  }
+
+  /** Add a new message type.
+   * The template parameter must be a sub-class of google::protobuf::Message.
+   * An instance is spawned and kept internally to spawn more on incoming messages.
+   */
+  template <class MT>
+  typename std::enable_if<std::is_base_of<google::protobuf::Message, MT>::value, void>::type
+  add_message_type()
+  {
+    MT m;
+    const google::protobuf::Descriptor *desc = m.GetDescriptor();
+    const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
+    if (! enumdesc) {
+      throw std::logic_error("Message does not have CompType enum");
+    }
+    const google::protobuf::EnumValueDescriptor *compdesc =
+      enumdesc->FindValueByName("COMP_ID");
+    const google::protobuf::EnumValueDescriptor *msgtdesc =
+      enumdesc->FindValueByName("MSG_TYPE");
+    if (! compdesc || ! msgtdesc) {
+      throw std::logic_error("Message CompType enum hs no COMP_ID or MSG_TYPE value");
+    }
+    int comp_id = compdesc->number();
+    int msg_type = msgtdesc->number();
+    if (comp_id < 0 || comp_id > std::numeric_limits<uint16_t>::max()) {
+      throw std::logic_error("Message has invalid COMP_ID");
+    }
+    if (msg_type < 0 || msg_type > std::numeric_limits<uint16_t>::max()) {
+      throw std::logic_error("Message has invalid MSG_TYPE");
+    }
+    KeyType key(comp_id, msg_type);
     if (message_types_.find(key) != message_types_.end()) {
       throw std::runtime_error("Message type already registered");
     }
