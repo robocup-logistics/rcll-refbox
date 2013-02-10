@@ -34,7 +34,10 @@
 (defrule print-protobuf-msg
   ?mf <- (protobuf-msg (type ?t) (ptr ?p))
   =>
-  (printout t "Asserted message of type " ?t " (ptr " ?p ")" crlf)
-  (printout t "Value: " (pb-get-field ?p "name") crlf)
   (retract ?mf)
+  (printout t "Got message of type " ?t " (ptr " ?p ")" crlf)
+  (foreach ?f (pb-field-names ?p)
+	   (bind ?v (pb-field-value ?p ?f))
+	   (printout t "  " ?f " [" (pb-field-label ?p ?f)
+		     ", " (pb-field-type ?p ?f) ", " (type ?v) "]: " ?v crlf))
 )

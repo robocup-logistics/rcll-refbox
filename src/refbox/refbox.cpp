@@ -153,7 +153,10 @@ LLSFRefBox::setup_clips()
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
-  clips_->add_function("pb-get-field", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_get_field)));
+  clips_->add_function("pb-field-names", sigc::slot<CLIPS::Values, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_names)));
+  clips_->add_function("pb-field-type", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_type)));
+  clips_->add_function("pb-field-label", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_label)));
+  clips_->add_function("pb-field-value", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_value)));
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
@@ -225,17 +228,107 @@ LLSFRefBox::handle_clips_periodic()
   }
 }
 
+
+CLIPS::Values
+LLSFRefBox::clips_pb_field_names(void *msgptr)
+{
+  google::protobuf::Message *m = static_cast<google::protobuf::Message *>(msgptr);
+
+  const Descriptor *desc       = m->GetDescriptor();
+  const int field_count = desc->field_count();
+  CLIPS::Values field_names(field_count);
+  for (int i = 0; i < field_count; ++i) {
+    field_names[i].set(desc->field(i)->name(), true);
+  }
+  return field_names;
+}
+
 CLIPS::Value
-LLSFRefBox::clips_pb_get_field(void *ptr, std::string field_name)
+LLSFRefBox::clips_pb_field_type(void *msgptr, std::string field_name)
 {
   std::shared_ptr<google::protobuf::Message> *m =
-    static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  switch (field->type()) {
+  case FieldDescriptor::TYPE_DOUBLE:   return CLIPS::Value("DOUBLE", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_FLOAT:    return CLIPS::Value("FLOAT", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_INT64:    return CLIPS::Value("INT64", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_UINT64:   return CLIPS::Value("UINT64", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_INT32:    return CLIPS::Value("INT32", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_FIXED64:  return CLIPS::Value("FIXED64", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_FIXED32:  return CLIPS::Value("FIXED32", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_BOOL:     return CLIPS::Value("BOOL", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_STRING:   return CLIPS::Value("STRING", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_MESSAGE:  return CLIPS::Value("MESSAGE", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_BYTES:    return CLIPS::Value("BYTES", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_UINT32:   return CLIPS::Value("UINT32", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_ENUM:     return CLIPS::Value("ENUM", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_SFIXED32: return CLIPS::Value("SFIXED32", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_SFIXED64: return CLIPS::Value("SFIXED64", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_SINT32:   return CLIPS::Value("SINT32", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_SINT64:   return CLIPS::Value("SINT64", CLIPS::TYPE_SYMBOL);
+  default: return CLIPS::Value("UNKNOWN", CLIPS::TYPE_SYMBOL);
+  }
+}
+
+CLIPS::Value
+LLSFRefBox::clips_pb_field_label(void *msgptr, std::string field_name)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  switch (field->label()) {
+  case FieldDescriptor::LABEL_OPTIONAL: return CLIPS::Value("OPTIONAL", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::LABEL_REQUIRED: return CLIPS::Value("REQUIRED", CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::LABEL_REPEATED: return CLIPS::Value("REPEATED", CLIPS::TYPE_SYMBOL);
+  default:                              return CLIPS::Value("UNKNOWN", CLIPS::TYPE_SYMBOL);
+  }
+}
+
+CLIPS::Value
+LLSFRefBox::clips_pb_field_value(void *msgptr, std::string field_name)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
   const Reflection *refl       = (*m)->GetReflection();
-  std::string s = refl->GetString(**m, field);
-  return CLIPS::Value(s);
+  switch (field->type()) {
+  case FieldDescriptor::TYPE_DOUBLE:   return CLIPS::Value(refl->GetDouble(**m, field));
+  case FieldDescriptor::TYPE_FLOAT:    return CLIPS::Value(refl->GetFloat(**m, field));
+  case FieldDescriptor::TYPE_INT64:    return CLIPS::Value(refl->GetInt64(**m, field));
+  case FieldDescriptor::TYPE_UINT64:
+    return CLIPS::Value((long int)refl->GetUInt64(**m, field));
+  case FieldDescriptor::TYPE_INT32:    return CLIPS::Value(refl->GetInt32(**m, field));
+  case FieldDescriptor::TYPE_FIXED64:
+    return CLIPS::Value((long int)refl->GetUInt64(**m, field));
+  case FieldDescriptor::TYPE_FIXED32:  return CLIPS::Value(refl->GetUInt32(**m, field));
+  case FieldDescriptor::TYPE_BOOL:     return CLIPS::Value(refl->GetBool(**m, field));
+  case FieldDescriptor::TYPE_STRING:   return CLIPS::Value(refl->GetString(**m, field));
+  case FieldDescriptor::TYPE_MESSAGE:
+    {
+      const google::protobuf::Message &mfield = refl->GetMessage(**m, field);
+      google::protobuf::Message *mcopy = mfield.New();
+      mcopy->CopyFrom(mfield);
+      void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
+      return CLIPS::Value(ptr);
+    }
+  case FieldDescriptor::TYPE_BYTES:    return CLIPS::Value((char *)"bytes");
+  case FieldDescriptor::TYPE_UINT32:   return CLIPS::Value(refl->GetUInt32(**m, field));
+  case FieldDescriptor::TYPE_ENUM:
+    return CLIPS::Value(refl->GetEnum(**m, field)->name(), CLIPS::TYPE_SYMBOL);
+  case FieldDescriptor::TYPE_SFIXED32: return CLIPS::Value(refl->GetInt32(**m, field));
+  case FieldDescriptor::TYPE_SFIXED64: return CLIPS::Value(refl->GetInt64(**m, field));
+  case FieldDescriptor::TYPE_SINT32:   return CLIPS::Value(refl->GetInt32(**m, field));
+  case FieldDescriptor::TYPE_SINT64:   return CLIPS::Value(refl->GetInt64(**m, field));
+  default:
+    throw std::logic_error("Unknown protobuf field type encountered");
+  }
 }
 
 CLIPS::Values
