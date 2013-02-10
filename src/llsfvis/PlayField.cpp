@@ -39,7 +39,9 @@
 namespace LLSFVis {
 
 PlayField::PlayField() {
-
+	add_events(Gdk::BUTTON_PRESS_MASK);
+	signal_button_press_event().connect(
+			sigc::mem_fun(*this, &PlayField::on_clicked));
 }
 
 void PlayField::add_machine(Machine* machine) {
@@ -203,8 +205,22 @@ void PlayField::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x,
 	cr->restore();
 }
 
+void PlayField::on_clicked(GdkEventButton* event) {
+	const Machine* m = get_clicked_machine(event->x, event->y);
+	m->getPosX();
+
+}
+
+const Machine* PlayField::get_clicked_machine(gdouble x, gdouble y) {
+	gdouble scaled_x = x / (get_allocated_width() / FIELDSIZE);
+	gdouble scaled_y = y / (get_allocated_height() / FIELDSIZE);
+	for(std::list<const Machine*>::iterator it = machines_.begin();it!=machines_.end();++it) {
+		if ((*it)->getPosX()==scaled_x && (*it)->getPosX()==scaled_y); //TODO weiter!!
+	}
+}
+
 PlayField::~PlayField() {
-	// TODO Auto-generated destructor stub
+// TODO Auto-generated destructor stub
 }
 
 } /* namespace LLSFVis */

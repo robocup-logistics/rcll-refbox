@@ -45,7 +45,7 @@ namespace LLSFVis {
 
 
 /**
- * Widget to display the playfield. Takes
+ * Widget to display the playfield.^
  */
 class PlayField: public Gtk::DrawingArea{
 public:
@@ -68,6 +68,8 @@ private:
 	void draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 	void draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 
+	virtual void on_clicked(GdkEventButton* event);
+	const Machine* get_clicked_machine(gdouble x, gdouble y);
 	std::list<const Machine*> machines_;
 	std::list<const Puck*> pucks_;
 
