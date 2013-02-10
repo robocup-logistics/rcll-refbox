@@ -232,10 +232,11 @@ LLSFRefBox::handle_clips_periodic()
 CLIPS::Values
 LLSFRefBox::clips_pb_field_names(void *msgptr)
 {
-  google::protobuf::Message *m = static_cast<google::protobuf::Message *>(msgptr);
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
 
-  const Descriptor *desc       = m->GetDescriptor();
-  const int field_count = desc->field_count();
+  const Descriptor *desc = (*m)->GetDescriptor();
+  const int field_count  = desc->field_count();
   CLIPS::Values field_names(field_count);
   for (int i = 0; i < field_count; ++i) {
     field_names[i].set(desc->field(i)->name(), true);
@@ -251,6 +252,9 @@ LLSFRefBox::clips_pb_field_type(void *msgptr, std::string field_name)
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field) {
+    return CLIPS::Value("DOES-NOT-EXIST", CLIPS::TYPE_SYMBOL);
+  }
   switch (field->type()) {
   case FieldDescriptor::TYPE_DOUBLE:   return CLIPS::Value("DOUBLE", CLIPS::TYPE_SYMBOL);
   case FieldDescriptor::TYPE_FLOAT:    return CLIPS::Value("FLOAT", CLIPS::TYPE_SYMBOL);
@@ -281,6 +285,9 @@ LLSFRefBox::clips_pb_field_label(void *msgptr, std::string field_name)
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field) {
+    return CLIPS::Value("DOES-NOT-EXIST", CLIPS::TYPE_SYMBOL);
+  }
   switch (field->label()) {
   case FieldDescriptor::LABEL_OPTIONAL: return CLIPS::Value("OPTIONAL", CLIPS::TYPE_SYMBOL);
   case FieldDescriptor::LABEL_REQUIRED: return CLIPS::Value("REQUIRED", CLIPS::TYPE_SYMBOL);
@@ -297,7 +304,17 @@ LLSFRefBox::clips_pb_field_value(void *msgptr, std::string field_name)
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field) {
+    printf("Field %s of %s does not exist\n",
+	   field_name.c_str(), (*m)->GetTypeName().c_str());
+    return CLIPS::Value("DOES-NOT-EXIST", CLIPS::TYPE_SYMBOL);
+  }
   const Reflection *refl       = (*m)->GetReflection();
+  if (field->type() != FieldDescriptor::TYPE_MESSAGE && ! refl->HasField(**m, field)) {
+    printf("Field %s of %s not set\n",
+	   field_name.c_str(), (*m)->GetTypeName().c_str());
+    return CLIPS::Value("NOT-SET", CLIPS::TYPE_SYMBOL);
+  }
   switch (field->type()) {
   case FieldDescriptor::TYPE_DOUBLE:   return CLIPS::Value(refl->GetDouble(**m, field));
   case FieldDescriptor::TYPE_FLOAT:    return CLIPS::Value(refl->GetFloat(**m, field));
