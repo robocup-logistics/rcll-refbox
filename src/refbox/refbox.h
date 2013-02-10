@@ -97,7 +97,8 @@ class LLSFRefBox
   CLIPS::Value  clips_pb_field_value(void *msgptr, std::string field_name);
   CLIPS::Value  clips_pb_field_type(void *msgptr, std::string field_name);
   CLIPS::Value  clips_pb_field_label(void *msgptr, std::string field_name);
-
+  CLIPS::Values clips_pb_field_list(void *msgptr, std::string field_name);
+  bool          clips_pb_field_is_list(void *msgptr, std::string field_name);
 
  private: // members
   Configuration *config_;

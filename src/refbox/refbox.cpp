@@ -157,6 +157,8 @@ LLSFRefBox::setup_clips()
   clips_->add_function("pb-field-type", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_type)));
   clips_->add_function("pb-field-label", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_label)));
   clips_->add_function("pb-field-value", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_value)));
+  clips_->add_function("pb-field-list", sigc::slot<CLIPS::Values, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_list)));
+  clips_->add_function("pb-field-is-list", sigc::slot<bool, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_is_list)));
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
@@ -346,6 +348,96 @@ LLSFRefBox::clips_pb_field_value(void *msgptr, std::string field_name)
   default:
     throw std::logic_error("Unknown protobuf field type encountered");
   }
+}
+
+CLIPS::Values
+LLSFRefBox::clips_pb_field_list(void *msgptr, std::string field_name)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field) {
+    return CLIPS::Values(1, CLIPS::Value("DOES-NOT-EXIST", CLIPS::TYPE_SYMBOL));
+  }
+  if (field->label() == FieldDescriptor::LABEL_REQUIRED ||
+      field->label() == FieldDescriptor::LABEL_OPTIONAL)
+  {
+    CLIPS::Values rv(1, clips_pb_field_value(msgptr, field_name));
+    return rv;
+  }
+
+  const Reflection *refl       = (*m)->GetReflection();
+  int field_size = refl->FieldSize(**m, field);
+  CLIPS::Values rv(field_size);
+  for (int i = 0; i < field_size; ++i) {
+    switch (field->type()) {
+    case FieldDescriptor::TYPE_DOUBLE:
+      rv[i] = CLIPS::Value(refl->GetRepeatedDouble(**m, field, i));
+      break;
+    case FieldDescriptor::TYPE_FLOAT:
+      rv[i] = CLIPS::Value(refl->GetRepeatedFloat(**m, field, i));
+      break;
+      break;
+    case FieldDescriptor::TYPE_UINT64:
+    case FieldDescriptor::TYPE_FIXED64:
+      rv[i] = CLIPS::Value((long int)refl->GetRepeatedUInt64(**m, field, i));
+      break;
+    case FieldDescriptor::TYPE_UINT32:
+    case FieldDescriptor::TYPE_FIXED32:
+      rv[i] = CLIPS::Value(refl->GetRepeatedUInt32(**m, field, i));
+      break;
+    case FieldDescriptor::TYPE_BOOL:
+      rv[i] = CLIPS::Value(refl->GetRepeatedBool(**m, field, i));
+      break;
+    case FieldDescriptor::TYPE_STRING:
+      rv[i] = CLIPS::Value(refl->GetRepeatedString(**m, field, i));
+      break;
+    case FieldDescriptor::TYPE_MESSAGE:
+      {
+	google::protobuf::Message *mcopy = (*m)->New();
+	mcopy->CopyFrom(refl->GetRepeatedMessage(**m, field, i));
+	void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
+	rv[i] = CLIPS::Value(ptr);
+      }
+    case FieldDescriptor::TYPE_BYTES:
+      rv[i] = CLIPS::Value((char *)"BYTES", CLIPS::TYPE_SYMBOL);
+      break;
+    case FieldDescriptor::TYPE_ENUM:
+      rv[i] = CLIPS::Value(refl->GetRepeatedEnum(**m, field, i)->name(), CLIPS::TYPE_SYMBOL);
+      break;
+    case FieldDescriptor::TYPE_SFIXED32:
+    case FieldDescriptor::TYPE_INT32:
+    case FieldDescriptor::TYPE_SINT32:
+      rv[i] = CLIPS::Value(refl->GetRepeatedInt32(**m, field, i));
+      break;
+    case FieldDescriptor::TYPE_SFIXED64:
+    case FieldDescriptor::TYPE_SINT64:
+    case FieldDescriptor::TYPE_INT64:
+      rv[i] = CLIPS::Value(refl->GetRepeatedInt64(**m, field, i));
+      break;
+    default:
+      throw std::logic_error("Unknown protobuf field type encountered");
+    }
+  }
+
+  return rv;
+}
+
+
+bool
+LLSFRefBox::clips_pb_field_is_list(void *msgptr, std::string field_name)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field) {
+    return false;
+  }
+  return (field->label() == FieldDescriptor::LABEL_REPEATED);
 }
 
 CLIPS::Values

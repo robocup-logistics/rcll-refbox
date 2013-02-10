@@ -32,12 +32,16 @@
 )
 
 (defrule print-protobuf-msg
-  ?mf <- (protobuf-msg (type ?t) (ptr ?p))
+  ?mf <- (protobuf-msg (type ?t) (ptr ?p) (rcvd-from ?from-host ?from-port))
   =>
   (retract ?mf)
-  (printout t "Got message of type " ?t " (ptr " ?p ")" crlf)
+  (printout t "Got message of type " ?t " (ptr " ?p ") from " ?from-host ":" ?from-port crlf)
   (foreach ?f (pb-field-names ?p)
-	   (bind ?v (pb-field-value ?p ?f))
+	   (if (pb-field-is-list ?p ?f) then
+	     (bind ?v (pb-field-list ?p ?f))
+	    else
+	     (bind ?v (pb-field-value ?p ?f))
+	   )
 	   (printout t "  " ?f " [" (pb-field-label ?p ?f)
 		     ", " (pb-field-type ?p ?f) ", " (type ?v) "]: " ?v crlf))
 )
