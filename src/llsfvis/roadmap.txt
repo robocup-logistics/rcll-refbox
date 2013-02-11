@@ -1,7 +1,8 @@
 THINGS TO DO:
 [x] Add a tab to present the refbox log
 [x] Add a widget for team scores
-[ ] Make machines rightclickable and show contextmenus
+[x] Make machines rightclickable and show contextmenus
+[x] show robots
 [ ] Game state: phase, start/stop/paus/, num of robots(last heard of)
 [ ] Communication handling refbox
 [ ] Integrate protobuf communication lib
