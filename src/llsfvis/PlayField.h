@@ -43,11 +43,10 @@
 
 namespace LLSFVis {
 
-
 /**
  * Widget to display the playfield.^
  */
-class PlayField: public Gtk::DrawingArea{
+class PlayField: public Gtk::DrawingArea {
 public:
 	PlayField();
 	virtual ~PlayField();
@@ -57,7 +56,6 @@ public:
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
-	static double scale(const double val);
 	void draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 			const Machine& machine);
 	void draw_puck(const Cairo::RefPtr<Cairo::Context>& cr, const Puck& puck);
@@ -69,7 +67,15 @@ private:
 	void draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 
 	virtual bool on_clicked(GdkEventButton* event);
+
+	virtual void on_contextmenu_clicked(Glib::ustring entry);
+
 	const Machine* get_clicked_machine(gdouble x, gdouble y);
+
+	Glib::RefPtr<Gtk::UIManager> uIManager_;
+	Glib::RefPtr<Gtk::ActionGroup> actionGroup_;
+	Gtk::Menu* popup_;
+
 	std::list<const Machine*> machines_;
 	std::list<const Puck*> pucks_;
 

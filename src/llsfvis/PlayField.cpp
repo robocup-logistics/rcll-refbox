@@ -38,10 +38,49 @@
 
 namespace LLSFVis {
 
-PlayField::PlayField() {
+PlayField::PlayField() :
+		popup_(0) {
 	add_events(Gdk::BUTTON_PRESS_MASK);
 	signal_button_press_event().connect(
 			sigc::mem_fun(*this, &PlayField::on_clicked));
+
+	actionGroup_ = Gtk::ActionGroup::create();
+	actionGroup_->add(Gtk::Action::create("ContextEntry1", "Entry1"),
+			sigc::bind<Glib::ustring>(
+					sigc::mem_fun(*this, &PlayField::on_contextmenu_clicked),
+					"Entry1"));
+
+	actionGroup_->add(Gtk::Action::create("ContextEntry2", "Entry2"),
+			sigc::bind<Glib::ustring>(
+					sigc::mem_fun(*this, &PlayField::on_contextmenu_clicked),
+					"Entry2"));
+
+	actionGroup_->add(Gtk::Action::create("ContextEntry3", "Entry3"),
+			sigc::bind<Glib::ustring>(
+					sigc::mem_fun(*this, &PlayField::on_contextmenu_clicked),
+					"Entry3"));
+
+	uIManager_ = Gtk::UIManager::create();
+	uIManager_->insert_action_group(actionGroup_);
+
+	Glib::ustring ui_info = "<ui>"
+			"  <popup name='PopupMenu'>"
+			"    <menuitem action='ContextEntry1'/>"
+			"    <menuitem action='ContextEntry2'/>"
+			"    <menuitem action='ContextEntry3'/>"
+			"  </popup>"
+			"</ui>";
+
+	try {
+		uIManager_->add_ui_from_string(ui_info);
+	} catch (const Glib::Error& ex) {
+		std::cerr << "building menus failed: " << ex.what();
+	}
+
+	popup_ = dynamic_cast<Gtk::Menu*>(uIManager_->get_widget("/PopupMenu"));
+	if (!popup_)
+		g_warning("menu not found");
+
 }
 
 void PlayField::add_machine(Machine* machine) {
@@ -207,18 +246,34 @@ void PlayField::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x,
 
 bool PlayField::on_clicked(GdkEventButton* event) {
 	const Machine* m = get_clicked_machine(event->x, event->y);
-	m->getPosX();
+	if (m != NULL) {
+		if (event->button == 3) {
+			popup_->popup(event->button, event->time);
+
+		}
+	}
 	return true;
+}
+
+void PlayField::on_contextmenu_clicked(Glib::ustring entry) {
+	std::cout << "clicked " << entry << std::endl;
 }
 
 const Machine* PlayField::get_clicked_machine(gdouble x, gdouble y) {
 	gdouble scaled_x = x / (get_allocated_width() / FIELDSIZE);
 	gdouble scaled_y = y / (get_allocated_height() / FIELDSIZE);
-	Machine* m = NULL;
-	for(std::list<const Machine*>::iterator it = machines_.begin();it!=machines_.end();++it) {
-		if ((*it)->getPosX()==scaled_x && (*it)->getPosX()==scaled_y); //TODO weiter!!
+	for (std::list<const Machine*>::iterator it = machines_.begin();
+			it != machines_.end(); ++it) {
+		if (scaled_x >= (*it)->getPosX() - MACHINESIZE / 2
+				&& scaled_x <= (*it)->getPosX() + MACHINESIZE / 2
+				&& scaled_y >= (*it)->getPosY() - MACHINESIZE / 2
+				&& scaled_y <= (*it)->getPosY() + MACHINESIZE / 2) {
+			std::cout << "Clicked machine " << (*it)->getTextDescription()
+					<< std::endl;
+			return (*it);
+		}
 	}
-	return m;
+	return NULL;
 }
 
 PlayField::~PlayField() {
