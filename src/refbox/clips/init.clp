@@ -42,7 +42,7 @@
   (confval (path "/llsfrb/clips/main") (type STRING) (value ?v))
   =>
   (printout t "Loading refbox main file '" ?v "'" crlf)
-  (load* (resolve-file (str-cat ?v ".clp")))
+  (batch* (resolve-file (str-cat ?v ".clp")))
 )
 
 (defrule enable-debug
