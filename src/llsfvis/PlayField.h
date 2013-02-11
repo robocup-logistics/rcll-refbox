@@ -40,6 +40,7 @@
 #include <list>
 #include "Machine.h"
 #include "Puck.h"
+#include "Robot.h"
 
 namespace LLSFVis {
 
@@ -50,8 +51,9 @@ class PlayField: public Gtk::DrawingArea {
 public:
 	PlayField();
 	virtual ~PlayField();
-	void add_machine(Machine* machine);
-	void add_puck(Puck* puck);
+	void add_machine(const Machine* machine);
+	void add_puck(const Puck* puck);
+	void add_robot(const Robot* robot);
 
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
@@ -65,6 +67,7 @@ private:
 			std::string text);
 	void draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 	void draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr);
+	void draw_robot(const Cairo::RefPtr<Cairo::Context>& cr, const Robot& bot);
 
 	virtual bool on_clicked(GdkEventButton* event);
 
@@ -78,7 +81,9 @@ private:
 
 	std::list<const Machine*> machines_;
 	std::list<const Puck*> pucks_;
+	std::list<const Robot*> bots_;
 
+	static const double BOTSIZE = 0.35;
 	static const double MACHINESIZE = 0.50;
 	static const double PUCKSIZE = 0.08;
 	static const double FIELDSIZE = 5.6;

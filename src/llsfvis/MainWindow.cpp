@@ -48,7 +48,12 @@ MainWindow::MainWindow() :
 	logBuffer_ = Gtk::TextBuffer::create();
 	Machine* m = new Machine(1.2, 1.0, Machine::NORTH, "machine_1\ntype: T1");
 	Puck* p = new Puck(2.5, 2.5, "12", "raw");
-
+	Robot* r1 = new Robot("Tick");
+	r1->setPose(1.0, 2.0, 0);
+	Robot* r2 = new Robot("Trick");
+	r2->setPose(3.0, 3.0, M_PI*0.2);
+	Robot* r3 = new Robot("Track");
+	r3->setPose(4.0, 5.0, M_PI * 0.5);
 
 	//SETUP the GUI
 
@@ -58,9 +63,12 @@ MainWindow::MainWindow() :
 
 	//the PlayField tab
 
-
 	playField_.add_machine(m);
 	playField_.add_puck(p);
+	playField_.add_robot(r1);
+	playField_.add_robot(r2);
+	playField_.add_robot(r3);
+
 	playFieldButton1_.set_label("Button1");
 	playFieldButton2_.set_label("Button2");
 	playFieldButton3_.set_label("Button3");
@@ -81,7 +89,8 @@ MainWindow::MainWindow() :
 			Gtk::POS_RIGHT, 1, 1);
 	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, playField_,
 			Gtk::POS_BOTTOM, 1, 1);
-	playFieldTabGrid_.attach_next_to(stateWidget_,buttonBoxPlayField_,Gtk::POS_BOTTOM,1,1);
+	playFieldTabGrid_.attach_next_to(stateWidget_, buttonBoxPlayField_,
+			Gtk::POS_BOTTOM, 1, 1);
 
 	//Create the logging tab
 
@@ -116,16 +125,16 @@ MainWindow::MainWindow() :
 
 }
 
-void MainWindow::add_log_message(std::string msg){
-	log_+=msg;
+void MainWindow::add_log_message(std::string msg) {
+	log_ += msg;
 	logBuffer_->set_text(log_);
 }
 
-void MainWindow::set_score(int score){
+void MainWindow::set_score(int score) {
 
 }
 
-MainWindow::~MainWindow(){
+MainWindow::~MainWindow() {
 
 }
 

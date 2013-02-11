@@ -83,12 +83,16 @@ PlayField::PlayField() :
 
 }
 
-void PlayField::add_machine(Machine* machine) {
+void PlayField::add_machine(const Machine* machine) {
 	machines_.push_back(machine);
 }
 
-void PlayField::add_puck(Puck* puck) {
+void PlayField::add_puck(const Puck* puck) {
 	pucks_.push_back(puck);
+}
+
+void PlayField::add_robot(const Robot* robot) {
+	bots_.push_back(robot);
 }
 
 bool PlayField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
@@ -109,10 +113,16 @@ bool PlayField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 		draw_machine(cr, **iter_machines);
 	}
 
-	//draw puck
+	//draw pucks
 	for (std::list<const Puck*>::iterator iter_pucks = pucks_.begin();
 			iter_pucks != pucks_.end(); ++iter_pucks) {
 		draw_puck(cr, **iter_pucks);
+	}
+
+	//draw_robots
+	for (std::list<const Robot*>::iterator iter_bots = bots_.begin();
+			iter_bots != bots_.end(); ++iter_bots) {
+		draw_robot(cr, **iter_bots);
 	}
 
 	cr->restore();
@@ -178,6 +188,23 @@ void PlayField::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 	default:
 		break;
 	}
+}
+
+void PlayField::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
+		const Robot& bot) {
+	cr->save();
+	cr->translate(bot.getPosX(), bot.getPosY());
+	cr->rotate(bot.getOrientation());
+	cr->set_line_width(0.01);
+	cr->arc(0, 0, BOTSIZE/2, 0.0, 2.0 * M_PI);
+	cr->move_to(BOTSIZE / 2, 0);
+	cr->line_to(0, BOTSIZE / 2 * -1);
+	cr->line_to(0, BOTSIZE / 2);
+	cr->line_to(BOTSIZE / 2, 0);
+	cr->set_source_rgb(0, 0, 0);
+	cr->stroke();
+	cr->restore();
+
 }
 
 void PlayField::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
