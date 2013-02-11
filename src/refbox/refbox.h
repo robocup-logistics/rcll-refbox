@@ -99,6 +99,12 @@ class LLSFRefBox
   CLIPS::Value  clips_pb_field_label(void *msgptr, std::string field_name);
   CLIPS::Values clips_pb_field_list(void *msgptr, std::string field_name);
   bool          clips_pb_field_is_list(void *msgptr, std::string field_name);
+  CLIPS::Value  clips_pb_create(std::string full_name);
+  CLIPS::Value  clips_pb_ref(void *msgptr);
+  void          clips_pb_destroy(void *msgptr);
+  void          clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Value value);
+  void          clips_pb_send(void *msgptr, long int client_id);
+
 
  private: // members
   Configuration *config_;

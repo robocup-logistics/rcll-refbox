@@ -159,6 +159,11 @@ LLSFRefBox::setup_clips()
   clips_->add_function("pb-field-value", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_value)));
   clips_->add_function("pb-field-list", sigc::slot<CLIPS::Values, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_list)));
   clips_->add_function("pb-field-is-list", sigc::slot<bool, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_is_list)));
+  clips_->add_function("pb-create", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_create)));
+  clips_->add_function("pb-destroy", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_destroy)));
+  clips_->add_function("pb-ref", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_ref)));
+  clips_->add_function("pb-set-field", sigc::slot<void, void *, std::string, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_set_field)));
+  clips_->add_function("pb-send", sigc::slot<void, void *, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_send)));
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
@@ -191,6 +196,7 @@ LLSFRefBox::clips_assert_message(std::pair<std::string, unsigned short> &endpoin
     host_port[0] = endpoint.first;
     host_port[1] = CLIPS::Value(endpoint.second);
     fact->set_slot("rcvd-from", host_port);
+    fact->set_slot("client-id", client_id);
     fact->set_slot("ptr", CLIPS::Value(ptr));
     CLIPS::Fact::pointer new_fact = clips_->assert_fact(fact);
 
@@ -228,6 +234,40 @@ LLSFRefBox::handle_clips_periodic()
     clips_msg_facts_.erase(index);
     to_erase.pop();
   }
+}
+
+
+CLIPS::Value
+LLSFRefBox::clips_pb_create(std::string full_name)
+{
+  try {
+    std::shared_ptr<google::protobuf::Message> m =
+      pbc_server_->message_register().new_message_for(full_name);
+    return CLIPS::Value(new std::shared_ptr<google::protobuf::Message>(m));
+  } catch (std::runtime_error &e) {
+    printf("Cannot create message of type %s: %s\n", full_name.c_str(), e.what());
+    return CLIPS::Value((void *)NULL);
+  }
+}
+
+
+CLIPS::Value
+LLSFRefBox::clips_pb_ref(void *msgptr)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  return CLIPS::Value(new std::shared_ptr<google::protobuf::Message>(*m));
+}
+
+
+void
+LLSFRefBox::clips_pb_destroy(void *msgptr)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  delete m;
 }
 
 
@@ -347,6 +387,82 @@ LLSFRefBox::clips_pb_field_value(void *msgptr, std::string field_name)
   case FieldDescriptor::TYPE_SINT64:   return CLIPS::Value(refl->GetInt64(**m, field));
   default:
     throw std::logic_error("Unknown protobuf field type encountered");
+  }
+}
+
+
+void
+LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Value value)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field) {
+    printf("Could not find field %s\n", field_name.c_str());
+    return;
+  }
+  const Reflection *refl       = (*m)->GetReflection();
+
+  switch (field->type()) {
+  case FieldDescriptor::TYPE_DOUBLE:   refl->SetDouble(m->get(), field, value); break;
+  case FieldDescriptor::TYPE_FLOAT:    refl->SetFloat(m->get(), field, value);  break;
+  case FieldDescriptor::TYPE_SFIXED64:
+  case FieldDescriptor::TYPE_SINT64:
+  case FieldDescriptor::TYPE_INT64:
+    refl->SetInt64(m->get(), field, value);  break;
+  case FieldDescriptor::TYPE_FIXED64:
+  case FieldDescriptor::TYPE_UINT64:
+    refl->SetUInt64(m->get(), field, (long int)value); break;
+  case FieldDescriptor::TYPE_SFIXED32:
+  case FieldDescriptor::TYPE_SINT32:
+  case FieldDescriptor::TYPE_INT32:
+    refl->SetInt32(m->get(), field, value); break;
+  case FieldDescriptor::TYPE_BOOL:
+    refl->SetBool(m->get(), field, (value == "TRUE"));
+    break;
+  case FieldDescriptor::TYPE_STRING:   refl->SetString(m->get(), field, value); break;
+  case FieldDescriptor::TYPE_MESSAGE:
+    {
+      std::shared_ptr<google::protobuf::Message> *mfrom =
+	static_cast<std::shared_ptr<google::protobuf::Message> *>(value.as_address());
+      Message *mut_msg = refl->MutableMessage(m->get(), field);
+      mut_msg->CopyFrom(**mfrom);
+      delete mfrom;
+    }
+    break;
+  case FieldDescriptor::TYPE_BYTES:    break;
+  case FieldDescriptor::TYPE_FIXED32:
+  case FieldDescriptor::TYPE_UINT32:
+    refl->SetUInt32(m->get(), field, value); break;
+  case FieldDescriptor::TYPE_ENUM:
+    {
+      const EnumDescriptor *enumdesc = field->enum_type();
+      const EnumValueDescriptor *enumval = enumdesc->FindValueByName(value);
+      if (enumval)  refl->SetEnum(m->get(), field, enumval);
+    }
+    break;
+  default:
+    throw std::logic_error("Unknown protobuf field type encountered");
+  }
+}
+
+
+void
+LLSFRefBox::clips_pb_send(void *msgptr, long int client_id)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  printf("Sending to %li\n", client_id);
+  if (client_id > 0 && client_id < std::numeric_limits<unsigned int>::max()) {
+    try {
+      pbc_server_->send(client_id, *m);
+    } catch (google::protobuf::FatalException &e) {
+      printf("Failed to send message of type %s: %s\n",
+	     (*m)->GetTypeName().c_str(), e.what());
+    }
   }
 }
 

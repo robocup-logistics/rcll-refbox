@@ -41,7 +41,8 @@
 )
 
 (defrule print-protobuf-msg
-  ?mf <- (protobuf-msg (type ?t) (ptr ?p) (rcvd-from ?from-host ?from-port))
+  ?mf <- (protobuf-msg (type ?t) (ptr ?p) (rcvd-from ?from-host ?from-port)
+		       (rcvd-via ?via) (client-id ?client-id))
   =>
   (retract ?mf)
   (printout t "Got message of type " ?t " (ptr " ?p ") from " ?from-host ":" ?from-port crlf)
@@ -53,4 +54,12 @@
 	   )
 	   (printout t "  " ?f " [" (pb-field-label ?p ?f)
 		     ", " (pb-field-type ?p ?f) ", " (type ?v) "]: " ?v crlf))
+  (bind ?reply (pb-create "llsf_msgs.Person"))
+  (pb-set-field ?reply "id" 123)
+  (pb-set-field ?reply "name" (pb-field-value ?p "name"))
+  (pb-set-field ?reply "email" (pb-field-value ?p "email"))
+  (pb-set-field ?reply "has_dog" TRUE)
+  (printout t "Reply " ?reply "  id: " (pb-field-value ?reply "id") crlf)
+  (pb-send ?reply ?client-id)
+  (pb-destroy ?reply)
 )
