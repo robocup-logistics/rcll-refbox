@@ -7,6 +7,7 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(load* (resolve-file facts.clp))
 (load* (resolve-file priorities.clp))
 
 
