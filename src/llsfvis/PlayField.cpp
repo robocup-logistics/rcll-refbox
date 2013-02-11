@@ -205,18 +205,20 @@ void PlayField::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x,
 	cr->restore();
 }
 
-void PlayField::on_clicked(GdkEventButton* event) {
+bool PlayField::on_clicked(GdkEventButton* event) {
 	const Machine* m = get_clicked_machine(event->x, event->y);
 	m->getPosX();
-
+	return true;
 }
 
 const Machine* PlayField::get_clicked_machine(gdouble x, gdouble y) {
 	gdouble scaled_x = x / (get_allocated_width() / FIELDSIZE);
 	gdouble scaled_y = y / (get_allocated_height() / FIELDSIZE);
+	Machine* m = NULL;
 	for(std::list<const Machine*>::iterator it = machines_.begin();it!=machines_.end();++it) {
 		if ((*it)->getPosX()==scaled_x && (*it)->getPosX()==scaled_y); //TODO weiter!!
 	}
+	return m;
 }
 
 PlayField::~PlayField() {
