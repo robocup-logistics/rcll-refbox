@@ -12,8 +12,17 @@
   (slot comp-id (type INTEGER))
   (slot msg-type (type INTEGER))
   (slot rcvd-via (type SYMBOL) (allowed-values STREAM BROADCAST))
-  (multislot rcvd-from (type STRING) (cardinality 2 2))
+  (multislot rcvd-from (cardinality 2 2))
+  (slot client-id (type INTEGER))
   (slot ptr (type EXTERNAL-ADDRESS))
+)
+
+(deffunction pb-client-id ($?rcvd-from)
+  (if (>= (length$ ?rcvd-from) 3) then (nth$ 3 ?rcvd-from) else 0)
+)
+
+(deffunction pb-is-broadcast (?rcvd-via)
+  (eq ?rcvd-via BROADCAST)
 )
 
 (defrule protobuf-client-connected
