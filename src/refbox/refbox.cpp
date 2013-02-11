@@ -165,6 +165,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("pb-set-field", sigc::slot<void, void *, std::string, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_set_field)));
   clips_->add_function("pb-send", sigc::slot<void, void *, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_send)));
   clips_->add_function("pb-disconnect-client", sigc::slot<void, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_disconnect)));
+  clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
@@ -619,6 +620,38 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
 }
 
 
+void
+LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::string state)
+{
+  if (! sps_)  return;
+  try {
+    sps_->set_light(machine, light, state);
+  } catch (fawkes::Exception &e) {
+    printf("Failed to set signal: %s\n", e.what());
+  }
+}
+
+
+void
+LLSFRefBox::sps_read_rfids()
+{
+  if (! sps_)  return;
+
+  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+
+  std::vector<uint32_t> puck_ids = sps_->read_rfids();
+  for (unsigned int i = 0; i < puck_ids.size(); ++i) {
+    std::string & machine_name = sps_->index_to_name(i);
+    if (puck_ids[i] == SPSComm::NO_PUCK) {
+      clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
+			    machine_name.c_str());
+    } else {
+      clips_->assert_fact_f("(rfid-input (machine %s) (has-puck TRUE) (id %u))",
+			    machine_name.c_str(), puck_ids[i]);
+    }
+  }
+}
+
 
 /** Start the timer for another run. */
 void
@@ -642,6 +675,9 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     long ms = (now - timer_last_).total_milliseconds();
     timer_last_ = now;
     */
+
+    sps_read_rfids();
+
     std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
     clips_->refresh_agenda();
     clips_->run();
