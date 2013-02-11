@@ -44,6 +44,7 @@ extern "C" {
 #include <string>
 #include <stdint.h>
 #include <vector>
+#include <map>
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -77,20 +78,34 @@ class SPSComm
     LIGHT_END		// Iterator end.
   } Light;
 
+  enum {
+    NO_PUCK = 0xFFFFFFFF
+  };
+
   SPSComm(const char *host, unsigned short port);
   ~SPSComm();
 
   void reset_lights();
   void test_lights();
   void set_light(Machine m, Light light, SignalState state);
+  void set_light(std::string &m, std::string  &light, std::string &state);
 
   void reset_rfids();
   bool read_rfid(Machine m, uint32_t &id);
   std::vector<uint32_t> read_rfids();
   void write_rfid(Machine m, uint32_t id);
 
+  std::string &  index_to_name(uint32_t index);
+  Machine      to_machine(std::string &machine);
+  Light        to_light(std::string &light);
+  SignalState  to_signal_state(std::string &signal_state);
+
  private:
   modbus_t *mb_;
+  std::vector<std::string> index_to_name_;
+  std::map<std::string, Machine>     name_to_machine_;
+  std::map<std::string, Light>       name_to_light_;
+  std::map<std::string, SignalState> name_to_signal_state_;
 };
 
 } // end of namespace llsfrb

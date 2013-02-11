@@ -94,6 +94,50 @@ SPSComm::SPSComm(const char *host, unsigned short port)
     throw fawkes::Exception("Failed to connect to SPS: %s",
 			    modbus_strerror(errno));
   }
+
+  index_to_name_.resize(SPS_NUM_MACHINES + 1);
+  index_to_name_[M1]   = "M1";
+  index_to_name_[M2]   = "M2";
+  index_to_name_[M3]   = "M3";
+  index_to_name_[M4]   = "M4";
+  index_to_name_[M5]   = "M5";
+  index_to_name_[M6]   = "M6";
+  index_to_name_[M7]   = "M7";
+  index_to_name_[M8]   = "M8";
+  index_to_name_[M9]   = "M9";
+  index_to_name_[M10]  = "M10";
+  index_to_name_[D1]   = "D1";
+  index_to_name_[D2]   = "D2";
+  index_to_name_[D3]   = "D3";
+  index_to_name_[TEST] = "TEST";
+  index_to_name_[R1]   = "R1";
+  index_to_name_[R2]   = "R2";
+  index_to_name_[SPS_NUM_MACHINES]   = "UNKNOWN";
+
+  name_to_machine_["M1"]   = M1;
+  name_to_machine_["M2"]   = M2;
+  name_to_machine_["M3"]   = M3;
+  name_to_machine_["M4"]   = M4;
+  name_to_machine_["M5"]   = M5;
+  name_to_machine_["M6"]   = M6;
+  name_to_machine_["M7"]   = M7;
+  name_to_machine_["M8"]   = M8;
+  name_to_machine_["M9"]   = M9;
+  name_to_machine_["M10"]  = M10;
+  name_to_machine_["D1"]   = D1;
+  name_to_machine_["D2"]   = D2;
+  name_to_machine_["D3"]   = D3;
+  name_to_machine_["TEST"] = TEST;
+  name_to_machine_["R1"]   = R1;
+  name_to_machine_["R2"]   = R2;
+
+  name_to_light_["RED"]    = LIGHT_RED;
+  name_to_light_["YELLOW"] = LIGHT_YELLOW;
+  name_to_light_["GREEN"]  = LIGHT_GREEN;
+
+  name_to_signal_state_["OFF"]    = SIGNAL_OFF;
+  name_to_signal_state_["ON"]     = SIGNAL_ON;
+  name_to_signal_state_["BLINK"]  = SIGNAL_BLINK;
 }
 
 
@@ -214,6 +258,17 @@ SPSComm::set_light(Machine m, Light light, SignalState state)
   }
 }
 
+/** Set a light of a machine to given state.
+ * @param m name of machine of which to set the light
+ * @param light name of light color to set
+ * @param state name of desired signal state of the light
+ */
+void
+SPSComm::set_light(std::string &m, std::string &light, std::string &state)
+{
+  set_light(to_machine(m), to_light(light), to_signal_state(state));
+}
+
 
 /** Read puck ID via RFID.
  * @param m machine of which to read the puck
@@ -331,6 +386,68 @@ SPSComm::write_rfid(Machine m, uint32_t id)
     throw fawkes::Exception("Failed to write RFID registers: %s", modbus_strerror(errno));
   }
 }
+
+
+/** Convert machine index to name.
+ * @param index machine index
+ * @return name of machine
+ */ 
+std::string &
+SPSComm::index_to_name(uint32_t index)
+{
+  if (index < SPS_NUM_MACHINES) {
+    return index_to_name_[index];
+  } else {
+    return index_to_name_[SPS_NUM_MACHINES];
+  }
+}
+
+
+/** Convert string to Machine enum.
+ * @param machine name of machine
+ * @return corresponding Machine value
+ */
+SPSComm::Machine
+SPSComm::to_machine(std::string &machine)
+{
+  std::map<std::string, Machine>::iterator m;
+  if ((m = name_to_machine_.find(machine)) != name_to_machine_.end()) {
+    return m->second;
+  } else {
+    throw fawkes::Exception("Unknown machine name '%s' requested", machine.c_str());
+  }
+}
+
+/** Convert string to Light enum.
+ * @param light name of light
+ * @return corresponding Light value
+ */
+SPSComm::Light
+SPSComm::to_light(std::string &light)
+{
+  std::map<std::string, Light>::iterator l;
+  if ((l = name_to_light_.find(light)) != name_to_light_.end()) {
+    return l->second;
+  } else {
+    throw fawkes::Exception("Unknown light name '%s' requested", light.c_str());
+  }
+}
+
+/** Convert string to signal state enum.
+ * @param signal_state name of signal state
+ * @return corresponding SignalState value
+ */
+SPSComm::SignalState
+SPSComm::to_signal_state(std::string &signal_state)
+{
+  std::map<std::string, SignalState>::iterator s;
+  if ((s = name_to_signal_state_.find(signal_state)) != name_to_signal_state_.end()) {
+    return s->second;
+  } else {
+    throw fawkes::Exception("Unknown signal state '%s' requested", signal_state.c_str());
+  }
+}
+
 
 
 } // end of namespace llsfrb
