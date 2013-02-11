@@ -99,7 +99,7 @@ ProtobufStreamServer::Session::start_read()
 }
 
 
-/** Send a message.
+ /** Send a message.
  * @param component_id ID of the component to address
  * @param msg_type numeric message type
  * @param m Message to send
@@ -127,6 +127,16 @@ ProtobufStreamServer::Session::send(uint16_t component_id, uint16_t msg_type,
 					 boost::asio::placeholders::bytes_transferred,
 					 entry));
   }
+}
+
+
+/** Disconnect from client. */
+void
+ProtobufStreamServer::Session::disconnect()
+{
+  boost::system::error_code err;
+  socket_.shutdown(ip::tcp::socket::shutdown_both, err);
+  socket_.close();
 }
 
 
@@ -309,6 +319,18 @@ ProtobufStreamServer::send(ClientID client, std::shared_ptr<google::protobuf::Me
   send(client, comp_id, msg_type, m);
 }
 
+
+/** Disconnect specific client.
+ * @param client client ID to disconnect from
+ */
+void
+ProtobufStreamServer::disconnect(ClientID client)
+{
+  if (sessions_.find(client) != sessions_.end()) {
+    boost::shared_ptr<Session> session = sessions_[client];
+    session->disconnect();
+  }
+}
 
 /** Start accepting connections. */
 void

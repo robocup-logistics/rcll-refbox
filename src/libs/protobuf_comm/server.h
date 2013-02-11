@@ -71,6 +71,8 @@ class ProtobufStreamServer
 	    std::shared_ptr<google::protobuf::Message> m);
   void send(ClientID client, std::shared_ptr<google::protobuf::Message> m);
  
+  void disconnect(ClientID client);
+
   /** Get the server's message register.
    * @return message register
    */
@@ -120,6 +122,7 @@ class ProtobufStreamServer
     void start_read();
     void send(uint16_t component_id, uint16_t msg_type,
 	      google::protobuf::Message &m);
+    void disconnect();
 
    private:
     void handle_read_message(const boost::system::error_code& error);
