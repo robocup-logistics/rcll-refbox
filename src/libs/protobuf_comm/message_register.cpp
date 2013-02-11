@@ -61,7 +61,7 @@ MessageRegister::MessageRegister()
 MessageRegister::~MessageRegister()
 {
   TypeMap::iterator m;
-  for (m = message_types_.begin(); m != message_types_.end(); ++m) {
+  for (m = message_by_comp_type_.begin(); m != message_by_comp_type_.end(); ++m) {
     delete m->second;
   }
 }
@@ -73,7 +73,11 @@ MessageRegister::~MessageRegister()
 void
 MessageRegister::remove_message_type(uint16_t component_id, uint16_t msg_type)
 {
-  message_types_.erase(KeyType(component_id, msg_type));
+  KeyType key(component_id, msg_type);
+  if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
+    message_by_typename_.erase(message_by_comp_type_[key]->GetDescriptor()->full_name());
+    message_by_comp_type_.erase(key);
+  }
 }
 
 /** Create a new message instance.
@@ -86,11 +90,29 @@ std::shared_ptr<google::protobuf::Message>
 MessageRegister::new_message_for(uint16_t component_id, uint16_t msg_type)
 {
   KeyType key(component_id, msg_type);
-  if (message_types_.find(key) == message_types_.end()) {
+  if (message_by_comp_type_.find(key) == message_by_comp_type_.end()) {
     throw std::runtime_error("Message type not registered");
   }
 
-  google::protobuf::Message *m = message_types_[key]->New();
+  google::protobuf::Message *m = message_by_comp_type_[key]->New();
+  return std::shared_ptr<google::protobuf::Message>(m);
+}
+
+
+/** Create a new message instance.
+ * @param full_name full message type name, i.e. the message type name
+ * possibly with a package name prefix.
+ * @return new instance of a protobuf message that has been registered
+ * for the given message type.
+ */
+std::shared_ptr<google::protobuf::Message>
+MessageRegister::new_message_for(std::string &full_name)
+{
+  if (message_by_typename_.find(full_name) == message_by_typename_.end()) {
+    throw std::runtime_error("Message type not registered");
+  }
+
+  google::protobuf::Message *m = message_by_typename_[full_name]->New();
   return std::shared_ptr<google::protobuf::Message>(m);
 }
 

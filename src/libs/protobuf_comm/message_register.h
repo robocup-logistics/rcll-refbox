@@ -72,10 +72,12 @@ class MessageRegister : boost::noncopyable
   add_message_type(uint16_t component_id, uint16_t msg_type)
   {
     KeyType key(component_id, msg_type);
-    if (message_types_.find(key) != message_types_.end()) {
+    if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
       throw std::runtime_error("Message type already registered");
     }
-    message_types_[key] = new MT();
+    MT *m = new MT();
+    message_by_comp_type_[key] = m;
+    message_by_typename_[m->GetDescriptor()->full_name()] = m;
   }
 
   /** Add a new message type.
@@ -108,16 +110,21 @@ class MessageRegister : boost::noncopyable
       throw std::logic_error("Message has invalid MSG_TYPE");
     }
     KeyType key(comp_id, msg_type);
-    if (message_types_.find(key) != message_types_.end()) {
+    if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
       throw std::runtime_error("Message type already registered");
     }
-    message_types_[key] = new MT();
+    MT *new_m = new MT();
+    message_by_comp_type_[key] = new_m;
+    message_by_typename_[new_m->GetTypeName()] = new_m;
   }
 
   void remove_message_type(uint16_t component_id, uint16_t msg_type);
 
   std::shared_ptr<google::protobuf::Message>
   new_message_for(uint16_t component_id, uint16_t msg_type);
+
+  std::shared_ptr<google::protobuf::Message>
+  new_message_for(std::string &full_name);
 
   void serialize(uint16_t component_id, uint16_t msg_type,
 		 google::protobuf::Message &msg,
@@ -129,7 +136,10 @@ class MessageRegister : boost::noncopyable
   typedef std::pair<uint16_t, uint16_t> KeyType;
   typedef std::map<KeyType, google::protobuf::Message *> TypeMap;
 
-  TypeMap message_types_;
+  typedef std::map<std::string, google::protobuf::Message *> TypeNameMap;
+
+  TypeMap message_by_comp_type_;
+  TypeNameMap message_by_typename_;
 };
 
 } // end namespace protobuf_comm
