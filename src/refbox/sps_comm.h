@@ -43,13 +43,14 @@ extern "C" {
 
 #include <string>
 #include <stdint.h>
+#include <vector>
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-#define SPS_NUM_SIGNALS 16
+#define SPS_NUM_MACHINES 16
 
 class SPSComm
 {
@@ -63,8 +64,8 @@ class SPSComm
 
   /** Machine type. */
   typedef enum {
-    M_BEGIN = 0, M1 = 0, M2, M3, M4, M5, M6, M7, M8,
-    M9, M10, D1, D2, D3, TEST, R1, R2, M_END
+    M_BEGIN = 0, M1 = 0, M2 = 1, M3 = 2, M4 = 3, M5 = 4, M6 = 5, M7 = 6, M8 = 7,
+    M9 = 8, M10 = 9, D1 = 10, D2 = 11, D3 = 12, TEST = 13, R1 = 14, R2 = 15, M_END = 16
   } Machine;
 
   /** Light type. */
@@ -85,11 +86,11 @@ class SPSComm
 
   void reset_rfids();
   bool read_rfid(Machine m, uint32_t &id);
+  std::vector<uint32_t> read_rfids();
   void write_rfid(Machine m, uint32_t id);
 
  private:
   modbus_t *mb_;
-  int mach_reg_offsets_[SPS_NUM_SIGNALS];
 };
 
 } // end of namespace llsfrb

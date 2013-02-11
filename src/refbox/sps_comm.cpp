@@ -63,7 +63,7 @@ namespace llsfrb {
 
 #define SPS_OUT_REG_START_SIGNAL MB_OUT_REG_START
 #define SPS_OUT_REG_START_RFID						\
-  (SPS_OUT_REG_START_SIGNAL + (SPS_OUT_REG_PER_SIGNAL * SPS_NUM_SIGNALS))
+  (SPS_OUT_REG_START_SIGNAL + (SPS_OUT_REG_PER_SIGNAL * SPS_NUM_MACHINES))
 
 #define SPS_IN_REG_START_RFID    MB_IN_REG_START
 
@@ -164,10 +164,10 @@ SPSComm::test_lights()
 void
 SPSComm::reset_lights()
 {
-  uint16_t *values = (uint16_t *)calloc(SPS_OUT_REG_PER_SIGNAL * SPS_NUM_SIGNALS,
+  uint16_t *values = (uint16_t *)calloc(SPS_OUT_REG_PER_SIGNAL * SPS_NUM_MACHINES,
 					  sizeof(uint16_t));
   if (modbus_write_registers(mb_, SPS_OUT_REG_START_SIGNAL,
-			     SPS_OUT_REG_PER_SIGNAL * SPS_NUM_SIGNALS, values) == -1)
+			     SPS_OUT_REG_PER_SIGNAL * SPS_NUM_MACHINES, values) == -1)
   {
     free(values);
     throw fawkes::Exception("Failed to reset register: %s", modbus_strerror(errno));
@@ -239,6 +239,32 @@ SPSComm::read_rfid(Machine m, uint32_t &id)
 
 }
 
+/** Read puck IDs via RFID.
+ * @return vector of IDs read from all of the RFID machines. If an
+ * idea is 0xFFFFFFFF then no puck was placed below the sensor.
+ */
+std::vector<uint32_t>
+SPSComm::read_rfids()
+{
+  const int addr = SPS_IN_REG_START_RFID;
+  uint16_t regs[SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID];
+  if (modbus_read_registers(mb_, addr, SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID, regs)
+      != SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID)
+  {
+    throw fawkes::Exception("Failed to read RFID registers: %s", modbus_strerror(errno));
+  }
+
+  std::vector<uint32_t> rv(SPS_NUM_MACHINES, 0xFFFFFFFF);
+  for (unsigned int i = 0; i < SPS_NUM_MACHINES; ++i) {
+    if (regs[i * SPS_IN_REG_PER_RFID] & SPS_RFID_HAS_PUCK) {
+      rv[i] = htonl(regs[i * SPS_IN_REG_PER_RFID + 1] << 16 |
+		    regs[i * SPS_IN_REG_PER_RFID + 2]);
+    }
+  }
+
+  return rv;
+}
+
 
 /** Reset all RFID registers.
  * Call this at the very beginning to avoid false values to be
@@ -247,10 +273,10 @@ SPSComm::read_rfid(Machine m, uint32_t &id)
 void
 SPSComm::reset_rfids()
 {
-  uint16_t *values = (uint16_t *)calloc(SPS_OUT_REG_PER_RFID * SPS_NUM_SIGNALS,
+  uint16_t *values = (uint16_t *)calloc(SPS_OUT_REG_PER_RFID * SPS_NUM_MACHINES,
 					sizeof(uint16_t));
   if (modbus_write_registers(mb_, SPS_OUT_REG_START_RFID,
-			     SPS_OUT_REG_PER_RFID * SPS_NUM_SIGNALS, values) == -1)
+			     SPS_OUT_REG_PER_RFID * SPS_NUM_MACHINES, values) == -1)
   {
     free(values);
     throw fawkes::Exception("Failed to reset RFID registers: %s", modbus_strerror(errno));
