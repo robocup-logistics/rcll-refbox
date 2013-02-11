@@ -42,6 +42,7 @@
 #include <msgs/Person.pb.h>
 
 using namespace protobuf_comm;
+using namespace llsf_msgs;
 
 /// @cond QA
 
