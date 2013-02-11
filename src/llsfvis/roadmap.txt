@@ -3,7 +3,7 @@ THINGS TO DO:
 [x] Add a widget for team scores
 [x] Make machines rightclickable and show contextmenus
 [x] show robots
-[ ] Game state: phase, start/stop/paus/, num of robots(last heard of)
+[x] Game state: phase, start/stop/paus/, num of robots(last heard of)
 [ ] Communication handling refbox
 [ ] Integrate protobuf communication lib
 [ ] Add support for configuration file desc. machines

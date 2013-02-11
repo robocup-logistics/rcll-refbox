@@ -9,8 +9,16 @@
 #define SCOREVIEW_H_
 
 #include <gtkmm.h>
+#include "RobotStatesWidget.h"
 
 namespace LLSFVis {
+enum GameState{
+	PRESTART,
+	EXPLORE,
+	PRODUCE,
+	END,
+	PAUSE
+};
 
 class StateWidget: public Gtk::Box {
 public:
@@ -18,11 +26,20 @@ public:
 	virtual ~StateWidget();
 	void set_score(int score);
 	void set_time(int score);
+	void set_game_state(GameState gameState);
 private:
 	Gtk::Label timeLabel_;
-	Gtk::Label scoreLabel_;
 	Gtk::Frame timeFrame_;
+
+	Gtk::Label scoreLabel_;
 	Gtk::Frame scoreFrame_;
+
+	Gtk::Frame gameStateFrame_;
+	Gtk::Label gameStateLabel_;
+
+	RobotStatesWidget botStates_;
+
+
 };
 
 } /* namespace LLSFVis */

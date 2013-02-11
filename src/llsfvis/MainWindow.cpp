@@ -84,11 +84,11 @@ MainWindow::MainWindow() :
 
 	playFieldTabGrid_.set_row_spacing(5);
 	playFieldTabGrid_.set_column_spacing(5);
-	playFieldTabGrid_.add(playField_);
+	playFieldTabGrid_.attach(playField_,0,0,1,2);
 	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, playField_,
 			Gtk::POS_RIGHT, 1, 1);
 	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, playField_,
-			Gtk::POS_BOTTOM, 1, 1);
+			Gtk::POS_BOTTOM, 2, 1);
 	playFieldTabGrid_.attach_next_to(stateWidget_, buttonBoxPlayField_,
 			Gtk::POS_BOTTOM, 1, 1);
 
