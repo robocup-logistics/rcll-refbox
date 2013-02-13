@@ -28,8 +28,14 @@
   (multislot last-contact (type INTEGER) (cardinality 2 2))
 )
 
+(deftemplate beacon-signal
+  (multislot time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
+  (slot seq (type INTEGER) (default 1))
+)
+
 (deffacts startup
   (state WAIT_START)
+  (beacon-signal (time (create$ 0 0)) (seq 1))
   (machine (name M1) (mtype T1))
   (machine (name M2) (mtype T1))
   (machine (name M3) (mtype T2))
