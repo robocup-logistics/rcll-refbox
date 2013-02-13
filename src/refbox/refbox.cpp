@@ -81,12 +81,19 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     printf("Connecting to SPS\n");
     sps_ = NULL;
     if (config_->get_bool("/llsfrb/sps/enable")) {
+      bool test_lights = true;
+      try {
+	test_lights = config_->get_bool("/llsfrb/sps/test-lights");
+      } catch (fawkes::Exception &e) {} // ignore, use default
+
       sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
 			 config_->get_uint("/llsfrb/sps/port"));
 
       sps_->reset_lights();
       sps_->reset_rfids();
-      sps_->test_lights();
+      if (test_lights) {
+	sps_->test_lights();
+      }
     }
   } catch (fawkes::Exception &e) {
     printf("Cannot connect to SPS, running without\n");
