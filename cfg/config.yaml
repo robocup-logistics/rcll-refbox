@@ -15,6 +15,7 @@ llsfrb:
     enable: false
     host: !ipv4 192.168.1.77
     port: !tcp-port 502
+    test-lights: false
 
   clips:
     # Timer interval, in milliseconds
@@ -24,8 +25,8 @@ llsfrb:
     debug: false
     # debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
     debug-level: 2
-    unwatch-facts: [time, rfid-input]
-    unwatch-rules: [retract-time,rfid-input-cleanup]
+    unwatch-facts: [time, rfid-input, beacon-signal]
+    unwatch-rules: [retract-time, rfid-input-cleanup, beacon-period]
 
   comm:
     server-port: !tcp-port 4444
