@@ -7,10 +7,6 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(load* (resolve-file facts.clp))
-(load* (resolve-file priorities.clp))
-
-
 (deftemplate rfid-input
   (slot machine (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TEST R1 R2))
   (slot has-puck (type SYMBOL))
