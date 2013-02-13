@@ -120,8 +120,17 @@ LLSFRefBox::setup_protobuf_comm()
     pbc_server_ = NULL;
     pbc_peer_   = NULL;
     pbc_server_ = new ProtobufStreamServer(config_->get_uint("/llsfrb/comm/server-port"));
-    pbc_peer_   = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/peer-host"),
-					    config_->get_uint("/llsfrb/comm/peer-port"));
+
+    if (config_->exists("/llsfrb/comm/peer-send-port") &&
+	config_->exists("/llsfrb/comm/peer-recv-port") )
+    {
+      pbc_peer_   = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/peer-host"),
+					      config_->get_uint("/llsfrb/comm/peer-send-port"),
+					      config_->get_uint("/llsfrb/comm/peer-recv-port"));
+    } else {
+      pbc_peer_   = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/peer-host"),
+					      config_->get_uint("/llsfrb/comm/peer-port"));
+    }
 
     pbc_server_->signal_connected()
       .connect(boost::bind(&LLSFRefBox::handle_client_connected, this, _1, _2));

@@ -29,4 +29,6 @@ llsfrb:
     server-port: !tcp-port 4444
     peer-host: !ipv4 192.168.0.255
     peer-port: !udp-port 4444
+    peer-send-port: !udp-port 4444
+    peer-recv-port: !udp-port 4445
     
