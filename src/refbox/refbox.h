@@ -105,6 +105,7 @@ class LLSFRefBox
   void          clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Value value);
   void          clips_pb_send(void *msgptr, long int client_id);
   void          clips_pb_disconnect(long int client_id);
+  void          clips_pb_broadcast(void *msgptr);
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
   void          sps_read_rfids();

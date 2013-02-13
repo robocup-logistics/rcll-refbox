@@ -173,6 +173,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("pb-ref", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_ref)));
   clips_->add_function("pb-set-field", sigc::slot<void, void *, std::string, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_set_field)));
   clips_->add_function("pb-send", sigc::slot<void, void *, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_send)));
+  clips_->add_function("pb-broadcast", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_broadcast)));
   clips_->add_function("pb-disconnect-client", sigc::slot<void, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_disconnect)));
   clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
 
@@ -474,6 +475,22 @@ LLSFRefBox::clips_pb_send(void *msgptr, long int client_id)
       printf("Failed to send message of type %s: %s\n",
 	     (*m)->GetTypeName().c_str(), e.what());
     }
+  }
+}
+
+
+void
+LLSFRefBox::clips_pb_broadcast(void *msgptr)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+
+  //printf("Broadcasting %s\n", (*m)->GetTypeName().c_str());
+  try {
+    pbc_peer_->send(*m);
+  } catch (google::protobuf::FatalException &e) {
+    printf("Failed to broadcast message of type %s: %s\n",
+	   (*m)->GetTypeName().c_str(), e.what());
   }
 }
 
