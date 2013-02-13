@@ -13,9 +13,9 @@
   (slot value)
 )
 
-(defrule print-confval
-  (confval (path ?p) (type ?t) (value ?v))
-  =>
-  (if (debug 2) then
-    (printout t "confval path: " ?p "  type: " ?t "  value: " ?v crlf))
-)
+;(defrule print-confval
+;  (confval (path ?p) (type ?t) (value ?v))
+;  =>
+;  (if (debug 2) then
+;    (printout t "confval path: " ?p "  type: " ?t "  value: " ?v crlf))
+;)
