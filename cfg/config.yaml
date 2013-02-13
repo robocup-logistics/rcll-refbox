@@ -24,6 +24,8 @@ llsfrb:
     debug: false
     # debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
     debug-level: 2
+    unwatch-facts: [time, rfid-input]
+    unwatch-rules: [retract-time,rfid-input-cleanup]
 
   comm:
     server-port: !tcp-port 4444

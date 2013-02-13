@@ -34,6 +34,7 @@
 )
 
 (deffacts startup
+  (time 0 0)
   (state WAIT_START)
   (beacon-signal (time (create$ 0 0)) (seq 1))
   (machine (name M1) (mtype T1))
