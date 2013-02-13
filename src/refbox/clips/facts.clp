@@ -13,6 +13,8 @@
   (multislot loaded-with (type SYMBOL) (allowed-symbols S0 S1 S2))
   (slot junk (type INTEGER) (default 0))
   (slot productions (type INTEGER) (default 0))
+  (slot state (type SYMBOL) (allowed-values REQINIT IDLE PROCESSING WAITING DOWN INVALID)
+	(default REQINIT))
 )
 
 (deftemplate puck

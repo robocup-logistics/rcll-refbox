@@ -61,3 +61,23 @@
   (pb-broadcast ?beacon)
   (pb-destroy ?beacon)
 )
+
+
+(defrule m-init "Initialize machines on startup"
+  ?mf <- (machine (name ?m) (state REQINIT))
+  =>
+  (modify ?mf (state IDLE))
+  (sps-set-signal (str-cat ?m) "GREEN" "ON")
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+  (sps-set-signal (str-cat ?m) "RED" "OFF")
+)
+
+
+(defrule m-shutdown "Shutdown machines at the end"
+  (finalize)
+  ?mf <- (machine (name ?m))
+  =>
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+  (sps-set-signal (str-cat ?m) "RED" "OFF")
+)
