@@ -110,6 +110,12 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 LLSFRefBox::~LLSFRefBox()
 {
   timer_.cancel();
+
+  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  clips_->assert_fact("(finalize)");
+  clips_->refresh_agenda();
+  clips_->run();
+
   delete pbc_server_;
   delete pbc_peer_;
   delete config_;
