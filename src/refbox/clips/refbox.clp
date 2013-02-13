@@ -81,3 +81,64 @@
   (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
   (sps-set-signal (str-cat ?m) "RED" "OFF")
 )
+
+
+(defrule m-puck-placed
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype ?t&~T1) (puck-id 0))
+  ?pf <- (puck (id ?id) (state ?ps))
+  =>
+  (modify ?mf (puck-id ?id))
+  (printout t "Got puck " ?id " under machine " ?m " (state: " ?ps ")" crlf)
+)
+
+(defrule m-puck-removed
+  (rfid-input (machine ?m) (has-puck FALSE))
+  ?mf <- (machine (name ?m) (mtype ?t&~T1) (puck-id ?id&~0))
+  ?pf <- (puck (id ?id) (state ?ps))
+  =>
+  (modify ?mf (puck-id 0))
+  (printout t "Removed puck " ?id " from machine " ?m crlf)
+)
+
+
+(defrule t1-proc-start
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype T1) (state IDLE))
+  ?pf <- (puck (id ?id) (state S0))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now))
+  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+)
+
+(defrule t1-invalid-input
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype T1) (state IDLE) (puck-id 0))
+  ?pf <- (puck (id ?id) (state ?ps&~S0))
+  =>
+  (modify ?mf (puck-id ?id) (state INVALID))
+  (sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
+)
+
+(defrule t1-proc-done
+  (time $?now)
+  ?mf <- (machine (name ?m) (mtype T1) (state PROCESSING) (puck-id ?id) (productions ?p)
+		  (proc-start $?ps&:(timeout ?now ?ps ?*M1-PROC-TIME*)))
+  ?pf <- (puck (id ?id) (state S0))
+  =>
+  (printout t "T1 production done @ " ?m ": " ?id " (S0 -> S1)" crlf)
+  (modify ?mf (state IDLE) (productions (+ ?p 1)))
+  (modify ?pf (state S1))
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+)
+
+(defrule t1-removal
+  (rfid-input (machine ?m) (has-puck FALSE))
+  ?mf <- (machine (name ?m) (mtype T1) (puck-id ?id&~0))
+  ;?pf <- (puck (id ?id) (state S0))
+  =>
+  (modify ?mf (state IDLE) (puck-id 0))
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+)

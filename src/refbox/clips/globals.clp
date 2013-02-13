@@ -9,4 +9,5 @@
 
 (defglobal
   ?*BEACON_PERIOD* = 2.0
+  ?*M1-PROC-TIME* = 8.0
 )

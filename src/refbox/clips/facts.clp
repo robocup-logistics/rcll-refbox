@@ -15,6 +15,8 @@
   (slot productions (type INTEGER) (default 0))
   (slot state (type SYMBOL) (allowed-values REQINIT IDLE PROCESSING WAITING DOWN INVALID)
 	(default REQINIT))
+  (multislot proc-start (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
+  (slot puck-id (type INTEGER))
 )
 
 (deftemplate puck
