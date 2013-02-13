@@ -316,7 +316,7 @@ ProtobufStreamServer::send(ClientID client, std::shared_ptr<google::protobuf::Me
     throw std::logic_error("Message has invalid MSG_TYPE");
   }
 
-  send(client, comp_id, msg_type, m);
+  send(client, comp_id, msg_type, *m);
 }
 
 

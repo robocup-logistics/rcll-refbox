@@ -194,7 +194,7 @@ ProtobufBroadcastPeer::handle_sent(const boost::system::error_code& error,
 }
 
 
-/** Send a message to the server.
+/** Send a message to other peers.
  * @param component_id ID of the component to address
  * @param msg_type numeric message type
  * @param m message to send
@@ -218,6 +218,52 @@ ProtobufBroadcastPeer::send(uint16_t component_id, uint16_t msg_type,
     outbound_queue_.push(entry);
   }
   start_send();
+}
+
+
+/** Send a message to other peers.
+ * @param component_id ID of the component to address
+ * @param msg_type numeric message type
+ * @param m message to send
+ */
+void
+ProtobufBroadcastPeer::send(uint16_t component_id, uint16_t msg_type,
+			    std::shared_ptr<google::protobuf::Message> m)
+{
+  send(component_id, msg_type, *m);
+}
+
+
+
+/** Send a message to other peers.
+ * @param m Message to send, the message must have an CompType enum type to
+ * specify component ID and message type.
+ */
+void
+ProtobufBroadcastPeer::send(std::shared_ptr<google::protobuf::Message> m)
+{
+  const google::protobuf::Descriptor *desc = m->GetDescriptor();
+  const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
+  if (! enumdesc) {
+    throw std::logic_error("Message does not have CompType enum");
+  }
+  const google::protobuf::EnumValueDescriptor *compdesc =
+    enumdesc->FindValueByName("COMP_ID");
+  const google::protobuf::EnumValueDescriptor *msgtdesc =
+    enumdesc->FindValueByName("MSG_TYPE");
+  if (! compdesc || ! msgtdesc) {
+    throw std::logic_error("Message CompType enum hs no COMP_ID or MSG_TYPE value");
+  }
+  int comp_id = compdesc->number();
+  int msg_type = msgtdesc->number();
+  if (comp_id < 0 || comp_id > std::numeric_limits<uint16_t>::max()) {
+    throw std::logic_error("Message has invalid COMP_ID");
+  }
+  if (msg_type < 0 || msg_type > std::numeric_limits<uint16_t>::max()) {
+    throw std::logic_error("Message has invalid MSG_TYPE");
+  }
+
+  send(comp_id, msg_type, *m);
 }
 
 void
