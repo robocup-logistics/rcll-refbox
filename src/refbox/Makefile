@@ -34,7 +34,7 @@ ifeq ($(HAVE_LIBMODBUS),1)
   LDFLAGS_LIBMODBUS = $(shell $(PKGCONFIG) --libs 'libmodbus')
 endif
 
-LIBS_refbox_llsf = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm
+LIBS_refbox_llsf = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_refbox_llsf = main.o refbox.o sps_comm.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)

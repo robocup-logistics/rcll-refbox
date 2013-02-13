@@ -39,6 +39,7 @@
 
 #include <config/yaml.h>
 #include <protobuf_comm/peer.h>
+#include <msgs/BeaconSignal.pb.h>
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
@@ -149,8 +150,8 @@ LLSFRefBox::setup_protobuf_comm()
   }
 
 
-  //MessageRegister &mr = pbc_server_->message_register();
-  //mr.add_message_type<...>(1, 2);
+  MessageRegister &mr = pbc_server_->message_register();
+  mr.add_message_type<llsf_msgs::BeaconSignal>();
 }
 
 void
