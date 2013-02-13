@@ -633,16 +633,25 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
     else if (v->is_bool())   type = "BOOL";
     else if (v->is_string()) {
       type = "STRING";
-      value = std::string("\"") + value + "\"";
+      if (! v->is_list()) {
+	value = std::string("\"") + value + "\"";
+      }
     } else {
       printf("Config value at '%s' of unknown type '%s'",
 	     v->path(), v->type());
     }
 
-    //logger->log_info(name(), "ASSERT (confval (path \"%s\") (type %s) (value %s)",
-    //		     v->path(), type.c_str(), v->get_as_string().c_str());
-    clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
-			 v->path(), type.c_str(), value.c_str());
+    if (v->is_list()) {
+      //printf("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))\n",
+      //       v->path(), type.c_str(), value.c_str());
+      clips_->assert_fact_f("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
+			    v->path(), type.c_str(), value.c_str());
+    } else {
+      //printf("(confval (path \"%s\") (type %s) (value %s))\n",
+      //       v->path(), type.c_str(), value.c_str());
+      clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
+			    v->path(), type.c_str(), value.c_str());
+    }
   }
 }
 
