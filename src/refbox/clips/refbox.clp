@@ -197,3 +197,82 @@
     (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
   )
 )
+
+
+(defrule t3-proc-start
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?pf <- (puck (id ?id) (state ?ps&S0|S1|S2))
+  ?mf <- (machine (name ?m) (mtype T3) (state IDLE|WAITING)
+		  (loaded-with $?lw&:(not (member$ ?ps ?lw))))
+  =>
+  (if (= (length$ ?lw) 2) then
+    ; last puck to add
+    (bind ?proc-time (random ?*T3-PROC-TIME-MIN* ?*T3-PROC-TIME-MAX*))
+   else
+    ; intermediate puck to add
+    (bind ?proc-time 2)
+  )
+  (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now) (proc-time ?proc-time))
+  (sps-set-signal (str-cat ?m) "GREEN" "ON")
+  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+)
+
+(defrule t3-invalid-input
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  (or (and (puck (id ?id) (state ?ps&~S0&~S1&~S2))
+	   ?mf <- (machine (name ?m) (mtype T3) (state IDLE|WAITING) (puck-id 0)))
+      ; OR:
+      (and (puck (id ?id) (state ?ps&S0|S1|S2))
+	   ?mf <- (machine (name ?m) (mtype T3) (state IDLE|WAITING) (puck-id 0)
+			   (loaded-with $?lw&:(member$ ?ps ?lw))))
+  )
+  =>
+  (modify ?mf (puck-id ?id) (state INVALID))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
+)
+
+(defrule t3-proc-waiting
+  (time $?now)
+  ?mf <- (machine (name ?m) (mtype T3) (state PROCESSING) (puck-id ?id)
+		  (loaded-with $?lw&:(< (length$ ?lw) 2))
+		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
+  ?pf <- (puck (id ?id) (state ?ps))
+  =>
+  (printout t "T3 " ?ps " consumed @ " ?m ": " ?id crlf)
+  (modify ?mf (state WAITING) (loaded-with (create$ ?lw ?ps)))
+  (modify ?pf (state CONSUMED))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+)
+
+(defrule t3-proc-done
+  (time $?now)
+  ?mf <- (machine (name ?m) (mtype T3) (state PROCESSING) (puck-id ?id)
+		  (loaded-with $?lw&:(= (length$ ?lw) 2)) (productions ?p) (junk ?junk)
+		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
+  ?pf <- (puck (id ?id) (state ?ps))
+  =>
+  (printout t "T3 production done @ " ?m ": " ?id " (" ?ps " -> S2, took " ?pt " sec)" crlf)
+  (modify ?mf (state IDLE) (loaded-with) (productions (+ ?p 1)) (junk (+ ?junk (length$ ?lw))))
+  (modify ?pf (state P1))
+  (sps-set-signal (str-cat ?m) "GREEN" "ON")
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+)
+
+(defrule t3-removal
+  (rfid-input (machine ?m) (has-puck FALSE))
+  ?mf <- (machine (name ?m) (mtype T3) (loaded-with $?lw) (puck-id ?id&~0))
+   ;?pf <- (puck (id ?id) (state S0))
+  =>
+  (if (> (length$ ?lw) 0) then
+    (modify ?mf (state WAITING) (puck-id 0))
+    (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+    (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+  else
+    (modify ?mf (state IDLE) (puck-id 0))
+    (sps-set-signal (str-cat ?m) "GREEN" "ON")
+    (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+  )
+)
