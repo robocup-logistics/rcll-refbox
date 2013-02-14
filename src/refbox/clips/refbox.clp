@@ -276,3 +276,47 @@
     (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
   )
 )
+
+
+(defrule recycle-proc-start
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE))
+  ?pf <- (puck (id ?id) (state JUNK|CONSUMED))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
+	  (proc-time ?*RECYCLE-PROC-TIME*))
+  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+)
+
+(defrule recycle-invalid-input
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE) (puck-id 0))
+  ?pf <- (puck (id ?id) (state ?ps&~JUNK&~CONSUMED))
+  =>
+  (modify ?mf (puck-id ?id) (state INVALID))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
+)
+
+(defrule recycle-proc-done
+  (time $?now)
+  ?mf <- (machine (name ?m) (mtype RECYCLE) (state PROCESSING) (puck-id ?id) (productions ?p)
+		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
+  ?pf <- (puck (id ?id) (state ?ps&JUNK|CONSUMED))
+  =>
+  (printout t "Recycling done @ " ?m ": " ?id " (" ?ps " -> S0)" crlf)
+  (modify ?mf (state IDLE) (productions (+ ?p 1)))
+  (modify ?pf (state S0))
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+)
+
+(defrule recycle-removal
+  (rfid-input (machine ?m) (has-puck FALSE))
+  ?mf <- (machine (name ?m) (mtype RECYCLE) (puck-id ?id&~0))
+  =>
+  (modify ?mf (state IDLE) (puck-id 0))
+  (sps-set-signal (str-cat ?m) "GREEN" "ON")
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+)
