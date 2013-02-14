@@ -355,6 +355,52 @@
     (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
   )
 )
+
+
+(defrule t5-proc-start
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype T5) (state IDLE))
+  ?pf <- (puck (id ?id) (state S0))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
+	  (proc-time (random ?*T5-PROC-TIME-MIN* ?*T5-PROC-TIME-MAX*)))
+  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+)
+
+(defrule t5-invalid-input
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype T5) (state IDLE) (puck-id 0))
+  ?pf <- (puck (id ?id) (state ?ps&~S0))
+  =>
+  (modify ?mf (puck-id ?id) (state INVALID))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
+)
+
+(defrule t5-proc-done
+  (time $?now)
+  ?mf <- (machine (name ?m) (mtype T5) (state PROCESSING) (puck-id ?id) (productions ?p)
+		  (proc-time ?pt) (proc-start $?ps&:(timeout ?now ?ps ?pt)))
+  ?pf <- (puck (id ?id) (state S0))
+  =>
+  (printout t "T5 production done @ " ?m ": " ?id " (S0 -> P3)" crlf)
+  (modify ?mf (state IDLE) (productions (+ ?p 1)))
+  (modify ?pf (state P3))
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+)
+
+(defrule t5-removal
+  (rfid-input (machine ?m) (has-puck FALSE))
+  ?mf <- (machine (name ?m) (mtype T5) (puck-id ?id&~0))
+  ;?pf <- (puck (id ?id) (state S0))
+  =>
+  (modify ?mf (state IDLE) (puck-id 0))
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+)
+
+
 (defrule recycle-proc-start
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
