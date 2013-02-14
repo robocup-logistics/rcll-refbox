@@ -286,7 +286,7 @@ SPSComm::read_rfid(Machine m, uint32_t &id)
   }
 
   if (regs[0] & SPS_RFID_HAS_PUCK) {
-    id = htonl(regs[1] << 16 | regs[2]);
+    id = regs[1] << 16 | regs[2];
     return true;
   } else {
     return false;
@@ -312,6 +312,7 @@ SPSComm::read_rfids()
   std::vector<uint32_t> rv(SPS_NUM_MACHINES, 0xFFFFFFFF);
   for (unsigned int i = 0; i < SPS_NUM_MACHINES; ++i) {
     if (regs[i * SPS_IN_REG_PER_RFID] & SPS_RFID_HAS_PUCK) {
+      // libmodbus has already swapped the bytes of the registers
       rv[i] = htonl(regs[i * SPS_IN_REG_PER_RFID + 1] << 16 |
 		    regs[i * SPS_IN_REG_PER_RFID + 2]);
     }
@@ -352,12 +353,12 @@ SPSComm::write_rfid(Machine m, uint32_t id)
   //  throw fawkes::Exception("No puck under RFID sensor\n");
   //}
 
-  uint32_t new_id = htonl(id);
   const int out_addr = SPS_OUT_REG_START_RFID + m * SPS_OUT_REG_PER_RFID;
   uint16_t out_regs[3];
   out_regs[0] = SPS_RFID_WRITE_PUCK_ID;
-  out_regs[1] = new_id >> 16;
-  out_regs[2] = new_id & 0xffff;
+  // libmodbus will swap the bytes of the register
+  out_regs[1] = (id >> 16) & 0xFFFF;
+  out_regs[2] = id & 0xFFFF;
   if (modbus_write_registers(mb_, out_addr, SPS_OUT_REG_PER_RFID, out_regs)
       != SPS_OUT_REG_PER_RFID)
   {
