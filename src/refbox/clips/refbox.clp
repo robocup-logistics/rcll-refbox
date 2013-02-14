@@ -320,3 +320,90 @@
   (sps-set-signal (str-cat ?m) "GREEN" "ON")
   (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
 )
+
+
+(defrule test-consumed-junk
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  ?pf <- (puck (id ?id) (state JUNK|CONSUMED))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+)
+
+(defrule test-s0
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  ?pf <- (puck (id ?id) (state S0))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+)
+
+(defrule test-s1
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  ?pf <- (puck (id ?id) (state S1))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+  (sps-set-signal (str-cat ?m) "RED" "ON")
+)
+
+(defrule test-s2
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  ?pf <- (puck (id ?id) (state S2))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "RED" "ON")
+)
+
+(defrule test-p1
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  ?pf <- (puck (id ?id) (state P1))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING))
+  (sps-set-signal (str-cat ?m) "GREEN" "BLINK")
+)
+
+(defrule test-p2
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  ?pf <- (puck (id ?id) (state P2))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
+)
+
+(defrule test-p3
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  ?pf <- (puck (id ?id) (state P3))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING))
+  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (sps-set-signal (str-cat ?m) "RED" "BLINK")
+)
+
+(defrule test-removal
+  (rfid-input (machine ?m) (has-puck FALSE))
+  ?mf <- (machine (name ?m) (mtype TEST) (puck-id ?id&~0))
+  =>
+  (modify ?mf (state IDLE) (puck-id 0))
+  (sps-set-signal (str-cat ?m) "GREEN" "ON")
+  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+  (sps-set-signal (str-cat ?m) "RED" "OFF")
+)
