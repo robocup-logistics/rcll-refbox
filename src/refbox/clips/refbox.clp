@@ -7,12 +7,6 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(deftemplate rfid-input
-  (slot machine (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TEST R1 R2))
-  (slot has-puck (type SYMBOL))
-  (slot id (type INTEGER))
-)
-
 (defrule rfid-input-cleanup
   (declare (salience ?*PRIORITY_CLEANUP*))
   ?f <- (rfid-input (machine ?m) (has-puck ?hp) (id ?id))
@@ -80,25 +74,6 @@
   (sps-set-signal (str-cat ?m) "GREEN" "OFF")
   (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
   (sps-set-signal (str-cat ?m) "RED" "OFF")
-)
-
-
-(defrule m-puck-placed
-  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  ?mf <- (machine (name ?m) (mtype ?t&~T1) (puck-id 0))
-  ?pf <- (puck (id ?id) (state ?ps))
-  =>
-  (modify ?mf (puck-id ?id))
-  (printout t "Got puck " ?id " under machine " ?m " (state: " ?ps ")" crlf)
-)
-
-(defrule m-puck-removed
-  (rfid-input (machine ?m) (has-puck FALSE))
-  ?mf <- (machine (name ?m) (mtype ?t&~T1) (puck-id ?id&~0))
-  ?pf <- (puck (id ?id) (state ?ps))
-  =>
-  (modify ?mf (puck-id 0))
-  (printout t "Removed puck " ?id " from machine " ?m crlf)
 )
 
 
