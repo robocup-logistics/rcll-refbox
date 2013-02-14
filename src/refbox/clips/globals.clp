@@ -18,6 +18,8 @@
   ?*T4-PROC-TIME-MIN* = 4 ; 40
   ?*T4-PROC-TIME-MAX* = 4 ; 60
   ?*T5-PROC-TIME-MIN* = 4 ; 40
+  ?*T5-PROC-TIME-MAX* = 4 ; 60
+  ?*T6-PROC-TIME-MIN* = 4 ; 40
   ?*T6-PROC-TIME-MAX* = 4 ; 60
   ?*RECYCLE-PROC-TIME* = 2
 )
