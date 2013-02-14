@@ -15,6 +15,7 @@
   (slot productions (type INTEGER) (default 0))
   (slot state (type SYMBOL) (allowed-values REQINIT IDLE PROCESSING WAITING DOWN INVALID)
 	(default REQINIT))
+  (slot proc-time (type INTEGER))
   (multislot proc-start (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
   (slot puck-id (type INTEGER))
 )
@@ -22,7 +23,7 @@
 (deftemplate puck
   (slot index (type INTEGER))
   (slot id (type INTEGER))
-  (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3) (default S0))
+  (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 JUNK CONSUMED) (default S0))
 )
 
 (deftemplate robot
