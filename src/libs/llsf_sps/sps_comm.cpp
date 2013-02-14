@@ -34,7 +34,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sps_comm.h"
+#include <llsf_sps/sps_comm.h>
 
 #include <modbus.h>
 #include <cerrno>
@@ -46,7 +46,7 @@
 #include <core/exception.h>
 #include <core/exceptions/software.h>
 
-namespace llsfrb {
+namespace llsf_sps {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif

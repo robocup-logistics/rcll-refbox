@@ -48,12 +48,15 @@ namespace protobuf_comm {
   class ProtobufBroadcastPeer;
 }
 
+namespace llsf_sps {
+  class SPSComm;
+}
+
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-class SPSComm;
 class Configuration;
 
 class LLSFRefBox
@@ -113,7 +116,7 @@ class LLSFRefBox
 
  private: // members
   Configuration *config_;
-  SPSComm *sps_;
+  llsf_sps::SPSComm *sps_;
   protobuf_comm::ProtobufStreamServer *pbc_server_;
   protobuf_comm::ProtobufBroadcastPeer *pbc_peer_;
   std::map<protobuf_comm::ProtobufStreamServer::ClientID,

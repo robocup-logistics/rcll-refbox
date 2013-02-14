@@ -35,15 +35,16 @@
  */
 
 #include "refbox.h"
-#include "sps_comm.h"
 
 #include <config/yaml.h>
 #include <protobuf_comm/peer.h>
 #include <msgs/BeaconSignal.pb.h>
+#include <llsf_sps/sps_comm.h>
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
 
+using namespace llsf_sps;
 using namespace protobuf_comm;
 using namespace google::protobuf;
 

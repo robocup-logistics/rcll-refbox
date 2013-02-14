@@ -46,7 +46,7 @@ extern "C" {
 #include <vector>
 #include <map>
 
-namespace llsfrb {
+namespace llsf_sps {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
