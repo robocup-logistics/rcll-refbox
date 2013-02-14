@@ -352,11 +352,12 @@ SPSComm::write_rfid(Machine m, uint32_t id)
   //  throw fawkes::Exception("No puck under RFID sensor\n");
   //}
 
+  uint32_t new_id = htonl(id);
   const int out_addr = SPS_OUT_REG_START_RFID + m * SPS_OUT_REG_PER_RFID;
   uint16_t out_regs[3];
   out_regs[0] = SPS_RFID_WRITE_PUCK_ID;
-  out_regs[1] = id >> 16;
-  out_regs[2] = id & 0xffff;
+  out_regs[1] = new_id >> 16;
+  out_regs[2] = new_id & 0xffff;
   if (modbus_write_registers(mb_, out_addr, SPS_OUT_REG_PER_RFID, out_regs)
       != SPS_OUT_REG_PER_RFID)
   {
