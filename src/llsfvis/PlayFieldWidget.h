@@ -67,10 +67,11 @@ private:
 			double wPos, double hPos, double orientation);
 	void draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x, double y,
 			std::string text);
+
+	void draw_field_border(const Cairo::RefPtr<Cairo::Context>& cr);
 	void draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 	void draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr);
 	void draw_robot(const Cairo::RefPtr<Cairo::Context>& cr, const Robot& bot);
-	void draw_coordinates(const Cairo::RefPtr<Cairo::Context>& cr);
 
 	virtual bool on_clicked(GdkEventButton* event);
 
@@ -88,10 +89,12 @@ private:
 
 	const Machine* clicked_machine_;
 
+	static const double FIELDLINESSIZE = 0.02;
 	static const double BOTSIZE = 0.35;
 	static const double MACHINESIZE = 0.50;
 	static const double PUCKSIZE = 0.08;
 	static const double FIELDSIZE = 5.6;
+	static const double FIELDBORDERSIZE = 0.2;
 	static const double ZONEHEIGHT = 0.4;
 	static const double ZONEWIDTH = 1.2;
 

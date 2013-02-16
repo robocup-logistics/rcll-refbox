@@ -101,13 +101,15 @@ void PlayFieldWidget::add_robot(const Robot* robot) {
 
 bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
-	cr->scale(get_allocated_height() / FIELDSIZE,
-			get_allocated_width() / FIELDSIZE);
+	cr->scale(get_allocated_height() / (FIELDSIZE + 2*FIELDBORDERSIZE),
+			get_allocated_width() / (FIELDSIZE + 2*FIELDBORDERSIZE));
 
 	//Blackground white
 	cr->set_source_rgb(1, 1, 1);
 	cr->paint();
 
+
+	draw_field_border(cr);
 	draw_delivery_zone(cr);
 	draw_starting_zone(cr);
 
@@ -136,6 +138,7 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 		const Machine& machine) {
 	cr->save();
+	cr->translate(FIELDBORDERSIZE,FIELDBORDERSIZE);
 	cr->set_source_rgb(0, 0, 0);
 	cr->set_line_width(0.01); //todo move to conffile
 
@@ -175,7 +178,7 @@ void PlayFieldWidget::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 		const Robot& bot) {
 	cr->save();
-	cr->translate(bot.getPosX(), bot.getPosY());
+	cr->translate(bot.getPosX()+FIELDBORDERSIZE, bot.getPosY()+FIELDBORDERSIZE);
 	cr->rotate(bot.getOrientation());
 	cr->set_line_width(0.01);
 	cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
@@ -192,6 +195,7 @@ void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 void PlayFieldWidget::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
 		const Puck& puck) {
 	cr->save();
+	cr->translate(FIELDBORDERSIZE,FIELDBORDERSIZE);
 	cr->set_line_width(0.04);
 	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE, 0.0, 2.0 * M_PI);
 	cr->set_source_rgba(0.5, 0, 0, 0.6);
@@ -204,7 +208,8 @@ void PlayFieldWidget::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
 void PlayFieldWidget::draw_delivery_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
-	cr->set_line_width(0.01);
+	cr->translate(FIELDBORDERSIZE,FIELDBORDERSIZE);
+	cr->set_line_width(FIELDLINESSIZE);
 	cr->move_to(0, FIELDSIZE / 2 - ZONEWIDTH / 2);
 	cr->line_to(ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
 	cr->line_to(ZONEHEIGHT, FIELDSIZE / 2 + ZONEWIDTH / 2);
@@ -220,7 +225,8 @@ void PlayFieldWidget::draw_delivery_zone(
 void PlayFieldWidget::draw_starting_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
-	cr->set_line_width(0.01);
+	cr->translate(FIELDBORDERSIZE,FIELDBORDERSIZE);
+	cr->set_line_width(FIELDLINESSIZE);
 	cr->move_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
 	cr->line_to(FIELDSIZE, FIELDSIZE / 2 - ZONEWIDTH / 2);
 	cr->line_to(FIELDSIZE, FIELDSIZE / 2 + ZONEWIDTH / 2);
@@ -283,9 +289,26 @@ void PlayFieldWidget::set_playfield(PlayField& playField) {
 	machines_ = playField.getMachines();
 }
 
+void PlayFieldWidget::draw_field_border(
+		const Cairo::RefPtr<Cairo::Context>& cr) {
+	cr->save();
+	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
+
+	cr->set_line_width(FIELDLINESSIZE);
+	cr->set_source_rgb(0, 0, 0);
+
+	cr->move_to(0, 0);
+	cr->line_to(0, FIELDSIZE);
+	cr->line_to(FIELDSIZE, FIELDSIZE);
+	cr->line_to(FIELDSIZE, 0);
+	cr->line_to(0, 0);
+	cr->stroke();
+	cr->restore();
+}
+
 const Machine* PlayFieldWidget::get_clicked_machine(gdouble x, gdouble y) {
-	gdouble scaled_x = x / (get_allocated_width() / FIELDSIZE);
-	gdouble scaled_y = y / (get_allocated_height() / FIELDSIZE);
+	gdouble scaled_x = x / (get_allocated_width() / (FIELDSIZE+FIELDBORDERSIZE*2))-FIELDBORDERSIZE;
+	gdouble scaled_y = y / (get_allocated_height() / (FIELDSIZE+FIELDBORDERSIZE*2))-FIELDBORDERSIZE;
 	for (std::list<const Machine*>::iterator it = machines_.begin();
 			it != machines_.end(); ++it) {
 		if (scaled_x >= (*it)->getPosX() - MACHINESIZE / 2
