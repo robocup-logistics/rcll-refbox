@@ -36,7 +36,7 @@ StateWidget::StateWidget() {
 	pack_start(botStates_);
 	pack_start(scoreFrame_, Gtk::PACK_EXPAND_WIDGET);
 	pack_start(timeFrame_, Gtk::PACK_EXPAND_WIDGET);
-	set_game_state(LLSFVis::PRESTART);
+	set_game_phase(LLSFVis::PRESTART);
 
 }
 
@@ -71,9 +71,9 @@ StateWidget::~StateWidget() {
 	// TODO Auto-generated destructor stub
 }
 
-void StateWidget::set_game_state(GameState gameState) {
+void StateWidget::set_game_phase(GamePhase gamePhase) {
 	Glib::ustring label;
-	switch (gameState) {
+	switch (gamePhase) {
 		case PRESTART:
 			label = "Preparation";
 			break;

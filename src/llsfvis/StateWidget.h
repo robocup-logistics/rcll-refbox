@@ -12,21 +12,25 @@
 #include "RobotStatesWidget.h"
 
 namespace LLSFVis {
-enum GameState{
-	PRESTART,
-	EXPLORE,
-	PRODUCE,
-	END,
-	PAUSE
-};
+
+	enum GamePhase{
+		PRESTART,
+		EXPLORE,
+		PRODUCE,
+		END,
+		PAUSE
+	};
 
 class StateWidget: public Gtk::Box {
 public:
+
+
+
 	StateWidget();
 	virtual ~StateWidget();
 	void set_score(int score);
 	void set_time(int score);
-	void set_game_state(GameState gameState);
+	void set_game_phase(GamePhase gamePhase);
 private:
 	Gtk::Label timeLabel_;
 	Gtk::Frame timeFrame_;
