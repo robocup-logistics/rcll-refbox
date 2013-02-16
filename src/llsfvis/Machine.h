@@ -44,11 +44,9 @@ namespace LLSFVis {
 class Machine {
 public:
 
-	enum Orientation {
-		NORTH, WEST, EAST, SOUTH
-	};
 
-	Machine(int posX, int posY, Orientation ori, std::string textDescription) :
+
+	Machine(double posX, double posY, double ori, std::string textDescription) :
 			posX_(posX), posY_(posY), orientation_(ori), textDescription_(
 					textDescription) {
 	}
@@ -58,11 +56,11 @@ public:
 	}
 	;
 
-	Orientation getOrientation() const {
+	double getOrientation() const {
 		return orientation_;
 	}
 
-	void setOrientation(Orientation orientation) {
+	void setOrientation(double orientation) {
 		orientation_ = orientation;
 	}
 
@@ -93,7 +91,7 @@ public:
 private:
 	double posX_;
 	double posY_;
-	Orientation orientation_;
+	double orientation_;
 	std::string textDescription_;
 };
 
