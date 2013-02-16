@@ -44,16 +44,6 @@ MainWindow::MainWindow() :
 				Gtk::ORIENTATION_VERTICAL), buttonBoxLogging_(
 				Gtk::ORIENTATION_VERTICAL) {
 
-	//INITIALISE DATA
-	logBuffer_ = Gtk::TextBuffer::create();
-	Machine* m = new Machine(1.2, 1.0, Machine::NORTH, "machine_1\ntype: T1");
-	Puck* p = new Puck(2.5, 2.5, "12", "raw");
-	Robot* r1 = new Robot("Tick");
-	r1->setPose(1.0, 2.0, 0);
-	Robot* r2 = new Robot("Trick");
-	r2->setPose(3.0, 3.0, M_PI*0.2);
-	Robot* r3 = new Robot("Track");
-	r3->setPose(4.0, 5.0, M_PI * 0.5);
 
 	//SETUP the GUI
 
@@ -62,13 +52,6 @@ MainWindow::MainWindow() :
 	tabs_.set_border_width(10);
 
 	//the PlayField tab
-
-	playField_.add_machine(m);
-	playField_.add_puck(p);
-	playField_.add_robot(r1);
-	playField_.add_robot(r2);
-	playField_.add_robot(r3);
-
 	playFieldButton1_.set_label("Button1");
 	playFieldButton2_.set_label("Button2");
 	playFieldButton3_.set_label("Button3");
@@ -79,21 +62,19 @@ MainWindow::MainWindow() :
 	buttonBoxPlayField_.pack_start(playFieldButton3_, Gtk::PACK_SHRINK);
 	buttonBoxPlayField_.pack_start(playFieldButton4_, Gtk::PACK_SHRINK);
 
-	logPreviewScrollWindow_.add(logPreview_);
-	logPreview_.set_buffer(logBuffer_);
+	logPreviewScrollWindow_.add(logPreviewWidget_);
 
 	playFieldTabGrid_.set_row_spacing(5);
 	playFieldTabGrid_.set_column_spacing(5);
-	playFieldTabGrid_.attach(playField_,0,0,1,2);
-	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, playField_,
+	playFieldTabGrid_.attach(playFieldWidget_,0,0,1,2);
+	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, playFieldWidget_,
 			Gtk::POS_RIGHT, 1, 1);
-	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, playField_,
+	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, playFieldWidget_,
 			Gtk::POS_BOTTOM, 2, 1);
 	playFieldTabGrid_.attach_next_to(stateWidget_, buttonBoxPlayField_,
 			Gtk::POS_BOTTOM, 1, 1);
 
 	//Create the logging tab
-
 	logButton1_.set_label("log1");
 	logButton2_.set_label("log2");
 	logButton3_.set_label("log3");
@@ -104,8 +85,10 @@ MainWindow::MainWindow() :
 	buttonBoxLogging_.pack_start(logButton3_, Gtk::PACK_SHRINK);
 	buttonBoxLogging_.pack_start(logButton4_, Gtk::PACK_SHRINK);
 
-	logView_.set_buffer(logBuffer_);
-	logScrollWindow_.add(logView_);
+	//make both logviews use the same model
+	logPreviewWidget_.set_model(logWidget_.get_model());
+
+	logScrollWindow_.add(logWidget_);
 	loggingTabPaned_.add1(logScrollWindow_);
 	loggingTabPaned_.add2(buttonBoxLogging_);
 
@@ -113,7 +96,7 @@ MainWindow::MainWindow() :
 	tabs_.append_page(loggingTabPaned_, "RefBox Log");
 	add(tabs_);
 	aspectFrame_.set(Gtk::ALIGN_START, Gtk::ALIGN_START, 1, true);
-	playField_.set_size_request(600, 600);
+	playFieldWidget_.set_size_request(600, 600);
 	logScrollWindow_.set_size_request(600, 600);
 	logPreviewScrollWindow_.set_size_request(0, 150);
 	buttonBoxPlayField_.set_size_request(150, 0);
@@ -126,16 +109,21 @@ MainWindow::MainWindow() :
 }
 
 void MainWindow::add_log_message(std::string msg) {
-	log_ += msg;
-	logBuffer_->set_text(log_);
-}
-
-void MainWindow::set_score(int score) {
-
+	logWidget_.add_log_message(msg);
+	//logPreviewWidget_.add_log_message(msg);
 }
 
 MainWindow::~MainWindow() {
 
+}
+
+void MainWindow::update_game_state(GameState& gameState) {
+	playFieldWidget_.update_game_state(gameState);
+	stateWidget_.update_game_state(gameState);
+}
+
+void MainWindow::set_playfield(PlayField& playField) {
+	playFieldWidget_.set_playfield(playField);
 }
 
 } /* namespace LLSFVis */

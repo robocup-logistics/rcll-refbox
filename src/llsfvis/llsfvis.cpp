@@ -38,13 +38,59 @@
 
 //using namespace Gtk;
 int main(int argc, char* argv[]) {
-	Glib::RefPtr<Gtk::Application> app =
-	    Gtk::Application::create(argc, argv,
-	      "org.gtkmm.examples.base");
+	Glib::RefPtr<Gtk::Application> app = Gtk::Application::create(argc, argv,
+			"org.gtkmm.examples.base");
 
-	  LLSFVis::MainWindow mainWindow;
-	  return app->run(mainWindow);
+	LLSFVis::PlayField pf;
 
+	pf.add_machine(3.92, 1.68, 0, "M1", "T0");
+	pf.add_machine(3.92, 3.92, 0, "M2", "T0");
+	pf.add_machine(2.80, 0.56, 0, "M3", "T0");
+	pf.add_machine(2.80, 1.68, 0, "M4", "T0");
+	pf.add_machine(2.80, 2.80, 0, "M5", "T0");
+	pf.add_machine(2.80, 3.92, 0, "M6", "T0");
+	pf.add_machine(2.80, 5.04, 0, "M7", "T0");
+	pf.add_machine(1.68, 1.68, 0, "M8", "T0");
+	pf.add_machine(1.68, 3.92, 0, "M9", "T0");
+	pf.add_machine(1.68, 5.04, 0, "M10", "T0");
+
+	pf.add_machine(5.40, 0.20, M_PI * 0.25, "R1", "RU");
+	pf.add_machine(0.20, 5.40, M_PI * 1.25, "R2", "RU");
+	pf.add_machine(5.40, 5.40, M_PI * 0.75, "T", "TU");
+
+	LLSFVis::GameState gs;
+	gs.setMachines(pf.getMachines());
+	gs.setPhase(LLSFVis::GameState::PRESTART);
+
+	std::list<const LLSFVis::Puck*> pucks;
+	LLSFVis::Puck* p = new LLSFVis::Puck(2.3, 2.3, "p1", "S0");
+	pucks.push_back(p);
+
+	gs.setPucks(pucks);
+
+	std::list<const LLSFVis::Robot*> bots;
+	LLSFVis::Robot* r1 = new LLSFVis::Robot("Tick");
+	r1->setPose(2.5, 2.5, 0);
+	r1->setLastHeard(time(NULL));
+	bots.push_back(r1);
+	LLSFVis::Robot* r2 = new LLSFVis::Robot("Trick");
+	r2->setPose(3.5, 3.5, M_PI_2);
+	r2->setLastHeard(time(NULL) - 3);
+	bots.push_back(r2);
+	LLSFVis::Robot* r3 = new LLSFVis::Robot("Track");
+	r3->setPose(0.5, 2.5, M_PI_2 / 2);
+	r3->setLastHeard(time(NULL) - 5);
+	bots.push_back(r3);
+
+	gs.setRobots(bots);
+	gs.setScore(42);
+	gs.setTime(123);
+
+	LLSFVis::MainWindow mainWindow;
+	mainWindow.set_playfield(pf);
+	mainWindow.add_log_message("Good Morning");
+	mainWindow.update_game_state(gs);
+	return app->run(mainWindow);
 
 }
 

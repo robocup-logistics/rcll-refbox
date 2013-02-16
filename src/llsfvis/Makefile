@@ -23,7 +23,7 @@ include $(BUILDSYSDIR)/gui.mk
 CFLAGS  += $(CFLAGS_GUI)
 LDFLAGS += $(LDFLAGS_GUI)
 LIBS_llsfvis = stdc++ llsfrbcore
-OBJS_llsfvis = llsfvis.o MainWindow.o PlayField.o StateWidget.o RobotStatesWidget.o
+OBJS_llsfvis = llsfvis.o MainWindow.o PlayFieldWidget.o StateWidget.o RobotStatesWidget.o PuckDialog.o LogWidget.o
 
 
 ifeq ($(HAVE_GTKMM_3),1)

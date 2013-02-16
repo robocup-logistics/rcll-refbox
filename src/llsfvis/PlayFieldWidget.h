@@ -42,6 +42,7 @@
 #include "Puck.h"
 #include "Robot.h"
 #include "PlayField.h"
+#include "GameState.h"
 
 namespace LLSFVis {
 
@@ -54,12 +55,13 @@ public:
 	virtual ~PlayFieldWidget();
 	void add_machine(const Machine* machine);
 	void set_playfield(PlayField& playField);
-	void add_puck(const Puck* puck);
-	void add_robot(const Robot* robot);
+	void update_game_state(GameState& gameState);
 
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
+	void add_puck(const Puck* puck);
+	void add_robot(const Robot* robot);
 	void draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 			const Machine& machine);
 	void draw_puck(const Cairo::RefPtr<Cairo::Context>& cr, const Puck& puck);
@@ -91,7 +93,7 @@ private:
 
 	static const double FIELDLINESSIZE = 0.02;
 	static const double BOTSIZE = 0.35;
-	static const double MACHINESIZE = 0.50;
+	static const double MACHINESIZE = 0.40;
 	static const double PUCKSIZE = 0.08;
 	static const double FIELDSIZE = 5.6;
 	static const double FIELDBORDERSIZE = 0.2;

@@ -15,16 +15,6 @@ RobotStatesWidget::RobotStatesWidget() :
 	bot1_ = NULL;
 	bot2_ = NULL;
 	bot3_ = NULL;
-	time_t now = time(NULL);
-	Robot* bot1 = new Robot("Manfred");
-	bot1->setLastHeard(now);
-	Robot* bot2 = new Robot("Guenther");
-	bot2->setLastHeard(now);
-	Robot* bot3 = new Robot("Karl");
-	bot3->setLastHeard(now);
-	setBot1(bot1);
-	setBot2(bot2);
-	//setBot3(bot3);
 
 	Pango::FontDescription font;
 	font.set_size(Pango::SCALE * 28);
@@ -51,7 +41,7 @@ RobotStatesWidget::RobotStatesWidget() :
 			sigc::mem_fun(*this, &RobotStatesWidget::on_update), 1000);
 }
 
-void RobotStatesWidget::update_bot(time_t rawtime, Robot* bot,
+void RobotStatesWidget::update_bot(time_t rawtime, const Robot* bot,
 		Gtk::Label* bot_label) {
 	if (bot != NULL) {
 		time_t bot_lastping = rawtime - bot->getLastHeard();
@@ -86,19 +76,28 @@ RobotStatesWidget::~RobotStatesWidget() {
 	// TODO Auto-generated destructor stub
 }
 
-void RobotStatesWidget::setBot1(Robot* bot) {
+void RobotStatesWidget::setBot1(const Robot* bot) {
 	bot1_ = bot;
 	bot1_frame_.set_label(bot->getId());
 }
 
-void RobotStatesWidget::setBot2(Robot* bot) {
+void RobotStatesWidget::setBot2(const Robot* bot) {
 	bot2_ = bot;
 	bot2_frame_.set_label(bot->getId());
 }
 
-void RobotStatesWidget::setBot3(Robot* bot) {
+void RobotStatesWidget::setBot3(const Robot* bot) {
 	bot3_ = bot;
 	bot3_frame_.set_label(bot->getId());
+}
+
+void RobotStatesWidget::clear() {
+	bot1_ = NULL;
+	bot2_ = NULL;
+	bot3_ = NULL;
+	bot1_label_.set_text("----");
+	bot2_label_.set_text("----");
+	bot3_label_.set_text("----");
 }
 
 } /* namespace LLSFVis */

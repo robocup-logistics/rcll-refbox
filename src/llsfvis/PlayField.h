@@ -1,7 +1,7 @@
 /***************************************************************************
- *  Playfield.h - Widget to represent the LLSF Area
+ *  PlayField.h - Data class representing the PlayField
  *
- *  Created: Mon Jan 31 17:46:35 2013
+ *  Created: Tue Feb 12 17:46:35 2013
  *  Copyright  2013  Daniel Ewert (daniel.ewert@ima.rwth-aachen.de)
  ****************************************************************************/
 
@@ -36,60 +36,29 @@
 #ifndef PLAYFIELD_H_
 #define PLAYFIELD_H_
 
-#include <gtkmm.h>
-#include <list>
-#include "Machine.h"
-#include "Puck.h"
-#include "Robot.h"
-
 namespace LLSFVis {
 
-/**
- * Widget to display the playfield.^
- */
-class PlayField: public Gtk::DrawingArea {
+class PlayField {
 public:
-	PlayField();
-	virtual ~PlayField();
-	void add_machine(const Machine* machine);
-	void add_puck(const Puck* puck);
-	void add_robot(const Robot* robot);
+	void add_machine(double posX, double posY, double orientation,
+			std::string name, std::string type) {
+		Machine* m = new Machine(posX, posY, orientation, name, type);
+		machines_.push_back(m);
+	}
 
-protected:
-	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
+	const std::list<const Machine*>& getMachines() const {
+		return machines_;
+	}
+
+	~PlayField(){
+		for (std::list<const Machine*>::iterator it = machines_.begin();it!=machines_.end();++it){
+			delete *it;
+		}
+	}
+
 private:
-	void draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
-			const Machine& machine);
-	void draw_puck(const Cairo::RefPtr<Cairo::Context>& cr, const Puck& puck);
-	void draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr, double size,
-			double wPos, double hPos, Machine::Orientation orientation);
-	void draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x, double y,
-			std::string text);
-	void draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr);
-	void draw_starting_zone(const Cairo::RefPtr<Cairo::Context>& cr);
-	void draw_robot(const Cairo::RefPtr<Cairo::Context>& cr, const Robot& bot);
-
-	virtual bool on_clicked(GdkEventButton* event);
-
-	virtual void on_contextmenu_clicked(Glib::ustring entry);
-
-	const Machine* get_clicked_machine(gdouble x, gdouble y);
-
-	Glib::RefPtr<Gtk::UIManager> uIManager_;
-	Glib::RefPtr<Gtk::ActionGroup> actionGroup_;
-	Gtk::Menu* popup_;
-
 	std::list<const Machine*> machines_;
-	std::list<const Puck*> pucks_;
-	std::list<const Robot*> bots_;
 
-	static const double BOTSIZE = 0.35;
-	static const double MACHINESIZE = 0.50;
-	static const double PUCKSIZE = 0.08;
-	static const double FIELDSIZE = 5.6;
-	static const double ZONEHEIGHT = 0.4;
-	static const double ZONEWIDTH = 1.2;
 };
-
-} /* namespace LLSFVis */
+}/* namespace LLSFVis */
 #endif /* PLAYFIELD_H_ */

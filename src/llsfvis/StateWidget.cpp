@@ -27,7 +27,6 @@ StateWidget::StateWidget() {
 	scoreFrame_.set_label("Scores");
 	timeFrame_.set_label("Game Time");
 
-
 	timeFrame_.add(timeLabel_);
 	scoreFrame_.add(scoreLabel_);
 	gameStateFrame_.add(gameStateLabel_);
@@ -36,7 +35,7 @@ StateWidget::StateWidget() {
 	pack_start(botStates_);
 	pack_start(scoreFrame_, Gtk::PACK_EXPAND_WIDGET);
 	pack_start(timeFrame_, Gtk::PACK_EXPAND_WIDGET);
-	set_game_phase(LLSFVis::PRESTART);
+	set_game_phase(GameState::PRESTART);
 
 }
 
@@ -66,33 +65,51 @@ void StateWidget::set_time(int time) {
 	timeLabel_.set_text(seconds_to_str(time));
 }
 
-
 StateWidget::~StateWidget() {
 	// TODO Auto-generated destructor stub
 }
 
-void StateWidget::set_game_phase(GamePhase gamePhase) {
+void StateWidget::set_game_phase(GameState::GamePhase gamePhase) {
 	Glib::ustring label;
 	switch (gamePhase) {
-		case PRESTART:
-			label = "Preparation";
-			break;
-		case EXPLORE:
-			label = "Exploration";
-			break;
-		case PRODUCE:
-			label = "Production";
-			break;
-		case END:
-			label = "Game Over";
-			break;
-		case PAUSE:
-			label = "Game Paused";
-			break;
-		default:
-			break;
+	case GameState::PRESTART:
+		label = "Preparation";
+		break;
+	case GameState::EXPLORE:
+		label = "Exploration";
+		break;
+	case GameState::PRODUCE:
+		label = "Production";
+		break;
+	case GameState::END:
+		label = "Game Over";
+		break;
+	case GameState::PAUSE:
+		label = "Game Paused";
+		break;
+	default:
+		break;
 	}
 	gameStateLabel_.set_text(label);
+}
+
+void StateWidget::update_game_state(GameState& gameState) {
+	const std::list<const Robot*>& bots = gameState.getRobots();
+	std::vector<const Robot*> botsv(bots.begin(), bots.end());
+	switch (botsv.size()) {
+	case 3:
+		botStates_.setBot3(botsv.at(2));
+	case 2:
+		botStates_.setBot2(botsv.at(1));
+	case 1:
+		botStates_.setBot1(botsv.at(0));
+		break;
+	default:
+		botStates_.clear();
+	}
+	set_time(gameState.getTime());
+	set_score(gameState.getScore());
+
 }
 
 } /* namespace LLSFVis */

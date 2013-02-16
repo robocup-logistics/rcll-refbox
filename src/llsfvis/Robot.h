@@ -39,7 +39,7 @@ namespace LLSFVis {
 class Robot {
 public:
 	Robot(std::string id) :
-			id_(id) {
+			id_(id), posX_(0), posY_(0), orientation_(0), last_heard(0) {
 	}
 	;
 
@@ -79,7 +79,7 @@ public:
 		posY_ = posY;
 	}
 
-	void setPose(double posX, double posY, double orientation){
+	void setPose(double posX, double posY, double orientation) {
 		posX_ = posX;
 		posY_ = posY;
 		orientation_ = orientation;

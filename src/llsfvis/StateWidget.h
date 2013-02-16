@@ -10,16 +10,11 @@
 
 #include <gtkmm.h>
 #include "RobotStatesWidget.h"
+#include "GameState.h"
 
 namespace LLSFVis {
 
-	enum GamePhase{
-		PRESTART,
-		EXPLORE,
-		PRODUCE,
-		END,
-		PAUSE
-	};
+
 
 class StateWidget: public Gtk::Box {
 public:
@@ -29,8 +24,9 @@ public:
 	StateWidget();
 	virtual ~StateWidget();
 	void set_score(int score);
-	void set_time(int score);
-	void set_game_phase(GamePhase gamePhase);
+	void set_time(int time);
+	void set_game_phase(GameState::GamePhase gamePhase);
+	void update_game_state(GameState& gameState);
 private:
 	Gtk::Label timeLabel_;
 	Gtk::Frame timeFrame_;

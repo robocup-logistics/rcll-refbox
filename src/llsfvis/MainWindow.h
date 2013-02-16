@@ -36,8 +36,11 @@
 #define MAINWINDOW_H_
 
 #include <gtkmm.h>
-#include "PlayField.h"
+#include "PlayFieldWidget.h"
 #include "StateWidget.h"
+#include "LogWidget.h"
+#include "GameState.h"
+#include "PlayField.h"
 
 namespace LLSFVis {
 
@@ -46,16 +49,17 @@ public:
 	MainWindow();
 	virtual ~MainWindow();
 	void add_log_message(std::string msg);
-	void set_score(int score);
+	void update_game_state(GameState& gameState);
+	void set_playfield(PlayField& playField);
 private:
 	Gtk::Notebook tabs_;
 	Gtk::Grid playFieldTabGrid_;
 	Gtk::Paned loggingTabPaned_;
 
 	Gtk::AspectFrame aspectFrame_;
-	PlayField playField_;
+	PlayFieldWidget playFieldWidget_;
 	Gtk::ScrolledWindow logPreviewScrollWindow_;
-	Gtk::TextView logPreview_;
+	LogWidget logPreviewWidget_;
 
 	Gtk::Box buttonBoxPlayField_;
 	Gtk::Button playFieldButton1_;
@@ -69,13 +73,10 @@ private:
 	Gtk::Button logButton3_;
 	Gtk::Button logButton4_;
 	Gtk::ScrolledWindow logScrollWindow_;
-	Gtk::TextView logView_;
 
 	StateWidget stateWidget_;
 
-	Glib::RefPtr<Gtk::TextBuffer> logBuffer_;
-	std::string log_;
-
+	LogWidget logWidget_;
 
 };
 
