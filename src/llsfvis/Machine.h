@@ -44,10 +44,17 @@ namespace LLSFVis {
 class Machine {
 public:
 
+	typedef struct {
+		bool red_on;
+		bool yellow_on;
+		bool green_on;
+		bool yellow_blinking;
+	} SignalState;
 
-
-	Machine(double posX, double posY, double ori, std::string name, std::string type) :
-			posX_(posX), posY_(posY), orientation_(ori), name_(name), type_(type) {
+	Machine(double posX, double posY, double ori, std::string name,
+			std::string type) :
+			posX_(posX), posY_(posY), orientation_(ori), name_(name), type_(
+					type) {
 	}
 	;
 
@@ -95,12 +102,21 @@ public:
 		type_ = type;
 	}
 
+	const SignalState& getState() const {
+		return state_;
+	}
+
+	void setState(const SignalState& state) {
+		state_ = state;
+	}
+
 private:
 	double posX_;
 	double posY_;
 	double orientation_;
 	std::string name_;
 	std::string type_;
+	SignalState state_;
 };
 
 } /* namespace LLSFVis */

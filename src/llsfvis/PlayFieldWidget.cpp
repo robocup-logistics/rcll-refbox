@@ -154,36 +154,54 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 
 	draw_machine_t(cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(),
 			machine.getOrientation());
-	draw_text(cr, leftX + MACHINESIZE/10, upperY + MACHINESIZE/15,
+	draw_text(cr, leftX + MACHINESIZE / 10, upperY + MACHINESIZE / 15,
 			machine.getName());
-	draw_text(cr, leftX + MACHINESIZE/10, lowerY - 4* MACHINESIZE/15,
-				machine.getType());
+	draw_text(cr, leftX + MACHINESIZE / 10, lowerY - 4 * MACHINESIZE / 15,
+			machine.getType());
 	cr->stroke();
 
-	draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5, upperY, 1,
-			0, 0);
-	draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-			upperY + MACHINESIZE / 5, 1, 1, 0);
-	draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-			upperY + 2 * MACHINESIZE / 5, 0, 1, 0);
+	const Machine::SignalState& state = machine.getState();
+	if (state.red_on) {
+		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+				upperY, 1, 0, 0);
+	} else {
+		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+				upperY, 0.8, 0, 0);
+	}
+	if (state.yellow_on) {
+		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+				upperY + MACHINESIZE / 5, 1, 1, 0);
+	} else {
+		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+				upperY + MACHINESIZE / 5, 0.9, 0.9, 0);
+	}
+	if (state.green_on) {
+		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+				upperY + 2 * MACHINESIZE / 5, 0, 1, 0);
+	} else {
+		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+				upperY + 2 * MACHINESIZE / 5, 0, 0.8, 0);
+	}
+
 	cr->restore();
 }
 
-void PlayFieldWidget::draw_machine_light(const Cairo::RefPtr<Cairo::Context>& cr,
-		double size, double x, double y, double r, double g, double b){
+void PlayFieldWidget::draw_machine_light(
+		const Cairo::RefPtr<Cairo::Context>& cr, double size, double x,
+		double y, double r, double g, double b) {
 	//adjustment, so light is in the box
-	x-=FIELDLINESSIZE/2;
-	y+=FIELDLINESSIZE/2;
+	x -= FIELDLINESSIZE / 2;
+	y += FIELDLINESSIZE / 2;
 
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
-	cr->move_to(x,y);
-	cr->line_to(x+size,y);
-	cr->line_to(x+size,y+size);
-	cr->line_to(x,y+size);
-	cr->line_to(x,y);
+	cr->move_to(x, y);
+	cr->line_to(x + size, y);
+	cr->line_to(x + size, y + size);
+	cr->line_to(x, y + size);
+	cr->line_to(x, y);
 	cr->stroke_preserve();
-	cr->set_source_rgb(r,g,b);
+	cr->set_source_rgb(r, g, b);
 	cr->fill();
 	cr->restore();
 }
