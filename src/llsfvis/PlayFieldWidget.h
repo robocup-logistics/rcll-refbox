@@ -67,6 +67,8 @@ private:
 	void draw_puck(const Cairo::RefPtr<Cairo::Context>& cr, const Puck& puck);
 	void draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr, double size,
 			double wPos, double hPos, double orientation);
+	void draw_machine_light(const Cairo::RefPtr<Cairo::Context>& cr,
+			double size, double x, double y, double r, double g, double b);
 	void draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x, double y,
 			std::string text);
 

@@ -139,7 +139,7 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->save();
 	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
 	cr->set_source_rgb(0, 0, 0);
-	cr->set_line_width(0.01); //todo move to conffile
+	cr->set_line_width(FIELDLINESSIZE);
 
 	double leftX = machine.getPosX() - MACHINESIZE / 2;
 	double rightX = machine.getPosX() + MACHINESIZE / 2;
@@ -154,11 +154,37 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 
 	draw_machine_t(cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(),
 			machine.getOrientation());
-	draw_text(cr, machine.getPosX() + MACHINESIZE / 2 + 0.10,
-			machine.getPosY() + 0.10,
-			machine.getName() + "\n" + machine.getType());
+	draw_text(cr, leftX + MACHINESIZE/10, upperY + MACHINESIZE/15,
+			machine.getName());
+	draw_text(cr, leftX + MACHINESIZE/10, lowerY - 4* MACHINESIZE/15,
+				machine.getType());
 	cr->stroke();
 
+	draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5, upperY, 1,
+			0, 0);
+	draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+			upperY + MACHINESIZE / 5, 1, 1, 0);
+	draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
+			upperY + 2 * MACHINESIZE / 5, 0, 1, 0);
+	cr->restore();
+}
+
+void PlayFieldWidget::draw_machine_light(const Cairo::RefPtr<Cairo::Context>& cr,
+		double size, double x, double y, double r, double g, double b){
+	//adjustment, so light is in the box
+	x-=FIELDLINESSIZE/2;
+	y+=FIELDLINESSIZE/2;
+
+	cr->save();
+	cr->set_line_width(FIELDLINESSIZE);
+	cr->move_to(x,y);
+	cr->line_to(x+size,y);
+	cr->line_to(x+size,y+size);
+	cr->line_to(x,y+size);
+	cr->line_to(x,y);
+	cr->stroke_preserve();
+	cr->set_source_rgb(r,g,b);
+	cr->fill();
 	cr->restore();
 }
 
@@ -310,7 +336,7 @@ void PlayFieldWidget::draw_field_border(
 void PlayFieldWidget::update_game_state(GameState& gameState) {
 	bots_ = gameState.getRobots();
 	pucks_ = gameState.getPucks();
-	machines_=gameState.getMachines();
+	machines_ = gameState.getMachines();
 }
 
 const Machine* PlayFieldWidget::get_clicked_machine(gdouble x, gdouble y) {
