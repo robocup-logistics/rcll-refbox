@@ -101,8 +101,9 @@ void PlayFieldWidget::add_robot(const Robot* robot) {
 
 bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
-	cr->scale(get_allocated_height() / (FIELDSIZE + 2 * FIELDBORDERSIZE),
-			get_allocated_width() / (FIELDSIZE + 2 * FIELDBORDERSIZE));
+	cr->scale((get_allocated_height() / (FIELDSIZE + 2 * FIELDBORDERSIZE)),
+			-(get_allocated_width() / (FIELDSIZE + 2 * FIELDBORDERSIZE)));
+	cr->translate(FIELDBORDERSIZE,-1* (FIELDSIZE+FIELDBORDERSIZE));
 
 	//Blackground white
 	cr->set_source_rgb(1, 1, 1);
@@ -137,14 +138,13 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 		const Machine& machine) {
 	cr->save();
-	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
 	cr->set_source_rgb(0, 0, 0);
 	cr->set_line_width(FIELDLINESSIZE);
 
 	double leftX = machine.getPosX() - MACHINESIZE / 2;
 	double rightX = machine.getPosX() + MACHINESIZE / 2;
-	double upperY = machine.getPosY() - MACHINESIZE / 2;
-	double lowerY = machine.getPosY() + MACHINESIZE / 2;
+	double upperY = machine.getPosY() + MACHINESIZE / 2;
+	double lowerY = machine.getPosY() - MACHINESIZE / 2;
 
 	cr->move_to(leftX, upperY);
 	cr->line_to(rightX, upperY);
@@ -154,9 +154,9 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 
 	draw_machine_t(cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(),
 			machine.getOrientation());
-	draw_text(cr, leftX + MACHINESIZE / 10, upperY + MACHINESIZE / 15,
+	draw_text(cr, leftX + MACHINESIZE / 10, upperY - MACHINESIZE / 15,
 			machine.getName());
-	draw_text(cr, leftX + MACHINESIZE / 10, lowerY - 4 * MACHINESIZE / 15,
+	draw_text(cr, leftX + MACHINESIZE / 10, lowerY + 4 * MACHINESIZE / 15,
 			machine.getType());
 	cr->stroke();
 
@@ -170,17 +170,17 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	}
 	if (state.yellow_on) {
 		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY + MACHINESIZE / 5, 1, 1, 0);
+				upperY - MACHINESIZE / 5, 1, 1, 0);
 	} else {
 		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY + MACHINESIZE / 5, 0.9, 0.9, 0);
+				upperY - MACHINESIZE / 5, 0.9, 0.9, 0);
 	}
 	if (state.green_on) {
 		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY + 2 * MACHINESIZE / 5, 0, 1, 0);
+				upperY - 2 * MACHINESIZE / 5, 0, 1, 0);
 	} else {
 		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY + 2 * MACHINESIZE / 5, 0, 0.8, 0);
+				upperY - 2 * MACHINESIZE / 5, 0, 0.8, 0);
 	}
 
 	cr->restore();
@@ -191,14 +191,14 @@ void PlayFieldWidget::draw_machine_light(
 		double y, double r, double g, double b) {
 	//adjustment, so light is in the box
 	x -= FIELDLINESSIZE / 2;
-	y += FIELDLINESSIZE / 2;
+	y -= FIELDLINESSIZE / 2;
 
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
 	cr->move_to(x, y);
 	cr->line_to(x + size, y);
-	cr->line_to(x + size, y + size);
-	cr->line_to(x, y + size);
+	cr->line_to(x + size, y - size);
+	cr->line_to(x, y - size);
 	cr->line_to(x, y);
 	cr->stroke_preserve();
 	cr->set_source_rgb(r, g, b);
@@ -222,8 +222,8 @@ void PlayFieldWidget::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 		const Robot& bot) {
 	cr->save();
-	cr->translate(bot.getPosX() + FIELDBORDERSIZE,
-			bot.getPosY() + FIELDBORDERSIZE);
+	cr->translate(bot.getPosX(),
+			bot.getPosY());
 	cr->rotate(bot.getOrientation());
 	cr->set_line_width(0.01);
 	cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
@@ -253,7 +253,6 @@ void PlayFieldWidget::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
 void PlayFieldWidget::draw_starting_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
-	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
 	cr->set_line_width(FIELDLINESSIZE);
 	cr->move_to(0, FIELDSIZE / 2 - ZONEWIDTH / 2);
 	cr->line_to(ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
@@ -270,7 +269,6 @@ void PlayFieldWidget::draw_starting_zone(
 void PlayFieldWidget::draw_delivery_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
-	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
 	cr->set_line_width(FIELDLINESSIZE);
 	cr->move_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
 	cr->line_to(FIELDSIZE, FIELDSIZE / 2 - ZONEWIDTH / 2);
@@ -287,6 +285,7 @@ void PlayFieldWidget::draw_delivery_zone(
 void PlayFieldWidget::draw_text(const Cairo::RefPtr<Cairo::Context>& cr,
 		double x, double y, std::string text) {
 	cr->save();
+	cr->scale(1,-1); //Temporary flip y-axis back, otherwise text is shown head down
 	cr->set_source_rgb(0, 0, 0);
 	Pango::FontDescription font;
 
@@ -301,7 +300,7 @@ void PlayFieldWidget::draw_text(const Cairo::RefPtr<Cairo::Context>& cr,
 	//int textWidth, textHeight;
 	//layout->get_pixel_size(textWidth, textHeight);
 
-	cr->move_to(x, y);
+	cr->move_to(x, y*-1); //cope with flipped y-axis
 	layout->show_in_cairo_context(cr);
 	cr->restore();
 }
@@ -337,8 +336,6 @@ void PlayFieldWidget::set_playfield(PlayField& playField) {
 void PlayFieldWidget::draw_field_border(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
-	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
-
 	cr->set_line_width(FIELDLINESSIZE);
 	cr->set_source_rgb(0, 0, 0);
 
@@ -361,16 +358,15 @@ const Machine* PlayFieldWidget::get_clicked_machine(gdouble x, gdouble y) {
 	gdouble scaled_x = x
 			/ (get_allocated_width() / (FIELDSIZE + FIELDBORDERSIZE * 2))
 			- FIELDBORDERSIZE;
-	gdouble scaled_y = y
+	gdouble scaled_y = FIELDSIZE - (y
 			/ (get_allocated_height() / (FIELDSIZE + FIELDBORDERSIZE * 2))
-			- FIELDBORDERSIZE;
+			- FIELDBORDERSIZE);
 	for (std::list<const Machine*>::iterator it = machines_.begin();
 			it != machines_.end(); ++it) {
 		if (scaled_x >= (*it)->getPosX() - MACHINESIZE / 2
 				&& scaled_x <= (*it)->getPosX() + MACHINESIZE / 2
 				&& scaled_y >= (*it)->getPosY() - MACHINESIZE / 2
 				&& scaled_y <= (*it)->getPosY() + MACHINESIZE / 2) {
-			std::cout << "Clicked machine " << (*it)->getName() << std::endl;
 			return (*it);
 		}
 	}
