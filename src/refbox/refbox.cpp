@@ -189,7 +189,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("pb-destroy", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_destroy)));
   clips_->add_function("pb-ref", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_ref)));
   clips_->add_function("pb-set-field", sigc::slot<void, void *, std::string, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_set_field)));
-  clips_->add_function("pb-send", sigc::slot<void, void *, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_send)));
+  clips_->add_function("pb-send", sigc::slot<void, long int, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_send)));
   clips_->add_function("pb-broadcast", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_broadcast)));
   clips_->add_function("pb-disconnect-client", sigc::slot<void, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_disconnect)));
   clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
@@ -488,7 +488,7 @@ LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Valu
 
 
 void
-LLSFRefBox::clips_pb_send(void *msgptr, long int client_id)
+LLSFRefBox::clips_pb_send(long int client_id, void *msgptr)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
