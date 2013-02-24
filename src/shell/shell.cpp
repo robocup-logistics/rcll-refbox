@@ -1,0 +1,440 @@
+
+/***************************************************************************
+ *  shell.h - LLSF RefBox shell
+ *
+ *  Created: Fri Feb 15 10:22:41 2013
+ *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ ****************************************************************************/
+
+/*  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in
+ *   the documentation and/or other materials provided with the
+ *   distribution.
+ * - Neither the name of the authors nor the names of its contributors
+ *   may be used to endorse or promote products derived from this
+ *   software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
+
+#include "shell.h"
+#include "machine.h"
+#include "robot.h"
+
+#include <protobuf_comm/client.h>
+
+#include <msgs/GameState.pb.h>
+#include <msgs/RobotInfo.pb.h>
+#include <msgs/MachineSpec.pb.h>
+
+#include <cursesp.h>
+#include <cursesf.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
+
+#include <cstring>
+#include <unistd.h>
+
+// defined in miliseconds
+#define TIMER_INTERVAL 500
+#define RECONNECT_TIMER_INTERVAL 2000
+#define BLINK_TIMER_INTERVAL 250
+
+using namespace protobuf_comm;
+
+namespace llsfrb_shell {
+#if 0 /* just to make Emacs auto-indent happy */
+}
+#endif
+
+LLSFRefBoxShell::LLSFRefBoxShell(int argc, char **argv)
+  : NCursesApplication(/*wantColors*/ TRUE),
+    error_(NULL), panel_(NULL), timer_(io_service_), reconnect_timer_(io_service_),
+    try_reconnect_(true), blink_timer_(io_service_)
+{
+  client = new ProtobufStreamClient();
+}
+
+
+LLSFRefBoxShell::~LLSFRefBoxShell()
+{
+  io_service_.stop();
+  try_reconnect_ = false;
+      
+  timer_.cancel();
+  reconnect_timer_.cancel();
+  blink_timer_.cancel();
+
+  delete client;
+  delete panel_;
+
+  std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
+  for (m = machines_.begin(); m != machines_.end(); ++m) {
+    delete m->second;
+  }
+  machines_.clear();
+
+  for (size_t i = 0; i < robots_.size(); ++i) {
+    delete robots_[i];
+  }
+  robots_.clear();
+
+  delete rb_log_;
+  delete game_log_;
+
+  delete p_state_;
+  delete p_time_;
+  delete p_points_;
+
+  // Delete all global objects allocated by libprotobuf
+  google::protobuf::ShutdownProtobufLibrary();
+}
+
+void
+LLSFRefBoxShell::title()
+{
+  const char * const titleText = "LLSF RefBox Shell";
+  const int len = ::strlen(titleText);
+
+  if (titleWindow) {
+    titleWindow->bkgd(screen_titles());
+    titleWindow->addstr(0, (titleWindow->cols() - len)/2, titleText);
+    titleWindow->noutrefresh();
+  }
+}
+
+
+const char *
+LLSFRefBoxShell::error() const
+{
+  return error_;
+}
+
+
+/** Handle operating system signal.
+ * @param error error code
+ * @param signum signal number
+ */
+void
+LLSFRefBoxShell::handle_signal(const boost::system::error_code& error, int signum)
+{
+  timer_.cancel();
+  reconnect_timer_.cancel();
+  blink_timer_.cancel();
+  io_service_.stop();
+}
+
+
+
+/** Start the timer for another run. */
+void
+LLSFRefBoxShell::start_timers()
+{
+  timer_.expires_from_now(boost::posix_time::milliseconds(TIMER_INTERVAL));
+  timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_timer, this,
+				boost::asio::placeholders::error));
+
+  blink_timer_.expires_from_now(boost::posix_time::milliseconds(BLINK_TIMER_INTERVAL));
+  blink_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_blink_timer, this,
+				      boost::asio::placeholders::error));
+}
+
+/** Handle timer event.
+ * @param error error code
+ */
+void
+LLSFRefBoxShell::handle_timer(const boost::system::error_code& error)
+{
+  if (! error) {
+    for (size_t i = 0; i < robots_.size(); ++i) {
+      robots_[i]->refresh();
+    }
+
+    timer_.expires_at(timer_.expires_at()
+		      + boost::posix_time::milliseconds(TIMER_INTERVAL));
+    timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_timer, this,
+				  boost::asio::placeholders::error));
+  }
+}
+
+/** Handle timer event.
+ * @param error error code
+ */
+void
+LLSFRefBoxShell::handle_blink_timer(const boost::system::error_code& error)
+{
+  if (! error) {
+
+    std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
+    for (m = machines_.begin(); m != machines_.end(); ++m) {
+      m->second->flip_blink_states();
+    }
+
+    blink_timer_.expires_at(blink_timer_.expires_at()
+			    + boost::posix_time::milliseconds(BLINK_TIMER_INTERVAL));
+    blink_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_blink_timer, this,
+					boost::asio::placeholders::error));
+  }
+}
+
+
+/** Handle reconnect timer event.
+ * @param error error code
+ */
+void
+LLSFRefBoxShell::handle_reconnect_timer(const boost::system::error_code& error)
+{
+  if (! error) {
+    client->async_connect("localhost", 4444);
+  }
+}
+
+
+void
+LLSFRefBoxShell::client_connected()
+{
+  p_state_->clear();
+  p_state_->addstr("CONNECTED");
+}
+
+void
+LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
+{
+  p_state_->clear();
+  p_state_->addstr("DISCONNECTED");
+  //p_state_->addstr(error.message().c_str());
+
+  std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
+  for (m = machines_.begin(); m != machines_.end(); ++m) {
+    m->second->reset();
+  }
+
+  if (try_reconnect_) {
+    reconnect_timer_.expires_from_now(boost::posix_time::milliseconds(RECONNECT_TIMER_INTERVAL));
+    reconnect_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_reconnect_timer, this,
+					    boost::asio::placeholders::error));
+  }
+
+}
+
+void
+LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
+			    std::shared_ptr<google::protobuf::Message> msg)
+{
+  std::shared_ptr<llsf_msgs::GameState> g;
+  if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
+    p_state_->clear();
+    p_state_->addstr(llsf_msgs::GameState::State_Name(g->state()).c_str());
+
+    struct timeval now;
+    now.tv_sec  = g->timestamp().sec();
+    now.tv_usec = g->timestamp().nsec() / 1000;
+    struct ::tm now_s;
+    localtime_r(&now.tv_sec, &now_s);
+    p_time_->clear();
+    p_time_->printw("%02d:%02d:%02d.%06ld", now_s.tm_hour,
+		    now_s.tm_min, now_s.tm_sec, (long)now.tv_usec);
+  }
+
+  std::shared_ptr<llsf_msgs::RobotInfo> r;
+  if ((r = std::dynamic_pointer_cast<llsf_msgs::RobotInfo>(msg))) {
+    for (int i = 0; i < r->robots_size(); ++i) {
+      // more robots than we can show
+      if ((size_t)i >= robots_.size()) break;
+
+      const llsf_msgs::Robot &robot = r->robots(i);
+      robots_[i]->set_name(robot.name());
+      robots_[i]->set_team(robot.team());
+      boost::posix_time::ptime
+	last_seen(boost::posix_time::from_time_t(robot.last_seen().sec()));
+      last_seen += boost::posix_time::nanoseconds(robot.last_seen().nsec());
+      robots_[i]->set_last_seen(last_seen);
+      robots_[i]->refresh();
+    }
+  }
+
+  std::shared_ptr<llsf_msgs::MachineSpecs> mspecs;
+  if ((mspecs = std::dynamic_pointer_cast<llsf_msgs::MachineSpecs>(msg))) {
+    for (int i = 0; i < mspecs->machines_size(); ++i) {
+      std::map<std::string, LLSFRefBoxShellMachine *>::iterator mpanel;
+      const llsf_msgs::MachineSpec &mspec = mspecs->machines(i);
+      //rb_log_->printw("Adding %s\n", mspec.name().c_str());
+      if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
+	mpanel->second->set_type(mspec.type());
+	std::vector<llsf_msgs::PuckType> inputs(mspec.inputs_size());
+	for (int j = 0; j < mspec.inputs_size(); ++j)  inputs[j] = mspec.inputs(j);
+	mpanel->second->set_inputs(inputs);
+	std::vector<llsf_msgs::PuckType> lw(mspec.loaded_with_size());
+	for (int j = 0; j < mspec.loaded_with_size(); ++j)  lw[j] = mspec.loaded_with(j);
+	mpanel->second->set_loaded_with(lw);
+	std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights;
+	for (int j = 0; j < mspec.lights_size(); ++j) {
+	  const llsf_msgs::LightSpec &lspec = mspec.lights(j);
+	  lights[lspec.color()] = lspec.state();
+	}
+	mpanel->second->set_lights(lights);
+	if (mspec.has_puck_under_rfid()) {
+	  mpanel->second->set_puck_under_rfid(true, mspec.puck_under_rfid());
+	} else {
+	  mpanel->second->set_puck_under_rfid(false);
+	}
+	mpanel->second->refresh();
+      }
+    }
+  }
+}
+
+int
+LLSFRefBoxShell::run()
+{
+  panel_ = new NCursesPanel();
+
+  if (panel_->lines() < 30) {
+    delete panel_;
+    panel_ = NULL;
+    error_ = "A minimum of 30 lines is required in the terminal";
+    return -1;
+  }
+
+  curs_set(0); // invisible cursor
+  use_default_colors();
+
+  panel_->bkgd(' '|COLOR_PAIR(0));
+  panel_->frame();
+  panel_->vline(1,                  panel_->width() - 26, panel_->height()-2);
+  panel_->addch(0,                  panel_->width() - 26, ACS_TTEE);
+  panel_->addch(panel_->height()-1, panel_->width() - 26, ACS_BTEE);
+
+  panel_->hline(panel_->height()-5, panel_->width() - 25, 24);
+  panel_->addch(panel_->height()-5, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(panel_->height()-5, panel_->width() -  1, ACS_RTEE);
+
+  panel_->hline(17, panel_->width() - 25, 24);
+  panel_->addch(17, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(17, panel_->width() -  1, ACS_RTEE);
+
+  int rb_log_lines   = panel_->maxy() / 3 * 2 - 2;
+  int game_log_lines = panel_->maxy() - rb_log_lines - 2;
+
+  panel_->hline(rb_log_lines + 1, 1, panel_->width() - 26);
+  panel_->addch(rb_log_lines + 1, 0, ACS_LTEE);
+  panel_->addch(rb_log_lines + 1, panel_->width() - 26, ACS_RTEE);
+
+  panel_->attron(A_BOLD);
+  panel_->addstr(0, panel_->width() - 17, "Machines");
+  panel_->addstr(17, panel_->width() - 16, "Robots");
+  panel_->addstr(panel_->height()-5, panel_->width() - 15, "Game");
+  panel_->addstr(0, (panel_->width() - 26) / 2 - 4, "RefBox Log");
+  panel_->addstr(rb_log_lines + 1, (panel_->width() - 26) / 2 - 3, "Game Log");
+  panel_->attroff(A_BOLD);
+
+  panel_->attron(A_BOLD);
+  panel_->addstr(panel_->height()-4, panel_->width() - 24, "State:");
+  panel_->addstr(panel_->height()-3, panel_->width() - 24, "Time:");
+  panel_->addstr(panel_->height()-2, panel_->width() - 24, "Points:");
+  panel_->attroff(A_BOLD);
+
+  const int mx = panel_->width() - 24;
+  machines_["M1"]   = new LLSFRefBoxShellMachine("M1",  "?",  1, mx);
+  machines_["M2"]   = new LLSFRefBoxShellMachine("M2",  "?",  2, mx);
+  machines_["M3"]   = new LLSFRefBoxShellMachine("M3",  "?",  3, mx);
+  machines_["M4"]   = new LLSFRefBoxShellMachine("M4",  "?",  4, mx);
+  machines_["M5"]   = new LLSFRefBoxShellMachine("M5",  "?",  5, mx);
+  machines_["M6"]   = new LLSFRefBoxShellMachine("M6",  "?",  6, mx);
+  machines_["M7"]   = new LLSFRefBoxShellMachine("M7",  "?",  7, mx);
+  machines_["M8"]   = new LLSFRefBoxShellMachine("M8",  "?",  8, mx);
+  machines_["M9"]   = new LLSFRefBoxShellMachine("M9",  "?",  9, mx);
+  machines_["M10"]  = new LLSFRefBoxShellMachine("M10", "?", 10, mx);
+  machines_["D1"]   = new LLSFRefBoxShellMachine("D1",   "", 11, mx);
+  machines_["D2"]   = new LLSFRefBoxShellMachine("D2",   "", 12, mx);
+  machines_["D3"]   = new LLSFRefBoxShellMachine("D3",   "", 13, mx);
+  machines_["TST"]  = new LLSFRefBoxShellMachine("TST",  "", 14, mx);
+  machines_["R1"]   = new LLSFRefBoxShellMachine("R1",   "", 15, mx);
+  machines_["R2"]   = new LLSFRefBoxShellMachine("R2",   "", 16, mx);
+
+  std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
+  for (m = machines_.begin(); m != machines_.end(); ++m) {
+    m->second->refresh();
+  }
+
+  robots_.resize(3, NULL);
+  for (size_t i = 0; i < robots_.size(); ++i) {
+    robots_[i] = new LLSFRefBoxShellRobot(18 + 2 * i, panel_->width() - 25);
+    robots_[i]->refresh();
+  }
+
+  panel_->refresh();
+
+  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28,
+			     1, 1);
+  rb_log_->scrollok(TRUE);
+
+  game_log_ = new NCursesPanel(game_log_lines,  panel_->width() - 28,
+			       rb_log_lines + 2, 1);
+  game_log_->scrollok(TRUE);
+
+
+  p_state_  = new NCursesPanel(1, 15, panel_->height()-4,  panel_->width() - 16);
+  p_time_   = new NCursesPanel(1, 15, panel_->height()-3,  panel_->width() - 16);
+  p_points_ = new NCursesPanel(1, 15, panel_->height()-2,  panel_->width() - 16);
+
+  p_state_->addstr("DISCONNECTED");
+  p_points_->addstr("0");
+
+  /*
+  boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+  robots_[0]->set_name("Robot 1");
+  robots_[0]->set_team("Carologistics");
+  robots_[0]->set_last_seen(now);
+  robots_[0]->refresh();
+  */
+
+  MessageRegister & message_register = client->message_register();
+  message_register.add_message_type<llsf_msgs::GameState>();
+  message_register.add_message_type<llsf_msgs::RobotInfo>();
+  message_register.add_message_type<llsf_msgs::MachineSpecs>();
+
+  client->signal_connected().connect(boost::bind(&LLSFRefBoxShell::client_connected, this));
+  client->signal_disconnected().connect(boost::bind(&LLSFRefBoxShell::client_disconnected,
+						    this, boost::asio::placeholders::error));
+  client->signal_received().connect(boost::bind(&LLSFRefBoxShell::client_msg, this,
+						_1, _2, _3));
+  client->async_connect("localhost", 4444);
+
+  // Construct a signal set registered for process termination.
+  boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
+
+  // Start an asynchronous wait for one of the signals to occur.
+  signals.async_wait(boost::bind(&LLSFRefBoxShell::handle_signal, this,
+				 boost::asio::placeholders::error,
+				 boost::asio::placeholders::signal_number));
+
+  start_timers();
+  io_service_.run();
+
+  return 0;
+}
+
+
+} // end of namespace llsfrb_shell
+
