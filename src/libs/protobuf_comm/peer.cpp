@@ -37,6 +37,7 @@
 #include <protobuf_comm/peer.h>
 
 #include <boost/lexical_cast.hpp>
+#include <ifaddrs.h>
 
 using namespace boost::asio;
 using namespace boost::system;
@@ -61,10 +62,14 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port))
 {
+  filter_self_  = true;
+
   in_data_size_ = max_packet_length;
   in_data_ = malloc(in_data_size_);
 
   socket_.set_option(socket_base::broadcast(true));
+  socket_.set_option(socket_base::reuse_address(true));
+  determine_local_endpoints();
 
   outbound_active_ = true;
   ip::udp::resolver::query query(address, boost::lexical_cast<std::string>(port));
@@ -92,11 +97,14 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port))
 {
+  filter_self_  = true;
+
   in_data_size_ = max_packet_length;
   in_data_ = malloc(in_data_size_);
 
   socket_.set_option(socket_base::broadcast(true));
   socket_.set_option(socket_base::reuse_address(true));
+  determine_local_endpoints();
 
   outbound_active_ = true;
   ip::udp::resolver::query query(address, boost::lexical_cast<std::string>(send_to_port));
@@ -118,6 +126,37 @@ ProtobufBroadcastPeer::~ProtobufBroadcastPeer()
     asio_thread_.join();
   }
   free(in_data_);
+}
+
+
+void
+ProtobufBroadcastPeer::determine_local_endpoints()
+{
+  struct ifaddrs *ifap;
+  if (getifaddrs(&ifap) == 0){
+    for (struct ifaddrs *iter = ifap; iter != NULL; iter = iter->ifa_next){
+      if (iter->ifa_addr == NULL) continue;
+      if (iter->ifa_addr->sa_family == AF_INET) {	
+	boost::asio::ip::address_v4
+	  addr(ntohl(reinterpret_cast<sockaddr_in*>(iter->ifa_addr)->sin_addr.s_addr));
+
+	local_endpoints_.push_back(
+	  boost::asio::ip::udp::endpoint(addr, socket_.local_endpoint().port()));
+      }      
+    }
+    freeifaddrs(ifap);
+  }
+  local_endpoints_.sort();
+}
+
+
+/** Set if to filter out own messages.
+ * @param filter true to filter out own messages, false to receive them
+ */
+void
+ProtobufBroadcastPeer::set_filter_self(bool filter)
+{
+  filter_self_ = filter;
 }
 
 
@@ -156,13 +195,23 @@ ProtobufBroadcastPeer::handle_recv(const boost::system::error_code& error,
     size_t to_read = ntohl(frame_header->payload_size);
 
     if (bytes_rcvd == (sizeof(frame_header_t) + to_read)) {
-      uint16_t comp_id   = ntohs(frame_header->component_id);
-      uint16_t msg_type  = ntohs(frame_header->msg_type);
-      void *msg_data = (char *)in_data_ + sizeof(frame_header_t);
-      std::shared_ptr<google::protobuf::Message> m =
-	message_register_.deserialize(*frame_header, msg_data);
 
-      sig_rcvd_(in_endpoint_, comp_id, msg_type, m);
+      if (! filter_self_ ||
+	  ! std::binary_search(local_endpoints_.begin(), local_endpoints_.end(), in_endpoint_))
+      {
+	uint16_t comp_id   = ntohs(frame_header->component_id);
+	uint16_t msg_type  = ntohs(frame_header->msg_type);
+	void *msg_data = (char *)in_data_ + sizeof(frame_header_t);
+	try {
+	  std::shared_ptr<google::protobuf::Message> m =
+	    message_register_.deserialize(*frame_header, msg_data);
+
+	  sig_rcvd_(in_endpoint_, comp_id, msg_type, m);
+	} catch (std::runtime_error &e) {
+	  printf("Failed to deserialize: %s\n", e.what());
+	  sig_error_(errc::make_error_code(errc::invalid_argument));
+	}
+      }
     } else {
       sig_error_(errc::make_error_code(errc::illegal_byte_sequence));
     }

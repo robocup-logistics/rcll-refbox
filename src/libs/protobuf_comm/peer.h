@@ -64,6 +64,8 @@ class ProtobufBroadcastPeer
 			unsigned short recv_on_port);
   ~ProtobufBroadcastPeer();
 
+  void set_filter_self(bool filter);
+
   void send(uint16_t component_id, uint16_t msg_type,
 	    google::protobuf::Message &m);
   void send(uint16_t component_id, uint16_t msg_type,
@@ -91,6 +93,7 @@ class ProtobufBroadcastPeer
 
 
  private: // methods
+  void determine_local_endpoints();
   void run_asio();
   void start_send();
   void start_recv();
@@ -104,6 +107,8 @@ class ProtobufBroadcastPeer
   boost::asio::io_service         io_service_;
   boost::asio::ip::udp::resolver  resolver_;
   boost::asio::ip::udp::socket    socket_;
+
+  std::list<boost::asio::ip::udp::endpoint>  local_endpoints_;
 
   boost::signals2::signal<void (boost::asio::ip::udp::endpoint &, uint16_t, uint16_t,
 				std::shared_ptr<google::protobuf::Message>)> sig_rcvd_;
@@ -119,6 +124,8 @@ class ProtobufBroadcastPeer
 
   void *         in_data_;
   size_t         in_data_size_;
+
+  bool           filter_self_;
 
   std::thread asio_thread_;
   MessageRegister message_register_;
