@@ -37,7 +37,7 @@
 (deftemplate puck
   (slot index (type INTEGER))
   (slot id (type INTEGER))
-  (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 JUNK CONSUMED) (default S0))
+  (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 CONSUMED) (default S0))
 )
 
 (deftemplate robot

@@ -121,7 +121,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE))
-  ?pf <- (puck (id ?id) (state JUNK|CONSUMED))
+  ?pf <- (puck (id ?id) (state CONSUMED))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
 	  (proc-time ?*RECYCLE-PROC-TIME*))
@@ -132,7 +132,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE) (puck-id 0))
-  ?pf <- (puck (id ?id) (state ?ps&~JUNK&~CONSUMED))
+  ?pf <- (puck (id ?id) (state ?ps&~CONSUMED))
   =>
   (modify ?mf (puck-id ?id) (state INVALID))
   (sps-set-signal (str-cat ?m) "GREEN" "OFF")
@@ -143,7 +143,7 @@
   (time $?now)
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state PROCESSING) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
-  ?pf <- (puck (id ?id) (state ?ps&JUNK|CONSUMED))
+  ?pf <- (puck (id ?id) (state ?ps&CONSUMED))
   =>
   (printout t "Recycling done @ " ?m ": " ?id " (" ?ps " -> S0)" crlf)
   (modify ?mf (state IDLE) (productions (+ ?p 1)))
@@ -165,7 +165,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state JUNK|CONSUMED))
+  ?pf <- (puck (id ?id) (state CONSUMED))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING))
   (sps-set-signal (str-cat ?m) "GREEN" "OFF")
