@@ -42,6 +42,7 @@
 
 #include <msgs/BeaconSignal.pb.h>
 #include <msgs/GameState.pb.h>
+#include <msgs/RobotInfo.pb.h>
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
@@ -171,6 +172,8 @@ LLSFRefBox::setup_protobuf_comm()
   MessageRegister &mr_server = pbc_server_->message_register();
   mr_server.add_message_type<llsf_msgs::BeaconSignal>();
   mr_server.add_message_type<llsf_msgs::GameState>();
+  mr_server.add_message_type<llsf_msgs::RobotInfo>();
+  mr_server.add_message_type<llsf_msgs::Robot>(9999, 1);
 
   MessageRegister &mr_peer = pbc_peer_->message_register();
   mr_peer.add_message_type<llsf_msgs::BeaconSignal>();

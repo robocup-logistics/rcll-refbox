@@ -101,3 +101,29 @@
   (pb-destroy ?gamestate)
 )
 
+(defrule net-send-RobotInfo
+  (time $?now)
+  (network-client (id ?client-id))
+  ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?p (pb-create "llsf_msgs.RobotInfo"))
+
+  (do-for-all-facts
+    ((?robot robot)) TRUE
+
+    (bind ?r (pb-create "llsf_msgs.Robot"))
+    (bind ?r-time (pb-field-value ?r "last_seen"))
+    (if (eq (type ?r-time) EXTERNAL-ADDRESS) then 
+      (pb-set-field ?r-time "sec" (nth$ 1 ?robot:last-seen))
+      (pb-set-field ?r-time "nsec" (* (nth$ 2 ?robot:last-seen) 1000))
+      (pb-set-field ?r "last_seen" ?r-time) ; destroys ?r-time!
+    )
+    (pb-set-field ?r "name" ?robot:name)
+    (pb-set-field ?r "team" ?robot:team)
+    (pb-add-list ?p "robots" ?r) ; destroys ?r
+  )
+
+  (pb-send ?client-id ?p)
+  (pb-destroy ?p)
+)
