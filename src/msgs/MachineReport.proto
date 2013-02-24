@@ -1,5 +1,5 @@
 
-package llsfrb_msgs;
+package llsf_msgs;
 
 import "MachineSpec.proto";
 

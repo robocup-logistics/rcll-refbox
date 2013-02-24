@@ -1,4 +1,4 @@
-package llsfrb_msgs;
+package llsf_msgs;
 
 message Order {
   enum ProductType {

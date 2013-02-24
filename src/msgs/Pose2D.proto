@@ -1,7 +1,7 @@
 /***************************************************************************
- *  base_header.h - Basic framing header or each message
+ *  Pose2D.proto - 2D Position on the playing field
  *
- *  Created: Mon Jan 21 12:05:03 2013
+ *  Created: Fri Feb 22 11:19:32 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
@@ -37,20 +37,10 @@ package llsf_msgs;
 
 import "Time.proto";
 
-message GameState {
-  enum State {
-    STATE_PRESTART = 0;
-    STATE_RUN = 1;
-    STATE_PAUSE = 2;
-    STATE_END = 3;
-  }
+message Pose2D {
+  required Time   timestamp = 1;
 
-  required uint64 ts_sec = 1;
-  required uint64 ts_nsec = 2;
-
-  required State state = 3;
-
-  optional uint32 points = 5;
-
-  // possible later: robot penalties
+  required float  x = 2;
+  required float  y = 3;
+  required float  ori = 4;
 }

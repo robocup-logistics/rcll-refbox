@@ -1,8 +1,7 @@
 
-package llsfrb_msgs;
+package llsf_msgs;
 
-message Pose2D {
-};
+import "Pose2D.proto";
 
 message SignalAssignment {
   required string type = 1;
