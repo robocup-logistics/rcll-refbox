@@ -102,9 +102,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     sps_ = NULL;
   }
 
-  setup_protobuf_comm();
-
   setup_clips();
+
+  setup_protobuf_comm();
 }
 
 /** Destructor. */
