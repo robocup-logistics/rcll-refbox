@@ -67,9 +67,9 @@ ProtobufStreamClient::ProtobufStreamClient()
 /** Destructor. */
 ProtobufStreamClient::~ProtobufStreamClient()
 {
+  disconnect();
+  io_service_.stop();
   if (asio_thread_.joinable()) {
-    disconnect();
-    io_service_.stop();
     asio_thread_.join();
   }
   free(in_data_);
@@ -129,7 +129,7 @@ ProtobufStreamClient::handle_resolve(const boost::system::error_code& err,
 			       boost::bind(&ProtobufStreamClient::handle_connect, this,
 					   boost::asio::placeholders::error));
   } else {
-    disconnect();
+    disconnect_nosig();
     sig_disconnected_(err);
   }
 }
@@ -142,7 +142,7 @@ ProtobufStreamClient::handle_connect(const boost::system::error_code &err)
     start_recv();
     sig_connected_();
   } else {
-    disconnect();
+    disconnect_nosig();
     sig_disconnected_(err);
   }
 }
@@ -186,6 +186,7 @@ ProtobufStreamClient::handle_read_header(const boost::system::error_code& error)
 	in_data_size_ = to_read;
 	in_data_ = new_data;
       } else {
+	disconnect_nosig();
 	sig_disconnected_(errc::make_error_code(errc::not_enough_memory));
       }
     }
@@ -194,6 +195,9 @@ ProtobufStreamClient::handle_read_header(const boost::system::error_code& error)
 			    boost::asio::buffer(in_data_, to_read),
 			    boost::bind(&ProtobufStreamClient::handle_read_message,
 					this, boost::asio::placeholders::error));
+  } else {
+    disconnect_nosig();
+    sig_disconnected_(error);
   }
 }
 
@@ -201,13 +205,20 @@ void
 ProtobufStreamClient::handle_read_message(const boost::system::error_code& error)
 {
   if (! error) {
-    std::shared_ptr<google::protobuf::Message> m =
-      message_register_.deserialize(in_frame_header_, in_data_);
-    uint16_t comp_id   = ntohs(in_frame_header_.component_id);
-    uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
-    sig_rcvd_(comp_id, msg_type, m);
+    try {
+      std::shared_ptr<google::protobuf::Message> m =
+	message_register_.deserialize(in_frame_header_, in_data_);
+      uint16_t comp_id   = ntohs(in_frame_header_.component_id);
+      uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
+      sig_rcvd_(comp_id, msg_type, m);
+    } catch (std::runtime_error &e) {
+      printf("Deserializing of message failed: %s\n", e.what());
+    }
 
     start_recv();
+  } else {
+    disconnect_nosig();
+    sig_disconnected_(error);
   }
 }
 
@@ -232,6 +243,7 @@ ProtobufStreamClient::handle_write(const boost::system::error_code& error,
       outbound_active_ = false;
     }
   } else {
+    disconnect_nosig();
     sig_disconnected_(error);
   }
 }
