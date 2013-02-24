@@ -32,13 +32,21 @@ OBJS_llsf_show_peers = llsf-show-peers.o
 LIBS_llsf_puck = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_sps
 OBJS_llsf_puck = llsf-puck.o
 
+LIBS_llsf_fake_robot = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+OBJS_llsf_fake_robot = llsf-fake-robot.o
+
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
-  OBJS_all += $(OBJS_llsf_show_peers)
-  BINS_all += $(BINDIR)/llsf-show-peers
+  OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot)
+  BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot
 
   CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) \
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS_llsf_show_peers += $(LDFLAGS_PROTOBUF) \
+	     		     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
+  CFLAGS_llsf_fake_robot  += $(CFLAGS_PROTOBUF) \
+	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS_llsf_fake_robot += $(LDFLAGS_PROTOBUF) \
 	     		     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
 else
