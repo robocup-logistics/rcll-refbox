@@ -11,13 +11,27 @@
   (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TST R1 R2))
   (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
   (multislot loaded-with (type SYMBOL) (allowed-symbols S0 S1 S2) (default))
+  (multislot actual-lights (type SYMBOL)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
+	     (default) (cardinality 0 3))
+  (multislot desired-lights (type SYMBOL)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
+	     (default GREEN-ON) (cardinality 0 3))
   (slot junk (type INTEGER) (default 0))
   (slot productions (type INTEGER) (default 0))
-  (slot state (type SYMBOL) (allowed-values REQINIT IDLE PROCESSING WAITING DOWN INVALID)
-	(default REQINIT))
+  (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID)
+	(default IDLE))
   (slot proc-time (type INTEGER))
   (multislot proc-start (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
   (slot puck-id (type INTEGER) (default 0))
+)
+
+(deftemplate machine-spec
+  (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
+  (multislot inputs (type SYMBOL) (allowed-symbols S0 S1 S2))
+  (slot output (type SYMBOL) (allowed-symbols NONE S0 S1 S2 P1 P2 P3))
+  (slot proc-time-min (type INTEGER))
+  (slot proc-time-max (type INTEGER))
 )
 
 (deftemplate puck
@@ -93,4 +107,15 @@
   (puck (index 18) (id 18))
   (puck (index 19) (id 19))
   (puck (index 20) (id 20))
+)
+
+(deffacts machine-specs
+  (machine-spec (mtype T1) (inputs S0) (output S1) (proc-time-min 4) (proc-time-max 4)) ; 3 8
+  (machine-spec (mtype T2) (inputs S0 S1) (output S2)
+		(proc-time-min 4) (proc-time-max 4)) ; 15 25
+  (machine-spec (mtype T3) (inputs S0 S1 S2) (output P1)
+		(proc-time-min 4) (proc-time-max 4)) ; 40 60
+  (machine-spec (mtype T4) (inputs S0 S1 S2) (output P2) (proc-time-min 4) (proc-time-max 4))
+  (machine-spec (mtype T5) (inputs S0) (output P3)
+		(proc-time-min 4) (proc-time-max 4)) ; 40 60
 )

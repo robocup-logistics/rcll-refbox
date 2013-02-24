@@ -8,18 +8,7 @@
 ;---------------------------------------------------------------------------
 
 (defglobal
-  ?*BEACON_PERIOD* = 2.0
-  ?*T1-PROC-TIME-MIN* = 2 ;  3
-  ?*T1-PROC-TIME-MAX* = 2 ;  8
-  ?*T2-PROC-TIME-MIN* = 4 ; 15
-  ?*T2-PROC-TIME-MAX* = 4 ; 25
-  ?*T3-PROC-TIME-MIN* = 4 ; 40
-  ?*T3-PROC-TIME-MAX* = 4 ; 60
-  ?*T4-PROC-TIME-MIN* = 4 ; 40
-  ?*T4-PROC-TIME-MAX* = 4 ; 60
-  ?*T5-PROC-TIME-MIN* = 4 ; 40
-  ?*T5-PROC-TIME-MAX* = 4 ; 60
-  ?*T6-PROC-TIME-MIN* = 4 ; 40
-  ?*T6-PROC-TIME-MAX* = 4 ; 60
+  ?*BEACON-PERIOD* = 2.0
   ?*RECYCLE-PROC-TIME* = 2
+  ?*INTERMEDIATE-PROC-TIME* = 2
 )
