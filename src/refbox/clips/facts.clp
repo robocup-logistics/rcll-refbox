@@ -8,7 +8,7 @@
 ;---------------------------------------------------------------------------
 
 (deftemplate machine
-  (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TEST R1 R2))
+  (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TST R1 R2))
   (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
   (multislot loaded-with (type SYMBOL) (allowed-symbols S0 S1 S2))
   (slot junk (type INTEGER) (default 0))
@@ -70,7 +70,7 @@
   (machine (name D1) (mtype DELIVER))
   (machine (name D2) (mtype DELIVER))
   (machine (name D3) (mtype DELIVER))
-  (machine (name TEST) (mtype TEST))
+  (machine (name TST) (mtype TEST))
   (machine (name R1) (mtype RECYCLE))
   (machine (name R2) (mtype RECYCLE))
   (puck (index  1) (id  1))
