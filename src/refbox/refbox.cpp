@@ -277,7 +277,7 @@ LLSFRefBox::clips_pb_create(std::string full_name)
     return CLIPS::Value(new std::shared_ptr<google::protobuf::Message>(m));
   } catch (std::runtime_error &e) {
     printf("Cannot create message of type %s: %s\n", full_name.c_str(), e.what());
-    return CLIPS::Value((void *)NULL);
+    return CLIPS::Value(new std::shared_ptr<google::protobuf::Message>());
   }
 }
 
@@ -287,6 +287,7 @@ LLSFRefBox::clips_pb_ref(void *msgptr)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return new std::shared_ptr<google::protobuf::Message>();
 
   return CLIPS::Value(new std::shared_ptr<google::protobuf::Message>(*m));
 }
@@ -297,6 +298,7 @@ LLSFRefBox::clips_pb_destroy(void *msgptr)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return;
 
   delete m;
 }
@@ -307,6 +309,7 @@ LLSFRefBox::clips_pb_field_names(void *msgptr)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return CLIPS::Values();
 
   const Descriptor *desc = (*m)->GetDescriptor();
   const int field_count  = desc->field_count();
@@ -322,6 +325,7 @@ LLSFRefBox::clips_pb_field_type(void *msgptr, std::string field_name)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL);
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -355,6 +359,7 @@ LLSFRefBox::clips_pb_field_label(void *msgptr, std::string field_name)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL);
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -374,6 +379,7 @@ LLSFRefBox::clips_pb_field_value(void *msgptr, std::string field_name)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL);
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -427,6 +433,7 @@ LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Valu
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return;
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -485,8 +492,12 @@ LLSFRefBox::clips_pb_send(void *msgptr, long int client_id)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) {
+    printf("Cannot send to %li: invalid message\n", client_id);
+    return;
+  }
 
-  printf("Sending to %li\n", client_id);
+  //printf("Sending to %li\n", client_id);
   if (client_id > 0 && client_id < std::numeric_limits<unsigned int>::max()) {
     try {
       pbc_server_->send(client_id, *m);
@@ -503,6 +514,10 @@ LLSFRefBox::clips_pb_broadcast(void *msgptr)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) {
+    printf("Cannot send broadcast: invalid message\n");
+    return;
+  }
 
   //printf("Broadcasting %s\n", (*m)->GetTypeName().c_str());
   try {
@@ -517,7 +532,6 @@ LLSFRefBox::clips_pb_broadcast(void *msgptr)
 void
 LLSFRefBox::clips_pb_disconnect(long int client_id)
 {
-
   printf("Disconnecting client %li\n", client_id);
 
   try {
@@ -532,6 +546,7 @@ LLSFRefBox::clips_pb_field_list(void *msgptr, std::string field_name)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return CLIPS::Values(1, CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL));
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -608,6 +623,7 @@ LLSFRefBox::clips_pb_field_is_list(void *msgptr, std::string field_name)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return false;
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
