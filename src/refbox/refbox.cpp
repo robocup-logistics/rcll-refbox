@@ -189,6 +189,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("pb-destroy", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_destroy)));
   clips_->add_function("pb-ref", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_ref)));
   clips_->add_function("pb-set-field", sigc::slot<void, void *, std::string, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_set_field)));
+  clips_->add_function("pb-add-list", sigc::slot<void, void *, std::string, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_add_list)));
   clips_->add_function("pb-send", sigc::slot<void, long int, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_send)));
   clips_->add_function("pb-broadcast", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_broadcast)));
   clips_->add_function("pb-disconnect-client", sigc::slot<void, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_disconnect)));
@@ -443,46 +444,115 @@ LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Valu
   }
   const Reflection *refl       = (*m)->GetReflection();
 
-  switch (field->type()) {
-  case FieldDescriptor::TYPE_DOUBLE:   refl->SetDouble(m->get(), field, value); break;
-  case FieldDescriptor::TYPE_FLOAT:    refl->SetFloat(m->get(), field, value);  break;
-  case FieldDescriptor::TYPE_SFIXED64:
-  case FieldDescriptor::TYPE_SINT64:
-  case FieldDescriptor::TYPE_INT64:
-    refl->SetInt64(m->get(), field, value);  break;
-  case FieldDescriptor::TYPE_FIXED64:
-  case FieldDescriptor::TYPE_UINT64:
-    refl->SetUInt64(m->get(), field, (long int)value); break;
-  case FieldDescriptor::TYPE_SFIXED32:
-  case FieldDescriptor::TYPE_SINT32:
+  try {
+    switch (field->type()) {
+    case FieldDescriptor::TYPE_DOUBLE:   refl->SetDouble(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_FLOAT:    refl->SetFloat(m->get(), field, value);  break;
+    case FieldDescriptor::TYPE_SFIXED64:
+    case FieldDescriptor::TYPE_SINT64:
+    case FieldDescriptor::TYPE_INT64:
+      refl->SetInt64(m->get(), field, value);  break;
+    case FieldDescriptor::TYPE_FIXED64:
+    case FieldDescriptor::TYPE_UINT64:
+      refl->SetUInt64(m->get(), field, (long int)value); break;
+    case FieldDescriptor::TYPE_SFIXED32:
+    case FieldDescriptor::TYPE_SINT32:
   case FieldDescriptor::TYPE_INT32:
-    refl->SetInt32(m->get(), field, value); break;
-  case FieldDescriptor::TYPE_BOOL:
-    refl->SetBool(m->get(), field, (value == "TRUE"));
-    break;
-  case FieldDescriptor::TYPE_STRING:   refl->SetString(m->get(), field, value); break;
-  case FieldDescriptor::TYPE_MESSAGE:
-    {
-      std::shared_ptr<google::protobuf::Message> *mfrom =
-	static_cast<std::shared_ptr<google::protobuf::Message> *>(value.as_address());
-      Message *mut_msg = refl->MutableMessage(m->get(), field);
-      mut_msg->CopyFrom(**mfrom);
-      delete mfrom;
+      refl->SetInt32(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_BOOL:
+      refl->SetBool(m->get(), field, (value == "TRUE"));
+      break;
+    case FieldDescriptor::TYPE_STRING:   refl->SetString(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_MESSAGE:
+      {
+	std::shared_ptr<google::protobuf::Message> *mfrom =
+	  static_cast<std::shared_ptr<google::protobuf::Message> *>(value.as_address());
+	Message *mut_msg = refl->MutableMessage(m->get(), field);
+	mut_msg->CopyFrom(**mfrom);
+	delete mfrom;
+      }
+      break;
+    case FieldDescriptor::TYPE_BYTES:    break;
+    case FieldDescriptor::TYPE_FIXED32:
+    case FieldDescriptor::TYPE_UINT32:
+      refl->SetUInt32(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_ENUM:
+      {
+	const EnumDescriptor *enumdesc = field->enum_type();
+	const EnumValueDescriptor *enumval = enumdesc->FindValueByName(value);
+	if (enumval)  refl->SetEnum(m->get(), field, enumval);
+      }
+      break;
+    default:
+      throw std::logic_error("Unknown protobuf field type encountered");
     }
-    break;
-  case FieldDescriptor::TYPE_BYTES:    break;
-  case FieldDescriptor::TYPE_FIXED32:
-  case FieldDescriptor::TYPE_UINT32:
-    refl->SetUInt32(m->get(), field, value); break;
-  case FieldDescriptor::TYPE_ENUM:
-    {
-      const EnumDescriptor *enumdesc = field->enum_type();
-      const EnumValueDescriptor *enumval = enumdesc->FindValueByName(value);
-      if (enumval)  refl->SetEnum(m->get(), field, enumval);
+  } catch (std::logic_error &e) {
+    printf("Failed to set field %s of %s: %s\n", field_name.c_str(),
+	   (*m)->GetTypeName().c_str(), e.what());
+  }
+}
+
+
+void
+LLSFRefBox::clips_pb_add_list(void *msgptr, std::string field_name, CLIPS::Value value)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return;
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field) {
+    printf("Could not find field %s\n", field_name.c_str());
+    return;
+  }
+  const Reflection *refl       = (*m)->GetReflection();
+
+  try {
+    switch (field->type()) {
+    case FieldDescriptor::TYPE_DOUBLE:   refl->AddDouble(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_FLOAT:    refl->AddFloat(m->get(), field, value);  break;
+    case FieldDescriptor::TYPE_SFIXED64:
+    case FieldDescriptor::TYPE_SINT64:
+    case FieldDescriptor::TYPE_INT64:
+      refl->AddInt64(m->get(), field, value);  break;
+    case FieldDescriptor::TYPE_FIXED64:
+    case FieldDescriptor::TYPE_UINT64:
+      refl->AddUInt64(m->get(), field, (long int)value); break;
+    case FieldDescriptor::TYPE_SFIXED32:
+    case FieldDescriptor::TYPE_SINT32:
+  case FieldDescriptor::TYPE_INT32:
+      refl->AddInt32(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_BOOL:
+      refl->AddBool(m->get(), field, (value == "TRUE"));
+      break;
+    case FieldDescriptor::TYPE_STRING:   refl->AddString(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_MESSAGE:
+      {
+	std::shared_ptr<google::protobuf::Message> *mfrom =
+	  static_cast<std::shared_ptr<google::protobuf::Message> *>(value.as_address());
+	Message *new_msg = refl->AddMessage(m->get(), field);
+	new_msg->CopyFrom(**mfrom);
+	delete mfrom;
+      }
+      break;
+    case FieldDescriptor::TYPE_BYTES:    break;
+    case FieldDescriptor::TYPE_FIXED32:
+    case FieldDescriptor::TYPE_UINT32:
+      refl->AddUInt32(m->get(), field, value); break;
+    case FieldDescriptor::TYPE_ENUM:
+      {
+	const EnumDescriptor *enumdesc = field->enum_type();
+	const EnumValueDescriptor *enumval = enumdesc->FindValueByName(value);
+	if (enumval)  refl->AddEnum(m->get(), field, enumval);
+      }
+      break;
+    default:
+      throw std::logic_error("Unknown protobuf field type encountered");
     }
-    break;
-  default:
-    throw std::logic_error("Unknown protobuf field type encountered");
+  } catch (std::logic_error &e) {
+    printf("Failed to add field %s of %s: %s\n", field_name.c_str(),
+	   (*m)->GetTypeName().c_str(), e.what());
   }
 }
 
