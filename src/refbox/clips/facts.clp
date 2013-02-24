@@ -10,14 +10,14 @@
 (deftemplate machine
   (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TST R1 R2))
   (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
-  (multislot loaded-with (type SYMBOL) (allowed-symbols S0 S1 S2))
+  (multislot loaded-with (type SYMBOL) (allowed-symbols S0 S1 S2) (default))
   (slot junk (type INTEGER) (default 0))
   (slot productions (type INTEGER) (default 0))
   (slot state (type SYMBOL) (allowed-values REQINIT IDLE PROCESSING WAITING DOWN INVALID)
 	(default REQINIT))
   (slot proc-time (type INTEGER))
   (multislot proc-start (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
-  (slot puck-id (type INTEGER))
+  (slot puck-id (type INTEGER) (default 0))
 )
 
 (deftemplate puck
