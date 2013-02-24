@@ -155,6 +155,8 @@ LLSFRefBox::setup_protobuf_comm()
       .connect(boost::bind(&LLSFRefBox::handle_client_msg, this, _1, _2, _3, _4));
     pbc_peer_->signal_received()
       .connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
+    pbc_peer_->signal_error()
+      .connect(boost::bind(&LLSFRefBox::handle_peer_error, this, _1));
   } catch (std::runtime_error &e) {
     delete config_;
     delete sps_;
@@ -806,6 +808,16 @@ LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
   std::pair<std::string, unsigned short> endpp =
     std::make_pair(endpoint.address().to_string(), endpoint.port());
   clips_assert_message(endpp, component_id, msg_type, msg);
+}
+
+
+/** Handle error during peer message processing.
+ * @param error the error that happened
+ */
+void
+LLSFRefBox::handle_peer_error(const boost::system::error_code &error)
+{
+  printf("Failed to receive peer message: %s\n", error.message().c_str());
 }
 
 

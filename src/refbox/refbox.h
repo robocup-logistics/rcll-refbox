@@ -84,6 +84,7 @@ class LLSFRefBox
   void handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
 		       uint16_t component_id, uint16_t msg_type,
 		       std::shared_ptr<google::protobuf::Message> msg);
+  void handle_peer_error(const boost::system::error_code &error);
 
   void setup_protobuf_comm();
 
