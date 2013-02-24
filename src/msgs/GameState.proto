@@ -38,19 +38,26 @@ package llsf_msgs;
 import "Time.proto";
 
 message GameState {
-  enum State {
-    STATE_PRESTART = 0;
-    STATE_RUN = 1;
-    STATE_PAUSE = 2;
-    STATE_END = 3;
+  enum CompType {
+    COMP_ID  = 2002;
+    MSG_TYPE = 10;
   }
 
-  required uint64 ts_sec = 1;
-  required uint64 ts_nsec = 2;
+  enum State {
+    WAIT_START = 0;
+    INIT_GAME = 1;
+    EXPLORATION = 2;
+    PRODUCTION = 3;
+    PAUSE = 4;
+    GAME_END = 5;
+  }
 
-  required State state = 3;
+  required Time   timestamp = 1;
 
+  required State  state = 3;
   optional uint32 points = 5;
+}
 
-  // possible later: robot penalties
+message SetGameState {
+  required GameState.State state = 1;
 }
