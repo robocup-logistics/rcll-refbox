@@ -127,3 +127,42 @@
   (pb-send ?client-id ?p)
   (pb-destroy ?p)
 )
+
+(defrule net-send-MachineSpecs
+  (network-client (id ?client-id))
+  (machine)
+  =>
+  (bind ?s (pb-create "llsf_msgs.MachineSpecs"))
+
+  (do-for-all-facts
+    ((?machine machine)) TRUE
+
+    (bind ?m (pb-create "llsf_msgs.MachineSpec"))
+
+    (pb-set-field ?m "name" ?machine:name)
+    (pb-set-field ?m "type" ?machine:mtype)
+    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype)
+      (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
+      (pb-set-field ?m "output" (str-cat ?mspec:output))
+    )
+    (foreach ?puck ?machine:loaded-with (pb-add-list ?m "loaded_with" (str-cat ?puck)))
+    (foreach ?l ?machine:actual-lights
+      (bind ?ls (pb-create "llsf_msgs.LightSpec"))
+      (bind ?dashidx (str-index "-" ?l))
+      (bind ?color (sub-string 1 (- ?dashidx 1) ?l))
+      (bind ?state (sub-string (+ ?dashidx 1) (str-length ?l) ?l))
+      (pb-set-field ?ls "color" ?color)
+      (pb-set-field ?ls "state" ?state)
+      (pb-add-list ?m "lights" ?ls)
+    )
+    (if (<> ?machine:puck-id 0) then
+      (pb-set-field ?m "puck_under_rfid"
+		    (do-for-fact ((?puck puck)) (= ?puck:id ?machine:puck-id)
+				 ?puck:state))
+    )
+    (pb-add-list ?s "machines" ?m) ; destroys ?m
+  )
+
+  (pb-send ?client-id ?s)
+  (pb-destroy ?s)
+)

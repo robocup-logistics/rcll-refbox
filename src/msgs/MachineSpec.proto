@@ -1,20 +1,55 @@
 
-package llsfrb_msgs;
+package llsf_msgs;
 
-  enum PuckType {
-    S0 = 0;
-    S1 = 1;
-    S2 = 2;
-    S3 = 3;
+enum PuckType {
+  S0 = 0;
+  S1 = 1;
+  S2 = 2;
+  S3 = 3;
+}
+
+enum LightColor {
+  RED = 0;
+  YELLOW = 1;
+  GREEN = 2;
+}
+
+enum LightState {
+  OFF = 0;
+  ON = 1;
+  BLINK = 2;
+}
+
+message LightSpec {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 3;
   }
 
-message MachineSpec {
-  required string name     = 1;
-  repeated PuckType input  = 2;
-  required PuckType output = 3;
+  required LightColor color = 1;
+  required LightState state = 2;
+}
 
+message MachineSpec {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 4;
+  }
+  required string name     = 1;
+  optional string type     = 2;
+
+  repeated PuckType inputs  = 3;
+  optional PuckType output  = 4;
+  repeated PuckType loaded_with = 5;
+  optional PuckType puck_under_rfid = 6;
+
+  repeated LightSpec lights = 7;
 }
 
 message MachineSpecs {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 5;
+  }
   repeated MachineSpec machines = 1;
 }
