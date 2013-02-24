@@ -7,6 +7,8 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(load* (resolve-file net.clp))
+
 (defrule rfid-input-cleanup
   (declare (salience ?*PRIORITY_CLEANUP*))
   ?f <- (rfid-input (machine ?m) (has-puck ?hp) (id ?id))

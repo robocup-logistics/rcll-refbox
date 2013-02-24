@@ -29,11 +29,14 @@
 (deftemplate robot
   (slot team (type STRING))
   (slot name (type STRING))
+  (slot host (type STRING))
+  (slot port (type INTEGER))
   (multislot position (type FLOAT) (cardinality 3 3)) ; x y theta
-  (multislot last-contact (type INTEGER) (cardinality 2 2))
+  (multislot last-seen (type INTEGER) (cardinality 2 2))
 )
 
-(deftemplate beacon-signal
+(deftemplate signal
+  (slot type)
   (multislot time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
   (slot seq (type INTEGER) (default 1))
 )
@@ -44,10 +47,16 @@
   (slot id (type INTEGER))
 )
 
+(deftemplate network-client
+  (slot id (type INTEGER))
+  (slot host (type STRING))
+  (slot port (type INTEGER))
+)
+
 (deffacts startup
   (time 0 0)
   (state WAIT_START)
-  (beacon-signal (time (create$ 0 0)) (seq 1))
+  (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (machine (name M1) (mtype T1))
   (machine (name M2) (mtype T1))
   (machine (name M3) (mtype T2))
