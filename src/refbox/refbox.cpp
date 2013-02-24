@@ -213,6 +213,8 @@ LLSFRefBox::clips_assert_message(std::pair<std::string, unsigned short> &endpoin
 				 std::shared_ptr<google::protobuf::Message> &msg,
 				 unsigned int client_id)
 {
+  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+
   CLIPS::Template::pointer temp = clips_->get_template("protobuf-msg");
   if (temp) {
     void *ptr = new std::shared_ptr<google::protobuf::Message>(msg);
