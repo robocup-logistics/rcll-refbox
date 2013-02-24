@@ -9,6 +9,7 @@
 
 (defglobal
   ?*BEACON-PERIOD* = 2.0
+  ?*GAMESTATE-PERIOD* = 2.0
   ?*RECYCLE-PROC-TIME* = 2
   ?*INTERMEDIATE-PROC-TIME* = 2
 )

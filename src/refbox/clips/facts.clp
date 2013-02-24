@@ -70,7 +70,9 @@
 (deffacts startup
   (time 0 0)
   (state WAIT_START)
+  (points 0)
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
+  (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (machine (name M1) (mtype T1))
   (machine (name M2) (mtype T1))
   (machine (name M3) (mtype T2))
