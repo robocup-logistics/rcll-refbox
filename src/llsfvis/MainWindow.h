@@ -50,12 +50,14 @@ public:
 	virtual ~MainWindow();
 	void add_log_message(std::string msg);
 	void update_game_state(GameState& gameState);
+	void set_attention_msg(std::string msg);
 	void set_playfield(PlayField& playField);
 private:
 	Gtk::Notebook tabs_;
 	Gtk::Grid playFieldTabGrid_;
 	Gtk::Paned loggingTabPaned_;
 
+	Gtk::Label attentionMsg_;
 	Gtk::AspectFrame aspectFrame_;
 	PlayFieldWidget playFieldWidget_;
 	Gtk::ScrolledWindow logPreviewScrollWindow_;

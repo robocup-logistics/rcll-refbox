@@ -146,11 +146,13 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	double upperY = machine.getPosY() + MACHINESIZE / 2;
 	double lowerY = machine.getPosY() - MACHINESIZE / 2;
 
-	cr->move_to(leftX, upperY);
-	cr->line_to(rightX, upperY);
-	cr->line_to(rightX, lowerY);
-	cr->line_to(leftX, lowerY);
-	cr->line_to(leftX, upperY);
+
+	//cr->move_to(leftX, upperY);
+	cr->rectangle(leftX,lowerY,MACHINESIZE,MACHINESIZE);
+	//cr->line_to(rightX, upperY);
+	//cr->line_to(rightX, lowerY);
+	//cr->line_to(leftX, lowerY);
+	//cr->line_to(leftX, upperY);
 
 	draw_machine_t(cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(),
 			machine.getOrientation());
@@ -254,11 +256,7 @@ void PlayFieldWidget::draw_starting_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
-	cr->move_to(0, FIELDSIZE / 2 - ZONEWIDTH / 2);
-	cr->line_to(ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
-	cr->line_to(ZONEHEIGHT, FIELDSIZE / 2 + ZONEWIDTH / 2);
-	cr->line_to(0, FIELDSIZE / 2 + ZONEWIDTH / 2);
-	cr->line_to(0, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->rectangle(0,FIELDSIZE / 2 - ZONEWIDTH / 2,ZONEHEIGHT,ZONEWIDTH);
 	cr->set_source_rgb(0.0, 0.0, 1.0);
 	cr->fill_preserve();
 	cr->set_source_rgb(0, 0, 0);
@@ -270,11 +268,7 @@ void PlayFieldWidget::draw_delivery_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
-	cr->move_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
-	cr->line_to(FIELDSIZE, FIELDSIZE / 2 - ZONEWIDTH / 2);
-	cr->line_to(FIELDSIZE, FIELDSIZE / 2 + ZONEWIDTH / 2);
-	cr->line_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 + ZONEWIDTH / 2);
-	cr->line_to(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2);
+	cr->rectangle(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2,ZONEHEIGHT,ZONEWIDTH);
 	cr->set_source_rgb(0.0, 1.0, 0.0);
 	cr->fill_preserve();
 	cr->set_source_rgb(0, 0, 0);

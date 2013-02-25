@@ -44,7 +44,6 @@ MainWindow::MainWindow() :
 				Gtk::ORIENTATION_VERTICAL), buttonBoxLogging_(
 				Gtk::ORIENTATION_VERTICAL) {
 
-
 	//SETUP the GUI
 
 	set_default_size(750, 750);
@@ -64,12 +63,22 @@ MainWindow::MainWindow() :
 
 	logPreviewScrollWindow_.add(logPreviewWidget_);
 
+	attentionMsg_.set_label("Attention:");
+
+	Pango::FontDescription font;
+	font.set_size(Pango::SCALE * 18);
+	font.set_weight(Pango::WEIGHT_BOLD);
+	attentionMsg_.override_color(Gdk::RGBA("dark red"));
+	attentionMsg_.override_font(font);
+
 	playFieldTabGrid_.set_row_spacing(5);
 	playFieldTabGrid_.set_column_spacing(5);
-	playFieldTabGrid_.attach(playFieldWidget_,0,0,1,2);
-	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, playFieldWidget_,
+	playFieldTabGrid_.attach(attentionMsg_, 0, 0, 2, 1);
+	playFieldTabGrid_.attach_next_to(aspectFrame_, attentionMsg_,
+			Gtk::POS_BOTTOM, 1, 2);
+	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, aspectFrame_,
 			Gtk::POS_RIGHT, 1, 1);
-	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, playFieldWidget_,
+	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, aspectFrame_,
 			Gtk::POS_BOTTOM, 2, 1);
 	playFieldTabGrid_.attach_next_to(stateWidget_, buttonBoxPlayField_,
 			Gtk::POS_BOTTOM, 1, 1);
@@ -87,22 +96,27 @@ MainWindow::MainWindow() :
 
 	//make both logviews use the same model
 	logPreviewWidget_.set_model(logWidget_.get_model());
-
+	logWidget_.set_hexpand(true);
+	logPreviewWidget_.set_hexpand(true);
 	logScrollWindow_.add(logWidget_);
-	loggingTabPaned_.add1(logScrollWindow_);
-	loggingTabPaned_.add2(buttonBoxLogging_);
+	loggingTabPaned_.pack1(logScrollWindow_,true,true);
+	loggingTabPaned_.pack2(buttonBoxLogging_,false,false);
 
 	tabs_.append_page(playFieldTabGrid_, "Playfield");
 	tabs_.append_page(loggingTabPaned_, "RefBox Log");
 	add(tabs_);
 	aspectFrame_.set(Gtk::ALIGN_START, Gtk::ALIGN_START, 1, true);
+	aspectFrame_.add(playFieldWidget_);
+	aspectFrame_.set_border_width(0);
+	aspectFrame_.set_shadow_type(Gtk::SHADOW_NONE);
 	playFieldWidget_.set_size_request(600, 600);
+	playFieldWidget_.set_hexpand(true);
+	playFieldWidget_.set_vexpand(true);
 	logScrollWindow_.set_size_request(600, 600);
 	logPreviewScrollWindow_.set_size_request(0, 150);
 	buttonBoxPlayField_.set_size_request(150, 0);
 	buttonBoxLogging_.set_size_request(150, 0);
 	show_all_children();
-
 	stateWidget_.set_time(540);
 	stateWidget_.set_score(543);
 
@@ -120,6 +134,10 @@ MainWindow::~MainWindow() {
 void MainWindow::update_game_state(GameState& gameState) {
 	playFieldWidget_.update_game_state(gameState);
 	stateWidget_.update_game_state(gameState);
+}
+
+void MainWindow::set_attention_msg(std::string msg) {
+	attentionMsg_.set_text(msg);
 }
 
 void MainWindow::set_playfield(PlayField& playField) {

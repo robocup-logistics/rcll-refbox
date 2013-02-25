@@ -89,6 +89,7 @@ int main(int argc, char* argv[]) {
 	LLSFVis::MainWindow mainWindow;
 	mainWindow.set_playfield(pf);
 	mainWindow.add_log_message("Good Morning");
+	mainWindow.set_attention_msg("ATTENTION! ROBOT'S GONNA BLOW UP!");
 	mainWindow.update_game_state(gs);
 	return app->run(mainWindow);
 
