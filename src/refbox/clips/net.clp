@@ -69,6 +69,20 @@
 				     (/ (pb-field-value ?time "nsec") 1000)))))
 )
 
+(defrule send-attmsg
+  ?af <- (attention-message ?message $?time-to-show)
+  (network-client (id ?client-id))
+  =>
+  (retract ?af)
+  (bind ?attmsg (pb-create "llsf_msgs.AttentionMessage"))
+  (pb-set-field ?attmsg "message" (str-cat ?message))
+  (if (> (length$ ?time-to-show) 0) then
+    (pb-set-field ?attmsg "time_to_show" (first$ ?time-to-show)))
+  (pb-send ?client-id ?attmsg)
+  (pb-destroy ?attmsg)
+)
+
+
 (defrule net-recv-SetGameState
   ?sf <- (state ?state)
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p)

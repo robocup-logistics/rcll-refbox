@@ -40,11 +40,13 @@
 #include <cursesapp.h>
 
 #include <boost/asio.hpp>
+#include <boost/date_time.hpp>
 #include <google/protobuf/message.h>
 
 #include <map>
 #include <vector>
 #include <string>
+#include <mutex>
 
 class NCursesPanel;
 
@@ -78,6 +80,7 @@ class LLSFRefBoxShell : public NCursesApplication {
   void start_timers();
   void handle_timer(const boost::system::error_code& error);
   void handle_blink_timer(const boost::system::error_code& error);
+  void handle_attmsg_timer(const boost::system::error_code& error);
   void handle_reconnect_timer(const boost::system::error_code& error);
   void handle_signal(const boost::system::error_code& error, int signum);
 
@@ -87,6 +90,7 @@ class LLSFRefBoxShell : public NCursesApplication {
 		  std::shared_ptr<google::protobuf::Message> msg);
 
  private: // members
+  bool        quit_;
   const char *error_;
 
   NCursesPanel *panel_;
@@ -94,6 +98,7 @@ class LLSFRefBoxShell : public NCursesApplication {
   NCursesPanel *rb_log_;
   NCursesPanel *game_log_;
 
+  NCursesPanel *p_attmsg_;
   NCursesPanel *p_state_;
   NCursesPanel *p_time_;
   NCursesPanel *p_points_;
@@ -106,6 +111,12 @@ class LLSFRefBoxShell : public NCursesApplication {
   boost::asio::deadline_timer  reconnect_timer_;
   bool                         try_reconnect_;
   boost::asio::deadline_timer  blink_timer_;
+  std::mutex                   attmsg_mutex_;
+  std::string                  attmsg_string_;
+  boost::asio::deadline_timer  attmsg_timer_;
+  bool                         attmsg_toggle_;
+  bool                         attmsg_has_endtime_;
+  boost::posix_time::ptime     attmsg_endtime_;
 
   protobuf_comm::ProtobufStreamClient *client;
 };

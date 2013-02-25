@@ -45,6 +45,7 @@
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/MachineSpec.pb.h>
+#include <msgs/AttentionMessage.pb.h>
 
 #include <cursesp.h>
 #include <cursesf.h>
@@ -59,6 +60,7 @@
 #define TIMER_INTERVAL 500
 #define RECONNECT_TIMER_INTERVAL 2000
 #define BLINK_TIMER_INTERVAL 250
+#define ATTMSG_TIMER_INTERVAL 1000
 
 using namespace protobuf_comm;
 
@@ -69,8 +71,9 @@ namespace llsfrb_shell {
 
 LLSFRefBoxShell::LLSFRefBoxShell(int argc, char **argv)
   : NCursesApplication(/*wantColors*/ TRUE),
-    error_(NULL), panel_(NULL), timer_(io_service_), reconnect_timer_(io_service_),
-    try_reconnect_(true), blink_timer_(io_service_)
+    quit_(false), error_(NULL), panel_(NULL), timer_(io_service_),
+    reconnect_timer_(io_service_), try_reconnect_(true), blink_timer_(io_service_),
+    attmsg_timer_(io_service_), attmsg_toggle_(true)
 {
   client = new ProtobufStreamClient();
 }
@@ -78,12 +81,14 @@ LLSFRefBoxShell::LLSFRefBoxShell(int argc, char **argv)
 
 LLSFRefBoxShell::~LLSFRefBoxShell()
 {
+  quit_ = true;
   io_service_.stop();
   try_reconnect_ = false;
       
   timer_.cancel();
   reconnect_timer_.cancel();
   blink_timer_.cancel();
+  attmsg_timer_.cancel();
 
   delete client;
   delete panel_;
@@ -105,6 +110,7 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   delete p_state_;
   delete p_time_;
   delete p_points_;
+  delete p_attmsg_;
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();
@@ -141,6 +147,7 @@ LLSFRefBoxShell::handle_signal(const boost::system::error_code& error, int signu
   timer_.cancel();
   reconnect_timer_.cancel();
   blink_timer_.cancel();
+  attmsg_timer_.cancel();
   io_service_.stop();
 }
 
@@ -198,6 +205,51 @@ LLSFRefBoxShell::handle_blink_timer(const boost::system::error_code& error)
 }
 
 
+/** Handle timer event.
+ * @param error error code
+ */
+void
+LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
+{
+  std::lock_guard<std::mutex> lock(attmsg_mutex_);
+  if (! error) {
+    if (attmsg_has_endtime_) {
+      boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+      boost::posix_time::time_duration td = now - attmsg_endtime_;
+      if (td > boost::posix_time::seconds(0)) {
+	attmsg_string_ = "";
+	attmsg_has_endtime_ = false;
+      }
+    }
+
+    if (attmsg_string_ != "") {
+      p_attmsg_->erase();
+      attmsg_toggle_ = ! attmsg_toggle_;
+      short default_fore, default_back;
+      pair_content(0, &default_fore, &default_back);
+      init_pair(200, COLOR_RED, default_back);
+      init_pair(201, COLOR_WHITE, COLOR_RED);
+
+      if (attmsg_toggle_) {
+	p_attmsg_->bkgd(' '|COLOR_PAIR(200));
+	p_attmsg_->attron(' '|COLOR_PAIR(200)|A_BOLD);
+      } else {
+	p_attmsg_->bkgd(' '|COLOR_PAIR(201));
+	p_attmsg_->attron(' '|COLOR_PAIR(201)|A_BOLD);
+      }
+      p_attmsg_->addstr(attmsg_string_.c_str());
+
+      attmsg_timer_.expires_at(attmsg_timer_.expires_at()
+			       + boost::posix_time::milliseconds(ATTMSG_TIMER_INTERVAL));
+      attmsg_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_attmsg_timer, this,
+					   boost::asio::placeholders::error));      
+    } else {
+      p_attmsg_->erase();
+    }
+  }
+}
+
+
 /** Handle reconnect timer event.
  * @param error error code
  */
@@ -224,15 +276,23 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
   p_state_->addstr("DISCONNECTED");
   //p_state_->addstr(error.message().c_str());
 
-  std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
-  for (m = machines_.begin(); m != machines_.end(); ++m) {
-    m->second->reset();
-  }
+  if (! quit_) {
+    std::lock_guard<std::mutex> lock(attmsg_mutex_);
+    attmsg_string_ = "";
+    p_attmsg_->bkgd(' '|COLOR_PAIR(0));
+    p_attmsg_->erase();
+    p_attmsg_->refresh();
 
-  if (try_reconnect_) {
-    reconnect_timer_.expires_from_now(boost::posix_time::milliseconds(RECONNECT_TIMER_INTERVAL));
-    reconnect_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_reconnect_timer, this,
-					    boost::asio::placeholders::error));
+    std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
+    for (m = machines_.begin(); m != machines_.end(); ++m) {
+      m->second->reset();
+    }
+
+    if (try_reconnect_) {
+      reconnect_timer_.expires_from_now(boost::posix_time::milliseconds(RECONNECT_TIMER_INTERVAL));
+      reconnect_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_reconnect_timer, this,
+					      boost::asio::placeholders::error));
+    }
   }
 
 }
@@ -298,6 +358,25 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       }
     }
   }
+
+  std::shared_ptr<llsf_msgs::AttentionMessage> am;
+  if ((am = std::dynamic_pointer_cast<llsf_msgs::AttentionMessage>(msg))) {
+    std::lock_guard<std::mutex> lock(attmsg_mutex_);
+    attmsg_string_ = am->message();
+    attmsg_has_endtime_ = am->has_time_to_show();
+    if (attmsg_has_endtime_) {
+      boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+      attmsg_endtime_ = now + boost::posix_time::seconds(am->time_to_show());
+    }
+    if (attmsg_string_ == "") {
+      attmsg_timer_.cancel();
+    } else {
+      attmsg_toggle_ = false;
+      attmsg_timer_.expires_from_now(boost::posix_time::milliseconds(0));
+      attmsg_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_attmsg_timer, this,
+					   boost::asio::placeholders::error));
+    }
+  }
 }
 
 int
@@ -329,19 +408,24 @@ LLSFRefBoxShell::run()
   panel_->addch(17, panel_->width() - 26, ACS_LTEE);
   panel_->addch(17, panel_->width() -  1, ACS_RTEE);
 
-  int rb_log_lines   = panel_->maxy() / 3 * 2 - 2;
-  int game_log_lines = panel_->maxy() - rb_log_lines - 2;
+  panel_->hline(2, 1, panel_->width() - 26);
+  panel_->addch(2, 0, ACS_LTEE);
+  panel_->addch(2, panel_->width() - 26, ACS_RTEE);
 
-  panel_->hline(rb_log_lines + 1, 1, panel_->width() - 26);
-  panel_->addch(rb_log_lines + 1, 0, ACS_LTEE);
-  panel_->addch(rb_log_lines + 1, panel_->width() - 26, ACS_RTEE);
+  int rb_log_lines   = panel_->maxy() / 3 * 2 - 4;
+  int game_log_lines = panel_->maxy() - rb_log_lines - 4;
+
+  panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
+  panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
+  panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
 
   panel_->attron(A_BOLD);
   panel_->addstr(0, panel_->width() - 17, "Machines");
+  panel_->addstr(0, (panel_->width() - 26) / 2 - 7, "Attention Message");
+  panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(17, panel_->width() - 16, "Robots");
   panel_->addstr(panel_->height()-5, panel_->width() - 15, "Game");
-  panel_->addstr(0, (panel_->width() - 26) / 2 - 4, "RefBox Log");
-  panel_->addstr(rb_log_lines + 1, (panel_->width() - 26) / 2 - 3, "Game Log");
+  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 3, "Game Log");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
@@ -382,14 +466,15 @@ LLSFRefBoxShell::run()
   panel_->refresh();
 
   rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28,
-			     1, 1);
+			     3, 1);
   rb_log_->scrollok(TRUE);
 
   game_log_ = new NCursesPanel(game_log_lines,  panel_->width() - 28,
-			       rb_log_lines + 2, 1);
+			       rb_log_lines + 4, 1);
   game_log_->scrollok(TRUE);
 
 
+  p_attmsg_ = new NCursesPanel(1, panel_->width() - 27, 1, 1);
   p_state_  = new NCursesPanel(1, 15, panel_->height()-4,  panel_->width() - 16);
   p_time_   = new NCursesPanel(1, 15, panel_->height()-3,  panel_->width() - 16);
   p_points_ = new NCursesPanel(1, 15, panel_->height()-2,  panel_->width() - 16);
@@ -409,6 +494,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::GameState>();
   message_register.add_message_type<llsf_msgs::RobotInfo>();
   message_register.add_message_type<llsf_msgs::MachineSpecs>();
+  message_register.add_message_type<llsf_msgs::AttentionMessage>();
 
   client->signal_connected().connect(boost::bind(&LLSFRefBoxShell::client_connected, this));
   client->signal_disconnected().connect(boost::bind(&LLSFRefBoxShell::client_disconnected,
