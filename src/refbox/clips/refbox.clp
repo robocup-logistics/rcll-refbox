@@ -9,6 +9,7 @@
 
 (load* (resolve-file net.clp))
 (load* (resolve-file machines.clp))
+(load* (resolve-file orders.clp))
 
 (defrule update-gametime
   (declare (salience ?*PRIORITY_FIRST*))

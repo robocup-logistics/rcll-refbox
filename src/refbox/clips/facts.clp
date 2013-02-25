@@ -70,6 +70,17 @@
   (slot port (type INTEGER))
 )
 
+(deftemplate order
+  (slot id (type INTEGER))
+  (slot product (type SYMBOL) (allowed-values P1 P2 P3))
+  (slot quantity-requested (type INTEGER) (default 1))
+  (slot quantity-produced (type INTEGER) (default 0))
+  (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
+  (slot delivery-gate (type SYMBOL) (allowed-values ANY D1 D2 D3) (default ANY))
+  (slot active (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (slot activate-at (type INTEGER))
+)
+
 (deftemplate gamestate
   (slot game-time (type FLOAT) (default 0.0))
   (multislot last-time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
@@ -134,4 +145,19 @@
   (machine-spec (mtype T5) (inputs S0) (output P3) (light-code RED-BLINK)
 		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
 )
+
+(deffacts orders
+  (order (id 1) (product P1) (quantity-requested 4) (delivery-period   0 300))
+  (order (id 2) (product P2) (quantity-requested 2) (delivery-period   0 300))
+  (order (id 3) (product P1) (quantity-requested 1) (delivery-period 301 600))
+  (order (id 4) (product P2) (quantity-requested 6) (delivery-period 301 600))
+  (order (id 5) (product P1) (quantity-requested 3) (delivery-period 601 900))
+  (order (id 6) (product P2) (quantity-requested 3) (delivery-period 601 900))
+  ; Late orders
+  (order (id 7) (product P3) (quantity-requested 1) (delivery-period 180 300)
+	 (active FALSE) (activate-at 5))
+  (order (id 8) (product P3) (quantity-requested 1) (delivery-period 400 580)
+	 (active FALSE) (activate-at 395))
+  (order (id 9) (product P3) (quantity-requested 1) (delivery-period 720 900)
+	 (active FALSE) (activate-at 715))
 )
