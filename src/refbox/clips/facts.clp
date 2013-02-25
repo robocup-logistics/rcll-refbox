@@ -32,6 +32,9 @@
   (slot output (type SYMBOL) (allowed-symbols NONE S0 S1 S2 P1 P2 P3))
   (slot proc-time-min (type INTEGER))
   (slot proc-time-max (type INTEGER))
+  (slot proc-time (type INTEGER))
+  (multislot light-code (type SYMBOL) (default)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK))
 )
 
 (deftemplate puck
@@ -120,12 +123,15 @@
 )
 
 (deffacts machine-specs
-  (machine-spec (mtype T1) (inputs S0) (output S1) (proc-time-min 4) (proc-time-max 4)) ; 3 8
+  (machine-spec (mtype T1) (inputs S0) (output S1) (light-code GREEN-ON)
+		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 3 8
   (machine-spec (mtype T2) (inputs S0 S1) (output S2)
-		(proc-time-min 4) (proc-time-max 4)) ; 15 25
-  (machine-spec (mtype T3) (inputs S0 S1 S2) (output P1)
-		(proc-time-min 4) (proc-time-max 4)) ; 40 60
-  (machine-spec (mtype T4) (inputs S0 S1 S2) (output P2) (proc-time-min 4) (proc-time-max 4))
-  (machine-spec (mtype T5) (inputs S0) (output P3)
-		(proc-time-min 4) (proc-time-max 4)) ; 40 60
+		(proc-time-min 4) (proc-time-max 4) (light-code YELLOW-ON)) ; 15 25
+  (machine-spec (mtype T3) (inputs S0 S1 S2) (output P1) (light-code RED-ON)
+		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
+  (machine-spec (mtype T4) (inputs S0 S1 S2) (output P2) (light-code GREEN-ON RED-ON)
+		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
+  (machine-spec (mtype T5) (inputs S0) (output P3) (light-code RED-BLINK)
+		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
+)
 )
