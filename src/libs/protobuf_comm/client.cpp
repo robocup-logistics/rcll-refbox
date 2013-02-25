@@ -67,7 +67,7 @@ ProtobufStreamClient::ProtobufStreamClient()
 /** Destructor. */
 ProtobufStreamClient::~ProtobufStreamClient()
 {
-  disconnect();
+  disconnect_nosig();
   io_service_.stop();
   if (asio_thread_.joinable()) {
     asio_thread_.join();
