@@ -54,7 +54,7 @@ namespace llsfrb_shell {
 LLSFRefBoxShellMachine::LLSFRefBoxShellMachine(std::string name, std::string type,
 					       int begin_y, int begin_x)
   : NCursesPanel(1, 22, begin_y, begin_x),
-    name_(name), type_(type)
+    name_(name), type_(type), puck_under_rfid_(false)
 {
 }
 

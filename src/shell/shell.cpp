@@ -256,7 +256,7 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
 void
 LLSFRefBoxShell::handle_reconnect_timer(const boost::system::error_code& error)
 {
-  if (! error) {
+  if (! error && try_reconnect_ && ! quit_) {
     client->async_connect("localhost", 4444);
   }
 }

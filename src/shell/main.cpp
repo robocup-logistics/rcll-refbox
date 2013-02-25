@@ -39,24 +39,6 @@
 #include <locale.h>
 #include <string>
 
-std::string error_;
-
-
-/** Run the shell.
- * This looks overly complicated, but it's necessary. We need to kill the
- * shell to be able to print the error message. But when allocating it on
- * the heap valgrind keeps reporting errors and we see crashes. Wrapping
- * it in an extra function does the trick so I'm happy...
- */
-static int
-run(int argc, char **argv)
-{
-  llsfrb_shell::LLSFRefBoxShell shell(argc, argv);
-  int rv = shell();
-  if (rv != 0 && shell.error())  error_ = shell.error();
-  return rv;
-}
-
 int
 main(int argc, char **argv)
 {
@@ -66,9 +48,8 @@ main(int argc, char **argv)
     return 1;
   }
 
-  int rv = run(argc, argv);
-  if (error_ != "") {
-    printf("%s\n", error_.c_str());
-  }
+  llsfrb_shell::LLSFRefBoxShell shell(argc, argv);
+  int rv = shell();
+  if (rv != 0 && shell.error()) printf("%s\n", shell.error());
   return rv;
 }
