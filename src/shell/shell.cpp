@@ -246,14 +246,10 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     p_state_->clear();
     p_state_->addstr(llsf_msgs::GameState::State_Name(g->state()).c_str());
 
-    struct timeval now;
-    now.tv_sec  = g->timestamp().sec();
-    now.tv_usec = g->timestamp().nsec() / 1000;
-    struct ::tm now_s;
-    localtime_r(&now.tv_sec, &now_s);
-    p_time_->clear();
-    p_time_->printw("%02d:%02d:%02d.%06ld", now_s.tm_hour,
-		    now_s.tm_min, now_s.tm_sec, (long)now.tv_usec);
+    int min = g->timestamp().sec() / 60;
+    int sec = g->timestamp().sec() - min * 60;
+    p_time_->erase();
+    p_time_->printw("%02d:%02d.%03ld", min, sec, g->timestamp().nsec() / 1000000);
   }
 
   std::shared_ptr<llsf_msgs::RobotInfo> r;

@@ -67,10 +67,17 @@
   (slot port (type INTEGER))
 )
 
+(deftemplate gamestate
+  (slot game-time (type FLOAT) (default 0.0))
+  (multislot last-time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
+  (slot points (type INTEGER) (default 0))
+)
+
+
 (deffacts startup
   (time 0 0)
-  (state WAIT_START)
-  (points 0)
+  (state INIT_GAME)
+  (gamestate)
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))

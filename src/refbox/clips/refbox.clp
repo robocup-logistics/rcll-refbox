@@ -10,6 +10,15 @@
 (load* (resolve-file net.clp))
 (load* (resolve-file machines.clp))
 
+(defrule update-gametime
+  (declare (salience ?*PRIORITY_FIRST*))
+  (state WAIT_START)
+  (time $?now)
+  ?gf <- (gamestate (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
+  =>
+  (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now))
+)
+
 (defrule rfid-input-cleanup
   (declare (salience ?*PRIORITY_CLEANUP*))
   ?f <- (rfid-input (machine ?m) (has-puck ?hp) (id ?id))
@@ -62,6 +71,12 @@
 )
 
 
+(defrule init-game
+  ?sf <- (state INIT_GAME)
+  ?gf <- (gamestate)
   =>
+  (retract ?sf)
+  (assert (state WAIT_START))
+  (modify ?gf (last-time (now)))
 )
 

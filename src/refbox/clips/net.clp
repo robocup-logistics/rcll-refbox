@@ -82,7 +82,7 @@
 (defrule net-send-GameState
   (time $?now)
   (state ?state)
-  (points ?points)
+  (gamestate (game-time ?game-time) (points ?points))
   (network-client (id ?client-id))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   =>
@@ -91,8 +91,9 @@
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "timestamp"))
   (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then 
-    (pb-set-field ?gamestate-time "sec" (nth$ 1 ?now))
-    (pb-set-field ?gamestate-time "nsec" (* (nth$ 2 ?now) 1000))
+    (bind ?gt (time-from-sec ?game-time))
+    (pb-set-field ?gamestate-time "sec" (nth$ 1 ?gt))
+    (pb-set-field ?gamestate-time "nsec" (* (nth$ 2 ?gt) 1000))
     (pb-set-field ?gamestate "timestamp" ?gamestate-time) ; destroys ?gamestate-time!
   )
   (pb-set-field ?gamestate "state" (str-cat ?state))
