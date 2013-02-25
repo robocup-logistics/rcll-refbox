@@ -9,11 +9,9 @@
 
 (defrule m-shutdown "Shutdown machines at the end"
   (finalize)
-  ?mf <- (machine (name ?m))
+  ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
-  (sps-set-signal (str-cat ?m) "RED" "OFF")
+  (modify ?mf (desired-lights))
 )
 
 (defrule machine-lights
@@ -21,9 +19,16 @@
   =>
   (printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
   (modify ?mf (actual-lights ?dl))
-  (foreach ?c (create$ GREEN YELLOW RED)
-    (sps-set-signal (str-cat ?m) (str-cat ?c)
-		    (if (member$ ?c ?dl) then "ON" else "OFF"))
+  (foreach ?l (deftemplate-slot-allowed-values machine desired-lights)
+    (bind ?dashidx (str-index "-" ?l))
+    (bind ?color (sub-string 1 (- ?dashidx 1) ?l))
+    (bind ?state (sub-string (+ ?dashidx 1) (str-length ?l) ?l))
+    (if (member$ ?l ?dl)
+     then 
+       (sps-set-signal (str-cat ?m) ?color ?state)
+     else
+       (sps-set-signal (str-cat ?m) ?color "OFF")
+    )
   )
 )
 
