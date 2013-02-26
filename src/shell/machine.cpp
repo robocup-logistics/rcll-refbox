@@ -40,10 +40,8 @@
 #include <unistd.h>
 
 #include <cursesp.h>
-#include <cursesf.h>
 
 #include <boost/format.hpp>
-#include <boost/bind.hpp>
 #include <mutex>
 
 namespace llsfrb_shell {
@@ -176,7 +174,7 @@ LLSFRefBoxShellMachine::refresh()
 
   if (puck_under_rfid_) {
     attron(' '|COLOR_PAIR(1)|A_BOLD);
-    addstr(0, 11, llsf_msgs::PuckType_Name(puck_under_rfid_type_).c_str());
+    addstr(0, 11, llsf_msgs::PuckType_Name(puck_under_rfid_type_).substr(0,2).c_str());
     attroff(A_BOLD);
   } else {
     attron(' '|COLOR_PAIR(1));
@@ -194,7 +192,7 @@ LLSFRefBoxShellMachine::refresh()
       attron(' '|COLOR_PAIR(1));
     }
 
-    addstr( 0, puck_x, llsf_msgs::PuckType_Name(inputs_[i]).c_str());
+    addstr( 0, puck_x, llsf_msgs::PuckType_Name(inputs_[i]).substr(0,2).c_str());
     attroff(A_BOLD);
     puck_x += 3;
   }
