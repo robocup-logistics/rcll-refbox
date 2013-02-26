@@ -498,7 +498,12 @@ LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Valu
       {
 	const EnumDescriptor *enumdesc = field->enum_type();
 	const EnumValueDescriptor *enumval = enumdesc->FindValueByName(value);
-	if (enumval)  refl->SetEnum(m->get(), field, enumval);
+	if (enumval) {
+	  refl->SetEnum(m->get(), field, enumval);
+	} else {
+	  printf("%s: cannot set invalid enum value '%s' on '%s'\n",
+		 (*m)->GetTypeName().c_str(), value.as_string().c_str(), field_name.c_str());
+	}
       }
       break;
     default:
@@ -590,6 +595,9 @@ LLSFRefBox::clips_pb_send(long int client_id, void *msgptr)
     try {
       pbc_server_->send(client_id, *m);
     } catch (google::protobuf::FatalException &e) {
+      printf("Failed to send message of type %s: %s\n",
+	     (*m)->GetTypeName().c_str(), e.what());
+    } catch (std::runtime_error &e) {
       printf("Failed to send message of type %s: %s\n",
 	     (*m)->GetTypeName().c_str(), e.what());
     }
