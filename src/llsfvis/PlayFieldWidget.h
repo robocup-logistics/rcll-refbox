@@ -93,14 +93,14 @@ private:
 
 	const Machine* clicked_machine_;
 
-	static const double FIELDLINESSIZE = 0.02;
-	static const double BOTSIZE = 0.35;
-	static const double MACHINESIZE = 0.40;
-	static const double PUCKSIZE = 0.08;
-	static const double FIELDSIZE = 5.6;
-	static const double FIELDBORDERSIZE = 0.2;
-	static const double ZONEHEIGHT = 0.4;
-	static const double ZONEWIDTH = 1.2;
+	static constexpr double FIELDLINESSIZE = 0.02;
+	static constexpr double BOTSIZE = 0.35;
+	static constexpr double MACHINESIZE = 0.40;
+	static constexpr double PUCKSIZE = 0.08;
+	static constexpr double FIELDSIZE = 5.6;
+	static constexpr double FIELDBORDERSIZE = 0.2;
+	static constexpr double ZONEHEIGHT = 0.4;
+	static constexpr double ZONEWIDTH = 1.2;
 
 };
 
