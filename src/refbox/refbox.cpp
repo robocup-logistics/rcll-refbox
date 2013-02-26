@@ -45,6 +45,7 @@
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/MachineSpec.pb.h>
 #include <msgs/AttentionMessage.pb.h>
+#include <msgs/OrderInstruction.pb.h>
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
@@ -180,6 +181,8 @@ LLSFRefBox::setup_protobuf_comm()
   mr_server.add_message_type<llsf_msgs::MachineSpecs>();
   mr_server.add_message_type<llsf_msgs::MachineSpec>();
   mr_server.add_message_type<llsf_msgs::LightSpec>();
+  mr_server.add_message_type<llsf_msgs::OrderInstruction>();
+  mr_server.add_message_type<llsf_msgs::OrderSpec>();
 
   MessageRegister &mr_peer = pbc_peer_->message_register();
   mr_peer.add_message_type<llsf_msgs::BeaconSignal>();
