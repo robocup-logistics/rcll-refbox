@@ -313,8 +313,7 @@ SPSComm::read_rfids()
   for (unsigned int i = 0; i < SPS_NUM_MACHINES; ++i) {
     if (regs[i * SPS_IN_REG_PER_RFID] & SPS_RFID_HAS_PUCK) {
       // libmodbus has already swapped the bytes of the registers
-      rv[i] = htonl(regs[i * SPS_IN_REG_PER_RFID + 1] << 16 |
-		    regs[i * SPS_IN_REG_PER_RFID + 2]);
+      rv[i] = regs[i * SPS_IN_REG_PER_RFID + 1] << 16 | regs[i * SPS_IN_REG_PER_RFID + 2];
     }
   }
 
