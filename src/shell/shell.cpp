@@ -39,6 +39,7 @@
 #include "shell.h"
 #include "machine.h"
 #include "robot.h"
+#include "order.h"
 
 #include <protobuf_comm/client.h>
 
@@ -46,6 +47,7 @@
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/MachineSpec.pb.h>
 #include <msgs/AttentionMessage.pb.h>
+#include <msgs/OrderInstruction.pb.h>
 
 #include <cursesp.h>
 #include <cursesf.h>
@@ -104,10 +106,15 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   }
   robots_.clear();
 
+  for (size_t i = 0; i < orders_.size(); ++i) {
+    delete orders_[i];
+  }
+  orders_.clear();
+
   delete rb_log_;
-  delete game_log_;
 
   delete p_state_;
+  delete p_phase_;
   delete p_time_;
   delete p_points_;
   delete p_attmsg_;
@@ -279,7 +286,10 @@ LLSFRefBoxShell::client_connected()
 void
 LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
 {
-  p_state_->clear();
+  p_state_->erase();
+  p_phase_->erase();
+  p_time_->erase();
+  p_points_->erase();
   p_state_->addstr("DISCONNECTED");
   //p_state_->addstr(error.message().c_str());
 
@@ -293,6 +303,10 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
     std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
     for (m = machines_.begin(); m != machines_.end(); ++m) {
       m->second->reset();
+    }
+
+    for (size_t i = 0; i < orders_.size(); ++i) {
+      orders_[i]->reset();
     }
 
     if (try_reconnect_) {
@@ -317,6 +331,10 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     int sec = g->timestamp().sec() - min * 60;
     p_time_->erase();
     p_time_->printw("%02d:%02d.%03ld", min, sec, g->timestamp().nsec() / 1000000);
+
+    for (size_t i = 0; i < orders_.size(); ++i) {
+      orders_[i]->set_gametime(g->timestamp().sec());
+    }
   }
 
   std::shared_ptr<llsf_msgs::RobotInfo> r;
@@ -384,6 +402,18 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 					   boost::asio::placeholders::error));
     }
   }
+
+  std::shared_ptr<llsf_msgs::OrderInstruction> ordins;
+  if ((ordins = std::dynamic_pointer_cast<llsf_msgs::OrderInstruction>(msg))) {
+    const size_t size = std::min((size_t)ordins->orders_size(), (size_t)orders_.size());
+    for (size_t i = 0; i < size; ++i) {
+      const llsf_msgs::OrderSpec &ospec = ordins->orders(i);
+      orders_[i]->update(ospec.id(), ospec.product(), ospec.quantity_requested(),
+			 ospec.quantity_delivered(), ospec.delivery_period_begin(),
+			 ospec.delivery_period_end(), ospec.delivery_gate());
+      orders_[i]->refresh();
+    }
+  }
 }
 
 int
@@ -407,9 +437,9 @@ LLSFRefBoxShell::run()
   panel_->addch(0,                  panel_->width() - 26, ACS_TTEE);
   panel_->addch(panel_->height()-1, panel_->width() - 26, ACS_BTEE);
 
-  panel_->hline(panel_->height()-5, panel_->width() - 25, 24);
-  panel_->addch(panel_->height()-5, panel_->width() - 26, ACS_LTEE);
-  panel_->addch(panel_->height()-5, panel_->width() -  1, ACS_RTEE);
+  panel_->hline(panel_->height()-6, panel_->width() - 25, 24);
+  panel_->addch(panel_->height()-6, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(panel_->height()-6, panel_->width() -  1, ACS_RTEE);
 
   panel_->hline(17, panel_->width() - 25, 24);
   panel_->addch(17, panel_->width() - 26, ACS_LTEE);
@@ -419,8 +449,7 @@ LLSFRefBoxShell::run()
   panel_->addch(2, 0, ACS_LTEE);
   panel_->addch(2, panel_->width() - 26, ACS_RTEE);
 
-  int rb_log_lines   = panel_->maxy() / 3 * 2 - 4;
-  int game_log_lines = panel_->maxy() - rb_log_lines - 4;
+  int rb_log_lines   = panel_->maxy() - 10;
 
   panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
   panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
@@ -431,15 +460,20 @@ LLSFRefBoxShell::run()
   panel_->addstr(0, (panel_->width() - 26) / 2 - 7, "Attention Message");
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(17, panel_->width() - 16, "Robots");
-  panel_->addstr(panel_->height()-5, panel_->width() - 15, "Game");
-  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 3, "Game Log");
+  panel_->addstr(panel_->height()-6, panel_->width() - 15, "Game");
+  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 3, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
-  panel_->addstr(panel_->height()-4, panel_->width() - 24, "State:");
+  panel_->addstr(panel_->height()-5, panel_->width() - 24, "State:");
+  panel_->addstr(panel_->height()-4, panel_->width() - 24, "Phase:");
   panel_->addstr(panel_->height()-3, panel_->width() - 24, "Time:");
   panel_->addstr(panel_->height()-2, panel_->width() - 24, "Points:");
   panel_->attroff(A_BOLD);
+
+  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28,
+			     3, 1);
+  rb_log_->scrollok(TRUE);
 
   const int mx = panel_->width() - 24;
   machines_["M1"]   = new LLSFRefBoxShellMachine("M1",  "?",  1, mx);
@@ -470,19 +504,18 @@ LLSFRefBoxShell::run()
     robots_[i]->refresh();
   }
 
+  orders_.resize(12, NULL);
+  for (size_t i = 0; i < orders_.size(); ++i) {
+    orders_[i] = new LLSFRefBoxShellOrder(rb_log_lines + 4 + i / 2,
+					  (i % 2) ? ((panel_->width() - 22) / 2) : 1);
+    orders_[i]->refresh();
+  }
+
   panel_->refresh();
 
-  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28,
-			     3, 1);
-  rb_log_->scrollok(TRUE);
-
-  game_log_ = new NCursesPanel(game_log_lines,  panel_->width() - 28,
-			       rb_log_lines + 4, 1);
-  game_log_->scrollok(TRUE);
-
-
   p_attmsg_ = new NCursesPanel(1, panel_->width() - 27, 1, 1);
-  p_state_  = new NCursesPanel(1, 15, panel_->height()-4,  panel_->width() - 16);
+  p_state_  = new NCursesPanel(1, 15, panel_->height()-5,  panel_->width() - 16);
+  p_phase_  = new NCursesPanel(1, 15, panel_->height()-4,  panel_->width() - 16);
   p_time_   = new NCursesPanel(1, 15, panel_->height()-3,  panel_->width() - 16);
   p_points_ = new NCursesPanel(1, 15, panel_->height()-2,  panel_->width() - 16);
 
@@ -502,6 +535,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::RobotInfo>();
   message_register.add_message_type<llsf_msgs::MachineSpecs>();
   message_register.add_message_type<llsf_msgs::AttentionMessage>();
+  message_register.add_message_type<llsf_msgs::OrderInstruction>();
 
   client->signal_connected().connect(boost::bind(&LLSFRefBoxShell::client_connected, this));
   client->signal_disconnected().connect(boost::bind(&LLSFRefBoxShell::client_disconnected,

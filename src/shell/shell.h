@@ -62,6 +62,7 @@ namespace llsfrb_shell {
 
 class LLSFRefBoxShellMachine;
 class LLSFRefBoxShellRobot;
+class LLSFRefBoxShellOrder;
 
 class LLSFRefBoxShell : public NCursesApplication {
  public:
@@ -96,15 +97,17 @@ class LLSFRefBoxShell : public NCursesApplication {
   NCursesPanel *panel_;
 
   NCursesPanel *rb_log_;
-  NCursesPanel *game_log_;
 
+  NCursesPanel *p_orders_;
   NCursesPanel *p_attmsg_;
   NCursesPanel *p_state_;
+  NCursesPanel *p_phase_;
   NCursesPanel *p_time_;
   NCursesPanel *p_points_;
 
   std::vector<LLSFRefBoxShellRobot *> robots_;
   std::map<std::string, LLSFRefBoxShellMachine *> machines_;
+  std::vector<LLSFRefBoxShellOrder *> orders_;
 
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
