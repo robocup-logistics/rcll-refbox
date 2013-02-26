@@ -335,6 +335,11 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     for (size_t i = 0; i < orders_.size(); ++i) {
       orders_[i]->set_gametime(g->timestamp().sec());
     }
+
+    if (g->has_points()) {
+      p_points_->erase();
+      p_points_->printw("%u", g->points());
+    }
   }
 
   std::shared_ptr<llsf_msgs::RobotInfo> r;
