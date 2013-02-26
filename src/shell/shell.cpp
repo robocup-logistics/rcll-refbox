@@ -219,6 +219,8 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
       if (td > boost::posix_time::seconds(0)) {
 	attmsg_string_ = "";
 	attmsg_has_endtime_ = false;
+	p_attmsg_->bkgd(' '|COLOR_PAIR(0));
+	p_attmsg_->erase();
       }
     }
 
@@ -237,7 +239,12 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
 	p_attmsg_->bkgd(' '|COLOR_PAIR(201));
 	p_attmsg_->attron(' '|COLOR_PAIR(201)|A_BOLD);
       }
-      p_attmsg_->addstr(attmsg_string_.c_str());
+      if ((int)attmsg_string_.length() >= p_attmsg_->width()) {
+	p_attmsg_->addstr(attmsg_string_.c_str());
+      } else {
+	p_attmsg_->addstr(0, (p_attmsg_->width() - attmsg_string_.length()) / 2,
+			  attmsg_string_.c_str());
+      }
 
       attmsg_timer_.expires_at(attmsg_timer_.expires_at()
 			       + boost::posix_time::milliseconds(ATTMSG_TIMER_INTERVAL));
@@ -371,7 +378,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     if (attmsg_string_ == "") {
       attmsg_timer_.cancel();
     } else {
-      attmsg_toggle_ = false;
+      attmsg_toggle_ = true;
       attmsg_timer_.expires_from_now(boost::posix_time::milliseconds(0));
       attmsg_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_attmsg_timer, this,
 					   boost::asio::placeholders::error));
