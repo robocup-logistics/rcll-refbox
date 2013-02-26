@@ -87,9 +87,10 @@
 
 (defrule machine-proc-done
   (time $?now)
+  ?gf <- (gamestate (points ?points))
   (machine (name ?m) (mtype ?mtype) (state PROCESSING))
   (machine-spec (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
-		(inputs $?inputs) (output ?output))
+		(inputs $?inputs) (output ?output) (points ?machine-points))
   ?mf <- (machine (name ?m) (mtype ?mtype) (puck-id ?id)
 		  (loaded-with $?lw&:(= (+ (length$ ?lw) 1) (length$ ?inputs)))
 		  (productions ?p) (junk ?junk)
@@ -101,6 +102,7 @@
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)) (junk (+ ?junk (length$ ?lw))))
   (modify ?pf (state ?output))
+  (modify ?gf (points (+ ?points ?machine-points)))
 )
 
 (defrule machine-puck-removal
