@@ -71,15 +71,24 @@
 
 (defrule send-attmsg
   ?af <- (attention-message ?message $?time-to-show)
-  (network-client (id ?client-id))
+  (network-client)
   =>
   (retract ?af)
   (bind ?attmsg (pb-create "llsf_msgs.AttentionMessage"))
   (pb-set-field ?attmsg "message" (str-cat ?message))
   (if (> (length$ ?time-to-show) 0) then
     (pb-set-field ?attmsg "time_to_show" (first$ ?time-to-show)))
-  (pb-send ?client-id ?attmsg)
+
+  (do-for-all-facts ((?client network-client)) TRUE
+		    (pb-send ?client:id ?attmsg))
   (pb-destroy ?attmsg)
+)
+
+(defrule discard-attmsg
+  ?af <- (attention-message ?message $?time-to-show)
+  (not (network-client))
+  =>
+  (retract ?af)
 )
 
 
