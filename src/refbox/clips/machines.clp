@@ -19,15 +19,17 @@
   =>
   (printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
   (modify ?mf (actual-lights ?dl))
-  (foreach ?l (deftemplate-slot-allowed-values machine desired-lights)
-    (bind ?dashidx (str-index "-" ?l))
-    (bind ?color (sub-string 1 (- ?dashidx 1) ?l))
-    (bind ?state (sub-string (+ ?dashidx 1) (str-length ?l) ?l))
-    (if (member$ ?l ?dl)
-     then 
-       (sps-set-signal (str-cat ?m) ?color ?state)
-     else
-       (sps-set-signal (str-cat ?m) ?color "OFF")
+  (foreach ?color (create$ RED YELLOW GREEN)
+    (if (member$ (sym-cat ?color "-ON") ?dl)
+    then 
+      (sps-set-signal (str-cat ?m) ?color "ON")
+    else
+      (if (member$ (sym-cat ?color "-BLINK") ?dl)
+      then
+        (sps-set-signal (str-cat ?m) ?color "BLINK")
+      else
+        (sps-set-signal (str-cat ?m) ?color "OFF")
+      )
     )
   )
 )
