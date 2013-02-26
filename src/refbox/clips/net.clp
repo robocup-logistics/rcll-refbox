@@ -180,9 +180,8 @@
       (pb-add-list ?m "lights" ?ls)
     )
     (if (<> ?machine:puck-id 0) then
-      (pb-set-field ?m "puck_under_rfid"
-		    (do-for-fact ((?puck puck)) (= ?puck:id ?machine:puck-id)
-				 ?puck:state))
+      (do-for-fact ((?puck puck)) (= ?puck:id ?machine:puck-id)
+		   (pb-set-field ?m "puck_under_rfid" ?puck:state))
     )
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
