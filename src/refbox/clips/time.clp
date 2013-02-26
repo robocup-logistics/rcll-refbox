@@ -37,7 +37,7 @@
 )
 
 (deffunction time-from-sec (?t)
-  (return (create$ (integer ?t) (integer (* (- ?t (integer ?t)) 10000000))))
+  (return (create$ (integer ?t) (integer (* (- ?t (integer ?t)) 1000000.))))
 )
 
 ; --- RULES - general housekeeping
