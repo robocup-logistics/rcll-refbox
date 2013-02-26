@@ -121,6 +121,47 @@
   )
 )
 
+(defrule deliver-proc-start
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE))
+  ?pf <- (puck (id ?id) (state ?ps))
+  (order (active TRUE) (product ?product&:(eq ?product ?ps)))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
+	  (proc-time ?*DELIVER-PROC-TIME*) (desired-lights GREEN-ON YELLOW-ON))
+)
+
+
+(defrule deliver-invalid-input
+  (time $?now)
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE) (puck-id 0))
+  ?pf <- (puck (id ?id) (state ?ps))
+  (not (order (active TRUE) (product ?product&:(eq ?product ?ps))))
+  =>
+  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
+)
+
+(defrule deliver-proc-done
+  (time $?now)
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state PROCESSING) (puck-id ?id) (productions ?p)
+		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
+  ?pf <- (puck (id ?id) (state ?ps))
+  =>
+  (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> CONSUMED)" crlf)
+  (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+  (modify ?pf (state CONSUMED))
+  (assert (product-delivered (time ?now) (product ?ps) (delivery-gate ?m))) 
+)
+
+(defrule deliver-removal
+  (rfid-input (machine ?m) (has-puck FALSE))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (puck-id ?id&~0))
+  =>
+  (modify ?mf (state IDLE) (puck-id 0) (desired-lights GREEN-ON))
+)
+
 
 (defrule recycle-proc-start
   (time $?now)

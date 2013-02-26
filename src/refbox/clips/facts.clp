@@ -74,11 +74,17 @@
   (slot id (type INTEGER))
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
   (slot quantity-requested (type INTEGER) (default 1))
-  (slot quantity-produced (type INTEGER) (default 0))
+  (slot quantity-delivered (type INTEGER) (default 0))
   (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
   (slot delivery-gate (type SYMBOL) (allowed-values ANY D1 D2 D3) (default ANY))
   (slot active (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (slot activate-at (type INTEGER))
+)
+ 
+(deftemplate product-delivered
+  (multislot time (type INTEGER) (cardinality 2 2))
+  (slot product (type SYMBOL) (allowed-values P1 P2 P3))
+  (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3))
 )
 
 (deftemplate gamestate
