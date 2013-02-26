@@ -189,3 +189,29 @@
   (pb-send ?client-id ?s)
   (pb-destroy ?s)
 )
+
+
+(defrule net-send-OrderInstruction
+  (network-client (id ?client-id))
+  (order)
+  =>
+  (bind ?oi (pb-create "llsf_msgs.OrderInstruction"))
+
+  (do-for-all-facts
+    ((?order order)) (eq ?order:active TRUE)
+
+    (bind ?o (pb-create "llsf_msgs.OrderSpec"))
+
+    (pb-set-field ?o "id" ?order:id)
+    (pb-set-field ?o "product" ?order:product)
+    (pb-set-field ?o "quantity_requested" ?order:quantity-requested)
+    (pb-set-field ?o "quantity_delivered" ?order:quantity-delivered)
+    (pb-set-field ?o "delivery_gate" ?order:delivery-gate)
+    (pb-set-field ?o "delivery_period_begin" (nth$ 1 ?order:delivery-period))
+    (pb-set-field ?o "delivery_period_end"   (nth$ 2 ?order:delivery-period))
+    (pb-add-list ?oi "orders" ?o) ; destroys ?o
+  )
+
+  (pb-send ?client-id ?oi)
+  (pb-destroy ?oi)
+)
