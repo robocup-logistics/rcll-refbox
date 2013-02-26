@@ -69,8 +69,6 @@
   )
   =>
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
-  ;(sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  ;(sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
 )
 
 (defrule machine-proc-waiting
@@ -85,7 +83,6 @@
   (printout t ?mtype ": " ?ps " consumed @ " ?m ": " ?id crlf)
   (modify ?mf (state WAITING) (loaded-with (create$ ?lw ?ps)) (desired-lights YELLOW-ON))
   (modify ?pf (state CONSUMED))
-  ;(sps-set-signal (str-cat ?m) "GREEN" "OFF")
 )
 
 (defrule machine-proc-done
@@ -104,8 +101,6 @@
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)) (junk (+ ?junk (length$ ?lw))))
   (modify ?pf (state ?output))
-  ;(sps-set-signal (str-cat ?m) "GREEN" "ON")
-  ;(sps-set-signal (str-cat ?m) "YELLOW" "OFF")
 )
 
 (defrule machine-puck-removal
@@ -116,12 +111,8 @@
   =>
   (if (> (length$ ?lw) 0) then
     (modify ?mf (state WAITING) (puck-id 0) (desired-lights YELLOW-ON))
-    ;(sps-set-signal (str-cat ?m) "GREEN" "OFF")
-    ;(sps-set-signal (str-cat ?m) "YELLOW" "ON")
   else
     (modify ?mf (state IDLE) (puck-id 0)  (desired-lights GREEN-ON))
-    ;(sps-set-signal (str-cat ?m) "GREEN" "ON")
-    ;(sps-set-signal (str-cat ?m) "YELLOW" "OFF")
   )
 )
 
@@ -174,8 +165,7 @@
   ?pf <- (puck (id ?id) (state CONSUMED))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
-	  (proc-time ?*RECYCLE-PROC-TIME*))
-  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+	  (proc-time ?*RECYCLE-PROC-TIME*) (desired-lights GREEN-ON YELLOW-ON))
 )
 
 (defrule recycle-invalid-input
@@ -184,9 +174,7 @@
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE) (puck-id 0))
   ?pf <- (puck (id ?id) (state ?ps&~CONSUMED))
   =>
-  (modify ?mf (puck-id ?id) (state INVALID))
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  (sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
+  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
 )
 
 (defrule recycle-proc-done
@@ -196,18 +184,15 @@
   ?pf <- (puck (id ?id) (state ?ps&CONSUMED))
   =>
   (printout t "Recycling done @ " ?m ": " ?id " (" ?ps " -> S0)" crlf)
-  (modify ?mf (state IDLE) (productions (+ ?p 1)))
+  (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON))
   (modify ?pf (state S0))
-  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
 )
 
 (defrule recycle-removal
   (rfid-input (machine ?m) (has-puck FALSE))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (puck-id ?id&~0))
   =>
-  (modify ?mf (state IDLE) (puck-id 0))
-  (sps-set-signal (str-cat ?m) "GREEN" "ON")
-  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
+  (modify ?mf (state IDLE) (puck-id 0) (desired-lights GREEN-ON))
 )
 
 
@@ -217,8 +202,7 @@
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   ?pf <- (puck (id ?id) (state CONSUMED))
   =>
-  (modify ?mf (puck-id ?id) (state PROCESSING))
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
+  (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights))
 )
 
 (defrule test-s0
@@ -227,9 +211,7 @@
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   ?pf <- (puck (id ?id) (state S0))
   =>
-  (modify ?mf (puck-id ?id) (state PROCESSING))
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
+  (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights YELLOW-ON))
 )
 
 (defrule test-s1
@@ -238,10 +220,7 @@
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   ?pf <- (puck (id ?id) (state S1))
   =>
-  (modify ?mf (puck-id ?id) (state PROCESSING))
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  (sps-set-signal (str-cat ?m) "YELLOW" "ON")
-  (sps-set-signal (str-cat ?m) "RED" "ON")
+  (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights YELLOW-ON RED-ON))
 )
 
 (defrule test-s2
@@ -250,9 +229,7 @@
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   ?pf <- (puck (id ?id) (state S2))
   =>
-  (modify ?mf (puck-id ?id) (state PROCESSING))
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  (sps-set-signal (str-cat ?m) "RED" "ON")
+  (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights RED-ON))
 )
 
 (defrule test-p1
@@ -261,8 +238,7 @@
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   ?pf <- (puck (id ?id) (state P1))
   =>
-  (modify ?mf (puck-id ?id) (state PROCESSING))
-  (sps-set-signal (str-cat ?m) "GREEN" "BLINK")
+  (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights GREEN-BLINK))
 )
 
 (defrule test-p2
@@ -271,9 +247,7 @@
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   ?pf <- (puck (id ?id) (state P2))
   =>
-  (modify ?mf (puck-id ?id) (state PROCESSING))
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  (sps-set-signal (str-cat ?m) "YELLOW" "BLINK")
+  (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights YELLOW-BLINK))
 )
 
 (defrule test-p3
@@ -282,17 +256,12 @@
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   ?pf <- (puck (id ?id) (state P3))
   =>
-  (modify ?mf (puck-id ?id) (state PROCESSING))
-  (sps-set-signal (str-cat ?m) "GREEN" "OFF")
-  (sps-set-signal (str-cat ?m) "RED" "BLINK")
+  (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights RED-BLINK))
 )
 
 (defrule test-removal
   (rfid-input (machine ?m) (has-puck FALSE))
   ?mf <- (machine (name ?m) (mtype TEST) (puck-id ?id&~0))
   =>
-  (modify ?mf (state IDLE) (puck-id 0))
-  (sps-set-signal (str-cat ?m) "GREEN" "ON")
-  (sps-set-signal (str-cat ?m) "YELLOW" "OFF")
-  (sps-set-signal (str-cat ?m) "RED" "OFF")
+  (modify ?mf (state IDLE) (puck-id 0) (desired-lights GREEN-ON))
 )
