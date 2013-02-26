@@ -200,7 +200,7 @@
 )
 
 
-(defrule test-consumed-junk
+(defrule test-consumed
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
