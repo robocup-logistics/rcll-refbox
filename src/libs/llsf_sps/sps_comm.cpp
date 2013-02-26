@@ -109,7 +109,7 @@ SPSComm::SPSComm(const char *host, unsigned short port)
   index_to_name_[D1]   = "D1";
   index_to_name_[D2]   = "D2";
   index_to_name_[D3]   = "D3";
-  index_to_name_[TEST] = "TEST";
+  index_to_name_[TST]  = "TST";
   index_to_name_[R1]   = "R1";
   index_to_name_[R2]   = "R2";
   index_to_name_[SPS_NUM_MACHINES]   = "UNKNOWN";
@@ -127,7 +127,7 @@ SPSComm::SPSComm(const char *host, unsigned short port)
   name_to_machine_["D1"]   = D1;
   name_to_machine_["D2"]   = D2;
   name_to_machine_["D3"]   = D3;
-  name_to_machine_["TEST"] = TEST;
+  name_to_machine_["TST"]  = TST;
   name_to_machine_["R1"]   = R1;
   name_to_machine_["R2"]   = R2;
 
