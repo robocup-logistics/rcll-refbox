@@ -181,6 +181,7 @@
 
 (defrule recycle-proc-done
   (time $?now)
+  ?gf <- (gamestate (points ?points))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state PROCESSING) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
   ?pf <- (puck (id ?id) (state ?ps&CONSUMED))
@@ -188,6 +189,7 @@
   (printout t "Recycling done @ " ?m ": " ?id " (" ?ps " -> S0)" crlf)
   (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON))
   (modify ?pf (state S0))
+  (modify ?gf (points (+ ?points ?*RECYCLE-POINTS*)))
 )
 
 (defrule recycle-removal
