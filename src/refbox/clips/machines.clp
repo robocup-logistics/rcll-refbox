@@ -37,7 +37,7 @@
 (defrule machine-proc-start
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  (machine (name ?m) (mtype ?mtype))
+  (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
   (machine-spec (mtype ?mtype)  (inputs $?inputs)
 		(proc-time-min ?pt-min) (proc-time-max ?pt-max))
   ?pf <- (puck (id ?id) (state ?ps&:(member$ ?ps ?inputs)))
@@ -58,7 +58,7 @@
 (defrule machine-invalid-input
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  (machine (name ?m) (mtype ?mtype))
+  (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
   (machine-spec (mtype ?mtype)  (inputs $?inputs))
   (or (and (puck (id ?id) (state ?ps&:(not (member$ ?ps ?inputs))))
 	   ?mf <- (machine (name ?m) (state IDLE|WAITING) (puck-id 0)))
@@ -75,7 +75,7 @@
 
 (defrule machine-proc-waiting
   (time $?now)
-  (machine (name ?m) (mtype ?mtype) (state PROCESSING))
+  (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE) (state PROCESSING))
   (machine-spec (mtype ?mtype)  (inputs $?inputs))
   ?mf <- (machine (name ?m) (mtype ?mtype) (puck-id ?id)
 		  (loaded-with $?lw&:(< (+ (length$ ?lw) 1) (length$ ?inputs)))
@@ -91,7 +91,8 @@
 (defrule machine-proc-done
   (time $?now)
   (machine (name ?m) (mtype ?mtype) (state PROCESSING))
-  (machine-spec (mtype ?mtype) (inputs $?inputs) (output ?output))
+  (machine-spec (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
+		(inputs $?inputs) (output ?output))
   ?mf <- (machine (name ?m) (mtype ?mtype) (puck-id ?id)
 		  (loaded-with $?lw&:(= (+ (length$ ?lw) 1) (length$ ?inputs)))
 		  (productions ?p) (junk ?junk)
@@ -109,7 +110,8 @@
 
 (defrule machine-puck-removal
   (rfid-input (machine ?m) (has-puck FALSE))
-  ?mf <- (machine (name ?m) (loaded-with $?lw) (puck-id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
+		  (loaded-with $?lw) (puck-id ?id&~0))
    ;?pf <- (puck (id ?id) (state S0))
   =>
   (if (> (length$ ?lw) 0) then
