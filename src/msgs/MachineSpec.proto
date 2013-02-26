@@ -36,6 +36,8 @@
 
 package llsf_msgs;
 
+import "Pose2D.proto";
+
 enum PuckType {
   S0 = 0;
   S1 = 1;
@@ -83,6 +85,7 @@ message MachineSpec {
   optional PuckType puck_under_rfid = 6;
 
   repeated LightSpec lights = 7;
+  optional Pose2D    pose = 8;
 }
 
 message MachineSpecs {
