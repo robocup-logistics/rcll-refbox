@@ -104,8 +104,12 @@ private:
 	static constexpr double PUCKSIZE = 0.08;
 	static constexpr double FIELDSIZE = 5.6;
 	static constexpr double FIELDBORDERSIZE = 0.2;
-	static constexpr double ZONEHEIGHT = 0.4;
-	static constexpr double ZONEWIDTH = 1.2;
+	static constexpr double ZONEHEIGHT = 1.0;
+	static constexpr double ZONEWIDTH = 0.4;
+	static constexpr double LOAREAHEIGHT = 0.6;
+	static constexpr double LOSLOTSIZE = 0.1;
+	static constexpr double LOSLOTX = 0.2 - LOSLOTSIZE / 2;
+	static constexpr double LOSLOTY = 3.6 - LOSLOTSIZE / 2;
 
 };
 

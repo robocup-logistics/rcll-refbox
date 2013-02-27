@@ -130,75 +130,145 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 }
 
 void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
-		const Machine& machine) {
+		const llsf_msgs::MachineSpec& machine) {
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
 	cr->set_line_width(FIELDLINESSIZE);
+	double leftX = machine.pose().x() - MACHINESIZE / 2;
+	double upperY = machine.pose().y() + MACHINESIZE / 2;
+	double lowerY = machine.pose().y() - MACHINESIZE / 2;
 
-	double leftX = machine.getPosX() - MACHINESIZE / 2;
-	double rightX = machine.getPosX() + MACHINESIZE / 2;
-	double upperY = machine.getPosY() + MACHINESIZE / 2;
-	double lowerY = machine.getPosY() - MACHINESIZE / 2;
+	cr->rectangle(leftX, lowerY, MACHINESIZE, MACHINESIZE);
 
-
-	//cr->move_to(leftX, upperY);
-	cr->rectangle(leftX,lowerY,MACHINESIZE,MACHINESIZE);
-	//cr->line_to(rightX, upperY);
-	//cr->line_to(rightX, lowerY);
-	//cr->line_to(leftX, lowerY);
-	//cr->line_to(leftX, upperY);
-
-	draw_machine_t(cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(),
-			machine.getOrientation());
+	draw_machine_t(cr, MACHINESIZE / 4, machine.pose().x(), machine.pose().y(),
+			machine.pose().ori());
 	draw_text(cr, leftX + MACHINESIZE / 10, upperY - MACHINESIZE / 15,
-			machine.getName());
+			machine.name());
 	draw_text(cr, leftX + MACHINESIZE / 10, lowerY + 4 * MACHINESIZE / 15,
-			machine.getType());
+			machine.type());
 	cr->stroke();
+	llsf_msgs::LightState redstate = llsf_msgs::LightState::OFF, yellowstate =
+			llsf_msgs::LightState::OFF, greenstate = llsf_msgs::LightState::OFF;
+	for (int i = 0; i < machine.lights_size(); ++i) {
+		const llsf_msgs::LightSpec& light = machine.lights(i);
 
-	const Machine::SignalState& state = machine.getState();
-	if (state.red_on) {
-		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY, 1, 0, 0);
-	} else {
-		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY, 0.8, 0, 0);
+		switch (light.color()) {
+		case llsf_msgs::LightColor::RED:
+			redstate = light.state();
+			break;
+		case llsf_msgs::LightColor::YELLOW:
+			yellowstate = light.state();
+			break;
+		case llsf_msgs::LightColor::GREEN:
+			greenstate = light.state();
+			break;
+		}
 	}
-	if (state.yellow_on) {
-		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY - MACHINESIZE / 5, 1, 1, 0);
-	} else {
-		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY - MACHINESIZE / 5, 0.9, 0.9, 0);
-	}
-	if (state.green_on) {
-		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY - 2 * MACHINESIZE / 5, 0, 1, 0);
-	} else {
-		draw_machine_light(cr, MACHINESIZE / 5, rightX - MACHINESIZE / 5,
-				upperY - 2 * MACHINESIZE / 5, 0, 0.8, 0);
-	}
-
+	draw_machine_signal(cr, machine, redstate, yellowstate, greenstate);
 	cr->restore();
+}
+
+void PlayFieldWidget::draw_machine_signal(
+		const Cairo::RefPtr<Cairo::Context>& cr,
+		const llsf_msgs::MachineSpec& machine,
+		const llsf_msgs::LightState& redState,
+		const llsf_msgs::LightState& yellowState,
+		const llsf_msgs::LightState& greenState) {
+
+	float r, g, b = 0.0;
+	bool blink = false;
+	switch (redState) {
+	case llsf_msgs::LightState::OFF:
+		r = 0.8;
+		g = 0;
+		b = 0;
+		blink = false;
+		break;
+	case llsf_msgs::LightState::BLINK:
+		r = 1;
+		g = 0;
+		b = 0;
+		blink = true;
+		break;
+	case llsf_msgs::LightState::ON:
+		r = 1;
+		g = 0;
+		b = 0;
+		blink = false;
+		break;
+	}
+
+	draw_machine_light(cr, MACHINESIZE / 5,
+			machine.pose().x() + MACHINESIZE * 3 / 10,
+			machine.pose().y() + MACHINESIZE * 3 / 10, r, g, b, blink);
+
+	switch (yellowState) {
+	case llsf_msgs::LightState::OFF:
+		r = 0.8;
+		g = 0.8;
+		b = 0;
+		blink = false;
+		break;
+	case llsf_msgs::LightState::BLINK:
+		r = 1;
+		g = 1;
+		b = 0;
+		blink = true;
+		break;
+	case llsf_msgs::LightState::ON:
+		r = 1;
+		g = 1;
+		b = 0;
+		blink = false;
+		break;
+	}
+
+	draw_machine_light(cr, MACHINESIZE / 5,
+			machine.pose().x() + MACHINESIZE * 3 / 10,
+			machine.pose().y() + MACHINESIZE / 10, r, g, b, blink);
+
+	switch (greenState) {
+	case llsf_msgs::LightState::OFF:
+		r = 0;
+		g = 0.8;
+		b = 0;
+		blink = false;
+		break;
+	case llsf_msgs::LightState::BLINK:
+		r = 0;
+		g = 1;
+		b = 0;
+		blink = true;
+		break;
+	case llsf_msgs::LightState::ON:
+		r = 0;
+		g = 1;
+		b = 0;
+		blink = false;
+		break;
+	}
+	draw_machine_light(cr, MACHINESIZE / 5,
+			machine.pose().x() + MACHINESIZE * 3 / 10,
+			machine.pose().y() - MACHINESIZE / 10, r, g, b, blink);
 }
 
 void PlayFieldWidget::draw_machine_light(
 		const Cairo::RefPtr<Cairo::Context>& cr, double size, double x,
-		double y, double r, double g, double b) {
+		double y, double r, double g, double b, bool blink) {
 	//adjustment, so light is in the box
 	x -= FIELDLINESSIZE / 2;
 	y -= FIELDLINESSIZE / 2;
 
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
-	cr->move_to(x, y);
-	cr->line_to(x + size, y);
-	cr->line_to(x + size, y - size);
-	cr->line_to(x, y - size);
-	cr->line_to(x, y);
+	cr->rectangle(x, y, size, size);
 	cr->stroke_preserve();
 	cr->set_source_rgb(r, g, b);
 	cr->fill();
+	if (blink) {
+		cr->arc(x + size / 2, y + size / 2, size, 0, 2 * M_PI);
+		cr->stroke();
+	}
 	cr->restore();
 }
 
@@ -273,7 +343,7 @@ void PlayFieldWidget::draw_delivery_zone(
 void PlayFieldWidget::draw_text(const Cairo::RefPtr<Cairo::Context>& cr,
 		double x, double y, std::string text) {
 	cr->save();
-	cr->scale(1,-1); //Temporary flip y-axis back, otherwise text is shown head down
+	cr->scale(1, -1); //Temporary flip y-axis back, otherwise text is shown head down
 	cr->set_source_rgb(0, 0, 0);
 	Pango::FontDescription font;
 
