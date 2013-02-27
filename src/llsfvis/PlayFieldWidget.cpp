@@ -411,7 +411,7 @@ void PlayFieldWidget::draw_field_border(
 }
 
 void PlayFieldWidget::update_robot_info(llsf_msgs::RobotInfo& robotInfo) {
-	//TODO implement!!
+	robotInfo_ = &robotInfo;
 }
 
 void PlayFieldWidget::update_machines(llsf_msgs::MachineSpecs& mSpecs) {
