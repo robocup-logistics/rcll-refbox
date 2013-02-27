@@ -131,8 +131,8 @@ MainWindow::~MainWindow() {
 
 }
 
-void MainWindow::update_game_state(GameState& gameState) {
-	playFieldWidget_.update_game_state(gameState);
+void MainWindow::update_game_state(llsf_msgs::GameState& gameState) {
+	//playFieldWidget_.update_game_state(gameState);
 	stateWidget_.update_game_state(gameState);
 }
 
@@ -140,8 +140,9 @@ void MainWindow::set_attention_msg(std::string msg) {
 	attentionMsg_.set_text(msg);
 }
 
-void MainWindow::set_playfield(PlayField& playField) {
-	playFieldWidget_.set_playfield(playField);
+void MainWindow::update_robots(llsf_msgs::RobotInfo& robotInfo) {
+	stateWidget_.update_robot_info(robotInfo);
+	playFieldWidget_.update_robot_info(robotInfo);
 }
 
 } /* namespace LLSFVis */
