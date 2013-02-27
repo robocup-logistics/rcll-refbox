@@ -87,23 +87,15 @@ PlayFieldWidget::PlayFieldWidget() :
 
 }
 
-void PlayFieldWidget::add_machine(const Machine* machine) {
-	machines_.push_back(machine);
-}
-
 void PlayFieldWidget::add_puck(const Puck* puck) {
 	pucks_.push_back(puck);
-}
-
-void PlayFieldWidget::add_robot(const Robot* robot) {
-	bots_.push_back(robot);
 }
 
 bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
 	cr->scale((get_allocated_height() / (FIELDSIZE + 2 * FIELDBORDERSIZE)),
 			-(get_allocated_width() / (FIELDSIZE + 2 * FIELDBORDERSIZE)));
-	cr->translate(FIELDBORDERSIZE,-1* (FIELDSIZE+FIELDBORDERSIZE));
+	cr->translate(FIELDBORDERSIZE, -1 * (FIELDSIZE + FIELDBORDERSIZE));
 
 	//Blackground white
 	cr->set_source_rgb(1, 1, 1);
@@ -114,9 +106,10 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	draw_starting_zone(cr);
 
 	//draw machines
-	for (std::list<const Machine*>::iterator iter_machines = machines_.begin();
-			iter_machines != machines_.end(); ++iter_machines) {
-		draw_machine(cr, **iter_machines);
+	if (machines_ != NULL) {
+		for (int i = 0; i < machines_->machines_size(); ++i) {
+			draw_machine(cr, machines_->machines(i));
+		}
 	}
 
 	//draw pucks
@@ -126,9 +119,10 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	}
 
 	//draw_robots
-	for (std::list<const Robot*>::iterator iter_bots = bots_.begin();
-			iter_bots != bots_.end(); ++iter_bots) {
-		draw_robot(cr, **iter_bots);
+	if (robotInfo_ != NULL) {
+		for (int i = 0; i < robotInfo_->robots_size(); ++i) {
+			draw_robot(cr, robotInfo_->robots(i));
+		}
 	}
 
 	cr->restore();
@@ -213,20 +207,19 @@ void PlayFieldWidget::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->save();
 	cr->translate(x, y);
 	cr->rotate(orientation);
-	cr->move_to(-size / 2, -size / 2);
-	cr->line_to(size / 2, -size / 2);
-	cr->move_to(0, -size / 2);
+	cr->move_to(-size / 2, 0);
+	cr->line_to(size / 2, 0);
+	cr->move_to(0, 0);
 	cr->line_to(0, size / 2);
 
 	cr->restore();
 }
 
 void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
-		const Robot& bot) {
+		const llsf_msgs::Robot& bot) {
 	cr->save();
-	cr->translate(bot.getPosX(),
-			bot.getPosY());
-	cr->rotate(bot.getOrientation());
+	cr->translate(bot.pose().x(), bot.pose().y());
+	cr->rotate(bot.pose().ori());
 	cr->set_line_width(0.01);
 	cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
 	cr->move_to(BOTSIZE / 2, 0);
@@ -256,7 +249,7 @@ void PlayFieldWidget::draw_starting_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
-	cr->rectangle(0,FIELDSIZE / 2 - ZONEWIDTH / 2,ZONEHEIGHT,ZONEWIDTH);
+	cr->rectangle(0, FIELDSIZE / 2 - ZONEHEIGHT / 2, ZONEWIDTH, ZONEHEIGHT);
 	cr->set_source_rgb(0.0, 0.0, 1.0);
 	cr->fill_preserve();
 	cr->set_source_rgb(0, 0, 0);
@@ -268,7 +261,8 @@ void PlayFieldWidget::draw_delivery_zone(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
-	cr->rectangle(FIELDSIZE - ZONEHEIGHT, FIELDSIZE / 2 - ZONEWIDTH / 2,ZONEHEIGHT,ZONEWIDTH);
+	cr->rectangle(FIELDSIZE - ZONEWIDTH, FIELDSIZE / 2 - ZONEHEIGHT / 2,
+			ZONEWIDTH, ZONEHEIGHT);
 	cr->set_source_rgb(0.0, 1.0, 0.0);
 	cr->fill_preserve();
 	cr->set_source_rgb(0, 0, 0);
@@ -294,7 +288,7 @@ void PlayFieldWidget::draw_text(const Cairo::RefPtr<Cairo::Context>& cr,
 	//int textWidth, textHeight;
 	//layout->get_pixel_size(textWidth, textHeight);
 
-	cr->move_to(x, y*-1); //cope with flipped y-axis
+	cr->move_to(x, y * -1); //cope with flipped y-axis
 	layout->show_in_cairo_context(cr);
 	cr->restore();
 }
@@ -323,52 +317,58 @@ void PlayFieldWidget::on_contextmenu_clicked(Glib::ustring entry) {
 	}
 }
 
-void PlayFieldWidget::set_playfield(PlayField& playField) {
-	machines_ = playField.getMachines();
-}
-
 void PlayFieldWidget::draw_field_border(
 		const Cairo::RefPtr<Cairo::Context>& cr) {
 	cr->save();
 	cr->set_line_width(FIELDLINESSIZE);
 	cr->set_source_rgb(0, 0, 0);
 
-	cr->move_to(0, 0);
-	cr->line_to(0, FIELDSIZE);
-	cr->line_to(FIELDSIZE, FIELDSIZE);
-	cr->line_to(FIELDSIZE, 0);
-	cr->line_to(0, 0);
+	cr->rectangle(0, 0, FIELDSIZE, FIELDSIZE);
+	//draw insertion area
+	cr->move_to(ZONEWIDTH, 0);
+	cr->line_to(ZONEWIDTH, FIELDSIZE);
+
+	cr->move_to(FIELDSIZE - ZONEWIDTH, 0);
+	cr->line_to(FIELDSIZE - ZONEWIDTH, FIELDSIZE);
+
+	//draw late order slot
+	cr->rectangle(LOSLOTX, LOSLOTY, LOSLOTSIZE, LOSLOTSIZE);
+	cr->move_to(0, FIELDSIZE / 2 + ZONEHEIGHT / 2 + LOAREAHEIGHT);
+	cr->line_to(ZONEWIDTH, FIELDSIZE / 2 + ZONEHEIGHT / 2 + LOAREAHEIGHT);
+
 	cr->stroke();
 	cr->restore();
 }
 
-void PlayFieldWidget::update_game_state(GameState& gameState) {
-	bots_ = gameState.getRobots();
-	pucks_ = gameState.getPucks();
-	machines_ = gameState.getMachines();
+void PlayFieldWidget::update_robot_info(llsf_msgs::RobotInfo& robotInfo) {
+	//TODO implement!!
 }
 
-const Machine* PlayFieldWidget::get_clicked_machine(gdouble x, gdouble y) {
+void PlayFieldWidget::update_machines(llsf_msgs::MachineSpecs& mSpecs) {
+	machines_ = &mSpecs;
+}
+
+const llsf_msgs::MachineSpec* PlayFieldWidget::get_clicked_machine(gdouble x,
+		gdouble y) {
 	gdouble scaled_x = x
 			/ (get_allocated_width() / (FIELDSIZE + FIELDBORDERSIZE * 2))
 			- FIELDBORDERSIZE;
-	gdouble scaled_y = FIELDSIZE - (y
-			/ (get_allocated_height() / (FIELDSIZE + FIELDBORDERSIZE * 2))
-			- FIELDBORDERSIZE);
-	for (std::list<const Machine*>::iterator it = machines_.begin();
-			it != machines_.end(); ++it) {
-		if (scaled_x >= (*it)->getPosX() - MACHINESIZE / 2
-				&& scaled_x <= (*it)->getPosX() + MACHINESIZE / 2
-				&& scaled_y >= (*it)->getPosY() - MACHINESIZE / 2
-				&& scaled_y <= (*it)->getPosY() + MACHINESIZE / 2) {
-			return (*it);
+	gdouble scaled_y = FIELDSIZE
+			- (y / (get_allocated_height() / (FIELDSIZE + FIELDBORDERSIZE * 2))
+					- FIELDBORDERSIZE);
+	for (int i = 0; i < machines_->machines_size(); ++i) {
+		float x = machines_->machines(i).pose().x();
+		float y = machines_->machines(i).pose().y();
+		if (scaled_x >= x - MACHINESIZE / 2 && scaled_x <= x + MACHINESIZE / 2
+				&& scaled_y >= y - MACHINESIZE / 2
+				&& scaled_y <= y + MACHINESIZE / 2) {
+			return &(machines_->machines(i));
 		}
 	}
 	return NULL;
 }
 
 PlayFieldWidget::~PlayFieldWidget() {
-// TODO Auto-generated destructor stub
 }
 
 } /* namespace LLSFVis */
