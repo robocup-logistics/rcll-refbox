@@ -18,8 +18,8 @@ namespace LLSFVis {
 
 using namespace protobuf_comm;
 
-RefboxClient::RefboxClient(MainWindow& mainWindow):
-	mainWindow_(mainWindow){
+RefboxClient::RefboxClient(MainWindow& mainWindow) :
+		mainWindow_(mainWindow) {
 	client = new ProtobufStreamClient();
 	MessageRegister & message_register = client->message_register();
 	message_register.add_message_type<llsf_msgs::GameState>();
@@ -57,11 +57,35 @@ void RefboxClient::client_connected() {
 }
 
 void RefboxClient::client_disconnected(const boost::system::error_code &error) {
-	mainWindow_.add_log_message("Refbox connected: " + error.message());
+	mainWindow_.add_log_message("Refbox disconnected: " + error.message());
 }
 
 void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
 		std::shared_ptr<google::protobuf::Message> msg) {
+	std::shared_ptr<llsf_msgs::GameState> g;
+	if ((g = std::dynamic_pointer_cast < llsf_msgs::GameState > (msg))) {
+		mainWindow_.update_game_state(*g);
+		return;
+	}
+
+	std::shared_ptr<llsf_msgs::RobotInfo> r;
+	if ((r = std::dynamic_pointer_cast < llsf_msgs::RobotInfo > (msg))) {
+		mainWindow_.update_robots(*r);
+		return;
+
+	}
+
+	std::shared_ptr<llsf_msgs::MachineSpecs> mspecs;
+	if ((mspecs = std::dynamic_pointer_cast < llsf_msgs::MachineSpecs > (msg))) {
+		mainWindow_.update_machines(*mspecs);
+		return;
+	}
+
+	std::shared_ptr<llsf_msgs::AttentionMessage> am;
+	if ((am = std::dynamic_pointer_cast < llsf_msgs::AttentionMessage > (msg))) {
+		mainWindow_.set_attention_msg(*am);
+		return;
+	}
 
 }
 
@@ -69,11 +93,9 @@ void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
  * @param error error code
  * @param signum signal number
  */
-void
-RefboxClient::handle_signal(const boost::system::error_code& error, int signum)
-{
-  io_service_.stop();
+void RefboxClient::handle_signal(const boost::system::error_code& error,
+		int signum) {
+	io_service_.stop();
 }
-
 
 } /* namespace LLSFVis */
