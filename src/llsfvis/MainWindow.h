@@ -55,7 +55,9 @@ public:
 	void update_game_state(llsf_msgs::GameState& gameState);
 	void update_robots(llsf_msgs::RobotInfo& robotInfo);
 	void update_machines(llsf_msgs::MachineSpecs& mSpecs);
+	void set_attention_msg(llsf_msgs::AttentionMessage& msg);
 private:
+	bool clear_attention_msg();
 	Gtk::Notebook tabs_;
 	Gtk::Grid playFieldTabGrid_;
 	Gtk::Paned loggingTabPaned_;

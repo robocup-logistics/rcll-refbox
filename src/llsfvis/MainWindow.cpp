@@ -63,7 +63,6 @@ MainWindow::MainWindow() :
 
 	logPreviewScrollWindow_.add(logPreviewWidget_);
 
-	attentionMsg_.set_label("Attention:");
 
 	Pango::FontDescription font;
 	font.set_size(Pango::SCALE * 18);
@@ -117,9 +116,6 @@ MainWindow::MainWindow() :
 	buttonBoxPlayField_.set_size_request(150, 0);
 	buttonBoxLogging_.set_size_request(150, 0);
 	show_all_children();
-	stateWidget_.set_time(540);
-	stateWidget_.set_score(543);
-
 }
 
 void MainWindow::add_log_message(std::string msg) {
@@ -136,8 +132,23 @@ void MainWindow::update_game_state(llsf_msgs::GameState& gameState) {
 	stateWidget_.update_game_state(gameState);
 }
 
-void MainWindow::set_attention_msg(std::string msg) {
-	attentionMsg_.set_text(msg);
+void MainWindow::set_attention_msg(llsf_msgs::AttentionMessage& msg) {
+	attentionMsg_.set_text(msg.message());
+	int timeToShow = 30000;
+	if (msg.has_time_to_show()){
+		timeToShow = msg.time_to_show() * 1000;
+	}
+	Glib::signal_timeout().connect(
+				sigc::mem_fun(*this, &MainWindow::clear_attention_msg), timeToShow);
+}
+
+void MainWindow::update_machines(llsf_msgs::MachineSpecs& mSpecs) {
+	playFieldWidget_.update_machines(mSpecs);
+}
+
+bool MainWindow::clear_attention_msg(){
+	attentionMsg_.set_text("");
+	return true;
 }
 
 void MainWindow::update_robots(llsf_msgs::RobotInfo& robotInfo) {
