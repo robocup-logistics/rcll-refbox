@@ -36,6 +36,7 @@
 
 (defrule machine-proc-start
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
   (machine-spec (mtype ?mtype)  (inputs $?inputs)
@@ -57,6 +58,7 @@
 
 (defrule machine-invalid-input
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
   (machine-spec (mtype ?mtype)  (inputs $?inputs))
@@ -73,6 +75,7 @@
 
 (defrule machine-proc-waiting
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE) (state PROCESSING))
   (machine-spec (mtype ?mtype)  (inputs $?inputs))
   ?mf <- (machine (name ?m) (mtype ?mtype) (puck-id ?id)
@@ -87,6 +90,7 @@
 
 (defrule machine-proc-done
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   ?gf <- (gamestate (points ?points))
   (machine (name ?m) (mtype ?mtype) (state PROCESSING))
   (machine-spec (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
@@ -106,6 +110,7 @@
 )
 
 (defrule machine-puck-removal
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck FALSE))
   ?mf <- (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
 		  (loaded-with $?lw) (puck-id ?id&~0))
@@ -120,6 +125,7 @@
 
 (defrule deliver-proc-start
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE))
   ?pf <- (puck (id ?id) (state ?ps))
@@ -132,6 +138,7 @@
 
 (defrule deliver-invalid-input
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE) (puck-id 0))
   ?pf <- (puck (id ?id) (state ?ps))
@@ -142,6 +149,7 @@
 
 (defrule deliver-proc-done
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   ?mf <- (machine (name ?m) (mtype DELIVER) (state PROCESSING) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
   ?pf <- (puck (id ?id) (state ?ps))
@@ -153,6 +161,7 @@
 )
 
 (defrule deliver-removal
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck FALSE))
   ?mf <- (machine (name ?m) (mtype DELIVER) (puck-id ?id&~0))
   =>
@@ -162,6 +171,7 @@
 
 (defrule recycle-proc-start
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE))
   ?pf <- (puck (id ?id) (state CONSUMED))
@@ -172,6 +182,7 @@
 
 (defrule recycle-invalid-input
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE) (puck-id 0))
   ?pf <- (puck (id ?id) (state ?ps&~CONSUMED))
@@ -181,6 +192,7 @@
 
 (defrule recycle-proc-done
   (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
   ?gf <- (gamestate (points ?points))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state PROCESSING) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
@@ -193,6 +205,7 @@
 )
 
 (defrule recycle-removal
+  (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck FALSE))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (puck-id ?id&~0))
   =>

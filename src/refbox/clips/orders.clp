@@ -8,7 +8,7 @@
 ;---------------------------------------------------------------------------
 
 (defrule activate-order
-  (gamestate (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?of <- (order (active FALSE) (activate-at ?at&:(>= ?gt ?at))
 		(product ?p) (quantity-requested ?q) (delivery-period $?period))
   =>
@@ -29,7 +29,7 @@
 )
 
 (defrule order-delivered-in-time
-  ?gf <- (gamestate (game-time ?gt) (points ?points))
+  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt) (points ?points))
   ?pf <- (product-delivered (time $?time) (product ?p) (delivery-gate ?dg))
   ; the actual order we are delivering
   ?of <- (order (id ?oid) (active TRUE) (product ?p) (quantity-requested ?q-req)

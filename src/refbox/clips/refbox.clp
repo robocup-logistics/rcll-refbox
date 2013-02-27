@@ -13,9 +13,9 @@
 
 (defrule update-gametime
   (declare (salience ?*PRIORITY_FIRST*))
-  (state WAIT_START)
   (time $?now)
-  ?gf <- (gamestate (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
+  ?gf <- (gamestate (state RUNNING)
+		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
   =>
   (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now))
 )
@@ -53,11 +53,8 @@
 
 
 (defrule init-game
-  ?sf <- (state INIT_GAME)
-  ?gf <- (gamestate)
+  ?gf <- (gamestate (state INIT))
   =>
-  (retract ?sf)
-  (assert (state WAIT_START))
-  (modify ?gf (last-time (now)))
+  (modify ?gf (state RUNNING) (last-time (now)))
 )
 

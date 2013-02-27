@@ -91,16 +91,19 @@
 )
 
 (deftemplate gamestate
+  (slot state (type SYMBOL)
+	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
+  (slot phase (type SYMBOL)
+	(allowed-values PRE_GAME EXPLORATION PRODUCTION POST_GAME) (default PRE_GAME))
   (slot game-time (type FLOAT) (default 0.0))
-  (multislot last-time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
+  (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot points (type INTEGER) (default 0))
 )
 
 
 (deffacts startup
   (time 0 0)
-  (state INIT_GAME)
-  (gamestate)
+  (gamestate (phase PRODUCTION))
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))

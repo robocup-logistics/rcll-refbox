@@ -93,19 +93,18 @@
 
 
 (defrule net-recv-SetGameState
-  ?sf <- (state ?state)
+  ?sf <- (gamestate (state ?state))
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p)
 		       (rcvd-from ?from-host ?from-port)
 		       (rcvd-via ?via) (client-id ?client-id))
   =>
   (retract ?mf ?sf) ; message will be destroyed after rule completes
-  (assert (state (sym-cat (pb-field-value ?p "state"))))
+  ;(assert (state (sym-cat (pb-field-value ?p "state"))))
 )
 
 (defrule net-send-GameState
   (time $?now)
-  (state ?state)
-  (gamestate (game-time ?game-time) (points ?points))
+  (gamestate (state ?state) (phase ?phase) (game-time ?game-time) (points ?points))
   (network-client (id ?client-id))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   =>
@@ -120,6 +119,7 @@
     (pb-set-field ?gamestate "timestamp" ?gamestate-time) ; destroys ?gamestate-time!
   )
   (pb-set-field ?gamestate "state" (str-cat ?state))
+  (pb-set-field ?gamestate "phase" (str-cat ?phase))
   (pb-set-field ?gamestate "points" ?points)
   (pb-send ?client-id ?gamestate)
   (pb-destroy ?gamestate)
