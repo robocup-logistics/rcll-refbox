@@ -64,8 +64,7 @@ std::string seconds_to_str(int sec) {
 }
 
 void StateWidget::set_time(const llsf_msgs::Time& time) {
-	//TODO show time
-	//timeLabel_.set_text(seconds_to_str(time));
+	timeLabel_.set_text(seconds_to_str(time.sec()));
 }
 
 StateWidget::~StateWidget() {
