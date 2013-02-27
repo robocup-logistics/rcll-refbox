@@ -281,6 +281,7 @@ LLSFRefBoxShell::client_connected()
 {
   p_state_->clear();
   p_state_->addstr("CONNECTED");
+  p_phase_->erase();
 }
 
 void
@@ -326,6 +327,9 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
   if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
     p_state_->clear();
     p_state_->addstr(llsf_msgs::GameState::State_Name(g->state()).c_str());
+
+    p_phase_->erase();
+    p_phase_->addstr(llsf_msgs::GameState::Phase_Name(g->phase()).c_str());
 
     int min = g->timestamp().sec() / 60;
     int sec = g->timestamp().sec() - min * 60;
