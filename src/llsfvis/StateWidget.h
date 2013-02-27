@@ -10,8 +10,8 @@
 
 #include <gtkmm.h>
 #include "RobotStatesWidget.h"
-#include "GameState.h"
-
+#include <msgs/GameState.pb.h>
+#include <msgs/RobotInfo.pb.h>
 namespace LLSFVis {
 
 
@@ -24,9 +24,10 @@ public:
 	StateWidget();
 	virtual ~StateWidget();
 	void set_score(int score);
-	void set_time(int time);
-	void set_game_phase(GameState::GamePhase gamePhase);
-	void update_game_state(GameState& gameState);
+	void set_time(const llsf_msgs::Time& time);
+	void set_game_phase(llsf_msgs::GameState::State state);
+	void update_game_state(llsf_msgs::GameState& gameState);
+	void update_robot_info(llsf_msgs::RobotInfo& robotInfo);
 private:
 	Gtk::Label timeLabel_;
 	Gtk::Frame timeFrame_;

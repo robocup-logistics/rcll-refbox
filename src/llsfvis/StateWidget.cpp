@@ -35,7 +35,9 @@ StateWidget::StateWidget() {
 	pack_start(botStates_);
 	pack_start(scoreFrame_, Gtk::PACK_EXPAND_WIDGET);
 	pack_start(timeFrame_, Gtk::PACK_EXPAND_WIDGET);
-	set_game_phase(GameState::PRESTART);
+
+	//default value:
+	set_game_phase(llsf_msgs::GameState::INIT_GAME);
 
 }
 
@@ -61,30 +63,31 @@ std::string seconds_to_str(int sec) {
 	return os.str();
 }
 
-void StateWidget::set_time(int time) {
-	timeLabel_.set_text(seconds_to_str(time));
+void StateWidget::set_time(const llsf_msgs::Time& time) {
+	//TODO show time
+	//timeLabel_.set_text(seconds_to_str(time));
 }
 
 StateWidget::~StateWidget() {
 	// TODO Auto-generated destructor stub
 }
 
-void StateWidget::set_game_phase(GameState::GamePhase gamePhase) {
+void StateWidget::set_game_phase(llsf_msgs::GameState::State state) {
 	Glib::ustring label;
-	switch (gamePhase) {
-	case GameState::PRESTART:
+	switch (state) {
+	case llsf_msgs::GameState::INIT_GAME:
 		label = "Preparation";
 		break;
-	case GameState::EXPLORE:
+	case llsf_msgs::GameState::EXPLORATION:
 		label = "Exploration";
 		break;
-	case GameState::PRODUCE:
+	case llsf_msgs::GameState::PRODUCTION:
 		label = "Production";
 		break;
-	case GameState::END:
+	case llsf_msgs::GameState::GAME_END:
 		label = "Game Over";
 		break;
-	case GameState::PAUSE:
+	case llsf_msgs::GameState::PAUSE:
 		label = "Game Paused";
 		break;
 	default:
@@ -93,23 +96,26 @@ void StateWidget::set_game_phase(GameState::GamePhase gamePhase) {
 	gameStateLabel_.set_text(label);
 }
 
-void StateWidget::update_game_state(GameState& gameState) {
-	const std::list<const Robot*>& bots = gameState.getRobots();
-	std::vector<const Robot*> botsv(bots.begin(), bots.end());
-	switch (botsv.size()) {
-	case 3:
-		botStates_.setBot3(botsv.at(2));
-	case 2:
-		botStates_.setBot2(botsv.at(1));
-	case 1:
-		botStates_.setBot1(botsv.at(0));
-		break;
-	default:
-		botStates_.clear();
-	}
-	set_time(gameState.getTime());
-	set_score(gameState.getScore());
+void StateWidget::update_game_state(llsf_msgs::GameState& gameState) {
+	set_game_phase(gameState.state());
+	set_time(gameState.timestamp());
+	set_score(gameState.points());
 
+}
+
+void StateWidget::update_robot_info(llsf_msgs::RobotInfo& robotInfo) {
+
+		switch (robotInfo.robots_size()) {
+		case 3:
+			botStates_.setBot3(robotInfo.robots(2));
+		case 2:
+			botStates_.setBot3(robotInfo.robots(1));
+		case 1:
+			botStates_.setBot3(robotInfo.robots(0));
+			break;
+		default:
+			botStates_.clear();
+		}
 }
 
 } /* namespace LLSFVis */

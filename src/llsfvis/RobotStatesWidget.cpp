@@ -41,10 +41,10 @@ RobotStatesWidget::RobotStatesWidget() :
 			sigc::mem_fun(*this, &RobotStatesWidget::on_update), 1000);
 }
 
-void RobotStatesWidget::update_bot(time_t rawtime, const Robot* bot,
+void RobotStatesWidget::update_bot(time_t rawtime, const llsf_msgs::Robot* bot,
 		Gtk::Label* bot_label) {
 	if (bot != NULL) {
-		time_t bot_lastping = rawtime - bot->getLastHeard();
+		time_t bot_lastping = rawtime - bot->last_seen().sec();
 		char bot_time[6];
 		strftime(bot_time, 6, "%M:%S", localtime(&bot_lastping));
 		Gdk::RGBA color;
@@ -76,19 +76,19 @@ RobotStatesWidget::~RobotStatesWidget() {
 	// TODO Auto-generated destructor stub
 }
 
-void RobotStatesWidget::setBot1(const Robot* bot) {
-	bot1_ = bot;
-	bot1_frame_.set_label(bot->getId());
+void RobotStatesWidget::setBot1(const llsf_msgs::Robot& bot) {
+	bot1_ = &bot;
+	bot1_frame_.set_label("[" + bot.team() + "]" + bot.name());
 }
 
-void RobotStatesWidget::setBot2(const Robot* bot) {
-	bot2_ = bot;
-	bot2_frame_.set_label(bot->getId());
+void RobotStatesWidget::setBot2(const llsf_msgs::Robot& bot) {
+	bot2_ = &bot;
+	bot2_frame_.set_label("[" + bot.team() + "]" + bot.name());
 }
 
-void RobotStatesWidget::setBot3(const Robot* bot) {
-	bot3_ = bot;
-	bot3_frame_.set_label(bot->getId());
+void RobotStatesWidget::setBot3(const llsf_msgs::Robot& bot) {
+	bot3_ = &bot;
+	bot3_frame_.set_label("[" + bot.team() + "]" + bot.name());
 }
 
 void RobotStatesWidget::clear() {
