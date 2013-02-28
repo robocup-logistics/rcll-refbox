@@ -101,7 +101,8 @@ private:
 	static constexpr double FIELDLINESSIZE = 0.02;
 	static constexpr double BOTSIZE = 0.35;
 	static constexpr double MACHINESIZE = 0.40;
-	static constexpr double PUCKSIZE = 0.08;
+	static constexpr double PUCKSIZE = 0.15;
+	static constexpr double MINIPUCKSIZE = 0.08;
 	static constexpr double FIELDSIZE = 5.6;
 	static constexpr double FIELDBORDERSIZE = 0.2;
 	static constexpr double ZONEHEIGHT = 1.0;

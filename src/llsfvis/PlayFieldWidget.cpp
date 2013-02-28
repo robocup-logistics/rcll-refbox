@@ -148,6 +148,16 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 			machine.type());
 	cr->stroke();
 
+	double puck_x = leftX + MACHINESIZE * 0.6;
+	double puck_y = lowerY + MACHINESIZE * 0.15;
+	cr->save();
+	cr->set_source_rgb(0.9,0,0);
+	for ( int i=0; i<machine.loaded_with_size();++i){
+		cr->arc(puck_x + i* (MINIPUCKSIZE * 1.15),puck_y,MINIPUCKSIZE/2,0,2*M_PI);
+		cr->fill();
+	}
+	cr->restore();
+
 	llsf_msgs::LightState redstate = llsf_msgs::LightState::OFF, yellowstate =
 			llsf_msgs::LightState::OFF, greenstate = llsf_msgs::LightState::OFF;
 
@@ -309,7 +319,7 @@ void PlayFieldWidget::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->save();
 	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
 	cr->set_line_width(0.04);
-	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE, 0.0, 2.0 * M_PI);
+	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE/2, 0.0, 2.0 * M_PI);
 	cr->set_source_rgba(0.5, 0, 0, 0.6);
 	cr->fill_preserve();
 	cr->set_source_rgb(1.0, 0, 0);
