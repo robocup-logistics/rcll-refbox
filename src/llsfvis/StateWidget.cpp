@@ -108,9 +108,9 @@ void StateWidget::update_robot_info(llsf_msgs::RobotInfo& robotInfo) {
 		case 3:
 			botStates_.setBot3(robotInfo.robots(2));
 		case 2:
-			botStates_.setBot3(robotInfo.robots(1));
+			botStates_.setBot2(robotInfo.robots(1));
 		case 1:
-			botStates_.setBot3(robotInfo.robots(0));
+			botStates_.setBot1(robotInfo.robots(0));
 			break;
 		default:
 			botStates_.clear();
