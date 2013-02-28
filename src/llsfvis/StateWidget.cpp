@@ -22,6 +22,9 @@ StateWidget::StateWidget() {
 	scoreLabel_.override_font(font);
 	timeLabel_.override_font(font);
 
+	gamePhaseLabel_.override_font(font);
+	gamePhaseFrame_.set_label("Game Phase");
+
 	gameStateLabel_.override_font(font);
 	gameStateFrame_.set_label("Game State");
 	scoreFrame_.set_label("Scores");
@@ -30,14 +33,16 @@ StateWidget::StateWidget() {
 	timeFrame_.add(timeLabel_);
 	scoreFrame_.add(scoreLabel_);
 	gameStateFrame_.add(gameStateLabel_);
+	gamePhaseFrame_.add(gamePhaseLabel_);
 
-	pack_start(gameStateFrame_);
+	pack_start(gamePhaseFrame_);
 	pack_start(botStates_);
 	pack_start(scoreFrame_, Gtk::PACK_EXPAND_WIDGET);
 	pack_start(timeFrame_, Gtk::PACK_EXPAND_WIDGET);
+	pack_start(gameStateFrame_);
 
 	//default value:
-	set_game_phase(llsf_msgs::GameState::INIT_GAME);
+	set_game_state(llsf_msgs::GameState::INIT);
 
 }
 
@@ -71,10 +76,10 @@ StateWidget::~StateWidget() {
 	// TODO Auto-generated destructor stub
 }
 
-void StateWidget::set_game_phase(llsf_msgs::GameState::State state) {
+void StateWidget::set_game_phase(llsf_msgs::GameState::Phase phase) {
 	Glib::ustring label;
-	switch (state) {
-	case llsf_msgs::GameState::INIT_GAME:
+	switch (phase) {
+	case llsf_msgs::GameState::PRE_GAME:
 		label = "Preparation";
 		break;
 	case llsf_msgs::GameState::EXPLORATION:
@@ -83,22 +88,44 @@ void StateWidget::set_game_phase(llsf_msgs::GameState::State state) {
 	case llsf_msgs::GameState::PRODUCTION:
 		label = "Production";
 		break;
-	case llsf_msgs::GameState::GAME_END:
-		label = "Game Over";
+	case llsf_msgs::GameState::POST_GAME:
+		label = "Cleanup";
 		break;
-	case llsf_msgs::GameState::PAUSE:
-		label = "Game Paused";
+	default:
+		break;
+	}
+	gamePhaseLabel_.set_text(label);
+}
+
+
+
+void StateWidget::update_game_state(llsf_msgs::GameState& gameState) {
+	set_game_phase(gameState.phase());
+	set_game_state(gameState.state());
+	set_time(gameState.timestamp());
+	set_score(gameState.points());
+
+}
+
+void StateWidget::set_game_state(llsf_msgs::GameState::State state) {
+	Glib::ustring label;
+	switch(state){
+	case llsf_msgs::GameState::INIT:
+		label = "Initializing..";
+		break;
+	case llsf_msgs::GameState::WAIT_START:
+		label = "Ready";
+		break;
+	case llsf_msgs::GameState::RUNNING:
+		label = "Running..";
+		break;
+	case llsf_msgs::GameState::PAUSED:
+		label = "Paused";
 		break;
 	default:
 		break;
 	}
 	gameStateLabel_.set_text(label);
-}
-
-void StateWidget::update_game_state(llsf_msgs::GameState& gameState) {
-	set_game_phase(gameState.state());
-	set_time(gameState.timestamp());
-	set_score(gameState.points());
 
 }
 
