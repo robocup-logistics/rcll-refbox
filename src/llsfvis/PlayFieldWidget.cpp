@@ -147,8 +147,10 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	draw_text(cr, leftX + MACHINESIZE / 10, lowerY + 4 * MACHINESIZE / 15,
 			machine.type());
 	cr->stroke();
+
 	llsf_msgs::LightState redstate = llsf_msgs::LightState::OFF, yellowstate =
 			llsf_msgs::LightState::OFF, greenstate = llsf_msgs::LightState::OFF;
+
 	for (int i = 0; i < machine.lights_size(); ++i) {
 		const llsf_msgs::LightSpec& light = machine.lights(i);
 
