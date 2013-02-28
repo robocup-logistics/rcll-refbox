@@ -47,7 +47,7 @@ message GameState {
     INIT = 0;
     WAIT_START = 1;
     RUNNING = 2;
-    PUASED = 3;
+    PAUSED = 3;
   }
 
   enum Phase {
