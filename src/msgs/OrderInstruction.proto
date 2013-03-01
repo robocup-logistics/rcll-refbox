@@ -39,7 +39,7 @@ package llsf_msgs;
 message OrderSpec {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 7;
+    MSG_TYPE = 40;
   }
 
   enum ProductType {
@@ -68,7 +68,7 @@ message OrderSpec {
 message OrderInstruction {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 6;
+    MSG_TYPE = 41;
   }
 
   repeated OrderSpec orders = 1;

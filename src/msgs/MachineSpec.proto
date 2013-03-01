@@ -64,7 +64,7 @@ enum LightState {
 message LightSpec {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 3;
+    MSG_TYPE = 10;
   }
 
   required LightColor color = 1;
@@ -74,7 +74,7 @@ message LightSpec {
 message MachineSpec {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 4;
+    MSG_TYPE = 12;
   }
   required string name     = 1;
   optional string type     = 2;
@@ -91,7 +91,7 @@ message MachineSpec {
 message MachineSpecs {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 5;
+    MSG_TYPE = 15;
   }
   repeated MachineSpec machines = 1;
 }

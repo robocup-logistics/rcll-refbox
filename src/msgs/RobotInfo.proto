@@ -39,6 +39,11 @@ import "Time.proto";
 import "Pose2D.proto";
 
 message Robot {
+  enum CompType {
+    COMP_ID  = 2002;
+    MSG_TYPE = 31;
+  }
+
   required string name = 1;
   required string team = 2; 
   required Time   last_seen = 3;
@@ -49,7 +54,7 @@ message Robot {
 message RobotInfo {
   enum CompType {
     COMP_ID  = 2002;
-    MSG_TYPE = 11;
+    MSG_TYPE = 30;
   }
 
   repeated Robot robots = 1;

@@ -40,7 +40,7 @@ import "Time.proto";
 message GameState {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 10;
+    MSG_TYPE = 20;
   }
 
   enum State {
@@ -65,5 +65,9 @@ message GameState {
 }
 
 message SetGameState {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 21;
+  }
   required GameState.State state = 1;
 }
