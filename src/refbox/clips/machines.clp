@@ -7,6 +7,13 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deffunction any-puck-in-state (?puck-state $?puck-ids)
+  (foreach ?id ?puck-ids
+    (if (any-factp ((?puck puck)) (and (eq ?puck:id ?id) (eq ?puck:state ?puck-state)))
+      then (return TRUE)))
+  (return FALSE)
+)
+
 (defrule m-shutdown "Shutdown machines at the end"
   (finalize)
   ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
@@ -43,7 +50,7 @@
 		(proc-time-min ?pt-min) (proc-time-max ?pt-max))
   ?pf <- (puck (id ?id) (state ?ps&:(member$ ?ps ?inputs)))
   ?mf <- (machine (name ?m) (mtype ?mtype) (state IDLE|WAITING)
-		  (loaded-with $?lw&:(not (member$ ?ps ?lw))))
+		  (loaded-with $?lw&:(not (any-puck-in-state ?ps ?lw))))
   =>
   (if (= (length$ ?lw) (length$ ?inputs)) then
     ; last puck to add
@@ -67,7 +74,7 @@
       ; OR:
       (and (puck (id ?id) (state ?ps&:(member$ ?ps ?inputs)))
 	   ?mf <- (machine (name ?m) (state IDLE|WAITING) (puck-id 0)
-			   (loaded-with $?lw&:(member$ ?ps ?lw))))
+			   (loaded-with $?lw&:(any-puck-in-state ?ps ?lw))))
   )
   =>
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
@@ -84,7 +91,7 @@
   ?pf <- (puck (id ?id) (state ?ps))
   =>
   (printout t ?mtype ": " ?ps " consumed @ " ?m ": " ?id crlf)
-  (modify ?mf (state WAITING) (loaded-with (create$ ?lw ?ps)) (desired-lights YELLOW-ON))
+  (modify ?mf (state WAITING) (loaded-with (create$ ?lw ?id)) (desired-lights YELLOW-ON))
   (modify ?pf (state CONSUMED))
 )
 

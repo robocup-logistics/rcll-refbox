@@ -91,15 +91,21 @@
   (retract ?af)
 )
 
-
 (defrule net-recv-SetGameState
-  ?sf <- (gamestate (state ?state))
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p)
-		       (rcvd-from ?from-host ?from-port)
-		       (rcvd-via ?via) (client-id ?client-id))
+  ?sf <- (gamestate)
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p))
   =>
-  (retract ?mf ?sf) ; message will be destroyed after rule completes
-  ;(assert (state (sym-cat (pb-field-value ?p "state"))))
+  (retract ?mf) ; message will be destroyed after rule completes
+  (modify ?sf (state (sym-cat (pb-field-value ?p "state"))))
+)
+
+
+(defrule net-recv-SetGamePhase
+  ?sf <- (gamestate)
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
+  (modify ?sf (phase (sym-cat (pb-field-value ?p "phase"))))
 )
 
 (defrule net-send-GameState
@@ -152,16 +158,16 @@
   (pb-destroy ?p)
 )
 
-(defrule net-send-MachineSpecs
+(defrule net-send-MachineInfo
   (network-client (id ?client-id))
   (machine)
   =>
-  (bind ?s (pb-create "llsf_msgs.MachineSpecs"))
+  (bind ?s (pb-create "llsf_msgs.MachineInfo"))
 
   (do-for-all-facts
     ((?machine machine)) TRUE
 
-    (bind ?m (pb-create "llsf_msgs.MachineSpec"))
+    (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (pb-set-field ?m "name" ?machine:name)
     (pb-set-field ?m "type" ?machine:mtype)
@@ -169,7 +175,14 @@
       (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
       (pb-set-field ?m "output" (str-cat ?mspec:output))
     )
-    (foreach ?puck ?machine:loaded-with (pb-add-list ?m "loaded_with" (str-cat ?puck)))
+    (foreach ?puck-id ?machine:loaded-with
+      (bind ?p (pb-create "llsf_msgs.Puck"))
+      (do-for-fact ((?puck puck)) (eq ?puck:id ?puck-id)
+        (pb-set-field ?p "id" ?puck:id)
+	(pb-set-field ?p "state" ?puck:state)
+      )
+      (pb-add-list ?m "loaded_with" (str-cat ?p))
+    )
     (foreach ?l ?machine:actual-lights
       (bind ?ls (pb-create "llsf_msgs.LightSpec"))
       (bind ?dashidx (str-index "-" ?l))
@@ -180,8 +193,12 @@
       (pb-add-list ?m "lights" ?ls)
     )
     (if (<> ?machine:puck-id 0) then
+      (bind ?p (pb-create "llsf_msgs.Puck"))
       (do-for-fact ((?puck puck)) (= ?puck:id ?machine:puck-id)
-		   (pb-set-field ?m "puck_under_rfid" ?puck:state))
+        (pb-set-field ?p "id" ?puck:id)
+	(pb-set-field ?p "state" ?puck:state)
+      )
+      (pb-set-field ?m "puck_under_rfid" ?p)
     )
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
