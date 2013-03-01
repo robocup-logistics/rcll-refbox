@@ -77,6 +77,7 @@ class LLSFRefBoxShell : public NCursesApplication {
   const char * error() const;
 
   int run();
+  void refresh();
 
  private: // methods
   void start_timers();

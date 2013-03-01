@@ -61,7 +61,7 @@
 
 // defined in miliseconds
 #define TIMER_INTERVAL 500
-#define RECONNECT_TIMER_INTERVAL 2000
+#define RECONNECT_TIMER_INTERVAL 1000
 #define BLINK_TIMER_INTERVAL 250
 #define ATTMSG_TIMER_INTERVAL 1000
 
@@ -364,6 +364,10 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
     } else {
       p_attmsg_->erase();
     }
+
+    rb_log_->refresh();
+    p_attmsg_->refresh();
+    io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
   }
 }
 
@@ -423,6 +427,13 @@ LLSFRefBoxShell::client_connected()
   p_state_->clear();
   p_state_->addstr("CONNECTED");
   p_phase_->erase();
+  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+}
+
+void
+LLSFRefBoxShell::refresh()
+{
+  panel_->refresh();
 }
 
 void
@@ -440,7 +451,6 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
     attmsg_string_ = "";
     p_attmsg_->bkgd(' '|COLOR_PAIR(0));
     p_attmsg_->erase();
-    p_attmsg_->refresh();
 
     std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
     for (m = machines_.begin(); m != machines_.end(); ++m) {
@@ -456,8 +466,10 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
       reconnect_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_reconnect_timer, this,
 					      boost::asio::placeholders::error));
     }
-  }
 
+  }
+  rb_log_->refresh();
+  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 }
 
 void
@@ -567,6 +579,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       orders_[i]->refresh();
     }
   }
+
+  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 }
 
 int
