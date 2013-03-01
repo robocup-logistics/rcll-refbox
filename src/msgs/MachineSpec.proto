@@ -37,17 +37,7 @@
 package llsf_msgs;
 
 import "Pose2D.proto";
-
-enum PuckType {
-  S0 = 0;
-  S1 = 1;
-  S2 = 2;
-  S3 = 3;
-  P1 = 4;
-  P2 = 5;
-  P3 = 6;
-  CONSUMED = 7;
-}
+import "PuckInfo.proto";
 
 enum LightColor {
   RED = 0;
@@ -71,27 +61,48 @@ message LightSpec {
   required LightState state = 2;
 }
 
-message MachineSpec {
+message Machine {
   enum CompType {
     COMP_ID  = 2000;
     MSG_TYPE = 12;
   }
-  required string name     = 1;
-  optional string type     = 2;
+  required string    name     = 1;
+  optional string    type     = 2;
 
-  repeated PuckType inputs  = 3;
-  optional PuckType output  = 4;
-  repeated PuckType loaded_with = 5;
-  optional PuckType puck_under_rfid = 6;
+  repeated PuckState inputs  = 3;
+  optional PuckState output  = 4;
+  repeated Puck      loaded_with = 5;
+  optional Puck      puck_under_rfid = 6;
 
   repeated LightSpec lights = 7;
   optional Pose2D    pose = 8;
 }
 
-message MachineSpecs {
+message MachineInfo {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 13;
+  }
+  repeated Machine machines = 1;
+}
+
+
+message RemovePuckFromMachine {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 14;
+  }
+
+  required uint32 puck_id = 1;
+}
+
+
+message PlacePuckUnderMachine {
   enum CompType {
     COMP_ID  = 2000;
     MSG_TYPE = 15;
   }
-  repeated MachineSpec machines = 1;
+  
+  required string machine_name = 1;
+  required uint32 puck_id = 2;
 }

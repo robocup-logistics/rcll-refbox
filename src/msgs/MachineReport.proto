@@ -2,10 +2,12 @@
 package llsf_msgs;
 
 import "MachineSpec.proto";
+import "PuckInfo.proto";
 
 message MachineReport {
-  required string id = 1;
-  required string type = 2;
+  required string id             = 1;
+  required string type           = 2;
 
-  optional PuckType pucks = 3;
+  repeated PuckState loaded_with = 3;
+  repeated PuckState puck_under_rfid = 4;
 }

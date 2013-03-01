@@ -1,7 +1,8 @@
+
 /***************************************************************************
- *  base_header.h - Basic framing header or each message
+ *  PuckInfo.proto - LLSF Protocol - Puck information
  *
- *  Created: Mon Jan 21 12:05:03 2013
+ *  Created: Mon Feb 25 11:36:50 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
@@ -35,47 +36,34 @@
 
 package llsf_msgs;
 
-import "Time.proto";
+import "Pose2D.proto";
 
-message GameState {
-  enum CompType {
-    COMP_ID  = 2000;
-    MSG_TYPE = 20;
-  }
-
-  enum State {
-    INIT = 0;
-    WAIT_START = 1;
-    RUNNING = 2;
-    PAUSED = 3;
-  }
-
-  enum Phase {
-    PRE_GAME = 0;
-    EXPLORATION = 1;
-    PRODUCTION = 2;
-    POST_GAME = 3;
-  }
-
-  required Time   timestamp = 1;
-
-  required State  state = 3;
-  required Phase  phase = 4;
-  optional uint32 points = 5;
+enum PuckState {
+  S0 = 0;
+  S1 = 1;
+  S2 = 2;
+  S3 = 3;
+  P1 = 4;
+  P2 = 5;
+  P3 = 6;
+  CONSUMED = 7;
 }
 
-message SetGameState {
+message Puck {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 21;
+    MSG_TYPE = 50;
   }
-  required GameState.State state = 1;
+  required uint32    id = 1;
+  required PuckState state = 2;
+  optional Pose2D    pose = 3;
 }
 
-message SetGamePhase {
+message PuckInfo {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 22;
+    MSG_TYPE = 51;
   }
-  required GameState.Phase phase = 1;
+
+  repeated Puck pucks = 1;
 }
