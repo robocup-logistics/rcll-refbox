@@ -46,6 +46,7 @@
 #include <msgs/MachineSpec.pb.h>
 #include <msgs/AttentionMessage.pb.h>
 #include <msgs/OrderInstruction.pb.h>
+#include <msgs/PuckInfo.pb.h>
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
@@ -176,13 +177,19 @@ LLSFRefBox::setup_protobuf_comm()
   mr_server.add_message_type<llsf_msgs::BeaconSignal>();
   mr_server.add_message_type<llsf_msgs::AttentionMessage>();
   mr_server.add_message_type<llsf_msgs::GameState>();
+  mr_server.add_message_type<llsf_msgs::SetGameState>();
+  mr_server.add_message_type<llsf_msgs::SetGamePhase>();
   mr_server.add_message_type<llsf_msgs::RobotInfo>();
-  mr_server.add_message_type<llsf_msgs::Robot>(9999, 1);
-  mr_server.add_message_type<llsf_msgs::MachineSpecs>();
-  mr_server.add_message_type<llsf_msgs::MachineSpec>();
+  mr_server.add_message_type<llsf_msgs::Robot>();
+  mr_server.add_message_type<llsf_msgs::MachineInfo>();
+  mr_server.add_message_type<llsf_msgs::Machine>();
+  mr_server.add_message_type<llsf_msgs::RemovePuckFromMachine>();
+  mr_server.add_message_type<llsf_msgs::PlacePuckUnderMachine>();
   mr_server.add_message_type<llsf_msgs::LightSpec>();
   mr_server.add_message_type<llsf_msgs::OrderInstruction>();
   mr_server.add_message_type<llsf_msgs::OrderSpec>();
+  mr_server.add_message_type<llsf_msgs::Puck>();
+  mr_server.add_message_type<llsf_msgs::PuckInfo>();
 
   MessageRegister &mr_peer = pbc_peer_->message_register();
   mr_peer.add_message_type<llsf_msgs::BeaconSignal>();
