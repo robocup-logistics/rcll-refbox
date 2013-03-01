@@ -60,6 +60,7 @@ public:
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
+	void create_context_menu(const llsf_msgs::MachineSpec& machine, GdkEventButton* event);
 	void add_puck(const Puck* puck);
 	void add_robot(const Robot* robot);
 	void draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
@@ -89,9 +90,11 @@ private:
 
 	const llsf_msgs::MachineSpec* get_clicked_machine(gdouble x, gdouble y);
 
+	Gtk::Menu* menu;
 	Glib::RefPtr<Gtk::UIManager> uIManager_;
 	Glib::RefPtr<Gtk::ActionGroup> actionGroup_;
-	Gtk::Menu* popup_;
+
+
 
 	const llsf_msgs::MachineSpecs* machines_ = NULL;
 	std::list<const Puck*> pucks_;

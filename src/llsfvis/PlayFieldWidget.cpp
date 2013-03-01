@@ -36,55 +36,50 @@
 #include "PlayFieldWidget.h"
 #include "PuckDialog.h"
 #include <iostream>
-
+#include <sstream>
 namespace LLSFVis {
 
-PlayFieldWidget::PlayFieldWidget() :
-		popup_(0) {
+PlayFieldWidget::PlayFieldWidget() {
 	add_events(Gdk::BUTTON_PRESS_MASK);
 	signal_button_press_event().connect(
 			sigc::mem_fun(*this, &PlayFieldWidget::on_clicked));
-
-	actionGroup_ = Gtk::ActionGroup::create();
-	actionGroup_->add(Gtk::Action::create("ContextEntry1", "Entry1"),
-			sigc::bind<Glib::ustring>(
-					sigc::mem_fun(*this,
-							&PlayFieldWidget::on_contextmenu_clicked),
-					"Entry1"));
-
-	actionGroup_->add(Gtk::Action::create("ContextEntry2", "Entry2"),
-			sigc::bind<Glib::ustring>(
-					sigc::mem_fun(*this,
-							&PlayFieldWidget::on_contextmenu_clicked),
-					"Entry2"));
-
-	actionGroup_->add(Gtk::Action::create("ContextEntry3", "Entry3"),
-			sigc::bind<Glib::ustring>(
-					sigc::mem_fun(*this,
-							&PlayFieldWidget::on_contextmenu_clicked),
-					"Entry3"));
-
 	uIManager_ = Gtk::UIManager::create();
+
+}
+
+void PlayFieldWidget::create_context_menu(
+		const llsf_msgs::MachineSpec& machine, GdkEventButton* event) {
+
+	uIManager_->remove_action_group(actionGroup_);
+	actionGroup_ = Gtk::ActionGroup::create();
+	Glib::ustring ui_info = "<ui><popup name='ContextMenu'>";
+	for (int i = 0; i < machine.loaded_with_size(); ++i) {
+
+		Glib::ustring puck_type= llsf_msgs::PuckType_Name(machine.loaded_with(i));
+
+		std::stringstream s;
+		s << "ContextEntry" << i;
+		actionGroup_->add(Gtk::Action::create(s.str(), "Remove " + puck_type),
+				sigc::bind<Glib::ustring>(
+						sigc::mem_fun(*this,
+								&PlayFieldWidget::on_contextmenu_clicked),
+						puck_type));
+		ui_info += "    <menuitem action='";
+		ui_info+= s.str();
+		ui_info += "'/>";
+	}
+	ui_info += "  </popup></ui>";
+
+
 	uIManager_->insert_action_group(actionGroup_);
-
-	Glib::ustring ui_info = "<ui>"
-			"  <popup name='PopupMenu'>"
-			"    <menuitem action='ContextEntry1'/>"
-			"    <menuitem action='ContextEntry2'/>"
-			"    <menuitem action='ContextEntry3'/>"
-			"  </popup>"
-			"</ui>";
-
 	try {
 		uIManager_->add_ui_from_string(ui_info);
 	} catch (const Glib::Error& ex) {
 		std::cerr << "building menus failed: " << ex.what();
 	}
-
-	popup_ = dynamic_cast<Gtk::Menu*>(uIManager_->get_widget("/PopupMenu"));
-	if (!popup_)
-		g_warning("menu not found");
-
+	menu =dynamic_cast<Gtk::Menu*>(uIManager_->get_widget("/ContextMenu"));
+	menu->popup(event->button,event->time);
+	//TODO hier weiter!!!
 }
 
 void PlayFieldWidget::add_puck(const Puck* puck) {
@@ -151,9 +146,10 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	double puck_x = leftX + MACHINESIZE * 0.6;
 	double puck_y = lowerY + MACHINESIZE * 0.15;
 	cr->save();
-	cr->set_source_rgb(0.9,0,0);
-	for ( int i=0; i<machine.loaded_with_size();++i){
-		cr->arc(puck_x + i* (MINIPUCKSIZE * 1.15),puck_y,MINIPUCKSIZE/2,0,2*M_PI);
+	cr->set_source_rgb(0.9, 0, 0);
+	for (int i = 0; i < machine.loaded_with_size(); ++i) {
+		cr->arc(puck_x + i * (MINIPUCKSIZE * 1.15), puck_y, MINIPUCKSIZE / 2, 0,
+				2 * M_PI);
 		cr->fill();
 	}
 	cr->restore();
@@ -319,7 +315,7 @@ void PlayFieldWidget::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->save();
 	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
 	cr->set_line_width(0.04);
-	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE/2, 0.0, 2.0 * M_PI);
+	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE / 2, 0.0, 2.0 * M_PI);
 	cr->set_source_rgba(0.5, 0, 0, 0.6);
 	cr->fill_preserve();
 	cr->set_source_rgb(1.0, 0, 0);
@@ -379,7 +375,7 @@ bool PlayFieldWidget::on_clicked(GdkEventButton* event) {
 	clicked_machine_ = get_clicked_machine(event->x, event->y);
 	if (clicked_machine_ != NULL) {
 		if (event->button == 3) {
-			popup_->popup(event->button, event->time);
+			create_context_menu(*clicked_machine_,event);
 		}
 	}
 	return true;
