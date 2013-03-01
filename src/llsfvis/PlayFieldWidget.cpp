@@ -49,8 +49,9 @@ PlayFieldWidget::PlayFieldWidget() {
 
 void PlayFieldWidget::create_context_menu(const llsf_msgs::Machine& machine,
 		GdkEventButton* event) {
-
-	uIManager_->remove_action_group(actionGroup_);
+	if (uIManager_->get_action_groups().size() > 0) {
+		uIManager_->remove_action_group(actionGroup_);
+	}
 	actionGroup_ = Gtk::ActionGroup::create();
 	Glib::ustring ui_info = "<ui><popup name='ContextMenu'>";
 	for (int i = 0; i < machine.loaded_with_size(); ++i) {
