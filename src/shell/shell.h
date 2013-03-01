@@ -37,8 +37,6 @@
 #ifndef __LLSF_REFBOX_SHELL_SHELL_H_
 #define __LLSF_REFBOX_SHELL_SHELL_H_
 
-#include <cursesapp.h>
-
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
 #include <google/protobuf/message.h>
@@ -65,14 +63,11 @@ class LLSFRefBoxShellMachine;
 class LLSFRefBoxShellRobot;
 class LLSFRefBoxShellOrder;
 
-class LLSFRefBoxShell : public NCursesApplication {
+class LLSFRefBoxShell
+{
  public:
-  LLSFRefBoxShell(int argc, char **argv);
+  LLSFRefBoxShell();
   ~LLSFRefBoxShell();
-
-  // return 1 to get title
-  int  titlesize() const { return 0; }
-  void title();
 
   const char * error() const;
 
@@ -127,10 +122,10 @@ class LLSFRefBoxShell : public NCursesApplication {
   boost::asio::deadline_timer  reconnect_timer_;
   bool                         try_reconnect_;
   boost::asio::deadline_timer  blink_timer_;
-  std::mutex                   attmsg_mutex_;
-  std::string                  attmsg_string_;
   boost::asio::deadline_timer  attmsg_timer_;
   bool                         attmsg_toggle_;
+  std::mutex                   attmsg_mutex_;
+  std::string                  attmsg_string_;
   bool                         attmsg_has_endtime_;
   boost::posix_time::ptime     attmsg_endtime_;
 

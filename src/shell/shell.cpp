@@ -151,6 +151,7 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   attmsg_timer_.cancel();
 
   delete client;
+  client = 0;
   delete panel_;
 
   std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
@@ -179,22 +180,6 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   delete p_time_;
   delete p_points_;
   delete p_attmsg_;
-
-  // Delete all global objects allocated by libprotobuf
-  google::protobuf::ShutdownProtobufLibrary();
-}
-
-void
-LLSFRefBoxShell::title()
-{
-  const char * const titleText = "LLSF RefBox Shell";
-  const int len = ::strlen(titleText);
-
-  if (titleWindow) {
-    titleWindow->bkgd(screen_titles());
-    titleWindow->addstr(0, (titleWindow->cols() - len)/2, titleText);
-    titleWindow->noutrefresh();
-  }
 }
 
 
@@ -228,7 +213,6 @@ LLSFRefBoxShell::start_timers()
   timer_.expires_from_now(boost::posix_time::milliseconds(TIMER_INTERVAL));
   timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_timer, this,
 				boost::asio::placeholders::error));
-
   blink_timer_.expires_from_now(boost::posix_time::milliseconds(BLINK_TIMER_INTERVAL));
   blink_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_blink_timer, this,
 				      boost::asio::placeholders::error));
@@ -264,7 +248,6 @@ LLSFRefBoxShell::handle_blink_timer(const boost::system::error_code& error)
     for (m = machines_.begin(); m != machines_.end(); ++m) {
       m->second->flip_blink_states();
     }
-
     blink_timer_.expires_at(blink_timer_.expires_at()
 			    + boost::posix_time::milliseconds(BLINK_TIMER_INTERVAL));
     blink_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_blink_timer, this,
