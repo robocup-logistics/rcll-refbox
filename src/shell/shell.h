@@ -99,6 +99,7 @@ class LLSFRefBoxShell
   std::string s_state_;
 
   NCursesPanel *panel_;
+  NCursesPanel *navbar_;
 
   NCursesPanel *rb_log_;
 

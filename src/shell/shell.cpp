@@ -569,7 +569,9 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 int
 LLSFRefBoxShell::run()
 {
-  panel_ = new NCursesPanel();
+  NCursesWindow rootw(::stdscr);
+  panel_ = new NCursesPanel(rootw.lines() - 1, rootw.cols());
+  navbar_ = new NCursesPanel(1, rootw.cols(), rootw.lines() - 1, 0);
 
   if (panel_->lines() < 30) {
     delete panel_;
@@ -581,15 +583,17 @@ LLSFRefBoxShell::run()
   curs_set(0); // invisible cursor
   use_default_colors();
 
+  int height = panel_->maxy();
+
   panel_->bkgd(' '|COLOR_PAIR(0));
   panel_->frame();
-  panel_->vline(1,                  panel_->width() - 26, panel_->height()-2);
+  panel_->vline(1,                  panel_->width() - 26, height);
   panel_->addch(0,                  panel_->width() - 26, ACS_TTEE);
-  panel_->addch(panel_->height()-1, panel_->width() - 26, ACS_BTEE);
+  panel_->addch(height, panel_->width() - 26, ACS_BTEE);
 
-  panel_->hline(panel_->height()-6, panel_->width() - 25, 24);
-  panel_->addch(panel_->height()-6, panel_->width() - 26, ACS_LTEE);
-  panel_->addch(panel_->height()-6, panel_->width() -  1, ACS_RTEE);
+  panel_->hline(height-5, panel_->width() - 25, 24);
+  panel_->addch(height-5, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(height-5, panel_->width() -  1, ACS_RTEE);
 
   panel_->hline(17, panel_->width() - 25, 24);
   panel_->addch(17, panel_->width() - 26, ACS_LTEE);
@@ -610,19 +614,50 @@ LLSFRefBoxShell::run()
   panel_->addstr(0, (panel_->width() - 26) / 2 - 7, "Attention Message");
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(17, panel_->width() - 16, "Robots");
-  panel_->addstr(panel_->height()-6, panel_->width() - 15, "Game");
+  panel_->addstr(height-5, panel_->width() - 15, "Game");
   panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 3, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
-  panel_->addstr(panel_->height()-5, panel_->width() - 24, "State:");
-  panel_->addstr(panel_->height()-4, panel_->width() - 24, "Phase:");
-  panel_->addstr(panel_->height()-3, panel_->width() - 24, "Time:");
-  panel_->addstr(panel_->height()-2, panel_->width() - 24, "Points:");
+  panel_->addstr(height-4, panel_->width() - 24, "State:");
+  panel_->addstr(height-3, panel_->width() - 24, "Phase:");
+  panel_->addstr(height-2, panel_->width() - 24, "Time:");
+  panel_->addstr(height-1, panel_->width() - 24, "Points:");
   panel_->attroff(A_BOLD);
 
-  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28,
-			     3, 1);
+  panel_->show();
+  panel_->refresh();
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr("F2");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 3, "STATE");
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr(0, 10, "F3");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 13, "PHASE");
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr(0, 20, "F5");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 23, "LOST PUCK");
+
+  short default_fore, default_back;
+  pair_content(0, &default_fore, &default_back);
+  init_pair(200, COLOR_RED, default_back);
+  init_pair(201, COLOR_WHITE, COLOR_RED);
+  navbar_->attron(' '|COLOR_PAIR(201)|A_BOLD);
+  navbar_->addstr(0, navbar_->cols() - 8, "SPC");
+  navbar_->standend();
+  navbar_->attron(' '|COLOR_PAIR(200)|A_BOLD);
+  navbar_->addstr(0, navbar_->cols() - 4, "STOP");
+  navbar_->refresh();
+
+  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
   rb_log_->scrollok(TRUE);
 
   const int mx = panel_->width() - 24;
