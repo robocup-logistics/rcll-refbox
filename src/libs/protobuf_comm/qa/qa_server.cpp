@@ -38,10 +38,9 @@
 #include <boost/asio.hpp>
 #include <protobuf_comm/server.h>
 
-#include <msgs/Person.pb.h>
 
 using namespace protobuf_comm;
-using namespace llsf_msgs;
+//using namespace llsf_msgs;
 
 /// @cond QA
 
@@ -81,12 +80,14 @@ handle_message(ProtobufStreamServer::ClientID client,
 	       std::shared_ptr<google::protobuf::Message> msg)
 {
   printf("Received message of type %u from %u\n", msg_type, client);
+  /*
   std::shared_ptr<Person> p;
   if ((p = std::dynamic_pointer_cast<Person>(msg))) {
     printf("Person %i: %s <%s>\n", p->id(), p->name().c_str(), p->email().c_str());
   }
 
   server.send(client, component_id, msg_type, *p);
+  */
 }
 
 int
@@ -94,8 +95,8 @@ main(int argc, char **argv)
 {
   boost::asio::io_service io_service;
 
-  MessageRegister & message_register = server.message_register();
-  message_register.add_message_type<Person>(1, 2);
+  //MessageRegister & message_register = server.message_register();
+  //message_register.add_message_type<Person>(1, 2);
 
   server.signal_connected().connect(client_connected);
   server.signal_disconnected().connect(client_disconnected);
