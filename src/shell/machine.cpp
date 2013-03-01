@@ -69,7 +69,7 @@ LLSFRefBoxShellMachine::set_type(std::string type)
 }
 
 void
-LLSFRefBoxShellMachine::set_inputs(std::vector<llsf_msgs::PuckType> &inputs)
+LLSFRefBoxShellMachine::set_inputs(std::vector<llsf_msgs::PuckState> &inputs)
 {
   inputs_ = inputs;
 }
@@ -89,17 +89,17 @@ LLSFRefBoxShellMachine::set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::Li
 }
 
 void
-LLSFRefBoxShellMachine::set_loaded_with(std::vector<llsf_msgs::PuckType> &loaded_with)
+LLSFRefBoxShellMachine::set_loaded_with(std::vector<llsf_msgs::PuckState> &loaded_with)
 {
   loaded_with_ = loaded_with;
 }
 
 
 void
-LLSFRefBoxShellMachine::set_puck_under_rfid(bool has_puck, llsf_msgs::PuckType puck_type)
+LLSFRefBoxShellMachine::set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state)
 {
   puck_under_rfid_ = has_puck;
-  puck_under_rfid_type_ = puck_type;
+  puck_under_rfid_state_ = puck_state;
 }
 
 void
@@ -174,7 +174,7 @@ LLSFRefBoxShellMachine::refresh()
 
   if (puck_under_rfid_) {
     attron(' '|COLOR_PAIR(1)|A_BOLD);
-    addstr(0, 11, llsf_msgs::PuckType_Name(puck_under_rfid_type_).substr(0,2).c_str());
+    addstr(0, 11, llsf_msgs::PuckState_Name(puck_under_rfid_state_).substr(0,2).c_str());
     attroff(A_BOLD);
   } else {
     attron(' '|COLOR_PAIR(1));
@@ -192,7 +192,7 @@ LLSFRefBoxShellMachine::refresh()
       attron(' '|COLOR_PAIR(1));
     }
 
-    addstr( 0, puck_x, llsf_msgs::PuckType_Name(inputs_[i]).substr(0,2).c_str());
+    addstr( 0, puck_x, llsf_msgs::PuckState_Name(inputs_[i]).substr(0,2).c_str());
     attroff(A_BOLD);
     puck_x += 3;
   }

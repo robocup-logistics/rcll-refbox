@@ -325,7 +325,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 {
   std::shared_ptr<llsf_msgs::GameState> g;
   if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
-    p_state_->clear();
+    s_state_ = llsf_msgs::GameState::State_Name(g->state());
+    p_state_->erase();
     p_state_->addstr(llsf_msgs::GameState::State_Name(g->state()).c_str());
 
     p_phase_->erase();
@@ -363,19 +364,21 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
   }
 
-  std::shared_ptr<llsf_msgs::MachineSpecs> mspecs;
-  if ((mspecs = std::dynamic_pointer_cast<llsf_msgs::MachineSpecs>(msg))) {
-    for (int i = 0; i < mspecs->machines_size(); ++i) {
+  std::shared_ptr<llsf_msgs::MachineInfo> minfo;
+  if ((minfo = std::dynamic_pointer_cast<llsf_msgs::MachineInfo>(msg))) {
+    for (int i = 0; i < minfo->machines_size(); ++i) {
       std::map<std::string, LLSFRefBoxShellMachine *>::iterator mpanel;
-      const llsf_msgs::MachineSpec &mspec = mspecs->machines(i);
+      const llsf_msgs::Machine &mspec = minfo->machines(i);
       //rb_log_->printw("Adding %s\n", mspec.name().c_str());
       if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
 	mpanel->second->set_type(mspec.type());
-	std::vector<llsf_msgs::PuckType> inputs(mspec.inputs_size());
+	std::vector<llsf_msgs::PuckState> inputs(mspec.inputs_size());
 	for (int j = 0; j < mspec.inputs_size(); ++j)  inputs[j] = mspec.inputs(j);
 	mpanel->second->set_inputs(inputs);
-	std::vector<llsf_msgs::PuckType> lw(mspec.loaded_with_size());
-	for (int j = 0; j < mspec.loaded_with_size(); ++j)  lw[j] = mspec.loaded_with(j);
+	std::vector<llsf_msgs::PuckState> lw(mspec.loaded_with_size());
+	for (int j = 0; j < mspec.loaded_with_size(); ++j) {
+	  lw[j] = mspec.loaded_with(j).state();
+	}
 	mpanel->second->set_loaded_with(lw);
 	std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights;
 	for (int j = 0; j < mspec.lights_size(); ++j) {
@@ -384,7 +387,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 	}
 	mpanel->second->set_lights(lights);
 	if (mspec.has_puck_under_rfid()) {
-	  mpanel->second->set_puck_under_rfid(true, mspec.puck_under_rfid());
+	  mpanel->second->set_puck_under_rfid(true, mspec.puck_under_rfid().state());
 	} else {
 	  mpanel->second->set_puck_under_rfid(false);
 	}
@@ -542,7 +545,7 @@ LLSFRefBoxShell::run()
   MessageRegister & message_register = client->message_register();
   message_register.add_message_type<llsf_msgs::GameState>();
   message_register.add_message_type<llsf_msgs::RobotInfo>();
-  message_register.add_message_type<llsf_msgs::MachineSpecs>();
+  message_register.add_message_type<llsf_msgs::MachineInfo>();
   message_register.add_message_type<llsf_msgs::AttentionMessage>();
   message_register.add_message_type<llsf_msgs::OrderInstruction>();
 

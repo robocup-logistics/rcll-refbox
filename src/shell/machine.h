@@ -59,9 +59,9 @@ class LLSFRefBoxShellMachine : public NCursesPanel
 
   void set_type(std::string type);
   void set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights);
-  void set_inputs(std::vector<llsf_msgs::PuckType> &inputs);
-  void set_loaded_with(std::vector<llsf_msgs::PuckType> &loaded_with);
-  void set_puck_under_rfid(bool has_puck, llsf_msgs::PuckType puck_type = llsf_msgs::S0);
+  void set_inputs(std::vector<llsf_msgs::PuckState> &inputs);
+  void set_loaded_with(std::vector<llsf_msgs::PuckState> &loaded_with);
+  void set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state = llsf_msgs::S0);
   void flip_blink_states();
 
   void reset();
@@ -71,10 +71,10 @@ class LLSFRefBoxShellMachine : public NCursesPanel
  private:
   std::string   name_;
   std::string   type_;
-  std::vector<llsf_msgs::PuckType> inputs_;
-  std::vector<llsf_msgs::PuckType> loaded_with_;
-  bool                             puck_under_rfid_;
-  llsf_msgs::PuckType              puck_under_rfid_type_;
+  std::vector<llsf_msgs::PuckState> inputs_;
+  std::vector<llsf_msgs::PuckState> loaded_with_;
+  bool                              puck_under_rfid_;
+  llsf_msgs::PuckState              puck_under_rfid_state_;
   std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;
   std::map<llsf_msgs::LightColor, bool> blink_state_;
 };

@@ -121,9 +121,9 @@ LLSFRefBoxShellOrder::refresh()
     }
     printw(0, 3, "%2u/%02u %s %02u:%02u-%02u:%02u %s",
 	   quantity_delivered_, quantity_requested_,
-	   llsf_msgs::OrderSpec::ProductType_Name(product_).c_str(),
+	   "", //llsf_msgs::OrderSpec::ProductType_Name(product_).c_str(),
 	   begin_min, begin_sec, end_min, end_sec,
-	   llsf_msgs::OrderSpec::DeliveryGate_Name(delivery_gate_).c_str());
+	   "");//llsf_msgs::OrderSpec::DeliveryGate_Name(delivery_gate_).c_str());
   }
 
   return NCursesPanel::refresh();
