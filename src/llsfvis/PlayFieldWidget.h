@@ -38,8 +38,6 @@
 
 #include <gtkmm.h>
 #include <list>
-#include "Puck.h"
-#include "GameState.h"
 #include "msgs/RobotInfo.pb.h"
 #include "msgs/MachineSpec.pb.h"
 
@@ -52,24 +50,21 @@ class PlayFieldWidget: public Gtk::DrawingArea {
 public:
 	PlayFieldWidget();
 	virtual ~PlayFieldWidget();
-	void add_machine(const Machine* machine);
-	void update_machines(llsf_msgs::MachineSpecs& mSpecs);
-	void update_game_state(GameState& gameState);
+	void update_machines(llsf_msgs::MachineInfo& mSpecs);
 	void update_robot_info(llsf_msgs::RobotInfo& robotInfo);
 
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
-	void create_context_menu(const llsf_msgs::MachineSpec& machine, GdkEventButton* event);
-	void add_puck(const Puck* puck);
-	void add_robot(const Robot* robot);
+	void create_context_menu(const llsf_msgs::Machine& machine, GdkEventButton* event);
 	void draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
-			const llsf_msgs::MachineSpec& machine);
-	void draw_puck(const Cairo::RefPtr<Cairo::Context>& cr, const Puck& puck);
+			const llsf_msgs::Machine& machine);
+	void draw_puck(const Cairo::RefPtr<Cairo::Context>& cr, const llsf_msgs::Puck& puck);
 	void draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr, double size,
-			double wPos, double hPos, double orientation);void draw_machine_signal(
+			double wPos, double hPos, double orientation);
+	void draw_machine_signal(
 			const Cairo::RefPtr<Cairo::Context>& cr,
-			const llsf_msgs::MachineSpec& machine,
+			const llsf_msgs::Machine& machine,
 			const llsf_msgs::LightState& redState,
 			const llsf_msgs::LightState& yellowState,
 			const llsf_msgs::LightState& greenState);
@@ -86,9 +81,9 @@ private:
 
 	virtual bool on_clicked(GdkEventButton* event);
 
-	virtual void on_contextmenu_clicked(Glib::ustring entry);
+	virtual void on_contextmenu_clicked(const llsf_msgs::Puck& puck);
 
-	const llsf_msgs::MachineSpec* get_clicked_machine(gdouble x, gdouble y);
+	const llsf_msgs::Machine* get_clicked_machine(gdouble x, gdouble y);
 
 	Gtk::Menu* menu;
 	Glib::RefPtr<Gtk::UIManager> uIManager_;
@@ -96,10 +91,10 @@ private:
 
 
 
-	const llsf_msgs::MachineSpecs* machines_ = NULL;
-	std::list<const Puck*> pucks_;
-	const llsf_msgs::RobotInfo* robotInfo_ = NULL;
-	const llsf_msgs::MachineSpec* clicked_machine_;
+	const llsf_msgs::MachineInfo* machines_ = NULL;
+	const llsf_msgs::PuckInfo* pucks_ = NULL;
+	const llsf_msgs::RobotInfo* robots_ = NULL;
+	const llsf_msgs::Machine* clicked_machine_;
 
 	static constexpr double FIELDLINESSIZE = 0.02;
 	static constexpr double BOTSIZE = 0.35;

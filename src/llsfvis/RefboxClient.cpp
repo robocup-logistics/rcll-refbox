@@ -24,7 +24,7 @@ RefboxClient::RefboxClient(MainWindow& mainWindow) :
 	MessageRegister & message_register = client->message_register();
 	message_register.add_message_type<llsf_msgs::GameState>();
 	message_register.add_message_type<llsf_msgs::RobotInfo>();
-	message_register.add_message_type<llsf_msgs::MachineSpecs>();
+	message_register.add_message_type<llsf_msgs::MachineInfo>();
 	message_register.add_message_type<llsf_msgs::AttentionMessage>();
 
 	client->signal_connected().connect(
@@ -75,8 +75,8 @@ void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
 
 	}
 
-	std::shared_ptr<llsf_msgs::MachineSpecs> mspecs;
-	if ((mspecs = std::dynamic_pointer_cast < llsf_msgs::MachineSpecs > (msg))) {
+	std::shared_ptr<llsf_msgs::MachineInfo> mspecs;
+	if ((mspecs = std::dynamic_pointer_cast < llsf_msgs::MachineInfo > (msg))) {
 		mainWindow_.update_machines(*mspecs);
 		return;
 	}

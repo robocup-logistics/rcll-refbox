@@ -39,7 +39,6 @@
 #include "PlayFieldWidget.h"
 #include "StateWidget.h"
 #include "LogWidget.h"
-#include "GameState.h"
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
@@ -54,7 +53,7 @@ public:
 	void add_log_message(std::string msg);
 	void update_game_state(llsf_msgs::GameState& gameState);
 	void update_robots(llsf_msgs::RobotInfo& robotInfo);
-	void update_machines(llsf_msgs::MachineSpecs& mSpecs);
+	void update_machines(llsf_msgs::MachineInfo& mSpecs);
 	void set_attention_msg(llsf_msgs::AttentionMessage& msg);
 private:
 	bool clear_attention_msg();

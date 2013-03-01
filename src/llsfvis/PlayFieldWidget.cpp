@@ -47,29 +47,29 @@ PlayFieldWidget::PlayFieldWidget() {
 
 }
 
-void PlayFieldWidget::create_context_menu(
-		const llsf_msgs::MachineSpec& machine, GdkEventButton* event) {
+void PlayFieldWidget::create_context_menu(const llsf_msgs::Machine& machine,
+		GdkEventButton* event) {
 
 	uIManager_->remove_action_group(actionGroup_);
 	actionGroup_ = Gtk::ActionGroup::create();
 	Glib::ustring ui_info = "<ui><popup name='ContextMenu'>";
 	for (int i = 0; i < machine.loaded_with_size(); ++i) {
-
-		Glib::ustring puck_type= llsf_msgs::PuckType_Name(machine.loaded_with(i));
+		//TODO nicht den pucknamen mit bind an die on_contextmenu_clicked schicken, sondern den neuen puck. am besten auch die machine!
+		Glib::ustring puck_state = llsf_msgs::PuckState_Name(
+				machine.loaded_with(i).state());
 
 		std::stringstream s;
 		s << "ContextEntry" << i;
-		actionGroup_->add(Gtk::Action::create(s.str(), "Remove " + puck_type),
-				sigc::bind<Glib::ustring>(
+		actionGroup_->add(Gtk::Action::create(s.str(), "Remove " + puck_state),
+				sigc::bind<const llsf_msgs::Puck&>(
 						sigc::mem_fun(*this,
 								&PlayFieldWidget::on_contextmenu_clicked),
-						puck_type));
+						machine.loaded_with(i)));
 		ui_info += "    <menuitem action='";
-		ui_info+= s.str();
+		ui_info += s.str();
 		ui_info += "'/>";
 	}
 	ui_info += "  </popup></ui>";
-
 
 	uIManager_->insert_action_group(actionGroup_);
 	try {
@@ -77,13 +77,9 @@ void PlayFieldWidget::create_context_menu(
 	} catch (const Glib::Error& ex) {
 		std::cerr << "building menus failed: " << ex.what();
 	}
-	menu =dynamic_cast<Gtk::Menu*>(uIManager_->get_widget("/ContextMenu"));
-	menu->popup(event->button,event->time);
+	menu = dynamic_cast<Gtk::Menu*>(uIManager_->get_widget("/ContextMenu"));
+	menu->popup(event->button, event->time);
 	//TODO hier weiter!!!
-}
-
-void PlayFieldWidget::add_puck(const Puck* puck) {
-	pucks_.push_back(puck);
 }
 
 bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
@@ -108,15 +104,16 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	}
 
 	//draw pucks
-	for (std::list<const Puck*>::iterator iter_pucks = pucks_.begin();
-			iter_pucks != pucks_.end(); ++iter_pucks) {
-		draw_puck(cr, **iter_pucks);
+	if (pucks_ != NULL) {
+		for (int i = 0; i < pucks_->pucks_size(); ++i) {
+			draw_puck(cr, pucks_->pucks(i));
+		}
 	}
 
 	//draw_robots
-	if (robotInfo_ != NULL) {
-		for (int i = 0; i < robotInfo_->robots_size(); ++i) {
-			draw_robot(cr, robotInfo_->robots(i));
+	if (robots_ != NULL) {
+		for (int i = 0; i < robots_->robots_size(); ++i) {
+			draw_robot(cr, robots_->robots(i));
 		}
 	}
 
@@ -125,7 +122,7 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 }
 
 void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
-		const llsf_msgs::MachineSpec& machine) {
+		const llsf_msgs::Machine& machine) {
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
 	cr->set_line_width(FIELDLINESSIZE);
@@ -178,7 +175,7 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 
 void PlayFieldWidget::draw_machine_signal(
 		const Cairo::RefPtr<Cairo::Context>& cr,
-		const llsf_msgs::MachineSpec& machine,
+		const llsf_msgs::Machine& machine,
 		const llsf_msgs::LightState& redState,
 		const llsf_msgs::LightState& yellowState,
 		const llsf_msgs::LightState& greenState) {
@@ -311,16 +308,19 @@ void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 }
 
 void PlayFieldWidget::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
-		const Puck& puck) {
-	cr->save();
-	cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
-	cr->set_line_width(0.04);
-	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE / 2, 0.0, 2.0 * M_PI);
-	cr->set_source_rgba(0.5, 0, 0, 0.6);
-	cr->fill_preserve();
-	cr->set_source_rgb(1.0, 0, 0);
-	cr->stroke();
-	cr->restore();
+		const llsf_msgs::Puck& puck) {
+	if (puck.has_pose()) {
+		cr->save();
+		cr->translate(FIELDBORDERSIZE, FIELDBORDERSIZE);
+		cr->set_line_width(0.04);
+		cr->arc(puck.pose().x(), puck.pose().y(), PUCKSIZE / 2, 0.0,
+				2.0 * M_PI);
+		cr->set_source_rgba(0.5, 0, 0, 0.6);
+		cr->fill_preserve();
+		cr->set_source_rgb(1.0, 0, 0);
+		cr->stroke();
+		cr->restore();
+	}
 }
 
 void PlayFieldWidget::draw_starting_zone(
@@ -419,14 +419,14 @@ void PlayFieldWidget::draw_field_border(
 }
 
 void PlayFieldWidget::update_robot_info(llsf_msgs::RobotInfo& robotInfo) {
-	robotInfo_ = &robotInfo;
+	robots_ = &robotInfo;
 }
 
-void PlayFieldWidget::update_machines(llsf_msgs::MachineSpecs& mSpecs) {
+void PlayFieldWidget::update_machines(llsf_msgs::MachineInfo& mSpecs) {
 	machines_ = &mSpecs;
 }
 
-const llsf_msgs::MachineSpec* PlayFieldWidget::get_clicked_machine(gdouble x,
+const llsf_msgs::Machine* PlayFieldWidget::get_clicked_machine(gdouble x,
 		gdouble y) {
 	gdouble scaled_x = x
 			/ (get_allocated_width() / (FIELDSIZE + FIELDBORDERSIZE * 2))

@@ -142,7 +142,7 @@ void MainWindow::set_attention_msg(llsf_msgs::AttentionMessage& msg) {
 				sigc::mem_fun(*this, &MainWindow::clear_attention_msg), timeToShow);
 }
 
-void MainWindow::update_machines(llsf_msgs::MachineSpecs& mSpecs) {
+void MainWindow::update_machines(llsf_msgs::MachineInfo& mSpecs) {
 	playFieldWidget_.update_machines(mSpecs);
 }
 
