@@ -55,7 +55,7 @@ namespace protobuf_comm {
 
 /** Constructor. */
 ProtobufStreamClient::ProtobufStreamClient()
-  : io_service_(), resolver_(io_service_), socket_(io_service_)
+  : resolver_(io_service_), socket_(io_service_)
 {
   connected_ = false;
   outbound_active_ = false;
@@ -258,6 +258,10 @@ void
 ProtobufStreamClient::send(uint16_t component_id, uint16_t msg_type,
 			   google::protobuf::Message &m)
 {
+  if (!connected_) {
+    throw std::runtime_error("Cannot send while not connected");
+  }
+
   QueueEntry *entry = new QueueEntry();
   message_register_.serialize(component_id, msg_type, m,
 			      entry->frame_header, entry->serialized_message);
