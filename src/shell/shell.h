@@ -91,6 +91,9 @@ class LLSFRefBoxShell : public NCursesApplication {
   void client_msg(uint16_t comp_id, uint16_t msg_type,
 		  std::shared_ptr<google::protobuf::Message> msg);
 
+  void start_keyboard();
+  void handle_keyboard(const boost::system::error_code& error);
+
   void set_game_state(std::string state);
   void set_game_phase(std::string phase);
 
@@ -129,6 +132,8 @@ class LLSFRefBoxShell : public NCursesApplication {
   bool                         attmsg_toggle_;
   bool                         attmsg_has_endtime_;
   boost::posix_time::ptime     attmsg_endtime_;
+
+  boost::asio::posix::stream_descriptor stdin_;
 
   protobuf_comm::ProtobufStreamClient *client;
 };

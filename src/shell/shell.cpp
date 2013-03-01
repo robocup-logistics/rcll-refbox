@@ -132,7 +132,8 @@ private:
 LLSFRefBoxShell::LLSFRefBoxShell()
   : quit_(false), error_(NULL), panel_(NULL), timer_(io_service_),
     reconnect_timer_(io_service_), try_reconnect_(true), blink_timer_(io_service_),
-    attmsg_timer_(io_service_), attmsg_toggle_(true)
+    attmsg_timer_(io_service_), attmsg_toggle_(true),
+    stdin_(io_service_, dup(STDIN_FILENO))
 {
   client = new ProtobufStreamClient();
 }
@@ -268,6 +269,49 @@ LLSFRefBoxShell::handle_blink_timer(const boost::system::error_code& error)
 			    + boost::posix_time::milliseconds(BLINK_TIMER_INTERVAL));
     blink_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_blink_timer, this,
 					boost::asio::placeholders::error));
+  }
+}
+
+void
+LLSFRefBoxShell::start_keyboard()
+{
+  stdin_.async_read_some(boost::asio::null_buffers(),
+			 boost::bind(&LLSFRefBoxShell::handle_keyboard, this,
+				     boost::asio::placeholders::error));
+}
+
+
+/** Handle keyboard input.
+ * @param error error code
+ */
+void
+LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
+{
+  if (! error) {
+    rb_log_->refresh();
+    int c = panel_->getch();
+    if (c != ERR) {
+      switch (c) {
+      case ' ':
+	if (s_state_ == "PAUSED") {
+	  set_game_state("RUNNING");
+	} else {
+	  set_game_state("PAUSED");
+	}
+	break;
+      case 'Q':
+      case 'q':
+	io_service_.stop();
+	break;
+      case KEY_F(2):
+	(*m_state_)();
+	break;
+      case KEY_F(3):
+	(*m_phase_)();
+	break;
+      }
+    }
+    start_keyboard();
   }
 }
 
@@ -710,6 +754,7 @@ LLSFRefBoxShell::run()
 				 boost::asio::placeholders::signal_number));
 
   start_timers();
+  start_keyboard();
   io_service_.run();
 
   return 0;
