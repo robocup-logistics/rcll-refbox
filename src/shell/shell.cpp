@@ -276,10 +276,22 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
     if (c != ERR) {
       switch (c) {
       case ' ':
-	if (s_state_ == "PAUSED") {
-	  set_game_state("RUNNING");
-	} else {
-	  set_game_state("PAUSED");
+	{
+	  short default_fore, default_back;
+	  pair_content(0, &default_fore, &default_back);
+	  init_pair(200, COLOR_RED, default_back);
+	  init_pair(202, COLOR_GREEN, default_back);
+	  navbar_->standend();
+	  if (s_state_ == "PAUSED") {
+	    set_game_state("RUNNING");
+	    navbar_->attron(' '|COLOR_PAIR(200)|A_BOLD);
+	    navbar_->addstr(0, navbar_->cols() - 4, "STOP");
+	  } else {
+	    set_game_state("PAUSED");
+	    navbar_->attron(' '|COLOR_PAIR(202)|A_BOLD);
+	    navbar_->addstr(0, navbar_->cols() - 4, "CONT");
+	  }
+	  navbar_->refresh();
 	}
 	break;
       case 'Q':
