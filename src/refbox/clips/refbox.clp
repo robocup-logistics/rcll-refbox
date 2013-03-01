@@ -20,6 +20,15 @@
   (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now))
 )
 
+(defrule update-last-time
+  (declare (salience ?*PRIORITY_FIRST*))
+  (time $?now)
+  ?gf <- (gamestate (state ~RUNNING)
+		    (last-time $?last-time&:(neq ?last-time ?now)))
+  =>
+  (modify ?gf (last-time ?now))
+)
+
 (defrule rfid-input-cleanup
   (declare (salience ?*PRIORITY_CLEANUP*))
   ?f <- (rfid-input (machine ?m) (has-puck ?hp) (id ?id))
