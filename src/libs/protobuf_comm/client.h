@@ -80,6 +80,9 @@ class ProtobufStreamClient
   void send(uint16_t component_id, uint16_t msg_type,
 	    google::protobuf::Message &m);
 
+  void send(std::shared_ptr<google::protobuf::Message> m);
+  void send(google::protobuf::Message &m);
+
   /** Signal that is invoked when a message has been received.
    * @return signal
    */
