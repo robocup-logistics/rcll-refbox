@@ -55,6 +55,7 @@ public:
 	void update_robots(llsf_msgs::RobotInfo& robotInfo);
 	void update_machines(llsf_msgs::MachineInfo& mSpecs);
 	void set_attention_msg(llsf_msgs::AttentionMessage& msg);
+	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck();
 private:
 	bool clear_attention_msg();
 	Gtk::Notebook tabs_;
@@ -83,6 +84,7 @@ private:
 	StateWidget stateWidget_;
 
 	LogWidget logWidget_;
+
 
 };
 

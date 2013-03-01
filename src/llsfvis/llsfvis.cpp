@@ -61,8 +61,8 @@ int main(int argc, char* argv[]) {
 	 pf.add_machine(0.20, 5.40, M_PI * 1.25, "R2", "RU");
 	 pf.add_machine(5.40, 5.40, M_PI * 0.75, "T", "TU");
 	 */
-	MachineSpecs mSpecs;
-	MachineSpec* m1 = mSpecs.add_machines();
+	MachineInfo mSpecs;
+	Machine* m1 = mSpecs.add_machines();
 	m1->set_name("M1");
 	m1->set_type("T0");
 	Pose2D* pose = m1->mutable_pose();
@@ -78,10 +78,12 @@ int main(int argc, char* argv[]) {
 	LightSpec* green = m1->add_lights();
 	green->set_color(LightColor::GREEN);
 	green->set_state(LightState::BLINK);
-
-	std::list<const LLSFVis::Puck*> pucks;
-	LLSFVis::Puck* p = new LLSFVis::Puck(2.3, 2.3, "p1", "S0");
-	pucks.push_back(p);
+	Puck* p1 = m1->add_loaded_with();
+	p1->set_id(42);
+	p1->set_state(PuckState::S0);
+	Puck* p2 = m1->add_loaded_with();
+	p2->set_id(42123);
+	p2->set_state(PuckState::S1);
 
 	RobotInfo rInfo;
 	Robot* r = rInfo.add_robots();
@@ -96,8 +98,8 @@ int main(int argc, char* argv[]) {
 	rpose->set_ori(0);
 
 	LLSFVis::MainWindow mainWindow;
-	//LLSFVis::RefboxClient refboxClient(mainWindow);
-	//mainWindow.set_playfield(pf);
+	LLSFVis::RefboxClient refboxClient(mainWindow);
+	mainWindow.signal_remove_puck().connect(sigc::mem_fun(refboxClient,&LLSFVis::RefboxClient::on_signal_remove_puck));
 	mainWindow.add_log_message("Good Morning");
 	mainWindow.update_machines(mSpecs);
 	mainWindow.update_robots(rInfo);

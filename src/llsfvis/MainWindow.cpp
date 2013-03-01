@@ -123,6 +123,8 @@ void MainWindow::add_log_message(std::string msg) {
 	//logPreviewWidget_.add_log_message(msg);
 }
 
+
+
 MainWindow::~MainWindow() {
 
 }
@@ -144,6 +146,10 @@ void MainWindow::set_attention_msg(llsf_msgs::AttentionMessage& msg) {
 
 void MainWindow::update_machines(llsf_msgs::MachineInfo& mSpecs) {
 	playFieldWidget_.update_machines(mSpecs);
+}
+
+sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> MainWindow::signal_remove_puck() {
+	return playFieldWidget_.signal_remove_puck();
 }
 
 bool MainWindow::clear_attention_msg(){

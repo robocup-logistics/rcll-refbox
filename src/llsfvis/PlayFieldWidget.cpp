@@ -376,24 +376,17 @@ bool PlayFieldWidget::on_clicked(GdkEventButton* event) {
 	clicked_machine_ = get_clicked_machine(event->x, event->y);
 	if (clicked_machine_ != NULL) {
 		if (event->button == 3) {
-			create_context_menu(*clicked_machine_,event);
+			create_context_menu(*clicked_machine_, event);
 		}
 	}
 	return true;
 }
 
-void PlayFieldWidget::on_contextmenu_clicked(Glib::ustring entry) {
-	if (entry == "Entry1") {
-		PuckDialog pd("Set Registered Puck");
-		int result = pd.run();
-		if (result == Gtk::RESPONSE_OK) {
-			std::cout << pd.get_value() << std::endl;
-			//TODO handle response
-		}
-
-	} else if (entry == "Entry2") {
-
-	}
+void PlayFieldWidget::on_contextmenu_clicked(const llsf_msgs::Puck& puck) {
+	llsf_msgs::RemovePuckFromMachine rpfm;
+	rpfm.set_puck_id(puck.id());
+	signal_remove_puck_.emit(rpfm);
+	std::cout << "Puck to remove: " << puck.DebugString() << std::endl;
 }
 
 void PlayFieldWidget::draw_field_border(
@@ -425,6 +418,10 @@ void PlayFieldWidget::update_robot_info(llsf_msgs::RobotInfo& robotInfo) {
 
 void PlayFieldWidget::update_machines(llsf_msgs::MachineInfo& mSpecs) {
 	machines_ = &mSpecs;
+}
+
+sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> PlayFieldWidget::signal_remove_puck() {
+	return signal_remove_puck_;
 }
 
 const llsf_msgs::Machine* PlayFieldWidget::get_clicked_machine(gdouble x,

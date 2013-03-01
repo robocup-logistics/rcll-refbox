@@ -52,7 +52,7 @@ public:
 	virtual ~PlayFieldWidget();
 	void update_machines(llsf_msgs::MachineInfo& mSpecs);
 	void update_robot_info(llsf_msgs::RobotInfo& robotInfo);
-
+	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck();
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 private:
@@ -79,6 +79,7 @@ private:
 	void draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 			const llsf_msgs::Robot& bot);
 
+
 	virtual bool on_clicked(GdkEventButton* event);
 
 	virtual void on_contextmenu_clicked(const llsf_msgs::Puck& puck);
@@ -89,6 +90,7 @@ private:
 	Glib::RefPtr<Gtk::UIManager> uIManager_;
 	Glib::RefPtr<Gtk::ActionGroup> actionGroup_;
 
+	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck_;
 
 
 	const llsf_msgs::MachineInfo* machines_ = NULL;

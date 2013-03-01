@@ -10,14 +10,17 @@
 
 #include <protobuf_comm/client.h>
 #include <boost/asio.hpp>
+#include <sigc++/sigc++.h>
 #include "MainWindow.h"
+#include "msgs/PuckInfo.pb.h"
 
 namespace LLSFVis {
 
-class RefboxClient {
+class RefboxClient : public sigc::trackable {
 public:
 	RefboxClient(MainWindow& mainWindow);
 	virtual ~RefboxClient();
+	void on_signal_remove_puck(llsf_msgs::RemovePuckFromMachine& puck);
 private:
 	MainWindow& mainWindow_;
 	protobuf_comm::ProtobufStreamClient *client;
@@ -27,6 +30,8 @@ private:
 	void client_msg(uint16_t comp_id, uint16_t msg_type,
 			std::shared_ptr<google::protobuf::Message> msg);
 	void handle_signal(const boost::system::error_code& error, int signum);
+
+
 };
 
 } /* namespace LLSFVis */
