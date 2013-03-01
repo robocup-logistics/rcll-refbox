@@ -49,6 +49,7 @@
 #include <mutex>
 
 class NCursesPanel;
+class NCursesMenu;
 
 namespace protobuf_comm {
   class ProtobufStreamClient;
@@ -90,9 +91,13 @@ class LLSFRefBoxShell : public NCursesApplication {
   void client_msg(uint16_t comp_id, uint16_t msg_type,
 		  std::shared_ptr<google::protobuf::Message> msg);
 
+  void set_game_state(std::string state);
+  void set_game_phase(std::string phase);
+
  private: // members
   bool        quit_;
   const char *error_;
+  std::string s_state_;
 
   NCursesPanel *panel_;
 
@@ -104,6 +109,10 @@ class LLSFRefBoxShell : public NCursesApplication {
   NCursesPanel *p_phase_;
   NCursesPanel *p_time_;
   NCursesPanel *p_points_;
+
+  std::string   s_cancel_;
+  NCursesMenu  *m_state_;
+  NCursesMenu  *m_phase_;
 
   std::vector<LLSFRefBoxShellRobot *> robots_;
   std::map<std::string, LLSFRefBoxShellMachine *> machines_;

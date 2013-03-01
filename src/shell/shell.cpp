@@ -51,6 +51,7 @@
 
 #include <cursesp.h>
 #include <cursesf.h>
+#include <cursesm.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
@@ -71,9 +72,65 @@ namespace llsfrb_shell {
 }
 #endif
 
-LLSFRefBoxShell::LLSFRefBoxShell(int argc, char **argv)
-  : NCursesApplication(/*wantColors*/ TRUE),
-    quit_(false), error_(NULL), panel_(NULL), timer_(io_service_),
+class PassiveItem : public NCursesMenuItem
+{
+ public:
+  PassiveItem(const char* text) : NCursesMenuItem(text) {
+    options_off(O_SELECTABLE);
+  }
+};
+
+
+class SignalItem : public NCursesMenuItem
+{
+public:
+  SignalItem(const std::string &s) : NCursesMenuItem(s.c_str())
+  {}
+
+  boost::signals2::signal<void ()> & signal() { return signal_; }
+
+  bool action() { signal_(); return TRUE; }
+
+  private:
+    boost::signals2::signal<void ()> signal_;
+};
+
+class Menu : public NCursesMenu
+{
+ public:
+  Menu(NCursesWindow *parent, int n_items, NCursesMenuItem **items)
+    : NCursesMenu(n_items + 2, max_cols(n_items, items) + 3,
+		  (parent->lines() - max_cols(n_items, items))/2,
+		  (parent->cols() - max_cols(n_items, items))/2),
+      parent_(parent)
+  {
+    InitMenu(items, true, true);
+    set_mark("");
+  }
+
+  virtual void On_Menu_Init()
+  {
+    bkgd(' '|COLOR_PAIR(0));
+    //subWindow().bkgd(parent_->getbkgd());
+    refresh();
+  }
+
+  int max_cols(int n_items, NCursesMenuItem **items)
+  {
+    int rv = 0;
+    for (int i = 0; i < n_items; ++i) {
+      rv = std::max(rv, (int)strlen(items[i]->name()));
+    }
+    return rv;
+  }
+
+private:
+  NCursesWindow *parent_;
+};
+
+
+LLSFRefBoxShell::LLSFRefBoxShell()
+  : quit_(false), error_(NULL), panel_(NULL), timer_(io_service_),
     reconnect_timer_(io_service_), try_reconnect_(true), blink_timer_(io_service_),
     attmsg_timer_(io_service_), attmsg_toggle_(true)
 {
@@ -112,6 +169,9 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   orders_.clear();
 
   delete rb_log_;
+
+  delete m_state_;
+  delete m_phase_;
 
   delete p_state_;
   delete p_phase_;
@@ -275,6 +335,43 @@ LLSFRefBoxShell::handle_reconnect_timer(const boost::system::error_code& error)
   }
 }
 
+
+void
+LLSFRefBoxShell::set_game_state(std::string state)
+{
+  llsf_msgs::GameState::State value;
+  if (llsf_msgs::GameState_State_Parse(state, &value)) {
+    rb_log_->printw("Requesting new game state %s\n", state.c_str());
+    llsf_msgs::SetGameState msg;
+    msg.set_state(value);
+    try {
+      client->send(msg);
+    } catch (std::runtime_error &e) {
+      rb_log_->printw("Sending game state failed: %s\n", e.what());
+    }
+  } else {
+    rb_log_->printw("Failed to parse game state %s\n", state.c_str());
+  }
+}
+
+
+void
+LLSFRefBoxShell::set_game_phase(std::string phase)
+{
+  llsf_msgs::GameState::Phase value;
+  if (llsf_msgs::GameState_Phase_Parse(phase, &value)) {
+    rb_log_->printw("Requesting new game phase %s\n", phase.c_str());
+    llsf_msgs::SetGamePhase msg;
+    msg.set_phase(value);
+    try {
+      client->send(msg);
+    } catch (std::runtime_error &e) {
+      rb_log_->printw("Sending game phase failed: %s\n", e.what());
+    }
+  } else {
+    rb_log_->printw("Failed to parse game phase %s\n", phase.c_str());
+  }
+}
 
 void
 LLSFRefBoxShell::client_connected()
@@ -526,13 +623,61 @@ LLSFRefBoxShell::run()
   panel_->refresh();
 
   p_attmsg_ = new NCursesPanel(1, panel_->width() - 27, 1, 1);
-  p_state_  = new NCursesPanel(1, 15, panel_->height()-5,  panel_->width() - 16);
-  p_phase_  = new NCursesPanel(1, 15, panel_->height()-4,  panel_->width() - 16);
-  p_time_   = new NCursesPanel(1, 15, panel_->height()-3,  panel_->width() - 16);
-  p_points_ = new NCursesPanel(1, 15, panel_->height()-2,  panel_->width() - 16);
+  p_state_  = new NCursesPanel(1, 15, height-4,  panel_->width() - 16);
+  p_phase_  = new NCursesPanel(1, 15, height-3,  panel_->width() - 16);
+  p_time_   = new NCursesPanel(1, 15, height-2,  panel_->width() - 16);
+  p_points_ = new NCursesPanel(1, 15, height-1,  panel_->width() - 16);
 
   p_state_->addstr("DISCONNECTED");
   p_points_->addstr("0");
+
+  // State menu
+  const google::protobuf::EnumDescriptor *state_enum_desc =
+    llsf_msgs::GameState_State_descriptor();
+  const int num_state_values = state_enum_desc->value_count();
+  NCursesMenuItem **state_items = new NCursesMenuItem*[2 + num_state_values];
+  for (int i = 0; i < state_enum_desc->value_count(); ++i) {
+    SignalItem *item = new SignalItem(state_enum_desc->value(i)->name());
+    item->signal().connect(boost::bind(&LLSFRefBoxShell::set_game_state, this,
+				       state_enum_desc->value(i)->name()));
+    state_items[i] = item;
+  }
+  // termination sentinel element
+  s_cancel_ = "** CANCEL **";
+  state_items[num_state_values]   = new SignalItem(s_cancel_);
+  state_items[num_state_values+1] = new NCursesMenuItem();
+
+  try {
+    m_state_ = new Menu(panel_, num_state_values+1, state_items);
+    m_state_->frame("Set State");
+    m_state_->hide();
+  } catch (NCursesException &e) {
+    rb_log_->printw("%s\n", e.message);
+  }
+
+  // Phase menu
+  const google::protobuf::EnumDescriptor *phase_enum_desc =
+    llsf_msgs::GameState_Phase_descriptor();
+  const int num_phase_values = phase_enum_desc->value_count();
+  NCursesMenuItem **phase_items = new NCursesMenuItem*[2 + num_phase_values];
+  for (int i = 0; i < phase_enum_desc->value_count(); ++i) {
+    SignalItem *item = new SignalItem(phase_enum_desc->value(i)->name());
+    item->signal().connect(boost::bind(&LLSFRefBoxShell::set_game_phase, this,
+				       phase_enum_desc->value(i)->name()));
+    phase_items[i] = item;
+  }
+  // termination sentinel element
+  s_cancel_ = "** CANCEL **";
+  phase_items[num_phase_values]   = new SignalItem(s_cancel_);
+  phase_items[num_phase_values+1] = new NCursesMenuItem();
+
+  try {
+    m_phase_ = new Menu(panel_, num_phase_values+1, phase_items);
+    m_phase_->frame("Set Phase");
+    m_phase_->hide();
+  } catch (NCursesException &e) {
+    rb_log_->printw("%s\n", e.message);
+  }
 
   /*
   boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());

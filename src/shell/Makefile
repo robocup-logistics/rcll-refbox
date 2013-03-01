@@ -24,7 +24,7 @@ CFLAGS += $(CFLAGS_CPP11)
 REQ_BOOST_LIBS = thread asio system signals2 format date_time
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-REQ_NCURSES_LIBS = ncursesw formw panelw
+REQ_NCURSES_LIBS = ncursesw formw panelw menuw
 
 ifneq ($(PKGCONFIG),)
   HAVE_NCURSES = $(if $(shell $(PKGCONFIG) --exists '$(REQ_NCURSES_LIBS)'; echo $${?/1/}),1,0)
