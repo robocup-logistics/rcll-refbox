@@ -422,6 +422,13 @@ LLSFRefBoxShell::client_connected()
 }
 
 void
+LLSFRefBoxShell::dispatch_client_connected()
+{
+  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::client_connected, this));
+}
+
+
+void
 LLSFRefBoxShell::refresh()
 {
   panel_->refresh();
@@ -466,6 +473,11 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
   io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 }
 
+void
+LLSFRefBoxShell::dispatch_client_disconnected(const boost::system::error_code &error)
+{
+  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::client_disconnected, this, error));
+}
 
 void
 LLSFRefBoxShell::dispatch_client_msg(uint16_t comp_id, uint16_t msg_type,
@@ -842,11 +854,14 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::OrderInstruction>();
   message_register.add_message_type<llsf_msgs::PuckInfo>();
 
-  client->signal_connected().connect(boost::bind(&LLSFRefBoxShell::client_connected, this));
-  client->signal_disconnected().connect(boost::bind(&LLSFRefBoxShell::client_disconnected,
-						    this, boost::asio::placeholders::error));
-  client->signal_received().connect(boost::bind(&LLSFRefBoxShell::dispatch_client_msg, this,
-						_1, _2, _3));
+  client->signal_connected().connect(
+    boost::bind(&LLSFRefBoxShell::dispatch_client_connected, this));
+  client->signal_disconnected().connect(
+    boost::bind(&LLSFRefBoxShell::dispatch_client_disconnected,
+		this, boost::asio::placeholders::error));
+  client->signal_received().connect(
+    boost::bind(&LLSFRefBoxShell::dispatch_client_msg, this, _1, _2, _3));
+
   client->async_connect("localhost", 4444);
 
   // Construct a signal set registered for process termination.
