@@ -150,6 +150,8 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   reconnect_timer_.cancel();
   blink_timer_.cancel();
   attmsg_timer_.cancel();
+  stdin_.cancel();
+  stdin_.release();
 
   delete client;
   client = 0;
