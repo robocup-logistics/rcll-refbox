@@ -35,6 +35,9 @@ OBJS_llsf_puck = llsf-puck.o
 LIBS_llsf_fake_robot = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_llsf_fake_robot = llsf-fake-robot.o
 
+LIBS_llsf_signal_ctrl = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_sps
+OBJS_llsf_signal_ctrl = llsf-signal-ctrl.o
+
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot)
   BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot
@@ -59,8 +62,8 @@ else
 endif
 
 ifeq ($(HAVE_LIBMODBUS),1)
-  OBJS_all +=	$(OBJS_llsf_puck)
-  BINS_all +=	$(BINDIR)/llsf-puck
+  OBJS_all +=	$(OBJS_llsf_puck) $(OBJS_llsf_signal_ctrl)
+  BINS_all +=	$(BINDIR)/llsf-puck $(BINDIR)/llsf-signal-ctrl
 
   CFLAGS  += $(CFLAGS_PROTOBUF) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
