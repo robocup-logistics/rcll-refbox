@@ -51,6 +51,10 @@ int main(int argc, char* argv[]) {
 	mainWindow.signal_remove_puck().connect(
 			sigc::mem_fun(refboxClient,
 					&LLSFVis::RefboxClient::on_signal_send_msg));
+
+	mainWindow.signal_set_game_state().connect(
+			sigc::mem_fun(refboxClient,
+					&LLSFVis::RefboxClient::on_signal_send_msg));
 	if (DEBUG) {
 		mainWindow.add_log_message("Good Morning");
 		mainWindow.update_machines(*getMachineInfo());

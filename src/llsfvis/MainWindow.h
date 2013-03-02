@@ -56,14 +56,29 @@ public:
 	void update_machines(llsf_msgs::MachineInfo& mSpecs);
 	void update_pucks(const llsf_msgs::PuckInfo& pucks);
 	void set_attention_msg(llsf_msgs::AttentionMessage& msg);
-	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck();
 
-	const sigc::signal<void, llsf_msgs::SetGameState>& getSignalSetGameState() const {
+	sigc::signal<void, llsf_msgs::SetGameState&> signal_set_game_state() {
 		return signal_set_game_state_;
 	}
 
+	sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> signal_remove_puck() {
+		return playFieldWidget_.signal_remove_puck();
+	}
+
+	sigc::signal<void, llsf_msgs::PlacePuckUnderMachine&> signal_place_puck_under_machine() {
+		return signal_place_puck_under_machine_;
+	}
+
 private:
+
 	bool clear_attention_msg();
+	void on_add_puck_to_machine_button_clicked();
+	void on_set_puck_under_rfid_button_clicked();
+	void on_start_pause_button_clicked();
+	std::vector<llsf_msgs::Puck*>  get_free_pucks();
+
+	std::vector<llsf_msgs::Machine*> get_machines();
+
 	Gtk::Notebook tabs_;
 	Gtk::Grid playFieldTabGrid_;
 	Gtk::Paned loggingTabPaned_;
@@ -75,9 +90,9 @@ private:
 	LogWidget logPreviewWidget_;
 
 	Gtk::Box buttonBoxPlayField_;
-	Gtk::Button playFieldButton1_;
-	Gtk::Button playFieldButton2_;
-	Gtk::Button playFieldButton3_;
+	Gtk::Button addPuckToMachineButton_;
+	Gtk::Button setPuckUnderRFIDButton_;
+	Gtk::Button startPauseButton_;
 	Gtk::Button playFieldButton4_;
 
 	Gtk::Box buttonBoxLogging_;
@@ -92,8 +107,9 @@ private:
 	LogWidget logWidget_;
 
 	const llsf_msgs::PuckInfo* pucks_ = NULL;
-	sigc::signal<void,llsf_msgs::SetGameState> signal_set_game_state_;
-
+	const llsf_msgs::MachineInfo* machines_ = NULL;
+	sigc::signal<void, llsf_msgs::SetGameState&> signal_set_game_state_;
+	sigc::signal<void, llsf_msgs::PlacePuckUnderMachine&> signal_place_puck_under_machine_;
 
 };
 

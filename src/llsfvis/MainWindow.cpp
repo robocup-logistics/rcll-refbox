@@ -35,6 +35,8 @@
 
 #include "MainWindow.h"
 #include <iostream>
+#include <list>
+#include "PlacePuckDialog.h"
 
 namespace LLSFVis {
 
@@ -48,21 +50,29 @@ MainWindow::MainWindow() :
 
 	set_default_size(750, 750);
 	set_position(Gtk::WIN_POS_CENTER);
+	set_title("Robocup Logistics League");
 	tabs_.set_border_width(10);
 
 	//the PlayField tab
-	playFieldButton1_.set_label("Button1");
-	playFieldButton2_.set_label("Button2");
-	playFieldButton3_.set_label("Button3");
+	addPuckToMachineButton_.set_label("Add Puck to Machine...");
+	addPuckToMachineButton_.signal_clicked().connect(
+			sigc::mem_fun(*this,
+					&MainWindow::on_add_puck_to_machine_button_clicked));
+	setPuckUnderRFIDButton_.set_label("Place Puck under RFID...");
+	setPuckUnderRFIDButton_.signal_clicked().connect(
+			sigc::mem_fun(*this,
+					&MainWindow::on_set_puck_under_rfid_button_clicked));
+	startPauseButton_.set_label("Start Game");
+	startPauseButton_.signal_clicked().connect(
+			sigc::mem_fun(*this, &MainWindow::on_start_pause_button_clicked));
 	playFieldButton4_.set_label("Button4");
 
-	buttonBoxPlayField_.pack_start(playFieldButton1_, Gtk::PACK_SHRINK);
-	buttonBoxPlayField_.pack_start(playFieldButton2_, Gtk::PACK_SHRINK);
-	buttonBoxPlayField_.pack_start(playFieldButton3_, Gtk::PACK_SHRINK);
+	buttonBoxPlayField_.pack_start(addPuckToMachineButton_, Gtk::PACK_SHRINK);
+	buttonBoxPlayField_.pack_start(setPuckUnderRFIDButton_, Gtk::PACK_SHRINK);
+	buttonBoxPlayField_.pack_start(startPauseButton_, Gtk::PACK_SHRINK);
 	buttonBoxPlayField_.pack_start(playFieldButton4_, Gtk::PACK_SHRINK);
 
 	logPreviewScrollWindow_.add(logPreviewWidget_);
-
 
 	Pango::FontDescription font;
 	font.set_size(Pango::SCALE * 18);
@@ -98,8 +108,8 @@ MainWindow::MainWindow() :
 	logWidget_.set_hexpand(true);
 	logPreviewWidget_.set_hexpand(true);
 	logScrollWindow_.add(logWidget_);
-	loggingTabPaned_.pack1(logScrollWindow_,true,true);
-	loggingTabPaned_.pack2(buttonBoxLogging_,false,false);
+	loggingTabPaned_.pack1(logScrollWindow_, true, true);
+	loggingTabPaned_.pack2(buttonBoxLogging_, false, false);
 
 	tabs_.append_page(playFieldTabGrid_, "Playfield");
 	tabs_.append_page(loggingTabPaned_, "RefBox Log");
@@ -123,8 +133,6 @@ void MainWindow::add_log_message(std::string msg) {
 	//logPreviewWidget_.add_log_message(msg);
 }
 
-
-
 MainWindow::~MainWindow() {
 
 }
@@ -137,19 +145,16 @@ void MainWindow::update_game_state(llsf_msgs::GameState& gameState) {
 void MainWindow::set_attention_msg(llsf_msgs::AttentionMessage& msg) {
 	attentionMsg_.set_text(msg.message());
 	int timeToShow = 30000;
-	if (msg.has_time_to_show()){
+	if (msg.has_time_to_show()) {
 		timeToShow = msg.time_to_show() * 1000;
 	}
 	Glib::signal_timeout().connect(
-				sigc::mem_fun(*this, &MainWindow::clear_attention_msg), timeToShow);
+			sigc::mem_fun(*this, &MainWindow::clear_attention_msg), timeToShow);
 }
 
 void MainWindow::update_machines(llsf_msgs::MachineInfo& mSpecs) {
+	machines_=&mSpecs;
 	playFieldWidget_.update_machines(mSpecs);
-}
-
-sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> MainWindow::signal_remove_puck() {
-	return playFieldWidget_.signal_remove_puck();
 }
 
 void MainWindow::update_pucks(const llsf_msgs::PuckInfo& pucks) {
@@ -157,7 +162,7 @@ void MainWindow::update_pucks(const llsf_msgs::PuckInfo& pucks) {
 	playFieldWidget_.update_pucks(pucks);
 }
 
-bool MainWindow::clear_attention_msg(){
+bool MainWindow::clear_attention_msg() {
 	attentionMsg_.set_text("");
 	return true;
 }
@@ -165,6 +170,58 @@ bool MainWindow::clear_attention_msg(){
 void MainWindow::update_robots(llsf_msgs::RobotInfo& robotInfo) {
 	stateWidget_.update_robot_info(robotInfo);
 	playFieldWidget_.update_robot_info(robotInfo);
+}
+
+void MainWindow::on_add_puck_to_machine_button_clicked() {
+	std::vector<llsf_msgs::Puck*> free_pucks = get_free_pucks();
+
+	std::vector<llsf_msgs::Machine*> machines = get_machines();
+
+	PlacePuckDialog pd(free_pucks, machines);
+	int resp = pd.run();
+	if (resp == Gtk::RESPONSE_OK) {
+		llsf_msgs::Machine* m = pd.get_selected_machine();
+		llsf_msgs::Puck* p = pd.get_selected_puck();
+		llsf_msgs::PlacePuckUnderMachine ppum;
+		ppum.set_machine_name(m->name());
+		ppum.set_puck_id(p->id());
+		std::cout << ppum.DebugString() << std::endl;
+		signal_place_puck_under_machine_.emit(ppum);
+	}
+
+}
+
+void MainWindow::on_set_puck_under_rfid_button_clicked() {
+	//TODO tbd
+}
+
+void MainWindow::on_start_pause_button_clicked() {
+	llsf_msgs::SetGameState gsm;
+	if (startPauseButton_.get_label() == "Start Game") {
+		startPauseButton_.set_label("Pause Game");
+		gsm.set_state(llsf_msgs::GameState::RUNNING);
+
+	} else if (startPauseButton_.get_label() == "Pause Game") {
+		startPauseButton_.set_label("Continue Game");
+		gsm.set_state(llsf_msgs::GameState::PAUSED);
+	} else if (startPauseButton_.get_label() == "Continue Game") {
+		startPauseButton_.set_label("Pause Game");
+		gsm.set_state(llsf_msgs::GameState::RUNNING);
+
+	}
+	signal_set_game_state_.emit(gsm);
+}
+
+std::vector<llsf_msgs::Puck*> MainWindow::get_free_pucks() {
+	//TODO tbd
+	std::vector<llsf_msgs::Puck*> p;
+	return p;
+}
+
+std::vector<llsf_msgs::Machine*> MainWindow::get_machines() {
+	//TODO tbd
+	std::vector<llsf_msgs::Machine*> m;
+	return m;
 }
 
 } /* namespace LLSFVis */

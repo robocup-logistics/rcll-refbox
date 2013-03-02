@@ -26,7 +26,7 @@ REQ_BOOST_LIBS = thread asio system signals2 format date_time
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 LIBS_llsfvis = stdc++ llsfrbcore llsf_protobuf_comm llsf_msgs
-OBJS_llsfvis = llsfvis.o MainWindow.o PlayFieldWidget.o StateWidget.o RobotStatesWidget.o PuckDialog.o LogWidget.o RefboxClient.o
+OBJS_llsfvis = llsfvis.o MainWindow.o PlayFieldWidget.o StateWidget.o RobotStatesWidget.o PuckDialog.o LogWidget.o RefboxClient.o PlacePuckDialog.o
 
 
 ifeq ($(HAVE_GTKMM_3)$(HAVE_BOOST_LIBS)$(HAVE_PROTOBUF),111)

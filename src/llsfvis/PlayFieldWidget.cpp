@@ -55,7 +55,6 @@ void PlayFieldWidget::create_context_menu(const llsf_msgs::Machine& machine,
 	actionGroup_ = Gtk::ActionGroup::create();
 	Glib::ustring ui_info = "<ui><popup name='ContextMenu'>";
 	for (int i = 0; i < machine.loaded_with_size(); ++i) {
-		//TODO nicht den pucknamen mit bind an die on_contextmenu_clicked schicken, sondern den neuen puck. am besten auch die machine!
 		Glib::ustring puck_state = llsf_msgs::PuckState_Name(
 				machine.loaded_with(i).state());
 
