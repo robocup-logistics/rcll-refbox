@@ -294,9 +294,11 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	break;
       case KEY_F(2):
 	(*m_state_)();
+	io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	break;
       case KEY_F(3):
 	(*m_phase_)();
+	io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	break;
       }
     }
@@ -354,8 +356,6 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
       p_attmsg_->erase();
     }
 
-    rb_log_->refresh();
-    p_attmsg_->refresh();
     io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
   }
 }
@@ -461,8 +461,15 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
     }
 
   }
-  rb_log_->refresh();
   io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+}
+
+
+void
+LLSFRefBoxShell::dispatch_client_msg(uint16_t comp_id, uint16_t msg_type,
+				     std::shared_ptr<google::protobuf::Message> msg)
+{
+  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::client_msg, this, comp_id, msg_type, msg));
 }
 
 void
@@ -525,7 +532,6 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 	last_seen(boost::posix_time::from_time_t(robot.last_seen().sec()));
       last_seen += boost::posix_time::nanoseconds(robot.last_seen().nsec());
       robots_[i]->set_last_seen(last_seen);
-      robots_[i]->refresh();
     }
   }
 
@@ -837,7 +843,7 @@ LLSFRefBoxShell::run()
   client->signal_connected().connect(boost::bind(&LLSFRefBoxShell::client_connected, this));
   client->signal_disconnected().connect(boost::bind(&LLSFRefBoxShell::client_disconnected,
 						    this, boost::asio::placeholders::error));
-  client->signal_received().connect(boost::bind(&LLSFRefBoxShell::client_msg, this,
+  client->signal_received().connect(boost::bind(&LLSFRefBoxShell::dispatch_client_msg, this,
 						_1, _2, _3));
   client->async_connect("localhost", 4444);
 

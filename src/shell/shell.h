@@ -85,6 +85,8 @@ class LLSFRefBoxShell
 
   void client_connected();
   void client_disconnected(const boost::system::error_code &error);
+  void dispatch_client_msg(uint16_t comp_id, uint16_t msg_type,
+			   std::shared_ptr<google::protobuf::Message> msg);
   void client_msg(uint16_t comp_id, uint16_t msg_type,
 		  std::shared_ptr<google::protobuf::Message> msg);
 
