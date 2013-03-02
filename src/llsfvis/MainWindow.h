@@ -54,8 +54,14 @@ public:
 	void update_game_state(llsf_msgs::GameState& gameState);
 	void update_robots(llsf_msgs::RobotInfo& robotInfo);
 	void update_machines(llsf_msgs::MachineInfo& mSpecs);
+	void update_pucks(const llsf_msgs::PuckInfo& pucks);
 	void set_attention_msg(llsf_msgs::AttentionMessage& msg);
 	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck();
+
+	const sigc::signal<void, llsf_msgs::SetGameState>& getSignalSetGameState() const {
+		return signal_set_game_state_;
+	}
+
 private:
 	bool clear_attention_msg();
 	Gtk::Notebook tabs_;
@@ -84,6 +90,9 @@ private:
 	StateWidget stateWidget_;
 
 	LogWidget logWidget_;
+
+	const llsf_msgs::PuckInfo* pucks_ = NULL;
+	sigc::signal<void,llsf_msgs::SetGameState> signal_set_game_state_;
 
 
 };

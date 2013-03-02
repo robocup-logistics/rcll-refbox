@@ -87,6 +87,12 @@ void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
 		return;
 	}
 
+	std::shared_ptr<llsf_msgs::PuckInfo> puck;
+	if ((puck = std::dynamic_pointer_cast < llsf_msgs::PuckInfo > (msg))) {
+			mainWindow_.update_pucks(*puck);
+			return;
+		}
+
 }
 
 void RefboxClient::on_signal_remove_puck(

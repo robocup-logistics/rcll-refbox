@@ -424,6 +424,10 @@ sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> PlayFieldWidget::signal_re
 	return signal_remove_puck_;
 }
 
+void PlayFieldWidget::update_pucks(const llsf_msgs::PuckInfo& pucks) {
+	pucks_=&pucks;
+}
+
 const llsf_msgs::Machine* PlayFieldWidget::get_clicked_machine(gdouble x,
 		gdouble y) {
 	gdouble scaled_x = x

@@ -52,6 +52,7 @@ public:
 	virtual ~PlayFieldWidget();
 	void update_machines(llsf_msgs::MachineInfo& mSpecs);
 	void update_robot_info(llsf_msgs::RobotInfo& robotInfo);
+	void update_pucks(const llsf_msgs::PuckInfo& pucks);
 	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck();
 protected:
 	virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);

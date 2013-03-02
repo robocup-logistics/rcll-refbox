@@ -152,6 +152,11 @@ sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> MainWindow::signal_remove_
 	return playFieldWidget_.signal_remove_puck();
 }
 
+void MainWindow::update_pucks(const llsf_msgs::PuckInfo& pucks) {
+	pucks_ = &pucks;
+	playFieldWidget_.update_pucks(pucks);
+}
+
 bool MainWindow::clear_attention_msg(){
 	attentionMsg_.set_text("");
 	return true;
