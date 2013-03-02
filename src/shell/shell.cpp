@@ -282,22 +282,10 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
     if (c != ERR) {
       switch (c) {
       case ' ':
-	{
-	  short default_fore, default_back;
-	  pair_content(0, &default_fore, &default_back);
-	  init_pair(200, COLOR_RED, default_back);
-	  init_pair(202, COLOR_GREEN, default_back);
-	  navbar_->standend();
-	  if (s_state_ == "PAUSED") {
-	    set_game_state("RUNNING");
-	    navbar_->attron(' '|COLOR_PAIR(200)|A_BOLD);
-	    navbar_->addstr(0, navbar_->cols() - 4, "STOP");
-	  } else {
-	    set_game_state("PAUSED");
-	    navbar_->attron(' '|COLOR_PAIR(202)|A_BOLD);
-	    navbar_->addstr(0, navbar_->cols() - 4, "CONT");
-	  }
-	  navbar_->refresh();
+	if (s_state_ == "PAUSED") {
+	  set_game_state("RUNNING");
+	} else {
+	  set_game_state("PAUSED");
 	}
 	break;
       case 'Q':
@@ -508,6 +496,20 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       p_points_->erase();
       p_points_->printw("%u", g->points());
     }
+
+    short default_fore, default_back;
+    pair_content(0, &default_fore, &default_back);
+    init_pair(200, COLOR_RED, default_back);
+    init_pair(202, COLOR_GREEN, default_back);
+    navbar_->standend();
+
+    if (g->state() == llsf_msgs::GameState::PAUSED) {
+      navbar_->attron(' '|COLOR_PAIR(202)|A_BOLD);
+      navbar_->addstr(0, navbar_->cols() - 5, "CONT");
+    } else {
+      navbar_->attron(' '|COLOR_PAIR(200)|A_BOLD);
+      navbar_->addstr(0, navbar_->cols() - 5, "STOP");
+    }
   }
 
   std::shared_ptr<llsf_msgs::RobotInfo> r;
@@ -676,32 +678,38 @@ LLSFRefBoxShell::run()
   panel_->refresh();
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr("F2");
+  navbar_->addstr(0, 1, "F2");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 3, "STATE");
+  navbar_->addstr(0, 4, "STATE");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 10, "F3");
+  navbar_->addstr(0, 11, "F3");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 13, "PHASE");
+  navbar_->addstr(0, 14, "PHASE");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 20, "F5");
+  navbar_->addstr(0, 21, "F5");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 23, "LOST PUCK");
+  navbar_->addstr(0, 24, "LOST PUCK");
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr(0, 35, "F7");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 38, "ADD PUCK");
 
   short default_fore, default_back;
   pair_content(0, &default_fore, &default_back);
   init_pair(200, COLOR_RED, default_back);
   init_pair(201, COLOR_WHITE, COLOR_RED);
   navbar_->attron(' '|COLOR_PAIR(201)|A_BOLD);
-  navbar_->addstr(0, navbar_->cols() - 8, "SPC");
+  navbar_->addstr(0, navbar_->cols() - 9, "SPC");
   navbar_->standend();
   navbar_->attron(' '|COLOR_PAIR(200)|A_BOLD);
-  navbar_->addstr(0, navbar_->cols() - 4, "STOP");
+  navbar_->addstr(0, navbar_->cols() - 5, "STOP");
   navbar_->refresh();
 
   rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
