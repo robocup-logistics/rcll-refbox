@@ -116,6 +116,7 @@
   (machine (name M3) (mtype T2))
   (machine (name M4) (mtype T2))
   (machine (name M5) (mtype T3))
+  (signal (type puck-info) (time (create$ 0 0)) (seq 1))
   (machine (name M6) (mtype T3))
   (machine (name M7) (mtype T4))
   (machine (name M8) (mtype T4))

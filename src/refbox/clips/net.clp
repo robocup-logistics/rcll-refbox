@@ -207,6 +207,27 @@
   (pb-destroy ?s)
 )
 
+(defrule net-send-PuckInfo
+  (time $?now)
+  (network-client (id ?client-id))
+  ?f <- (signal (type puck-info) (time $?t&:(timeout ?now ?t ?*PUCKINFO-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?pi (pb-create "llsf_msgs.PuckInfo"))
+
+  (do-for-all-facts
+    ((?puck puck)) TRUE
+
+    (bind ?p (pb-create "llsf_msgs.Puck"))
+    (pb-set-field ?p "id" ?puck:id)
+    (pb-set-field ?p "state" (str-cat ?puck:state))
+    (pb-add-list ?pi "pucks" ?p) ; destroys ?p
+  )
+
+  (pb-send ?client-id ?pi)
+  (pb-destroy ?pi)
+)
+
 
 (defrule net-send-OrderInstruction
   (network-client (id ?client-id))
