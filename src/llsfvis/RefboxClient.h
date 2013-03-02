@@ -20,7 +20,7 @@ class RefboxClient : public sigc::trackable {
 public:
 	RefboxClient(MainWindow& mainWindow);
 	virtual ~RefboxClient();
-	void on_signal_remove_puck(llsf_msgs::RemovePuckFromMachine& puck);
+	void on_signal_send_msg(google::protobuf::Message &m);
 private:
 	MainWindow& mainWindow_;
 	protobuf_comm::ProtobufStreamClient *client;

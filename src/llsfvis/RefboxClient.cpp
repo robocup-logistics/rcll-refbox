@@ -95,9 +95,10 @@ void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
 
 }
 
-void RefboxClient::on_signal_remove_puck(
-		llsf_msgs::RemovePuckFromMachine& puck) {
-	client->send(puck);
+void RefboxClient::on_signal_send_msg(google::protobuf::Message &m)
+{
+	std::cout << "Sending " << m.DebugString() << std::endl;
+	client->send(m);
 }
 
 /** Handle operating system signal.
