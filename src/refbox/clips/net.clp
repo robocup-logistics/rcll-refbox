@@ -181,7 +181,7 @@
         (pb-set-field ?p "id" ?puck:id)
 	(pb-set-field ?p "state" ?puck:state)
       )
-      (pb-add-list ?m "loaded_with" (str-cat ?p))
+      (pb-add-list ?m "loaded_with" ?p)
     )
     (foreach ?l ?machine:actual-lights
       (bind ?ls (pb-create "llsf_msgs.LightSpec"))
