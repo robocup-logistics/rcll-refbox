@@ -16,7 +16,7 @@
 	     (default) (cardinality 0 3))
   (multislot desired-lights (type SYMBOL)
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
-	     (default GREEN-ON) (cardinality 0 3))
+	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
   (slot junk (type INTEGER) (default 0))
   (slot productions (type INTEGER) (default 0))
   (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID)
@@ -93,7 +93,11 @@
 (deftemplate gamestate
   (slot state (type SYMBOL)
 	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
+  (slot prev-state (type SYMBOL)
+	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
   (slot phase (type SYMBOL)
+	(allowed-values PRE_GAME EXPLORATION PRODUCTION POST_GAME) (default PRE_GAME))
+  (slot prev-phase (type SYMBOL)
 	(allowed-values PRE_GAME EXPLORATION PRODUCTION POST_GAME) (default PRE_GAME))
   (slot game-time (type FLOAT) (default 0.0))
   (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
@@ -103,7 +107,7 @@
 
 (deffacts startup
   (time 0 0)
-  (gamestate (phase PRODUCTION))
+  (gamestate (phase PRE_GAME))
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))

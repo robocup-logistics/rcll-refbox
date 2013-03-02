@@ -92,20 +92,20 @@
 )
 
 (defrule net-recv-SetGameState
-  ?sf <- (gamestate)
+  ?sf <- (gamestate (state ?state))
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (modify ?sf (state (sym-cat (pb-field-value ?p "state"))))
+  (modify ?sf (state (sym-cat (pb-field-value ?p "state"))) (prev-state ?state))
 )
 
 
 (defrule net-recv-SetGamePhase
-  ?sf <- (gamestate)
+  ?sf <- (gamestate (phase ?phase))
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (modify ?sf (phase (sym-cat (pb-field-value ?p "phase"))))
+  (modify ?sf (phase (sym-cat (pb-field-value ?p "phase"))) (prev-phase ?phase))
 )
 
 (defrule net-send-GameState
