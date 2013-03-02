@@ -96,6 +96,7 @@ LLSFRefBoxShellOrder::reset()
   delivery_period_begin_ = 0;
   delivery_period_end_ = 0;
   delivery_gate_ = llsf_msgs::OrderSpec::ANY;
+  refresh();
 }
 
 int

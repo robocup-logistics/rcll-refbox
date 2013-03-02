@@ -71,6 +71,7 @@ LLSFRefBoxShellPuck::reset()
 {
   id_ = 0;
   state_ = llsf_msgs::S0;
+  refresh();
 }
 
 int
@@ -85,7 +86,10 @@ LLSFRefBoxShellPuck::refresh()
     printw("%6u", id_);
     attroff(A_BOLD);
   }
-  attron(' '|COLOR_PAIR(1)|A_BOLD);
+  attron(' '|COLOR_PAIR(1));
+  if (state_ != llsf_msgs::S0) {
+    attron(A_BOLD);
+  }
   printw(0, 7, "%2s", (id_ == 0) ? "" : llsf_msgs::PuckState_Name(state_).substr(0,2).c_str());
   standend();
 
