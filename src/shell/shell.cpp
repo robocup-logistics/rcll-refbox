@@ -40,6 +40,7 @@
 #include "machine.h"
 #include "robot.h"
 #include "order.h"
+#include "puck.h"
 
 #include <protobuf_comm/client.h>
 
@@ -169,6 +170,11 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
     delete orders_[i];
   }
   orders_.clear();
+
+  for (size_t i = 0; i < pucks_.size(); ++i) {
+    delete pucks_[i];
+  }
+  pucks_.clear();
 
   delete rb_log_;
 
@@ -456,6 +462,10 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
       orders_[i]->reset();
     }
 
+    for (size_t i = 0; i < pucks_.size(); ++i) {
+      pucks_[i]->reset();
+    }
+
     if (try_reconnect_) {
       reconnect_timer_.expires_from_now(boost::posix_time::milliseconds(RECONNECT_TIMER_INTERVAL));
       reconnect_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_reconnect_timer, this,
@@ -576,7 +586,22 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       orders_[i]->update(ospec.id(), ospec.product(), ospec.quantity_requested(),
 			 ospec.quantity_delivered(), ospec.delivery_period_begin(),
 			 ospec.delivery_period_end(), ospec.delivery_gate());
-      orders_[i]->refresh();
+    }
+    for (size_t i = size; i < orders_.size(); ++i) {
+      orders_[i]->reset();
+    }
+  }
+
+  std::shared_ptr<llsf_msgs::PuckInfo> pinfo;
+  if ((pinfo = std::dynamic_pointer_cast<llsf_msgs::PuckInfo>(msg))) {
+    const size_t size = std::min((size_t)pinfo->pucks_size(), (size_t)pucks_.size());
+    for (size_t i = 0; i < size; ++i) {
+      const llsf_msgs::Puck &puck = pinfo->pucks(i);
+      pucks_[i]->update(puck.id(), puck.state());
+      pucks_[i]->refresh();
+    }
+    for (size_t i = size; i < pucks_.size(); ++i) {
+      pucks_[i]->reset();
     }
   }
 
@@ -620,11 +645,15 @@ LLSFRefBoxShell::run()
   panel_->addch(2, 0, ACS_LTEE);
   panel_->addch(2, panel_->width() - 26, ACS_RTEE);
 
-  int rb_log_lines   = panel_->maxy() - 10;
+  int rb_log_lines   = panel_->maxy() - 15;
 
   panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
   panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
   panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
+
+  panel_->hline(rb_log_lines + 8, 1, panel_->width() - 26);
+  panel_->addch(rb_log_lines + 8, 0, ACS_LTEE);
+  panel_->addch(rb_log_lines + 8, panel_->width() - 26, ACS_RTEE);
 
   panel_->attron(A_BOLD);
   panel_->addstr(0, panel_->width() - 17, "Machines");
@@ -632,7 +661,8 @@ LLSFRefBoxShell::run()
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(17, panel_->width() - 16, "Robots");
   panel_->addstr(height-5, panel_->width() - 15, "Game");
-  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 3, "Orders");
+  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 3, "Pucks");
+  panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 3, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
@@ -708,9 +738,17 @@ LLSFRefBoxShell::run()
 
   orders_.resize(12, NULL);
   for (size_t i = 0; i < orders_.size(); ++i) {
-    orders_[i] = new LLSFRefBoxShellOrder(rb_log_lines + 4 + i / 2,
+    orders_[i] = new LLSFRefBoxShellOrder(rb_log_lines + 9 + i / 2,
 					  (i % 2) ? ((panel_->width() - 22) / 2) : 1);
     orders_[i]->refresh();
+  }
+
+  pucks_.resize(24, NULL);
+  for (size_t i = 0; i < 4; ++i) {
+    for (size_t j = 0; j < 6; ++j) {
+      pucks_[i*6+j] = new LLSFRefBoxShellPuck(rb_log_lines + 4 + i, 1 + (j * 10));
+      pucks_[i*6+j]->refresh();
+    }
   }
 
   panel_->refresh();
@@ -786,6 +824,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::MachineInfo>();
   message_register.add_message_type<llsf_msgs::AttentionMessage>();
   message_register.add_message_type<llsf_msgs::OrderInstruction>();
+  message_register.add_message_type<llsf_msgs::PuckInfo>();
 
   client->signal_connected().connect(boost::bind(&LLSFRefBoxShell::client_connected, this));
   client->signal_disconnected().connect(boost::bind(&LLSFRefBoxShell::client_disconnected,

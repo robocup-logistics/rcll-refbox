@@ -62,6 +62,7 @@ namespace llsfrb_shell {
 class LLSFRefBoxShellMachine;
 class LLSFRefBoxShellRobot;
 class LLSFRefBoxShellOrder;
+class LLSFRefBoxShellPuck;
 
 class LLSFRefBoxShell
 {
@@ -117,6 +118,7 @@ class LLSFRefBoxShell
   std::vector<LLSFRefBoxShellRobot *> robots_;
   std::map<std::string, LLSFRefBoxShellMachine *> machines_;
   std::vector<LLSFRefBoxShellOrder *> orders_;
+  std::vector<LLSFRefBoxShellPuck *> pucks_;
 
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
