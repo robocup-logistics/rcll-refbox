@@ -7,6 +7,13 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deffunction any-puck-in-state (?puck-state $?puck-ids)
+  (foreach ?id ?puck-ids
+    (if (any-factp ((?puck puck)) (and (eq ?puck:id ?id) (eq ?puck:state ?puck-state)))
+      then (return TRUE)))
+  (return FALSE)
+)
+
 (defrule machine-enable-production
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
   =>
