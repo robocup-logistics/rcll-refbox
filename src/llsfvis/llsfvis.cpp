@@ -37,76 +37,30 @@
 #include "MainWindow.h"
 #include "RefboxClient.h"
 #include "msgs/MachineSpec.pb.h"
+#include "test_data.cpp"
+
+#define DEBUG true
 
 using namespace llsf_msgs;
 int main(int argc, char* argv[]) {
 	Glib::RefPtr<Gtk::Application> app = Gtk::Application::create(argc, argv,
 			"org.gtkmm.examples.base");
 
-	/*
-	 LLSFVis::PlayField pf;
-
-	 pf.add_machine(3.92, 1.68, 0, "M1", "T0");
-	 pf.add_machine(3.92, 3.92, 0, "M2", "T0");
-	 pf.add_machine(2.80, 0.56, 0, "M3", "T0");
-	 pf.add_machine(2.80, 1.68, 0, "M4", "T0");
-	 pf.add_machine(2.80, 2.80, 0, "M5", "T0");
-	 pf.add_machine(2.80, 3.92, 0, "M6", "T0");
-	 pf.add_machine(2.80, 5.04, 0, "M7", "T0");
-	 pf.add_machine(1.68, 1.68, 0, "M8", "T0");
-	 pf.add_machine(1.68, 3.92, 0, "M9", "T0");
-	 pf.add_machine(1.68, 5.04, 0, "M10", "T0");
-
-	 pf.add_machine(5.40, 0.20, M_PI * 0.25, "R1", "RU");
-	 pf.add_machine(0.20, 5.40, M_PI * 1.25, "R2", "RU");
-	 pf.add_machine(5.40, 5.40, M_PI * 0.75, "T", "TU");
-	 */
-	MachineInfo mSpecs;
-	Machine* m1 = mSpecs.add_machines();
-	m1->set_name("M1");
-	m1->set_type("T0");
-	Pose2D* pose = m1->mutable_pose();
-	pose->set_x(3.92);
-	pose->set_y(1.68);
-	pose->set_ori(0);
-	LightSpec* red = m1->add_lights();
-	red->set_color(LightColor::RED);
-	red->set_state(LightState::ON);
-	LightSpec* yellow = m1->add_lights();
-	yellow->set_color(LightColor::YELLOW);
-	yellow->set_state(LightState::ON);
-	LightSpec* green = m1->add_lights();
-	green->set_color(LightColor::GREEN);
-	green->set_state(LightState::BLINK);
-	Puck* p1 = m1->add_loaded_with();
-	p1->set_id(42);
-	p1->set_state(PuckState::S0);
-	Puck* p2 = m1->add_loaded_with();
-	p2->set_id(42123);
-	p2->set_state(PuckState::S1);
-
-	RobotInfo rInfo;
-	Robot* r = rInfo.add_robots();
-	r->set_name("Tick");
-	r->set_team("Carologistics");
-	Time* rtime = r->mutable_last_seen();
-	rtime->set_sec(3);
-	rtime->set_nsec(14);
-	Pose2D* rpose = r->mutable_pose();
-	rpose->set_x(2.8);
-	rpose->set_y(2.8);
-	rpose->set_ori(0);
-
 	LLSFVis::MainWindow mainWindow;
 	LLSFVis::RefboxClient refboxClient(mainWindow);
-	mainWindow.signal_remove_puck().connect(sigc::mem_fun(refboxClient,&LLSFVis::RefboxClient::on_signal_remove_puck));
-	mainWindow.add_log_message("Good Morning");
-	mainWindow.update_machines(mSpecs);
-	mainWindow.update_robots(rInfo);
-	AttentionMessage msg;
-	msg.set_message("BEWARE, WE ARE GONNA BLOW UP!!");
-	msg.set_time_to_show(10);
-	mainWindow.set_attention_msg(msg);
+	mainWindow.signal_remove_puck().connect(
+			sigc::mem_fun(refboxClient,
+					&LLSFVis::RefboxClient::on_signal_send_msg));
+	if (DEBUG) {
+		mainWindow.add_log_message("Good Morning");
+		mainWindow.update_machines(*getMachineInfo());
+		mainWindow.update_robots(*getRobotInfo());
+		mainWindow.update_pucks(*getPuckInfo());
+		AttentionMessage msg;
+		msg.set_message("BEWARE, WE ARE GONNA BLOW UP!!");
+		msg.set_time_to_show(10);
+		mainWindow.set_attention_msg(msg);
+	}
 	return app->run(mainWindow);
 
 }
