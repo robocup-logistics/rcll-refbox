@@ -480,10 +480,15 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     p_phase_->erase();
     p_phase_->addstr(llsf_msgs::GameState::Phase_Name(g->phase()).c_str());
 
-    int min = g->timestamp().sec() / 60;
-    int sec = g->timestamp().sec() - min * 60;
+    int hour = g->timestamp().sec() / 3600;
+    int min  = (g->timestamp().sec() - hour * 3600) / 60;
+    int sec  = g->timestamp().sec() - hour * 3600 - min * 60;
     p_time_->erase();
-    p_time_->printw("%02d:%02d.%03ld", min, sec, g->timestamp().nsec() / 1000000);
+    if (hour > 0) {
+      p_time_->printw("%02d:%02d:%02d.%03ld", hour, min, sec, g->timestamp().nsec() / 1000000);
+    } else {
+      p_time_->printw("%02d:%02d.%03ld", min, sec, g->timestamp().nsec() / 1000000);
+    }
 
     for (size_t i = 0; i < orders_.size(); ++i) {
       orders_[i]->set_gametime(g->timestamp().sec());
