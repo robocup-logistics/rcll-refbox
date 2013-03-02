@@ -53,6 +53,11 @@ namespace protobuf_comm {
   class ProtobufStreamClient;
 }
 
+namespace llsf_msgs {
+  class MachineInfo;
+  class PuckInfo;
+}
+
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
@@ -98,6 +103,8 @@ class LLSFRefBoxShell
 
   void set_game_state(std::string state);
   void set_game_phase(std::string phase);
+  void set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id);
+  void set_loaded_with(const std::string &machine_name, unsigned int puck_id);
 
  private: // members
   bool        quit_;
@@ -140,6 +147,9 @@ class LLSFRefBoxShell
   boost::asio::posix::stream_descriptor stdin_;
 
   protobuf_comm::ProtobufStreamClient *client;
+
+  std::shared_ptr<llsf_msgs::MachineInfo> last_minfo_;
+  std::shared_ptr<llsf_msgs::PuckInfo> last_pinfo_;
 };
 
 
