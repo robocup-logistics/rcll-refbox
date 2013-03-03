@@ -93,7 +93,8 @@ message RemovePuckFromMachine {
     MSG_TYPE = 14;
   }
 
-  required uint32 puck_id = 1;
+  required string machine_name = 1;
+  required uint32 puck_id = 2;
 }
 
 
