@@ -72,10 +72,11 @@ Menu::max_cols(int n_items, NCursesMenuItem **items)
 
 MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
 					 std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : NCursesMenu(det_lines(minfo) + 1 + 2, 8 + 2,
+  : NCursesMenu(det_lines(minfo) + 1 + 2, 10 + 2,
 		(parent->lines() - (det_lines(minfo) + 1))/2,
-		(parent->cols() - 8)/2)
+		(parent->cols() - 10)/2)
 {
+  valid_item_ = false;
   int n_items = det_lines(minfo);
   items_.resize(n_items + 1);
   int ni = 0;
@@ -83,14 +84,16 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
     if (m.has_puck_under_rfid()) {
-      items_[ni++] = std::make_tuple(m.name() + "  " +
-				     llsf_msgs::PuckState_Name(m.puck_under_rfid().state()),
-				     m.name(), m.puck_under_rfid().id());
+      items_[ni++] =
+	std::make_tuple("* " + m.name() + " " +
+			llsf_msgs::PuckState_Name(m.puck_under_rfid().state()).substr(0,2),
+			m.name(), m.puck_under_rfid().id());
     }
     for (int l = 0; l < m.loaded_with_size(); ++l) {
-      items_[ni++] = std::make_tuple(m.name() + "  " +
-				     llsf_msgs::PuckState_Name(m.loaded_with(l).state()),
-				     m.name(), m.loaded_with(l).id());
+      items_[ni++] =
+	std::make_tuple("  " + m.name() + " " +
+			llsf_msgs::PuckState_Name(m.loaded_with(l).state()).substr(0,2),
+			m.name(), m.loaded_with(l).id());
     }
   }
   for (int i = 0; i < ni; ++i) {
