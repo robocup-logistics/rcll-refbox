@@ -39,6 +39,8 @@
   ?pf <- (puck (id ?id) (state ?ps&:(member$ ?ps ?inputs)))
   ?mf <- (machine (name ?m) (mtype ?mtype) (state IDLE|WAITING)
 		  (loaded-with $?lw&:(not (any-puck-in-state ?ps ?lw))))
+  (not (or (machine (name ?m2&~?m) (puck-id ?m2-pid&?id))
+	   (machine (name ?m2&~?m) (loaded-with $?m2-lw&:(member$ ?id ?m2-lw)))))
   =>
   (if (= (length$ ?lw) (length$ ?inputs)) then
     ; last puck to add
@@ -51,12 +53,15 @@
 	  (desired-lights GREEN-ON YELLOW-ON))
 )
 
+
 (defrule machine-invalid-input
   (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
   (machine-spec (mtype ?mtype)  (inputs $?inputs))
+  (not (or (machine (name ?m2&~?m) (puck-id ?m2-pid&?id))
+	   (machine (name ?m2&~?m) (loaded-with $?m2-lw&:(member$ ?id ?m2-lw)))))
   (or (and (puck (id ?id) (state ?ps&:(not (member$ ?ps ?inputs))))
 	   ?mf <- (machine (name ?m) (state IDLE|WAITING) (puck-id 0)))
       ; OR:
@@ -66,6 +71,23 @@
   )
   =>
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
+)
+
+(defrule machine-invalid-input-junk
+  "A puck was placed that was already placed at another machine"
+  (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
+  ?pf <- (puck (id ?id))
+  (or (machine (name ?m2&~?m) (puck-id ?m2-pid&?id))
+      (machine (name ?m2&~?m) (loaded-with $?m2-lw&:(member$ ?id ?m2-lw))))
+  =>
+  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
+  (modify ?pf (state CONSUMED))
+  (delayed-do-for-all-facts ((?machine machine)) (member$ ?id ?machine:loaded-with)
+    (modify ?machine (loaded-with (delete-member$ ?machine:loaded-with ?id)))
+  )
 )
 
 (defrule machine-proc-waiting
@@ -80,7 +102,7 @@
   =>
   (printout t ?mtype ": " ?ps " consumed @ " ?m ": " ?id crlf)
   (modify ?mf (state WAITING) (loaded-with (create$ ?lw ?id)) (desired-lights YELLOW-ON))
-  (modify ?pf (state CONSUMED))
+  ;(modify ?pf (state CONSUMED))
 )
 
 (defrule machine-proc-done
@@ -100,8 +122,13 @@
 	    " -> " ?output ", took " ?pt " sec)" crlf)
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)) (junk (+ ?junk (length$ ?lw))))
-  (modify ?pf (state ?output))
   (modify ?gf (points (+ ?points ?machine-points)))
+  (modify ?pf (state ?output))
+  (foreach ?puck-id ?lw
+    (do-for-fact ((?puck puck)) (= ?puck:id ?puck-id)
+      (modify ?puck (state CONSUMED))
+    )
+  )
 )
 
 (defrule machine-puck-removal
