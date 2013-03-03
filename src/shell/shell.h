@@ -105,6 +105,7 @@ class LLSFRefBoxShell
   void set_game_phase(std::string phase);
   void set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id);
   void set_loaded_with(const std::string &machine_name, unsigned int puck_id);
+  void send_remove_puck(std::string &machine_name, unsigned int puck_id);
 
  private: // members
   bool        quit_;

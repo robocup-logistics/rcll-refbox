@@ -253,6 +253,12 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	  try {
 	    MachineWithPuckMenu m(panel_, last_minfo_);
 	    m();
+	    if (m) {
+	      std::string machine_name;
+	      unsigned int puck_id;
+	      m.get_machine_puck(machine_name, puck_id);
+	      send_remove_puck(machine_name, puck_id);	      
+	    }
 	  } catch (NCursesException &e) {
 	    rb_log_->printw("Machine menu failed: %s\n", e.message);
 	  }
@@ -454,6 +460,20 @@ LLSFRefBoxShell::set_loaded_with(const std::string &machine_name, unsigned int p
     client->send(msg);
   } catch (std::runtime_error &e) {
     rb_log_->printw("Sending load puck failed: %s\n", e.what());
+  }
+}
+
+
+void
+LLSFRefBoxShell::send_remove_puck(std::string &machine_name, unsigned int puck_id)
+{
+  llsf_msgs::RemovePuckFromMachine msg;
+  msg.set_machine_name(machine_name);
+  msg.set_puck_id(puck_id);
+  try {
+    client->send(msg);
+  } catch (std::runtime_error &e) {
+    rb_log_->printw("Sending remove puck failed: %s\n", e.what());
   }
 }
 
