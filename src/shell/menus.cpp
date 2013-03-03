@@ -243,8 +243,8 @@ PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *parent,
   std::list<int>::iterator i;
   for (i = rel_pucks.begin(); i != rel_pucks.end(); ++i) {
     const llsf_msgs::Puck &p = pinfo->pucks(*i);
-    items_[ni++] = std::make_tuple(llsf_msgs::PuckState_Name(p.state()) + " (" +
-				   std::to_string(p.id()) + ")", *i);
+    items_[ni++] = std::make_tuple(llsf_msgs::PuckState_Name(p.state()).substr(0,2) +
+				   " (" + std::to_string(p.id()) + ")", *i);
   }
   //std::sort(items_.begin(), items_.end());
 
