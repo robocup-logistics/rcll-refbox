@@ -207,6 +207,50 @@
   (pb-destroy ?s)
 )
 
+
+(defrule net-recv-PlacePuckUnderMachine
+  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout t 
+  "(assert (rfid-input (machine (sym-cat " (pb-field-value ?p "machine_name") "))"
+		      " (has-puck TRUE) (id " (pb-field-value ?p "puck_id") ")))" crlf)
+  (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
+		      (has-puck TRUE) (id (pb-field-value ?p "puck_id"))))
+)
+
+(defrule net-recv-LoadPuckInMachine
+  ?pf <- (protobuf-msg (type "llsf_msgs.LoadPuckInMachine") (ptr ?p))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (do-for-fact ((?machine machine))
+	       (eq ?machine:name (sym-cat (pb-field-value ?p "machine_name")))
+    (bind ?puck-id (pb-field-value ?p "puck_id"))
+    (if (not (member$ ?puck-id ?machine:loaded-with))
+      then (modify ?machine (loaded-with (create$ ?machine:loaded-with ?puck-id)))
+    )
+  )
+)
+
+(defrule net-recv-RemovePuckFromMachine
+  ?pf <- (protobuf-msg (type "llsf_msgs.RemovePuckFromMachine") (ptr ?p))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  ;(printout t "Removing from Machine " (pb-field-value ?p "machine_name") crlf) 
+  (do-for-fact ((?machine machine))
+	       (eq ?machine:name (sym-cat (pb-field-value ?p "machine_name")))
+    (bind ?puck-id (pb-field-value ?p "puck_id"))
+    (if (= ?machine:puck-id ?puck-id)
+      then (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
+			       (has-puck FALSE)))
+      else
+      (if (member$ ?puck-id ?machine:loaded-with)
+        then (modify ?machine (loaded-with (delete-member$ ?machine:loaded-with ?puck-id)))
+      )
+    )
+  )
+)
+
 (defrule net-send-PuckInfo
   (time $?now)
   (network-client (id ?client-id))
