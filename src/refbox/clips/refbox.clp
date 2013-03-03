@@ -61,7 +61,16 @@
   (foreach ?v ?lv (unwatch rules (sym-cat ?v)))
 )
 
-
+; Sort pucks by ID, such that do-for-all-facts on the puck deftemplate
+; iterates in a nice order, e.g. for net-send-PuckInfo
+(defrule sort-pucks
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?oa <- (puck (id ?id-a))
+  ?ob <- (puck (id ?id-b&:(> ?id-a ?id-b)&:(< (fact-index ?oa) (fact-index ?ob))))
+  =>
+  (modify ?ob)
+  (modify ?oa)
+)
 
 (defrule init-game
   ?gf <- (gamestate (state INIT))
