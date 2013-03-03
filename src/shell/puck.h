@@ -54,7 +54,7 @@ class LLSFRefBoxShellPuck : public NCursesPanel
   LLSFRefBoxShellPuck(int begin_y, int begin_x);
   ~LLSFRefBoxShellPuck();
 
-  void update(unsigned int id, llsf_msgs::PuckState state);
+  void update(unsigned int id, llsf_msgs::PuckState state, bool at_machine_ = false);
   void reset();
 
   int refresh();
@@ -62,6 +62,7 @@ class LLSFRefBoxShellPuck : public NCursesPanel
  private:
   unsigned int id_;
   llsf_msgs::PuckState state_;
+  bool at_machine_;
 };
 
 

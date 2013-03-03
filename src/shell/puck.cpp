@@ -47,8 +47,8 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellPuck::LLSFRefBoxShellPuck(int begin_y, int begin_x)
-  : NCursesPanel(1, 9, begin_y, begin_x),
-    id_(0), state_(llsf_msgs::S0)
+  : NCursesPanel(1, 10, begin_y, begin_x),
+    id_(0), state_(llsf_msgs::S0), at_machine_(false)
 {
 }
 
@@ -59,10 +59,11 @@ LLSFRefBoxShellPuck::~LLSFRefBoxShellPuck()
 
 
 void
-LLSFRefBoxShellPuck::update(unsigned int id, llsf_msgs::PuckState state)
+LLSFRefBoxShellPuck::update(unsigned int id, llsf_msgs::PuckState state, bool at_machine)
 {
   id_ = id;
   state_ = state;
+  at_machine_ = at_machine;
 }
 
 
@@ -71,12 +72,19 @@ LLSFRefBoxShellPuck::reset()
 {
   id_ = 0;
   state_ = llsf_msgs::S0;
+  at_machine_ = false;
   refresh();
 }
 
 int
 LLSFRefBoxShellPuck::refresh()
 {
+  // the same as in machine.cpp
+  init_pair(1, COLOR_BLACK, COLOR_WHITE);
+  init_pair(2, COLOR_WHITE, COLOR_RED);
+  init_pair(3, COLOR_WHITE, COLOR_YELLOW);
+  init_pair(4, COLOR_WHITE, COLOR_GREEN);
+
   standend();
   erase();
   bkgd(' '|COLOR_PAIR(0));
@@ -90,8 +98,21 @@ LLSFRefBoxShellPuck::refresh()
   if (state_ != llsf_msgs::S0) {
     attron(A_BOLD);
   }
+  if (state_ == llsf_msgs::CONSUMED) {
+    attron(' '|COLOR_PAIR(1));
+  } else if (state_ == llsf_msgs::S1) {
+    attron(' '|COLOR_PAIR(4));
+  } else if (state_ == llsf_msgs::S2) {
+    attron(' '|COLOR_PAIR(3));
+  } else if (state_ == llsf_msgs::P1 || state_ == llsf_msgs::P2 || state_ == llsf_msgs::P3) {
+    attron(' '|COLOR_PAIR(2));
+  }
+
   printw(0, 7, "%2s", (id_ == 0) ? "" : llsf_msgs::PuckState_Name(state_).substr(0,2).c_str());
   standend();
+  if (at_machine_) {
+    addch(0, 9, '*');
+  }
 
   return NCursesPanel::refresh();
 }

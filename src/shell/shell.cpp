@@ -666,7 +666,23 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     const size_t size = std::min((size_t)pinfo->pucks_size(), (size_t)pucks_.size());
     for (size_t i = 0; i < size; ++i) {
       const llsf_msgs::Puck &puck = pinfo->pucks(i);
-      pucks_[i]->update(puck.id(), puck.state());
+      bool at_machine = false;
+      if (last_minfo_) {
+	for (int j = 0; j < last_minfo_->machines_size() && ! at_machine; ++j) {
+	  const llsf_msgs::Machine &m = last_minfo_->machines(j);
+	  if (m.has_puck_under_rfid() && m.puck_under_rfid().id() == puck.id()) {
+	    at_machine = true;
+	    break;
+	  }
+	  for (int k = 0; k < m.loaded_with_size(); ++k) {
+	    if (m.loaded_with(k).id() == puck.id()) {
+	      at_machine = true;
+	      break;
+	    }
+	  }
+	}
+      }
+      pucks_[i]->update(puck.id(), puck.state(), at_machine);
       pucks_[i]->refresh();
     }
     for (size_t i = size; i < pucks_.size(); ++i) {

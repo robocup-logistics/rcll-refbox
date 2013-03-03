@@ -139,6 +139,7 @@ LLSFRefBoxShellMachine::refresh()
     addstr(0, 0, boost::str(boost::format("%-3s|%-3s") % name_ % type_.substr(0,2)).c_str());
   }
 
+  // the same as in puck.cpp
   init_pair(1, COLOR_BLACK, COLOR_WHITE);
   init_pair(2, COLOR_WHITE, COLOR_RED);
   init_pair(3, COLOR_WHITE, COLOR_YELLOW);
