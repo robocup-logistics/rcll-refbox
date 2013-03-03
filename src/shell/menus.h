@@ -89,8 +89,8 @@ class MachineWithPuckMenu : public NCursesMenu
  public:
   MachineWithPuckMenu(NCursesWindow *parent, std::shared_ptr<llsf_msgs::MachineInfo> minfo);
 
-  boost::signals2::signal<void (std::string, unsigned int)> &
-  signal() { return sig_puck_sel_; }
+  void get_machine_puck(std::string &machine_name, unsigned int &puck_id);
+  operator bool() const { return valid_item_; }
 
  private:
   virtual void On_Menu_Init();
@@ -98,9 +98,11 @@ class MachineWithPuckMenu : public NCursesMenu
   void puck_selected(std::string machine, unsigned int puck_id);
 
  private:
+  bool valid_item_;
   std::string s_cancel_;
+  std::string machine_name_;
+  unsigned int puck_id_;
   std::vector<std::tuple<std::string, std::string, unsigned int>> items_;
-  boost::signals2::signal<void (std::string, unsigned int)> sig_puck_sel_;
 };
 
 

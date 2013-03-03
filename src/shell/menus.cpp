@@ -114,7 +114,16 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
 void
 MachineWithPuckMenu::puck_selected(std::string machine, unsigned int puck_id)
 {
-  sig_puck_sel_(machine, puck_id);
+  valid_item_ = true;
+  machine_name_ = machine;
+  puck_id_ = puck_id;
+}
+
+void
+MachineWithPuckMenu::get_machine_puck(std::string &machine_name, unsigned int &puck_id)
+{
+  machine_name = machine_name_;
+  puck_id = puck_id_;
 }
 
 void
