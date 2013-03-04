@@ -12,13 +12,18 @@
   ?mf <- (machine (mtype ?mtype))
   (machine-spec (mtype ?mtype) (light-code ?lc))
   =>
-  (modify ?gf (prev-phase EXPLORATION))
+  ; Set prev phase to avoid re-firing, reset game time
+  (modify ?gf (prev-phase EXPLORATION) (game-time 0.0))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (bind ?dl (create$))
     (do-for-fact ((?spec machine-spec)) (eq ?machine:mtype ?spec:mtype)
       (bind ?dl ?spec:light-code)
     )
     (modify ?machine (desired-lights ?dl))
+  )
+  ; Retract all existing reports for the new exploration phase
+  (delayed-do-for-all-facts ((?report exploration-report)) TRUE
+    (retract ?report)
   )
 )
 
