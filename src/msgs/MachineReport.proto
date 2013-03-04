@@ -4,10 +4,31 @@ package llsf_msgs;
 import "MachineInfo.proto";
 import "PuckInfo.proto";
 
-message MachineReport {
-  required string id             = 1;
-  required string type           = 2;
+message MachineReportEntry {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 60;
+  }
 
-  repeated PuckState loaded_with = 3;
-  repeated PuckState puck_under_rfid = 4;
+  required string name = 1;
+  required string type = 2;
+}
+
+message MachineReport {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 61;
+  }
+
+  repeated MachineReportEntry machines = 1;
+}
+
+
+message MachineReportInfo {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 62;
+  }
+
+  repeated string reported_machines = 1;
 }
