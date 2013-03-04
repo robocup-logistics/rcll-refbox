@@ -49,7 +49,7 @@
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
-#include <msgs/OrderInstruction.pb.h>
+#include <msgs/OrderInfo.pb.h>
 
 #include <cursesp.h>
 #include <cursesf.h>
@@ -666,11 +666,11 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
   }
 
-  std::shared_ptr<llsf_msgs::OrderInstruction> ordins;
-  if ((ordins = std::dynamic_pointer_cast<llsf_msgs::OrderInstruction>(msg))) {
+  std::shared_ptr<llsf_msgs::OrderInfo> ordins;
+  if ((ordins = std::dynamic_pointer_cast<llsf_msgs::OrderInfo>(msg))) {
     const size_t size = std::min((size_t)ordins->orders_size(), (size_t)orders_.size());
     for (size_t i = 0; i < size; ++i) {
-      const llsf_msgs::OrderSpec &ospec = ordins->orders(i);
+      const llsf_msgs::Order &ospec = ordins->orders(i);
       orders_[i]->update(ospec.id(), ospec.product(), ospec.quantity_requested(),
 			 ospec.quantity_delivered(), ospec.delivery_period_begin(),
 			 ospec.delivery_period_end(), ospec.delivery_gate());
@@ -934,7 +934,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::RobotInfo>();
   message_register.add_message_type<llsf_msgs::MachineInfo>();
   message_register.add_message_type<llsf_msgs::AttentionMessage>();
-  message_register.add_message_type<llsf_msgs::OrderInstruction>();
+  message_register.add_message_type<llsf_msgs::OrderInfo>();
   message_register.add_message_type<llsf_msgs::PuckInfo>();
 
   client->signal_connected().connect(

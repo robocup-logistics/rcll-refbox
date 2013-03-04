@@ -187,8 +187,8 @@ LLSFRefBox::setup_protobuf_comm()
   mr_server.add_message_type<llsf_msgs::PlacePuckUnderMachine>();
   mr_server.add_message_type<llsf_msgs::LoadPuckInMachine>();
   mr_server.add_message_type<llsf_msgs::LightSpec>();
-  mr_server.add_message_type<llsf_msgs::OrderInstruction>();
-  mr_server.add_message_type<llsf_msgs::OrderSpec>();
+  mr_server.add_message_type<llsf_msgs::OrderInfo>();
+  mr_server.add_message_type<llsf_msgs::Order>();
   mr_server.add_message_type<llsf_msgs::Puck>();
   mr_server.add_message_type<llsf_msgs::PuckInfo>();
 

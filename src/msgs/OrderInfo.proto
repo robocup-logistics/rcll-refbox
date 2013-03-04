@@ -36,7 +36,7 @@
 
 package llsf_msgs;
 
-message OrderSpec {
+message Order {
   enum CompType {
     COMP_ID  = 2000;
     MSG_TYPE = 40;
@@ -65,11 +65,11 @@ message OrderSpec {
   optional DeliveryGate delivery_gate = 8 [default = ANY];
 }
 
-message OrderInstruction {
+message OrderInfo {
   enum CompType {
     COMP_ID  = 2000;
     MSG_TYPE = 41;
   }
 
-  repeated OrderSpec orders = 1;
+  repeated Order orders = 1;
 }

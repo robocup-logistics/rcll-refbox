@@ -273,16 +273,16 @@
 )
 
 
-(defrule net-send-OrderInstruction
+(defrule net-send-OrderInfo
   (network-client (id ?client-id))
   (order)
   =>
-  (bind ?oi (pb-create "llsf_msgs.OrderInstruction"))
+  (bind ?oi (pb-create "llsf_msgs.OrderInfo"))
 
   (do-for-all-facts
     ((?order order)) (eq ?order:active TRUE)
 
-    (bind ?o (pb-create "llsf_msgs.OrderSpec"))
+    (bind ?o (pb-create "llsf_msgs.Order"))
 
     (pb-set-field ?o "id" ?order:id)
     (pb-set-field ?o "product" ?order:product)

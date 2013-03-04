@@ -48,9 +48,9 @@ namespace llsfrb_shell {
 
 LLSFRefBoxShellOrder::LLSFRefBoxShellOrder(int begin_y, int begin_x)
   : NCursesPanel(1, 27, begin_y, begin_x),
-    id_(0), product_(llsf_msgs::OrderSpec::P1), quantity_requested_(0),
+    id_(0), product_(llsf_msgs::Order::P1), quantity_requested_(0),
     quantity_delivered_(0), delivery_period_begin_(0), delivery_period_end_(0),
-    delivery_gate_(llsf_msgs::OrderSpec::ANY), game_time_(0.)
+    delivery_gate_(llsf_msgs::Order::ANY), game_time_(0.)
 {
 }
 
@@ -61,12 +61,12 @@ LLSFRefBoxShellOrder::~LLSFRefBoxShellOrder()
 
 
 void
-LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::OrderSpec::ProductType product,
+LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::ProductType product,
 			     unsigned int quantity_requested,
 			     unsigned int quantity_delivered,
 			     unsigned int delivery_period_begin,
 			     unsigned int delivery_period_end,
-			     llsf_msgs::OrderSpec::DeliveryGate delivery_gate)
+			     llsf_msgs::Order::DeliveryGate delivery_gate)
 {
   id_ = id;
   product_ = product;
@@ -90,12 +90,12 @@ void
 LLSFRefBoxShellOrder::reset()
 {
   id_ = 0;
-  product_ = llsf_msgs::OrderSpec::P1;
+  product_ = llsf_msgs::Order::P1;
   quantity_requested_ = 0;
   quantity_delivered_ = 0;
   delivery_period_begin_ = 0;
   delivery_period_end_ = 0;
-  delivery_gate_ = llsf_msgs::OrderSpec::ANY;
+  delivery_gate_ = llsf_msgs::Order::ANY;
   refresh();
 }
 
@@ -121,9 +121,9 @@ LLSFRefBoxShellOrder::refresh()
     }
     printw(0, 3, "%2u/%02u %s %02u:%02u-%02u:%02u %s",
 	   quantity_delivered_, quantity_requested_,
-	   llsf_msgs::OrderSpec::ProductType_Name(product_).c_str(),
+	   llsf_msgs::Order::ProductType_Name(product_).c_str(),
 	   begin_min, begin_sec, end_min, end_sec,
-	   llsf_msgs::OrderSpec::DeliveryGate_Name(delivery_gate_).c_str());
+	   llsf_msgs::Order::DeliveryGate_Name(delivery_gate_).c_str());
   }
 
   return NCursesPanel::refresh();

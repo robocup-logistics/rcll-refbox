@@ -39,7 +39,7 @@
 
 #include <cursesp.h>
 
-#include <msgs/OrderInstruction.pb.h>
+#include <msgs/OrderInfo.pb.h>
 
 #include <vector>
 #include <map>
@@ -56,10 +56,10 @@ class LLSFRefBoxShellOrder : public NCursesPanel
   LLSFRefBoxShellOrder(int begin_y, int begin_x);
   ~LLSFRefBoxShellOrder();
 
-  void update(unsigned int id, llsf_msgs::OrderSpec::ProductType product,
+  void update(unsigned int id, llsf_msgs::Order::ProductType product,
 	      unsigned int quantity_requested, unsigned int quantity_delivered,
 	      unsigned int delivery_period_begin, unsigned int delivery_period_end,
-	      llsf_msgs::OrderSpec::DeliveryGate delivery_gate);
+	      llsf_msgs::Order::DeliveryGate delivery_gate);
   void set_gametime(unsigned int game_time);
 
   void reset();
@@ -68,12 +68,12 @@ class LLSFRefBoxShellOrder : public NCursesPanel
 
  private:
   unsigned int id_;
-  llsf_msgs::OrderSpec::ProductType product_;
+  llsf_msgs::Order::ProductType product_;
   unsigned int quantity_requested_;
   unsigned int quantity_delivered_;
   unsigned int delivery_period_begin_;
   unsigned int delivery_period_end_;
-  llsf_msgs::OrderSpec::DeliveryGate delivery_gate_;
+  llsf_msgs::Order::DeliveryGate delivery_gate_;
 
   unsigned int game_time_;
 };
