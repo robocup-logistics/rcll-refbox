@@ -699,11 +699,13 @@ LLSFRefBox::clips_pb_field_list(void *msgptr, std::string field_name)
       break;
     case FieldDescriptor::TYPE_MESSAGE:
       {
-	google::protobuf::Message *mcopy = (*m)->New();
-	mcopy->CopyFrom(refl->GetRepeatedMessage(**m, field, i));
+	const google::protobuf::Message &msg = refl->GetRepeatedMessage(**m, field, i);
+	google::protobuf::Message *mcopy = msg.New();
+	mcopy->CopyFrom(msg);
 	void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
 	rv[i] = CLIPS::Value(ptr);
       }
+      break;
     case FieldDescriptor::TYPE_BYTES:
       rv[i] = CLIPS::Value((char *)"BYTES", CLIPS::TYPE_SYMBOL);
       break;
