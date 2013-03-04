@@ -107,7 +107,7 @@
 
 (deftemplate exploration-report
   (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10))
-  (slot type (type SYMBOL) (allowed-values T1 T2 T3 T4 T5))
+  (slot type (type SYMBOL) (allowed-values WRONG T1 T2 T3 T4 T5))
   (slot host (type STRING))
   (slot port (type INTEGER))
   (slot game-time (type FLOAT))

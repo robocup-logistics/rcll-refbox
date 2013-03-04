@@ -37,27 +37,32 @@
   (foreach ?m (pb-field-list ?p "machines")
     (bind ?name (sym-cat (pb-field-value ?m "name")))
     (bind ?type (sym-cat (pb-field-value ?m "type")))
-    (do-for-fact ((?machine machine)) (eq ?machine:name ?name)
-      (if (eq ?machine:mtype ?type)
+    (if (member$ ?name (deftemplate-slot-allowed-values exploration-report name))
+    then
+      (do-for-fact ((?machine machine)) (eq ?machine:name ?name)
+        ; If it has not been reported, yet
+        (if (not (any-factp ((?report exploration-report)) (eq ?report:name ?name)))
         then
-          ; correct report, has it already been reported?
-          (if (not (any-factp ((?report exploration-report)) (eq ?report:name ?name)))
-	    then
-              (printout t "Correct report: " ?name " of type " ?type crlf) 
-              (modify ?gf (points (+ ?points ?*EXPLORATION-CORRECT-REPORT-POINTS*)))
-	      (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
-					  (host ?from-host) (port ?from-port)))
-          )
-        else
-          (printout t "Invalid report: " ?name " of type " ?type crlf) 
-          (modify ?gf (points (max (+ ?points ?*EXPLORATION-INVALID-REPORT-POINTS*) 0)))
+          (if (eq ?machine:mtype ?type)
+          then ; correct report
+	    (printout t "Correct report: " ?name " of type " ?type crlf) 
+	    (modify ?gf (points (+ ?points ?*EXPLORATION-CORRECT-REPORT-POINTS*)))
+	    (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
+					(host ?from-host) (port ?from-port)))
+          else ; wrong report
+	    (printout t "Wrong report: " ?name " of type " ?type crlf) 
+	    (modify ?gf (points (max (+ ?points ?*EXPLORATION-WRONG-REPORT-POINTS*) 0)))
+	    (assert (exploration-report (name ?name) (type WRONG) (game-time ?game-time)
+					(host ?from-host) (port ?from-port)))
+	  )
+        )
       )
     )
     (pb-destroy ?m)
   )
 )
 
-(defrule exploration-cleaup-report
+(defrule exploration-cleanup-report
   (gamestate (phase ~EXPLORATION))
   ?mf <- (protobuf-msg (type "llsf_msgs.MachineReport") (ptr ?p)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
