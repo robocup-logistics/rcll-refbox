@@ -40,7 +40,7 @@
 #include <cursesm.h>
 #include <string>
 #include <boost/signals2.hpp>
-#include <msgs/MachineSpec.pb.h>
+#include <msgs/MachineInfo.pb.h>
 #include <msgs/PuckInfo.pb.h>
 
 namespace llsfrb_shell {

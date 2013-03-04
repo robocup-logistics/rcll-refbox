@@ -43,7 +43,7 @@
 #include <msgs/BeaconSignal.pb.h>
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
-#include <msgs/MachineSpec.pb.h>
+#include <msgs/MachineInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
 #include <msgs/OrderInstruction.pb.h>
 #include <msgs/PuckInfo.pb.h>

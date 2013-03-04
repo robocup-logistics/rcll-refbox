@@ -1,6 +1,6 @@
 
 /***************************************************************************
- *  MachineSpec.proto - LLSF Protocol - Machine Specification message
+ *  MachineInfo.proto - LLSF Protocol - Machine Specification message
  *
  *  Created: Mon Feb 25 11:36:50 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]

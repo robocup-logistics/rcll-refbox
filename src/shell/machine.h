@@ -39,7 +39,7 @@
 
 #include <cursesp.h>
 
-#include <msgs/MachineSpec.pb.h>
+#include <msgs/MachineInfo.pb.h>
 
 #include <vector>
 #include <map>

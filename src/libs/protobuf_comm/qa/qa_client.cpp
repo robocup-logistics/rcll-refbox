@@ -38,7 +38,7 @@
 #include <boost/asio.hpp>
 #include <protobuf_comm/client.h>
 
-#include <msgs/MachineSpec.pb.h>
+#include <msgs/MachineInfo.pb.h>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
