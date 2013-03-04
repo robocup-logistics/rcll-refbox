@@ -47,6 +47,7 @@
 #include <msgs/AttentionMessage.pb.h>
 #include <msgs/OrderInstruction.pb.h>
 #include <msgs/PuckInfo.pb.h>
+#include <msgs/MachineReport.pb.h>
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
@@ -191,9 +192,15 @@ LLSFRefBox::setup_protobuf_comm()
   mr_server.add_message_type<llsf_msgs::Order>();
   mr_server.add_message_type<llsf_msgs::Puck>();
   mr_server.add_message_type<llsf_msgs::PuckInfo>();
+  mr_server.add_message_type<llsf_msgs::MachineReportEntry>();
+  mr_server.add_message_type<llsf_msgs::MachineReport>();
+  mr_server.add_message_type<llsf_msgs::MachineReportInfo>();
 
   MessageRegister &mr_peer = pbc_peer_->message_register();
   mr_peer.add_message_type<llsf_msgs::BeaconSignal>();
+  mr_peer.add_message_type<llsf_msgs::MachineReportEntry>();
+  mr_peer.add_message_type<llsf_msgs::MachineReport>();
+  mr_peer.add_message_type<llsf_msgs::MachineReportInfo>();
 }
 
 void
