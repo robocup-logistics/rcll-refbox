@@ -211,16 +211,39 @@ void MainWindow::on_start_pause_button_clicked() {
 	signal_set_game_state_.emit(gsm);
 }
 
-std::vector<llsf_msgs::Puck*> MainWindow::get_free_pucks() {
-	//TODO tbd
-	std::vector<llsf_msgs::Puck*> p;
-	return p;
+llsf_msgs::PuckInfo* MainWindow::find_free_pucks() {
+	freePucks_ = pucks_->New();
+
+	if (machines_ != NULL && pucks_ != NULL) {
+		for (int puck_index = 0; puck_index < pucks_->pucks_size();
+				++puck_index) {
+			bool found = false;
+			for (int machine_index = 0;
+					machine_index < machines_->machines_size();
+					++machine_index) {
+				for (int loaded_puck_index = 0;
+						loaded_puck_index
+								< machines_->machines(machine_index).loaded_with_size();
+						++loaded_puck_index) {
+					if (pucks_->pucks(puck_index).id() == machines_->machines(machine_index).loaded_with(loaded_puck_index).id()){
+						found = true;
+						break;
+					}
+				}
+				if (found) break;
+			}
+
+			if (!found){
+				llsf_msgs::Puck* puckCopy = freePucks_->add_pucks();
+				puckCopy->CopyFrom(pucks_->pucks(puck_index));
+			}
+		}
+
+	} else {
+		freePucks_ = NULL;
+	}
+	return freePucks_;
 }
 
-std::vector<llsf_msgs::Machine*> MainWindow::get_machines() {
-	//TODO tbd
-	std::vector<llsf_msgs::Machine*> m;
-	return m;
-}
 
 } /* namespace LLSFVis */
