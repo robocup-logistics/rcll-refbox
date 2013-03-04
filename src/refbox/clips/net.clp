@@ -13,6 +13,11 @@
   =>
   (retract ?cf)
   (assert (network-client (id ?client-id) (host ?host) (port ?port)))
+  ; reset certain signals to trigger immediate re-sending
+  (delayed-do-for-all-facts ((?signal signal))
+    (member$ ?signal:type (create$ gamestate robot-info machine-info puck-info order-info))
+    (modify ?signal (time 0 0))
+  )
 )
 
 (defrule net-client-disconnected
