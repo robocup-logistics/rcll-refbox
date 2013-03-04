@@ -14,7 +14,7 @@
   ?sf <- (signal (type order-info))
   =>
   (modify ?of (active TRUE))
-  (modify ?sf (count 1))
+  (modify ?sf (count 1) (time 0 0))
   (assert (attention-message (str-cat "Late order: " ?q " x " ?p " from "
 				      (nth$ 1 ?period) " to " (nth$ 2 ?period)) 15))
 )
