@@ -40,6 +40,8 @@
 #include <utils/system/argparser.h>
 
 #include <msgs/BeaconSignal.pb.h>
+#include <msgs/OrderInfo.pb.h>
+#include <msgs/GameState.pb.h>
 
 
 #include <boost/asio.hpp>
@@ -83,6 +85,37 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
   if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
     printf("Detected robot: %s:%s (seq %lu)\n",
 	   b->team_name().c_str(), b->peer_name().c_str(), b->seq());
+  }
+
+  std::shared_ptr<GameState> gs;
+  if ((gs = std::dynamic_pointer_cast<GameState>(msg))) {
+    int hour = gs->game_time().sec() / 3600;
+    int min  = (gs->game_time().sec() - hour * 3600) / 60;
+    int sec  = gs->game_time().sec() - hour * 3600 - min * 60;
+
+    printf("GameState received:  %02i:%02i:%02i.%02ld  %s %s  %u points\n",
+	   hour, min, sec, gs->game_time().nsec() / 1000000,
+	   llsf_msgs::GameState::Phase_Name(gs->phase()).c_str(),
+	   llsf_msgs::GameState::State_Name(gs->state()).c_str(),
+	   gs->points());
+  }
+
+  std::shared_ptr<OrderInfo> oi;
+  if ((oi = std::dynamic_pointer_cast<OrderInfo>(msg))) {
+    printf("Order Info received:\n");
+    for (int i = 0; i < oi->orders_size(); ++i) {
+      const llsf_msgs::Order &o = oi->orders(i);
+      unsigned int begin_min = o.delivery_period_begin() / 60;
+      unsigned int begin_sec = o.delivery_period_begin() - begin_min * 60;
+      unsigned int end_min = o.delivery_period_end() / 60;
+      unsigned int end_sec = o.delivery_period_end() - end_min * 60;
+
+      printf("  %u: %u/%u of %s from %02u:%02u to %02u:%02u at gate %s\n", o.id(),
+	     o.quantity_delivered(), o.quantity_requested(),
+	     llsf_msgs::Order::ProductType_Name(o.product()).c_str(),
+	     begin_min, begin_sec, end_min, end_sec,
+	     llsf_msgs::Order::DeliveryGate_Name(o.delivery_gate()).c_str());
+    }
   }
 }
 
@@ -146,6 +179,8 @@ main(int argc, char **argv)
 
   MessageRegister & message_register = peer_->message_register();
   message_register.add_message_type<BeaconSignal>();
+  message_register.add_message_type<OrderInfo>();
+  message_register.add_message_type<GameState>();
 
   peer_->signal_received().connect(handle_message);
   peer_->signal_error().connect(handle_error);
