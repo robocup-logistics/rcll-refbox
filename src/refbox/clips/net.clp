@@ -273,11 +273,7 @@
   (pb-destroy ?pi)
 )
 
-
-(defrule net-send-OrderInfo
-  (network-client (id ?client-id))
-  (order)
-  =>
+(deffunction net-create-OrderInfo ()
   (bind ?oi (pb-create "llsf_msgs.OrderInfo"))
 
   (do-for-all-facts
@@ -294,7 +290,33 @@
     (pb-set-field ?o "delivery_period_end"   (nth$ 2 ?order:delivery-period))
     (pb-add-list ?oi "orders" ?o) ; destroys ?o
   )
+  (return ?oi)
+)
 
-  (pb-send ?client-id ?oi)
+(defrule net-send-OrderInfo
+  (network-client (id ?client-id))
+  (order)
+  =>
+  ; We do not match for gamestate in the antecedent because it would trigger
+  ; in every cycle (game time is updated)
+  (do-for-fact ((?gs gamestate)) (eq ?gs:phase PRODUCTION)
+    (bind ?oi (net-create-OrderInfo))
+    (pb-send ?client-id ?oi)
+    (pb-destroy ?oi)
+  )
+)
+
+(defrule net-broadcast-OrderInfo
+  (time $?now)
+  (gamestate (phase PRODUCTION))
+  ?sf <- (signal (type order-info) (seq ?seq) (count ?count)
+		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-ORDERINFO-BURST-COUNT*)
+					       then ?*BC-ORDERINFO-PERIOD*
+					       else ?*BC-ORDERINFO-BURST-PERIOD*))))
+  =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+
+  (bind ?oi (net-create-OrderInfo))
+  (pb-broadcast ?oi)
   (pb-destroy ?oi)
 )
