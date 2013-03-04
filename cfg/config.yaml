@@ -25,8 +25,9 @@ llsfrb:
     debug: false
     # debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
     debug-level: 2
-    unwatch-facts: [time, rfid-input, beacon-signal]
-    unwatch-rules: [retract-time, rfid-input-cleanup, beacon-period]
+    unwatch-facts: [time, rfid-input, signal, gamestate]
+    unwatch-rules: [retract-time, rfid-input-cleanup, net-send-beacon,
+                    update-gametime, update-last-time]
 
   comm:
     server-port: !tcp-port 4444
