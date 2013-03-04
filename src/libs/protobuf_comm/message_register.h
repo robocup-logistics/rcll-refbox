@@ -73,7 +73,9 @@ class MessageRegister : boost::noncopyable
   {
     KeyType key(component_id, msg_type);
     if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
-      throw std::runtime_error("Message type already registered");
+      std::string msg = "Message type " + std::to_string(component_id) + ":" +
+	std::to_string(msg_type) + " already registered";
+      throw std::runtime_error(msg);
     }
     MT *m = new MT();
     message_by_comp_type_[key] = m;
@@ -111,7 +113,9 @@ class MessageRegister : boost::noncopyable
     }
     KeyType key(comp_id, msg_type);
     if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
-      throw std::runtime_error("Message type already registered");
+      std::string msg = "Message type " + std::to_string(comp_id) + ":" +
+	std::to_string(msg_type) + " already registered";
+      throw std::runtime_error(msg);
     }
     MT *new_m = new MT();
     message_by_comp_type_[key] = new_m;

@@ -91,7 +91,9 @@ MessageRegister::new_message_for(uint16_t component_id, uint16_t msg_type)
 {
   KeyType key(component_id, msg_type);
   if (message_by_comp_type_.find(key) == message_by_comp_type_.end()) {
-    throw std::runtime_error("Message type not registered");
+    std::string msg = "Message type " + std::to_string(component_id) + ":" +
+      std::to_string(msg_type) + " not registered";
+    throw std::runtime_error(msg);
   }
 
   google::protobuf::Message *m = message_by_comp_type_[key]->New();
