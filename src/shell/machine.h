@@ -61,6 +61,7 @@ class LLSFRefBoxShellMachine : public NCursesPanel
   void set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights);
   void set_inputs(std::vector<llsf_msgs::PuckState> &inputs);
   void set_loaded_with(std::vector<llsf_msgs::PuckState> &loaded_with);
+  void set_correctly_reported(bool has_field, bool correctly_reported = false);
   void set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state = llsf_msgs::S0);
   void flip_blink_states();
 
@@ -75,6 +76,8 @@ class LLSFRefBoxShellMachine : public NCursesPanel
   std::vector<llsf_msgs::PuckState> loaded_with_;
   bool                              puck_under_rfid_;
   llsf_msgs::PuckState              puck_under_rfid_state_;
+  bool                              has_correctly_reported_field_;
+  bool                              correctly_reported_;
   std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;
   std::map<llsf_msgs::LightColor, bool> blink_state_;
 };

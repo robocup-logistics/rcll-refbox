@@ -52,7 +52,8 @@ namespace llsfrb_shell {
 LLSFRefBoxShellMachine::LLSFRefBoxShellMachine(std::string name, std::string type,
 					       int begin_y, int begin_x)
   : NCursesPanel(1, 22, begin_y, begin_x),
-    name_(name), type_(type), puck_under_rfid_(false)
+    name_(name), type_(type), puck_under_rfid_(false),
+    has_correctly_reported_field_(false), correctly_reported_(false)
 {
 }
 
@@ -103,6 +104,13 @@ LLSFRefBoxShellMachine::set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState 
 }
 
 void
+LLSFRefBoxShellMachine::set_correctly_reported(bool has_field, bool correctly_reported)
+{
+  has_correctly_reported_field_ = has_field;
+  correctly_reported_ = correctly_reported;
+}
+
+void
 LLSFRefBoxShellMachine::flip_blink_states()
 {
   if (! blink_state_.empty()) {
@@ -121,6 +129,8 @@ LLSFRefBoxShellMachine::reset()
   inputs_.clear();
   loaded_with_.clear();
   puck_under_rfid_ = false;
+  has_correctly_reported_field_ = false;
+  correctly_reported_ = false;
   lights_.clear();
   blink_state_.clear();
   refresh();
@@ -176,6 +186,10 @@ LLSFRefBoxShellMachine::refresh()
   if (puck_under_rfid_) {
     attron(' '|COLOR_PAIR(1)|A_BOLD);
     addstr(0, 11, llsf_msgs::PuckState_Name(puck_under_rfid_state_).substr(0,2).c_str());
+    attroff(A_BOLD);
+  } else if (has_correctly_reported_field_) {
+    attron(' '|COLOR_PAIR(correctly_reported_ ? 4 : 2)|A_BOLD);
+    addstr(0, 11, correctly_reported_ ? "++" : "--");
     attroff(A_BOLD);
   } else {
     attron(' '|COLOR_PAIR(1));

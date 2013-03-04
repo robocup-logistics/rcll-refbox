@@ -645,6 +645,11 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 	} else {
 	  mpanel->second->set_puck_under_rfid(false);
 	}
+	if (mspec.has_correctly_reported()) {
+	  mpanel->second->set_correctly_reported(true, mspec.correctly_reported());
+	} else {
+	  mpanel->second->set_correctly_reported(false, false);
+	}
 	mpanel->second->refresh();
       }
     }
