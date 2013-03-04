@@ -105,6 +105,14 @@
   (slot points (type INTEGER) (default 0))
 )
 
+(deftemplate exploration-report
+  (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10))
+  (slot type (type SYMBOL) (allowed-values T1 T2 T3 T4 T5))
+  (slot host (type STRING))
+  (slot port (type INTEGER))
+  (slot game-time (type FLOAT))
+)
+
 
 (deffacts startup
   (time 0 0)
@@ -119,6 +127,7 @@
   (machine (name M5) (mtype T3))
   (signal (type puck-info) (time (create$ 0 0)) (seq 1))
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
+  (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (machine (name M6) (mtype T3))
   (machine (name M7) (mtype T4))
   (machine (name M8) (mtype T4))

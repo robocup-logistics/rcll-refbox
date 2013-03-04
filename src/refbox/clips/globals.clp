@@ -24,6 +24,8 @@
   ?*INTERMEDIATE-PROC-TIME* = 2
   ; number of points for specific actoins
   ?*RECYCLE-POINTS* = 3
+  ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4
+  ?*EXPLORATION-INVALID-REPORT-POINTS* = -2
   ; Game phase time; seconds
   ?*EXPLORATION-TIME* = 180
   ?*PRODUCTION-TIME* = 900
