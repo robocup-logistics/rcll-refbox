@@ -76,6 +76,7 @@ message Machine {
 
   repeated LightSpec lights = 7;
   optional Pose2D    pose = 8;
+  optional bool      correctly_reported = 9;
 }
 
 message MachineInfo {
