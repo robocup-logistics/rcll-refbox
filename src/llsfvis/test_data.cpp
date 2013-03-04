@@ -5,7 +5,7 @@
  *      Author: daniel
  */
 
-#include "msgs/MachineSpec.pb.h"
+#include "msgs/MachineInfo.pb.h"
 
 using namespace llsf_msgs;
 

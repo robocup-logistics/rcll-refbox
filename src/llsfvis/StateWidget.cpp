@@ -102,7 +102,7 @@ void StateWidget::set_game_phase(llsf_msgs::GameState::Phase phase) {
 void StateWidget::update_game_state(llsf_msgs::GameState& gameState) {
 	set_game_phase(gameState.phase());
 	set_game_state(gameState.state());
-	set_time(gameState.timestamp());
+	set_time(gameState.game_time());
 	set_score(gameState.points());
 
 }

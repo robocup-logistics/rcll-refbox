@@ -10,7 +10,7 @@
 
 #include <gtkmm.h>
 #include <msgs/PuckInfo.pb.h>
-#include <msgs/MachineSpec.pb.h>
+#include <msgs/MachineInfo.pb.h>
 
 namespace LLSFVis {
 

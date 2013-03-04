@@ -36,7 +36,7 @@
 #include <gtkmm.h>
 #include "MainWindow.h"
 #include "RefboxClient.h"
-#include "msgs/MachineSpec.pb.h"
+#include "msgs/MachineInfo.pb.h"
 #include "test_data.cpp"
 
 #define DEBUG true

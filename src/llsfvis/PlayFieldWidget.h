@@ -39,7 +39,7 @@
 #include <gtkmm.h>
 #include <list>
 #include "msgs/RobotInfo.pb.h"
-#include "msgs/MachineSpec.pb.h"
+#include "msgs/MachineInfo.pb.h"
 
 namespace LLSFVis {
 
