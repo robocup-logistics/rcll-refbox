@@ -160,14 +160,14 @@
 )
 
 (defrule net-send-MachineInfo
-  (network-client (id ?client-id))
-  (machine)
+  (time $?now)
+  ?sf <- (signal (type machine-info)
+		 (time $?t&:(timeout ?now ?t ?*MACHINE-INFO-PERIOD*)) (seq ?seq))
   =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)))
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
 
-  (do-for-all-facts
-    ((?machine machine)) TRUE
-
+  (do-for-all-facts ((?machine machine)) TRUE
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (pb-set-field ?m "name" ?machine:name)
@@ -204,7 +204,9 @@
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
-  (pb-send ?client-id ?s)
+  (do-for-all-facts ((?client network-client)) TRUE
+    (pb-send ?client:id ?s)
+  )
   (pb-destroy ?s)
 )
 
@@ -294,19 +296,6 @@
 )
 
 (defrule net-send-OrderInfo
-  (network-client (id ?client-id))
-  (order)
-  =>
-  ; We do not match for gamestate in the antecedent because it would trigger
-  ; in every cycle (game time is updated)
-  (do-for-fact ((?gs gamestate)) (eq ?gs:phase PRODUCTION)
-    (bind ?oi (net-create-OrderInfo))
-    (pb-send ?client-id ?oi)
-    (pb-destroy ?oi)
-  )
-)
-
-(defrule net-broadcast-OrderInfo
   (time $?now)
   (gamestate (phase PRODUCTION))
   ?sf <- (signal (type order-info) (seq ?seq) (count ?count)
@@ -317,6 +306,8 @@
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
   (bind ?oi (net-create-OrderInfo))
+  (do-for-all-facts ((?client network-client)) TRUE
+    (pb-send ?client:id ?oi))
   (pb-broadcast ?oi)
   (pb-destroy ?oi)
 )

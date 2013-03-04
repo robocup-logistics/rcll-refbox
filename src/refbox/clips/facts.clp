@@ -125,6 +125,7 @@
   (machine (name M3) (mtype T2))
   (machine (name M4) (mtype T2))
   (machine (name M5) (mtype T3))
+  (signal (type machine-info) (time (create$ 0 0)) (seq 1))
   (signal (type puck-info) (time (create$ 0 0)) (seq 1))
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
