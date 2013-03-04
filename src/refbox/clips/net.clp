@@ -206,6 +206,12 @@
       )
       (pb-set-field ?m "puck_under_rfid" ?p)
     )
+    ; In exploration phase, indicate whether this was correctly reported
+    (do-for-fact ((?gs gamestate)) (eq ?gs:phase EXPLORATION)
+      (do-for-fact ((?report exploration-report)) (eq ?report:name ?machine:name)
+	(pb-set-field ?m "correctly_reported" (neq ?report:type WRONG))
+      )
+    )
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
