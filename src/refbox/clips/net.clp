@@ -117,17 +117,18 @@
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (if (debug 3) then (printout t "Sending GameState" crlf))
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
-  (bind ?gamestate-time (pb-field-value ?gamestate "timestamp"))
+  (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))
   (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then 
     (bind ?gt (time-from-sec ?game-time))
     (pb-set-field ?gamestate-time "sec" (nth$ 1 ?gt))
     (pb-set-field ?gamestate-time "nsec" (* (nth$ 2 ?gt) 1000))
-    (pb-set-field ?gamestate "timestamp" ?gamestate-time) ; destroys ?gamestate-time!
+    (pb-set-field ?gamestate "game_time" ?gamestate-time) ; destroys ?gamestate-time!
   )
   (pb-set-field ?gamestate "state" (str-cat ?state))
   (pb-set-field ?gamestate "phase" (str-cat ?phase))
   (pb-set-field ?gamestate "points" ?points)
   (pb-send ?client-id ?gamestate)
+  (pb-broadcast ?gamestate)
   (pb-destroy ?gamestate)
 )
 
