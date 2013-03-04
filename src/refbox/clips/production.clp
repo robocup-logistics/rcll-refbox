@@ -17,7 +17,7 @@
 (defrule machine-enable-production
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
   =>
-  (modify ?gs (prev-phase PRODUCTION))
+  (modify ?gs (prev-phase PRODUCTION) (game-time 0.0))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (switch ?machine:state
       (case PROCESSING then (modify ?machine (desired-lights GREEN-ON YELLOW-ON)))

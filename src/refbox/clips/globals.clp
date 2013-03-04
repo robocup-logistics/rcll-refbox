@@ -8,12 +8,18 @@
 ;---------------------------------------------------------------------------
 
 (defglobal
-  ?*BEACON-PERIOD* = 2.0
-  ?*GAMESTATE-PERIOD* = 2.0
+  ; network sending periods; seconds
+  ?*BEACON-PERIOD* = 1.0
+  ?*GAMESTATE-PERIOD* = 1.0
   ?*ROBOTINFO-PERIOD* = 2.0
   ?*PUCKINFO-PERIOD* = 2.0
+  ; Machine processing times; seconds
   ?*RECYCLE-PROC-TIME* = 2
-  ?*RECYCLE-POINTS* = 3
   ?*DELIVER-PROC-TIME* = 1
   ?*INTERMEDIATE-PROC-TIME* = 2
+  ; number of points for specific actoins
+  ?*RECYCLE-POINTS* = 3
+  ; Game phase time; seconds
+  ?*EXPLORATION-TIME* = 180
+  ?*PRODUCTION-TIME* = 900
 )
