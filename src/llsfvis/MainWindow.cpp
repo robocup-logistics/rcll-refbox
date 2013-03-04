@@ -153,7 +153,7 @@ void MainWindow::set_attention_msg(llsf_msgs::AttentionMessage& msg) {
 }
 
 void MainWindow::update_machines(llsf_msgs::MachineInfo& mSpecs) {
-	machines_=&mSpecs;
+	machines_ = &mSpecs;
 	playFieldWidget_.update_machines(mSpecs);
 }
 
@@ -173,18 +173,17 @@ void MainWindow::update_robots(llsf_msgs::RobotInfo& robotInfo) {
 }
 
 void MainWindow::on_add_puck_to_machine_button_clicked() {
-	std::vector<llsf_msgs::Puck*> free_pucks = get_free_pucks();
+	find_free_pucks();
 
-	std::vector<llsf_msgs::Machine*> machines = get_machines();
 
-	PlacePuckDialog pd(free_pucks, machines);
+	PlacePuckDialog pd(*freePucks_, *machines_);
 	int resp = pd.run();
 	if (resp == Gtk::RESPONSE_OK) {
-		llsf_msgs::Machine* m = pd.get_selected_machine();
-		llsf_msgs::Puck* p = pd.get_selected_puck();
+		const llsf_msgs::Machine& m = pd.get_selected_machine();
+		const llsf_msgs::Puck& p = pd.get_selected_puck();
 		llsf_msgs::PlacePuckUnderMachine ppum;
-		ppum.set_machine_name(m->name());
-		ppum.set_puck_id(p->id());
+		ppum.set_machine_name(m.name());
+		ppum.set_puck_id(p.id());
 		std::cout << ppum.DebugString() << std::endl;
 		signal_place_puck_under_machine_.emit(ppum);
 	}

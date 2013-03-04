@@ -12,8 +12,8 @@ using namespace llsf_msgs;
 
 namespace LLSFVis {
 
-PlacePuckDialog::PlacePuckDialog(vector<Puck*>& pucks,
-		vector<Machine*>& machines) :
+PlacePuckDialog::PlacePuckDialog(const llsf_msgs::PuckInfo& pucks,
+		const llsf_msgs::MachineInfo& machines) :
 		pucks_(pucks), machines_(machines) {
 
 	set_title("Select puck and machine to fill puck with");
@@ -25,16 +25,15 @@ PlacePuckDialog::PlacePuckDialog(vector<Puck*>& pucks,
 	add_button(Gtk::Stock::OK, Gtk::RESPONSE_OK);
 	add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
 
-	for (vector<Puck*>::iterator it = pucks.begin(); it != pucks.end(); ++it) {
+	for (int i =0; i < pucks_.pucks_size(); ++i) {
 		stringstream s;
-		s << (*it)->id() << ": " << PuckState_Name((*it)->state());
+		s << pucks_.pucks(i).id() << ": " << PuckState_Name(pucks_.pucks(i).state());
 		combo_pucks_.append(s.str());
 	}
 
-	for (vector<Machine*>::iterator it = machines.begin(); it != machines.end();
-			++it) {
+	for (int i = 0; i < machines_.machines_size(); ++i) {
 		stringstream s;
-		s << (*it)->name() << ": " << (*it)->type();
+		s << machines_.machines(i).name() << ": " << machines_.machines(i).type();
 		combo_machines_.append(s.str());
 	}
 	combo_pucks_.set_active(0);
@@ -46,12 +45,12 @@ PlacePuckDialog::~PlacePuckDialog() {
 	// TODO Auto-generated destructor stub
 }
 
-llsf_msgs::Machine* PlacePuckDialog::get_selected_machine() {
-	return machines_.at(combo_machines_.get_active_row_number());
+const llsf_msgs::Machine& PlacePuckDialog::get_selected_machine() {
+	return machines_.machines(combo_machines_.get_active_row_number());
 }
 
-llsf_msgs::Puck* PlacePuckDialog::get_selected_puck() {
-	return pucks_.at(combo_pucks_.get_active_row_number());
+const llsf_msgs::Puck& PlacePuckDialog::get_selected_puck() {
+	return pucks_.pucks(combo_pucks_.get_active_row_number());
 }
 
 } /* namespace LLSFVis */

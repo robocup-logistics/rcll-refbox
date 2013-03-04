@@ -16,14 +16,14 @@ namespace LLSFVis {
 
 class PlacePuckDialog : public Gtk::Dialog{
 public:
-	PlacePuckDialog(std::vector<llsf_msgs::Puck*>& pucks, std::vector<llsf_msgs::Machine*>& machines);
+	PlacePuckDialog(const llsf_msgs::PuckInfo& pucks, const llsf_msgs::MachineInfo& machines);
 	virtual ~PlacePuckDialog();
-	llsf_msgs::Machine* get_selected_machine();
-	llsf_msgs::Puck* get_selected_puck();
+	const llsf_msgs::Machine& get_selected_machine();
+	const llsf_msgs::Puck& get_selected_puck();
 private:
 
-	std::vector<llsf_msgs::Puck*>& pucks_;
-	std::vector<llsf_msgs::Machine*>& machines_;
+	const llsf_msgs::PuckInfo& pucks_;
+	const llsf_msgs::MachineInfo& machines_;
 	Gtk::Grid grid_;
 	Gtk::ComboBoxText combo_pucks_;
 	Gtk::ComboBoxText combo_machines_;
