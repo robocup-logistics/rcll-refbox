@@ -57,7 +57,7 @@ message GameState {
     POST_GAME = 3;
   }
 
-  required Time   timestamp = 1;
+  required Time   game_time = 1;
 
   required State  state = 3;
   required Phase  phase = 4;
