@@ -229,7 +229,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
     if (c != ERR) {
       switch (c) {
       case ' ':
-	if (s_state_ == "PAUSED") {
+	if (s_state_ == "WAIT_START" || s_state_ == "PAUSED") {
 	  set_game_state("RUNNING");
 	} else {
 	  set_game_state("PAUSED");
@@ -248,7 +248,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	break;
 
-      case KEY_F(5):
+      case KEY_F(7):
 	if (last_minfo_) {
 	  try {
 	    MachineWithPuckMenu m(panel_, last_minfo_);
@@ -266,7 +266,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	}
 	break;
 
-      case KEY_F(7):
+      case KEY_F(5):
 	if (last_minfo_ && last_pinfo_) {
 	  try {
 	    MachineThatCanTakePuckMenu mtctpm(panel_, last_minfo_);
@@ -564,18 +564,18 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     p_phase_->erase();
     p_phase_->addstr(llsf_msgs::GameState::Phase_Name(g->phase()).c_str());
 
-    int hour = g->timestamp().sec() / 3600;
-    int min  = (g->timestamp().sec() - hour * 3600) / 60;
-    int sec  = g->timestamp().sec() - hour * 3600 - min * 60;
+    int hour = g->game_time().sec() / 3600;
+    int min  = (g->game_time().sec() - hour * 3600) / 60;
+    int sec  = g->game_time().sec() - hour * 3600 - min * 60;
     p_time_->erase();
     if (hour > 0) {
-      p_time_->printw("%02d:%02d:%02d.%03ld", hour, min, sec, g->timestamp().nsec() / 1000000);
+      p_time_->printw("%02d:%02d:%02d.%03ld", hour, min, sec, g->game_time().nsec() / 1000000);
     } else {
-      p_time_->printw("%02d:%02d.%03ld", min, sec, g->timestamp().nsec() / 1000000);
+      p_time_->printw("%02d:%02d.%03ld", min, sec, g->game_time().nsec() / 1000000);
     }
 
     for (size_t i = 0; i < orders_.size(); ++i) {
-      orders_[i]->set_gametime(g->timestamp().sec());
+      orders_[i]->set_gametime(g->game_time().sec());
     }
 
     if (g->has_points()) {
@@ -589,7 +589,10 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     init_pair(202, COLOR_GREEN, default_back);
     navbar_->standend();
 
-    if (g->state() == llsf_msgs::GameState::PAUSED) {
+    if (g->state() == llsf_msgs::GameState::WAIT_START) {
+      navbar_->attron(' '|COLOR_PAIR(202)|A_BOLD);
+      navbar_->addstr(0, navbar_->cols() - 5, "STRT");
+    } else if (g->state() == llsf_msgs::GameState::PAUSED) {
       navbar_->attron(' '|COLOR_PAIR(202)|A_BOLD);
       navbar_->addstr(0, navbar_->cols() - 5, "CONT");
     } else {
@@ -796,13 +799,13 @@ LLSFRefBoxShell::run()
   navbar_->addstr(0, 21, "F5");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 24, "LOST PUCK");
+  navbar_->addstr(0, 24, "ADD PUCK");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 35, "F7");
+  navbar_->addstr(0, 34, "F7");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 38, "ADD PUCK");
+  navbar_->addstr(0, 37, "REM PUCK");
 
   short default_fore, default_back;
   pair_content(0, &default_fore, &default_back);
