@@ -71,6 +71,7 @@ class ProtobufBroadcastPeer
   void send(uint16_t component_id, uint16_t msg_type,
 	    std::shared_ptr<google::protobuf::Message> m);
   void send(std::shared_ptr<google::protobuf::Message> m);
+  void send(google::protobuf::Message &m);
 
   /** Get the server's message register.
    * @return message register

@@ -283,7 +283,6 @@ ProtobufBroadcastPeer::send(uint16_t component_id, uint16_t msg_type,
 }
 
 
-
 /** Send a message to other peers.
  * @param m Message to send, the message must have an CompType enum type to
  * specify component ID and message type.
@@ -291,7 +290,18 @@ ProtobufBroadcastPeer::send(uint16_t component_id, uint16_t msg_type,
 void
 ProtobufBroadcastPeer::send(std::shared_ptr<google::protobuf::Message> m)
 {
-  const google::protobuf::Descriptor *desc = m->GetDescriptor();
+  send(*m);
+}
+
+
+/** Send a message to other peers.
+ * @param m Message to send, the message must have an CompType enum type to
+ * specify component ID and message type.
+ */
+void
+ProtobufBroadcastPeer::send(google::protobuf::Message &m)
+{
+  const google::protobuf::Descriptor *desc = m.GetDescriptor();
   const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
   if (! enumdesc) {
     throw std::logic_error("Message does not have CompType enum");
@@ -312,7 +322,7 @@ ProtobufBroadcastPeer::send(std::shared_ptr<google::protobuf::Message> m)
     throw std::logic_error("Message has invalid MSG_TYPE");
   }
 
-  send(comp_id, msg_type, *m);
+  send(comp_id, msg_type, m);
 }
 
 void
