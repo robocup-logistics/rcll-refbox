@@ -17,11 +17,12 @@ BASEDIR = ../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
 
-SUBDIRS = core utils netcomm
+SUBDIRS = core utils config logging netcomm protobuf_comm llsf_sps
 
 # Explicit dependencies, this is needed to have make bail out if there is any
 # error. This is also necessary for working parallel build (i.e. for dual core)
 netcomm: core utils
 utils: core
+logging: protobuf_comm
 
-include $(BUILDSYSDIR)/rules.mk
+include $(BUILDSYSDIR)/base.mk
