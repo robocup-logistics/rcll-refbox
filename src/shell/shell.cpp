@@ -261,7 +261,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	      send_remove_puck(machine_name, puck_id);	      
 	    }
 	  } catch (NCursesException &e) {
-	    rb_log_->printw("Machine menu failed: %s\n", e.message);
+	    logf("Machine menu failed: %s", e.message);
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}
@@ -273,11 +273,11 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	    MachineThatCanTakePuckMenu mtctpm(panel_, last_minfo_);
 	    mtctpm();
 	    if (mtctpm) {
-	      rb_log_->printw("Valid machine selected\n");
+	      //rb_log_->printw("Valid machine selected\n");
 	      PuckForMachineMenu pfmm(panel_, last_pinfo_, last_minfo_, mtctpm.machine());
 	      pfmm();
 	      if (pfmm) {
-		rb_log_->printw("Valid puck selected\n");
+		//rb_log_->printw("Valid puck selected\n");
 		const llsf_msgs::Machine &m = mtctpm.machine();
 		const llsf_msgs::Puck &p = pfmm.puck();
 		bool can_be_placed_under_rfid = ! m.has_puck_under_rfid();
@@ -295,25 +295,23 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 		  if (mpm) {
 
 		    if (mpm.place_under_rfid()) {
-		      rb_log_->printw("Place %s under RFID of %s\n",
-				      llsf_msgs::PuckState_Name(p.state()).c_str(),
-				      m.name().c_str());
+		      logf("Place %s under RFID of %s",
+			  llsf_msgs::PuckState_Name(p.state()).c_str(),
+			  m.name().c_str());
 		      set_puck_under_rfid(m.name(), p.id());
 		    } else {
-		      rb_log_->printw("Load machine %s with puck %s (%u)\n",
-				      m.name().c_str(),
-				      llsf_msgs::PuckState_Name(p.state()).c_str(),
-				      p.id());
+		      logf("Load machine %s with puck %s (%u)", m.name().c_str(),
+			  llsf_msgs::PuckState_Name(p.state()).c_str(), p.id());
 		      set_loaded_with(m.name(), p.id());
 		    }
 		  }
 		} else if (can_be_placed_under_rfid) {
-		  rb_log_->printw("Place %s under RFID of %s\n",
+		  logf("Place %s under RFID of %s",
 				  llsf_msgs::PuckState_Name(p.state()).c_str(),
 				  m.name().c_str());
 		  set_puck_under_rfid(m.name(), p.id());
 		} else {
-		  rb_log_->printw("Load machine %s with puck %s (%u)\n",
+		  logf("Load machine %s with puck %s (%u)",
 				  m.name().c_str(),
 				  llsf_msgs::PuckState_Name(p.state()).c_str(),
 				  p.id());
@@ -322,7 +320,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	      }
 	    }
 	  } catch (NCursesException &e) {
-	    rb_log_->printw("Machine menu failed: %s\n", e.message);
+	    logf("Machine menu failed: %s", e.message);
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}
@@ -406,16 +404,16 @@ LLSFRefBoxShell::set_game_state(std::string state)
 {
   llsf_msgs::GameState::State value;
   if (llsf_msgs::GameState_State_Parse(state, &value)) {
-    rb_log_->printw("Requesting new game state %s\n", state.c_str());
+    logf("Requesting new game state %s", state.c_str());
     llsf_msgs::SetGameState msg;
     msg.set_state(value);
     try {
       client->send(msg);
     } catch (std::runtime_error &e) {
-      rb_log_->printw("Sending game state failed: %s\n", e.what());
+      logf("Sending game state failed: %s", e.what());
     }
   } else {
-    rb_log_->printw("Failed to parse game state %s\n", state.c_str());
+    logf("Failed to parse game state %s", state.c_str());
   }
 }
 
@@ -425,16 +423,16 @@ LLSFRefBoxShell::set_game_phase(std::string phase)
 {
   llsf_msgs::GameState::Phase value;
   if (llsf_msgs::GameState_Phase_Parse(phase, &value)) {
-    rb_log_->printw("Requesting new game phase %s\n", phase.c_str());
+    logf("Requesting new game phase %s", phase.c_str());
     llsf_msgs::SetGamePhase msg;
     msg.set_phase(value);
     try {
       client->send(msg);
     } catch (std::runtime_error &e) {
-      rb_log_->printw("Sending game phase failed: %s\n", e.what());
+      logf("Sending game phase failed: %s", e.what());
     }
   } else {
-    rb_log_->printw("Failed to parse game phase %s\n", phase.c_str());
+    logf("Failed to parse game phase %s", phase.c_str());
   }
 }
 
@@ -447,7 +445,7 @@ LLSFRefBoxShell::set_puck_under_rfid(const std::string &machine_name, unsigned i
   try {
     client->send(msg);
   } catch (std::runtime_error &e) {
-    rb_log_->printw("Sending puck under RFID failed: %s\n", e.what());
+    logf("Sending puck under RFID failed: %s", e.what());
   }
 }
 
@@ -460,7 +458,7 @@ LLSFRefBoxShell::set_loaded_with(const std::string &machine_name, unsigned int p
   try {
     client->send(msg);
   } catch (std::runtime_error &e) {
-    rb_log_->printw("Sending load puck failed: %s\n", e.what());
+    logf("Sending load puck failed: %s", e.what());
   }
 }
 
@@ -474,7 +472,7 @@ LLSFRefBoxShell::send_remove_puck(std::string &machine_name, unsigned int puck_i
   try {
     client->send(msg);
   } catch (std::runtime_error &e) {
-    rb_log_->printw("Sending remove puck failed: %s\n", e.what());
+    logf("Sending remove puck failed: %s", e.what());
   }
 }
 
@@ -624,7 +622,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     for (int i = 0; i < minfo->machines_size(); ++i) {
       std::map<std::string, LLSFRefBoxShellMachine *>::iterator mpanel;
       const llsf_msgs::Machine &mspec = minfo->machines(i);
-      //rb_log_->printw("Adding %s\n", mspec.name().c_str());
+      //logf("Adding %s\n", mspec.name().c_str());
       if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
 	mpanel->second->set_type(mspec.type());
 	std::vector<llsf_msgs::PuckState> inputs(mspec.inputs_size());
@@ -721,33 +719,75 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 
   std::shared_ptr<llsf_log_msgs::LogMessage> lm;
   if ((lm = std::dynamic_pointer_cast<llsf_log_msgs::LogMessage>(msg))) {
-    short default_fore, default_back;
-    pair_content(0, &default_fore, &default_back);
-    init_pair(205, COLOR_RED, default_back);
-    init_pair(206, COLOR_YELLOW, default_back);
-    init_pair(207, COLOR_BLACK, default_back);
-    init_pair(208, COLOR_WHITE, default_back);
-
-    rb_log_->standend();
-    if (lm->log_level() == llsf_log_msgs::LogMessage::LL_DEBUG) {
-      rb_log_->attron(' '|COLOR_PAIR(208));
-    } else if (lm->log_level() == llsf_log_msgs::LogMessage::LL_INFO) {
-      rb_log_->attron(' '|COLOR_PAIR(207));
-    } else if (lm->log_level() == llsf_log_msgs::LogMessage::LL_WARN) {
-      rb_log_->attron(' '|COLOR_PAIR(206));
-    } else if (lm->log_level() == llsf_log_msgs::LogMessage::LL_ERROR) {
-      rb_log_->attron(' '|COLOR_PAIR(205));
-    }
-    struct ::tm now_s;
-    time_t t = lm->ts_sec();
-    localtime_r(&t, &now_s);
-    rb_log_->printw("%02d:%02d:%02d.%03ld [%s]: %s\n", now_s.tm_hour,
-		    now_s.tm_min, now_s.tm_sec, lm->ts_nsec() / 1000000,
-		    lm->component().c_str(), lm->message().c_str());
-    rb_log_->standend();
+    log(lm->log_level(), lm->ts_sec(), lm->ts_nsec(), lm->component(), lm->message());
   }
 
   io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+}
+
+void
+LLSFRefBoxShell::log(llsf_log_msgs::LogMessage::LogLevel log_level,
+		     long int ts_sec, long int ts_nsec,
+		     const std::string &component, const std::string &message)
+{
+  short default_fore, default_back;
+  pair_content(0, &default_fore, &default_back);
+  init_pair(205, COLOR_RED, default_back);
+  init_pair(206, COLOR_YELLOW, default_back);
+  init_pair(207, COLOR_BLACK, default_back);
+  init_pair(208, COLOR_WHITE, default_back);
+
+  rb_log_->standend();
+  if (log_level == llsf_log_msgs::LogMessage::LL_DEBUG) {
+    rb_log_->attron(' '|COLOR_PAIR(208));
+  } else if (log_level == llsf_log_msgs::LogMessage::LL_INFO) {
+    rb_log_->attron(' '|COLOR_PAIR(207));
+  } else if (log_level == llsf_log_msgs::LogMessage::LL_WARN) {
+    rb_log_->attron(' '|COLOR_PAIR(206));
+  } else if (log_level == llsf_log_msgs::LogMessage::LL_ERROR) {
+    rb_log_->attron(' '|COLOR_PAIR(205));
+  }
+  struct ::tm now_s;
+  if (ts_sec == 0) {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    ts_sec = now.tv_sec;
+    ts_nsec = now.tv_usec * 1000;
+  }
+  time_t t = ts_sec;
+  localtime_r(&t, &now_s);
+  rb_log_->printw("%02d:%02d:%02d.%03ld %s: %s\n", now_s.tm_hour,
+		  now_s.tm_min, now_s.tm_sec, ts_nsec / 1000000,
+		  component.c_str(), message.c_str());
+  rb_log_->standend();
+}
+
+void
+LLSFRefBoxShell::log(llsf_log_msgs::LogMessage::LogLevel log_level,
+		     const std::string &component, const char *format, ...)
+{
+  va_list arg;
+  va_start(arg, format);
+  char *tmp;
+  if (vasprintf(&tmp, format, arg) != -1) {
+    log(log_level, 0, 0, component, tmp);
+    free(tmp);
+  }
+  va_end(arg);
+}
+
+
+void
+LLSFRefBoxShell::logf(const char *format, ...)
+{
+  va_list arg;
+  va_start(arg, format);
+  char *tmp;
+  if (vasprintf(&tmp, format, arg) != -1) {
+    log(llsf_log_msgs::LogMessage::LL_INFO, 0, 0, "L", tmp);
+    free(tmp);
+  }
+  va_end(arg);
 }
 
 int
@@ -931,7 +971,7 @@ LLSFRefBoxShell::run()
     m_state_->frame("Set State");
     m_state_->hide();
   } catch (NCursesException &e) {
-    rb_log_->printw("%s\n", e.message);
+    logf("%s", e.message);
   }
 
   // Phase menu
@@ -955,7 +995,7 @@ LLSFRefBoxShell::run()
     m_phase_->frame("Set Phase");
     m_phase_->hide();
   } catch (NCursesException &e) {
-    rb_log_->printw("%s\n", e.message);
+    logf("%s", e.message);
   }
 
   /*

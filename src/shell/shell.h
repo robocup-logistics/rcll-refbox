@@ -41,6 +41,8 @@
 #include <boost/date_time.hpp>
 #include <google/protobuf/message.h>
 
+#include <logging/llsf_log_msgs/LogMessage.pb.h>
+
 #include <map>
 #include <vector>
 #include <string>
@@ -106,6 +108,15 @@ class LLSFRefBoxShell
   void set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id);
   void set_loaded_with(const std::string &machine_name, unsigned int puck_id);
   void send_remove_puck(std::string &machine_name, unsigned int puck_id);
+
+  void log(llsf_log_msgs::LogMessage::LogLevel log_level,
+	   long int ts_sec, long int ts_nsec,
+	   const std::string &component, const std::string &message);
+
+  void log(llsf_log_msgs::LogMessage::LogLevel log_level,
+	   const std::string &component, const char *format, ...);
+
+  void logf(const char *format, ...);
 
  private: // members
   bool        quit_;
