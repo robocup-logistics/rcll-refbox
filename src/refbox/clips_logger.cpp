@@ -143,7 +143,7 @@ void
 init_clips_logger(void *env, Logger *logger, Logger *trace_logger)
 {
   CLIPSContextMaintainer *cm =
-    new CLIPSContextMaintainer(logger, trace_logger, "CLIPS");
+    new CLIPSContextMaintainer(logger, trace_logger, "C");
 
   SetEnvironmentContext(env, cm);
 
