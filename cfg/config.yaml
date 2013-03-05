@@ -11,6 +11,12 @@ include:
 # Main configuration document
 
 llsfrb:
+  log:
+    level: debug
+    general: refbox.log
+    clips: clips.log
+    game: game.log
+
   sps:
     enable: false
     host: !ipv4 192.168.1.77

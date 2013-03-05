@@ -40,6 +40,7 @@
 #include <boost/asio.hpp>
 #include <google/protobuf/message.h>
 #include <protobuf_comm/server.h>
+#include <logging/logger.h>
 
 #include <clipsmm.h>
 #include <mutex>
@@ -118,6 +119,9 @@ class LLSFRefBox
 
  private: // members
   Configuration *config_;
+  Logger        *logger_;
+  Logger        *clips_logger_;
+  Logger::LogLevel log_level_;
   llsf_sps::SPSComm *sps_;
   protobuf_comm::ProtobufStreamServer *pbc_server_;
   protobuf_comm::ProtobufBroadcastPeer *pbc_peer_;

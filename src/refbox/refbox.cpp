@@ -35,10 +35,15 @@
  */
 
 #include "refbox.h"
+#include "clips_logger.h"
 
 #include <config/yaml.h>
 #include <protobuf_comm/peer.h>
 #include <llsf_sps/sps_comm.h>
+#include <logging/multi.h>
+#include <logging/file.h>
+#include <logging/network.h>
+#include <logging/console.h>
 
 #include <msgs/BeaconSignal.pb.h>
 #include <msgs/GameState.pb.h>
@@ -86,10 +91,32 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     throw;
   }
 
+  log_level_ = Logger::LL_DEBUG;
   try {
-    printf("Connecting to SPS\n");
+    std::string ll = config_->get_string("/llsfrb/log/level");
+    if (ll == "debug") {
+      log_level_ = Logger::LL_DEBUG;
+    } else if (ll == "info") {
+      log_level_ = Logger::LL_INFO;
+    } else if (ll == "warn") {
+      log_level_ = Logger::LL_WARN;
+    } else if (ll == "error") {
+      log_level_ = Logger::LL_ERROR;
+    }
+  } catch (fawkes::Exception &e) {} // ignored, use default
+
+  MultiLogger *mlogger = new MultiLogger();
+  mlogger->add_logger(new ConsoleLogger(log_level_));
+  try {
+    std::string logfile = config_->get_string("/llsfrb/log/general");
+    mlogger->add_logger(new FileLogger(logfile.c_str(), log_level_));
+  } catch (fawkes::Exception &e) {} // ignored, use default
+  logger_ = mlogger;
+
+  try {
     sps_ = NULL;
     if (config_->get_bool("/llsfrb/sps/enable")) {
+      logger_->log_info("RefBox", "Connecting to SPS");
       bool test_lights = true;
       try {
 	test_lights = config_->get_bool("/llsfrb/sps/test-lights");
@@ -105,7 +132,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       }
     }
   } catch (fawkes::Exception &e) {
-    printf("Cannot connect to SPS, running without\n");
+    logger_->log_warn("RefBox", "Cannot connect to SPS, running without");
     delete sps_;
     sps_ = NULL;
   }
@@ -113,6 +140,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   setup_clips();
 
   setup_protobuf_comm();
+
+  mlogger->add_logger(new NetworkLogger(pbc_server_, log_level_));
 }
 
 /** Destructor. */
@@ -125,11 +154,15 @@ LLSFRefBox::~LLSFRefBox()
   clips_->refresh_agenda();
   clips_->run();
 
+  finalize_clips_logger(clips_->cobj());
+
   delete pbc_server_;
   delete pbc_peer_;
   delete config_;
   delete sps_;
   delete clips_;
+  delete logger_;
+  delete clips_logger_;
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();
@@ -206,8 +239,18 @@ LLSFRefBox::setup_protobuf_comm()
 void
 LLSFRefBox::setup_clips()
 {
-  printf("Creating CLIPS environment\n");
+  logger_->log_info("RefBox", "Creating CLIPS environment");
   clips_ = new CLIPS::Environment();
+
+  MultiLogger *mlogger = new MultiLogger();
+  mlogger->add_logger(new ConsoleLogger(log_level_));
+  try {
+    std::string logfile = config_->get_string("/llsfrb/log/clips");
+    mlogger->add_logger(new FileLogger(logfile.c_str(), log_level_));
+  } catch (fawkes::Exception &e) {} // ignored, use default
+  clips_logger_ = mlogger;
+
+  init_clips_logger(clips_->cobj(), logger_, clips_logger_);
 
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
@@ -231,7 +274,7 @@ LLSFRefBox::setup_clips()
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
   if (!clips_->batch_evaluate(cfg_clips_dir_ + "init.clp")) {
-    printf("Failed to initialize CLIPS environment, batch file failed.");
+    logger_->log_warn("RefBox", "Failed to initialize CLIPS environment, batch file failed.");
     throw fawkes::Exception("Failed to initialize CLIPS environment, batch file failed.");
   }  
 
@@ -268,11 +311,11 @@ LLSFRefBox::clips_assert_message(std::pair<std::string, unsigned short> &endpoin
     if (new_fact) {
       clips_msg_facts_[new_fact->index()] = new_fact;
     } else {
-      printf("Asserting protobuf-msg fact failed\n");
+      logger_->log_warn("RefBox", "Asserting protobuf-msg fact failed");
       delete static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
     }
   } else {
-    printf("Did not get template, did you load protobuf.clp?\n");
+    logger_->log_warn("RefBox", "Did not get template, did you load protobuf.clp?");
   }
 }
 
@@ -286,7 +329,7 @@ LLSFRefBox::handle_clips_periodic()
   for (f = clips_msg_facts_.begin(); f != clips_msg_facts_.end(); ++f) {
     CLIPS::Template::pointer temp = f->second->get_template();
     if (f->second->refcount() == 1) {
-      printf("Fact %li can be erased\n", f->second->index());
+      //logger_->log_info("RefBox", "Fact %li can be erased", f->second->index());
       to_erase.push(f->first);
     }
   }
@@ -310,7 +353,8 @@ LLSFRefBox::clips_pb_create(std::string full_name)
       pbc_server_->message_register().new_message_for(full_name);
     return CLIPS::Value(new std::shared_ptr<google::protobuf::Message>(m));
   } catch (std::runtime_error &e) {
-    printf("Cannot create message of type %s: %s\n", full_name.c_str(), e.what());
+    logger_->log_warn("RefBox", "Cannot create message of type %s: %s",
+		      full_name.c_str(), e.what());
     return CLIPS::Value(new std::shared_ptr<google::protobuf::Message>());
   }
 }
@@ -418,13 +462,13 @@ LLSFRefBox::clips_pb_field_value(void *msgptr, std::string field_name)
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
   if (! field) {
-    printf("Field %s of %s does not exist\n",
+    logger_->log_warn("RefBox", "Field %s of %s does not exist",
 	   field_name.c_str(), (*m)->GetTypeName().c_str());
     return CLIPS::Value("DOES-NOT-EXIST", CLIPS::TYPE_SYMBOL);
   }
   const Reflection *refl       = (*m)->GetReflection();
   if (field->type() != FieldDescriptor::TYPE_MESSAGE && ! refl->HasField(**m, field)) {
-    printf("Field %s of %s not set\n",
+    logger_->log_warn("RefBox", "Field %s of %s not set",
 	   field_name.c_str(), (*m)->GetTypeName().c_str());
     return CLIPS::Value("NOT-SET", CLIPS::TYPE_SYMBOL);
   }
@@ -472,7 +516,7 @@ LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Valu
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
   if (! field) {
-    printf("Could not find field %s\n", field_name.c_str());
+    logger_->log_warn("RefBox", "Could not find field %s", field_name.c_str());
     return;
   }
   const Reflection *refl       = (*m)->GetReflection();
@@ -516,7 +560,7 @@ LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Valu
 	if (enumval) {
 	  refl->SetEnum(m->get(), field, enumval);
 	} else {
-	  printf("%s: cannot set invalid enum value '%s' on '%s'\n",
+	  logger_->log_warn("RefBox", "%s: cannot set invalid enum value '%s' on '%s'",
 		 (*m)->GetTypeName().c_str(), value.as_string().c_str(), field_name.c_str());
 	}
       }
@@ -525,7 +569,7 @@ LLSFRefBox::clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Valu
       throw std::logic_error("Unknown protobuf field type encountered");
     }
   } catch (std::logic_error &e) {
-    printf("Failed to set field %s of %s: %s\n", field_name.c_str(),
+    logger_->log_warn("RefBox", "Failed to set field %s of %s: %s", field_name.c_str(),
 	   (*m)->GetTypeName().c_str(), e.what());
   }
 }
@@ -541,7 +585,7 @@ LLSFRefBox::clips_pb_add_list(void *msgptr, std::string field_name, CLIPS::Value
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
   if (! field) {
-    printf("Could not find field %s\n", field_name.c_str());
+    logger_->log_warn("RefBox", "Could not find field %s", field_name.c_str());
     return;
   }
   const Reflection *refl       = (*m)->GetReflection();
@@ -589,7 +633,7 @@ LLSFRefBox::clips_pb_add_list(void *msgptr, std::string field_name, CLIPS::Value
       throw std::logic_error("Unknown protobuf field type encountered");
     }
   } catch (std::logic_error &e) {
-    printf("Failed to add field %s of %s: %s\n", field_name.c_str(),
+    logger_->log_warn("RefBox", "Failed to add field %s of %s: %s", field_name.c_str(),
 	   (*m)->GetTypeName().c_str(), e.what());
   }
 }
@@ -601,19 +645,19 @@ LLSFRefBox::clips_pb_send(long int client_id, void *msgptr)
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
   if (!*m) {
-    printf("Cannot send to %li: invalid message\n", client_id);
+    logger_->log_warn("RefBox", "Cannot send to %li: invalid message", client_id);
     return;
   }
 
-  //printf("Sending to %li\n", client_id);
+  //logger_->log_info("RefBox", "Sending to %li", client_id);
   if (client_id > 0 && client_id < std::numeric_limits<unsigned int>::max()) {
     try {
       pbc_server_->send(client_id, *m);
     } catch (google::protobuf::FatalException &e) {
-      printf("Failed to send message of type %s: %s\n",
+      logger_->log_warn("RefBox", "Failed to send message of type %s: %s",
 	     (*m)->GetTypeName().c_str(), e.what());
     } catch (std::runtime_error &e) {
-      printf("Failed to send message of type %s: %s\n",
+      logger_->log_warn("RefBox", "Failed to send message of type %s: %s",
 	     (*m)->GetTypeName().c_str(), e.what());
     }
   }
@@ -626,15 +670,15 @@ LLSFRefBox::clips_pb_broadcast(void *msgptr)
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
   if (!*m) {
-    printf("Cannot send broadcast: invalid message\n");
+    logger_->log_warn("RefBox", "Cannot send broadcast: invalid message");
     return;
   }
 
-  //printf("Broadcasting %s\n", (*m)->GetTypeName().c_str());
+  //logger_->log_info("RefBox", "Broadcasting %s", (*m)->GetTypeName().c_str());
   try {
     pbc_peer_->send(*m);
   } catch (google::protobuf::FatalException &e) {
-    printf("Failed to broadcast message of type %s: %s\n",
+    logger_->log_warn("RefBox", "Failed to broadcast message of type %s: %s",
 	   (*m)->GetTypeName().c_str(), e.what());
   }
 }
@@ -643,12 +687,12 @@ LLSFRefBox::clips_pb_broadcast(void *msgptr)
 void
 LLSFRefBox::clips_pb_disconnect(long int client_id)
 {
-  printf("Disconnecting client %li\n", client_id);
+  logger_->log_info("RefBox", "Disconnecting client %li", client_id);
 
   try {
     pbc_server_->disconnect(client_id);
   } catch (std::runtime_error &e) {
-    printf("Failed to disconnect from client %li: %s", client_id, e.what());
+    logger_->log_warn("RefBox", "Failed to disconnect from client %li: %s", client_id, e.what());
   }
 }
 
@@ -784,17 +828,17 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
 	value = std::string("\"") + value + "\"";
       }
     } else {
-      printf("Config value at '%s' of unknown type '%s'",
+      logger_->log_warn("RefBox", "Config value at '%s' of unknown type '%s'",
 	     v->path(), v->type());
     }
 
     if (v->is_list()) {
-      //printf("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))\n",
+      //logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
       //       v->path(), type.c_str(), value.c_str());
       clips_->assert_fact_f("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
 			    v->path(), type.c_str(), value.c_str());
     } else {
-      //printf("(confval (path \"%s\") (type %s) (value %s))\n",
+      //logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (value %s))",
       //       v->path(), type.c_str(), value.c_str());
       clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
 			    v->path(), type.c_str(), value.c_str());
@@ -810,7 +854,7 @@ LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::st
   try {
     sps_->set_light(machine, light, state);
   } catch (fawkes::Exception &e) {
-    printf("Failed to set signal: %s\n", e.what());
+    logger_->log_warn("RefBox", "Failed to set signal: %s", e.what());
   }
 }
 
@@ -948,7 +992,7 @@ LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
 void
 LLSFRefBox::handle_peer_error(const boost::system::error_code &error)
 {
-  printf("Failed to receive peer message: %s\n", error.message().c_str());
+  logger_->log_warn("RefBox", "Failed to receive peer message: %s", error.message().c_str());
 }
 
 
