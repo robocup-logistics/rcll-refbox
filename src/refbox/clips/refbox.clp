@@ -67,7 +67,6 @@
   =>
   (modify ?gs (phase EXPLORATION) (prev-phase PRE_GAME))
   (assert (attention-message "Starting game" 5))
-
 )
 
 (defrule switch-to-production

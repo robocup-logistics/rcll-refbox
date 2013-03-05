@@ -25,6 +25,8 @@
   (delayed-do-for-all-facts ((?report exploration-report)) TRUE
     (retract ?report)
   )
+
+  (assert (attention-message "Entering Exploration Phase" 5))
 )
 
 

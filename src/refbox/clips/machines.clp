@@ -17,7 +17,7 @@
 (defrule machine-lights "Set machines if desired lights differ from actual lights"
   ?mf <- (machine (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
   =>
-  (printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
+  ;(printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
   (modify ?mf (actual-lights ?dl))
   (foreach ?color (create$ RED YELLOW GREEN)
     (if (member$ (sym-cat ?color "-ON") ?dl)
