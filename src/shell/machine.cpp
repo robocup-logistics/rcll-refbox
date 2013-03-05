@@ -79,12 +79,14 @@ LLSFRefBoxShellMachine::set_inputs(std::vector<llsf_msgs::PuckState> &inputs)
 void
 LLSFRefBoxShellMachine::set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights)
 {
-  lights_ = lights;
-  blink_state_.clear();
-  std::map<llsf_msgs::LightColor, llsf_msgs::LightState>::iterator l;
-  for (l = lights.begin(); l != lights.end(); ++l) {
-    if (l->second == llsf_msgs::BLINK) {
-      blink_state_[l->first] = false;
+  if (lights_ != lights) {
+    lights_ = lights;
+    blink_state_.clear();
+    std::map<llsf_msgs::LightColor, llsf_msgs::LightState>::iterator l;
+    for (l = lights.begin(); l != lights.end(); ++l) {
+      if (l->second == llsf_msgs::BLINK) {
+	blink_state_[l->first] = false;
+      }
     }
   }
 }
