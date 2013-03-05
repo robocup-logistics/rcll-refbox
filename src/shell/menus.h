@@ -37,6 +37,7 @@
 #ifndef __LLSF_REFBOX_SHELL_MENUS_H_
 #define __LLSF_REFBOX_SHELL_MENUS_H_
 
+#include <cstddef>
 #include <cursesm.h>
 #include <string>
 #include <boost/signals2.hpp>

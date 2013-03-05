@@ -73,11 +73,13 @@ main(int argc, char **argv)
 
   boost::asio::io_service io_service;
 
+#if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
   signal_set_ = new boost::asio::signal_set(io_service, SIGINT, SIGTERM);
 
   // Start an asynchronous wait for one of the signals to occur.
   signal_set_->async_wait(signal_handler);
+#endif
 
   io_service.run();
 

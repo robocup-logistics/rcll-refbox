@@ -436,11 +436,15 @@ ProtobufStreamServer::handle_accept(Session::Ptr new_session,
 void
 ProtobufStreamServer::run_asio()
 {
+#if BOOST_ASIO_VERSION > 100409
   while (! io_service_.stopped()) {
+#endif
     usleep(0);
     io_service_.reset();
     io_service_.run();
+#if BOOST_ASIO_VERSION > 100409
   }
+#endif
 }
 
 } // end namespace protobuf_comm

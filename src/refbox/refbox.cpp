@@ -50,7 +50,7 @@
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
-#include <msgs/OrderInstruction.pb.h>
+#include <msgs/OrderInfo.pb.h>
 #include <msgs/PuckInfo.pb.h>
 #include <msgs/MachineReport.pb.h>
 
@@ -1002,6 +1002,7 @@ LLSFRefBox::handle_peer_error(const boost::system::error_code &error)
 int
 LLSFRefBox::run()
 {
+#if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
   boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
 
@@ -1009,6 +1010,7 @@ LLSFRefBox::run()
   signals.async_wait(boost::bind(&LLSFRefBox::handle_signal, this,
 				 boost::asio::placeholders::error,
 				 boost::asio::placeholders::signal_number));
+#endif
 
   start_timer();
   io_service_.run();

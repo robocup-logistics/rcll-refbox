@@ -37,6 +37,7 @@
 #ifndef __LLSF_REFBOX_SHELL_ROBOT_H_
 #define __LLSF_REFBOX_SHELL_ROBOT_H_
 
+#include <cstddef>
 #include <cursesp.h>
 
 #include <string>

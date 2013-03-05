@@ -125,7 +125,11 @@ ProtobufStreamClient::handle_resolve(const boost::system::error_code& err,
   if (! err) {
     // Attempt a connection to each endpoint in the list until we
     // successfully establish a connection.
+#if BOOST_ASIO_VERSION > 100409
     boost::asio::async_connect(socket_, endpoint_iterator,
+#else
+    socket_.async_connect(*endpoint_iterator,
+#endif
 			       boost::bind(&ProtobufStreamClient::handle_connect, this,
 					   boost::asio::placeholders::error));
   } else {

@@ -97,7 +97,9 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   blink_timer_.cancel();
   attmsg_timer_.cancel();
   stdin_.cancel();
+#if BOOST_ASIO_VERSION > 100409
   stdin_.release();
+#endif
 
   delete client;
   client = 0;
@@ -1025,6 +1027,7 @@ LLSFRefBoxShell::run()
 
   client->async_connect("localhost", 4444);
 
+#if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
   boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
 
@@ -1032,6 +1035,7 @@ LLSFRefBoxShell::run()
   signals.async_wait(boost::bind(&LLSFRefBoxShell::handle_signal, this,
 				 boost::asio::placeholders::error,
 				 boost::asio::placeholders::signal_number));
+#endif
 
   start_timers();
   start_keyboard();

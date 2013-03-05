@@ -164,11 +164,15 @@ ProtobufBroadcastPeer::set_filter_self(bool filter)
 void
 ProtobufBroadcastPeer::run_asio()
 {
+#if BOOST_ASIO_VERSION > 100409
   while (! io_service_.stopped()) {
+#endif
     usleep(0);
     io_service_.reset();
     io_service_.run();
+#if BOOST_ASIO_VERSION > 100409
   }
+#endif
 }
 
 

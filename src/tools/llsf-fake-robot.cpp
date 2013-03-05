@@ -185,11 +185,13 @@ main(int argc, char **argv)
   peer_->signal_received().connect(handle_message);
   peer_->signal_error().connect(handle_error);
 
+#if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
   boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
 
   // Start an asynchronous wait for one of the signals to occur.
   signals.async_wait(signal_handler);
+#endif
 
   timer_ = new boost::asio::deadline_timer(io_service);
   timer_->expires_from_now(boost::posix_time::milliseconds(2000));

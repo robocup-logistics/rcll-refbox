@@ -46,10 +46,13 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <google/protobuf/message.h>
 
-#define _GLIBCXX_USE_SCHED_YIELD
+#ifndef _GLIBCXX_USE_SCHED_YIELD
+#  define _GLIBCXX_USE_SCHED_YIELD
+#endif
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <atomic>
 
 namespace protobuf_comm {
 #if 0 /* just to make Emacs auto-indent happy */
