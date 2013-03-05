@@ -226,11 +226,14 @@
   ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
-  (printout t 
-  "(assert (rfid-input (machine (sym-cat " (pb-field-value ?p "machine_name") "))"
-		      " (has-puck TRUE) (id " (pb-field-value ?p "puck_id") ")))" crlf)
+  (bind ?id (pb-field-value ?p "puck_id"))
+  ; retract all existing rfid-input facts for this puck, can happen if SPS
+  ; is enabled and then a network message is received
+  (delayed-do-for-all-facts ((?input rfid-input)) (= ?input:id ?id)
+    (retract ?input)
+  )
   (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
-		      (has-puck TRUE) (id (pb-field-value ?p "puck_id"))))
+		      (has-puck TRUE) (id ?id)))
 )
 
 (defrule net-recv-LoadPuckInMachine
@@ -255,8 +258,14 @@
 	       (eq ?machine:name (sym-cat (pb-field-value ?p "machine_name")))
     (bind ?puck-id (pb-field-value ?p "puck_id"))
     (if (= ?machine:puck-id ?puck-id)
-      then (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
-			       (has-puck FALSE)))
+      then
+        ; retract all existing rfid-input facts for this puck, can happen if SPS
+        ; is enabled and then a network message is received
+        (delayed-do-for-all-facts ((?input rfid-input)) (= ?input:id ?puck-id)
+          (retract ?input)
+	)
+        (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
+			    (has-puck FALSE)))
       else
       (if (member$ ?puck-id ?machine:loaded-with)
         then (modify ?machine (loaded-with (delete-member$ ?machine:loaded-with ?puck-id)))
