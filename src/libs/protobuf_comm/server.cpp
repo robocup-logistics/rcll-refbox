@@ -296,9 +296,9 @@ ProtobufStreamServer::send(ClientID client, uint16_t component_id, uint16_t msg_
  * specify component ID and message type.
  */
 void
-ProtobufStreamServer::send(ClientID client, std::shared_ptr<google::protobuf::Message> m)
+ProtobufStreamServer::send(ClientID client, google::protobuf::Message &m)
 {
-  const google::protobuf::Descriptor *desc = m->GetDescriptor();
+  const google::protobuf::Descriptor *desc = m.GetDescriptor();
   const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
   if (! enumdesc) {
     throw std::logic_error("Message does not have CompType enum");
@@ -319,7 +319,72 @@ ProtobufStreamServer::send(ClientID client, std::shared_ptr<google::protobuf::Me
     throw std::logic_error("Message has invalid MSG_TYPE");
   }
 
-  send(client, comp_id, msg_type, *m);
+  send(client, comp_id, msg_type, m);
+}
+
+/** Send a message.
+ * @param client ID of the client to addresss
+ * @param m Message to send, the message must have an CompType enum type to
+ * specify component ID and message type.
+ */
+void
+ProtobufStreamServer::send(ClientID client, std::shared_ptr<google::protobuf::Message> m)
+{
+  send(client, *m);
+}
+
+/** Send a message to all clients.
+ * @param component_id ID of the component to address
+ * @param msg_type numeric message type
+ * @param m message to send
+ */
+void
+ProtobufStreamServer::send_to_all(uint16_t component_id, uint16_t msg_type,
+				  google::protobuf::Message &m)
+{
+  std::map<ClientID, boost::shared_ptr<Session>>::iterator s;
+  for (s = sessions_.begin(); s != sessions_.end(); ++s) {
+    send(s->first, component_id, msg_type, m);
+  }
+}
+
+/** Send a message to all clients.
+ * @param component_id ID of the component to address
+ * @param msg_type numeric message type
+ * @param m message to send
+ */
+void
+ProtobufStreamServer::send_to_all(uint16_t component_id, uint16_t msg_type,
+				  std::shared_ptr<google::protobuf::Message> m)
+{
+  std::map<ClientID, boost::shared_ptr<Session>>::iterator s;
+  for (s = sessions_.begin(); s != sessions_.end(); ++s) {
+    send(s->first, component_id, msg_type, m);
+  }
+}
+
+/** Send a message to all clients.
+ * @param m message to send
+ */
+void
+ProtobufStreamServer::send_to_all(std::shared_ptr<google::protobuf::Message> m)
+{
+  std::map<ClientID, boost::shared_ptr<Session>>::iterator s;
+  for (s = sessions_.begin(); s != sessions_.end(); ++s) {
+    send(s->first, m);
+  }
+}
+
+/** Send a message to all clients.
+ * @param m message to send
+ */
+void
+ProtobufStreamServer::send_to_all(google::protobuf::Message &m)
+{
+  std::map<ClientID, boost::shared_ptr<Session>>::iterator s;
+  for (s = sessions_.begin(); s != sessions_.end(); ++s) {
+    send(s->first, m);
+  }
 }
 
 

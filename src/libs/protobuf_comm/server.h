@@ -70,7 +70,15 @@ class ProtobufStreamServer
   void send(ClientID client, uint16_t component_id, uint16_t msg_type,
 	    std::shared_ptr<google::protobuf::Message> m);
   void send(ClientID client, std::shared_ptr<google::protobuf::Message> m);
- 
+  void send(ClientID client, google::protobuf::Message &m);
+
+  void send_to_all(uint16_t component_id, uint16_t msg_type,
+		   google::protobuf::Message &m);
+  void send_to_all(uint16_t component_id, uint16_t msg_type,
+		   std::shared_ptr<google::protobuf::Message> m);
+  void send_to_all(std::shared_ptr<google::protobuf::Message> m);
+  void send_to_all(google::protobuf::Message &m);
+
   void disconnect(ClientID client);
 
   /** Get the server's message register.
