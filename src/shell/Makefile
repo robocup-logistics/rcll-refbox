@@ -35,7 +35,8 @@ ifeq ($(HAVE_NCURSES),1)
   LDFLAGS_NCURSES = $(shell $(PKGCONFIG) --libs '$(REQ_NCURSES_LIBS)') -lncurses++w
 endif
 
-LIBS_llsf_refbox_shell = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_llsf_refbox_shell = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm \
+			 llsf_msgs llsf_log_msgs
 OBJS_llsf_refbox_shell = main.o shell.o machine.o robot.o order.o puck.o menus.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)

@@ -50,6 +50,7 @@
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
 #include <msgs/OrderInfo.pb.h>
+#include <logging/llsf_log_msgs/LogMessage.pb.h>
 
 #include <cursesp.h>
 #include <cursesf.h>
@@ -718,6 +719,34 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
   }
 
+  std::shared_ptr<llsf_log_msgs::LogMessage> lm;
+  if ((lm = std::dynamic_pointer_cast<llsf_log_msgs::LogMessage>(msg))) {
+    short default_fore, default_back;
+    pair_content(0, &default_fore, &default_back);
+    init_pair(205, COLOR_RED, default_back);
+    init_pair(206, COLOR_YELLOW, default_back);
+    init_pair(207, COLOR_BLACK, default_back);
+    init_pair(208, COLOR_WHITE, default_back);
+
+    rb_log_->standend();
+    if (lm->log_level() == llsf_log_msgs::LogMessage::LL_DEBUG) {
+      rb_log_->attron(' '|COLOR_PAIR(208));
+    } else if (lm->log_level() == llsf_log_msgs::LogMessage::LL_INFO) {
+      rb_log_->attron(' '|COLOR_PAIR(207));
+    } else if (lm->log_level() == llsf_log_msgs::LogMessage::LL_WARN) {
+      rb_log_->attron(' '|COLOR_PAIR(206));
+    } else if (lm->log_level() == llsf_log_msgs::LogMessage::LL_ERROR) {
+      rb_log_->attron(' '|COLOR_PAIR(205));
+    }
+    struct ::tm now_s;
+    time_t t = lm->ts_sec();
+    localtime_r(&t, &now_s);
+    rb_log_->printw("%02d:%02d:%02d.%03ld [%s]: %s\n", now_s.tm_hour,
+		    now_s.tm_min, now_s.tm_sec, lm->ts_nsec() / 1000000,
+		    lm->component().c_str(), lm->message().c_str());
+    rb_log_->standend();
+  }
+
   io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 }
 
@@ -944,6 +973,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::AttentionMessage>();
   message_register.add_message_type<llsf_msgs::OrderInfo>();
   message_register.add_message_type<llsf_msgs::PuckInfo>();
+  message_register.add_message_type<llsf_log_msgs::LogMessage>();
 
   client->signal_connected().connect(
     boost::bind(&LLSFRefBoxShell::dispatch_client_connected, this));
