@@ -39,7 +39,7 @@ LIBS_llsf_refbox_shell = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm \
 			 llsf_msgs llsf_log_msgs
 OBJS_llsf_refbox_shell = main.o shell.o machine.o robot.o order.o puck.o menus.o
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
+ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS)$(HAVE_NCURSES),111)
   OBJS_all =	$(OBJS_llsf_refbox_shell)
   BINS_all =	$(BINDIR)/llsf-refbox-shell
 
@@ -55,14 +55,18 @@ else
   ifneq ($(HAVE_BOOST_LIBS),1)
     WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
   endif
+  ifneq ($(HAVE_NCURSES),1)
+    WARN_TARGETS += warning_ncurses
+  endif
 endif
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
-.PHONY: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
+.PHONY: $(WARN_TARGETS) $(WARN_TARGETS_BOOST) warning_ncurses
 $(WARN_TARGETS_BOOST): warning_boost_%:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_comm library$(TNORMAL) (Boost library $* not found)"
-
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox shell$(TNORMAL) (Boost library $* not found)"
+warning_ncurses:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox shell$(TNORMAL) (ncurses++ not found)"
 endif
 
 include $(BUILDSYSDIR)/base.mk
