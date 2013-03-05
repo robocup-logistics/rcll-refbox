@@ -36,3 +36,5 @@
 *.pb.h
 *.pb.cpp
 
+# Log files
+*.log
