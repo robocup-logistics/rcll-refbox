@@ -36,11 +36,14 @@
 
 #include "refbox.h"
 
+#include <clipsmm.h>
+
 using namespace llsfrb;
 
 int
 main(int argc, char **argv)
 {
+  CLIPS::init();
   LLSFRefBox llsfrb(argc, argv);
   return llsfrb.run();
 }
