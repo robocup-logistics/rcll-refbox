@@ -23,6 +23,10 @@
   ?*PEER-TIME-DIFFERENCE-WARNING* = 3.0
   ; number of burst updates before falling back to slower updates
   ?*BC-ORDERINFO-BURST-COUNT* = 10
+  ; How often and in what period should the version information
+  ; be send over the network when a new peer is detected?
+  ?*BC-VERSIONINFO-PERIOD* = 0.5
+  ?*BC-VERSIONINFO-COUNT* = 10
   ; Machine processing times; seconds
   ?*RECYCLE-PROC-TIME* = 2
   ?*DELIVER-PROC-TIME* = 1

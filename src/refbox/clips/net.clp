@@ -7,6 +7,15 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deffunction net-create-VersionInfo ()
+  (bind ?vi (pb-create "llsf_msgs.VersionInfo"))
+  (pb-set-field ?vi "version_major" ?*VERSION-MAJOR*)
+  (pb-set-field ?vi "version_minor" ?*VERSION-MINOR*)
+  (pb-set-field ?vi "version_micro" ?*VERSION-MICRO*)
+  (pb-set-field ?vi "version_string"
+		(str-cat ?*VERSION-MAJOR* "." ?*VERSION-MINOR* "." ?*VERSION-MICRO*))
+  (return ?vi)
+)
 
 (defrule net-client-connected
   ?cf <- (protobuf-client-connected ?client-id ?host ?port)
@@ -18,6 +27,11 @@
     (member$ ?signal:type (create$ gamestate robot-info machine-info puck-info order-info))
     (modify ?signal (time 0 0))
   )
+
+  ; Send version information right away
+  (bind ?vi (net-create-VersionInfo))
+  (pb-send ?client-id ?vi)
+  (pb-destroy ?vi)
 )
 
 (defrule net-client-disconnected
@@ -62,8 +76,10 @@
   (time $?now)
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  ?sf <- (signal (type version-info))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
+  (modify ?sf (count 0) (time 0 0))
   (printout debug "Received initial beacon from " ?from-host ":" ?from-port crlf)
   (bind ?team (pb-field-value ?p "team_name"))
   (bind ?name (pb-field-value ?p "peer_name"))
@@ -362,4 +378,17 @@
     (pb-send ?client:id ?oi))
   (pb-broadcast ?oi)
   (pb-destroy ?oi)
+)
+
+
+(defrule net-send-VersionInfo
+  (time $?now)
+  ?sf <- (signal (type version-info) (seq ?seq)
+		 (count ?count&:(< ?count ?*BC-VERSIONINFO-COUNT*))
+		 (time $?t&:(timeout ?now ?t ?*BC-VERSIONINFO-PERIOD*)))
+  =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+  (bind ?vi (net-create-VersionInfo))
+  (pb-broadcast ?vi)
+  (pb-destroy ?vi)
 )
