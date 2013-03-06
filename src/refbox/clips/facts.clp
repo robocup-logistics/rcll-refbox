@@ -33,9 +33,14 @@
   (slot proc-time-min (type INTEGER))
   (slot proc-time-max (type INTEGER))
   (slot proc-time (type INTEGER))
-  (multislot light-code (type SYMBOL) (default)
-	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK))
+  (slot light-code (type INTEGER) (default 1))
   (slot points (type INTEGER) (default 0))
+)
+
+(deftemplate machine-light-code
+  (slot id (type INTEGER))
+  (multislot code (type SYMBOL) (default)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK))
 )
 
 (deftemplate puck
@@ -162,21 +167,34 @@
   (puck (index 20) (id 20))
 )
 
+(deffacts light-codes
+  (machine-light-code (id 1) (code GREEN-ON))
+  (machine-light-code (id 2) (code YELLOW-ON))
+  (machine-light-code (id 3) (code GREEN-ON YELLOW-ON))
+  (machine-light-code (id 4) (code RED-ON))
+  (machine-light-code (id 5) (code RED-ON GREEN-ON))
+  (machine-light-code (id 6) (code RED-ON YELLOW-ON))
+  (machine-light-code (id 7) (code RED-ON YELLOW-ON GREEN-ON))
+  (machine-light-code (id 8) (code GREEN-BLINK))
+  (machine-light-code (id 9) (code YELLOW-BLINK))
+  (machine-light-code (id 10) (code RED-BLINK))
+)
+
 (deffacts machine-specs
   (machine-spec (mtype T1) (inputs S0) (output P1)
-		(light-code GREEN-ON) (points 5)
+		(light-code 1) (points 0)
 		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 3 8
   (machine-spec (mtype T2) (inputs S0 S1) (output S2)
-		(light-code YELLOW-ON) (points 4)
+		(light-code 2) (points 4)
 		(proc-time-min 4) (proc-time-max 4)) ; 15 25
   (machine-spec (mtype T3) (inputs S0 S1 S2) (output P1)
-		(light-code RED-ON) (points 12)
+		(light-code 4) (points 12)
 		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
   (machine-spec (mtype T4) (inputs S0 S1 S2) (output P2)
-		(light-code GREEN-ON RED-ON) (points 12)
+		(light-code 5) (points 12)
 		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
   (machine-spec (mtype T5) (inputs S0) (output P3)
-		(light-code RED-BLINK) (points 0)
+		(light-code 10) (points 0)
 		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 20 40
 )
 

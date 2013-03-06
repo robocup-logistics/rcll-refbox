@@ -14,16 +14,38 @@
   =>
   ; Set prev phase to avoid re-firing, reset game time
   (modify ?gf (prev-phase EXPLORATION) (game-time 0.0))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (bind ?dl (create$))
-    (do-for-fact ((?spec machine-spec)) (eq ?machine:mtype ?spec:mtype)
-      (bind ?dl ?spec:light-code)
-    )
-    (modify ?machine (desired-lights ?dl))
-  )
+
   ; Retract all existing reports for the new exploration phase
   (delayed-do-for-all-facts ((?report exploration-report)) TRUE
     (retract ?report)
+  )
+
+  ; Gather all available light codes
+  (bind ?light-codes (create$))
+  (do-for-all-facts ((?lc machine-light-code)) TRUE
+    (bind ?light-codes (create$ ?light-codes ?lc:id))
+  )
+  ; Randomize light codes
+  (bind ?light-codes (randomize$ ?light-codes))
+  ; Assign random light codes
+  (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
+    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id (nth$ 1 ?light-codes))
+      (printout t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
+    )
+    (modify ?mspec (light-code (nth$ 1 ?light-codes)))
+    (bind ?light-codes (delete$ ?light-codes 1 1))
+  )
+
+  ; Set lights
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
+    (bind ?dl (create$))
+    (do-for-fact ((?spec machine-spec) (?lc machine-light-code))
+		 (and (eq ?machine:mtype ?spec:mtype) (= ?spec:light-code ?lc:id))
+      (bind ?dl ?lc:code)
+      ;(printout t "Assigning " ?lc:code " to machine " ?machine:name
+      ;		   " of type " ?machine:mtype crlf)
+    )
+    (modify ?machine (desired-lights ?dl))
   )
 
   (assert (attention-message "Entering Exploration Phase" 5))
