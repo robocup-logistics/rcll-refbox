@@ -124,7 +124,7 @@ void
 handle_timer(const boost::system::error_code& error)
 {
   if (! error) {
-    boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
     std::shared_ptr<BeaconSignal> signal(new BeaconSignal());
     Time *time = signal->mutable_time();
     boost::posix_time::time_duration const since_epoch =
