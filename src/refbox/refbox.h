@@ -68,11 +68,11 @@ class LLSFRefBox
 
   int run();
 
+  void handle_signal(const boost::system::error_code& error, int signum);
 
  private: // methods
   void start_timer();
   void handle_timer(const boost::system::error_code& error);
-  void handle_signal(const boost::system::error_code& error, int signum);
   void handle_client_connected(protobuf_comm::ProtobufStreamServer::ClientID client,
 			       boost::asio::ip::tcp::endpoint &endpoint);
   void handle_client_disconnected(protobuf_comm::ProtobufStreamServer::ClientID client,

@@ -56,6 +56,9 @@
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
+#if BOOST_ASIO_VERSION < 100601
+#  include <csignal>
+#endif
 
 using namespace llsf_sps;
 using namespace protobuf_comm;
@@ -63,6 +66,17 @@ using namespace google::protobuf;
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
+}
+#endif
+
+#if BOOST_ASIO_VERSION < 100601
+LLSFRefBox *g_refbox = NULL;
+static void handle_signal(int signum)
+{
+  if (g_refbox) {
+    g_refbox->handle_signal(boost::system::errc::make_error_code(boost::system::errc::success),
+			    signum);
+  }
 }
 #endif
 
@@ -926,6 +940,7 @@ void
 LLSFRefBox::handle_signal(const boost::system::error_code& error, int signum)
 {
   timer_.cancel();
+  io_service_.stop();
 }
 
 
@@ -1010,6 +1025,9 @@ LLSFRefBox::run()
   signals.async_wait(boost::bind(&LLSFRefBox::handle_signal, this,
 				 boost::asio::placeholders::error,
 				 boost::asio::placeholders::signal_number));
+#else
+  g_refbox = this;
+  signal(SIGINT, llsfrb::handle_signal);
 #endif
 
   start_timer();
