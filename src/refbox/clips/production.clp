@@ -18,14 +18,56 @@
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
   =>
   (modify ?gs (prev-phase PRODUCTION) (game-time 0.0))
+
+  ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (switch ?machine:state
-      (case PROCESSING then (modify ?machine (desired-lights GREEN-ON YELLOW-ON)))
-      (case WAITING    then (modify ?machine (desired-lights YELLOW-ON)))
-      (case INVALID    then (modify ?machine (desired-lights YELLOW-BLINK)))
-      (case DOWN       then (modify ?machine (desired-lights RED-ON)))
-      (default (modify ?machine (desired-lights GREEN-ON)))
+    (modify ?machine (loaded-with) (junk 0) (productions 0) (state IDLE)
+	             (proc-start 0 0) (puck-id 0) (desired-lights GREEN-ON))
+    ; could be used to restore if phase changes were allowed			    
+    ;(switch ?machine:state
+    ;  (case PROCESSING then (modify ?machine (desired-lights GREEN-ON YELLOW-ON)))
+    ;  (case WAITING    then (modify ?machine (desired-lights YELLOW-ON)))
+    ;  (case INVALID    then (modify ?machine (desired-lights YELLOW-BLINK)))
+    ;  (case DOWN       then (modify ?machine (desired-lights RED-ON)))
+    ;  (default (modify ?machine (desired-lights GREEN-ON)))
+    ;)
+  )
+
+  ; assign random machine types out of the start distribution
+  (bind ?machine-assignment (randomize$ ?*MACHINE-DISTRIBUTION*))
+  (printout t "Initial machine distribution:    " ?*MACHINE-DISTRIBUTION* crlf)
+  (printout t "Randomized machine distribution: " ?machine-assignment crlf)
+  (delayed-do-for-all-facts ((?machine machine))
+    (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
+    (if (= (length$ ?machine-assignment) 0)
+     then (printout logerror "No machine assignment available for " ?machine:name crlf)
+     else
+       (bind ?mtype (nth$ 1 ?machine-assignment))
+       (bind ?machine-assignment (delete$ ?machine-assignment 1 1))
+       (printout t "Assigning type " ?mtype " to machine " ?machine:name crlf)
+       (modify ?machine (mtype ?mtype))
     )
+  )
+
+  ;(printout t "Assigning processing times to machines" crlf)
+  (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
+    (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))
+    (printout t "Proc time for " ?mspec:mtype " will be " ?proc-time " sec" crlf)
+    (modify ?mspec (proc-time ?proc-time))
+  )
+  ; reset late orders, assign random times
+  (delayed-do-for-all-facts ((?order order)) (eq ?order:late-order TRUE)
+    (bind ?deliver-start
+      (random (nth$ 1 ?order:late-order-start-period) (nth$ 2 ?order:late-order-start-period)))
+    (bind ?deliver-end (+ ?deliver-start 120))
+    (bind ?activate-at (max (- ?deliver-start 5) 0))
+    (printout t "Late order " ?order:id ": from " ?deliver-start " to " ?deliver-end crlf)
+    (modify ?order (active FALSE) (activate-at ?activate-at)
+	    (delivery-period ?deliver-start ?deliver-end))
+  )
+  ; assign random quantities to non-late orders
+  (delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
+    (modify ?order (quantity-requested (random 3 10)))
   )
 
   (assert (attention-message "Entering Production Phase" 5))

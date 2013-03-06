@@ -30,4 +30,6 @@
   ; Game phase time; seconds
   ?*EXPLORATION-TIME* = 180
   ?*PRODUCTION-TIME* = 900
+  ; Machine distribution
+  ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T4 T5)
 )
