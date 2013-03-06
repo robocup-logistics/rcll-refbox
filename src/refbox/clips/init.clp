@@ -69,3 +69,5 @@
 )
 
 (reset)
+
+(seed (integer (time)))
