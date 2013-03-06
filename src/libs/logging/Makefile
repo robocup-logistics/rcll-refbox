@@ -47,6 +47,8 @@ else
   endif
 endif
 
+network.o: | $(PRESUBDIRS)
+
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
