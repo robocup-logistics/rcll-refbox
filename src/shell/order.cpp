@@ -41,6 +41,8 @@
 
 #include <cursesp.h>
 
+#include "colors.h"
+
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
@@ -104,7 +106,7 @@ LLSFRefBoxShellOrder::refresh()
 {
   standend();
   erase();
-  bkgd(' '|COLOR_PAIR(0));
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
 
   if (id_ != 0) {
     unsigned int begin_min = delivery_period_begin_ / 60;

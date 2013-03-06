@@ -1,8 +1,8 @@
 
 /***************************************************************************
- *  puck.cpp - LLSF RefBox shell - puck
+ *  colors.cpp - LLSF RefBox shell
  *
- *  Created: Fri Mar 01 15:54:22 2013
+ *  Created: Wed Mar 06 14:25:31 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
@@ -34,84 +34,32 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "puck.h"
-
-#include <cstring>
-#include <unistd.h>
-
-#include <cursesp.h>
-
 #include "colors.h"
+#include <curses.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-LLSFRefBoxShellPuck::LLSFRefBoxShellPuck(int begin_y, int begin_x)
-  : NCursesPanel(1, 10, begin_y, begin_x),
-    id_(0), state_(llsf_msgs::S0), at_machine_(false)
-{
-}
-
-
-LLSFRefBoxShellPuck::~LLSFRefBoxShellPuck()
-{
-}
-
-
 void
-LLSFRefBoxShellPuck::update(unsigned int id, llsf_msgs::PuckState state, bool at_machine)
+init_colors()
 {
-  id_ = id;
-  state_ = state;
-  at_machine_ = at_machine;
+  //short default_fore, default_back;
+  //pair_content(0, &default_fore, &default_back);
+  chtype default_back = getbkgd(stdscr);
+
+  init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
+  init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW, default_back);
+  init_pair(COLOR_BLACK_ON_BACK, COLOR_BLACK, default_back);
+  init_pair(COLOR_WHITE_ON_BACK, COLOR_WHITE, default_back);
+  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
+  init_pair(COLOR_GREEN_ON_BACK, COLOR_GREEN, default_back);
+  init_pair(COLOR_BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
+  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
+  init_pair(COLOR_WHITE_ON_YELLOW, COLOR_WHITE, COLOR_YELLOW);
+  init_pair(COLOR_WHITE_ON_GREEN, COLOR_WHITE, COLOR_GREEN);
+
 }
-
-
-void
-LLSFRefBoxShellPuck::reset()
-{
-  id_ = 0;
-  state_ = llsf_msgs::S0;
-  at_machine_ = false;
-  refresh();
-}
-
-int
-LLSFRefBoxShellPuck::refresh()
-{
-  standend();
-  erase();
-  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
-
-  if (id_ != 0) {
-    attron(A_BOLD);
-    printw("%6u", id_);
-    attroff(A_BOLD);
-  }
-  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-  if (state_ != llsf_msgs::S0) {
-    attron(A_BOLD);
-  }
-  if (state_ == llsf_msgs::CONSUMED) {
-    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-  } else if (state_ == llsf_msgs::S1) {
-    attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN));
-  } else if (state_ == llsf_msgs::S2) {
-    attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
-  } else if (state_ == llsf_msgs::P1 || state_ == llsf_msgs::P2 || state_ == llsf_msgs::P3) {
-    attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
-  }
-
-  printw(0, 7, "%2s", (id_ == 0) ? "" : llsf_msgs::PuckState_Name(state_).substr(0,2).c_str());
-  standend();
-  if (at_machine_) {
-    addch(0, 9, '*');
-  }
-
-  return NCursesPanel::refresh();
-}
-
 
 } // end of namespace llsfrb_shell

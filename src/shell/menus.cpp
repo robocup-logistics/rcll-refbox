@@ -35,6 +35,7 @@
  */
 
 #include "menus.h"
+#include "colors.h"
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -55,7 +56,7 @@ Menu::Menu(NCursesWindow *parent, int n_items, NCursesMenuItem **items)
 void
 Menu::On_Menu_Init()
 {
-  bkgd(' '|COLOR_PAIR(0));
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
   refresh();
 }
@@ -107,6 +108,7 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
   mitems[ni+1] = new NCursesMenuItem();
 
   set_mark("");
+  set_format(ni+1, 1);
   InitMenu(mitems, true, true);
   frame("Puck");
 }
@@ -129,7 +131,7 @@ MachineWithPuckMenu::get_machine_puck(std::string &machine_name, unsigned int &p
 void
 MachineWithPuckMenu::On_Menu_Init()
 {
-  bkgd(' '|COLOR_PAIR(0));
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
   refresh();
 }
@@ -202,7 +204,7 @@ MachineThatCanTakePuckMenu::machine()
 void
 MachineThatCanTakePuckMenu::On_Menu_Init()
 {
-  bkgd(' '|COLOR_PAIR(0));
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
   refresh();
 }
@@ -280,7 +282,7 @@ PuckForMachineMenu::puck()
 void
 PuckForMachineMenu::On_Menu_Init()
 {
-  bkgd(' '|COLOR_PAIR(0));
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
   refresh();
 }
@@ -398,7 +400,7 @@ MachinePlacingMenu::place_under_rfid()
 void
 MachinePlacingMenu::On_Menu_Init()
 {
-  bkgd(' '|COLOR_PAIR(0));
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
   refresh();
 }

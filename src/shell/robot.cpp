@@ -37,6 +37,7 @@
 #define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 #include "robot.h"
+#include "colors.h"
 
 #include <cursesp.h>
 
@@ -78,9 +79,6 @@ LLSFRefBoxShellRobot::refresh()
 {
   standend();
   if (name_ != "") {
-    
-    init_pair(2, COLOR_WHITE, COLOR_RED);
-    init_pair(3, COLOR_BLACK, COLOR_YELLOW);
 
     boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
     boost::posix_time::time_duration td = now - last_seen_;
@@ -89,15 +87,15 @@ LLSFRefBoxShellRobot::refresh()
     clear();
     
     if (td_seconds > 15) {
-      bkgd(' '|COLOR_PAIR(0));
+      bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
       name_ = "";
       team_ = "";
     } else if (td_seconds > 10) {
-      bkgd(' '|COLOR_PAIR(2));
+      bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
     } else if (td_seconds > 5) {
-      bkgd(' '|COLOR_PAIR(3));
+      bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
     } else {
-      bkgd(' '|COLOR_PAIR(0));
+      bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
     }
   }
 

@@ -42,6 +42,7 @@
 #include "order.h"
 #include "puck.h"
 #include "menus.h"
+#include "colors.h"
 
 #include <protobuf_comm/client.h>
 
@@ -79,9 +80,9 @@ namespace llsfrb_shell {
 LLSFRefBoxShell::LLSFRefBoxShell()
   : quit_(false), error_(NULL), panel_(NULL), timer_(io_service_),
     reconnect_timer_(io_service_), try_reconnect_(true), blink_timer_(io_service_),
-    attmsg_timer_(io_service_), attmsg_toggle_(true),
-    stdin_(io_service_, dup(STDIN_FILENO))
+    attmsg_timer_(io_service_), attmsg_toggle_(true)
 {
+  stdin_ = new boost::asio::posix::stream_descriptor(io_service_, dup(STDIN_FILENO));
   client = new ProtobufStreamClient();
 }
 
@@ -96,10 +97,14 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   reconnect_timer_.cancel();
   blink_timer_.cancel();
   attmsg_timer_.cancel();
-  stdin_.cancel();
+  stdin_->cancel();
 #if BOOST_ASIO_VERSION > 100409
-  stdin_.release();
+  stdin_->release();
 #endif
+  try {
+    delete stdin_;
+    stdin_ = nullptr;
+  } catch (std::exception &e) {} // ignored
 
   delete client;
   client = 0;
@@ -214,9 +219,9 @@ LLSFRefBoxShell::handle_blink_timer(const boost::system::error_code& error)
 void
 LLSFRefBoxShell::start_keyboard()
 {
-  stdin_.async_read_some(boost::asio::null_buffers(),
-			 boost::bind(&LLSFRefBoxShell::handle_keyboard, this,
-				     boost::asio::placeholders::error));
+  stdin_->async_read_some(boost::asio::null_buffers(),
+			  boost::bind(&LLSFRefBoxShell::handle_keyboard, this,
+				      boost::asio::placeholders::error));
 }
 
 
@@ -356,18 +361,15 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
 
     if (attmsg_string_ != "") {
       p_attmsg_->erase();
+      p_attmsg_->standend();
       attmsg_toggle_ = ! attmsg_toggle_;
-      short default_fore, default_back;
-      pair_content(0, &default_fore, &default_back);
-      init_pair(200, COLOR_RED, default_back);
-      init_pair(201, COLOR_WHITE, COLOR_RED);
 
       if (attmsg_toggle_) {
-	p_attmsg_->bkgd(' '|COLOR_PAIR(200));
-	p_attmsg_->attron(' '|COLOR_PAIR(200)|A_BOLD);
+	p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
+	p_attmsg_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
       } else {
-	p_attmsg_->bkgd(' '|COLOR_PAIR(201));
-	p_attmsg_->attron(' '|COLOR_PAIR(201)|A_BOLD);
+	p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
+	p_attmsg_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
       }
       if ((int)attmsg_string_.length() >= p_attmsg_->width()) {
 	p_attmsg_->addstr(attmsg_string_.c_str());
@@ -375,6 +377,7 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
 	p_attmsg_->addstr(0, (p_attmsg_->width() - attmsg_string_.length()) / 2,
 			  attmsg_string_.c_str());
       }
+      p_attmsg_->standend();
 
       attmsg_timer_.expires_at(attmsg_timer_.expires_at()
 			       + boost::posix_time::milliseconds(ATTMSG_TIMER_INTERVAL));
@@ -584,20 +587,16 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       p_points_->printw("%u", g->points());
     }
 
-    short default_fore, default_back;
-    pair_content(0, &default_fore, &default_back);
-    init_pair(200, COLOR_RED, default_back);
-    init_pair(202, COLOR_GREEN, default_back);
     navbar_->standend();
 
     if (g->state() == llsf_msgs::GameState::WAIT_START) {
-      navbar_->attron(' '|COLOR_PAIR(202)|A_BOLD);
+      navbar_->attron(' '|COLOR_PAIR(COLOR_GREEN_ON_BACK)|A_BOLD);
       navbar_->addstr(0, navbar_->cols() - 5, "STRT");
     } else if (g->state() == llsf_msgs::GameState::PAUSED) {
-      navbar_->attron(' '|COLOR_PAIR(202)|A_BOLD);
+      navbar_->attron(' '|COLOR_PAIR(COLOR_GREEN_ON_BACK)|A_BOLD);
       navbar_->addstr(0, navbar_->cols() - 5, "CONT");
     } else {
-      navbar_->attron(' '|COLOR_PAIR(200)|A_BOLD);
+      navbar_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
       navbar_->addstr(0, navbar_->cols() - 5, "STOP");
     }
   }
@@ -659,15 +658,17 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
   std::shared_ptr<llsf_msgs::AttentionMessage> am;
   if ((am = std::dynamic_pointer_cast<llsf_msgs::AttentionMessage>(msg))) {
     std::lock_guard<std::mutex> lock(attmsg_mutex_);
+
+    if (attmsg_string_ != "") {
+      attmsg_timer_.cancel();
+    }
     attmsg_string_ = am->message();
     attmsg_has_endtime_ = am->has_time_to_show();
     if (attmsg_has_endtime_) {
       boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
       attmsg_endtime_ = now + boost::posix_time::seconds(am->time_to_show());
     }
-    if (attmsg_string_ == "") {
-      attmsg_timer_.cancel();
-    } else {
+    if (attmsg_string_ != "") {
       attmsg_toggle_ = true;
       attmsg_timer_.expires_from_now(boost::posix_time::milliseconds(0));
       attmsg_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_attmsg_timer, this,
@@ -732,22 +733,16 @@ LLSFRefBoxShell::log(llsf_log_msgs::LogMessage::LogLevel log_level,
 		     long int ts_sec, long int ts_nsec,
 		     const std::string &component, const std::string &message)
 {
-  short default_fore, default_back;
-  pair_content(0, &default_fore, &default_back);
-  init_pair(205, COLOR_RED, default_back);
-  init_pair(206, COLOR_YELLOW, default_back);
-  init_pair(207, COLOR_BLACK, default_back);
-  init_pair(208, COLOR_WHITE, default_back);
-
   rb_log_->standend();
+  rb_log_->attron(' '|COLOR_PAIR(COLOR_DEFAULT));
   if (log_level == llsf_log_msgs::LogMessage::LL_DEBUG) {
-    rb_log_->attron(' '|COLOR_PAIR(208));
+    rb_log_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BACK));
   } else if (log_level == llsf_log_msgs::LogMessage::LL_INFO) {
-    rb_log_->attron(' '|COLOR_PAIR(207));
+    rb_log_->attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
   } else if (log_level == llsf_log_msgs::LogMessage::LL_WARN) {
-    rb_log_->attron(' '|COLOR_PAIR(206));
+    rb_log_->attron(' '|COLOR_PAIR(COLOR_YELLOW_ON_BACK));
   } else if (log_level == llsf_log_msgs::LogMessage::LL_ERROR) {
-    rb_log_->attron(' '|COLOR_PAIR(205));
+    rb_log_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
   }
   struct ::tm now_s;
   if (ts_sec == 0) {
@@ -795,9 +790,8 @@ LLSFRefBoxShell::logf(const char *format, ...)
 int
 LLSFRefBoxShell::run()
 {
-  NCursesWindow rootw(::stdscr);
-  panel_ = new NCursesPanel(rootw.lines() - 1, rootw.cols());
-  navbar_ = new NCursesPanel(1, rootw.cols(), rootw.lines() - 1, 0);
+  panel_ = new NCursesPanel(LINES - 1, COLS);
+  navbar_ = new NCursesPanel(1, COLS, LINES - 1, 0);
 
   if (panel_->lines() < 30) {
     delete panel_;
@@ -808,6 +802,7 @@ LLSFRefBoxShell::run()
 
   curs_set(0); // invisible cursor
   use_default_colors();
+  init_colors();
 
   int height = panel_->maxy();
 
@@ -883,14 +878,10 @@ LLSFRefBoxShell::run()
   navbar_->attron(A_BOLD);
   navbar_->addstr(0, 37, "REM PUCK");
 
-  short default_fore, default_back;
-  pair_content(0, &default_fore, &default_back);
-  init_pair(200, COLOR_RED, default_back);
-  init_pair(201, COLOR_WHITE, COLOR_RED);
-  navbar_->attron(' '|COLOR_PAIR(201)|A_BOLD);
+  navbar_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   navbar_->addstr(0, navbar_->cols() - 9, "SPC");
   navbar_->standend();
-  navbar_->attron(' '|COLOR_PAIR(200)|A_BOLD);
+  navbar_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
   navbar_->addstr(0, navbar_->cols() - 5, "STOP");
   navbar_->refresh();
 

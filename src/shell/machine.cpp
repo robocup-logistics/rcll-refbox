@@ -35,6 +35,7 @@
  */
 
 #include "machine.h"
+#include "colors.h"
 
 #include <cstring>
 #include <unistd.h>
@@ -143,7 +144,7 @@ LLSFRefBoxShellMachine::refresh()
 {
   standend();
   erase();
-  bkgd(' '|COLOR_PAIR(0));
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
 
   if (type_ == "") {
     addstr(0, 0, boost::str(boost::format("%-7s") % name_).c_str());
@@ -151,50 +152,44 @@ LLSFRefBoxShellMachine::refresh()
     addstr(0, 0, boost::str(boost::format("%-3s|%-3s") % name_ % type_.substr(0,2)).c_str());
   }
 
-  // the same as in puck.cpp
-  init_pair(1, COLOR_BLACK, COLOR_WHITE);
-  init_pair(2, COLOR_WHITE, COLOR_RED);
-  init_pair(3, COLOR_WHITE, COLOR_YELLOW);
-  init_pair(4, COLOR_WHITE, COLOR_GREEN);
-
   if (lights_.find(llsf_msgs::GREEN) != lights_.end() &&
       (lights_[llsf_msgs::GREEN] == llsf_msgs::ON ||
        (lights_[llsf_msgs::GREEN] == llsf_msgs::BLINK && blink_state_[llsf_msgs::GREEN])))
   {
-    attron(' '|COLOR_PAIR(4));
+    attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN));
   } else {
-    attron(' '|COLOR_PAIR(1));
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
   addstr( 0, 7, " ");
   if (lights_.find(llsf_msgs::YELLOW) != lights_.end() &&
       (lights_[llsf_msgs::YELLOW] == llsf_msgs::ON ||
        (lights_[llsf_msgs::YELLOW] == llsf_msgs::BLINK && blink_state_[llsf_msgs::YELLOW])))
   {
-    attron(' '|COLOR_PAIR(3));
+    attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
   } else {
-    attron(' '|COLOR_PAIR(1));
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
   addstr( 0, 8, " ");
   if (lights_.find(llsf_msgs::RED) != lights_.end() &&
       (lights_[llsf_msgs::RED] == llsf_msgs::ON ||
        (lights_[llsf_msgs::RED] == llsf_msgs::BLINK && blink_state_[llsf_msgs::RED])))
   {
-    attron(' '|COLOR_PAIR(2));
+    attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
   } else {
-    attron(' '|COLOR_PAIR(1));
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
   addstr( 0, 9, " ");
 
   if (puck_under_rfid_) {
-    attron(' '|COLOR_PAIR(1)|A_BOLD);
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)|A_BOLD);
     addstr(0, 11, llsf_msgs::PuckState_Name(puck_under_rfid_state_).substr(0,2).c_str());
     attroff(A_BOLD);
   } else if (has_correctly_reported_field_) {
-    attron(' '|COLOR_PAIR(correctly_reported_ ? 4 : 2)|A_BOLD);
+    attron(' '|COLOR_PAIR(correctly_reported_ ? COLOR_WHITE_ON_GREEN : COLOR_WHITE_ON_RED)|A_BOLD);
     addstr(0, 11, correctly_reported_ ? "++" : "--");
     attroff(A_BOLD);
   } else {
-    attron(' '|COLOR_PAIR(1));
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
     addstr(0, 11, "  ");
   }
 
@@ -204,9 +199,9 @@ LLSFRefBoxShellMachine::refresh()
       (std::find(loaded_with_.begin(), loaded_with_.end(), inputs_[i]) != loaded_with_.end());
 
     if (puck_loaded) {
-      attron(' '|COLOR_PAIR(2)|A_BOLD);
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
     } else {
-      attron(' '|COLOR_PAIR(1));
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
     }
 
     addstr( 0, puck_x, llsf_msgs::PuckState_Name(inputs_[i]).substr(0,2).c_str());

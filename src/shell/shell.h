@@ -156,7 +156,7 @@ class LLSFRefBoxShell
   bool                         attmsg_has_endtime_;
   boost::posix_time::ptime     attmsg_endtime_;
 
-  boost::asio::posix::stream_descriptor stdin_;
+  boost::asio::posix::stream_descriptor *stdin_;
 
   protobuf_comm::ProtobufStreamClient *client;
 
