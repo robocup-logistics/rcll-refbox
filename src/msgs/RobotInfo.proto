@@ -46,7 +46,8 @@ message Robot {
 
   required string name = 1;
   required string team = 2; 
-  required Time   last_seen = 3;
+  required string host = 3;
+  required Time   last_seen = 4;
 
   optional Pose2D pose = 6;
 }
