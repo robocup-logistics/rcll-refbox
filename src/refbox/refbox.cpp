@@ -53,6 +53,7 @@
 #include <msgs/OrderInfo.pb.h>
 #include <msgs/PuckInfo.pb.h>
 #include <msgs/MachineReport.pb.h>
+#include <msgs/VersionInfo.pb.h>
 
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
@@ -224,6 +225,7 @@ LLSFRefBox::setup_protobuf_comm()
   MessageRegister &mr_server = pbc_server_->message_register();
   mr_server.add_message_type<llsf_msgs::BeaconSignal>();
   mr_server.add_message_type<llsf_msgs::AttentionMessage>();
+  mr_server.add_message_type<llsf_msgs::VersionInfo>();
   mr_server.add_message_type<llsf_msgs::GameState>();
   mr_server.add_message_type<llsf_msgs::SetGameState>();
   mr_server.add_message_type<llsf_msgs::SetGamePhase>();
