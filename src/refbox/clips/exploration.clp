@@ -69,12 +69,14 @@
         then
           (if (eq ?machine:mtype ?type)
           then ; correct report
-	    (printout t "Correct report: " ?name " of type " ?type crlf) 
+	    (printout t "Correct report: " ?name " of type " ?type ". "
+		      "Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
 	    (modify ?gf (points (+ ?points ?*EXPLORATION-CORRECT-REPORT-POINTS*)))
 	    (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
 					(host ?from-host) (port ?from-port)))
           else ; wrong report
-	    (printout t "Wrong report: " ?name " of type " ?type crlf) 
+	    (printout t "Wrong report: " ?name " of type " ?type ". "
+		      "Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
 	    (modify ?gf (points (max (+ ?points ?*EXPLORATION-WRONG-REPORT-POINTS*) 0)))
 	    (assert (exploration-report (name ?name) (type WRONG) (game-time ?game-time)
 					(host ?from-host) (port ?from-port)))

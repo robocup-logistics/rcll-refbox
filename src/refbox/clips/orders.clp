@@ -63,13 +63,9 @@
 	   (quantity-requested ?q-req-2&:(>= ?q-del-2 ?q-req-2 )&:(>= ?q-del ?q-req)))
   ))
   =>
-  (printout t "Product " ?p " delivered at " ?dg crlf)
   (retract ?pf)
   (modify ?of (quantity-delivered (+ ?q-del 1)))
-  (if (< ?q-del ?q-req)
-  then
-    (modify ?gf (points (+ ?points ?order-points)))
-  else
-    (modify ?gf (points (+ ?points ?order-points-supernumerous)))
-  )
+  (bind ?addp (if (< ?q-del ?q-req) then ?order-points else ?order-points-supernumerous))
+  (modify ?gf (points (+ ?points ?addp)))
+  (printout t "Product " ?p " delivered at " ?dg ". Awarding " ?addp " points" crlf)
 )

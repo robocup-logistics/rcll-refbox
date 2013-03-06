@@ -93,6 +93,7 @@
     ; intermediate puck to add
     (bind ?proc-time ?*INTERMEDIATE-PROC-TIME*)
   )
+  (printout t "Production begins at " ?m " (will take " ?proc-time " sec)" crlf)
   (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now) (proc-time ?proc-time)
 	  (desired-lights GREEN-ON YELLOW-ON))
 )
@@ -163,7 +164,7 @@
   ?pf <- (puck (id ?id) (state ?ps))
   =>
   (printout t ?mtype " production done @ " ?m ": " ?id " (" ?ps
-	    " -> " ?output ", took " ?pt " sec)" crlf)
+	    " -> " ?output ", took " ?pt " sec, awarding " ?machine-points " points)" crlf)
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)) (junk (+ ?junk (length$ ?lw))))
   (modify ?gf (points (+ ?points ?machine-points)))
@@ -264,7 +265,8 @@
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
   ?pf <- (puck (id ?id) (state ?ps&CONSUMED))
   =>
-  (printout t "Recycling done @ " ?m ": " ?id " (" ?ps " -> S0)" crlf)
+  (printout t "Recycling done @ " ?m ": " ?id " (" ?ps " -> S0). "
+	    "Awarding " ?*RECYCLE-POINTS* " points." crlf)
   (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON))
   (modify ?pf (state S0))
   (modify ?gf (points (+ ?points ?*RECYCLE-POINTS*)))
