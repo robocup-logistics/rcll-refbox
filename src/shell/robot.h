@@ -54,15 +54,19 @@ class LLSFRefBoxShellRobot : public NCursesPanel
  public:
   LLSFRefBoxShellRobot(int begin_y, int begin_x);
 
-  void set_name(std::string name);
-  void set_team(std::string team);
+  void update(std::string name, std::string team, std::string host);
   void set_last_seen(boost::posix_time::ptime &last_seen);
+  void reset();
 
   int refresh();
+
+  bool is_busy() const { return (name_ != ""); }
+  const std::string &  name() const { return name_; }
 
  private:
   std::string   name_;
   std::string   team_;
+  std::string   host_;
   boost::posix_time::ptime last_seen_;
 };
 

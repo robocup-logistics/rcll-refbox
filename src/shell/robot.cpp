@@ -50,27 +50,30 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellRobot::LLSFRefBoxShellRobot(int begin_y, int begin_x)
-  : NCursesPanel(2, 21, begin_y, begin_x)
+  : NCursesPanel(2, 24, begin_y, begin_x)
 {
 }
 
 
 void
-LLSFRefBoxShellRobot::set_name(std::string name)
+LLSFRefBoxShellRobot::update(std::string name, std::string team, std::string host)
 {
   name_ = name;
-}
-
-void
-LLSFRefBoxShellRobot::set_team(std::string team)
-{
   team_ = team;
+  host_ = host;
 }
 
 void
 LLSFRefBoxShellRobot::set_last_seen(boost::posix_time::ptime &last_seen)
 {
   last_seen_ = last_seen;
+}
+
+void
+LLSFRefBoxShellRobot::reset()
+{
+  name_ = team_ = host_ = "";
+  refresh();
 }
 
 
@@ -80,13 +83,13 @@ LLSFRefBoxShellRobot::refresh()
   standend();
   if (name_ != "") {
 
-    boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+    boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
     boost::posix_time::time_duration td = now - last_seen_;
     long td_seconds = td.seconds();
 
-    clear();
+    erase();
     
-    if (td_seconds > 15) {
+    if (td_seconds > 30) {
       bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
       name_ = "";
       team_ = "";
@@ -97,12 +100,15 @@ LLSFRefBoxShellRobot::refresh()
     } else {
       bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
     }
-  }
 
-  attron(A_BOLD);
-  addstr(0, 1, name_.c_str());
-  attroff(A_BOLD);
-  addstr(1, 1, team_.c_str());
+    attron(A_BOLD);
+    printw(0, 0, "%s (%s)", name_.c_str(), team_.c_str());
+    attroff(A_BOLD);
+    addstr(1, 0, host_.c_str());
+  } else {
+    bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+    erase();
+  }
 
   return NCursesPanel::refresh();
 }

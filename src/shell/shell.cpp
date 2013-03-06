@@ -532,6 +532,10 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
       pucks_[i]->reset();
     }
 
+    for (size_t i = 0; i < robots_.size(); ++i) {
+      robots_[i]->reset();
+    }
+
     if (try_reconnect_) {
       reconnect_timer_.expires_from_now(boost::posix_time::milliseconds(RECONNECT_TIMER_INTERVAL));
       reconnect_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_reconnect_timer, this,
@@ -603,17 +607,31 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 
   std::shared_ptr<llsf_msgs::RobotInfo> r;
   if ((r = std::dynamic_pointer_cast<llsf_msgs::RobotInfo>(msg))) {
+    size_t idx = 0;
     for (int i = 0; i < r->robots_size(); ++i) {
-      // more robots than we can show
-      if ((size_t)i >= robots_.size()) break;
-
       const llsf_msgs::Robot &robot = r->robots(i);
-      robots_[i]->set_name(robot.name());
-      robots_[i]->set_team(robot.team());
+
+      while (idx < robots_.size() && robots_[idx]->is_busy() &&
+	     robots_[idx]->name() != robot.name())
+      {
+	++idx;
+      }
+
+      if ((size_t)idx >= robots_.size()) {
+	// more robots than we can show
+	logf("Max robots displayed, cannot show %s (%s)",
+	     robot.name().c_str(), robot.team().c_str());
+	break;
+      }
+
+      robots_[idx]->update(robot.name(), robot.team(), robot.host());
       boost::posix_time::ptime
 	last_seen(boost::posix_time::from_time_t(robot.last_seen().sec()));
       last_seen += boost::posix_time::nanoseconds(robot.last_seen().nsec());
-      robots_[i]->set_last_seen(last_seen);
+      robots_[idx]->set_last_seen(last_seen);
+    }
+    for (size_t i = idx+1; i < robots_.size(); ++i) {
+      robots_[i]->reset();
     }
   }
 
