@@ -52,6 +52,7 @@
 #include <msgs/AttentionMessage.pb.h>
 #include <msgs/OrderInfo.pb.h>
 #include <logging/llsf_log_msgs/LogMessage.pb.h>
+#include <msgs/VersionInfo.pb.h>
 
 #include <cursesp.h>
 #include <cursesf.h>
@@ -519,6 +520,8 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
     p_attmsg_->bkgd(' '|COLOR_PAIR(0));
     p_attmsg_->erase();
 
+    panel_->hline(panel_->height() - 1, 2, 20);
+
     std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
     for (m = machines_.begin(); m != machines_.end(); ++m) {
       m->second->reset();
@@ -743,6 +746,16 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     log(lm->log_level(), lm->ts_sec(), lm->ts_nsec(), lm->component(), lm->message());
   }
 
+  std::shared_ptr<llsf_msgs::VersionInfo> vi;
+  if ((vi = std::dynamic_pointer_cast<llsf_msgs::VersionInfo>(msg))) {
+    logf("Connected to RefBox version %s", vi->version_string().c_str());
+    panel_->standend();
+    panel_->attron(A_BOLD);
+    panel_->printw(panel_->height()-1, 2, //panel_->width() - vi->version_string().length() - 10,
+		   " RefBox %s ", vi->version_string().c_str());
+    panel_->standend();
+  }
+
   io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 }
 
@@ -858,8 +871,8 @@ LLSFRefBoxShell::run()
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(17, panel_->width() - 16, "Robots");
   panel_->addstr(height-5, panel_->width() - 15, "Game");
-  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 3, "Pucks");
-  panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 3, "Orders");
+  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 2, "Pucks");
+  panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 2, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
@@ -1025,6 +1038,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::OrderInfo>();
   message_register.add_message_type<llsf_msgs::PuckInfo>();
   message_register.add_message_type<llsf_log_msgs::LogMessage>();
+  message_register.add_message_type<llsf_msgs::VersionInfo>();
 
   client->signal_connected().connect(
     boost::bind(&LLSFRefBoxShell::dispatch_client_connected, this));
