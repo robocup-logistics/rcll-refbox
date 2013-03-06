@@ -181,27 +181,27 @@
 )
 
 (deffacts machine-specs
-  (machine-spec (mtype T1) (inputs S0) (output P1)
+  (machine-spec (mtype T1) (inputs S0) (output S1)
 		(light-code 1) (points 0)
-		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 3 8
+		(proc-time-min 3) (proc-time-max 8) (proc-time 4)) ; 3 8
   (machine-spec (mtype T2) (inputs S0 S1) (output S2)
 		(light-code 2) (points 4)
-		(proc-time-min 4) (proc-time-max 4)) ; 15 25
+		(proc-time-min 15) (proc-time-max 25)) ; 15 25
   (machine-spec (mtype T3) (inputs S0 S1 S2) (output P1)
 		(light-code 4) (points 12)
-		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
+		(proc-time-min 40) (proc-time-max 60) (proc-time 4)) ; 40 60
   (machine-spec (mtype T4) (inputs S0 S1 S2) (output P2)
 		(light-code 5) (points 12)
-		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 40 60
+		(proc-time-min 40) (proc-time-max 60) (proc-time 4)) ; 40 60
   (machine-spec (mtype T5) (inputs S0) (output P3)
 		(light-code 10) (points 0)
-		(proc-time-min 4) (proc-time-max 4) (proc-time 4)) ; 20 40
+		(proc-time-min 20) (proc-time-max 40) (proc-time 4)) ; 20 40
 )
 
 (deffacts orders
   (order (id 1) (product P1) (quantity-requested 3) (delivery-period   0 299))
   (order (id 2) (product P2) (quantity-requested 2) (delivery-period   0 299))
-  (order (id 3) (product P3) (quantity-requested 4) (delivery-period   0 200))
+  (order (id 3) (product P3) (quantity-requested 4) (delivery-period   0 299))
   (order (id 4) (product P1) (quantity-requested 1) (delivery-period 300 599))
   (order (id 5) (product P2) (quantity-requested 6) (delivery-period 300 599))
   (order (id 6) (product P3) (quantity-requested 2) (delivery-period 300 599))
