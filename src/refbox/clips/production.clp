@@ -79,16 +79,16 @@
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
   (machine-spec (mtype ?mtype)  (inputs $?inputs)
-		(proc-time-min ?pt-min) (proc-time-max ?pt-max))
+		(proc-time ?pt))
   ?pf <- (puck (id ?id) (state ?ps&:(member$ ?ps ?inputs)))
   ?mf <- (machine (name ?m) (mtype ?mtype) (state IDLE|WAITING)
 		  (loaded-with $?lw&:(not (any-puck-in-state ?ps ?lw))))
   (not (or (machine (name ?m2&~?m) (puck-id ?m2-pid&?id))
 	   (machine (name ?m2&~?m) (loaded-with $?m2-lw&:(member$ ?id ?m2-lw)))))
   =>
-  (if (= (length$ ?lw) (length$ ?inputs)) then
+  (if (= (+ (length$ ?lw) 1) (length$ ?inputs)) then
     ; last puck to add
-    (bind ?proc-time (random ?pt-min ?pt-max))
+    (bind ?proc-time ?pt)
    else
     ; intermediate puck to add
     (bind ?proc-time ?*INTERMEDIATE-PROC-TIME*)
