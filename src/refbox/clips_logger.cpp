@@ -93,11 +93,11 @@ CLIPSLogger::log(const char *logical_name, const char *str)
   if (strcmp(str, "\n") == 0) {
     if (strcmp(logical_name, "debug") == 0) {
       logger_->log_debug(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    } else if (strcmp(logical_name, "wtrace") == 0) {
+    } else if (strcmp(logical_name, WTRACE) == 0) {
       trace_logger_->log_debug(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    } else if (strcmp(logical_name, "warn") == 0) {
+    } else if (strcmp(logical_name, "warn") == 0 || strcmp(logical_name, WWARNING) == 0) {
       logger_->log_warn(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    } else if (strcmp(logical_name, "error") == 0) {
+    } else if (strcmp(logical_name, "error") == 0 || strcmp(logical_name, WERROR) == 0) {
       logger_->log_error(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
     } else {
       logger_->log_info(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
@@ -120,6 +120,9 @@ log_router_query(void *env, char *logical_name)
   if (strcmp(logical_name, "error") == 0) return TRUE;
   if (strcmp(logical_name, "stdout") == 0) return TRUE;
   if (strcmp(logical_name, WTRACE) == 0) return TRUE;
+  if (strcmp(logical_name, WWARNING) == 0) return TRUE;
+  if (strcmp(logical_name, WERROR) == 0) return TRUE;
+  if (strcmp(logical_name, WDISPLAY) == 0) return TRUE;
   return FALSE;
 }
 
