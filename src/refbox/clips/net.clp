@@ -52,10 +52,9 @@
   ?rf <- (robot (host ?from-host) (port ?from-port))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
+  ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
   (bind ?time (pb-field-value ?p "time"))
-  (modify ?rf (last-seen (create$ (pb-field-value ?time "sec")
-				  (/ (pb-field-value ?time "nsec") 1000))))
+  (modify ?rf (last-seen ?now) (warning-sent FALSE))
 )
 
 (defrule net-recv-beacon-unknown
@@ -65,13 +64,45 @@
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (printout t "Received beacon from " ?from-host ":" ?from-port crlf)
-  (bind ?time (pb-field-value ?p "time"))
+  (printout debug "Received initial beacon from " ?from-host ":" ?from-port crlf)
+  (bind ?team (pb-field-value ?p "team_name"))
+  (bind ?name (pb-field-value ?p "peer_name"))
+  (bind ?timef (pb-field-value ?p "time"))
+  (bind ?time (create$ (pb-field-value ?timef "sec") (/ (pb-field-value ?timef "nsec") 1000)))
+  (bind ?peer-time-diff (abs (time-diff-sec ?now ?time)))
+  (if (> ?peer-time-diff ?*PEER-TIME-DIFFERENCE-WARNING*)
+   then
+    (printout warn "Robot " ?name " of " ?team
+	      " has a large time offset (" ?peer-time-diff " sec)" crlf)
+    (assert (attention-message (str-cat "Robot " ?name " of " ?team
+					" has a large time offset (" ?peer-time-diff " sec)")
+			       5))
+  )
   (assert (robot (team (pb-field-value ?p "team_name"))
 		 (name (pb-field-value ?p "peer_name"))
 		 (host ?from-host) (port ?from-port)
-		 (last-seen (create$ (pb-field-value ?time "sec")
-				     (/ (pb-field-value ?time "nsec") 1000)))))
+		 (last-seen ?now)))
+)
+
+(defrule net-robot-lost
+  (time $?now)
+  ?rf <- (robot (team ?team) (name ?name) (host ?host) (port ?port) (warning-sent FALSE)
+		(last-seen $?ls&:(timeout ?now ?ls ?*PEER-LOST-TIMEOUT*)))
+  =>
+  (modify ?rf (warning-sent TRUE))
+  (printout warn "Robot " ?name " of " ?team " at " ?host " lost" crlf)
+  (assert (attention-message (str-cat "Robot " ?name " of " ?team " at " ?host " lost") 10))
+)
+
+(defrule net-robot-remove
+  (time $?now)
+  ?rf <- (robot (team ?team) (name ?name) (host ?host) (port ?port)
+		(last-seen $?ls&:(timeout ?now ?ls ?*PEER-REMOVE-TIMEOUT*)))
+  =>
+  (retract ?rf)
+  (printout warn "Robot " ?name " of " ?team " at " ?host " definitely lost" crlf)
+  (assert
+   (attention-message (str-cat "Robot " ?name " of " ?team " at " ?host " definitely lost") 4))
 )
 
 (defrule send-attmsg
@@ -157,6 +188,7 @@
     )
     (pb-set-field ?r "name" ?robot:name)
     (pb-set-field ?r "team" ?robot:team)
+    (pb-set-field ?r "host" ?robot:host)
     (pb-add-list ?p "robots" ?r) ; destroys ?r
   )
 

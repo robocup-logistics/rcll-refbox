@@ -56,6 +56,7 @@
   (slot port (type INTEGER))
   (multislot position (type FLOAT) (cardinality 3 3)) ; x y theta
   (multislot last-seen (type INTEGER) (cardinality 2 2))
+  (slot warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
 )
 
 (deftemplate signal

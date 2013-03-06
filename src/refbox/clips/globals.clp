@@ -17,6 +17,10 @@
   ?*BC-ORDERINFO-PERIOD* = 5.0
   ?*BC-ORDERINFO-BURST-PERIOD* = 0.5
   ?*BC-MACHINE-REPORT-INFO-PERIOD* = 1.0
+  ; Time after which to warn about a robot lost
+  ?*PEER-LOST-TIMEOUT* = 5.0
+  ?*PEER-REMOVE-TIMEOUT* = 30.0
+  ?*PEER-TIME-DIFFERENCE-WARNING* = 3.0
   ; number of burst updates before falling back to slower updates
   ?*BC-ORDERINFO-BURST-COUNT* = 10
   ; Machine processing times; seconds
