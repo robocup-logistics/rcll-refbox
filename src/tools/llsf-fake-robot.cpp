@@ -42,6 +42,7 @@
 #include <msgs/BeaconSignal.pb.h>
 #include <msgs/OrderInfo.pb.h>
 #include <msgs/GameState.pb.h>
+#include <msgs/VersionInfo.pb.h>
 
 
 #include <boost/asio.hpp>
@@ -117,6 +118,11 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 	     llsf_msgs::Order::DeliveryGate_Name(o.delivery_gate()).c_str());
     }
   }
+
+  std::shared_ptr<VersionInfo> vi;
+  if ((vi = std::dynamic_pointer_cast<VersionInfo>(msg))) {
+    printf("VersionInfo received: %s\n", vi->version_string().c_str());
+  }
 }
 
 
@@ -181,6 +187,7 @@ main(int argc, char **argv)
   message_register.add_message_type<BeaconSignal>();
   message_register.add_message_type<OrderInfo>();
   message_register.add_message_type<GameState>();
+  message_register.add_message_type<VersionInfo>();
 
   peer_->signal_received().connect(handle_message);
   peer_->signal_error().connect(handle_error);
