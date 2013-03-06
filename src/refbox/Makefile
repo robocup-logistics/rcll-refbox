@@ -47,7 +47,7 @@ else
     WARN_TARGETS += warning_libmodbus
   endif
   ifneq ($(HAVE_CLIPS),1)
-    WARN_CLIPS += warning_clips
+    WARN_TARGETS += warning_clips
   endif
   ifneq ($(HAVE_BOOST_LIBS),1)
     WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
