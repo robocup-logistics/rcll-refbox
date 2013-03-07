@@ -33,7 +33,7 @@
   (slot proc-time-min (type INTEGER))
   (slot proc-time-max (type INTEGER))
   (slot proc-time (type INTEGER))
-  (slot light-code (type INTEGER) (default 1))
+  (slot light-code (type INTEGER) (default 0))
   (slot points (type INTEGER) (default 0))
 )
 
@@ -133,6 +133,7 @@
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
+  (signal (type exploration-info) (time (create$ 0 0)) (seq 1))
   (machine (name M1) (mtype T1))
   (machine (name M2) (mtype T1))
   (machine (name M3) (mtype T2))

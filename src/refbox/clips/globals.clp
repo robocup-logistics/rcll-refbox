@@ -17,6 +17,7 @@
   ?*BC-ORDERINFO-PERIOD* = 5.0
   ?*BC-ORDERINFO-BURST-PERIOD* = 0.5
   ?*BC-MACHINE-REPORT-INFO-PERIOD* = 1.0
+  ?*BC-EXPLORATION-INFO-PERIOD* = 1.0
   ; Time after which to warn about a robot lost
   ?*PEER-LOST-TIMEOUT* = 5.0
   ?*PEER-REMOVE-TIMEOUT* = 30.0

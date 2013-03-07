@@ -96,6 +96,42 @@
   (retract ?mf)
 )
 
+
+(defrule exploration-send-ExplorationInfo
+  (time $?now)
+  (gamestate (phase EXPLORATION))
+  ?sf <- (signal (type exploration-info)
+		 (time $?t&:(timeout ?now ?t ?*BC-EXPLORATION-INFO-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)))
+  (bind ?ei (pb-create "llsf_msgs.ExplorationInfo"))
+
+  (do-for-all-facts ((?mspec machine-spec)) (<> ?mspec:light-code 0)
+    (do-for-fact ((?lc machine-light-code)) (= ?mspec:light-code ?lc:id)
+      (bind ?s (pb-create "llsf_msgs.ExplorationSignal"))
+      (pb-set-field ?s "type" ?mspec:mtype)
+      ; nested foreach are broken, hence use progn$
+      (progn$ (?color (create$ RED YELLOW GREEN))
+        (bind ?state OFF)
+        (progn$ (?poss-state (create$ OFF ON BLINK))
+          (if (member$ (sym-cat ?color "-" ?poss-state) ?lc:code)
+	    then (bind ?state (str-cat ?poss-state))
+          )
+        )
+        (bind ?s-light (pb-create "llsf_msgs.LightSpec"))
+	(pb-set-field ?s-light "color" ?color)
+	(pb-set-field ?s-light "state" ?state)
+        (pb-add-list ?s "lights" ?s-light)
+      )
+
+      (pb-add-list ?ei "signals" ?s)
+    )
+  )
+
+  (pb-broadcast ?ei)
+  (pb-destroy ?ei)
+)
+
 (defrule exploration-send-MachineReportInfo
   (time $?now)
   (gamestate (phase EXPLORATION))
