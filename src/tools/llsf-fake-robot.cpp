@@ -43,6 +43,7 @@
 #include <msgs/OrderInfo.pb.h>
 #include <msgs/GameState.pb.h>
 #include <msgs/VersionInfo.pb.h>
+#include <msgs/ExplorationInfo.pb.h>
 
 
 #include <boost/asio.hpp>
@@ -123,6 +124,21 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
   if ((vi = std::dynamic_pointer_cast<VersionInfo>(msg))) {
     printf("VersionInfo received: %s\n", vi->version_string().c_str());
   }
+
+  std::shared_ptr<ExplorationInfo> ei;
+  if ((ei = std::dynamic_pointer_cast<ExplorationInfo>(msg))) {
+    printf("ExplorationInfo received:\n");
+    for (int i = 0; i < ei->signals_size(); ++i) {
+      const ExplorationSignal &es = ei->signals(i);
+      printf("  Machine type %s assignment:", es.type().c_str());
+      for (int j = 0; j < es.lights_size(); ++j) {
+	const LightSpec &lspec = es.lights(j);
+	printf(" %s=%s", LightColor_Name(lspec.color()).c_str(),
+	       LightState_Name(lspec.state()).c_str());
+      }
+      printf("\n");
+    }
+  }
 }
 
 
@@ -188,6 +204,7 @@ main(int argc, char **argv)
   message_register.add_message_type<OrderInfo>();
   message_register.add_message_type<GameState>();
   message_register.add_message_type<VersionInfo>();
+  message_register.add_message_type<ExplorationInfo>();
 
   peer_->signal_received().connect(handle_message);
   peer_->signal_error().connect(handle_error);
