@@ -145,10 +145,18 @@
 
 (defrule net-recv-SetGameState
   ?sf <- (gamestate (state ?state))
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p))
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   (modify ?sf (state (sym-cat (pb-field-value ?p "state"))) (prev-state ?state))
+)
+
+(defrule net-recv-SetGameState-illegal
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
+  (printout warn "Illegal SetGameState message received from host " ?host crlf)
 )
 
 
@@ -158,6 +166,14 @@
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   (modify ?sf (phase (sym-cat (pb-field-value ?p "phase"))) (prev-phase ?phase))
+)
+
+(defrule net-recv-SetGamePhase-illegal
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
+  (printout warn "Illegal SetGamePhase message received from host " ?host crlf)
 )
 
 (defrule net-send-GameState
@@ -271,7 +287,7 @@
 
 
 (defrule net-recv-PlacePuckUnderMachine
-  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p))
+  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
   (bind ?id (pb-field-value ?p "puck_id"))
@@ -282,6 +298,14 @@
   )
   (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
 		      (has-puck TRUE) (id ?id)))
+)
+
+(defrule net-recv-PlacePuckUnderMachine-illegal
+  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Illegal PlacePuckUnderMachine message received from host " ?host crlf)
 )
 
 (defrule net-recv-LoadPuckInMachine
@@ -295,6 +319,14 @@
       then (modify ?machine (loaded-with (create$ ?machine:loaded-with ?puck-id)))
     )
   )
+)
+
+(defrule net-recv-LoadPuckInMachine-illegal
+  ?pf <- (protobuf-msg (type "llsf_msgs.LoadPuckInMachine") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Illegal LoadPuckInMachine message received from host " ?host crlf)
 )
 
 (defrule net-recv-RemovePuckFromMachine
@@ -321,6 +353,15 @@
     )
   )
 )
+
+(defrule net-recv-RemovePuckFromMachine-illegal
+  ?pf <- (protobuf-msg (type "llsf_msgs.RemovePuckFromMachine") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Illegal RemovePuckFromMachine message received from host " ?host crlf)
+)
+
 
 (defrule net-send-PuckInfo
   (time $?now)
