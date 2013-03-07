@@ -49,6 +49,7 @@
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/MachineInfo.pb.h>
+#include <msgs/MachineCommands.pb.h>
 #include <msgs/AttentionMessage.pb.h>
 #include <msgs/OrderInfo.pb.h>
 #include <logging/llsf_log_msgs/LogMessage.pb.h>
