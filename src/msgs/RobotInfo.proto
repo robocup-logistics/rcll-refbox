@@ -1,3 +1,4 @@
+
 /***************************************************************************
  *  RobotInfo.proto - Robot information
  *
@@ -44,11 +45,19 @@ message Robot {
     MSG_TYPE = 31;
   }
 
+  // Name and team of the robot as it was
+  // announced by the robot in the
+  // BeaconSignal message.
   required string name = 1;
-  required string team = 2; 
+  required string team = 2;
+  // Host from where the BeaconSignal
+  // was received
   required string host = 3;
+  // Timestamp in UTC when a BeaconSignal
+  // was received last from this robot
   required Time   last_seen = 4;
 
+  // Optional pose information
   optional Pose2D pose = 6;
 }
 
@@ -58,5 +67,6 @@ message RobotInfo {
     MSG_TYPE = 30;
   }
 
+  // List of all known robots
   repeated Robot robots = 1;
 }

@@ -44,9 +44,13 @@ message BeaconSignal {
     MSG_TYPE = 1;
   }
 
+  // Local time in UTC
   required Time   time = 1;
+  // Sequence number
   required uint64 seq = 2;
 
+  // The robot's team name
   required string team_name = 8;
+  // The robot's name
   required string peer_name = 9;
 }

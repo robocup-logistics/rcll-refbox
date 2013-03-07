@@ -38,6 +38,7 @@ package llsf_msgs;
 
 import "Pose2D.proto";
 
+// Current state of a puck
 enum PuckState {
   S0 = 0;
   S1 = 1;
@@ -53,8 +54,13 @@ message Puck {
     COMP_ID  = 2000;
     MSG_TYPE = 50;
   }
+
+  // Puck unique ID
   required uint32    id = 1;
+  // Current state of the puck
   required PuckState state = 2;
+
+  // Optional pose information
   optional Pose2D    pose = 3;
 }
 
@@ -64,5 +70,6 @@ message PuckInfo {
     MSG_TYPE = 51;
   }
 
+  // List of all known pucks
   repeated Puck pucks = 1;
 }

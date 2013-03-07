@@ -42,11 +42,13 @@ message Order {
     MSG_TYPE = 40;
   }
 
+  // Ordered product type
   enum ProductType {
     P1 = 1;
     P2 = 2;
     P3 = 3;
   }
+  // Gate to deliver to, or any
   enum DeliveryGate {
     ANY = 1;
     D1  = 2;
@@ -54,15 +56,23 @@ message Order {
     D3  = 4;
   }
 
+  // ID and requested product of this order
   required uint32       id = 1;
   required ProductType  product = 2;
-  required uint32       quantity_requested = 3;
-  required uint32       quantity_delivered = 4;
 
-  required uint32       delivery_period_begin = 6;
-  required uint32       delivery_period_end   = 7;
+  // Quantity requested and delivered
+  required uint32 quantity_requested = 3;
+  required uint32 quantity_delivered = 4;
 
-  optional DeliveryGate delivery_gate = 8 [default = ANY];
+  // Start and end time of the delivery
+  // period in seconds of game time
+  required uint32 delivery_period_begin = 6;
+  required uint32 delivery_period_end   = 7;
+
+  // The gate to deliver to, defaults to any
+  // (non-defunct, i.e. non-red light) gate
+  optional DeliveryGate delivery_gate = 8
+  	   [default = ANY];
 }
 
 message OrderInfo {
@@ -71,5 +81,6 @@ message OrderInfo {
     MSG_TYPE = 41;
   }
 
+  // The current orders
   repeated Order orders = 1;
 }

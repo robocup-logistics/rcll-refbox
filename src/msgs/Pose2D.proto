@@ -1,3 +1,4 @@
+
 /***************************************************************************
  *  Pose2D.proto - 2D Position on the playing field
  *
@@ -37,10 +38,15 @@ package llsf_msgs;
 
 import "Time.proto";
 
+// Pose information on 2D map
+// Data is relative to the LLSF field frame
 message Pose2D {
+  // Time when this pose was measured
   required Time   timestamp = 1;
 
+  // X/Y coordinates in meters
   required float  x = 2;
   required float  y = 3;
+  // Orientation in rad
   required float  ori = 4;
 }
