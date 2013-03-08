@@ -37,7 +37,7 @@
 package llsf_msgs;
 
 import "Time.proto";
-import "Pose2D.proto"
+import "Pose2D.proto";
 
 message BeaconSignal {
   enum CompType {
