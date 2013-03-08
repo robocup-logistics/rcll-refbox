@@ -179,7 +179,6 @@
 (defrule net-send-GameState
   (time $?now)
   (gamestate (state ?state) (phase ?phase) (game-time ?game-time) (points ?points))
-  (network-client (id ?client-id))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
@@ -195,7 +194,9 @@
   (pb-set-field ?gamestate "state" (str-cat ?state))
   (pb-set-field ?gamestate "phase" (str-cat ?phase))
   (pb-set-field ?gamestate "points" ?points)
-  (pb-send ?client-id ?gamestate)
+  (do-for-all-facts ((?client network-client)) TRUE
+    (pb-send ?client:id ?gamestate)
+  )
   (pb-broadcast ?gamestate)
   (pb-destroy ?gamestate)
 )
