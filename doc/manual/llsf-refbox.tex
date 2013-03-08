@@ -1,0 +1,838 @@
+
+% Copyright 2013 Tim Niemueller
+
+\documentclass[a4paper]{article}
+\usepackage{a4wide}
+\usepackage{color}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{array}
+\usepackage{footmisc}
+
+\usetikzlibrary{calc,through,backgrounds,shadows,decorations.pathreplacing}
+\usetikzlibrary{positioning,decorations.text}
+\newcommand{\refsec}[1]{Section~\ref{#1}}
+\newcommand{\reffig}[1]{Figure~\ref{#1}}
+\newcommand{\refdef}[1]{Definition~\ref{#1}}
+\newcommand{\reflst}[1]{Listing~\ref{#1}}
+%\newcommand{\reflst}[1]{Figure~\ref{#1}}
+
+%% Mulberry Color for highlighting
+\definecolor{Mulberry}{cmyk}{0.34,0.90,0,0.02}
+\definecolor{BrickRed}{cmyk}{0,0.89,0.94,0.28}
+
+
+\hypersetup{
+  pdftitle      = {Referee Box for the RoboCup Logistics League},
+  pdfauthor     = {Tim Niemueller},
+  pdfkeywords   = {Robotics, RoboCup, LLSF, Referee Box},
+  pdfsubject    = {Integration Manual},
+  %pdfpagemode   = {UseOutlines},        % PageWdth, FullScreen, None ...
+  hidelinks    = true,          % true colored links, false colored boxes
+%  linkcolor     = black,
+%  citecolor     = black,
+%  filecolor     = black,
+%  urlcolor      = black,
+%  backref       = false,
+%  pagecolor     = black,         % link to other document pages
+%  linktocpage,                  % linked page numbers instead of titles
+%  menucolor   = blue,           % Acrobat menu item
+%  pdfnewwindow= true,                %
+%  pdfborder   = {0 0 0},             %
+%  bookmarksopen=true,                %
+%  bookmarksnumbered=true,            %
+%  pdfcreator   = {pdflatex},
+%  pdfproducer  = {latex-pdftex}
+}
+
+% required to make keywordsprefix for CLIPS working
+% took me a while to figure it out, don't remove!
+\lstset{language=Java}
+
+\lstdefinelanguage{protobuf}{
+  keywordsprefix=?,
+  %keywordsprefix=\$,
+  alsoletter={?=-<>*\$},
+  keywordstyle=\color{Mulberry!90!black}\bfseries,
+  keywords=[2]{package, message, extend, enum},
+  keywordstyle=[2]\color{BrickRed!70!blue}\bfseries,
+  keywords=[3]{float, double, int32 int64, uint32, uint64, sint32,
+    sint64, fixed32, fixed64, sfixed32, sfixed64, bool, string, bytes},
+  keywordstyle=[3]\color{darkgray}\bfseries,
+  keywords=[4]{max},%
+  keywordstyle=[4]\color{gray}\bfseries,
+  keywords=[5]{required, optional, repeated},
+  keywordstyle=[5]\color{red!60!black}\bfseries,
+  %identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]"
+}
+
+
+\lstdefinelanguage{cpp}{
+  %keywordsprefix=?,
+  %keywordsprefix=\$,
+  %alsoletter={?=-<>*\$},
+  keywordstyle=\color{Mulberry!90!black}\bfseries,
+  keywords=[2]{typedef, struct, class, using, namespace, include,
+    private, public},
+  keywordstyle=[2]\color{BrickRed!70!blue}\bfseries,
+  keywords=[3]{uint32_t, uint16_t, std::string, unsigned short, void},
+  keywordstyle=[3]\color{darkgray}\bfseries,
+  keywords=[4]{max},%
+  keywordstyle=[4]\color{gray}\bfseries,
+  %identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]"
+}
+
+\lstdefinestyle{protobuf}
+{
+  language=protobuf,
+  basicstyle=\footnotesize\ttfamily\vspace{0.2cm},
+  breaklines=true,
+  showstringspaces=false,
+  %keywordstyle=\bfseries,
+  %keywordstyle=\color{Mulberry},
+  frame=lines,
+  belowcaptionskip=8pt,
+  emphstyle=\itshape,
+  numbers=left,
+  stepnumber=1,
+  backgroundcolor=\color{blue!10},
+  rulecolor=\color{blue!50},
+  fillcolor=\color{blue!20},
+  framexleftmargin=16pt,
+  xleftmargin=16pt,
+  %stringstyle=\color{BitterSweet},
+  stringstyle=\color{BrickRed},
+  commentstyle=\color{purple!50!black},
+  escapechar=\%
+  % emph={getup, servo, depends_skills},
+  %emphstyle=\underbar,
+  %numbers=left,
+  %stepnumber=1,
+  %%stringstyle=\ttfamily, % typewriter type for strings
+}
+
+\lstdefinestyle{cpp}
+{
+  language=cpp,
+  basicstyle=\footnotesize\ttfamily\vspace{0.2cm},
+  breaklines=true,
+  showstringspaces=false,
+  %keywordstyle=\bfseries,
+  %keywordstyle=\color{Mulberry},
+  frame=lines,
+  belowcaptionskip=8pt,
+  emphstyle=\itshape,
+  numbers=left,
+  stepnumber=1,
+  backgroundcolor=\color{blue!10},
+  rulecolor=\color{blue!50},
+  fillcolor=\color{blue!20},
+  framexleftmargin=16pt,
+  xleftmargin=16pt,
+  %stringstyle=\color{BitterSweet},
+  stringstyle=\color{BrickRed},
+  commentstyle=\color{purple!50!black}
+  %escapechar=\%
+  % emph={getup, servo, depends_skills},
+  %emphstyle=\underbar,
+  %numbers=left,
+  %stepnumber=1,
+  %%stringstyle=\ttfamily, % typewriter type for strings
+}
+
+\lstdefinestyle{small-protobuf}{
+  style=protobuf,
+  basicstyle=\ttfamily\footnotesize,
+  numbersep=6pt,
+}
+\lstdefinestyle{really-small-protobuf}{
+  style=protobuf,
+  basicstyle=\ttfamily\scriptsize,
+  numbersep=5pt,
+}
+
+
+\lstdefinestyle{really-small-cpp}{
+  language=cpp,
+  style=cpp,
+  basicstyle=\ttfamily\scriptsize,
+  numbersep=5pt,
+}
+
+\lstdefinestyle{really-small-protobuf-no-frame}{
+  style=protobuf,
+  basicstyle=\ttfamily\scriptsize,
+  numbersep=5pt,
+  frame=none,
+  backgroundcolor=\color{white},
+  framextopmargin=0pt,
+  framexbottommargin=0pt
+}
+
+\lstdefinestyle{small-protobuf-no-frame}{
+  style=protobuf,
+  basicstyle=\ttfamily\footnotesize,
+  numbersep=5pt,
+  frame=none,
+  backgroundcolor=\color{white},
+  framextopmargin=0pt,
+  framexbottommargin=0pt
+}
+
+
+\begin{document}
+\title{\textbf{Referee Box for the RoboCup Logistics League}\\%
+  \Large Integrator Manual}
+\author{Tim Niemueller\\\href{mailto:niemueller@cs.rwth-aachen.de}{niemueller@kbsg.rwth-aachen.de}}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+Under the umbrella of RoboCup, in 2012 the first competition in the
+\textit{Logistics League sponsored by Festo} (LLSF) took place. The
+idea of this new RoboCup league is to simulate a production process
+where an assembly robot has to bring goods to production places to
+refine them step by step to a final product. A team of robots has to
+explore which machine is producing/refining what semi-finished
+products and produce as many products as possible.
+
+Already at this early stage it became apparent, that just observing
+the game and awarding points is complex. Especially when introducing
+more goods that can be processed, and when expecting more robots
+operating concurrently in the arena in the future, we need to consider
+options to automate the evaluation of the game.
+
+The Referee Box (refbox) controls and monitors the game to perform
+this very evaluation. We have tried to make the refbox as autonomous
+as possible. Textual and graphical user interfaces allow for human
+instruction and supervision. This is in particular required in
+unexpected situations (e.g. humans need to stop the game if a robot
+catches fire) or where perceptual input is not available (a puck is
+moved out of the are of a machine which is still waiting for more
+goods). Several parts of the refbox were influenced by the Fawkes
+Robot Software Framework~\cite{Fawkes} -- some libraries like the
+configuration and logging facilities are simplified versions of the
+Fawkes libraries -- and ROS~\cite{ROS}. The internally used CLIPS
+environment is based on the Carologistics' task coordination
+approach~\cite{CLIPS-Agent}.
+
+This manual describes how to integrate a robot system with the refbox,
+in particular the communication protocols involved. For detailed
+information about system requirements to build and run the refbox as
+well as configuration and usage instructions please refer to the
+referee box website at \url{http://www.robocup-logistics.org/refbox}.
+
+\section{Infrastructure}
+\label{sec:infrastructure}
+The refbox communicates with two different classes of entities, robots
+and controllers. Any machine of a playing team is considered a
+robot. Controllers are used by the human referees to interact with the
+refbox, visualize its internal state, and give instructions to it.
+
+All communication is handled using IPv4. There are two primary ways of
+communication. First, controllers access the refbox using a TCP-based
+stream communication protocol in a client-server fashion. Second,
+robots communicate with the refbox using UDP-based broadcast protocol
+in a peer-to-peer fashion.
+
+Messages are defined and encoded using the Google protobuf library. It
+provides easy to use, extensible, and widely compatible data exchange
+structures. Messages are transmitted using a minimal protocol for
+framing the serialized messages.
+
+In the following we give a brief overview of Protobuf and how the
+messages are defined. We then introduce the framing protocol and how
+it is used to transmit messages. We then describe the basic stream and
+broadcast communication modes and conclude with an overview and
+example using the protobuf\_comm library which is part of the refbox.
+
+\subsection{Protocol Buffers (protobuf)}
+Protocol
+Buffers\footnote{\url{https://code.google.com/p/protobuf/}\label{fn:protobuf}}
+(protobuf) offers a description language to define data exchange
+formats which can be encoded and decoded very efficiently. The formats
+are extensible and provide for basic data types, nesting, structure
+re-use, efficient serialization and deserialization, variable-length
+lists, and a compiler to create code for C++, Java, or Python to
+access the data. In this document, we will only give a very brief
+introduction and we refer to the protobuf website\footref{fn:protobuf}
+for more detailed information.
+
+Data structures are defined as a message and are somewhat similar to
+C/C++ data structures. Each field has a rule out of \texttt{required},
+\texttt{optional}, or \texttt{repeated}, a type, a name, and a unique
+tag number. The rule defines if the field must or can be present, or
+if it can be zero, one, or more values of the given type. The type can
+be either one of a number of basic types, or another message type. The
+tags must be unique within a message. They are used to identify the
+fields when deserializing.
+
+Structures in other files can be used by importing a file. See for
+example BeaconSignal.proto as an example in
+\refsec{sec:messages}. After defining the messages in proto files,
+they must be compiled to generate the actual code to use the data
+structures. Protobuf comes with support for C++, Java, and Python out
+of the box. For other languages third-party tools exist. The code must
+then be compiled into a library or your application.
+
+\subsection{Framing Protocol}
+
+\begin{minipage}{\linewidth}
+  \begin{minipage}[t]{.64\linewidth}
+    \vspace{0pt}
+Once protobuf messages are serialized, they contain no information
+about the contained type or the length of the message. Therefore, to
+transmit them over the network a framing protocol is required. This
+adds a little frame around each message indicating its type and size
+to allow for transmitting arbitrary messages over the same
+connection. This is provided by the framing protocol.
+  \end{minipage}
+  \hspace{.01\linewidth}
+  \begin{minipage}[t]{.34\linewidth}
+    \vspace{0pt}
+\lstinputlisting[showlines,style=really-small-cpp,
+firstline=63, lastline=70,
+framexleftmargin=4pt, xleftmargin=4pt,numbers=none,
+morekeywords={\$?ms},emph={merge,m-prio}]
+{../../src/libs/protobuf_comm/frame_header.h}
+  \end{minipage}
+\end{minipage}
+
+\smallskip
+
+The structure shown to the right describes the frame header. Each
+message that is sent over the network is prepended such a header. Each
+header consists of three values. The component ID can be used to
+dispatch messages to a particular component. In our case, all messages
+have a component ID of 2000 for the refbox. The message type denotes
+the contained protobuf message and determines how the message is
+deserialized. The payload size specifies the amount of data to read
+for the next message for deserialization.
+
+The message must be 4-byte-aligned, i.e. the message structure when
+sent over the network must have a size of exactly eight bytes. All
+contained numbers must be encoded in network byte order (big endian,
+most significant bit first). The numbers are encoded as 16
+(\texttt{uint16\_t}) or 32 bit (\texttt{uint32\_t}) unsigned integers
+respectively.
+
+When sending a message over the network, first the protobuf message is
+serialized (to determine the payload size). Then the frame header is
+prepared with the appropriate component ID, message type, and the
+payload size as just determined. Then the frame header is sent
+immediately followed by the serialized message.
+
+Note that for UDP packets, the data must be serialized into a common
+buffer. Otherwise the operating systems network stack could split the
+transmission into two UDP messages, one containing the frame header
+and the other the message. This is invalid and cannot be decoded on
+the other end (UDP does not provide for receiving in the correct order
+and packet correlation).
+
+\subsection{Communication Modes}
+The refbox uses two communication modes. A TCP-connection-based
+streaming protocol is used for communication between the refbox and
+controllers like the shell or GUI. Teams may not use this mode to
+contact the refbox. For such communication a UDP-based broadcast
+protocol is employed.
+
+Since the wifi is inherently unreliably, in particular during a
+RoboCup competition. Hence connections can be lost at any time. In
+particular on a busy wireless network a TCP handshake can mean a high
+performance penalty, or can even mean reliable communication fails
+due to frequent re transmissions. Therefore, for communication with the
+robots a UDP-based protocol was chosen. For now, we use broadcasting
+to communicate the information to all robots at once. In the future,
+this might be extended to Multicast.
+
+To implement stream-based communication, we recommend to implement it
+in such a way that always the frame header is read first, and only
+afterwards the payload is read depending on the size given in the
+header.
+
+For broadcast-based communication, make sure to build a complete
+message buffer including the frame header and the serialized message,
+and then send it in one go to avoid fragmentation. When reading,
+create a sufficiently large buffer to read the full package at
+once. Then read the frame header from the buffer and deserialize the
+message.
+
+The refbox accepts stream client connections on TCP port 4444. During
+the tournament, connections will most likely only be allowed from the
+local or selected hosts. Neither a robot nor any other team's device
+may use the stream protocol to communicate with the
+refbox. Peer-to-peer broadcast communication is down on UDP port
+4444. The refbox will communicate on an assigned broadcast address
+determined at the tournament. Make sure that all of this information
+is easily configurable on your system.
+
+\subsection{Example using protobuf\_comm}
+The protobuf\_comm library provides an implementation of network
+communication with protobuf messages using the framing protocol
+described above for both communication modes. It is available as part
+of the refbox source code\footnote{Instructions how to obtain the code
+  at \url{http://trac.fawkesrobotics.org/wiki/LLSFRefBox/Install}} in
+the \texttt{src/libs/protobuf\_comm} directory. The implementation
+uses Boost Asio for the asynchronous I/O implementation, and Boost
+Signals2 to provide events that your code can connect to. The
+protobuf\_comm library currently requires a compiler accepting code
+according to the C++11 standard, e.g. GCC 4.6 or higher.
+
+The library has three principal classes of interaction that you may or
+may not use. First, the ProtobufStreamClient class implements a TCP
+socket connection using the framing protocol to receive and transmit
+messages from and to a ProtobufStreamServer, that is run in the
+refbox. Second, the ProtobufBroadcastPeer implements peer-to-peer
+communication over UDP using the framing protocol. Finally, the
+MessageRegister is employed by both classes to register messages you
+wish to react to. Messages types must be registered with the message
+register so that the client or peer can now how to deserialize
+incoming messages. Messages of an unknown type are ignored.
+
+The library uses the signal-slot event pattern to notify your code
+about events such as being connected or disconnected, or receiving an
+incoming message. This is built on top of
+Boost.Signals2\footnote{Cf. \url{http://www.boost.org/libs/signals2/}}. Note
+that this is incompatible with Boost.Signals. Signals2 was chosen
+because it provides an increased thread-safety. The
+ProtobufStreamClient and ProtobufBroadcastPeer run a concurrent thread
+to process incoming data. So when a signal is issued, it happens in
+the context of the receiving thread. For code that is not thread-safe,
+or that expects events only from a particular thread (e.g. GUI
+applications using Gtkmm or even text interfaces using ncurses), you
+need to implement a dispatch pattern that will issue an event that is
+evaluated in that main thread.
+
+\begin{figure}
+  \lstinputlisting[name=peer,showlines,style=really-small-cpp,
+    firstline=37, lastline=84, numbers=left, stepnumber=5,
+    numberfirstline=true,numberblanklines=true,
+    framexleftmargin=16pt, xleftmargin=4pt]
+    {../../src/examples/peer.cpp}
+\caption{Example program for a protobuf\_comm peer}
+\label{fig:example-peer}
+\end{figure}
+\begin{figure}
+  \lstinputlisting[name=client,showlines,style=really-small-cpp,
+    firstline=37, lastline=94,numbers=left,stepnumber=5,
+    framexleftmargin=16pt, xleftmargin=4pt]
+    {../../src/examples/client.cpp}
+\caption{Example program for a protobuf\_comm client}
+\label{fig:example-client}
+\end{figure}
+In \reffig{fig:example-peer} you see the code for an example how to
+use peer communication. You can also find the code in the
+\texttt{src/examples} directory in the refbox source. You can adapt
+the code and integrate it into your existing system. The full source
+code can be compiled to a stand-alone program for testing. However,
+you should integrate the code with your own main loop rather than
+copying the stub from the example.
+
+In the ExamplePeer class's constructor the peer is created (line
+11). In lines 13--14 the MessageRegister of the peer is retrieved, and
+a single message type is registered. Note that no component ID or
+message type are provided. They are retrieved from the CompType enum
+field within the message specification (cf.~\refsec{sec:messages}). In
+lines 16--20 the signals of the peer are connected to methods of the
+ExamplePeer class. The events can be issued as soon as the signal is
+connected. So make sure any required resource initialization has been
+completed or is guarded when connecting the signals. The ExamplePeer's
+\texttt{peer\_error} (line 30ff.) and \texttt{peer\_msg} (line 35ff.)
+methods are called if a message reception failed or succeeded
+respectively. Since the UDP communication is connection-less no
+connected or disconnected signals exist. To detect that the refbox is
+reachable listen to incoming BeaconSignal messages (see below). In the
+\texttt{peer\_msg} method there are two ways to decide what message
+has been received. You can either decide based on the component ID and
+message type numbers (always both!), or you can use C++ Runtime Type
+Information (RTTI). The latter is preferred and shown in the
+example. It provides strong typing guarantees. As always, do not
+forget to free the peer's resources by deleting it when no longer
+required (destructor in line 24ff.).
+
+In the ExampleClient class's constructor the client is created (line
+12). In lines 14--15 the MessageRegister of the client is retrieved,
+and a single message type is registered. Note that no component ID or
+message type are provided. They are retrieved from the CompType enum
+field within the message specification (cf.~\refsec{sec:messages}). In
+lines 16--23 the signals of the client are connected to methods of the
+ExampleClient class. The events can be issued as soon as the client is
+connected. The \texttt{async\_connect} method of the client will
+trigger connecting to the server, but it does not block. Make sure any
+required resource initialization has been completed or is guarded when
+connecting the client. Once the connection has been established, the
+\texttt{connected} signal is issued and thus the ExampleClient's
+\texttt{client\_connected} method (line~35ff.) is called. Likewise,
+when the connection is lost the \texttt{client\_disconnected} method
+(line~38ff.) is called with an error code indicating the reason of the
+error. In the \texttt{client\_msg} method there are two ways to decide
+what message has been received. You can either decide based on the
+component ID and message type numbers (always both!), or you can use
+C++ Runtime Type Information (RTTI). The latter is preferred and shown
+in the example. It provides strong typing guarantees. As always, do
+not forget to free the peer's resources by deleting it when no longer
+required (destructor in line 29ff.).
+
+\section{Messages}
+\label{sec:messages}
+In this section we describe the actual messages used for
+communication. They are transmitted using the infrastructure described
+above in accordance to the rules and regulations described in the LLSF
+rule book.
+
+Messages require a component ID and message type. The tuple must be
+unique among all messages. The refbox uses the component ID 2000 for
+all its messages. Messages are grouped in one file if they are
+directly related. Within one file, one block of ten message type IDs
+is used (with the principal messages BeaconSignal, AttentionMessage,
+and VersionInfo being an exception).
+
+The message types are encoded in the message proto files as a CompType
+enum sub-type per message. The CompType must always be of the same
+form, having a COMP\_ID and a MSG\_TYPE entry. The COMP\_ID is
+assigned the component ID number, i.e. 2000 for the refbox. The
+MSG\_TYPE is assigned the type identification number of the particular
+message. It must be unique among all LLSF refbox messages. A message
+type number may not be re-used once a message type is removed, as not
+to confuse older peers expecting the old message type.
+
+In the following, we give the protobuf specifications and description
+of all message types currently used for the LLSF refbox
+communication. The ``Via'' field describes what communication method
+is used to transmit the message, it can be either Peer-to-Peer (P2P),
+Client-Server (C-S), or both. Many messages are sent at certain
+periods. These are given in seconds time in between two sent messages,
+or event if it is sent on particular events. Some broadcast messages
+feature a burst mode to send a number of packets of the same content
+in short succession to increase the chance of reaching the other
+peers. The ``Sent by'' and ``Sent to'' fields indicate the sender and
+receiver of a message. A controller is the refbox GUI or shell to
+communicate to, not a team's device. All proto files are in the
+\texttt{src/msgs} directory of the refbox source code. Feel free to
+copy them to your own source code, but in this case make sure to watch
+for updates to the messages and integrate those
+changes\footnote{Register at
+  \url{https://lists.kbsg.rwth-aachen.de/listinfo/llsf-refbox-commits}
+  to the llsf-refbox-commits mailing list to be notified of any pushes
+  to the refbox repository.}.
+
+\bigskip
+
+\newcommand{\msgspec}[6]{%
+\hspace{-1.1\parindent}
+\begin{minipage}{\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+    \vspace{0pt}
+    \lstinputlisting[showlines,style=really-small-protobuf,
+      firstline=37, escapechar=\%,%    %caption=,belowcaptionskip=2mm,
+      framexleftmargin=4pt, xleftmargin=4pt,numbers=none,
+      morekeywords={\$?ms},emph={merge,m-prio}]
+      {../../src/msgs/#1}
+  \end{minipage}
+  \hspace{.01\linewidth}
+  \begin{minipage}[t]{.51\linewidth}
+    \vspace{2pt}
+    \small
+    \begin{tabular}{>{\bfseries}ll>{\bfseries}ll}
+      File:&\multicolumn{3}{p{.95\linewidth}}{%
+        \texttt{#1}
+      }\\[3pt]
+      Via:&#2&Period:&#3\\
+      Sent by:&#4&Sent to:&#5\\[3pt]
+      \multicolumn{4}{p{.95\linewidth}}{%
+        #6
+      }
+    \end{tabular}
+  \end{minipage}
+\end{minipage}
+}
+
+\hspace{-1.1\parindent}
+\begin{minipage}{\linewidth}
+  \begin{minipage}[t]{.48\linewidth}
+    \vspace{0pt}
+    \begin{lstlisting}[showlines,style=really-small-protobuf,
+      escapechar=\%,
+      framexleftmargin=4pt, xleftmargin=4pt,numbers=none,
+      morekeywords={\$?ms},emph={merge,m-prio}]
+package llsf_msgs;
+
+message AttentionMessage {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 2;
+  }
+
+  // The message to display, be brief!
+  required string %message% = 1;
+  // Time in sec the message is visible
+  optional float  time_to_show = 2;
+}
+    \end{lstlisting}
+  \end{minipage}
+  \hspace{.01\linewidth}
+  \begin{minipage}[t]{.51\linewidth}
+    \vspace{2pt}
+    \small
+    \begin{tabular}{>{\bfseries}ll>{\bfseries}ll}
+      File:&\multicolumn{3}{p{.95\linewidth}}{%
+        \texttt{AttentionMessage.proto}
+      }\\[3pt]
+      Via:&Client-Server&Period:&events\\
+      Sent by:&refbox&Sent to:&controller\\[3pt]
+      \multicolumn{4}{p{.95\linewidth}}{%
+        An AttentionMessage is sent when a particular event
+        requires human attention, e.g. if a late order puck must be
+        placed or if communication to a robot is lost.
+      }
+    \end{tabular}
+  \end{minipage}
+\end{minipage}
+
+\msgspec{BeaconSignal.proto}{Peer-to-Peer}{1\,sec}{all}{any}%
+{%
+  The BeaconSignal is periodically sent to detect robots and the
+  refbox on the network. If a robot is initially detected the time
+  value is used to compare the clock offset (\emph{not} taking network
+  delays into account). The controller may issue a warning if this is
+  too large. The team and robot name are required to be able to
+  diagnose possible connection problems.
+
+  \medskip
+
+  If a robot is not seen for more than 5\,seconds it is considered
+  lost, and after 30\,seconds definitely lost.
+  %, in which case it might
+  %be removed from the field as per the dead robot rule.
+
+  \medskip
+
+  We encourage teams to provide the known position of the robot in the
+  pose field to use it for the game visualization. Not only can it
+  make the job of the referee easier, but it will make the games more
+  interesting to watch for visitors.
+}
+
+\msgspec{VersionInfo.proto}{P2P \& C-S}{event}{refbox}{any}%
+{%
+  The VersionInfo message is sent to each newly connected stream
+  client as the first message. Additionally, whenever a new peer is
+  detected on the network, the version info is periodically sent 10
+  times at a period of $0.5$\,sec. The information can be used to
+  ensure compatibility and warn after future refbox upgrades.
+}
+
+\msgspec{Time.proto}{---}{---}{---}{---}%
+{%
+  This structure is used as a sub-message type within other messages
+  and is never send by itself. It describes a point in time or a
+  duration. What is sent depends on the contextual message.
+
+  \medskip
+
+  A point in time is given relative to the Unix epoch in UTC time, for
+  example using the \texttt{clock\_gettime()} POSIX API call, or using
+  Boost's \texttt{posix\_time::universal\_time()} method.
+
+  \medskip
+
+  A duration is simply given as the number of seconds since the start
+  and the number of nanoseconds since the start of the second.
+}
+
+\msgspec{Pose2D.proto}{---}{---}{---}{---}%
+{%
+  This structure is used as a sub-message type within other messages
+  and is never send by itself. It describes a position and orientation
+  on the 2D ground plane of the LLSF arena. The coordinate reference
+  frame is aligned as described in the rule book.
+}
+
+\msgspec{ExplorationInfo.proto}{Peer-to-Peer}{1\,sec}{refbox}{robots}%
+{%
+  This ExplorationInfo message is periodically sent during the
+  exploration phase. It announces the mapping from type names to light
+  signals to the robots. There will be one entry per machine type in
+  the signals list. The lights list in the ExplorationSignal
+  sub-message will contain one entry per light color, even for signals
+  which are off.
+
+  \medskip
+  If one or more robots are presumably not receiving this message it
+  is recommended to set the game state to PAUSED for some time. The
+  ExplorationInfo message is continued to be sent in this state to
+  allow the robot to catch up without jeopardizing the game.
+}
+
+\msgspec{GameState.proto}{P2P \& C-S}{1\,sec}{refbox}{all}%
+{%
+  The GameState message is periodically sent via peer-to-peer to all
+  robots as well as by client-server communication to connected
+  controllers. The game time is restarted in the exploration and
+  production phases, i.e. the time goes from 0 to 180 seconds in the
+  exploration phase and from 0 to 900 seconds in the production phase.
+
+  \medskip
+
+  In the PRE\_GAME and POST\_GAME phases as well as in states other
+  than RUNNING the robots must stand still immediately and all the
+  time.
+
+  \medskip
+
+  The SetGameState and SetGamePhase messages can be used to request
+  setting a new game state or phase respectively. They may only be
+  sent by a controller. Be careful, setting a new phase will trigger
+  re-initialization of that phase. To interrupt a game set the state
+  to PAUSE, only modify the phase if you want to change
+  irreversibly. It is illegal to send these messages from a robot. It
+  will be detected by the refbox and considered a fraud attempt.
+}
+
+\msgspec{MachineInfo.proto}{Client-Server}{$0.25$\,sec}{refbox}{controllers}%
+{%
+  The MachineInfo message is sent periodically to controllers by the
+  refbox to inform them about the current state of all machines,
+  including their static (inputs, output, name, type, pose) and
+  dynamic information (pucks loaded into the machine area or placed
+  under the RFID sensor, light signals, or whether it was correctly
+  reported during the exploration phase. The refbox may report only
+  light signals that are on or blinking. Light color that are not
+  mentioned should be considered to be off. The pose information may
+  or may not be sent. It can be used for visualy aligning machine
+  representations with the actual position.
+
+  \medskip
+
+  During the game the human referee at the refbox should take great
+  care to notice any additionally connected controller (announced in
+  the log window). No team computer or robot is allowed to connect to
+  the refbox as particularly the machine state information allows for
+  cheating.
+}
+
+\msgspec{MachineReport.proto}{Peer-to-Peer}{$2$\,sec}{robots}{refbox}%
+{%
+  During the exploration phase robots announce recognized machines
+  with the MachineReport message stating name and types. In each
+  message, one or more machines can be reported. We suggest do always
+  send all recognized machines to make sure that even in the case of
+  packet losses, all machines are reported to the refbox
+  eventually. The message should be send periodically, for example
+  once every two seconds.
+
+  \medskip
+
+  Note that for each machine only the first report received is
+  accepted and points are awarded according to the rule book and the
+  correctness. It is not possible to correct a once given wrong
+  report. Every subsequent repetition will be silently ignored.
+
+  \medskip
+
+  In the case of multiple robots there is \emph{no} need to
+  synchronize their report to send one merged report. Instead each
+  robot can report independently directly to the refbox. However,
+  remember that only the first report for each machine is considered.
+
+}
+
+\msgspec{OrderInfo.proto}{P2P \& C-S}{$5$\,sec}{refbox}{any}%
+{%
+  During the production phase the refbox periodically sends the
+  current orders to all robots and controllers. Note that the list of
+  orders in the OrderInfo message can and will change. If late orders
+  get activated, new orders appear in the message. Also note the
+  delivery period of orders. In a message, there will most likely be
+  orders with an active delivery period, while others have already
+  past or are yet to come.
+
+  \medskip
+
+  If a new order is posted, the refbox will go into a short time burst
+  mode for a few seconds. During this time, it will send 10 messages
+  at a period of $0.5$\,sec. Afterwards it continues with the normal
+  period of $5$ seconds.
+}
+
+\msgspec{PuckInfo.proto}{Client-Server}{$1$\,sec}{refbox}{controllers}%
+{%
+  The PuckInfo message is sent periodically by the refbox to connected
+  controllers. It contains state information about all pucks know to
+  the refbox. The shell uses this information for the ``Pucks''
+  section. Each puck has a unique ID and a current state.
+
+  \medskip
+
+  The pose information is optional and not currently provided. It may
+  be used in the future with a camera-based tracking system.
+}
+
+\msgspec{RobotInfo.proto}{Client-Server}{$1$\,sec}{refbox}{controllers}%
+{%
+  The RobotInfo message is sent periodically by the refbox to
+  connected controllers. It contains information about all robots
+  known to the refbox. It reflects its belief gathered from processing
+  BeaconSignal messages from the robots. It also contains a host name
+  from where the BeaconSignal was received, for example to diagnose
+  problems if a robot is lost.
+
+  \medskip
+
+  The pose information is optional. For teams which choose to provide
+  this information in the BeaconSignal it is forwarded to the
+  controller for visualization.
+}
+
+\section{Further Development}
+\label{sec:dev}
+The development of the refbox is an ongoing effort. While the basis
+should be reasonably stable, there will be bugs that need to be fixed
+and the refbox will have to be adapted to future rule changes. We
+welcome comments and contributions when presented in a friendly
+manner. There are some resources you can use to help us develop the
+software and join the effort.
+
+\begin{description}
+\item[RoboCup Logistics mailing list] \hfill\\
+  Please post questions and discuss issues and possible improvements
+  on the RoboCup Logistics mailing list.\\
+  \url{https://lists.kbsg.rwth-aachen.de/listinfo/robocup-logistics}
+\item[Bug Reports] \hfill\\
+  Bug reports should be submitted to the Fawkes Trac system for the
+  ``LLSF RefBox'' component.\\
+  \url{http://trac.fawkesrobotics.org/wiki/LLSFRefBox/ReportAProblem}
+\item[Source Code] \hfill\\
+  The source code is maintained as a git repository. See the
+  installation instructions on how to get a copy. There is a web
+  interface available to view the code and changes to it.\\
+  \url{http://trac.fawkesrobotics.org/wiki/LLSFRefBox/Install}\\
+  \url{http://git.fawkesrobotics.org/llsf-refbox.git}
+\item[Licenses] \hfill\\
+  Parts of the LLSF refbox are licensed under the 3-clause BSD
+  license. Some parts, especially the ones originating from Fawkes,
+  are released under the GNU General Public License Version 2 or later
+  with special exceptions. See the header in the source code files for
+  details.
+\end{description}
+
+%\nocite{*}
+{\small
+\bibliographystyle{unsrt}
+\bibliography{llsf-refbox}
+}
+
+\end{document}
