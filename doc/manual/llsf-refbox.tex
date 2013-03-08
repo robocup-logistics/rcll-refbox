@@ -212,7 +212,7 @@ products and produce as many products as possible.
 Already at this early stage it became apparent, that just observing
 the game and awarding points is complex. Especially when introducing
 more goods that can be processed, and when expecting more robots
-operating concurrently in the arena in the future, we need to consider
+operating concurrently in the future, we need to consider
 options to automate the evaluation of the game.
 
 The Referee Box (refbox) controls and monitors the game to perform
@@ -221,13 +221,13 @@ as possible. Textual and graphical user interfaces allow for human
 instruction and supervision. This is in particular required in
 unexpected situations (e.g. humans need to stop the game if a robot
 catches fire) or where perceptual input is not available (a puck is
-moved out of the are of a machine which is still waiting for more
-goods). Several parts of the refbox were influenced by the Fawkes
-Robot Software Framework~\cite{Fawkes} -- some libraries like the
-configuration and logging facilities are simplified versions of the
-Fawkes libraries -- and ROS~\cite{ROS}. The internally used CLIPS
-environment is based on the Carologistics' task coordination
-approach~\cite{CLIPS-Agent}.
+accidentally moved out of the area of a machine which is still wait
+ing for more goods). Several parts of the refbox were influenced by
+the Fawkes Robot Software Framework~\cite{Fawkes} -- some libraries
+like the configuration and logging facilities are simplified
+versions of the Fawkes libraries -- and ROS~\cite{ROS}. The
+internally used CLIPS environment is based on the Carologistics'
+task coordination approach~\cite{CLIPS-Agent}.
 
 This manual describes how to integrate a robot system with the refbox,
 in particular the communication protocols involved. For detailed
@@ -254,10 +254,11 @@ structures. Messages are transmitted using a minimal protocol for
 framing the serialized messages.
 
 In the following we give a brief overview of Protobuf and how the
-messages are defined. We then introduce the framing protocol and how
-it is used to transmit messages. We then describe the basic stream and
-broadcast communication modes and conclude with an overview and
-example using the protobuf\_comm library which is part of the refbox.
+messages are defined. We then introduce the framing protocol and
+how it is used to transmit messages. Afterwards we describe the
+basic stream and broadcast communication modes and conclude with an
+overview and example using the protobuf\_comm library which is part
+of the refbox.
 
 \subsection{Protocol Buffers (protobuf)}
 Protocol
@@ -271,22 +272,22 @@ access the data. In this document, we will only give a very brief
 introduction and we refer to the protobuf website\footref{fn:protobuf}
 for more detailed information.
 
-Data structures are defined as a message and are somewhat similar to
-C/C++ data structures. Each field has a rule out of \texttt{required},
-\texttt{optional}, or \texttt{repeated}, a type, a name, and a unique
-tag number. The rule defines if the field must or can be present, or
-if it can be zero, one, or more values of the given type. The type can
-be either one of a number of basic types, or another message type. The
-tags must be unique within a message. They are used to identify the
-fields when deserializing.
+Data structures are defined as messages containing fields, somewhat
+similar to C/C++ data structures. Each field has a rule out of
+\texttt{required}, \texttt{optional}, or \texttt{repeated}, a type,
+a name, and a unique tag number. The rule defines if the field must
+or can be present, or if it can be zero, one, or more values of the
+given type. The type can be either one of a number of basic types,
+or another message type. The tags must be unique within a message.
+They are used to identify the fields when deserializing.
 
-Structures in other files can be used by importing a file. See for
-example BeaconSignal.proto as an example in
-\refsec{sec:messages}. After defining the messages in proto files,
+Structures in other files can be used by importing these files. See
+for example BeaconSignal.proto as an example in
+\refsec{sec:messages}.  After defining the messages in proto files,
 they must be compiled to generate the actual code to use the data
-structures. Protobuf comes with support for C++, Java, and Python out
-of the box. For other languages third-party tools exist. The code must
-then be compiled into a library or your application.
+structures. Protobuf comes with support for C++, Java, and Python
+out of the box. For other languages third-party tools exist. The
+code must then be compiled into a library or your application.
 
 \subsection{Framing Protocol}
 
@@ -350,13 +351,13 @@ contact the refbox. For such communication a UDP-based broadcast
 protocol is employed.
 
 Since the wifi is inherently unreliably, in particular during a
-RoboCup competition. Hence connections can be lost at any time. In
-particular on a busy wireless network a TCP handshake can mean a high
-performance penalty, or can even mean reliable communication fails
-due to frequent re transmissions. Therefore, for communication with the
-robots a UDP-based protocol was chosen. For now, we use broadcasting
-to communicate the information to all robots at once. In the future,
-this might be extended to Multicast.
+RoboCup competition, connections can be lost at any time. In
+particular on a busy wireless network a TCP handshake can mean a
+high performance penalty, or can even mean reliable communication
+fails due to frequent re transmissions. Therefore, for
+communication with the robots a UDP-based protocol was chosen. For
+now, we use broadcasting to communicate the information to all
+robots at once. In the future, this might be extended to Multicast.
 
 To implement stream-based communication, we recommend to implement it
 in such a way that always the frame header is read first, and only
@@ -398,9 +399,10 @@ messages from and to a ProtobufStreamServer, that is run in the
 refbox. Second, the ProtobufBroadcastPeer implements peer-to-peer
 communication over UDP using the framing protocol. Finally, the
 MessageRegister is employed by both classes to register messages you
-wish to react to. Messages types must be registered with the message
-register so that the client or peer can now how to deserialize
-incoming messages. Messages of an unknown type are ignored.
+wish to react to. Messages types must be registered with the
+message register so that the client or peer can know how to
+deserialize incoming messages. Messages of an unknown type are
+ignored.
 
 The library uses the signal-slot event pattern to notify your code
 about events such as being connected or disconnected, or receiving an
@@ -758,7 +760,7 @@ message AttentionMessage {
   get activated, new orders appear in the message. Also note the
   delivery period of orders. In a message, there will most likely be
   orders with an active delivery period, while others have already
-  past or are yet to come.
+  passed or are yet to come.
 
   \medskip
 
