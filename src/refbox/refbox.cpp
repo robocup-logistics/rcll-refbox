@@ -319,7 +319,8 @@ LLSFRefBox::clips_assert_message(std::pair<std::string, unsigned short> &endpoin
     fact->set_slot("type", msg->GetTypeName());
     fact->set_slot("comp-id", comp_id);
     fact->set_slot("msg-type", msg_type);
-    fact->set_slot("rcvd-via", CLIPS::Value((client_id == 0) ? "BROADCAST" : "STREAM"));
+    fact->set_slot("rcvd-via",
+      CLIPS::Value((client_id == 0) ? "BROADCAST" : "STREAM", CLIPS::TYPE_SYMBOL));
     CLIPS::Values host_port(2, CLIPS::Value(CLIPS::TYPE_STRING));
     host_port[0] = endpoint.first;
     host_port[1] = CLIPS::Value(endpoint.second);
