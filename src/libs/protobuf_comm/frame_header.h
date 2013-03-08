@@ -52,15 +52,17 @@ namespace protobuf_comm {
  * software component. The component then can use the message type to
  * determine how the message must be parse the payload. It is appended
  * immediately following the header. The payload size does not include
- * the size of the header. The CRC32 checksum is likewise calculated
- * on the payload only.
+ * the size of the header.
  * All numbers are given in network byte order (big endian).
  * @author Tim Niemueller
  */
 typedef struct {
-  uint16_t  component_id;	/**< component id */
-  uint16_t  msg_type;		/**< message type */
-  uint32_t  payload_size;	/**< payload size in bytes */
+  /** component id */
+  uint16_t  component_id;
+  /** message type */
+  uint16_t  msg_type;
+  /** payload size in bytes */
+  uint32_t  payload_size;
 } frame_header_t;
 
 #pragma pack(pop)
