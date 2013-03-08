@@ -37,6 +37,7 @@
 package llsf_msgs;
 
 import "Time.proto";
+import "Pose2D.proto"
 
 message BeaconSignal {
   enum CompType {
@@ -50,7 +51,11 @@ message BeaconSignal {
   required uint64 seq = 2;
 
   // The robot's team name
-  required string team_name = 8;
+  required string team_name = 4;
   // The robot's name
-  required string peer_name = 9;
+  required string peer_name = 5;
+
+  // Position and orientation of the
+  // robot on the LLSF playing field
+  optional Pose2D pose = 7;
 }
