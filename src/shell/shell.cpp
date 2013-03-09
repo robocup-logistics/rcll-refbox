@@ -297,34 +297,21 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 		    break;
 		  }
 		}
-		if (can_be_placed_under_rfid && can_be_loaded_with) {
-		  MachinePlacingMenu mpm(panel_, m.name(),
-					 llsf_msgs::PuckState_Name(p.state()));
-		  mpm();
-		  if (mpm) {
-
-		    if (mpm.place_under_rfid()) {
-		      logf("Place %s under RFID of %s",
-			  llsf_msgs::PuckState_Name(p.state()).c_str(),
-			  m.name().c_str());
-		      set_puck_under_rfid(m.name(), p.id());
-		    } else {
-		      logf("Load machine %s with puck %s (%u)", m.name().c_str(),
-			  llsf_msgs::PuckState_Name(p.state()).c_str(), p.id());
-		      set_loaded_with(m.name(), p.id());
-		    }
+		MachinePlacingMenu mpm(panel_, m.name(),
+				       llsf_msgs::PuckState_Name(p.state()),
+				       can_be_placed_under_rfid, can_be_loaded_with);
+		mpm();
+		if (mpm) {
+		  if (mpm.place_under_rfid()) {
+		    logf("Place %s under RFID of %s",
+			 llsf_msgs::PuckState_Name(p.state()).c_str(),
+			 m.name().c_str());
+		    set_puck_under_rfid(m.name(), p.id());
+		  } else {
+		    logf("Load machine %s with puck %s (%u)", m.name().c_str(),
+			 llsf_msgs::PuckState_Name(p.state()).c_str(), p.id());
+		    set_loaded_with(m.name(), p.id());
 		  }
-		} else if (can_be_placed_under_rfid) {
-		  logf("Place %s under RFID of %s",
-				  llsf_msgs::PuckState_Name(p.state()).c_str(),
-				  m.name().c_str());
-		  set_puck_under_rfid(m.name(), p.id());
-		} else {
-		  logf("Load machine %s with puck %s (%u)",
-				  m.name().c_str(),
-				  llsf_msgs::PuckState_Name(p.state()).c_str(),
-				  p.id());
-		  set_loaded_with(m.name(), p.id());
 		}
 	      }
 	    }
@@ -656,7 +643,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     for (int i = 0; i < minfo->machines_size(); ++i) {
       std::map<std::string, LLSFRefBoxShellMachine *>::iterator mpanel;
       const llsf_msgs::Machine &mspec = minfo->machines(i);
-      //logf("Adding %s\n", mspec.name().c_str());
+      //logf("Adding %s @ (%f, %f, %f)\n", mspec.name().c_str(),
+      //     mspec.pose().x(), mspec.pose().y(), mspec.pose().ori());
       if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
 	mpanel->second->set_type(mspec.type());
 	std::vector<llsf_msgs::PuckState> inputs(mspec.inputs_size());

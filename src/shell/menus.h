@@ -53,7 +53,7 @@ namespace llsfrb_shell {
 class PassiveItem : public NCursesMenuItem
 {
  public:
-  PassiveItem(const char* text) : NCursesMenuItem(text)
+  PassiveItem(const std::string &text) : NCursesMenuItem(text.c_str())
   { options_off(O_SELECTABLE); }
 };
 
@@ -182,7 +182,8 @@ class PuckForMachineMenu : public Menu
 class MachinePlacingMenu : public Menu
 {
  public:
-  MachinePlacingMenu(NCursesWindow *parent, std::string machine, std::string puck);
+  MachinePlacingMenu(NCursesWindow *parent, std::string machine, std::string puck,
+		     bool can_be_placed_under_rfid, bool can_be_loaded_with);
 
   bool place_under_rfid();
 
@@ -191,6 +192,7 @@ class MachinePlacingMenu : public Menu
  private:
   void item_selected(bool under_rfid);
   virtual void On_Menu_Init();
+  int det_lines(bool can_be_placed_under_rfid, bool can_be_loaded_with);
 
  private:
   bool valid_selected_;

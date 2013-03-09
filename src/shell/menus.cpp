@@ -456,8 +456,10 @@ PuckForMachineMenu::operator bool() const
 
 
 MachinePlacingMenu::MachinePlacingMenu(NCursesWindow *parent,
-				       std::string machine, std::string puck)
-  : Menu(5, 30, (parent->lines() - 5)/2, (parent->cols() - 30)/2)
+				       std::string machine, std::string puck,
+				       bool can_be_placed_under_rfid, bool can_be_loaded_with)
+  : Menu(det_lines(can_be_placed_under_rfid, can_be_loaded_with), 30,
+	 (parent->lines() - 5)/2, (parent->cols() - 30)/2)
 {
   valid_selected_ = false;
   place_under_rfid_ = false;
@@ -466,20 +468,36 @@ MachinePlacingMenu::MachinePlacingMenu(NCursesWindow *parent,
   s_cancel_ = "Cancel";
   NCursesMenuItem **mitems = new NCursesMenuItem*[4];
 
-  SignalItem *item_0 = new SignalItem(s_under_rfid_);
-  SignalItem *item_1 = new SignalItem(s_loaded_with_);
-  mitems[0] = item_0;
-  mitems[1] = item_1;
-  mitems[2] = new SignalItem(s_cancel_);
-  mitems[3] = new NCursesMenuItem();
+  int idx = 0;
+
+  if (can_be_placed_under_rfid) {
+    SignalItem *item = new SignalItem(s_under_rfid_);
+    item->signal().connect(boost::bind(&MachinePlacingMenu::item_selected, this, true));
+    mitems[idx++] = item;
+  }
+
+  if (can_be_loaded_with) {
+    SignalItem *item = new SignalItem(s_loaded_with_);
+    item->signal().connect(boost::bind(&MachinePlacingMenu::item_selected, this, false));
+    mitems[idx++] = item;
+  }
+  mitems[idx++] = new SignalItem(s_cancel_);
+  mitems[idx++] = new NCursesMenuItem();
     
-  item_0->signal().connect(boost::bind(&MachinePlacingMenu::item_selected, this, true));
-  item_1->signal().connect(boost::bind(&MachinePlacingMenu::item_selected, this, false));
 
   set_mark("");
-  set_format(3, 1);
+  set_format(idx-1, 1);
   InitMenu(mitems, true, true);
   frame("Placing");
+}
+
+int
+MachinePlacingMenu::det_lines(bool can_be_placed_under_rfid, bool can_be_loaded_with)
+{
+  int rv = 3;
+  if (can_be_placed_under_rfid) rv += 1;
+  if (can_be_loaded_with) rv += 1;
+  return rv;
 }
 
 void
