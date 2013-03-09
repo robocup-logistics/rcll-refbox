@@ -79,8 +79,8 @@
     (bind ?p-pose-y (pb-field-value ?p-pose "y"))
     (bind ?p-pose-ori (pb-field-value ?p-pose "ori"))
     (bind ?pose (create$ ?p-pose-time-sec ?p-pose-time-usec ?p-pose-x ?p-pose-y ?p-pose-ori))
-    (modify ?rf (last-seen ?now) (warning-sent FALSE) (pose ?pose))
   )
+  (modify ?rf (last-seen ?now) (warning-sent FALSE) (pose ?pose))
 )
 
 (defrule net-recv-beacon-unknown
