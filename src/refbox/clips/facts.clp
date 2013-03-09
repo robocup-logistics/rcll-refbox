@@ -27,7 +27,7 @@
 
 (deftemplate machine-spec
   (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
-  (multislot inputs (type SYMBOL) (allowed-symbols S0 S1 S2))
+  (multislot inputs (type SYMBOL) (allowed-symbols S0 S1 S2) (default))
   (slot output (type SYMBOL) (allowed-symbols NONE S0 S1 S2 P1 P2 P3))
   (slot proc-time-min (type INTEGER))
   (slot proc-time-max (type INTEGER))

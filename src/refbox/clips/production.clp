@@ -474,3 +474,81 @@
   (retract ?pf) ; message will be destroyed after rule completes
   (printout warn "Received RemovePuckFromMachine while not in PRODUCTION from host " ?host crlf)
 )
+
+
+(defrule machine-update-loaded-with-no-inputs
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?uf <- (machine-update-loaded-with ?m $?new-lw)
+  (machine (name ?m) (mtype ?mtype))
+  (machine-spec (mtype ?mtype) (inputs $?inputs&:(= (length$ ?inputs) 0)))
+  =>
+  (retract ?uf)
+  (printout t "Ignoring load update " ?new-lw " for " ?m "|" ?mtype " w/o inputs" crlf)
+)
+
+(defrule machine-update-loaded-with-full
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?uf <- (machine-update-loaded-with ?m $?new-lw)
+  (machine (name ?m) (mtype ?mtype))
+  (machine-spec (mtype ?mtype) (inputs $?inputs&:(< (length$ ?inputs) (length$ ?new-lw))))
+  =>
+  (retract ?uf)
+  (printout t "Ignoring load update " ?new-lw " for " ?m "|" ?mtype " being already full" crlf)
+)
+
+(defrule machine-update-loaded-with-puck
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?uf <- (machine-update-loaded-with ?m $?new-lw)
+  (machine (name ?m) (mtype ?mtype) (puck-id ?puck-id&~0))
+  (machine-spec (mtype ?mtype) (inputs $?inputs&:(= (length$ ?inputs) (length$ ?new-lw))))
+  =>
+  (retract ?uf)
+  (printout t "Load update conflict " ?new-lw " for " ?m "|" ?mtype
+	    " with puck under RFID" crlf)
+)
+
+(defrule machine-update-loaded-with-test
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?gf <- (gamestate (phase PRODUCTION) (points ?points))
+  ?uf <- (machine-update-loaded-with ?m $?new-lw)
+  =>
+  (printout t test crlf)
+)
+
+(defrule machine-update-loaded-with
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?gf <- (gamestate (phase PRODUCTION) (points ?points))
+  ?uf <- (machine-update-loaded-with ?m $?new-lw)
+  ?mf <- (machine (name ?m) (mtype ?mtype) (loaded-with $?old-lw) (productions ?p))
+  (machine-spec (mtype ?mtype) (inputs $?inputs&:(> (length$ ?inputs) 0))
+		(output ?output) (points ?machine-points))
+
+  =>
+  (retract ?uf)
+  (printout t "Updating " ?m "|" ?mtype " load from " ?old-lw " to " ?new-lw crlf)
+  (bind ?new-lw-size (length$ ?new-lw))
+  
+  (if (= ?new-lw-size (length$ ?inputs))
+   then ; production at this machine is complete
+    (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
+  	    (productions (+ ?p 1)))
+    (modify ?gf (points (+ ?points ?machine-points)))
+    ;(modify ?pf (state ?output))
+    (delayed-do-for-all-facts ((?puck puck)) (member$ ?puck:id ?new-lw)
+      (if (member$ ?puck:id ?old-lw)
+        then (modify ?puck (state CONSUMED))
+        else (modify ?puck (state ?output))
+      )
+    )
+  )
+  (if (= ?new-lw-size 0)
+   then ; all pucks have been removed
+    (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON))
+  )
+  (if (> ?new-lw-size 0)
+   then ; partial input, more pucks required to complete
+    (modify ?mf (state WAITING) (loaded-with ?new-lw) (desired-lights YELLOW-ON))
+  )
+) 
+
+
