@@ -36,6 +36,7 @@
 
 #include "menus.h"
 #include "colors.h"
+#include <boost/format.hpp>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -177,7 +178,7 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
 {
   valid_item_ = false;
   int n_items = det_lines(minfo);
-  items_.resize(n_items + 1);
+  items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
   for (int i = 0; i < minfo->machines_size(); ++i) {
@@ -186,15 +187,40 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
       items_[ni++] =
 	std::make_tuple("* " + m.name() + " " +
 			llsf_msgs::PuckState_Name(m.puck_under_rfid().state()).substr(0,2),
-			m.name(), m.puck_under_rfid().id());
+			m.name(), m.puck_under_rfid().id(), m.puck_under_rfid().state());
     }
     for (int l = 0; l < m.loaded_with_size(); ++l) {
       items_[ni++] =
 	std::make_tuple("  " + m.name() + " " +
 			llsf_msgs::PuckState_Name(m.loaded_with(l).state()).substr(0,2),
-			m.name(), m.loaded_with(l).id());
+			m.name(), m.loaded_with(l).id(), m.loaded_with(l).state());
     }
   }
+
+  std::sort(items_.begin(), items_.end(),
+	    [](const ItemTuple &i1, const ItemTuple &i2) -> bool
+	    {
+	      const std::string &s1 = std::get<1>(i1);
+	      const std::string &s2 = std::get<1>(i2);
+	      std::string f1 = s1.substr(0,1);
+	      std::string f2 = s2.substr(0,1);
+	      bool star1 = (std::get<0>(i1)[0] == '*');
+	      bool star2 = (std::get<0>(i2)[0] == '*');
+	      int n1 = 0, n2 = 0;
+	      try {
+		n1 = std::stoi(s1.substr(1));
+		n2 = std::stoi(s2.substr(1));
+	      } catch (std::invalid_argument &e) {} // ignored
+	      return 
+		((f1 == f2) &&
+		 ((n1 < n2) || ((n1 == n2) && (star1 && ! star2)) ||
+		  (std::get<3>(i1) < std::get<3>(i2)))) ||
+		((f1 == "M") && (f2 != "M")) ||
+		((f1 == "D") && (f2.find_first_of("MD") == std::string::npos)) ||
+		((f1 == "T") && (f2.find_first_of("MDT") == std::string::npos)) ||
+		((f1 == "R") && (f2.find_first_of("MDTR") == std::string::npos));
+	    });
+
   for (int i = 0; i < ni; ++i) {
     SignalItem *item = new SignalItem(std::get<0>(items_[i]));
     item->signal().connect(boost::bind(&MachineWithPuckMenu::puck_selected, this,
@@ -252,9 +278,9 @@ MachineWithPuckMenu::det_lines(std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
 MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
   NCursesWindow *parent,
   std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : Menu(det_lines(minfo) + 1 + 2, 8 + 2,
+  : Menu(det_lines(minfo) + 1 + 2, 24 + 2,
 	 (parent->lines() - (det_lines(minfo) + 1))/2,
-	 (parent->cols() - 8)/2),
+	 (parent->cols() - 26)/2),
     minfo_(minfo)
 {
   machine_selected_ = false;
@@ -265,15 +291,34 @@ MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
     if (! m.has_puck_under_rfid() || (m.inputs_size() - m.loaded_with_size() > 0)) {
-      items_[ni++] = std::make_tuple(m.name(), i);
+      std::string s = boost::str(boost::format("%-3s|%s") % m.name() % m.type());
+      items_[ni++] = std::make_tuple(s, m.name(), i);
     }
   }
-  std::sort(items_.begin(), items_.end());
+  std::sort(items_.begin(), items_.end(),
+	    [](const ItemTuple &i1, const ItemTuple &i2) -> bool
+	    {
+	      const std::string &s1 = std::get<1>(i1);
+	      const std::string &s2 = std::get<1>(i2);
+	      std::string f1 = s1.substr(0,1);
+	      std::string f2 = s2.substr(0,1);
+	      int n1 = 0, n2 = 0;
+	      try {
+		n1 = std::stoi(s1.substr(1));
+		n2 = std::stoi(s2.substr(1));
+	      } catch (std::invalid_argument &e) {} // ignored
+	      return 
+		((f1 == f2) && (n1 < n2)) ||
+		((f1 == "M") && (f2 != "M")) ||
+		((f1 == "D") && (f2.find_first_of("MD") == std::string::npos)) ||
+		((f1 == "T") && (f2.find_first_of("MDT") == std::string::npos)) ||
+		((f1 == "R") && (f2.find_first_of("MDTR") == std::string::npos));
+	    });
 
   for (int i = 0; i < ni; ++i) {
     SignalItem *item = new SignalItem(std::get<0>(items_[i]));
     item->signal().connect(boost::bind(&MachineThatCanTakePuckMenu::machine_selected, this,
-				       std::get<1>(items_[i])));
+				       std::get<2>(items_[i])));
     mitems[i] = item;
   }
   s_cancel_ = "Cancel";
@@ -304,6 +349,42 @@ MachineThatCanTakePuckMenu::On_Menu_Init()
 {
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
+
+  for (size_t i = 0; i < items_.size(); ++i) {
+    const llsf_msgs::Machine &m = minfo_->machines(std::get<2>(items_[i]));
+    if (m.puck_under_rfid().id() != 0) {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)|A_BOLD);
+      addstr(i+1, 13,
+	     llsf_msgs::PuckState_Name(m.puck_under_rfid().state()).substr(0,2).c_str());
+      attroff(A_BOLD);
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+      addstr(i+1, 13, "  ");
+    }
+
+    int puck_x = 16;
+    for (int j = 0; j < m.inputs_size(); ++j) {
+      llsf_msgs::PuckState ps = m.inputs(j);
+      bool puck_loaded = false;
+      for (int k = 0; k < m.loaded_with_size(); ++k) {
+	if (m.loaded_with(k).state() == ps) {
+	  puck_loaded = true;
+	  break;
+	}
+      }
+
+      if (puck_loaded) {
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
+      } else {
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+      }
+
+      addstr(i+1, puck_x, llsf_msgs::PuckState_Name(ps).substr(0,2).c_str());
+      attroff(A_BOLD);
+      puck_x += 3;
+    }
+  }
+
   refresh();
 }
 

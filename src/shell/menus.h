@@ -120,7 +120,8 @@ class MachineWithPuckMenu : public Menu
   std::string s_cancel_;
   std::string machine_name_;
   unsigned int puck_id_;
-  std::vector<std::tuple<std::string, std::string, unsigned int>> items_;
+  typedef std::tuple<std::string, std::string, unsigned int, llsf_msgs::PuckState> ItemTuple;
+  std::vector<ItemTuple> items_;
 };
 
 
@@ -144,7 +145,8 @@ class MachineThatCanTakePuckMenu : public Menu
   bool machine_selected_;
   int machine_idx_;
   std::string s_cancel_;
-  std::vector<std::tuple<std::string, int>> items_;
+  typedef std::tuple<std::string, std::string, int> ItemTuple;
+  std::vector<ItemTuple> items_;
 };
 
 
