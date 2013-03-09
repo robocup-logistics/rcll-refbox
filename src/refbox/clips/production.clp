@@ -21,7 +21,7 @@
 
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (loaded-with) (junk 0) (productions 0) (state IDLE)
+    (modify ?machine (loaded-with) (productions 0) (state IDLE)
 	             (proc-start 0 0) (puck-id 0) (desired-lights GREEN-ON))
     ; could be used to restore if phase changes were allowed			    
     ;(switch ?machine:state
@@ -80,7 +80,7 @@
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
   (machine-spec (mtype ?mtype)  (inputs $?inputs)
 		(proc-time ?pt))
-  ?pf <- (puck (id ?id) (state ?ps&:(member$ ?ps ?inputs)))
+  (puck (id ?id) (state ?ps&:(member$ ?ps ?inputs)))
   ?mf <- (machine (name ?m) (mtype ?mtype) (state IDLE|WAITING)
 		  (loaded-with $?lw&:(not (any-puck-in-state ?ps ?lw))))
   (not (or (machine (name ?m2&~?m) (puck-id ?m2-pid&?id))
@@ -147,7 +147,6 @@
   =>
   (printout t ?mtype ": " ?ps " consumed @ " ?m ": " ?id crlf)
   (modify ?mf (state WAITING) (loaded-with (create$ ?lw ?id)) (desired-lights YELLOW-ON))
-  ;(modify ?pf (state CONSUMED))
 )
 
 (defrule machine-proc-done
@@ -159,14 +158,14 @@
 		(inputs $?inputs) (output ?output) (points ?machine-points))
   ?mf <- (machine (name ?m) (mtype ?mtype) (puck-id ?id)
 		  (loaded-with $?lw&:(= (+ (length$ ?lw) 1) (length$ ?inputs)))
-		  (productions ?p) (junk ?junk)
+		  (productions ?p)
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
   ?pf <- (puck (id ?id) (state ?ps))
   =>
   (printout t ?mtype " production done @ " ?m ": " ?id " (" ?ps
 	    " -> " ?output ", took " ?pt " sec, awarding " ?machine-points " points)" crlf)
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
-	  (productions (+ ?p 1)) (junk (+ ?junk (length$ ?lw))))
+	  (productions (+ ?p 1)))
   (modify ?gf (points (+ ?points ?machine-points)))
   (modify ?pf (state ?output))
   (foreach ?puck-id ?lw
@@ -181,7 +180,6 @@
   (rfid-input (machine ?m) (has-puck FALSE))
   ?mf <- (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
 		  (loaded-with $?lw) (puck-id ?id&~0))
-   ;?pf <- (puck (id ?id) (state S0))
   =>
   (if (> (length$ ?lw) 0) then
     (modify ?mf (state WAITING) (puck-id 0) (desired-lights YELLOW-ON))
@@ -195,7 +193,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE))
-  ?pf <- (puck (id ?id) (state ?ps))
+  (puck (id ?id) (state ?ps))
   (order (active TRUE) (product ?product&:(eq ?product ?ps)))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
@@ -208,7 +206,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE) (puck-id 0))
-  ?pf <- (puck (id ?id) (state ?ps))
+  (puck (id ?id) (state ?ps))
   (not (order (active TRUE) (product ?product&:(eq ?product ?ps))))
   =>
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
@@ -241,7 +239,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE))
-  ?pf <- (puck (id ?id) (state CONSUMED))
+  (puck (id ?id) (state CONSUMED))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
 	  (proc-time ?*RECYCLE-PROC-TIME*) (desired-lights GREEN-ON YELLOW-ON))
@@ -252,7 +250,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE) (puck-id 0))
-  ?pf <- (puck (id ?id) (state ?ps&~CONSUMED))
+  (puck (id ?id) (state ?ps&~CONSUMED))
   =>
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
 )
@@ -285,7 +283,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state CONSUMED))
+  (puck (id ?id) (state CONSUMED))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights))
 )
@@ -294,7 +292,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state S0))
+  (puck (id ?id) (state S0))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights YELLOW-ON))
 )
@@ -303,7 +301,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state S1))
+  (puck (id ?id) (state S1))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights YELLOW-ON RED-ON))
 )
@@ -312,7 +310,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state S2))
+  (puck (id ?id) (state S2))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights RED-ON))
 )
@@ -321,7 +319,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state P1))
+  (puck (id ?id) (state P1))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights GREEN-BLINK))
 )
@@ -330,7 +328,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state P2))
+  (puck (id ?id) (state P2))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights YELLOW-BLINK))
 )
@@ -339,7 +337,7 @@
   (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
-  ?pf <- (puck (id ?id) (state P3))
+  (puck (id ?id) (state P3))
   =>
   (modify ?mf (puck-id ?id) (state PROCESSING) (desired-lights RED-BLINK))
 )

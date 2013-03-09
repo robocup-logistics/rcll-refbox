@@ -17,7 +17,6 @@
   (multislot desired-lights (type SYMBOL)
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
 	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
-  (slot junk (type INTEGER) (default 0))
   (slot productions (type INTEGER) (default 0))
   (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID)
 	(default IDLE))
