@@ -348,3 +348,129 @@
   =>
   (modify ?mf (state IDLE) (puck-id 0) (desired-lights GREEN-ON))
 )
+
+
+
+(defrule prod-net-recv-PlacePuckUnderMachine
+  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p) (rcvd-via STREAM))
+  (gamestate (phase PRODUCTION) (state RUNNING))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (bind ?id (pb-field-value ?p "puck_id"))
+  ; retract all existing rfid-input facts for this puck, can happen if SPS
+  ; is enabled and then a network message is received
+  (delayed-do-for-all-facts ((?input rfid-input)) (= ?input:id ?id)
+    (retract ?input)
+  )
+  (bind ?machine (sym-cat (pb-field-value ?p "machine_name")))
+  (printout t "Placing puck " ?id " under machine " ?machine crlf)
+  (assert (rfid-input (machine ?machine) (has-puck TRUE) (id ?id)))
+)
+
+(defrule prod-net-recv-PlacePuckUnderMachine-not-running
+  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p) (rcvd-via STREAM))
+  (gamestate (phase PRODUCTION) (state ~RUNNING))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (bind ?id (pb-field-value ?p "puck_id"))
+  (bind ?machine (sym-cat (pb-field-value ?p "machine_name")))
+  (printout warn "Cannot place puck " ?id " under machine " ?machine " when not RUNNING" crlf)
+)
+
+(defrule prod-net-recv-PlacePuckUnderMachine-illegal
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Illegal PlacePuckUnderMachine message received from host " ?host crlf)
+)
+
+(defrule prod-net-recv-PlacePuckUnderMachine-out-of-phase
+  ?pf <- (protobuf-msg (type "llsf_msgs.PlacePuckUnderMachine") (ptr ?p)
+		       (rcvd-via STREAM) (rcvd-from ?host ?port))
+  (gamestate (phase ~PRODUCTION))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Received PlacePuckUnderMachine while not in PRODUCTION from host " ?host crlf)
+)
+
+(defrule prod-net-recv-LoadPuckInMachine
+  ?pf <- (protobuf-msg (type "llsf_msgs.LoadPuckInMachine") (ptr ?p)
+		       (rcvd-via STREAM) (rcvd-from ?host ?port))
+  (gamestate (phase PRODUCTION))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (do-for-fact ((?machine machine))
+	       (eq ?machine:name (sym-cat (pb-field-value ?p "machine_name")))
+    (bind ?puck-id (pb-field-value ?p "puck_id"))
+    (if (not (member$ ?puck-id ?machine:loaded-with))
+      then
+       (bind ?new-loaded-with (create$ ?machine:loaded-with ?puck-id))
+       (assert (machine-update-loaded-with ?machine:name ?new-loaded-with))
+    )
+  )
+)
+
+(defrule prod-net-recv-LoadPuckInMachine-illegal
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?pf <- (protobuf-msg (type "llsf_msgs.LoadPuckInMachine") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Illegal LoadPuckInMachine message received from host " ?host crlf)
+)
+
+(defrule prod-net-recv-LoadPuckInMachine-out-of-phase
+  ?pf <- (protobuf-msg (type "llsf_msgs.LoadPuckInMachine") (ptr ?p)
+		       (rcvd-via STREAM) (rcvd-from ?host ?port))
+  (gamestate (phase ~PRODUCTION))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Received LoadPuckInMachine while not in PRODUCTION from host " ?host crlf)
+)
+
+(defrule prod-net-recv-RemovePuckFromMachine
+  ?pf <- (protobuf-msg (type "llsf_msgs.RemovePuckFromMachine") (ptr ?p))
+  (gamestate (phase PRODUCTION))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  ;(printout t "Removing from Machine " (pb-field-value ?p "machine_name") crlf) 
+  (do-for-fact ((?machine machine))
+	       (eq ?machine:name (sym-cat (pb-field-value ?p "machine_name")))
+    (bind ?puck-id (pb-field-value ?p "puck_id"))
+    (if (= ?machine:puck-id ?puck-id)
+      then
+        ; retract all existing rfid-input facts for this puck, can happen if SPS
+        ; is enabled and then a network message is received
+        (delayed-do-for-all-facts ((?input rfid-input)) (= ?input:id ?puck-id)
+          (retract ?input)
+	)
+        (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
+			    (has-puck FALSE)))
+      else
+      (if (member$ ?puck-id ?machine:loaded-with)
+        then
+	  (bind ?new-loaded-with (delete-member$ ?machine:loaded-with ?puck-id))
+	  (assert (machine-update-loaded-with ?machine:name ?new-loaded-with))
+      )
+    )
+  )
+)
+
+(defrule prod-net-recv-RemovePuckFromMachine-illegal
+  ?pf <- (protobuf-msg (type "llsf_msgs.RemovePuckFromMachine") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Illegal RemovePuckFromMachine message received from host " ?host crlf)
+)
+
+(defrule prod-net-recv-RemovePuckFromMachine-out-of-phase
+  ?pf <- (protobuf-msg (type "llsf_msgs.RemovePuckFromMachine") (ptr ?p)
+		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
+  (gamestate (phase ~PRODUCTION))
+  =>
+  (retract ?pf) ; message will be destroyed after rule completes
+  (printout warn "Received RemovePuckFromMachine while not in PRODUCTION from host " ?host crlf)
+)
