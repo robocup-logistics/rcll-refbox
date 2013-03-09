@@ -7,7 +7,7 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(defrule machine-enable-exploration
+(defrule exploration-start
   ?gf <- (gamestate (phase EXPLORATION) (prev-phase ~EXPLORATION))
   ?mf <- (machine (mtype ?mtype))
   (machine-spec (mtype ?mtype) (light-code ?lc))
@@ -51,6 +51,26 @@
   (assert (attention-message "Entering Exploration Phase" 5))
 )
 
+(defrule exploration-pause
+  ?gf <- (gamestate (state PAUSED) (prev-state ~PAUSED))
+  =>
+  (modify ?gf (prev-state PAUSED))
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
+    (modify ?machine (desired-lights))
+  )
+)
+
+(defrule exploration-continue
+  ?gf <- (gamestate (state RUNNING) (prev-state ~RUNNING))
+  =>
+  (modify ?gf (prev-state RUNNING))
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
+    (do-for-fact ((?spec machine-spec) (?lc machine-light-code))
+		 (and (eq ?machine:mtype ?spec:mtype) (= ?spec:light-code ?lc:id))
+      (modify ?machine (desired-lights ?lc:code))
+    )
+  )
+)
 
 (defrule exploration-handle-report
   ?gf <- (gamestate (phase EXPLORATION) (points ?points) (game-time ?game-time))
