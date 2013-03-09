@@ -52,7 +52,7 @@
 )
 
 (defrule exploration-pause
-  ?gf <- (gamestate (state PAUSED) (prev-state ~PAUSED))
+  ?gf <- (gamestate (phase EXPLORATION) (state PAUSED) (prev-state ~PAUSED))
   =>
   (modify ?gf (prev-state PAUSED))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
@@ -61,7 +61,7 @@
 )
 
 (defrule exploration-continue
-  ?gf <- (gamestate (state RUNNING) (prev-state ~RUNNING))
+  ?gf <- (gamestate (phase EXPLORATION) (state RUNNING) (prev-state ~RUNNING))
   =>
   (modify ?gf (prev-state RUNNING))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
