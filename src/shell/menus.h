@@ -41,6 +41,7 @@
 #include <cursesm.h>
 #include <string>
 #include <boost/signals2.hpp>
+#include <boost/asio.hpp>
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/PuckInfo.pb.h>
 
@@ -74,7 +75,23 @@ public:
 class Menu : public NCursesMenu
 {
  public:
-  Menu(NCursesWindow *parent, int n_items, NCursesMenuItem **items);
+  Menu(int nlines, int ncols, int begin_y, int begin_x);
+  virtual NCursesMenuItem* operator()(void);
+
+ private:
+  void start_keyboard();
+  void handle_keyboard(const boost::system::error_code& error);
+
+ private:
+  boost::asio::io_service io_service_;
+  boost::asio::posix::stream_descriptor stdin_;
+};
+
+
+class GenericItemsMenu : public Menu
+{
+ public:
+  GenericItemsMenu(NCursesWindow *parent, int n_items, NCursesMenuItem **items);
 
  private:
   virtual void On_Menu_Init();
@@ -85,7 +102,7 @@ class Menu : public NCursesMenu
 };
 
 
-class MachineWithPuckMenu : public NCursesMenu
+class MachineWithPuckMenu : public Menu
 {
  public:
   MachineWithPuckMenu(NCursesWindow *parent, std::shared_ptr<llsf_msgs::MachineInfo> minfo);
@@ -107,7 +124,7 @@ class MachineWithPuckMenu : public NCursesMenu
 };
 
 
-class MachineThatCanTakePuckMenu : public NCursesMenu
+class MachineThatCanTakePuckMenu : public Menu
 {
  public:
   MachineThatCanTakePuckMenu(NCursesWindow *parent,
@@ -131,7 +148,7 @@ class MachineThatCanTakePuckMenu : public NCursesMenu
 };
 
 
-class PuckForMachineMenu : public NCursesMenu
+class PuckForMachineMenu : public Menu
 {
  public:
   PuckForMachineMenu(NCursesWindow *parent,
@@ -162,7 +179,7 @@ class PuckForMachineMenu : public NCursesMenu
 };
 
 
-class MachinePlacingMenu : public NCursesMenu
+class MachinePlacingMenu : public Menu
 {
  public:
   MachinePlacingMenu(NCursesWindow *parent, std::string machine, std::string puck);

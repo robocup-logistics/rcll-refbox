@@ -1006,7 +1006,7 @@ LLSFRefBoxShell::run()
   state_items[num_state_values+1] = new NCursesMenuItem();
 
   try {
-    m_state_ = new Menu(panel_, num_state_values+1, state_items);
+    m_state_ = new GenericItemsMenu(panel_, num_state_values+1, state_items);
     m_state_->frame("Set State");
     m_state_->hide();
   } catch (NCursesException &e) {
@@ -1030,7 +1030,7 @@ LLSFRefBoxShell::run()
   phase_items[num_phase_values+1] = new NCursesMenuItem();
 
   try {
-    m_phase_ = new Menu(panel_, num_phase_values+1, phase_items);
+    m_phase_ = new GenericItemsMenu(panel_, num_phase_values+1, phase_items);
     m_phase_->frame("Set Phase");
     m_phase_->hide();
   } catch (NCursesException &e) {

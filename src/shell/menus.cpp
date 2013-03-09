@@ -42,11 +42,109 @@ namespace llsfrb_shell {
 }
 #endif
 
+static const int CMD_QUIT   = MAX_COMMAND + 1;
+static const int CMD_ACTION = MAX_COMMAND + 2;
 
-Menu::Menu(NCursesWindow *parent, int n_items, NCursesMenuItem **items)
-  : NCursesMenu(n_items + 2, max_cols(n_items, items) + 2,
-		(parent->lines() - max_cols(n_items, items))/2,
-		(parent->cols() - max_cols(n_items, items))/2),
+Menu::Menu(int nlines, int ncols, int begin_y, int begin_x)
+: NCursesMenu(nlines, ncols, begin_y, begin_x),
+  stdin_(io_service_, dup(STDIN_FILENO))
+{}
+
+NCursesMenuItem*
+Menu::operator()(void)
+{
+  set_current(* (*this)[0]);
+
+  post();
+  show();
+  refresh();
+
+  nodelay(true);
+  start_keyboard();
+  io_service_.run();
+  io_service_.reset();
+
+  unpost();
+  hide();
+  refresh();
+  if (options() & O_ONEVALUE)
+    return current_item();
+  else
+    return NULL;
+}
+
+void
+Menu::start_keyboard()
+{
+  stdin_.async_read_some(boost::asio::null_buffers(),
+			 boost::bind(&Menu::handle_keyboard, this,
+				     boost::asio::placeholders::error));
+}
+
+void
+Menu::handle_keyboard(const boost::system::error_code& error)
+{
+  if (! error) {
+    int drvCmnd;
+    int err;
+    int c;
+    bool b_action = FALSE;
+    while ((c=getKey()) != ERR) {
+      if ((drvCmnd = virtualize(c)) == CMD_QUIT)  break;
+      switch((err=driver(drvCmnd))) {
+      case E_REQUEST_DENIED:
+	On_Request_Denied(c);
+	break;
+      case E_NOT_SELECTABLE:
+	On_Not_Selectable(c);
+	break;
+      case E_UNKNOWN_COMMAND:
+	if (drvCmnd == CMD_ACTION) {
+	  if (options() & O_ONEVALUE) {
+	    NCursesMenuItem* itm = current_item();
+	    assert(itm != 0);
+	    if (itm->options() & O_SELECTABLE)
+	    {
+	      b_action = itm->action();
+	      refresh();
+	    }
+	    else
+	      On_Not_Selectable(c);
+	  }
+	  else {
+	    int n = count();
+	    for(int i=0; i<n; i++) {
+	      NCursesMenuItem* itm = (*this)[i];
+	      if (itm->value()) {
+		b_action |= itm->action();
+		refresh();
+	      }
+	    }
+	  }
+	} else
+	  On_Unknown_Command(c);
+	break;
+      case E_NO_MATCH:
+	On_No_Match(c);
+	break;
+      case E_OK:
+	break;
+      default:
+	OnError(err);
+      }
+    }
+    
+    if (!b_action) {
+      start_keyboard();
+    }
+  }
+}
+
+
+GenericItemsMenu::GenericItemsMenu(NCursesWindow *parent, int n_items, NCursesMenuItem **items)
+  : Menu(n_items + 2, max_cols(n_items, items) + 2,
+	 (parent->lines() - max_cols(n_items, items))/2,
+	 (parent->cols() - max_cols(n_items, items))/2),
     parent_(parent)
 {
   set_mark("");
@@ -54,7 +152,7 @@ Menu::Menu(NCursesWindow *parent, int n_items, NCursesMenuItem **items)
 }
 
 void
-Menu::On_Menu_Init()
+GenericItemsMenu::On_Menu_Init()
 {
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
@@ -62,7 +160,7 @@ Menu::On_Menu_Init()
 }
 
 int
-Menu::max_cols(int n_items, NCursesMenuItem **items)
+GenericItemsMenu::max_cols(int n_items, NCursesMenuItem **items)
 {
   int rv = 0;
   for (int i = 0; i < n_items; ++i) {
@@ -73,9 +171,9 @@ Menu::max_cols(int n_items, NCursesMenuItem **items)
 
 MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
 					 std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : NCursesMenu(det_lines(minfo) + 1 + 2, 10 + 2,
-		(parent->lines() - (det_lines(minfo) + 1))/2,
-		(parent->cols() - 10)/2)
+  : Menu(det_lines(minfo) + 1 + 2, 10 + 2,
+	 (parent->lines() - (det_lines(minfo) + 1))/2,
+	 (parent->cols() - 10)/2)
 {
   valid_item_ = false;
   int n_items = det_lines(minfo);
@@ -154,9 +252,9 @@ MachineWithPuckMenu::det_lines(std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
 MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
   NCursesWindow *parent,
   std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : NCursesMenu(det_lines(minfo) + 1 + 2, 8 + 2,
-		(parent->lines() - (det_lines(minfo) + 1))/2,
-		(parent->cols() - 8)/2),
+  : Menu(det_lines(minfo) + 1 + 2, 8 + 2,
+	 (parent->lines() - (det_lines(minfo) + 1))/2,
+	 (parent->cols() - 8)/2),
     minfo_(minfo)
 {
   machine_selected_ = false;
@@ -232,9 +330,9 @@ PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *parent,
 				       std::shared_ptr<llsf_msgs::PuckInfo> pinfo,
 				       std::shared_ptr<llsf_msgs::MachineInfo> minfo,
 				       const llsf_msgs::Machine &machine)
-  : NCursesMenu(det_lines(pinfo, minfo, machine) + 1 + 2, 14 + 2,
-		(parent->lines() - (det_lines(pinfo, minfo, machine) + 1))/2,
-		(parent->cols() - 14)/2),
+  : Menu(det_lines(pinfo, minfo, machine) + 1 + 2, 14 + 2,
+	 (parent->lines() - (det_lines(pinfo, minfo, machine) + 1))/2,
+	 (parent->cols() - 14)/2),
     pinfo_(pinfo)
 {
   puck_selected_ = false;
@@ -359,7 +457,7 @@ PuckForMachineMenu::operator bool() const
 
 MachinePlacingMenu::MachinePlacingMenu(NCursesWindow *parent,
 				       std::string machine, std::string puck)
-  : NCursesMenu(5, 30, (parent->lines() - 5)/2, (parent->cols() - 30)/2)
+  : Menu(5, 30, (parent->lines() - 5)/2, (parent->cols() - 30)/2)
 {
   valid_selected_ = false;
   place_under_rfid_ = false;
