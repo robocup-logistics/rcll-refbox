@@ -71,6 +71,29 @@
   (foreach ?v ?lv (unwatch rules (sym-cat ?v)))
 )
 
+(defrule reset-game
+  ?gs <- (gamestate (state INIT) (prev-state ~INIT))
+  =>
+  (bind ?nc-id (create$))
+  (bind ?nc-host (create$))
+  (bind ?nc-port (create$))
+  ; Remember network clients
+  (do-for-all-facts ((?client network-client)) TRUE
+    (bind ?nc-id   (create$ ?nc-id ?client:id))
+    (bind ?nc-host (create$ ?nc-id ?client:host))
+    (bind ?nc-port (create$ ?nc-id ?client:port))
+  )
+  ; reset the CLIPS environment
+  (reset)
+  (assert (init))
+  ; restore network clients
+  (foreach ?cid ?nc-id
+    (assert (network-client (id ?cid)
+			    (host (nth$ ?cid-index ?nc-host))
+			    (port (nth$ ?cid-index ?nc-host))))
+  )
+)
+
 (defrule start-game
   ?gs <- (gamestate (phase PRE_GAME) (state RUNNING))
   =>
