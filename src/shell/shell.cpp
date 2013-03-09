@@ -486,7 +486,8 @@ LLSFRefBoxShell::send_remove_puck(std::string &machine_name, unsigned int puck_i
 void
 LLSFRefBoxShell::client_connected()
 {
-  p_state_->clear();
+  p_state_->erase();
+  p_state_->standend();
   p_state_->addstr("CONNECTED");
   p_phase_->erase();
   io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
@@ -512,7 +513,9 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
   p_phase_->erase();
   p_time_->erase();
   p_points_->erase();
+  p_state_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   p_state_->addstr("DISCONNECTED");
+  p_state_->standend();
   //p_state_->addstr(error.message().c_str());
 
   if (! quit_) {
@@ -571,7 +574,15 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
   if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
     s_state_ = llsf_msgs::GameState::State_Name(g->state());
     p_state_->erase();
+    if (g->state() == llsf_msgs::GameState::WAIT_START ||
+	g->state() == llsf_msgs::GameState::PAUSED)
+    {
+      p_state_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
+    } else if (g->state() == llsf_msgs::GameState::RUNNING) {
+      p_state_->attron(' '|COLOR_PAIR(COLOR_GREEN_ON_BACK)|A_BOLD);
+    }
     p_state_->addstr(llsf_msgs::GameState::State_Name(g->state()).c_str());
+    p_state_->standend();
 
     p_phase_->erase();
     p_phase_->addstr(llsf_msgs::GameState::Phase_Name(g->phase()).c_str());
@@ -972,7 +983,10 @@ LLSFRefBoxShell::run()
   p_time_   = new NCursesPanel(1, 15, height-2,  panel_->width() - 16);
   p_points_ = new NCursesPanel(1, 15, height-1,  panel_->width() - 16);
 
+  p_state_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   p_state_->addstr("DISCONNECTED");
+  p_state_->standend();
+
   p_points_->addstr("0");
 
   // State menu
