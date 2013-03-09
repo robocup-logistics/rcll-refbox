@@ -34,3 +34,7 @@
 (deffunction is-odd-int (?num)
   (return (eq (mod ?num 2) 1))
 )
+
+(deffunction non-zero-pose ($?pose)
+  (return (or (<> (nth$ 1 ?pose) 0.0) (<> (nth$ 2 ?pose) 0.0) (<> (nth$ 3 ?pose) 0.0)))
+)

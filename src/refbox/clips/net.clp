@@ -68,7 +68,19 @@
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
   (bind ?time (pb-field-value ?p "time"))
-  (modify ?rf (last-seen ?now) (warning-sent FALSE))
+  (bind ?pose (create$ 0 0 0 0 0))
+  (if (pb-has-field ?p "pose")
+   then
+    (bind ?p-pose (pb-field-value ?p "pose"))
+    (bind ?p-pose-time (pb-field-value ?p-pose "timestamp"))
+    (bind ?p-pose-time-sec (pb-field-value ?p-pose-time "sec"))
+    (bind ?p-pose-time-usec (/ (pb-field-value ?p-pose-time "nsec") 1000))
+    (bind ?p-pose-x (pb-field-value ?p-pose "x"))
+    (bind ?p-pose-y (pb-field-value ?p-pose "y"))
+    (bind ?p-pose-ori (pb-field-value ?p-pose "ori"))
+    (bind ?pose (create$ ?p-pose-time-sec ?p-pose-time-usec ?p-pose-x ?p-pose-y ?p-pose-ori))
+    (modify ?rf (last-seen ?now) (warning-sent FALSE) (pose ?pose))
+  )
 )
 
 (defrule net-recv-beacon-unknown
@@ -219,6 +231,19 @@
       (pb-set-field ?r-time "nsec" (* (nth$ 2 ?robot:last-seen) 1000))
       (pb-set-field ?r "last_seen" ?r-time) ; destroys ?r-time!
     )
+    ; If we have a pose publish it
+    (if (non-zero-pose ?robot:pose) then
+      (bind ?p (pb-field-value ?r "pose"))
+      (bind ?p-time (pb-field-value ?p "timestamp"))
+      (pb-set-field ?p-time "sec" (nth$ 1 ?robot:pose-time))
+      (pb-set-field ?p-time "nsec" (* (nth$ 2 ?robot:pose-time) 1000))
+      (pb-set-field ?p "timestamp" ?p-time)
+      (pb-set-field ?p "x" (nth$ 1 ?robot:pose))
+      (pb-set-field ?p "y" (nth$ 2 ?robot:pose))
+      (pb-set-field ?p "ori" (nth$ 3 ?robot:pose))
+      (pb-set-field ?r "pose" ?p)
+    )
+
     (pb-set-field ?r "name" ?robot:name)
     (pb-set-field ?r "team" ?robot:team)
     (pb-set-field ?r "host" ?robot:host)
@@ -271,6 +296,19 @@
       )
       (pb-set-field ?m "puck_under_rfid" ?p)
     )
+    ; If we have a pose publish it
+    (if (non-zero-pose ?machine:pose) then
+      (bind ?p (pb-field-value ?m "pose"))
+      (bind ?p-time (pb-field-value ?p "timestamp"))
+      (pb-set-field ?p-time "sec" (nth$ 1 ?machine:pose-time))
+      (pb-set-field ?p-time "nsec" (* (nth$ 2 ?machine:pose-time) 1000))
+      (pb-set-field ?p "timestamp" ?p-time)
+      (pb-set-field ?p "x" (nth$ 1 ?machine:pose))
+      (pb-set-field ?p "y" (nth$ 2 ?machine:pose))
+      (pb-set-field ?p "ori" (nth$ 3 ?machine:pose))
+      (pb-set-field ?m "pose" ?p)
+    )
+      
     ; In exploration phase, indicate whether this was correctly reported
     (do-for-fact ((?gs gamestate)) (eq ?gs:phase EXPLORATION)
       (do-for-fact ((?report exploration-report)) (eq ?report:name ?machine:name)
@@ -301,6 +339,18 @@
     (bind ?p (pb-create "llsf_msgs.Puck"))
     (pb-set-field ?p "id" ?puck:id)
     (pb-set-field ?p "state" (str-cat ?puck:state))
+    ; If we have a pose publish it
+    (if (non-zero-pose ?puck:pose) then
+      (bind ?ps (pb-field-value ?p "pose"))
+      (bind ?ps-time (pb-field-value ?ps "timestamp"))
+      (pb-set-field ?ps-time "sec" (nth$ 1 ?puck:pose-time))
+      (pb-set-field ?ps-time "nsec" (* (nth$ 2 ?puck:pose-time) 1000))
+      (pb-set-field ?ps "timestamp" ?ps-time)
+      (pb-set-field ?ps "x" (nth$ 1 ?puck:pose))
+      (pb-set-field ?ps "y" (nth$ 2 ?puck:pose))
+      (pb-set-field ?ps "ori" (nth$ 3 ?puck:pose))
+      (pb-set-field ?p "pose" ?ps)
+    )
     (pb-add-list ?pi "pucks" ?p) ; destroys ?p
   )
 

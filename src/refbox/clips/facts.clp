@@ -21,8 +21,11 @@
   (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID)
 	(default IDLE))
   (slot proc-time (type INTEGER))
-  (multislot proc-start (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
+  (multislot proc-start (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot puck-id (type INTEGER) (default 0))
+   ; x y theta (meters and rad)
+  (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
+  (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
 (deftemplate machine-spec
@@ -46,6 +49,9 @@
   (slot index (type INTEGER))
   (slot id (type INTEGER))
   (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 CONSUMED) (default S0))
+   ; x y theta (meters and rad)
+  (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
+  (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
 (deftemplate robot
@@ -53,9 +59,11 @@
   (slot name (type STRING))
   (slot host (type STRING))
   (slot port (type INTEGER))
-  (multislot position (type FLOAT) (cardinality 3 3)) ; x y theta
   (multislot last-seen (type INTEGER) (cardinality 2 2))
   (slot warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+   ; x y theta (meters and rad)
+  (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
+  (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
 (deftemplate signal
@@ -120,6 +128,17 @@
   (slot game-time (type FLOAT))
 )
 
+; Machine directions in LLSF arena frame when looking from bird's eye perspective
+(defglobal
+  ?*M-RIGHT*      = 0
+  ?*M-UP*         = (/ (pi) 2.0)
+  ?*M-LEFT*       = (pi)
+  ?*M-DOWN*       = (* (/ 3.0 2.0) (pi))
+  ?*M-UP-RIGHT*   = (* (/ 1.0 4.0) (pi))
+  ?*M-UP-LEFT*   =  (* (/ 3.0 4.0) (pi))
+  ?*M-DOWN-LEFT*  = (* (/ 5.0 4.0) (pi))
+  ?*M-DOWN-RIGHT* = (* (/ 7.0 4.0) (pi))
+)
 
 (deffacts startup
   (time 0 0)
@@ -133,22 +152,24 @@
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
   (signal (type exploration-info) (time (create$ 0 0)) (seq 1))
-  (machine (name M1) (mtype T1))
-  (machine (name M2) (mtype T1))
-  (machine (name M3) (mtype T2))
-  (machine (name M4) (mtype T2))
-  (machine (name M5) (mtype T3))
-  (machine (name M6) (mtype T3))
-  (machine (name M7) (mtype T4))
-  (machine (name M8) (mtype T4))
-  (machine (name M9) (mtype T5))
-  (machine (name M10) (mtype T5))
-  (machine (name D1) (mtype DELIVER))
-  (machine (name D2) (mtype DELIVER))
-  (machine (name D3) (mtype DELIVER))
-  (machine (name TST) (mtype TEST))
-  (machine (name R1) (mtype RECYCLE))
-  (machine (name R2) (mtype RECYCLE))
+  ; Positions are the example ones from the rulebook and
+  ; will most likely be different during the tournament
+  (machine (name M1)  (mtype T1)      (pose 3.92 1.68 ?*M-DOWN*))
+  (machine (name M2)  (mtype T1)      (pose 3.92 3.92 ?*M-LEFT*))
+  (machine (name M3)  (mtype T2)      (pose 2.80 0.56 ?*M-RIGHT*))
+  (machine (name M4)  (mtype T2)      (pose 2.80 1.68 ?*M-DOWN*))
+  (machine (name M5)  (mtype T3)      (pose 2.80 2.80 ?*M-UP*))
+  (machine (name M6)  (mtype T3)      (pose 2.80 3.92 ?*M-LEFT*))
+  (machine (name M7)  (mtype T4)      (pose 2.80 5.04 ?*M-UP*))
+  (machine (name M8)  (mtype T4)      (pose 1.68 1.68 ?*M-RIGHT*))
+  (machine (name M9)  (mtype T5)      (pose 1.68 3.92 ?*M-LEFT*))
+  (machine (name M10) (mtype T5)      (pose 1.68 5.04 ?*M-DOWN*))
+  (machine (name D1)  (mtype DELIVER) (pose 5.34 3.15 ?*M-LEFT*))
+  (machine (name D2)  (mtype DELIVER) (pose 5.34 2.80 ?*M-LEFT*))
+  (machine (name D3)  (mtype DELIVER) (pose 5.34 2.45 ?*M-LEFT*))
+  (machine (name TST) (mtype TEST)    (pose 5.40 5.40 ?*M-DOWN-LEFT*))
+  (machine (name R1)  (mtype RECYCLE) (pose 5.40 0.20 ?*M-UP-LEFT*))
+  (machine (name R2)  (mtype RECYCLE) (pose 0.20 5.40 ?*M-DOWN-RIGHT*))
   (puck (index  1) (id  1))
   (puck (index  2) (id  2))
   (puck (index  3) (id  3))
