@@ -277,6 +277,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
   clips_->add_function("pb-field-names", sigc::slot<CLIPS::Values, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_names)));
   clips_->add_function("pb-field-type", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_type)));
+  clips_->add_function("pb-has-field", sigc::slot<bool, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_has_field)));
   clips_->add_function("pb-field-label", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_label)));
   clips_->add_function("pb-field-value", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_value)));
   clips_->add_function("pb-field-list", sigc::slot<CLIPS::Values, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_list)));
@@ -452,6 +453,27 @@ LLSFRefBox::clips_pb_field_type(void *msgptr, std::string field_name)
   default: return CLIPS::Value("UNKNOWN", CLIPS::TYPE_SYMBOL);
   }
 }
+
+bool
+LLSFRefBox::clips_pb_has_field(void *msgptr, std::string field_name)
+{
+  std::shared_ptr<google::protobuf::Message> *m =
+    static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
+  if (!*m) return false;
+
+  const Descriptor *desc       = (*m)->GetDescriptor();
+  const FieldDescriptor *field = desc->FindFieldByName(field_name);
+  if (! field)  return false;
+
+  const Reflection *refl       = (*m)->GetReflection();
+
+  if (field->is_repeated()) {
+    return (refl->FieldSize(**m, field) > 0);
+  } else {
+    return refl->HasField(**m, field);
+  }
+}
+
 
 CLIPS::Value
 LLSFRefBox::clips_pb_field_label(void *msgptr, std::string field_name)
