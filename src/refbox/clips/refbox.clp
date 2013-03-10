@@ -110,13 +110,14 @@
   (assert (attention-message "Switching to production phase" 5))
 )
 
-(defrule end-game
+(defrule game-over
   (time $?now)
   ?gs <- (gamestate (phase PRODUCTION) (state RUNNING)
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED))
   (assert (attention-message "Game Over" 60))
+  (printout t "Game Over" crlf)
 )
 
 (defrule goto-pre-game
