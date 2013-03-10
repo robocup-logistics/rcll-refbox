@@ -210,10 +210,10 @@ explore which machine is producing/refining what semi-finished
 products and produce as many products as possible.
 
 Already at this early stage it became apparent, that just observing
-the game and awarding points is complex. Especially when introducing
-more goods that can be processed, and when expecting more robots
-operating concurrently in the future, we need to consider
-options to automate the evaluation of the game.
+the game and awarding points is complex. For the future, when
+introducing more goods that can be processed, or when expecting more
+robots operating concurrently, we need to consider options to automate
+the evaluation of the game.
 
 The Referee Box (refbox) controls and monitors the game to perform
 this very evaluation. We have tried to make the refbox as autonomous
@@ -221,13 +221,13 @@ as possible. Textual and graphical user interfaces allow for human
 instruction and supervision. This is in particular required in
 unexpected situations (e.g. humans need to stop the game if a robot
 catches fire) or where perceptual input is not available (a puck is
-accidentally moved out of the area of a machine which is still wait
-ing for more goods). Several parts of the refbox were influenced by
-the Fawkes Robot Software Framework~\cite{Fawkes} -- some libraries
-like the configuration and logging facilities are simplified
-versions of the Fawkes libraries -- and ROS~\cite{ROS}. The
-internally used CLIPS environment is based on the Carologistics'
-task coordination approach~\cite{CLIPS-Agent}.
+accidentally moved out of the area of a machine which is still waiting
+for more goods). Several parts of the refbox were influenced by the
+Fawkes Robot Software Framework~\cite{Fawkes} -- some libraries like
+the configuration and logging facilities are simplified versions of
+the Fawkes libraries -- and ROS~\cite{ROS}. The internally used CLIPS
+environment is based on the Carologistics' task coordination
+approach~\cite{CLIPS-Agent}.
 
 This manual describes how to integrate a robot system with the refbox,
 in particular the communication protocols involved. For detailed
@@ -323,12 +323,12 @@ the contained protobuf message and determines how the message is
 deserialized. The payload size specifies the amount of data to read
 for the next message for deserialization.
 
-The message must be 4-byte-aligned, i.e. the message structure when
-sent over the network must have a size of exactly eight bytes. All
-contained numbers must be encoded in network byte order (big endian,
-most significant bit first). The numbers are encoded as 16
-(\texttt{uint16\_t}) or 32 bit (\texttt{uint32\_t}) unsigned integers
-respectively.
+The message must be 4-byte-aligned, i.e. the size of the frame header
+message structure sums up to exactly eight bytes when sent over the
+network. All contained numbers must be encoded in network byte order
+(big endian, most significant bit first). The numbers are encoded as
+16 (\texttt{uint16\_t}) or 32 bit (\texttt{uint32\_t}) unsigned
+integers respectively.
 
 When sending a message over the network, first the protobuf message is
 serialized (to determine the payload size). Then the frame header is
@@ -387,10 +387,12 @@ described above for both communication modes. It is available as part
 of the refbox source code\footnote{Instructions how to obtain the code
   at \url{http://trac.fawkesrobotics.org/wiki/LLSFRefBox/Install}} in
 the \texttt{src/libs/protobuf\_comm} directory. The implementation
-uses Boost Asio for the asynchronous I/O implementation, and Boost
-Signals2 to provide events that your code can connect to. The
-protobuf\_comm library currently requires a compiler accepting code
-according to the C++11 standard, e.g. GCC 4.6 or higher.
+uses Boost Asio\footnote{\url{http://www.boost.org/libs/asio}} for the
+asynchronous I/O implementation, and Boost
+Signals2\footnote{\url{http://www.boost.org/libs/signals2/}} to
+provide events that your code can connect to. The protobuf\_comm
+library currently requires a compiler accepting code according to the
+C++11 standard, e.g. GCC 4.6 or higher.
 
 The library has three principal classes of interaction that you may or
 may not use. First, the ProtobufStreamClient class implements a TCP
@@ -406,17 +408,16 @@ ignored.
 
 The library uses the signal-slot event pattern to notify your code
 about events such as being connected or disconnected, or receiving an
-incoming message. This is built on top of
-Boost.Signals2\footnote{Cf. \url{http://www.boost.org/libs/signals2/}}. Note
-that this is incompatible with Boost.Signals. Signals2 was chosen
-because it provides an increased thread-safety. The
-ProtobufStreamClient and ProtobufBroadcastPeer run a concurrent thread
-to process incoming data. So when a signal is issued, it happens in
-the context of the receiving thread. For code that is not thread-safe,
-or that expects events only from a particular thread (e.g. GUI
-applications using Gtkmm or even text interfaces using ncurses), you
-need to implement a dispatch pattern that will issue an event that is
-evaluated in that main thread.
+incoming message. This is built on top of Boost Signals2. Note that
+this is incompatible with Boost.Signals. Signals2 was chosen because
+it provides an increased thread-safety. The ProtobufStreamClient and
+ProtobufBroadcastPeer run a concurrent thread to process incoming
+data. So when a signal is issued, it happens in the context of the
+receiving thread. For code that is not thread-safe, or that expects
+events only from a particular thread (e.g. GUI applications using
+Gtkmm or even text interfaces using ncurses), you need to implement a
+dispatch pattern that will issue an event that is evaluated in that
+main thread.
 
 \begin{figure}
   \lstinputlisting[name=peer,showlines,style=really-small-cpp,
@@ -459,7 +460,7 @@ connected or disconnected signals exist. To detect that the refbox is
 reachable listen to incoming BeaconSignal messages (see below). In the
 \texttt{peer\_msg} method there are two ways to decide what message
 has been received. You can either decide based on the component ID and
-message type numbers (always both!), or you can use C++ Runtime Type
+message type numbers (always both!), or you can use C++ Run-time Type
 Information (RTTI). The latter is preferred and shown in the
 example. It provides strong typing guarantees. As always, do not
 forget to free the peer's resources by deleting it when no longer
@@ -483,7 +484,7 @@ when the connection is lost the \texttt{client\_disconnected} method
 error. In the \texttt{client\_msg} method there are two ways to decide
 what message has been received. You can either decide based on the
 component ID and message type numbers (always both!), or you can use
-C++ Runtime Type Information (RTTI). The latter is preferred and shown
+C++ Run-time Type Information (RTTI). The latter is preferred and shown
 in the example. It provides strong typing guarantees. As always, do
 not forget to free the peer's resources by deleting it when no longer
 required (destructor in line 29ff.).
@@ -529,7 +530,9 @@ for updates to the messages and integrate those
 changes\footnote{Register at
   \url{https://lists.kbsg.rwth-aachen.de/listinfo/llsf-refbox-commits}
   to the llsf-refbox-commits mailing list to be notified of any pushes
-  to the refbox repository.}.
+  to the refbox repository.}. The intention is to keep changes at a
+minimum, especially when approaching a tournament. But in certain
+situations may be necessary, e.g. to fix problems.
 
 \bigskip
 
@@ -604,29 +607,29 @@ message AttentionMessage {
   \end{minipage}
 \end{minipage}
 
-\msgspec{BeaconSignal.proto}{Peer-to-Peer}{1\,sec}{all}{any}%
+\msgspec{BeaconSignal.proto}{Peer-to-Peer}{1\,sec}{robots \& refbox}{any}%
 {%
   The BeaconSignal is periodically sent to detect robots and the
   refbox on the network. If a robot is initially detected the time
   value is used to compare the clock offset (\emph{not} taking network
   delays into account). The controller may issue a warning if this is
   too large. The team and robot name are required to be able to
-  diagnose possible connection problems.
+  diagnose possible connection problems. The refbox will set these
+  fields to ``LLSF'' and ``RefBox'' respectively.
 
-  \medskip
+  \smallskip
 
   If a robot is not seen for more than 5\,seconds it is considered
   lost, and after 30\,seconds definitely lost.
   %, in which case it might
   %be removed from the field as per the dead robot rule.
 
-  \medskip
+  \smallskip
 
-  We encourage teams to provide the known position of the robot in the
-  pose field to use it for the game visualization. Not only can it
-  make the job of the referee easier, but it will make the games more
-  interesting to watch for visitors.
-}
+  We encourage teams to provide the position of the robot in the pose
+  field to use it for visualization. Not only does it help the
+  referee, but it will make the games more interesting to watch for
+  visitors.  }
 
 \msgspec{VersionInfo.proto}{P2P \& C-S}{event}{refbox}{any}%
 {%
@@ -643,13 +646,11 @@ message AttentionMessage {
   and is never send by itself. It describes a point in time or a
   duration. What is sent depends on the contextual message.
 
-  \medskip
+  \smallskip
 
   A point in time is given relative to the Unix epoch in UTC time, for
   example using the \texttt{clock\_gettime()} POSIX API call, or using
   Boost's \texttt{posix\_time::universal\_time()} method.
-
-  \medskip
 
   A duration is simply given as the number of seconds since the start
   and the number of nanoseconds since the start of the second.
@@ -667,10 +668,14 @@ message AttentionMessage {
 {%
   This ExplorationInfo message is periodically sent during the
   exploration phase. It announces the mapping from type names to light
-  signals to the robots. There will be one entry per machine type in
-  the signals list. The lights list in the ExplorationSignal
-  sub-message will contain one entry per light color, even for signals
-  which are off.
+  signals and machine names referenced by field positions to the
+  robots. There will be one entry per machine type in the signals
+  list. The lights list in the ExplorationSignal sub-message will
+  contain one entry per light color, even for signals which are
+  off. The machines field contains one entry per machine to
+  identify. The machines are referenced by a name bound to a specified
+  position. Note that this name to position mapping might be different
+  from the example in the rulebook.
 
   \medskip
   If one or more robots are presumably not receiving this message it
@@ -704,18 +709,25 @@ message AttentionMessage {
   will be detected by the refbox and considered a fraud attempt.
 }
 
-\msgspec{MachineInfo.proto}{Client-Server}{$0.25$\,sec}{refbox}{controllers}%
+\msgspec{MachineInfo.proto}{P2P \& C-S}{$0.25$\,sec}{refbox}{all}%
 {%
-  The MachineInfo message is sent periodically to controllers by the
-  refbox to inform them about the current state of all machines,
-  including their static (inputs, output, name, type, pose) and
-  dynamic information (pucks loaded into the machine area or placed
-  under the RFID sensor, light signals, or whether it was correctly
-  reported during the exploration phase. The refbox may report only
-  light signals that are on or blinking. Light color that are not
-  mentioned should be considered to be off. The pose information may
-  or may not be sent. It can be used for visualy aligning machine
-  representations with the actual position.
+  The MachineInfo message is sent periodically to controllers and
+  robots (in production phase only) by the refbox. The message to
+  \emph{controllers} includes static (inputs, output, name, type,
+  pose) and dynamic information (pucks loaded into the machine area or
+  placed under the RFID sensor, light signals, or whether it was
+  correctly reported during the exploration phase) about all machines.
+  The refbox may report only light signals that are on or
+  blinking. Light color that are not mentioned should be considered to
+  be off. It can be used for visually aligning machine representations
+  with the actual position. The message is sent every $0.25$\,sec.
+
+  The message broadcasted to \emph{robots} only includes name, type,
+  input puck types, output puck type, and pose (as defined by the
+  rulebook). It is sent only during the production phase. At the
+  beginning of the phase, the message is sent at a $0.5$\,sec period
+  for 15\,sec. Afterwards the message is sent every 2\,sec.
+ 
 
   \medskip
 
