@@ -27,14 +27,6 @@
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (loaded-with) (productions 0) (state IDLE)
 	             (proc-start 0 0) (puck-id 0) (desired-lights GREEN-ON))
-    ; could be used to restore if phase changes were allowed			    
-    ;(switch ?machine:state
-    ;  (case PROCESSING then (modify ?machine (desired-lights GREEN-ON YELLOW-ON)))
-    ;  (case WAITING    then (modify ?machine (desired-lights YELLOW-ON)))
-    ;  (case INVALID    then (modify ?machine (desired-lights YELLOW-BLINK)))
-    ;  (case DOWN       then (modify ?machine (desired-lights RED-ON)))
-    ;  (default (modify ?machine (desired-lights GREEN-ON)))
-    ;)
   )
 
   ; assign random machine types out of the start distribution
@@ -76,6 +68,41 @@
 
   (assert (attention-message "Entering Production Phase" 5))
 )
+
+(defrule machine-down
+  (declare (salience ?*PRIORITY_HIGH*))
+  (time $?now)
+  (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
+  ?mf <- (machine (name ?name) (state ?state&~DOWN) (proc-start $?proc-start)
+		  (down-period $?dp&:(<= (nth$ 1 ?dp) ?gtime)&:(>= (nth$ 2 ?dp) ?gtime)))
+  =>
+  (bind ?down-time (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
+  (printout t "Machine " ?name " down for " ?down-time " sec" crlf)
+  (if (eq ?state PROCESSING)
+   then
+    (modify ?mf (state DOWN) (desired-lights RED-ON) (prev-state ?state)
+	    (proc-start (+ (nth$ 1 ?proc-start) ?down-time) (nth$ 2 ?proc-start)))
+   else
+    (modify ?mf (state DOWN) (prev-state ?state) (desired-lights RED-ON))
+  )
+)
+
+(defrule machine-up
+  (declare (salience ?*PRIORITY_HIGH*))
+  (time $?now)
+  (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
+  ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state)
+		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gtime)))
+  =>
+  (printout t "Machine " ?name " is up again" crlf)
+  (switch ?prev-state
+    (case PROCESSING then (modify ?mf (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)))
+    (case WAITING    then (modify ?mf (state WAITING)    (desired-lights YELLOW-ON)))
+    (case INVALID    then (modify ?mf (state INVALID)    (desired-lights YELLOW-BLINK)))
+    (case IDLE       then (modify ?mf (state IDLE)       (desired-lights GREEN-ON)))
+  )
+)
+
 
 (defrule machine-proc-start
   (time $?now)
@@ -182,13 +209,22 @@
 (defrule machine-puck-removal
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck FALSE))
-  ?mf <- (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
+  ?mf <- (machine (name ?m) (state ?state) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
 		  (loaded-with $?lw) (puck-id ?id&~0))
   =>
-  (if (> (length$ ?lw) 0) then
-    (modify ?mf (state WAITING) (puck-id 0) (desired-lights YELLOW-ON))
-  else
-    (modify ?mf (state IDLE) (puck-id 0)  (desired-lights GREEN-ON))
+  (if (eq ?state DOWN)
+   then
+    (if (> (length$ ?lw) 0) then
+      (modify ?mf (prev-state WAITING) (puck-id 0))
+     else
+      (modify ?mf (prev-state IDLE) (puck-id 0))
+    )
+   else
+    (if (> (length$ ?lw) 0) then
+      (modify ?mf (state WAITING) (puck-id 0) (desired-lights YELLOW-ON))
+     else
+      (modify ?mf (state IDLE) (puck-id 0)  (desired-lights GREEN-ON))
+    )
   )
 )
 
