@@ -37,6 +37,7 @@
 package llsf_msgs;
 
 import "MachineInfo.proto";
+import "Pose2D.proto";
 
 message ExplorationSignal {
   enum CompType {
@@ -50,12 +51,26 @@ message ExplorationSignal {
   repeated LightSpec lights = 2;
 }
 
-message ExplorationInfo {
+message ExplorationMachine {
   enum CompType {
     COMP_ID  = 2000;
     MSG_TYPE = 71;
   }
 
+  // Name of the machine
+  required string  name = 1;
+  // Pose of the machine on the field
+  required Pose2D  pose = 2;
+}
+
+message ExplorationInfo {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 72;
+  }
+
   // The signal assignments
-  repeated ExplorationSignal signals = 1;
+  repeated ExplorationSignal  signals = 1;
+  // The machines to identify
+  repeated ExplorationMachine machines = 2;
 }
