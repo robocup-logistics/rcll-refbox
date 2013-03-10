@@ -45,6 +45,22 @@
     )
   )
 
+  ; assign random down times
+  (bind ?num-down-times (random 6 8))
+  (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
+  (loop-for-count (min ?num-down-times (length$ ?candidates))
+    (bind ?idx (random 1 (length$ ?candidates)))
+    (bind ?duration (random 30 120))
+    (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
+    (bind ?end-time (+ ?start-time ?duration))
+    (bind ?mf (nth$ ?idx ?candidates))
+    (printout t (fact-slot-value ?mf name) " down from "
+	      (time-sec-format ?start-time) " to " (time-sec-format ?end-time)
+	      " (" ?duration " sec)" crlf)
+    (modify ?mf (down-period ?start-time ?end-time))
+    (bind ?candidates (delete$ ?candidates ?idx ?idx))
+  )
+
   ;(printout t "Assigning processing times to machines" crlf)
   (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
     (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))
