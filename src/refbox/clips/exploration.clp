@@ -20,21 +20,8 @@
     (retract ?report)
   )
 
-  ; Gather all available light codes
-  (bind ?light-codes (create$))
-  (do-for-all-facts ((?lc machine-light-code)) TRUE
-    (bind ?light-codes (create$ ?light-codes ?lc:id))
-  )
-  ; Randomize light codes
-  (bind ?light-codes (randomize$ ?light-codes))
-  ; Assign random light codes
-  (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
-    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id (nth$ 1 ?light-codes))
-      (printout t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
-    )
-    (modify ?mspec (light-code (nth$ 1 ?light-codes)))
-    (bind ?light-codes (delete$ ?light-codes 1 1))
-  )
+  (if (not (any-factp ((?mi machines-initialized)) TRUE))
+   then (machine-init-randomize))
 
   ; Set lights
   (delayed-do-for-all-facts ((?machine machine)) TRUE

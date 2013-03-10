@@ -23,50 +23,9 @@
   ; trigger machine info burst period
   (modify ?sf (count 1) (time 0 0))
 
-  ; reset machines
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (loaded-with) (productions 0) (state IDLE)
-	             (proc-start 0 0) (puck-id 0) (desired-lights GREEN-ON))
-  )
+  (if (not (any-factp ((?mi machines-initialized)) TRUE))
+   then (machine-init-randomize))
 
-  ; assign random machine types out of the start distribution
-  (bind ?machine-assignment (randomize$ ?*MACHINE-DISTRIBUTION*))
-  (printout t "Initial machine distribution:    " ?*MACHINE-DISTRIBUTION* crlf)
-  (printout t "Randomized machine distribution: " ?machine-assignment crlf)
-  (delayed-do-for-all-facts ((?machine machine))
-    (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
-    (if (= (length$ ?machine-assignment) 0)
-     then (printout logerror "No machine assignment available for " ?machine:name crlf)
-     else
-       (bind ?mtype (nth$ 1 ?machine-assignment))
-       (bind ?machine-assignment (delete$ ?machine-assignment 1 1))
-       (printout t "Assigning type " ?mtype " to machine " ?machine:name crlf)
-       (modify ?machine (mtype ?mtype))
-    )
-  )
-
-  ; assign random down times
-  (bind ?num-down-times (random 6 8))
-  (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
-  (loop-for-count (min ?num-down-times (length$ ?candidates))
-    (bind ?idx (random 1 (length$ ?candidates)))
-    (bind ?duration (random 30 120))
-    (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
-    (bind ?end-time (+ ?start-time ?duration))
-    (bind ?mf (nth$ ?idx ?candidates))
-    (printout t (fact-slot-value ?mf name) " down from "
-	      (time-sec-format ?start-time) " to " (time-sec-format ?end-time)
-	      " (" ?duration " sec)" crlf)
-    (modify ?mf (down-period ?start-time ?end-time))
-    (bind ?candidates (delete$ ?candidates ?idx ?idx))
-  )
-
-  ;(printout t "Assigning processing times to machines" crlf)
-  (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
-    (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))
-    (printout t "Proc time for " ?mspec:mtype " will be " ?proc-time " sec" crlf)
-    (modify ?mspec (proc-time ?proc-time))
-  )
   ; reset late orders, assign random times
   (delayed-do-for-all-facts ((?order order)) (eq ?order:late-order TRUE)
     (bind ?deliver-start
@@ -81,6 +40,11 @@
   ; assign random quantities to non-late orders
   (delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
     (modify ?order (quantity-requested (random 3 10)))
+  )
+
+  ; Set lights
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
+    (modify ?machine (desired-lights GREEN-ON))
   )
 
   (assert (attention-message "Entering Production Phase" 5))
