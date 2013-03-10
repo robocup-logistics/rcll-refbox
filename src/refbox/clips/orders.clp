@@ -16,7 +16,8 @@
   (modify ?of (active TRUE))
   (modify ?sf (count 1) (time 0 0))
   (assert (attention-message (str-cat "Late order: " ?q " x " ?p " from "
-				      (nth$ 1 ?period) " to " (nth$ 2 ?period)) 15))
+				      (time-sec-format (nth$ 1 ?period)) " to "
+				      (time-sec-format (nth$ 2 ?period))) 15))
 )
 
 ; Sort orders by ID, such that do-for-all-facts on the orders deftemplate
