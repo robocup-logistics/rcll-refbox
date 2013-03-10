@@ -52,6 +52,22 @@ main(int argc, char **argv)
 
   int rv = 0;
 
+  initscr();
+  int h, w;
+  getmaxyx(stdscr, h, w);
+
+  if (h < 31) {
+    ::endwin();
+    printf("A minimum of 31 lines is required in the terminal\n");
+    return -1;
+  }
+
+  if (w < 87) {
+    ::endwin();
+    printf("A minimum of 87 columns is required in the terminal\n");
+    return -1;
+  }
+
   {
     NCursesWindow rootw(::stdscr);
     rootw.bkgd(' '|COLOR_PAIR(5));
@@ -60,7 +76,6 @@ main(int argc, char **argv)
 
     llsfrb_shell::LLSFRefBoxShell shell;
     rv = shell.run();
-
   }
   ::endwin();
 

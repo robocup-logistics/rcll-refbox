@@ -80,9 +80,12 @@ namespace llsfrb_shell {
 
 
 LLSFRefBoxShell::LLSFRefBoxShell()
-  : quit_(false), error_(NULL), panel_(NULL), timer_(io_service_),
-    reconnect_timer_(io_service_), try_reconnect_(true), blink_timer_(io_service_),
-    attmsg_timer_(io_service_), attmsg_toggle_(true)
+  : quit_(false), error_(NULL), panel_(nullptr), navbar_(nullptr),
+    rb_log_(nullptr), p_orders_(nullptr), p_attmsg_(nullptr), p_state_(nullptr),
+    p_phase_(nullptr), p_time_(nullptr), p_points_(nullptr), 
+    m_state_(nullptr),  m_phase_(nullptr), 
+    timer_(io_service_), reconnect_timer_(io_service_), try_reconnect_(true),
+    blink_timer_(io_service_), attmsg_timer_(io_service_), attmsg_toggle_(true)
 {
   stdin_ = new boost::asio::posix::stream_descriptor(io_service_, dup(STDIN_FILENO));
   client = new ProtobufStreamClient();
@@ -111,6 +114,7 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   delete client;
   client = 0;
   delete panel_;
+  delete navbar_;
 
   std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
   for (m = machines_.begin(); m != machines_.end(); ++m) {
@@ -822,13 +826,6 @@ LLSFRefBoxShell::run()
 {
   panel_ = new NCursesPanel(LINES - 1, COLS);
   navbar_ = new NCursesPanel(1, COLS, LINES - 1, 0);
-
-  if (panel_->lines() < 30) {
-    delete panel_;
-    panel_ = NULL;
-    error_ = "A minimum of 30 lines is required in the terminal";
-    return -1;
-  }
 
   curs_set(0); // invisible cursor
   use_default_colors();
