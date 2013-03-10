@@ -44,6 +44,7 @@
 #include <msgs/GameState.pb.h>
 #include <msgs/VersionInfo.pb.h>
 #include <msgs/ExplorationInfo.pb.h>
+#include <msgs/MachineInfo.pb.h>
 
 
 #include <boost/asio.hpp>
@@ -139,6 +140,18 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       printf("\n");
     }
   }
+
+  std::shared_ptr<MachineInfo> mi;
+  if ((mi = std::dynamic_pointer_cast<MachineInfo>(msg))) {
+    printf("MachineInfo received:\n");
+    for (int i = 0; i < mi->machines_size(); ++i) {
+      const Machine &m = mi->machines(i);
+      const Pose2D &p = m.pose();
+      printf("  %-3s|%2s @ (%f, %f, %f)\n",
+	     m.name().c_str(), m.type().substr(0, 2).c_str(),
+	     p.x(), p.y(), p.ori());
+    }
+  }
 }
 
 
@@ -205,6 +218,7 @@ main(int argc, char **argv)
   message_register.add_message_type<GameState>();
   message_register.add_message_type<VersionInfo>();
   message_register.add_message_type<ExplorationInfo>();
+  message_register.add_message_type<MachineInfo>();
 
   peer_->signal_received().connect(handle_message);
   peer_->signal_error().connect(handle_error);
