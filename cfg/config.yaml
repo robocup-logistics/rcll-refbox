@@ -35,7 +35,8 @@ llsfrb:
     unwatch-rules: [retract-time, rfid-input-cleanup, net-send-beacon, update-gametime,
                     update-last-time, net-send-GameState, net-send-OrderInfo,
                     net-send-MachineInfo, net-send-PuckInfo, net-send-RobotInfo,
-                    exploration-send-MachineReportInfo]
+                    exploration-send-MachineReportInfo, net-broadcast-MachineInfo,
+                    net-send-VersionInfo]
 
   comm:
     server-port: !tcp-port 4444
