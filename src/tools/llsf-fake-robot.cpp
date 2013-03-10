@@ -45,6 +45,7 @@
 #include <msgs/VersionInfo.pb.h>
 #include <msgs/ExplorationInfo.pb.h>
 #include <msgs/MachineInfo.pb.h>
+#include <msgs/MachineReport.pb.h>
 
 
 #include <boost/asio.hpp>
@@ -139,6 +140,12 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       }
       printf("\n");
     }
+    printf("  --\n");
+    for (int i = 0; i < ei->machines_size(); ++i) {
+      const ExplorationMachine &em = ei->machines(i);
+      printf("  Machine %s at (%f, %f, %f)\n", em.name().c_str(),
+	     em.pose().x(), em.pose().y(), em.pose().ori());
+    }
   }
 
   std::shared_ptr<MachineInfo> mi;
@@ -150,6 +157,20 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       printf("  %-3s|%2s @ (%f, %f, %f)\n",
 	     m.name().c_str(), m.type().substr(0, 2).c_str(),
 	     p.x(), p.y(), p.ori());
+    }
+  }
+
+  std::shared_ptr<MachineReportInfo> mri;
+  if ((mri = std::dynamic_pointer_cast<MachineReportInfo>(msg))) {
+    printf("MachineReportInfo received:\n");
+    if (mri->reported_machines_size() > 0) {
+      printf("  Reported machines:");
+      for (int i = 0; i < mri->reported_machines_size(); ++i) {
+	printf(" %s", mri->reported_machines(i).c_str());
+      }
+      printf("\n");
+    } else {
+      printf("  no machines reported, yet\n");
     }
   }
 }
@@ -219,6 +240,7 @@ main(int argc, char **argv)
   message_register.add_message_type<VersionInfo>();
   message_register.add_message_type<ExplorationInfo>();
   message_register.add_message_type<MachineInfo>();
+  message_register.add_message_type<MachineReportInfo>();
 
   peer_->signal_received().connect(handle_message);
   peer_->signal_error().connect(handle_error);
