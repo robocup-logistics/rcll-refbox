@@ -40,6 +40,18 @@
   (return (create$ (integer ?t) (integer (* (- ?t (integer ?t)) 1000000.))))
 )
 
+(deffunction time-sec-format (?time-sec)
+  (bind ?hour (div ?time-sec 3600))
+  (bind ?min  (div (- ?time-sec (* ?hour 3600)) 60))
+  (bind ?sec  (- ?time-sec (* ?hour 3600) (* ?min 60)))
+  (if (> ?hour 0)
+   then
+    (return (format nil "%02d:%02d:%02d" ?hour ?min ?sec))
+   else
+    (return (format nil "%02d:%02d" ?min ?sec))
+  )
+)
+
 ; --- RULES - general housekeeping
 (defrule retract-time
   (declare (salience ?*PRIORITY_TIME_RETRACT*))
