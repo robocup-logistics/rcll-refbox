@@ -22,6 +22,7 @@
   =>
   (retract ?cf)
   (assert (network-client (id ?client-id) (host ?host) (port ?port)))
+  (printout t "Client " ?client-id " connected from " ?host ":" ?port crlf)
   ; reset certain signals to trigger immediate re-sending
   (delayed-do-for-all-facts ((?signal signal))
     (member$ ?signal:type
@@ -37,9 +38,10 @@
 
 (defrule net-client-disconnected
   ?cf <- (protobuf-client-disconnected ?client-id)
-  ?nf <- (network-client (id ?client-id))
+  ?nf <- (network-client (id ?client-id) (host ?host))
   =>
   (retract ?cf ?nf)
+  (printout t "Client " ?client-id " ( " ?host ") disconnected" crlf)
 )
 
 (defrule net-send-beacon
