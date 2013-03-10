@@ -135,6 +135,23 @@
     )
   )
 
+  (do-for-all-facts ((?m machine) (?mspec machine-spec))
+    (and (eq ?m:mtype ?mspec:mtype) (<> ?mspec:light-code 0) (non-zero-pose ?m:pose))
+
+    (bind ?em (pb-create "llsf_msgs.ExplorationMachine"))
+    (pb-set-field ?em "name" ?m:name)
+    (bind ?p (pb-field-value ?em "pose"))
+    (bind ?p-time (pb-field-value ?p "timestamp"))
+    (pb-set-field ?p-time "sec" (nth$ 1 ?m:pose-time))
+    (pb-set-field ?p-time "nsec" (* (nth$ 2 ?m:pose-time) 1000))
+    (pb-set-field ?p "timestamp" ?p-time)
+    (pb-set-field ?p "x" (nth$ 1 ?m:pose))
+    (pb-set-field ?p "y" (nth$ 2 ?m:pose))
+    (pb-set-field ?p "ori" (nth$ 3 ?m:pose))
+    (pb-set-field ?em "pose" ?p)
+    (pb-add-list ?ei "machines" ?em)
+  )
+
   (pb-broadcast ?ei)
   (pb-destroy ?ei)
 )

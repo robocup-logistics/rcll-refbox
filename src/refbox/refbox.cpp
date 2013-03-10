@@ -248,6 +248,7 @@ LLSFRefBox::setup_protobuf_comm()
   mr_server.add_message_type<llsf_msgs::MachineReportInfo>();
   mr_server.add_message_type<llsf_msgs::ExplorationInfo>();
   mr_server.add_message_type<llsf_msgs::ExplorationSignal>();
+  mr_server.add_message_type<llsf_msgs::ExplorationMachine>();
 
   MessageRegister &mr_peer = pbc_peer_->message_register();
   mr_peer.add_message_type<llsf_msgs::BeaconSignal>();
