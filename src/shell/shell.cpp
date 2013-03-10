@@ -234,7 +234,6 @@ void
 LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 {
   if (! error) {
-    rb_log_->refresh();
     int c = panel_->getch();
     if (c != ERR) {
       switch (c) {
