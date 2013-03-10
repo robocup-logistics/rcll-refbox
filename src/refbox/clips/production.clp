@@ -16,8 +16,12 @@
 
 (defrule machine-enable-production
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
+  ?sf <- (signal (type machine-info-bc))
   =>
   (modify ?gs (prev-phase PRODUCTION) (game-time 0.0))
+
+  ; trigger machine info burst period
+  (modify ?sf (count 1) (time 0 0))
 
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE

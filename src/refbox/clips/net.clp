@@ -24,7 +24,8 @@
   (assert (network-client (id ?client-id) (host ?host) (port ?port)))
   ; reset certain signals to trigger immediate re-sending
   (delayed-do-for-all-facts ((?signal signal))
-    (member$ ?signal:type (create$ gamestate robot-info machine-info puck-info order-info))
+    (member$ ?signal:type
+	     (create$ gamestate robot-info machine-info machine-info-bc puck-info order-info))
     (modify ?signal (time 0 0))
   )
 
@@ -321,6 +322,45 @@
   (do-for-all-facts ((?client network-client)) TRUE
     (pb-send ?client:id ?s)
   )
+  (pb-destroy ?s)
+)
+
+(defrule net-broadcast-MachineInfo
+  (time $?now)
+  (gamestate (phase PRODUCTION))
+  ?sf <- (signal (type machine-info-bc) (seq ?seq) (count ?count)
+		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-MACHINE-INFO-BURST-COUNT*)
+					       then ?*BC-MACHINE-INFO-PERIOD*
+					       else ?*BC-MACHINE-INFO-BURST-PERIOD*))))
+  =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+  (bind ?s (pb-create "llsf_msgs.MachineInfo"))
+
+  (do-for-all-facts ((?machine machine)) TRUE
+    (bind ?m (pb-create "llsf_msgs.Machine"))
+
+    (pb-set-field ?m "name" ?machine:name)
+    (pb-set-field ?m "type" ?machine:mtype)
+    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype)
+      (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
+      (pb-set-field ?m "output" (str-cat ?mspec:output))
+    )
+    ; If we have a pose publish it
+    (if (non-zero-pose ?machine:pose) then
+      (bind ?p (pb-field-value ?m "pose"))
+      (bind ?p-time (pb-field-value ?p "timestamp"))
+      (pb-set-field ?p-time "sec" (nth$ 1 ?machine:pose-time))
+      (pb-set-field ?p-time "nsec" (* (nth$ 2 ?machine:pose-time) 1000))
+      (pb-set-field ?p "timestamp" ?p-time)
+      (pb-set-field ?p "x" (nth$ 1 ?machine:pose))
+      (pb-set-field ?p "y" (nth$ 2 ?machine:pose))
+      (pb-set-field ?p "ori" (nth$ 3 ?machine:pose))
+      (pb-set-field ?m "pose" ?p)
+    )
+    (pb-add-list ?s "machines" ?m) ; destroys ?m
+  )
+
+  (pb-broadcast ?s)
   (pb-destroy ?s)
 )
 
