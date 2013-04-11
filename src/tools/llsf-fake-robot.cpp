@@ -87,7 +87,11 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 {
   std::shared_ptr<BeaconSignal> b;
   if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
+#if __WORDSIZE == 64
     printf("Detected robot: %s:%s (seq %lu)\n",
+#else
+    printf("Detected robot: %s:%s (seq %llu)\n",
+#endif
 	   b->team_name().c_str(), b->peer_name().c_str(), b->seq());
   }
 
@@ -97,7 +101,11 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     int min  = (gs->game_time().sec() - hour * 3600) / 60;
     int sec  = gs->game_time().sec() - hour * 3600 - min * 60;
 
+#if __WORDSIZE == 64
     printf("GameState received:  %02i:%02i:%02i.%02ld  %s %s  %u points\n",
+#else
+    printf("GameState received:  %02i:%02i:%02i.%02lld  %s %s  %u points\n",
+#endif
 	   hour, min, sec, gs->game_time().nsec() / 1000000,
 	   llsf_msgs::GameState::Phase_Name(gs->phase()).c_str(),
 	   llsf_msgs::GameState::State_Name(gs->state()).c_str(),

@@ -66,7 +66,11 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 {
   std::shared_ptr<BeaconSignal> b;
   if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
+#if __WORDSIZE == 64
     printf("Detected robot: %s:%s (seq %lu)\n",
+#else
+    printf("Detected robot: %s:%s (seq %llu)\n",
+#endif
 	   b->team_name().c_str(), b->peer_name().c_str(), b->seq());
   }
 }
