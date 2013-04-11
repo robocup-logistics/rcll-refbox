@@ -582,9 +582,17 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     int sec  = g->game_time().sec() - hour * 3600 - min * 60;
     p_time_->erase();
     if (hour > 0) {
+#if __WORDSIZE == 64
       p_time_->printw("%02d:%02d:%02d.%03ld", hour, min, sec, g->game_time().nsec() / 1000000);
+#else
+      p_time_->printw("%02d:%02d:%02d.%03lld", hour, min, sec, g->game_time().nsec() / 1000000);
+#endif
     } else {
+#if __WORDSIZE == 64
       p_time_->printw("%02d:%02d.%03ld", min, sec, g->game_time().nsec() / 1000000);
+#else
+      p_time_->printw("%02d:%02d.%03lld", min, sec, g->game_time().nsec() / 1000000);
+#endif
     }
 
     for (size_t i = 0; i < orders_.size(); ++i) {
