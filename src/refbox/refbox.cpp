@@ -694,7 +694,9 @@ LLSFRefBox::clips_pb_send(long int client_id, void *msgptr)
   }
 
   //logger_->log_info("RefBox", "Sending to %li", client_id);
-  if (client_id > 0 && client_id < std::numeric_limits<unsigned int>::max()) {
+  if ((client_id > 0) &&
+      (client_id < (long int)std::numeric_limits<unsigned int>::max()))
+  {
     try {
       pbc_server_->send(client_id, *m);
     } catch (google::protobuf::FatalException &e) {
