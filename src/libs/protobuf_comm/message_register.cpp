@@ -66,6 +66,42 @@ MessageRegister::~MessageRegister()
   }
 }
 
+/** Add a message type from generated pool.
+ * This will check all message libraries for a type of the given name
+ * and if found registers it.
+ */
+void
+MessageRegister::add_message_type(std::string msg_type)
+{
+  const google::protobuf::DescriptorPool *pool =
+    google::protobuf::DescriptorPool::generated_pool();
+  google::protobuf::MessageFactory *factory =
+    google::protobuf::MessageFactory::generated_factory();
+
+  const google::protobuf::Descriptor *desc = pool->FindMessageTypeByName(msg_type);
+  if (desc) {
+    google::protobuf::Message *m = factory->GetPrototype(desc)->New();
+    if (m) {
+      KeyType key = key_from_desc(desc);
+      std::lock_guard<std::mutex> lock(maps_mutex_);
+      if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
+	std::string msg = "Message type " + std::to_string(key.first) + ":" +
+	  std::to_string(key.second) + " already registered";
+	throw std::runtime_error(msg);
+      }
+      //printf("Registering %s (%u:%u)\n", msg_type.c_str(), key.first, key.second);
+      message_by_comp_type_[key] = m;
+      message_by_typename_[m->GetTypeName()] = m;
+    } else {
+      throw std::runtime_error("Cannot instantiate message type");
+    }
+
+  } else {
+    throw std::runtime_error("Message type not registered");
+  }
+}
+
+
 /** Remove the given message type.
  * @param component_id ID of component this message type belongs to
  * @param msg_type message type
@@ -74,10 +110,37 @@ void
 MessageRegister::remove_message_type(uint16_t component_id, uint16_t msg_type)
 {
   KeyType key(component_id, msg_type);
+  std::lock_guard<std::mutex> lock(maps_mutex_);
   if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
     message_by_typename_.erase(message_by_comp_type_[key]->GetDescriptor()->full_name());
     message_by_comp_type_.erase(key);
   }
+}
+
+
+MessageRegister::KeyType
+MessageRegister::key_from_desc(const google::protobuf::Descriptor *desc)
+{
+  const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
+  if (! enumdesc) {
+    throw std::logic_error("Message does not have CompType enum");
+  }
+  const google::protobuf::EnumValueDescriptor *compdesc =
+    enumdesc->FindValueByName("COMP_ID");
+  const google::protobuf::EnumValueDescriptor *msgtdesc =
+    enumdesc->FindValueByName("MSG_TYPE");
+  if (! compdesc || ! msgtdesc) {
+    throw std::logic_error("Message CompType enum hs no COMP_ID or MSG_TYPE value");
+  }
+  int comp_id = compdesc->number();
+  int msg_type = msgtdesc->number();
+  if (comp_id < 0 || comp_id > std::numeric_limits<uint16_t>::max()) {
+    throw std::logic_error("Message has invalid COMP_ID");
+  }
+  if (msg_type < 0 || msg_type > std::numeric_limits<uint16_t>::max()) {
+    throw std::logic_error("Message has invalid MSG_TYPE");
+  }
+  return KeyType(comp_id, msg_type);
 }
 
 /** Create a new message instance.
@@ -90,6 +153,8 @@ std::shared_ptr<google::protobuf::Message>
 MessageRegister::new_message_for(uint16_t component_id, uint16_t msg_type)
 {
   KeyType key(component_id, msg_type);
+
+  std::lock_guard<std::mutex> lock(maps_mutex_);
   if (message_by_comp_type_.find(key) == message_by_comp_type_.end()) {
     std::string msg = "Message type " + std::to_string(component_id) + ":" +
       std::to_string(msg_type) + " not registered";
@@ -110,12 +175,25 @@ MessageRegister::new_message_for(uint16_t component_id, uint16_t msg_type)
 std::shared_ptr<google::protobuf::Message>
 MessageRegister::new_message_for(std::string &full_name)
 {
+  std::lock_guard<std::mutex> lock(maps_mutex_);
   if (message_by_typename_.find(full_name) == message_by_typename_.end()) {
-    throw std::runtime_error("Message type not registered");
-  }
 
-  google::protobuf::Message *m = message_by_typename_[full_name]->New();
-  return std::shared_ptr<google::protobuf::Message>(m);
+    const google::protobuf::DescriptorPool *pool =
+      google::protobuf::DescriptorPool::generated_pool();
+    google::protobuf::MessageFactory *factory =
+      google::protobuf::MessageFactory::generated_factory();
+
+    const google::protobuf::Descriptor *desc = pool->FindMessageTypeByName(full_name);
+    if (desc) {
+      google::protobuf::Message *m = factory->GetPrototype(desc)->New();
+      return std::shared_ptr<google::protobuf::Message>(m);
+    } else {
+      throw std::runtime_error("Message type not registered");
+    }
+  } else {
+    google::protobuf::Message *m = message_by_typename_[full_name]->New();
+    return std::shared_ptr<google::protobuf::Message>(m);
+  }
 }
 
 
@@ -142,7 +220,7 @@ MessageRegister::serialize(uint16_t component_id, uint16_t msg_type,
 }
 
 
-/** Deserialie message.
+/** Deserialize message.
  * @param frame_header incoming message's frame header
  * @param data incoming message's data buffer
  * @return new instance of a protobuf message type that has been registered

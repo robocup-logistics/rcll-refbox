@@ -43,12 +43,14 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/descriptor.h>
 #include <boost/utility.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <map>
 #include <cstdint>
 #include <stdexcept>
 #include <memory>
 #include <limits>
+#include <mutex>
 
 namespace protobuf_comm {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -60,6 +62,8 @@ class MessageRegister : boost::noncopyable
  public:
   MessageRegister();
   ~MessageRegister();
+
+  void add_message_type(std::string msg_type);
 
   /** Add a new message type.
    * The template parameter must be a sub-class of google::protobuf::Message.
@@ -92,29 +96,10 @@ class MessageRegister : boost::noncopyable
   {
     MT m;
     const google::protobuf::Descriptor *desc = m.GetDescriptor();
-    const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
-    if (! enumdesc) {
-      throw std::logic_error("Message does not have CompType enum");
-    }
-    const google::protobuf::EnumValueDescriptor *compdesc =
-      enumdesc->FindValueByName("COMP_ID");
-    const google::protobuf::EnumValueDescriptor *msgtdesc =
-      enumdesc->FindValueByName("MSG_TYPE");
-    if (! compdesc || ! msgtdesc) {
-      throw std::logic_error("Message CompType enum hs no COMP_ID or MSG_TYPE value");
-    }
-    int comp_id = compdesc->number();
-    int msg_type = msgtdesc->number();
-    if (comp_id < 0 || comp_id > std::numeric_limits<uint16_t>::max()) {
-      throw std::logic_error("Message has invalid COMP_ID");
-    }
-    if (msg_type < 0 || msg_type > std::numeric_limits<uint16_t>::max()) {
-      throw std::logic_error("Message has invalid MSG_TYPE");
-    }
-    KeyType key(comp_id, msg_type);
+    KeyType key = key_from_desc(desc);
     if (message_by_comp_type_.find(key) != message_by_comp_type_.end()) {
-      std::string msg = "Message type " + std::to_string(comp_id) + ":" +
-	std::to_string(msg_type) + " already registered";
+      std::string msg = "Message type " + std::to_string(key.first) + ":" +
+	std::to_string(key.second) + " already registered";
       throw std::runtime_error(msg);
     }
     MT *new_m = new MT();
@@ -139,9 +124,11 @@ class MessageRegister : boost::noncopyable
  private:
   typedef std::pair<uint16_t, uint16_t> KeyType;
   typedef std::map<KeyType, google::protobuf::Message *> TypeMap;
-
   typedef std::map<std::string, google::protobuf::Message *> TypeNameMap;
 
+  KeyType key_from_desc(const google::protobuf::Descriptor *desc);
+
+  std::mutex maps_mutex_;
   TypeMap message_by_comp_type_;
   TypeNameMap message_by_typename_;
 };
