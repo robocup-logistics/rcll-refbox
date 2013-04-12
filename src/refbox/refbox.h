@@ -82,10 +82,15 @@ class LLSFRefBox
 			 uint16_t component_id, uint16_t msg_type,
 			 std::shared_ptr<google::protobuf::Message> msg);
 
+  void handle_client_fail(protobuf_comm::ProtobufStreamServer::ClientID client,
+			 uint16_t component_id, uint16_t msg_type,
+			 std::string msg);
+
   void handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
 		       uint16_t component_id, uint16_t msg_type,
 		       std::shared_ptr<google::protobuf::Message> msg);
-  void handle_peer_error(const boost::system::error_code &error);
+  void handle_peer_recv_error(boost::asio::ip::udp::endpoint &endpoint, std::string msg);
+  void handle_peer_send_error(std::string msg);
 
   void setup_protobuf_comm();
 
@@ -98,6 +103,7 @@ class LLSFRefBox
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
+  bool          clips_pb_register_type(std::string full_name);
   CLIPS::Values clips_pb_field_names(void *msgptr);
   bool          clips_pb_has_field(void *msgptr, std::string field_name);
   CLIPS::Value  clips_pb_field_value(void *msgptr, std::string field_name);

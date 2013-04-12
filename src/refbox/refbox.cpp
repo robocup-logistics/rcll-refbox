@@ -95,6 +95,8 @@ static void handle_signal(int signum)
 LLSFRefBox::LLSFRefBox(int argc, char **argv)
   : timer_(io_service_)
 {
+  pbc_server_ = NULL;
+  pbc_peer_ = NULL;
 
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
@@ -154,9 +156,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     sps_ = NULL;
   }
 
-  setup_clips();
-
   setup_protobuf_comm();
+  setup_clips();
 
   mlogger->add_logger(new NetworkLogger(pbc_server_, log_level_));
 }
@@ -211,10 +212,14 @@ LLSFRefBox::setup_protobuf_comm()
       .connect(boost::bind(&LLSFRefBox::handle_client_disconnected, this, _1, _2));
     pbc_server_->signal_received()
       .connect(boost::bind(&LLSFRefBox::handle_client_msg, this, _1, _2, _3, _4));
+    pbc_server_->signal_receive_failed()
+      .connect(boost::bind(&LLSFRefBox::handle_client_fail, this, _1, _2, _3, _4));
     pbc_peer_->signal_received()
       .connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
-    pbc_peer_->signal_error()
-      .connect(boost::bind(&LLSFRefBox::handle_peer_error, this, _1));
+    pbc_peer_->signal_recv_error()
+      .connect(boost::bind(&LLSFRefBox::handle_peer_recv_error, this, _1, _2));
+    pbc_peer_->signal_send_error()
+      .connect(boost::bind(&LLSFRefBox::handle_peer_send_error, this, _1));
   } catch (std::runtime_error &e) {
     delete config_;
     delete sps_;
@@ -223,7 +228,7 @@ LLSFRefBox::setup_protobuf_comm()
     throw;
   }
 
-
+  /*
   MessageRegister &mr_server = pbc_server_->message_register();
   mr_server.add_message_type<llsf_msgs::BeaconSignal>();
   mr_server.add_message_type<llsf_msgs::AttentionMessage>();
@@ -255,6 +260,7 @@ LLSFRefBox::setup_protobuf_comm()
   mr_peer.add_message_type<llsf_msgs::MachineReportEntry>();
   mr_peer.add_message_type<llsf_msgs::MachineReport>();
   mr_peer.add_message_type<llsf_msgs::MachineReportInfo>();
+  */
 }
 
 void
@@ -276,6 +282,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
+  clips_->add_function("pb-register-type", sigc::slot<bool, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_register_type)));
   clips_->add_function("pb-field-names", sigc::slot<CLIPS::Values, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_names)));
   clips_->add_function("pb-field-type", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_field_type)));
   clips_->add_function("pb-has-field", sigc::slot<bool, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_pb_has_field)));
@@ -364,6 +371,20 @@ LLSFRefBox::handle_clips_periodic()
     delete static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
     clips_msg_facts_.erase(index);
     to_erase.pop();
+  }
+}
+
+
+bool
+LLSFRefBox::clips_pb_register_type(std::string full_name)
+{
+  try {
+    pbc_server_->message_register().add_message_type(full_name);
+    pbc_peer_->message_register().add_message_type(full_name);
+    return true;
+  } catch (std::runtime_error &e) {
+    logger_->log_error("RefBox", "Registering type %s failed: %s", full_name.c_str(), e.what());
+    return false;
   }
 }
 
@@ -692,6 +713,7 @@ LLSFRefBox::clips_pb_send(long int client_id, void *msgptr)
     logger_->log_warn("RefBox", "Cannot send to %li: invalid message", client_id);
     return;
   }
+  if (!pbc_server_)  return;
 
   //logger_->log_info("RefBox", "Sending to %li", client_id);
   if ((client_id > 0) &&
@@ -719,6 +741,7 @@ LLSFRefBox::clips_pb_broadcast(void *msgptr)
     logger_->log_warn("RefBox", "Cannot send broadcast: invalid message");
     return;
   }
+  if (!pbc_peer_)  return;
 
   //logger_->log_info("RefBox", "Broadcasting %s", (*m)->GetTypeName().c_str());
   try {
@@ -1015,6 +1038,25 @@ LLSFRefBox::handle_client_msg(ProtobufStreamServer::ClientID client,
 		       component_id, msg_type, msg, client);
 }
 
+/** Handle server reception failure
+ * @param client client ID
+ * @param component_id component the message was addressed to
+ * @param msg_type type of the message
+ * @param msg the message string
+ */
+void
+LLSFRefBox::handle_client_fail(ProtobufStreamServer::ClientID client,
+			      uint16_t component_id, uint16_t msg_type,
+			      std::string msg)
+{
+  clips_->assert_fact_f("(protobuf-receive-failed (comp-id %u) (msg-type %u) "
+			"(rcvd-via STREAM) (client-id %u) (message \"%s\") "
+			"(rcvd-from (\"%s\" %u)))",
+			component_id, msg_type, client, msg.c_str(),
+			client_endpoints_[client].first.c_str(),
+			client_endpoints_[client].second);
+}
+
 
 /** Handle message that came from a peer/robot
  * @param endpoint the endpoint from which the message was received
@@ -1034,12 +1076,23 @@ LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
 
 
 /** Handle error during peer message processing.
- * @param error the error that happened
+ * @param endpoint endpoint of incoming message
+ * @param msg error message
  */
 void
-LLSFRefBox::handle_peer_error(const boost::system::error_code &error)
+LLSFRefBox::handle_peer_recv_error(boost::asio::ip::udp::endpoint &endpoint, std::string msg)
 {
-  logger_->log_warn("RefBox", "Failed to receive peer message: %s", error.message().c_str());
+  logger_->log_warn("RefBox", "Failed to receive peer message from %s:%u: %s", msg.c_str(),
+		    endpoint.address().to_string().c_str(), endpoint.port());
+}
+
+/** Handle error during peer message processing.
+ * @param msg error message
+ */
+void
+LLSFRefBox::handle_peer_send_error(std::string msg)
+{
+  logger_->log_warn("RefBox", "Failed to send peer message: %s", msg.c_str());
 }
 
 

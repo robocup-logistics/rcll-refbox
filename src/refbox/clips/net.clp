@@ -17,6 +17,21 @@
   (return ?vi)
 )
 
+(defrule net-init
+  (init)
+  =>
+  ; register message type we expect to receive, all others will be ignored
+  ;(printout t "Registering incoming types" crlf)
+  (pb-register-type "llsf_msgs.BeaconSignal")
+  (pb-register-type "llsf_msgs.SetGameState")
+  (pb-register-type "llsf_msgs.SetGamePhase")
+  (pb-register-type "llsf_msgs.RemovePuckFromMachine")
+  (pb-register-type "llsf_msgs.PlacePuckUnderMachine")
+  (pb-register-type "llsf_msgs.LoadPuckInMachine")
+  (pb-register-type "llsf_msgs.MachineReport")
+  ;(printout t "Registered incoming types" crlf)
+)
+
 (defrule net-client-connected
   ?cf <- (protobuf-client-connected ?client-id ?host ?port)
   =>
