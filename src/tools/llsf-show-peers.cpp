@@ -54,9 +54,16 @@ signal_handler(const boost::system::error_code& error, int signum)
 }
 
 void
-handle_error(const boost::system::error_code &error)
+handle_recv_error(boost::asio::ip::udp::endpoint &endpoint, std::string msg)
 {
-  printf("Error: %s\n", error.message().c_str());
+  printf("Receive error from %s:%u: %s\n",
+	 endpoint.address().to_string().c_str(), endpoint.port(), msg.c_str());
+}
+
+void
+handle_send_error(std::string msg)
+{
+  printf("Send error: %s\n", msg.c_str());
 }
 
 void
@@ -91,7 +98,8 @@ main(int argc, char **argv)
   message_register.add_message_type<BeaconSignal>();
 
   peer->signal_received().connect(handle_message);
-  peer->signal_error().connect(handle_error);
+  peer->signal_recv_error().connect(handle_recv_error);
+  peer->signal_send_error().connect(handle_send_error);
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
