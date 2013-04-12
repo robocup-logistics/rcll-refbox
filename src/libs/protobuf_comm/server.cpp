@@ -211,14 +211,15 @@ void
 ProtobufStreamServer::Session::handle_read_message(const boost::system::error_code& error)
 {
   if (! error) {
+    uint16_t comp_id   = ntohs(in_frame_header_.component_id);
+    uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
     try {
       std::shared_ptr<google::protobuf::Message> m =
 	parent_->message_register().deserialize(in_frame_header_, in_data_);
-      uint16_t comp_id   = ntohs(in_frame_header_.component_id);
-      uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
       parent_->sig_rcvd_(id_, comp_id, msg_type, m);
     } catch (std::runtime_error &e) {
       // ignored, most likely unknown message tpye
+      parent_->sig_recv_failed_(id_, comp_id, msg_type, e.what());
     }
     start_read();
   } else {

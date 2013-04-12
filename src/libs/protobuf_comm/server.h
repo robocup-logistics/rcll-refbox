@@ -97,6 +97,12 @@ class ProtobufStreamServer
 				std::shared_ptr<google::protobuf::Message>)> &
     signal_received() { return sig_rcvd_; }
 
+  /** Signal that is invoked when receiving a message failed.
+   * @return signal
+   */
+  boost::signals2::signal<void (ClientID, uint16_t, uint16_t, std::string)> &
+    signal_receive_failed() { return sig_recv_failed_; }
+
   /** Signal that is invoked when a new client has connected.
    * @return signal
    */
@@ -169,6 +175,7 @@ class ProtobufStreamServer
   boost::asio::ip::tcp::acceptor acceptor_;
   boost::signals2::signal<void (ClientID, uint16_t, uint16_t,
 				std::shared_ptr<google::protobuf::Message>)> sig_rcvd_;
+  boost::signals2::signal<void (ClientID, uint16_t, uint16_t, std::string)> sig_recv_failed_;
   boost::signals2::signal<void (ClientID, boost::asio::ip::tcp::endpoint &)> sig_connected_;
   boost::signals2::signal<void (ClientID, const boost::system::error_code &)>
     sig_disconnected_;

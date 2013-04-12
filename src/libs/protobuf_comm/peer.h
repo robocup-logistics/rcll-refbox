@@ -86,11 +86,17 @@ class ProtobufBroadcastPeer
 				std::shared_ptr<google::protobuf::Message>)> &
     signal_received() { return sig_rcvd_; }
 
-  /** Signal that is invoked on an error.
+  /** Signal that is invoked when receiving a message failed.
    * @return signal
    */
-  boost::signals2::signal<void (const boost::system::error_code &)> &
-    signal_error() { return sig_error_; }
+  boost::signals2::signal<void (boost::asio::ip::udp::endpoint &, std::string)> &
+    signal_recv_error() { return sig_recv_error_; }
+
+  /** Signal that is invoked when sending a message failed.
+   * @return signal
+   */
+  boost::signals2::signal<void (std::string)> &
+    signal_send_error() { return sig_send_error_; }
 
 
  private: // methods
@@ -113,7 +119,8 @@ class ProtobufBroadcastPeer
 
   boost::signals2::signal<void (boost::asio::ip::udp::endpoint &, uint16_t, uint16_t,
 				std::shared_ptr<google::protobuf::Message>)> sig_rcvd_;
-  boost::signals2::signal<void (const boost::system::error_code &)> sig_error_;
+  boost::signals2::signal<void (boost::asio::ip::udp::endpoint &, std::string)> sig_recv_error_;
+  boost::signals2::signal<void (std::string)> sig_send_error_;
 
 
   std::queue<QueueEntry *> outbound_queue_;

@@ -185,7 +185,7 @@ ProtobufBroadcastPeer::handle_resolve(const boost::system::error_code& err,
     outbound_active_   = false;
     outbound_endpoint_ = endpoint_iterator->endpoint();
   } else {
-    sig_error_(err);
+    sig_send_error_("Resolving endpoint failed");
   }
   start_send();
 }
@@ -212,16 +212,16 @@ ProtobufBroadcastPeer::handle_recv(const boost::system::error_code& error,
 
 	  sig_rcvd_(in_endpoint_, comp_id, msg_type, m);
 	} catch (std::runtime_error &e) {
-	  printf("Failed to deserialize: %s\n", e.what());
-	  sig_error_(errc::make_error_code(errc::invalid_argument));
+	  //printf("Failed to deserialize: %s\n", e.what());
+	  sig_recv_error_(in_endpoint_, std::string("Deserialization fail: ") + e.what());
 	}
       }
     } else {
-      sig_error_(errc::make_error_code(errc::illegal_byte_sequence));
+      sig_recv_error_(in_endpoint_, "Invalid number of bytes received");
     }
 
   } else {
-    sig_error_(error);
+    sig_recv_error_(in_endpoint_, "General receiving error or truncated message");
   }
 
   start_recv();
@@ -240,7 +240,7 @@ ProtobufBroadcastPeer::handle_sent(const boost::system::error_code& error,
   }
 
   if (error) {
-    sig_error_(error);
+    sig_send_error_("Sending message failed");
   }
 
   start_send();

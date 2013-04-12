@@ -209,14 +209,15 @@ void
 ProtobufStreamClient::handle_read_message(const boost::system::error_code& error)
 {
   if (! error) {
+    uint16_t comp_id   = ntohs(in_frame_header_.component_id);
+    uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
     try {
       std::shared_ptr<google::protobuf::Message> m =
 	message_register_.deserialize(in_frame_header_, in_data_);
-      uint16_t comp_id   = ntohs(in_frame_header_.component_id);
-      uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
       sig_rcvd_(comp_id, msg_type, m);
     } catch (std::runtime_error &e) {
       printf("Deserializing of message failed: %s\n", e.what());
+      sig_recv_failed_(comp_id, msg_type, e.what());
     }
 
     start_recv();
