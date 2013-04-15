@@ -44,7 +44,7 @@
   (init)
   (confval (path "/llsfrb/clips/main") (type STRING) (value ?v))
   =>
-  (printout t "Loading refbox main file '" ?v "'" crlf)
+  ;(printout t "Loading refbox main file '" ?v "'" crlf)
   (batch* (resolve-file (str-cat ?v ".clp")))
 )
 
@@ -68,6 +68,12 @@
   (bind ?*DEBUG* ?v)
 )
 
-(reset)
+(defrule announce-loading-done
+  (declare (salience ?*PRIORITY_LAST*))
+  (init)
+  =>
+  (printout t "RefBox loaded and ready to run" crlf)
+)
 
+(reset)
 (seed (integer (time)))
