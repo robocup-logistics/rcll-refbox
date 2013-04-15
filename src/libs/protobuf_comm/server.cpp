@@ -252,6 +252,27 @@ ProtobufStreamServer::ProtobufStreamServer(unsigned short port)
 }
 
 
+/** Constructor.
+ * @param port port to listen on
+ * @param proto_path file paths to search for proto files. All message types
+ * within these files will automatically be registered and available for dynamic
+ * message creation.
+ */
+ProtobufStreamServer::ProtobufStreamServer(unsigned short port,
+					   std::vector<std::string> &proto_path)
+  : io_service_(),
+    acceptor_(io_service_, ip::tcp::endpoint(ip::tcp::v4(), port)),
+    message_register_(proto_path)
+{
+  next_cid_ = 1;
+
+  acceptor_.set_option(socket_base::reuse_address(true));
+
+  start_accept();
+  asio_thread_ = std::thread(&ProtobufStreamServer::run_asio, this);
+}
+
+
 /** Destructor. */
 ProtobufStreamServer::~ProtobufStreamServer()
 {

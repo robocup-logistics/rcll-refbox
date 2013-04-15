@@ -66,6 +66,7 @@ class ProtobufStreamServer
   typedef unsigned int ClientID;
 
   ProtobufStreamServer(unsigned short port);
+  ProtobufStreamServer(unsigned short port, std::vector<std::string> &proto_path);
   ~ProtobufStreamServer();
 
   void send(ClientID client, uint16_t component_id, uint16_t msg_type,

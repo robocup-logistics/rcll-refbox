@@ -63,6 +63,20 @@ ProtobufStreamClient::ProtobufStreamClient()
   in_data_ = malloc(in_data_size_);
 }
 
+/** Constructor.
+ * @param proto_path file paths to search for proto files. All message types
+ * within these files will automatically be registered and available for dynamic
+ * message creation.
+ */
+ProtobufStreamClient::ProtobufStreamClient(std::vector<std::string> &proto_path)
+  : resolver_(io_service_), socket_(io_service_), message_register_(proto_path)
+{
+  connected_ = false;
+  outbound_active_ = false;
+  in_data_size_ = 1024;
+  in_data_ = malloc(in_data_size_);
+}
+
 
 /** Destructor. */
 ProtobufStreamClient::~ProtobufStreamClient()

@@ -60,6 +60,7 @@ class ProtobufStreamClient
 {
  public:
   ProtobufStreamClient();
+  ProtobufStreamClient(std::vector<std::string> &proto_path);
   ~ProtobufStreamClient();
 
   /** Get the client's message register.
