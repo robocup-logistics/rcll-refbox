@@ -45,18 +45,6 @@
 #include <logging/network.h>
 #include <logging/console.h>
 
-#include <msgs/BeaconSignal.pb.h>
-#include <msgs/GameState.pb.h>
-#include <msgs/RobotInfo.pb.h>
-#include <msgs/MachineInfo.pb.h>
-#include <msgs/MachineCommands.pb.h>
-#include <msgs/AttentionMessage.pb.h>
-#include <msgs/OrderInfo.pb.h>
-#include <msgs/PuckInfo.pb.h>
-#include <msgs/MachineReport.pb.h>
-#include <msgs/VersionInfo.pb.h>
-#include <msgs/ExplorationInfo.pb.h>
-
 #include <google/protobuf/descriptor.h>
 #include <boost/bind.hpp>
 #if BOOST_ASIO_VERSION < 100601
@@ -193,7 +181,43 @@ LLSFRefBox::setup_protobuf_comm()
   try {
     pbc_server_ = NULL;
     pbc_peer_   = NULL;
-    pbc_server_ = new ProtobufStreamServer(config_->get_uint("/llsfrb/comm/server-port"));
+    
+    std::vector<std::string> proto_dirs;
+    try {
+      proto_dirs = config_->get_strings("/llsfrb/comm/protobuf-dirs");
+      if (proto_dirs.size() > 0) {
+	for (size_t i = 0; i < proto_dirs.size(); ++i) {
+	  std::string::size_type pos;
+	  if ((pos = proto_dirs[i].find("@BASEDIR@")) != std::string::npos) {
+	    proto_dirs[i].replace(pos, 9, BASEDIR);
+	  }
+	  if ((pos = proto_dirs[i].find("@RESDIR@")) != std::string::npos) {
+	    proto_dirs[i].replace(pos, 8, RESDIR);
+	  }
+	  if ((pos = proto_dirs[i].find("@CONFDIR@")) != std::string::npos) {
+	    proto_dirs[i].replace(pos, 9, CONFDIR);
+	  }
+	  
+	  if (proto_dirs[i][proto_dirs.size()-1] != '/') {
+	    proto_dirs[i] += "/";
+	  }
+	  //logger_->log_warn("RefBox", "DIR: %s", proto_dirs[i].c_str());
+	}
+      }
+    } catch (fawkes::Exception &e) {} // ignore, use default
+
+    pbc_server_ = new ProtobufStreamServer(config_->get_uint("/llsfrb/comm/server-port"),
+					   proto_dirs);
+
+    MessageRegister &mr_server = pbc_server_->message_register();
+    if (! mr_server.load_failures().empty()) {
+      MessageRegister::LoadFailMap::const_iterator e = mr_server.load_failures().begin();
+      std::string errstr = e->first + " (" + e->second + ")";
+      for (++e; e != mr_server.load_failures().end(); ++e) {
+	errstr += std::string(", ") + e->first + " (" + e->second + ")";
+      }
+      logger_->log_warn("RefBox", "Failed to load some message types: %s", errstr.c_str());
+    }
 
     if (config_->exists("/llsfrb/comm/peer-send-port") &&
 	config_->exists("/llsfrb/comm/peer-recv-port") )
@@ -227,40 +251,6 @@ LLSFRefBox::setup_protobuf_comm()
     delete pbc_peer_;
     throw;
   }
-
-  /*
-  MessageRegister &mr_server = pbc_server_->message_register();
-  mr_server.add_message_type<llsf_msgs::BeaconSignal>();
-  mr_server.add_message_type<llsf_msgs::AttentionMessage>();
-  mr_server.add_message_type<llsf_msgs::VersionInfo>();
-  mr_server.add_message_type<llsf_msgs::GameState>();
-  mr_server.add_message_type<llsf_msgs::SetGameState>();
-  mr_server.add_message_type<llsf_msgs::SetGamePhase>();
-  mr_server.add_message_type<llsf_msgs::RobotInfo>();
-  mr_server.add_message_type<llsf_msgs::Robot>();
-  mr_server.add_message_type<llsf_msgs::MachineInfo>();
-  mr_server.add_message_type<llsf_msgs::Machine>();
-  mr_server.add_message_type<llsf_msgs::RemovePuckFromMachine>();
-  mr_server.add_message_type<llsf_msgs::PlacePuckUnderMachine>();
-  mr_server.add_message_type<llsf_msgs::LoadPuckInMachine>();
-  mr_server.add_message_type<llsf_msgs::LightSpec>();
-  mr_server.add_message_type<llsf_msgs::OrderInfo>();
-  mr_server.add_message_type<llsf_msgs::Order>();
-  mr_server.add_message_type<llsf_msgs::Puck>();
-  mr_server.add_message_type<llsf_msgs::PuckInfo>();
-  mr_server.add_message_type<llsf_msgs::MachineReportEntry>();
-  mr_server.add_message_type<llsf_msgs::MachineReport>();
-  mr_server.add_message_type<llsf_msgs::MachineReportInfo>();
-  mr_server.add_message_type<llsf_msgs::ExplorationInfo>();
-  mr_server.add_message_type<llsf_msgs::ExplorationSignal>();
-  mr_server.add_message_type<llsf_msgs::ExplorationMachine>();
-
-  MessageRegister &mr_peer = pbc_peer_->message_register();
-  mr_peer.add_message_type<llsf_msgs::BeaconSignal>();
-  mr_peer.add_message_type<llsf_msgs::MachineReportEntry>();
-  mr_peer.add_message_type<llsf_msgs::MachineReport>();
-  mr_peer.add_message_type<llsf_msgs::MachineReportInfo>();
-  */
 }
 
 void
