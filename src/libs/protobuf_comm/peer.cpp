@@ -62,24 +62,9 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port))
 {
-  filter_self_  = true;
-
-  in_data_size_ = max_packet_length;
-  in_data_ = malloc(in_data_size_);
-
-  socket_.set_option(socket_base::broadcast(true));
-  socket_.set_option(socket_base::reuse_address(true));
-  determine_local_endpoints();
-
-  outbound_active_ = true;
-  ip::udp::resolver::query query(address, boost::lexical_cast<std::string>(port));
-  resolver_.async_resolve(query,
-			  boost::bind(&ProtobufBroadcastPeer::handle_resolve, this,
-				      boost::asio::placeholders::error,
-				      boost::asio::placeholders::iterator));
-
-  start_recv();
-  asio_thread_ = std::thread(&ProtobufBroadcastPeer::run_asio, this);
+  ctor(address, port);
+  message_register_ = new MessageRegister();
+  own_message_register_ = true;
 }
 
 
@@ -96,6 +81,88 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
 					     unsigned short recv_on_port)
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port))
+{
+  ctor(address, send_to_port);
+  message_register_ = new MessageRegister();
+  own_message_register_ = true;
+}
+
+/** Constructor.
+ * @param address IPv4 broadcast address to send to
+ * @param port IPv4 UDP port to listen on and to send to
+ */ 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port,
+					     std::vector<std::string> &proto_path)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port))
+{
+  ctor(address, port);
+  message_register_ = new MessageRegister(proto_path);
+  own_message_register_ = true;
+}
+
+
+/** Testing constructor.
+ * This constructor listens and sends to different ports. It can be used to
+ * send and receive on the same host or even from within the same process.
+ * It is most useful for communication tests.
+ * @param address IPv4 address to send to
+ * @param send_to_port IPv4 UDP port to send data to
+ * @param recv_on_port IPv4 UDP port to receive data on
+ */
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
+					     unsigned short send_to_port,
+					     unsigned short recv_on_port,
+					     std::vector<std::string> &proto_path)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port))
+{
+  ctor(address, send_to_port);
+  message_register_ = new MessageRegister(proto_path);
+  own_message_register_ = true;
+}
+
+
+/** Constructor.
+ * @param address IPv4 broadcast address to send to
+ * @param port IPv4 UDP port to listen on and to send to
+ */ 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port,
+					     MessageRegister *mr)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, port);
+}
+
+
+/** Testing constructor.
+ * This constructor listens and sends to different ports. It can be used to
+ * send and receive on the same host or even from within the same process.
+ * It is most useful for communication tests.
+ * @param address IPv4 address to send to
+ * @param send_to_port IPv4 UDP port to send data to
+ * @param recv_on_port IPv4 UDP port to receive data on
+ */
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
+					     unsigned short send_to_port,
+					     unsigned short recv_on_port,
+					     MessageRegister *mr)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, send_to_port);
+}
+
+
+/** Constructor helper.
+ * @param address hostname/address to send to
+ * @param send_to_port UDP port to send messages to
+ */
+void
+ProtobufBroadcastPeer::ctor(const std::string &address, unsigned int send_to_port)
 {
   filter_self_  = true;
 
@@ -126,6 +193,9 @@ ProtobufBroadcastPeer::~ProtobufBroadcastPeer()
     asio_thread_.join();
   }
   free(in_data_);
+  if (own_message_register_) {
+    delete message_register_;
+  }
 }
 
 
@@ -208,7 +278,7 @@ ProtobufBroadcastPeer::handle_recv(const boost::system::error_code& error,
 	void *msg_data = (char *)in_data_ + sizeof(frame_header_t);
 	try {
 	  std::shared_ptr<google::protobuf::Message> m =
-	    message_register_.deserialize(*frame_header, msg_data);
+	    message_register_->deserialize(*frame_header, msg_data);
 
 	  sig_rcvd_(in_endpoint_, comp_id, msg_type, m);
 	} catch (std::runtime_error &e) {
@@ -257,7 +327,7 @@ ProtobufBroadcastPeer::send(uint16_t component_id, uint16_t msg_type,
 			    google::protobuf::Message &m)
 {
   QueueEntry *entry = new QueueEntry();
-  message_register_.serialize(component_id, msg_type, m,
+  message_register_->serialize(component_id, msg_type, m,
 			      entry->frame_header, entry->serialized_message);
 
   if (entry->serialized_message.size() > max_packet_length) {

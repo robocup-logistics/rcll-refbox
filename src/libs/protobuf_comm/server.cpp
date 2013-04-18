@@ -243,6 +243,8 @@ ProtobufStreamServer::ProtobufStreamServer(unsigned short port)
   : io_service_(),
     acceptor_(io_service_, ip::tcp::endpoint(ip::tcp::v4(), port))
 {
+  message_register_ = new MessageRegister();
+  own_message_register_ = true;
   next_cid_ = 1;
 
   acceptor_.set_option(socket_base::reuse_address(true));
@@ -261,8 +263,27 @@ ProtobufStreamServer::ProtobufStreamServer(unsigned short port)
 ProtobufStreamServer::ProtobufStreamServer(unsigned short port,
 					   std::vector<std::string> &proto_path)
   : io_service_(),
+    acceptor_(io_service_, ip::tcp::endpoint(ip::tcp::v4(), port))
+{
+  message_register_ = new MessageRegister(proto_path);
+  own_message_register_ = true;
+  next_cid_ = 1;
+
+  acceptor_.set_option(socket_base::reuse_address(true));
+
+  start_accept();
+  asio_thread_ = std::thread(&ProtobufStreamServer::run_asio, this);
+}
+
+/** Constructor.
+ * @param port port to listen on
+ * @param mr message register to use to (de)serialize messages
+ */
+ProtobufStreamServer::ProtobufStreamServer(unsigned short port,
+					   MessageRegister *mr)
+  : io_service_(),
     acceptor_(io_service_, ip::tcp::endpoint(ip::tcp::v4(), port)),
-    message_register_(proto_path)
+    message_register_(mr), own_message_register_(false)
 {
   next_cid_ = 1;
 
@@ -278,6 +299,9 @@ ProtobufStreamServer::~ProtobufStreamServer()
 {
   io_service_.stop();
   asio_thread_.join();
+  if (own_message_register_) {
+    delete message_register_;
+  }
 }
 
 

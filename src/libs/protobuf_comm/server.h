@@ -67,6 +67,7 @@ class ProtobufStreamServer
 
   ProtobufStreamServer(unsigned short port);
   ProtobufStreamServer(unsigned short port, std::vector<std::string> &proto_path);
+  ProtobufStreamServer(unsigned short port, MessageRegister *mr);
   ~ProtobufStreamServer();
 
   void send(ClientID client, uint16_t component_id, uint16_t msg_type,
@@ -89,7 +90,7 @@ class ProtobufStreamServer
    * @return message register
    */
   MessageRegister &  message_register()
-  { return message_register_; }
+  { return *message_register_; }
 
   /** Signal that is invoked when a message has been received.
    * @return signal
@@ -187,7 +188,8 @@ class ProtobufStreamServer
 
   std::atomic<ClientID> next_cid_;
 
-  MessageRegister message_register_;
+  MessageRegister *message_register_;
+  bool             own_message_register_;
 };
 
 } // end namespace protobuf_comm

@@ -57,6 +57,8 @@ namespace protobuf_comm {
 ProtobufStreamClient::ProtobufStreamClient()
   : resolver_(io_service_), socket_(io_service_)
 {
+  message_register_ = new MessageRegister();
+  own_message_register_ = true;
   connected_ = false;
   outbound_active_ = false;
   in_data_size_ = 1024;
@@ -69,7 +71,23 @@ ProtobufStreamClient::ProtobufStreamClient()
  * message creation.
  */
 ProtobufStreamClient::ProtobufStreamClient(std::vector<std::string> &proto_path)
-  : resolver_(io_service_), socket_(io_service_), message_register_(proto_path)
+  : resolver_(io_service_), socket_(io_service_)
+{
+  message_register_ = new MessageRegister(proto_path);
+  own_message_register_ = true;
+  connected_ = false;
+  outbound_active_ = false;
+  in_data_size_ = 1024;
+  in_data_ = malloc(in_data_size_);
+}
+
+
+/** Constructor.
+ * @param mr message register to use to (de)serialize messages
+ */
+ProtobufStreamClient::ProtobufStreamClient(MessageRegister *mr)
+  : resolver_(io_service_), socket_(io_service_),
+    message_register_(mr), own_message_register_(false)
 {
   connected_ = false;
   outbound_active_ = false;
@@ -87,6 +105,9 @@ ProtobufStreamClient::~ProtobufStreamClient()
     asio_thread_.join();
   }
   free(in_data_);
+  if (own_message_register_) {
+    delete message_register_;
+  }
 }
 
 
@@ -227,7 +248,7 @@ ProtobufStreamClient::handle_read_message(const boost::system::error_code& error
     uint16_t msg_type  = ntohs(in_frame_header_.msg_type);
     try {
       std::shared_ptr<google::protobuf::Message> m =
-	message_register_.deserialize(in_frame_header_, in_data_);
+	message_register_->deserialize(in_frame_header_, in_data_);
       sig_rcvd_(comp_id, msg_type, m);
     } catch (std::runtime_error &e) {
       printf("Deserializing of message failed: %s\n", e.what());
@@ -282,8 +303,8 @@ ProtobufStreamClient::send(uint16_t component_id, uint16_t msg_type,
   }
 
   QueueEntry *entry = new QueueEntry();
-  message_register_.serialize(component_id, msg_type, m,
-			      entry->frame_header, entry->serialized_message);
+  message_register_->serialize(component_id, msg_type, m,
+			       entry->frame_header, entry->serialized_message);
 
   entry->buffers[0] = boost::asio::buffer(&entry->frame_header, sizeof(frame_header_t));
   entry->buffers[1] = boost::asio::buffer(entry->serialized_message);

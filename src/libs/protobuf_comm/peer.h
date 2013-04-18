@@ -62,6 +62,13 @@ class ProtobufBroadcastPeer
   ProtobufBroadcastPeer(const std::string address, unsigned short port);
   ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
 			unsigned short recv_on_port);
+  ProtobufBroadcastPeer(const std::string address, unsigned short port,
+			std::vector<std::string> &proto_path);
+  ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
+			unsigned short recv_on_port, std::vector<std::string> &proto_path);
+  ProtobufBroadcastPeer(const std::string address, unsigned short port, MessageRegister *mr);
+  ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
+			unsigned short recv_on_port, MessageRegister *mr);
   ~ProtobufBroadcastPeer();
 
   void set_filter_self(bool filter);
@@ -77,7 +84,7 @@ class ProtobufBroadcastPeer
    * @return message register
    */
   MessageRegister &  message_register()
-  { return message_register_; }
+  { return *message_register_; }
 
   /** Signal that is invoked when a message has been received.
    * @return signal
@@ -100,6 +107,7 @@ class ProtobufBroadcastPeer
 
 
  private: // methods
+  void ctor(const std::string &address, unsigned int send_to_port);
   void determine_local_endpoints();
   void run_asio();
   void start_send();
@@ -122,6 +130,7 @@ class ProtobufBroadcastPeer
   boost::signals2::signal<void (boost::asio::ip::udp::endpoint &, std::string)> sig_recv_error_;
   boost::signals2::signal<void (std::string)> sig_send_error_;
 
+  std::string  send_to_address_;
 
   std::queue<QueueEntry *> outbound_queue_;
   std::mutex               outbound_mutex_;
@@ -136,8 +145,8 @@ class ProtobufBroadcastPeer
   bool           filter_self_;
 
   std::thread asio_thread_;
-  MessageRegister message_register_;
-
+  MessageRegister *message_register_;
+  bool             own_message_register_;
 };
 
 } // end namespace protobuf_comm

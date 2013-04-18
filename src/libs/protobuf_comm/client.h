@@ -61,13 +61,14 @@ class ProtobufStreamClient
  public:
   ProtobufStreamClient();
   ProtobufStreamClient(std::vector<std::string> &proto_path);
+  ProtobufStreamClient(MessageRegister *mr);
   ~ProtobufStreamClient();
 
   /** Get the client's message register.
    * @return message register
    */
   MessageRegister &  message_register()
-  { return message_register_; }
+  { return *message_register_; }
 
   void async_connect(const char *host, unsigned short port);
   void disconnect();
@@ -147,7 +148,8 @@ class ProtobufStreamClient
   size_t         in_data_size_;
   void *         in_data_;
 
-  MessageRegister message_register_;
+  MessageRegister *message_register_;
+  bool             own_message_register_;
 };
 
 } // end namespace protobuf_comm
