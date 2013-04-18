@@ -37,6 +37,7 @@
 #include "refbox.h"
 #include "clips_logger.h"
 
+#include <core/threading/mutex.h>
 #include <config/yaml.h>
 #include <protobuf_clips/communicator.h>
 #include <llsf_sps/sps_comm.h>
@@ -80,7 +81,7 @@ static void handle_signal(int signum)
  * @param argv array of arguments
  */
 LLSFRefBox::LLSFRefBox(int argc, char **argv)
-  : timer_(io_service_)
+  : clips_mutex_(fawkes::Mutex::RECURSIVE), timer_(io_service_)
 {
   pb_comm_ = NULL;
 
@@ -154,7 +155,8 @@ LLSFRefBox::~LLSFRefBox()
 {
   timer_.cancel();
 
-  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  fawkes::MutexLocker lock(&clips_mutex_);
   clips_->assert_fact("(finalize)");
   clips_->refresh_agenda();
   clips_->run();
@@ -273,7 +275,9 @@ LLSFRefBox::setup_clips()
 void
 LLSFRefBox::handle_clips_periodic()
 {
-  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  fawkes::MutexLocker lock(&clips_mutex_);
+
 
   std::queue<int> to_erase;
   std::map<long int, CLIPS::Fact::pointer>::iterator f;
@@ -370,7 +374,9 @@ LLSFRefBox::sps_read_rfids()
 {
   if (! sps_)  return;
 
-  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  fawkes::MutexLocker lock(&clips_mutex_);
+
 
   std::vector<uint32_t> puck_ids = sps_->read_rfids();
   for (unsigned int i = 0; i < puck_ids.size(); ++i) {
@@ -411,7 +417,9 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
 
     sps_read_rfids();
 
-    std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+    //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+    fawkes::MutexLocker lock(&clips_mutex_);
+
     clips_->assert_fact("(time (now))");
     clips_->refresh_agenda();
     clips_->run();

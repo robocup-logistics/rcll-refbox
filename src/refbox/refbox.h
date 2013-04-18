@@ -40,9 +40,10 @@
 #include <boost/asio.hpp>
 #include <google/protobuf/message.h>
 #include <logging/logger.h>
+#include <core/threading/mutex.h>
+#include <core/threading/mutex_locker.h>
 
 #include <clipsmm.h>
-#include <mutex>
 
 namespace protobuf_clips {
   class ClipsProtobufCommunicator;
@@ -95,7 +96,8 @@ class LLSFRefBox
   protobuf_clips::ClipsProtobufCommunicator *pb_comm_;
 
   CLIPS::Environment                       *clips_;
-  std::recursive_mutex                      clips_mutex_;
+  //std::recursive_mutex                      clips_mutex_;
+  fawkes::Mutex                             clips_mutex_;
   std::map<long int, CLIPS::Fact::pointer>  clips_msg_facts_;
 
   boost::asio::io_service      io_service_;
