@@ -24,7 +24,7 @@ HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 CFLAGS += $(CFLAGS_CPP11)
 
-LIBS_libllsf_protobuf_clips = stdc++ m llsf_protobuf_comm
+LIBS_libllsf_protobuf_clips = stdc++ m llsfrbcore llsf_protobuf_comm
 OBJS_libllsf_protobuf_clips = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp)))))
 HDRS_libllsf_protobuf_clips = $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h))
 

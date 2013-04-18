@@ -39,10 +39,10 @@
 
 #include <list>
 #include <map>
-#include <mutex>
 #include <clipsmm.h>
 
 #include <protobuf_comm/server.h>
+#include <core/threading/mutex.h>
 
 namespace protobuf_comm {
   class ProtobufStreamClient;
@@ -57,8 +57,8 @@ namespace protobuf_clips {
 class ClipsProtobufCommunicator
 {
  public:
-  ClipsProtobufCommunicator(CLIPS::Environment *env, std::recursive_mutex &env_mutex);
-  ClipsProtobufCommunicator(CLIPS::Environment *env, std::recursive_mutex &env_mutex,
+  ClipsProtobufCommunicator(CLIPS::Environment *env, fawkes::Mutex &env_mutex);
+  ClipsProtobufCommunicator(CLIPS::Environment *env, fawkes::Mutex &env_mutex,
 			    std::vector<std::string> &proto_path);
   ~ClipsProtobufCommunicator();
 
@@ -138,14 +138,14 @@ class ClipsProtobufCommunicator
 
  private:
   CLIPS::Environment   *clips_;
-  std::recursive_mutex &clips_mutex_;
+  fawkes::Mutex        &clips_mutex_;
 
   protobuf_comm::MessageRegister       *message_register_;
   protobuf_comm::ProtobufStreamServer  *server_;
   protobuf_comm::ProtobufBroadcastPeer *peer_;
 
   
-  std::recursive_mutex map_mutex_;
+  fawkes::Mutex map_mutex_;
   long int next_client_id_;
   std::map<long int, protobuf_comm::ProtobufStreamServer::ClientID> server_clients_;
 

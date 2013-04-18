@@ -36,7 +36,7 @@
 
 #include <protobuf_clips/communicator.h>
 
-
+#include <core/threading/mutex_locker.h>
 #include <protobuf_comm/client.h>
 #include <protobuf_comm/server.h>
 #include <protobuf_comm/peer.h>
@@ -65,7 +65,7 @@ namespace protobuf_clips {
  * @param env_mutex mutex to lock when operating on the CLIPS environment.
  */
 ClipsProtobufCommunicator::ClipsProtobufCommunicator(CLIPS::Environment *env,
-						     std::recursive_mutex &env_mutex)
+						     fawkes::Mutex &env_mutex)
   : clips_(env), clips_mutex_(env_mutex), server_(NULL), peer_(NULL)
 {
   message_register_ = new MessageRegister();
@@ -78,7 +78,7 @@ ClipsProtobufCommunicator::ClipsProtobufCommunicator(CLIPS::Environment *env,
  * @param proto_path proto path passed to a newly instantiated message register
  */
 ClipsProtobufCommunicator::ClipsProtobufCommunicator(CLIPS::Environment *env,
-						     std::recursive_mutex &env_mutex,
+						     fawkes::Mutex &env_mutex,
 						     std::vector<std::string> &proto_path)
   : clips_(env), clips_mutex_(env_mutex), server_(NULL), peer_(NULL)
 {
@@ -546,7 +546,7 @@ ClipsProtobufCommunicator::clips_pb_client_connect(std::string host, int port)
 
   long int client_id;
   {
-    std::lock_guard<std::recursive_mutex> lock(map_mutex_);
+    fawkes::MutexLocker lock(&map_mutex_);
     client_id = ++next_client_id_;
     clients_[client_id] = client;
   }
@@ -576,7 +576,7 @@ ClipsProtobufCommunicator::clips_pb_send(long int client_id, void *msgptr)
   if (!server_)  return;
 
   try {
-    std::lock_guard<std::recursive_mutex> lock(map_mutex_);
+    fawkes::MutexLocker lock(&map_mutex_);
 
     if (server_clients_.find(client_id) != server_clients_.end()) {
       server_->send(server_clients_[client_id], *m);
@@ -620,7 +620,7 @@ ClipsProtobufCommunicator::clips_pb_disconnect(long int client_id)
   //logger_->log_info("RefBox", "Disconnecting client %li", client_id);
 
   try {
-    std::lock_guard<std::recursive_mutex> lock(map_mutex_);
+    fawkes::MutexLocker lock(&map_mutex_);
 
     if (server_clients_.find(client_id) != server_clients_.end()) {
       protobuf_comm::ProtobufStreamServer::ClientID srv_client = server_clients_[client_id];
@@ -738,7 +738,7 @@ ClipsProtobufCommunicator::clips_assert_message(std::pair<std::string, unsigned 
 						ClipsProtobufCommunicator::ClientType ct,
 						unsigned int client_id)
 {
-  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  fawkes::MutexLocker lock(&clips_mutex_);
 
   CLIPS::Template::pointer temp = clips_->get_template("protobuf-msg");
   if (temp) {
@@ -778,7 +778,7 @@ ClipsProtobufCommunicator::handle_server_client_connected(ProtobufStreamServer::
 
   long int client_id = -1;
   {
-    std::lock_guard<std::recursive_mutex> lock(map_mutex_);
+    fawkes::MutexLocker lock(&map_mutex_);
     client_id = ++next_client_id_;
     client_endpoints_[client_id] =
       std::make_pair(endpoint.address().to_string(), endpoint.port());
@@ -786,7 +786,7 @@ ClipsProtobufCommunicator::handle_server_client_connected(ProtobufStreamServer::
     rev_server_clients_[client] = client_id;
   }
 
-  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  fawkes::MutexLocker lock(&clips_mutex_);
   clips_->assert_fact_f("(protobuf-server-client-connected %li %s %u)", client_id,
 			endpoint.address().to_string().c_str(), endpoint.port());
   clips_->refresh_agenda();
@@ -800,7 +800,7 @@ ClipsProtobufCommunicator::handle_server_client_disconnected(ProtobufStreamServe
 {
   long int client_id = -1;
   {
-    std::lock_guard<std::recursive_mutex> lock(map_mutex_);
+    fawkes::MutexLocker lock(&map_mutex_);
     RevServerClientMap::iterator c;
     if ((c = rev_server_clients_.find(client)) != rev_server_clients_.end()) {
       client_id = c->second;
@@ -810,7 +810,7 @@ ClipsProtobufCommunicator::handle_server_client_disconnected(ProtobufStreamServe
   }
 
   if (client_id >= 0) {
-    std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+    fawkes::MutexLocker lock(&clips_mutex_);
     clips_->assert_fact_f("(protobuf-server-client-disconnected %li)", client_id);
     clips_->refresh_agenda();
     clips_->run();
@@ -829,7 +829,7 @@ ClipsProtobufCommunicator::handle_server_client_msg(ProtobufStreamServer::Client
 						    uint16_t component_id, uint16_t msg_type,
 						    std::shared_ptr<google::protobuf::Message> msg)
 {
-  std::lock_guard<std::recursive_mutex> lock(map_mutex_);
+  fawkes::MutexLocker lock(&map_mutex_);
   RevServerClientMap::iterator c;
   if ((c = rev_server_clients_.find(client)) != rev_server_clients_.end()) {
     clips_assert_message(client_endpoints_[c->second],
@@ -848,10 +848,10 @@ ClipsProtobufCommunicator::handle_server_client_fail(ProtobufStreamServer::Clien
 						     uint16_t component_id, uint16_t msg_type,
 						     std::string msg)
 {
-  std::lock_guard<std::recursive_mutex> lock(map_mutex_);
+  fawkes::MutexLocker lock(&map_mutex_);
   RevServerClientMap::iterator c;
   if ((c = rev_server_clients_.find(client)) != rev_server_clients_.end()) {
-    std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+    fawkes::MutexLocker lock(&clips_mutex_);
     clips_->assert_fact_f("(protobuf-server-receive-failed (comp-id %u) (msg-type %u) "
 			  "(rcvd-via STREAM) (client-id %li) (message \"%s\") "
 			  "(rcvd-from (\"%s\" %u)))",
@@ -903,7 +903,7 @@ ClipsProtobufCommunicator::handle_peer_send_error(std::string msg)
 void
 ClipsProtobufCommunicator::handle_client_connected(long int client_id)
 {
-  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  fawkes::MutexLocker lock(&clips_mutex_);
   clips_->assert_fact_f("(protobuf-client-connected %li)", client_id);
   clips_->refresh_agenda();
   clips_->run();
@@ -913,7 +913,7 @@ void
 ClipsProtobufCommunicator::handle_client_disconnected(long int client_id,
 						      const boost::system::error_code &error)
 {
-  std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+  fawkes::MutexLocker lock(&clips_mutex_);
   clips_->assert_fact_f("(protobuf-client-disconnected %li)", client_id);
   clips_->refresh_agenda();
   clips_->run();
