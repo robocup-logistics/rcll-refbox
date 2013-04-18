@@ -13,6 +13,7 @@
   (slot msg-type (type INTEGER))
   (slot rcvd-via (type SYMBOL) (allowed-values STREAM BROADCAST))
   (multislot rcvd-from (cardinality 2 2))
+  (slot client-type (type SYMBOL) (allowed-values SERVER CLIENT PEER))
   (slot client-id (type INTEGER))
   (slot ptr (type EXTERNAL-ADDRESS))
 )
