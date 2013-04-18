@@ -39,14 +39,13 @@
 
 #include <boost/asio.hpp>
 #include <google/protobuf/message.h>
-#include <protobuf_comm/server.h>
 #include <logging/logger.h>
 
 #include <clipsmm.h>
 #include <mutex>
 
-namespace protobuf_comm {
-  class ProtobufBroadcastPeer;
+namespace protobuf_clips {
+  class ClipsProtobufCommunicator;
 }
 
 namespace llsf_sps {
@@ -73,52 +72,15 @@ class LLSFRefBox
  private: // methods
   void start_timer();
   void handle_timer(const boost::system::error_code& error);
-  void handle_client_connected(protobuf_comm::ProtobufStreamServer::ClientID client,
-			       boost::asio::ip::tcp::endpoint &endpoint);
-  void handle_client_disconnected(protobuf_comm::ProtobufStreamServer::ClientID client,
-				  const boost::system::error_code &error);
-
-  void handle_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
-			 uint16_t component_id, uint16_t msg_type,
-			 std::shared_ptr<google::protobuf::Message> msg);
-
-  void handle_client_fail(protobuf_comm::ProtobufStreamServer::ClientID client,
-			 uint16_t component_id, uint16_t msg_type,
-			 std::string msg);
-
-  void handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
-		       uint16_t component_id, uint16_t msg_type,
-		       std::shared_ptr<google::protobuf::Message> msg);
-  void handle_peer_recv_error(boost::asio::ip::udp::endpoint &endpoint, std::string msg);
-  void handle_peer_send_error(std::string msg);
 
   void setup_protobuf_comm();
 
   void          setup_clips();
   void          handle_clips_periodic();
-  void          clips_assert_message(std::pair<std::string, unsigned short> &endpoint,
-				     uint16_t comp_id, uint16_t msg_type,
-				     std::shared_ptr<google::protobuf::Message> &msg,
-				     unsigned int client_id = 0);
+
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
-  bool          clips_pb_register_type(std::string full_name);
-  CLIPS::Values clips_pb_field_names(void *msgptr);
-  bool          clips_pb_has_field(void *msgptr, std::string field_name);
-  CLIPS::Value  clips_pb_field_value(void *msgptr, std::string field_name);
-  CLIPS::Value  clips_pb_field_type(void *msgptr, std::string field_name);
-  CLIPS::Value  clips_pb_field_label(void *msgptr, std::string field_name);
-  CLIPS::Values clips_pb_field_list(void *msgptr, std::string field_name);
-  bool          clips_pb_field_is_list(void *msgptr, std::string field_name);
-  CLIPS::Value  clips_pb_create(std::string full_name);
-  CLIPS::Value  clips_pb_ref(void *msgptr);
-  void          clips_pb_destroy(void *msgptr);
-  void          clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Value value);
-  void          clips_pb_add_list(void *msgptr, std::string field_name, CLIPS::Value value);
-  void          clips_pb_send(long int client_id, void *msgptr);
-  void          clips_pb_disconnect(long int client_id);
-  void          clips_pb_broadcast(void *msgptr);
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
   void          sps_read_rfids();
@@ -130,10 +92,7 @@ class LLSFRefBox
   Logger        *clips_logger_;
   Logger::LogLevel log_level_;
   llsf_sps::SPSComm *sps_;
-  protobuf_comm::ProtobufStreamServer *pbc_server_;
-  protobuf_comm::ProtobufBroadcastPeer *pbc_peer_;
-  std::map<protobuf_comm::ProtobufStreamServer::ClientID,
-    std::pair<std::string, unsigned short>> client_endpoints_;
+  protobuf_clips::ClipsProtobufCommunicator *pb_comm_;
 
   CLIPS::Environment                       *clips_;
   std::recursive_mutex                      clips_mutex_;

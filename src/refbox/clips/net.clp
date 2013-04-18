@@ -18,7 +18,7 @@
 )
 
 (defrule net-client-connected
-  ?cf <- (protobuf-client-connected ?client-id ?host ?port)
+  ?cf <- (protobuf-server-client-connected ?client-id ?host ?port)
   =>
   (retract ?cf)
   (assert (network-client (id ?client-id) (host ?host) (port ?port)))
@@ -37,7 +37,7 @@
 )
 
 (defrule net-client-disconnected
-  ?cf <- (protobuf-client-disconnected ?client-id)
+  ?cf <- (protobuf-server-client-disconnected ?client-id)
   ?nf <- (network-client (id ?client-id) (host ?host))
   =>
   (retract ?cf ?nf)
