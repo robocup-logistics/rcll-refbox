@@ -90,10 +90,20 @@ ClipsProtobufCommunicator::ClipsProtobufCommunicator(CLIPS::Environment *env,
 /** Destructor. */
 ClipsProtobufCommunicator::~ClipsProtobufCommunicator()
 {
-  for (auto f : functions_) {
-    clips_->remove_function(f);
+  {
+    fawkes::MutexLocker lock(&clips_mutex_);
+
+    CLIPS::DefaultFacts::pointer df = clips_->get_default_facts("protobuf-available");
+    if (df) df->retract();
+
+    avail_fact_->retract();
+    avail_fact_.reset();
+
+    for (auto f : functions_) {
+      clips_->remove_function(f);
+    }
+    functions_.clear();
   }
-  functions_.clear();
 
   for (auto c : clients_) {
     delete c.second;
@@ -115,6 +125,7 @@ ClipsProtobufCommunicator::~ClipsProtobufCommunicator()
 void
 ClipsProtobufCommunicator::setup_clips()
 {
+  fawkes::MutexLocker lock(&clips_mutex_);
 
   ADD_FUNCTION("pb-register-type", (sigc::slot<bool, std::string>(sigc::mem_fun(*this, &ClipsProtobufCommunicator::clips_pb_register_type))));
   ADD_FUNCTION("pb-field-names", (sigc::slot<CLIPS::Values, void *>(sigc::mem_fun(*this, &ClipsProtobufCommunicator::clips_pb_field_names))));
@@ -138,6 +149,8 @@ ClipsProtobufCommunicator::setup_clips()
   ADD_FUNCTION("pb-connect", (sigc::slot<long int, std::string, int>(sigc::mem_fun(*this, &ClipsProtobufCommunicator::clips_pb_client_connect))));
   ADD_FUNCTION("pb-disconnect", (sigc::slot<void, long int>(sigc::mem_fun(*this, &ClipsProtobufCommunicator::clips_pb_disconnect))));
 
+  clips_->build("(deffacts protobuf-available (protobuf-available))");
+  avail_fact_ = clips_->assert_fact("(protobuf-available)");
 }
 
 /** Enable protobuf stream server.
