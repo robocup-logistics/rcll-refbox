@@ -152,11 +152,14 @@ class ClipsProtobufCommunicator
   typedef std::map<protobuf_comm::ProtobufStreamServer::ClientID, long int> RevServerClientMap;
   RevServerClientMap rev_server_clients_;
   std::map<long int, protobuf_comm::ProtobufStreamClient *>  clients_;
-  std::list<std::string>  functions_;
 
   std::map<long int, std::pair<std::string, unsigned short>> client_endpoints_;
 
   std::map<long int, CLIPS::Fact::pointer>  msg_facts_;
+
+
+  std::list<std::string>  functions_;
+  CLIPS::Fact::pointer    avail_fact_;
 };
 
 } // end namespace protobuf_clips
