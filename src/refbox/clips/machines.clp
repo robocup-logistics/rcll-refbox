@@ -59,7 +59,10 @@
   )
 
   ; assign random machine types out of the start distribution
-  (bind ?machine-assignment (randomize$ ?*MACHINE-DISTRIBUTION*))
+  (if ?*RANDOMIZE-MACHINE-TYPES*
+    then (bind ?machine-assignment (randomize$ ?*MACHINE-DISTRIBUTION*))
+    else (bind ?machine-assignment ?*MACHINE-DISTRIBUTION*)
+  )
   (printout t "Initial machine distribution:    " ?*MACHINE-DISTRIBUTION* crlf)
   (printout t "Randomized machine distribution: " ?machine-assignment crlf)
   (delayed-do-for-all-facts ((?machine machine))
