@@ -156,12 +156,14 @@ LLSFRefBox::~LLSFRefBox()
   timer_.cancel();
 
   //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
-  fawkes::MutexLocker lock(&clips_mutex_);
-  clips_->assert_fact("(finalize)");
-  clips_->refresh_agenda();
-  clips_->run();
+  {
+    fawkes::MutexLocker lock(&clips_mutex_);
+    clips_->assert_fact("(finalize)");
+    clips_->refresh_agenda();
+    clips_->run();
 
-  finalize_clips_logger(clips_->cobj());
+    finalize_clips_logger(clips_->cobj());
+  }
 
   delete pb_comm_;
   delete config_;
@@ -275,14 +277,10 @@ LLSFRefBox::setup_clips()
 void
 LLSFRefBox::handle_clips_periodic()
 {
-  //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
-  fawkes::MutexLocker lock(&clips_mutex_);
-
-
   std::queue<int> to_erase;
   std::map<long int, CLIPS::Fact::pointer>::iterator f;
+
   for (f = clips_msg_facts_.begin(); f != clips_msg_facts_.end(); ++f) {
-    CLIPS::Template::pointer temp = f->second->get_template();
     if (f->second->refcount() == 1) {
       //logger_->log_info("RefBox", "Fact %li can be erased", f->second->index());
       to_erase.push(f->first);
@@ -417,12 +415,14 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
 
     sps_read_rfids();
 
-    //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
-    fawkes::MutexLocker lock(&clips_mutex_);
+    {
+      //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+      fawkes::MutexLocker lock(&clips_mutex_);
 
-    clips_->assert_fact("(time (now))");
-    clips_->refresh_agenda();
-    clips_->run();
+      clips_->assert_fact("(time (now))");
+      clips_->refresh_agenda();
+      clips_->run();
+    }
 
     timer_.expires_at(timer_.expires_at()
 		      + boost::posix_time::milliseconds(cfg_timer_interval_));
