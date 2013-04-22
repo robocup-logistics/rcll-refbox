@@ -191,6 +191,18 @@
   (printout warn "Illegal SetGamePhase message received from host " ?host crlf)
 )
 
+(defrule net-recv-SetPucks
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetPucks") (ptr ?p))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
+  ; retract all puck facts, we store new ones
+  (do-for-all-facts ((?puck puck)) TRUE (retract ?puck))
+  ; store new pucks
+  (foreach ?m (pb-field-list ?p "ids")
+    (assert (puck (index ?m-index) (id ?m)))
+  )
+)
+
 (defrule net-send-GameState
   (time $?now)
   (gamestate (state ?state) (phase ?phase) (game-time ?game-time) (points ?points))
