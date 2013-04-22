@@ -218,7 +218,6 @@
 
 (defrule net-send-RobotInfo
   (time $?now)
-  (network-client (id ?client-id))
   ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
@@ -253,7 +252,8 @@
     (pb-add-list ?p "robots" ?r) ; destroys ?r
   )
 
-  (pb-send ?client-id ?p)
+  (do-for-all-facts ((?client network-client)) TRUE
+    (pb-send ?client:id ?p))
   (pb-destroy ?p)
 )
 
@@ -369,7 +369,6 @@
 
 (defrule net-send-PuckInfo
   (time $?now)
-  (network-client (id ?client-id))
   ?f <- (signal (type puck-info) (time $?t&:(timeout ?now ?t ?*PUCKINFO-PERIOD*)) (seq ?seq))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
@@ -396,7 +395,8 @@
     (pb-add-list ?pi "pucks" ?p) ; destroys ?p
   )
 
-  (pb-send ?client-id ?pi)
+  (do-for-all-facts ((?client network-client)) TRUE
+    (pb-send ?client:id ?pi))
   (pb-destroy ?pi)
 )
 
