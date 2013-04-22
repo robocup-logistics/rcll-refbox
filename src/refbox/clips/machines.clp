@@ -79,7 +79,7 @@
   (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
   (loop-for-count (min ?num-down-times (length$ ?candidates))
     (bind ?idx (random 1 (length$ ?candidates)))
-    (bind ?duration (random 30 120))
+    (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
     (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
     (bind ?end-time (+ ?start-time ?duration))
     (bind ?mf (nth$ ?idx ?candidates))

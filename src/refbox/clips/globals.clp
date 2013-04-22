@@ -31,6 +31,10 @@
   ; be send over the network when a new peer is detected?
   ?*BC-VERSIONINFO-PERIOD* = 0.5
   ?*BC-VERSIONINFO-COUNT* = 10
+  ; Minimum and maximum machine down times, actual value will be
+  ; chosen randomly from this range
+  ?*DOWN-TIME-MIN* = 2  ;  30
+  ?*DOWN-TIME-MAX* = 4  ; 120
   ; Machine processing times; seconds
   ?*RECYCLE-PROC-TIME* = 2
   ?*DELIVER-PROC-TIME* = 1
