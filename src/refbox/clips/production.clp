@@ -467,6 +467,7 @@
         (delayed-do-for-all-facts ((?input rfid-input)) (= ?input:id ?puck-id)
           (retract ?input)
 	)
+	(printout t "Removing puck " ?puck-id " from machine " ?machine:name crlf)
         (assert (rfid-input (machine (sym-cat (pb-field-value ?p "machine_name")))
 			    (has-puck FALSE)))
       else
