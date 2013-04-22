@@ -38,6 +38,9 @@ package llsf_msgs;
 
 import "Pose2D.proto";
 
+option java_package = "org.robocup_logistics.llsf_msgs";
+option java_outer_classname = "PuckInfoProtos";
+
 // Current state of a puck
 enum PuckState {
   S0 = 0;
