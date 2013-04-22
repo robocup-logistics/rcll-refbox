@@ -76,3 +76,13 @@ message PuckInfo {
   // List of all known pucks
   repeated Puck pucks = 1;
 }
+
+message SetPucks {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 52;
+  }
+
+  // List of all known pucks
+  repeated uint32 ids = 1;
+}
