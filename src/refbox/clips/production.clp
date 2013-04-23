@@ -514,9 +514,14 @@
 			    (has-puck FALSE)))
       else
       (if (member$ ?puck-id ?machine:loaded-with)
-        then
-	  (bind ?new-loaded-with (delete-member$ ?machine:loaded-with ?puck-id))
-	  (assert (machine-update-loaded-with ?machine:name ?new-loaded-with))
+      then
+        (bind ?new-loaded-with (delete-member$ ?machine:loaded-with ?puck-id))
+	(assert (machine-update-loaded-with ?machine:name ?new-loaded-with))
+	(do-for-fact ((?puck puck)) (eq ?puck:id ?puck-id)
+          (printout t "Change puck " ?puck-id " from " ?puck:state " to CONSUMED"
+		    " on user instructed removal" crlf)
+	  (modify ?puck (state CONSUMED))
+        )
       )
     )
   )
@@ -571,14 +576,6 @@
 	    " with puck under RFID" crlf)
 )
 
-(defrule machine-update-loaded-with-test
-  (declare (salience ?*PRIORITY_HIGH*))
-  ?gf <- (gamestate (phase PRODUCTION) (points ?points))
-  ?uf <- (machine-update-loaded-with ?m $?new-lw)
-  =>
-  (printout t test crlf)
-)
-
 (defrule machine-update-loaded-with
   (declare (salience ?*PRIORITY_HIGH*))
   ?gf <- (gamestate (phase PRODUCTION) (points ?points))
@@ -586,7 +583,6 @@
   ?mf <- (machine (name ?m) (mtype ?mtype) (loaded-with $?old-lw) (productions ?p))
   (machine-spec (mtype ?mtype) (inputs $?inputs&:(> (length$ ?inputs) 0))
 		(output ?output) (points ?machine-points))
-
   =>
   (retract ?uf)
   (printout t "Updating " ?m "|" ?mtype " load from " ?old-lw " to " ?new-lw crlf)
