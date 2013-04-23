@@ -134,7 +134,7 @@
   =>
   (modify ?gs (prev-phase POST_GAME))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights))
+    (modify ?machine (desired-lights RED-BLINK))
   )
 )
 
