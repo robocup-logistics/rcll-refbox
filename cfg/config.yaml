@@ -21,7 +21,7 @@ llsfrb:
     enable: false
     host: !ipv4 192.168.1.77
     port: !tcp-port 502
-    test-lights: false
+    test-lights: true
 
   clips:
     # Timer interval, in milliseconds
