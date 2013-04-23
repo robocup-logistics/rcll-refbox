@@ -60,7 +60,7 @@
 )
 
 (defrule exploration-handle-report
-  ?gf <- (gamestate (phase EXPLORATION) (points ?points) (game-time ?game-time))
+  ?gf <- (gamestate (phase EXPLORATION) (game-time ?game-time))
   ?mf <- (protobuf-msg (type "llsf_msgs.MachineReport") (ptr ?p)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   =>
@@ -78,13 +78,17 @@
           then ; correct report
 	    (printout t "Correct report: " ?name " of type " ?type ". "
 		      "Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
-	    (modify ?gf (points (+ ?points ?*EXPLORATION-CORRECT-REPORT-POINTS*)))
+	    (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
+			    (reason (str-cat "Correct exploration report for "
+					     ?name "|" ?type))))
 	    (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
 					(host ?from-host) (port ?from-port)))
           else ; wrong report
 	    (printout t "Wrong report: " ?name " of type " ?type ". "
 		      "Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
-	    (modify ?gf (points (max (+ ?points ?*EXPLORATION-WRONG-REPORT-POINTS*) 0)))
+	    (assert (points (points ?*EXPLORATION-WRONG-REPORT-POINTS*)
+			    (reason (str-cat "Wrong exploration report for "
+					     ?name "|" ?type))))
 	    (assert (exploration-report (name ?name) (type WRONG) (game-time ?game-time)
 					(host ?from-host) (port ?from-port)))
 	  )

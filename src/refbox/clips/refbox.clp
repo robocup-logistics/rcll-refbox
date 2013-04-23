@@ -22,13 +22,19 @@
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
 
-(defrule update-gametime
+(defrule update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
   ?gf <- (gamestate (phase PRODUCTION|EXPLORATION) (state RUNNING)
 		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
   =>
-  (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now))
+  (bind ?points 0)
+  (do-for-all-facts ((?p points)) TRUE
+    (bind ?points (+ ?points ?p:points))
+  )
+  (bind ?points (max ?points 0))
+  (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now)
+	  (points ?points))
 )
 
 (defrule update-last-time

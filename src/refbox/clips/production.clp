@@ -207,7 +207,6 @@
 (defrule machine-proc-done
   (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
-  ?gf <- (gamestate (points ?points))
   (machine (name ?m) (mtype ?mtype) (state PROCESSING))
   (machine-spec (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
 		(inputs $?inputs) (output ?output) (points ?machine-points))
@@ -221,7 +220,7 @@
 	    " -> " ?output ", took " ?pt " sec, awarding " ?machine-points " points)" crlf)
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)))
-  (modify ?gf (points (+ ?points ?machine-points)))
+  (assert (points (points ?machine-points) (reason (str-cat ?mtype " production done at " ?m))))
   (modify ?pf (state ?output))
   (foreach ?puck-id ?lw
     (do-for-fact ((?puck puck)) (= ?puck:id ?puck-id)
@@ -328,7 +327,6 @@
 (defrule recycle-proc-done
   (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
-  ?gf <- (gamestate (points ?points))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state PROCESSING) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
   ?pf <- (puck (id ?id) (state ?ps&CONSUMED))
@@ -337,7 +335,7 @@
 	    "Awarding " ?*RECYCLE-POINTS* " points." crlf)
   (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON))
   (modify ?pf (state S0))
-  (modify ?gf (points (+ ?points ?*RECYCLE-POINTS*)))
+  (assert (points (points ?*RECYCLE-POINTS*) (reason (str-cat "Recycling done at " ?m))))
 )
 
 (defrule recycle-removal
@@ -578,7 +576,7 @@
 
 (defrule machine-update-loaded-with
   (declare (salience ?*PRIORITY_HIGH*))
-  ?gf <- (gamestate (phase PRODUCTION) (points ?points))
+  ?gf <- (gamestate (phase PRODUCTION))
   ?uf <- (machine-update-loaded-with ?m $?new-lw)
   ?mf <- (machine (name ?m) (mtype ?mtype) (loaded-with $?old-lw) (productions ?p))
   (machine-spec (mtype ?mtype) (inputs $?inputs&:(> (length$ ?inputs) 0))
@@ -592,7 +590,8 @@
    then ; production at this machine is complete
     (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
   	    (productions (+ ?p 1)))
-    (modify ?gf (points (+ ?points ?machine-points)))
+    (assert (points (points ?machine-points)
+		    (reason (str-cat "Production step at " ?m "|" ?mtype))))
     ;(modify ?pf (state ?output))
     (delayed-do-for-all-facts ((?puck puck)) (member$ ?puck:id ?new-lw)
       (if (member$ ?puck:id ?old-lw)

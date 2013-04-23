@@ -135,6 +135,11 @@
   (slot game-time (type FLOAT))
 )
 
+(deftemplate points
+  (slot points (type INTEGER))
+  (slot reason (type STRING))
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-RIGHT*      = 0
@@ -148,7 +153,6 @@
 )
 
 (deffacts startup
-  (time 0 0)
   (gamestate (phase PRE_GAME))
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
