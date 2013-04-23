@@ -52,6 +52,14 @@
   )
 )
 
+; Check if two time ranges overlap each other.
+; The parameters are two time ranges start and end times respectively.
+; The units do not matter as long as they are the same for all values.
+(deffunction time-range-overlap (?r1-start ?r1-end ?r2-start ?r2-end)
+  (return (or (and (>= ?r1-start ?r2-start) (<= ?r1-start ?r2-end))
+	      (and (>= ?r1-end ?r2-start) (<= ?r1-end ?r2-end))))
+)
+
 ; --- RULES - general housekeeping
 (defrule retract-time
   (declare (salience ?*PRIORITY_TIME_RETRACT*))
