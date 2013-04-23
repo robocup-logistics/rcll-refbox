@@ -97,7 +97,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     throw;
   }
 
-  log_level_ = Logger::LL_DEBUG;
+  log_level_ = Logger::LL_INFO;
   try {
     std::string ll = config_->get_string("/llsfrb/log/level");
     if (ll == "debug") {
@@ -250,7 +250,7 @@ LLSFRefBox::setup_clips()
   mlogger->add_logger(new ConsoleLogger(log_level_));
   try {
     std::string logfile = config_->get_string("/llsfrb/log/clips");
-    mlogger->add_logger(new FileLogger(logfile.c_str(), log_level_));
+    mlogger->add_logger(new FileLogger(logfile.c_str(), Logger::LL_DEBUG));
   } catch (fawkes::Exception &e) {} // ignored, use default
   clips_logger_ = mlogger;
 
