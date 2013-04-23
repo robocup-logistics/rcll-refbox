@@ -93,6 +93,34 @@
     (bind ?candidates (delete$ ?candidates ?idx ?idx))
   )
 
+  ; assign random active delivery gate times
+  (bind ?delivery-gates (create$))
+  (do-for-all-facts ((?m machine)) (eq ?m:mtype DELIVER)
+    (bind ?delivery-gates (create$ ?delivery-gates ?m:name))
+  )
+  (bind ?deliver-period-end-time 0)
+  (bind ?last-delivery-gate NONE)
+  (while (< ?deliver-period-end-time ?*PRODUCTION-TIME*)
+    (bind ?start-time ?deliver-period-end-time)
+    (bind ?deliver-period-end-time
+      (min (+ ?start-time (random ?*DELIVERY-GATE-MIN-TIME* ?*DELIVERY-GATE-MAX-TIME*))
+	   ?*PRODUCTION-TIME*))
+    (if (>= ?deliver-period-end-time (- ?*PRODUCTION-TIME* ?*DELIVERY-GATE-MIN-TIME*))
+      ; expand this delivery gates' time
+      then (bind ?deliver-period-end-time ?*PRODUCTION-TIME*))
+    (bind ?candidates (delete-member$ ?delivery-gates ?last-delivery-gate))
+    (bind ?delivery-gate (nth$ (random 1 (length$ ?candidates)) ?candidates))
+    (bind ?last-delivery-gate ?delivery-gate)
+    (assert (delivery-period (delivery-gate ?delivery-gate)
+			     (period ?start-time ?deliver-period-end-time)))
+  )
+  (do-for-all-facts ((?period delivery-period)) TRUE
+    (printout t "Deliver time " ?period:delivery-gate ": "
+	      (time-sec-format (nth$ 1 ?period:period)) " to "
+	      (time-sec-format (nth$ 2 ?period:period)) " ("
+	      (- (nth$ 2 ?period:period) (nth$ 1 ?period:period)) " sec)" crlf)
+  )
+
   ;(printout t "Assigning processing times to machines" crlf)
   (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
     (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))

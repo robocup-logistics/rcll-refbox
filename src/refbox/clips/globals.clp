@@ -39,6 +39,9 @@
   ?*RECYCLE-PROC-TIME* = 2
   ?*DELIVER-PROC-TIME* = 1
   ?*INTERMEDIATE-PROC-TIME* = 2
+  ; Delivery gate active times
+  ?*DELIVERY-GATE-MIN-TIME* = 30
+  ?*DELIVERY-GATE-MAX-TIME* = 120
   ; number of points for specific actoins
   ?*RECYCLE-POINTS* = 3
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4

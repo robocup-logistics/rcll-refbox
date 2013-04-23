@@ -268,6 +268,14 @@
 	  (proc-time ?*DELIVER-PROC-TIME*) (desired-lights GREEN-ON YELLOW-ON))
 )
 
+(defrule delivery-gate-down-period "Setup next delivery gate down period"
+  (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
+  (delivery-period (period $?p&:(>= ?gtime (nth$ 1 ?p))&:(<= ?gtime (nth$ 2 ?p)))
+		   (delivery-gate ?dgate))
+  ?mf <- (machine (mtype DELIVER) (name ~?dgate) (state ~DOWN))
+  =>
+  (modify ?mf (down-period ?p))
+)
 
 (defrule deliver-invalid-input
   (time $?now)

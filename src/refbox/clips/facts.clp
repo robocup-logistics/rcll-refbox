@@ -101,6 +101,11 @@
   (slot points (type INTEGER) (default 10))
   (slot points-supernumerous (type INTEGER) (default 1))
 )
+
+(deftemplate delivery-period
+  (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3))
+  (multislot period (type INTEGER) (cardinality 2 2))
+)  
  
 (deftemplate product-delivered
   (multislot time (type INTEGER) (cardinality 2 2))
