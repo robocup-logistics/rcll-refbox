@@ -99,7 +99,6 @@
 
 (defrule machine-down
   (declare (salience ?*PRIORITY_HIGH*))
-  (time $?now)
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
   ?mf <- (machine (name ?name) (state ?state&~DOWN) (proc-start $?proc-start)
 		  (down-period $?dp&:(<= (nth$ 1 ?dp) ?gtime)&:(>= (nth$ 2 ?dp) ?gtime)))
@@ -117,7 +116,6 @@
 
 (defrule machine-up
   (declare (salience ?*PRIORITY_HIGH*))
-  (time $?now)
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
   ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gtime)))
@@ -159,7 +157,6 @@
 
 
 (defrule machine-invalid-input
-  (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
@@ -179,7 +176,6 @@
 
 (defrule machine-invalid-input-junk
   "A puck was placed that was already placed at another machine"
-  (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE))
@@ -278,7 +274,6 @@
 )
 
 (defrule deliver-invalid-input
-  (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE) (puck-id 0))
@@ -322,7 +317,6 @@
 )
 
 (defrule recycle-invalid-input
-  (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state IDLE) (puck-id 0))
@@ -356,7 +350,6 @@
 
 
 (defrule test-consumed
-  (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   (puck (id ?id) (state CONSUMED))
@@ -365,7 +358,6 @@
 )
 
 (defrule test-s0
-  (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   (puck (id ?id) (state S0))
@@ -374,7 +366,6 @@
 )
 
 (defrule test-s1
-  (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   (puck (id ?id) (state S1))
@@ -383,7 +374,6 @@
 )
 
 (defrule test-s2
-  (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   (puck (id ?id) (state S2))
@@ -392,7 +382,6 @@
 )
 
 (defrule test-p1
-  (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   (puck (id ?id) (state P1))
@@ -401,7 +390,6 @@
 )
 
 (defrule test-p2
-  (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   (puck (id ?id) (state P2))
@@ -410,7 +398,6 @@
 )
 
 (defrule test-p3
-  (time $?now)
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
   (puck (id ?id) (state P3))
