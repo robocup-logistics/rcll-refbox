@@ -36,52 +36,73 @@
 
 #include <config/yaml.h>
 
+#include <utils/system/argparser.h>
 #include <llsf_sps/sps_comm.h> 
-#include <boost/asio.hpp>
 
-#include <memory>
+#include <unistd.h>
 
 using namespace llsf_sps;
 using namespace fawkes;
 
-boost::asio::signal_set      *signal_set_;
 SPSComm                      *sps_;
 
 void
-signal_handler(const boost::system::error_code& error, int signum)
+usage(const char *progname)
 {
+  printf("Usage: %s -m MACHINE_ID -r S -g S -b S \n\n"
+	 "-m MACHINE_ID    use this machine to write puck\n"
+	 "-r S             set red light to state S (ON, OFF, or BLINK)\n"
+	 "-g S             set green light to state S (ON, OFF, or BLINK)\n"
+	 "-y S             set yellow light to state S (ON, OFF, or BLINK)\n",
+	 progname);
 }
 
 int
 main(int argc, char **argv)
 {
-  //ArgumentParser argp(argc, argv, "m:");
+  ArgumentParser argp(argc, argv, "m:r:g:y:");
 
   std::auto_ptr<llsfrb::Configuration> config(new llsfrb::YamlConfiguration(CONFDIR));
   config->load("config.yaml");
 
-  printf("Connecting to SPS...\n");
+  //printf("Connecting to SPS...\n");
   sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
 		     config->get_uint("/llsfrb/sps/port"));
   sps_->reset_lights();
   sps_->reset_rfids();
 
-  sps_->test_lights();
-  sps_->set_light(SPSComm::R2, SPSComm::LIGHT_RED, SPSComm::SIGNAL_ON);
-  sps_->set_light(SPSComm::R2, SPSComm::LIGHT_YELLOW, SPSComm::SIGNAL_ON);
-  sps_->set_light(SPSComm::R2, SPSComm::LIGHT_GREEN, SPSComm::SIGNAL_ON);
+  SPSComm::Machine machine      = SPSComm::M1;
+  SPSComm::SignalState red_s    = SPSComm::SIGNAL_OFF;
+  SPSComm::SignalState green_s  = SPSComm::SIGNAL_OFF;
+  SPSComm::SignalState yellow_s = SPSComm::SIGNAL_OFF;
 
-  boost::asio::io_service io_service;
+  if (argp.has_arg("m")) {
+    std::string machine_name = argp.arg("m");
+    machine = sps_->to_machine(machine_name);
+  }
 
-#if BOOST_ASIO_VERSION >= 100601
-  // Construct a signal set registered for process termination.
-  signal_set_ = new boost::asio::signal_set(io_service, SIGINT, SIGTERM);
+  if (argp.has_arg("r")) {
+    std::string signal_state = argp.arg("r");
+    red_s = sps_->to_signal_state(signal_state);
+  }
 
-  // Start an asynchronous wait for one of the signals to occur.
-  signal_set_->async_wait(signal_handler);
-#endif
+  if (argp.has_arg("g")) {
+    std::string signal_state = argp.arg("g");
+    green_s = sps_->to_signal_state(signal_state);
+  }
 
-  io_service.run();
+  if (argp.has_arg("y")) {
+    std::string signal_state = argp.arg("y");
+    yellow_s = sps_->to_signal_state(signal_state);
+  }
+
+
+  //sps_->test_lights();
+  sps_->set_light(machine, SPSComm::LIGHT_RED, red_s);
+  sps_->set_light(machine, SPSComm::LIGHT_YELLOW, yellow_s);
+  sps_->set_light(machine, SPSComm::LIGHT_GREEN, green_s);
+
+  usleep(500000);
 
   delete sps_;
 }
