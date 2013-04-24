@@ -71,7 +71,8 @@
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
   (bind ?time (pb-field-value ?p "time"))
-  (bind ?pose (create$ 0 0 0 0 0))
+  (bind ?pose-time (create$ 0 0))
+  (bind ?pose (create$ 0.0 0.0 0.0))
   (if (pb-has-field ?p "pose")
    then
     (bind ?p-pose (pb-field-value ?p "pose"))
@@ -81,9 +82,11 @@
     (bind ?p-pose-x (pb-field-value ?p-pose "x"))
     (bind ?p-pose-y (pb-field-value ?p-pose "y"))
     (bind ?p-pose-ori (pb-field-value ?p-pose "ori"))
-    (bind ?pose (create$ ?p-pose-time-sec ?p-pose-time-usec ?p-pose-x ?p-pose-y ?p-pose-ori))
+    (bind ?pose-time (create$ ?p-pose-time-sec ?p-pose-time-usec))
+    (bind ?pose (create$ ?p-pose-x ?p-pose-y ?p-pose-ori))
   )
-  (modify ?rf (last-seen ?now) (warning-sent FALSE) (pose ?pose))
+  (modify ?rf (last-seen ?now) (warning-sent FALSE)
+              (pose ?pose) (pose-time ?pose-time))
 )
 
 (defrule net-recv-beacon-unknown
