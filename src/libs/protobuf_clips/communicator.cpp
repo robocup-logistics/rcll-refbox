@@ -422,7 +422,7 @@ ClipsProtobufCommunicator::clips_pb_set_field(void *msgptr, std::string field_na
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
-  if (!*m) return;
+  if (!(m && *m)) return;
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -491,7 +491,7 @@ ClipsProtobufCommunicator::clips_pb_add_list(void *msgptr, std::string field_nam
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
-  if (!(m || *m)) return;
+  if (!(m && *m)) return;
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -582,7 +582,7 @@ ClipsProtobufCommunicator::clips_pb_send(long int client_id, void *msgptr)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
-  if (!(m || *m)) {
+  if (!(m && *m)) {
     //logger_->log_warn("RefBox", "Cannot send to %li: invalid message", client_id);
     return;
   }
@@ -615,7 +615,7 @@ ClipsProtobufCommunicator::clips_pb_broadcast(void *msgptr)
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
-  if (!(m || *m)) {
+  if (!(m && *m)) {
     //logger_->log_warn("RefBox", "Cannot send broadcast: invalid message");
     return;
   }
@@ -658,7 +658,7 @@ ClipsProtobufCommunicator::clips_pb_field_list(void *msgptr, std::string field_n
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
-  if (!(m || *m)) return CLIPS::Values(1, CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL));
+  if (!(m && *m)) return CLIPS::Values(1, CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL));
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
@@ -737,7 +737,7 @@ ClipsProtobufCommunicator::clips_pb_field_is_list(void *msgptr, std::string fiel
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
-  if (!(m || *m)) return false;
+  if (!(m && *m)) return false;
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
