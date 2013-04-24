@@ -310,7 +310,7 @@ ProtobufBroadcastPeer::handle_sent(const boost::system::error_code& error,
   }
 
   if (error) {
-    sig_send_error_("Sending message failed");
+    sig_send_error_(std::string("Sending message failed: ") + error.message());
   }
 
   start_send();
