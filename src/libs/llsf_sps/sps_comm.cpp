@@ -199,7 +199,7 @@ SPSComm::test_lights()
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
       set_light((Machine)m, (Light)l, SIGNAL_OFF);
     }
-    usleep(150000);
+    usleep(100000);
   }
 }
 
