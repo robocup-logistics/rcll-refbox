@@ -41,7 +41,7 @@ llsfrb:
   comm:
     protobuf-dirs: ["@BASEDIR@/src/msgs"]
     server-port: !tcp-port 4444
-    peer-host: !ipv4 172.16.255.255
+    peer-host: !ipv4 172.26.255.255
     peer-port: !udp-port 4444
     #peer-send-port: !udp-port 4444
     #peer-recv-port: !udp-port 4445
