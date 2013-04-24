@@ -220,7 +220,8 @@
 	    " -> " ?output ", took " ?pt " sec, awarding " ?machine-points " points)" crlf)
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)))
-  (assert (points (points ?machine-points) (reason (str-cat ?mtype " production done at " ?m))))
+  (assert (points (points ?machine-points) (phase PRODUCTION)
+		  (reason (str-cat ?mtype " production done at " ?m))))
   (modify ?pf (state ?output))
   (foreach ?puck-id ?lw
     (do-for-fact ((?puck puck)) (= ?puck:id ?puck-id)
@@ -335,7 +336,8 @@
 	    "Awarding " ?*RECYCLE-POINTS* " points." crlf)
   (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON))
   (modify ?pf (state S0))
-  (assert (points (points ?*RECYCLE-POINTS*) (reason (str-cat "Recycling done at " ?m))))
+  (assert (points (points ?*RECYCLE-POINTS*)  (phase PRODUCTION)
+		  (reason (str-cat "Recycling done at " ?m))))
 )
 
 (defrule recycle-removal
@@ -590,7 +592,7 @@
    then ; production at this machine is complete
     (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
   	    (productions (+ ?p 1)))
-    (assert (points (points ?machine-points)
+    (assert (points (points ?machine-points) (phase PRODUCTION)
 		    (reason (str-cat "Production step at " ?m "|" ?mtype))))
     ;(modify ?pf (state ?output))
     (delayed-do-for-all-facts ((?puck puck)) (member$ ?puck:id ?new-lw)

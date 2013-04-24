@@ -79,6 +79,7 @@
 	    (printout t "Correct report: " ?name " of type " ?type ". "
 		      "Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
 	    (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
+			    (phase EXPLORATION)
 			    (reason (str-cat "Correct exploration report for "
 					     ?name "|" ?type))))
 	    (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
@@ -87,6 +88,7 @@
 	    (printout t "Wrong report: " ?name " of type " ?type ". "
 		      "Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
 	    (assert (points (points ?*EXPLORATION-WRONG-REPORT-POINTS*)
+			    (phase EXPLORATION)
 			    (reason (str-cat "Wrong exploration report for "
 					     ?name "|" ?type))))
 	    (assert (exploration-report (name ?name) (type WRONG) (game-time ?game-time)

@@ -137,6 +137,7 @@
 
 (deftemplate points
   (slot points (type INTEGER))
+  (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION))
   (slot reason (type STRING))
 )
 

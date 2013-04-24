@@ -29,10 +29,13 @@
 		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
   =>
   (bind ?points 0)
-  (do-for-all-facts ((?p points)) TRUE
-    (bind ?points (+ ?points ?p:points))
+  (foreach ?phase (deftemplate-slot-allowed-values points phase)
+    (bind ?phase-points 0)
+    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
+      (bind ?phase-points (+ ?points ?p:points))
+    )
+    (bind ?points (+ ?points (max ?phase-points 0)))
   )
-  (bind ?points (max ?points 0))
   (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now)
 	  (points ?points))
 )
