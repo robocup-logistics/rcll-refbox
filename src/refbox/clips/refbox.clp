@@ -32,7 +32,7 @@
   (foreach ?phase (deftemplate-slot-allowed-values points phase)
     (bind ?phase-points 0)
     (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
-      (bind ?phase-points (+ ?points ?p:points))
+      (bind ?phase-points (+ ?phase-points ?p:points))
     )
     (bind ?points (+ ?points (max ?phase-points 0)))
   )
