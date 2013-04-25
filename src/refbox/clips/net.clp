@@ -53,7 +53,7 @@
   (bind ?beacon (pb-create "llsf_msgs.BeaconSignal"))
   (bind ?beacon-time (pb-field-value ?beacon "time"))
   (pb-set-field ?beacon-time "sec" (nth$ 1 ?now))
-  (pb-set-field ?beacon-time "nsec" (* (nth$ 2 ?now) 1000))
+  (pb-set-field ?beacon-time "nsec" (integer (* (nth$ 2 ?now) 1000)))
   (pb-set-field ?beacon "time" ?beacon-time) ; destroys ?beacon-time!
   (pb-set-field ?beacon "seq" ?seq)
   (pb-set-field ?beacon "team_name" "LLSF")
@@ -78,7 +78,7 @@
     (bind ?p-pose (pb-field-value ?p "pose"))
     (bind ?p-pose-time (pb-field-value ?p-pose "timestamp"))
     (bind ?p-pose-time-sec (pb-field-value ?p-pose-time "sec"))
-    (bind ?p-pose-time-usec (/ (pb-field-value ?p-pose-time "nsec") 1000))
+    (bind ?p-pose-time-usec (integer (/ (pb-field-value ?p-pose-time "nsec") 1000)))
     (bind ?p-pose-x (pb-field-value ?p-pose "x"))
     (bind ?p-pose-y (pb-field-value ?p-pose "y"))
     (bind ?p-pose-ori (pb-field-value ?p-pose "ori"))
@@ -102,7 +102,7 @@
   (bind ?team (pb-field-value ?p "team_name"))
   (bind ?name (pb-field-value ?p "peer_name"))
   (bind ?timef (pb-field-value ?p "time"))
-  (bind ?time (create$ (pb-field-value ?timef "sec") (/ (pb-field-value ?timef "nsec") 1000)))
+  (bind ?time (create$ (pb-field-value ?timef "sec") (integer (/ (pb-field-value ?timef "nsec") 1000))))
   (bind ?peer-time-diff (abs (time-diff-sec ?now ?time)))
   (if (> ?peer-time-diff ?*PEER-TIME-DIFFERENCE-WARNING*)
    then
@@ -218,7 +218,7 @@
   (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then 
     (bind ?gt (time-from-sec ?game-time))
     (pb-set-field ?gamestate-time "sec" (nth$ 1 ?gt))
-    (pb-set-field ?gamestate-time "nsec" (* (nth$ 2 ?gt) 1000))
+    (pb-set-field ?gamestate-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
     (pb-set-field ?gamestate "game_time" ?gamestate-time) ; destroys ?gamestate-time!
   )
   (pb-set-field ?gamestate "state" (str-cat ?state))
@@ -245,7 +245,7 @@
     (bind ?r-time (pb-field-value ?r "last_seen"))
     (if (eq (type ?r-time) EXTERNAL-ADDRESS) then 
       (pb-set-field ?r-time "sec" (nth$ 1 ?robot:last-seen))
-      (pb-set-field ?r-time "nsec" (* (nth$ 2 ?robot:last-seen) 1000))
+      (pb-set-field ?r-time "nsec" (integer (* (nth$ 2 ?robot:last-seen) 1000)))
       (pb-set-field ?r "last_seen" ?r-time) ; destroys ?r-time!
     )
     ; If we have a pose publish it
@@ -253,7 +253,7 @@
       (bind ?p (pb-field-value ?r "pose"))
       (bind ?p-time (pb-field-value ?p "timestamp"))
       (pb-set-field ?p-time "sec" (nth$ 1 ?robot:pose-time))
-      (pb-set-field ?p-time "nsec" (* (nth$ 2 ?robot:pose-time) 1000))
+      (pb-set-field ?p-time "nsec" (integer (* (nth$ 2 ?robot:pose-time) 1000)))
       (pb-set-field ?p "timestamp" ?p-time)
       (pb-set-field ?p "x" (nth$ 1 ?robot:pose))
       (pb-set-field ?p "y" (nth$ 2 ?robot:pose))
@@ -319,7 +319,7 @@
       (bind ?p (pb-field-value ?m "pose"))
       (bind ?p-time (pb-field-value ?p "timestamp"))
       (pb-set-field ?p-time "sec" (nth$ 1 ?machine:pose-time))
-      (pb-set-field ?p-time "nsec" (* (nth$ 2 ?machine:pose-time) 1000))
+      (pb-set-field ?p-time "nsec" (integer (* (nth$ 2 ?machine:pose-time) 1000)))
       (pb-set-field ?p "timestamp" ?p-time)
       (pb-set-field ?p "x" (nth$ 1 ?machine:pose))
       (pb-set-field ?p "y" (nth$ 2 ?machine:pose))
@@ -367,7 +367,7 @@
       (bind ?p (pb-field-value ?m "pose"))
       (bind ?p-time (pb-field-value ?p "timestamp"))
       (pb-set-field ?p-time "sec" (nth$ 1 ?machine:pose-time))
-      (pb-set-field ?p-time "nsec" (* (nth$ 2 ?machine:pose-time) 1000))
+      (pb-set-field ?p-time "nsec" (integer (* (nth$ 2 ?machine:pose-time) 1000)))
       (pb-set-field ?p "timestamp" ?p-time)
       (pb-set-field ?p "x" (nth$ 1 ?machine:pose))
       (pb-set-field ?p "y" (nth$ 2 ?machine:pose))
@@ -400,7 +400,7 @@
       (bind ?ps (pb-field-value ?p "pose"))
       (bind ?ps-time (pb-field-value ?ps "timestamp"))
       (pb-set-field ?ps-time "sec" (nth$ 1 ?puck:pose-time))
-      (pb-set-field ?ps-time "nsec" (* (nth$ 2 ?puck:pose-time) 1000))
+      (pb-set-field ?ps-time "nsec" (integer (* (nth$ 2 ?puck:pose-time) 1000)))
       (pb-set-field ?ps "timestamp" ?ps-time)
       (pb-set-field ?ps "x" (nth$ 1 ?puck:pose))
       (pb-set-field ?ps "y" (nth$ 2 ?puck:pose))
