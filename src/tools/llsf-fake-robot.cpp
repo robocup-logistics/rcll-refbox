@@ -206,6 +206,15 @@ handle_timer(const boost::system::error_code& error)
       static_cast<google::protobuf::int64>(since_epoch.fractional_seconds() * 
 					   (1000000000/since_epoch.ticks_per_second())));
 
+    Pose2D *pose = signal->mutable_pose();
+    pose->set_x(1.0);
+    pose->set_y(2.0);
+    pose->set_ori(3.0);
+
+    Time *pose_time = pose->mutable_timestamp();
+    pose_time->set_sec(4);
+    pose_time->set_nsec(5);
+
     signal->set_peer_name(name_);
     signal->set_team_name(team_);
     signal->set_seq(++seq_);
