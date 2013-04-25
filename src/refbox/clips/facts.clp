@@ -137,6 +137,8 @@
 
 (deftemplate points
   (slot points (type INTEGER))
+  (slot game-time (type FLOAT))
+  (multislot time (type INTEGER) (cardinality 2 2))
   (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION))
   (slot reason (type STRING))
 )

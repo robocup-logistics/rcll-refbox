@@ -25,7 +25,7 @@
 (defrule update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  ?gf <- (gamestate (phase PRODUCTION|EXPLORATION) (state RUNNING)
+  ?gf <- (gamestate (phase PRODUCTION|EXPLORATION) (state RUNNING) (points ?old-points)
 		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
   =>
   (bind ?points 0)

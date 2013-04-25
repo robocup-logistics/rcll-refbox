@@ -192,7 +192,7 @@
 
 (defrule machine-proc-waiting
   (time $?now)
-  (gamestate (state RUNNING) (phase PRODUCTION))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (machine (name ?m) (mtype ?mtype&~DELIVER&~TEST&~RECYCLE) (state PROCESSING))
   (machine-spec (mtype ?mtype)  (inputs $?inputs))
   ?mf <- (machine (name ?m) (mtype ?mtype) (puck-id ?id)
@@ -206,7 +206,7 @@
 
 (defrule machine-proc-done
   (time $?now)
-  (gamestate (state RUNNING) (phase PRODUCTION))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (machine (name ?m) (mtype ?mtype) (state PROCESSING))
   (machine-spec (mtype ?mtype&~DELIVER&~TEST&~RECYCLE)
 		(inputs $?inputs) (output ?output) (points ?machine-points))
@@ -220,7 +220,7 @@
 	    " -> " ?output ", took " ?pt " sec, awarding " ?machine-points " points)" crlf)
   (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)))
-  (assert (points (points ?machine-points) (phase PRODUCTION)
+  (assert (points (time ?now) (game-time ?gt) (points ?machine-points) (phase PRODUCTION)
 		  (reason (str-cat ?mtype " production done at " ?m))))
   (modify ?pf (state ?output))
   (foreach ?puck-id ?lw
@@ -327,7 +327,7 @@
 
 (defrule recycle-proc-done
   (time $?now)
-  (gamestate (state RUNNING) (phase PRODUCTION))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?mf <- (machine (name ?m) (mtype RECYCLE) (state PROCESSING) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start $?pstart&:(timeout ?now ?pstart ?pt)))
   ?pf <- (puck (id ?id) (state ?ps&CONSUMED))
@@ -336,7 +336,7 @@
 	    "Awarding " ?*RECYCLE-POINTS* " points." crlf)
   (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON))
   (modify ?pf (state S0))
-  (assert (points (points ?*RECYCLE-POINTS*)  (phase PRODUCTION)
+  (assert (points (time ?now) (game-time ?gt) (points ?*RECYCLE-POINTS*)  (phase PRODUCTION)
 		  (reason (str-cat "Recycling done at " ?m))))
 )
 
@@ -578,7 +578,8 @@
 
 (defrule machine-update-loaded-with
   (declare (salience ?*PRIORITY_HIGH*))
-  ?gf <- (gamestate (phase PRODUCTION))
+  (time $?now)
+  ?gf <- (gamestate (phase PRODUCTION) (game-time ?gt))
   ?uf <- (machine-update-loaded-with ?m $?new-lw)
   ?mf <- (machine (name ?m) (mtype ?mtype) (loaded-with $?old-lw) (productions ?p))
   (machine-spec (mtype ?mtype) (inputs $?inputs&:(> (length$ ?inputs) 0))
@@ -592,7 +593,7 @@
    then ; production at this machine is complete
     (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
   	    (productions (+ ?p 1)))
-    (assert (points (points ?machine-points) (phase PRODUCTION)
+    (assert (points (time ?now) (game-time ?gt) (points ?machine-points) (phase PRODUCTION)
 		    (reason (str-cat "Production step at " ?m "|" ?mtype))))
     ;(modify ?pf (state ?output))
     (delayed-do-for-all-facts ((?puck puck)) (member$ ?puck:id ?new-lw)
