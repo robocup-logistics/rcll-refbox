@@ -368,19 +368,22 @@ ClipsProtobufCommunicator::clips_pb_field_value(void *msgptr, std::string field_
 {
   std::shared_ptr<google::protobuf::Message> *m =
     static_cast<std::shared_ptr<google::protobuf::Message> *>(msgptr);
-  if (!*m) return CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL);
+  if (!(m && *m)) {
+    printf("Invalid message when setting %s\n", field_name.c_str());
+    return CLIPS::Value("INVALID-MESSAGE", CLIPS::TYPE_SYMBOL);
+  }
 
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
   if (! field) {
-    //logger_->log_warn("RefBox", "Field %s of %s does not exist",
-    //   field_name.c_str(), (*m)->GetTypeName().c_str());
+    printf("Field %s of %s does not exist\n",
+	   field_name.c_str(), (*m)->GetTypeName().c_str());
     return CLIPS::Value("DOES-NOT-EXIST", CLIPS::TYPE_SYMBOL);
   }
   const Reflection *refl       = (*m)->GetReflection();
   if (field->type() != FieldDescriptor::TYPE_MESSAGE && ! refl->HasField(**m, field)) {
-    //logger_->log_warn("RefBox", "Field %s of %s not set",
-    //	   field_name.c_str(), (*m)->GetTypeName().c_str());
+    printf("Field %s of %s not set\n",
+    	   field_name.c_str(), (*m)->GetTypeName().c_str());
     return CLIPS::Value("NOT-SET", CLIPS::TYPE_SYMBOL);
   }
   switch (field->type()) {
@@ -427,7 +430,7 @@ ClipsProtobufCommunicator::clips_pb_set_field(void *msgptr, std::string field_na
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
   if (! field) {
-    //logger_->log_warn("RefBox", "Could not find field %s", field_name.c_str());
+    printf("Could not find field %s\n", field_name.c_str());
     return;
   }
   const Reflection *refl       = (*m)->GetReflection();
@@ -480,8 +483,8 @@ ClipsProtobufCommunicator::clips_pb_set_field(void *msgptr, std::string field_na
       throw std::logic_error("Unknown protobuf field type encountered");
     }
   } catch (std::logic_error &e) {
-    //logger_->log_warn("RefBox", "Failed to set field %s of %s: %s", field_name.c_str(),
-    //	   (*m)->GetTypeName().c_str(), e.what());
+    printf("Failed to set field %s of %s: %s\n", field_name.c_str(),
+	   (*m)->GetTypeName().c_str(), e.what());
   }
 }
 
@@ -496,7 +499,7 @@ ClipsProtobufCommunicator::clips_pb_add_list(void *msgptr, std::string field_nam
   const Descriptor *desc       = (*m)->GetDescriptor();
   const FieldDescriptor *field = desc->FindFieldByName(field_name);
   if (! field) {
-    //logger_->log_warn("RefBox", "Could not find field %s", field_name.c_str());
+    printf("Could not find field %s\n", field_name.c_str());
     return;
   }
   const Reflection *refl       = (*m)->GetReflection();
@@ -544,8 +547,8 @@ ClipsProtobufCommunicator::clips_pb_add_list(void *msgptr, std::string field_nam
       throw std::logic_error("Unknown protobuf field type encountered");
     }
   } catch (std::logic_error &e) {
-    //logger_->log_warn("RefBox", "Failed to add field %s of %s: %s", field_name.c_str(),
-    //	   (*m)->GetTypeName().c_str(), e.what());
+    printf("Failed to add field %s of %s: %s\n", field_name.c_str(),
+    	   (*m)->GetTypeName().c_str(), e.what());
   }
 }
 
