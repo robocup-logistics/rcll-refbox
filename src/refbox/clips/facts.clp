@@ -215,9 +215,9 @@
   (machine-light-code (id 5) (code RED-ON GREEN-ON))
   (machine-light-code (id 6) (code RED-ON YELLOW-ON))
   (machine-light-code (id 7) (code RED-ON YELLOW-ON GREEN-ON))
-  (machine-light-code (id 8) (code GREEN-BLINK))
-  (machine-light-code (id 9) (code YELLOW-BLINK))
-  (machine-light-code (id 10) (code RED-BLINK))
+  ;(machine-light-code (id 8) (code GREEN-BLINK))
+  ;(machine-light-code (id 9) (code YELLOW-BLINK))
+  ;(machine-light-code (id 10) (code RED-BLINK))
 )
 
 (deffacts machine-specs
