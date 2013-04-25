@@ -121,12 +121,25 @@
 
 (defrule game-over
   (time $?now)
-  ?gs <- (gamestate (phase PRODUCTION) (state RUNNING)
+  ?gs <- (gamestate (phase PRODUCTION) (state RUNNING) (points ?points)
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED))
   (assert (attention-message "Game Over" 60))
-  (printout t "Game Over" crlf)
+  (printout t "-- Awarded Points --" crlf)
+  (foreach ?phase (deftemplate-slot-allowed-values points phase)
+    (printout t ?phase crlf)
+    (bind ?phase-points 0)
+    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
+      (printout t
+        (format nil "  %s  %2d  %s" (time-sec-format ?p:game-time) ?p:points ?p:reason) crlf)
+      (bind ?phase-points (+ ?phase-points ?p:points))
+    )
+    (printout t ?phase " TOTAL: " ?phase-points crlf)
+  )
+  (printout t "OVERALL TOTAL POINTS: " ?points crlf)
+
+  (printout t "===  Game Over  ===" crlf)
 )
 
 (defrule goto-pre-game
