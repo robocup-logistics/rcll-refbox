@@ -84,6 +84,8 @@
     (bind ?p-pose-ori (pb-field-value ?p-pose "ori"))
     (bind ?pose-time (create$ ?p-pose-time-sec ?p-pose-time-usec))
     (bind ?pose (create$ ?p-pose-x ?p-pose-y ?p-pose-ori))
+    (pb-destroy ?p-pose-time)
+    (pb-destroy ?p-pose)
   )
   (modify ?rf (last-seen ?now) (warning-sent FALSE)
               (pose ?pose) (pose-time ?pose-time))
