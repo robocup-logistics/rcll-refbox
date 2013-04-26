@@ -150,6 +150,16 @@ SPSComm::~SPSComm()
   }
 }
 
+void
+SPSComm::try_reconnect()
+{
+  modbus_close(mb_);
+  if (modbus_connect(mb_) == -1) {
+    throw fawkes::Exception("Failed to re-connect to SPS: %s",
+			    modbus_strerror(errno));
+  }
+}
+
 
 /** Light testing sequence
  * Goes through the following sequence:

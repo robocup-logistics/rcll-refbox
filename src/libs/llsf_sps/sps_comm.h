@@ -85,6 +85,8 @@ class SPSComm
   SPSComm(const char *host, unsigned short port);
   ~SPSComm();
 
+  void try_reconnect();
+
   void reset_lights();
   void test_lights();
   void set_light(Machine m, Light light, SignalState state);
