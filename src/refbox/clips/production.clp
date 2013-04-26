@@ -14,7 +14,7 @@
   (return FALSE)
 )
 
-(defrule machine-enable-production
+(defrule production-start
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
   ?sf <- (signal (type machine-info-bc))
   =>

@@ -130,3 +130,26 @@
 
   (assert (machines-initialized))
 )
+
+
+(defrule machine-reset-game
+  (reset-game)
+  =>
+  ; Retract machine initialization state, if set
+  (do-for-fact ((?mi machines-initialized)) TRUE
+    (retract ?mi)
+  )
+
+  (printout t "Retracting delivery periods" crlf)
+  ; retract all delivery periods
+  (delayed-do-for-all-facts ((?dp delivery-period)) TRUE
+    (retract ?dp)
+  )
+
+  (printout t "Resetting down periods" crlf) 
+  ; reset all down periods
+  (delayed-do-for-all-facts ((?m machine)) TRUE
+    (modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
+  )
+
+)

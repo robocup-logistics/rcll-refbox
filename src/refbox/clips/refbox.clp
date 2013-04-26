@@ -103,6 +103,24 @@
   )
 )
 
+
+(defrule goto-pre-game
+  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
+  =>
+  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
+    (modify ?machine (desired-lights GREEN-ON YELLOW-ON RED-ON))
+  )
+  (assert (reset-game))
+)
+
+(defrule retract-reset-game
+  (declare (salience ?*PRIORITY_CLEANUP*))
+  ?rf <- (reset-game)
+  =>
+  (retract ?rf)
+)
+
 (defrule start-game
   ?gs <- (gamestate (phase PRE_GAME) (state RUNNING))
   =>
@@ -142,15 +160,6 @@
   (printout t "===  Game Over  ===" crlf)
 )
 
-(defrule goto-pre-game
-  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
-  =>
-  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights GREEN-ON YELLOW-ON RED-ON))
-  )
-)
-
 (defrule goto-post-game
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
@@ -159,7 +168,6 @@
     (modify ?machine (desired-lights RED-BLINK))
   )
 )
-
 
 ; Sort pucks by ID, such that do-for-all-facts on the puck deftemplate
 ; iterates in a nice order, e.g. for net-send-PuckInfo
