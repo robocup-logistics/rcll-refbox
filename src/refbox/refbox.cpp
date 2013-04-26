@@ -376,15 +376,27 @@ LLSFRefBox::sps_read_rfids()
   fawkes::MutexLocker lock(&clips_mutex_);
 
 
-  std::vector<uint32_t> puck_ids = sps_->read_rfids();
-  for (unsigned int i = 0; i < puck_ids.size(); ++i) {
-    std::string & machine_name = sps_->index_to_name(i);
-    if (puck_ids[i] == SPSComm::NO_PUCK) {
-      clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
-			    machine_name.c_str());
-    } else {
-      clips_->assert_fact_f("(rfid-input (machine %s) (has-puck TRUE) (id %u))",
-			    machine_name.c_str(), puck_ids[i]);
+  try {
+    std::vector<uint32_t> puck_ids = sps_->read_rfids();
+    for (unsigned int i = 0; i < puck_ids.size(); ++i) {
+      std::string & machine_name = sps_->index_to_name(i);
+      if (puck_ids[i] == SPSComm::NO_PUCK) {
+        clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
+			      machine_name.c_str());
+      } else {
+        clips_->assert_fact_f("(rfid-input (machine %s) (has-puck TRUE) (id %u))",
+			      machine_name.c_str(), puck_ids[i]);
+      }
+    }
+  } catch (fawkes::Exception &e) {
+    logger_->log_warn("RefBox", "Failed to read RFIDs");
+    logger_->log_warn("RefBox", e);
+    try {
+      sps_->try_reconnect();
+      logger_->log_info("RefBox", "Successfully reconnected");
+    } catch (fawkes::Exception &e) {
+      logger_->log_error("RefBox", "Failed to reconnect");
+      logger_->log_error("RefBox", e);
     }
   }
 }
