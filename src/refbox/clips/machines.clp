@@ -103,6 +103,9 @@
       (bind ?candidates (delete$ ?candidates ?idx ?idx))
     )
 
+    ; erase all existing delivery periods, might be left-overs
+    ; from pre-defined facts for non-random game
+    (delayed-do-for-all-facts ((?p delivery-period)) TRUE (retract ?p))
     ; assign random active delivery gate times
     (bind ?delivery-gates (create$))
     (do-for-all-facts ((?m machine)) (eq ?m:mtype DELIVER)
