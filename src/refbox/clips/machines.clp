@@ -36,20 +36,28 @@
 
 (deffunction machine-init-randomize ()
 
-  ; Gather all available light codes
-  (bind ?light-codes (create$))
-  (do-for-all-facts ((?lc machine-light-code)) TRUE
-    (bind ?light-codes (create$ ?light-codes ?lc:id))
+  (if ?*RANDOMIZE-GAME* then
+    ; Gather all available light codes
+    (bind ?light-codes (create$))
+    (do-for-all-facts ((?lc machine-light-code)) TRUE
+      (bind ?light-codes (create$ ?light-codes ?lc:id))
+    )
+    ; Randomize light codes
+    (bind ?light-codes (randomize$ ?light-codes))
+    ; Assign random light codes
+    (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
+      (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id (nth$ 1 ?light-codes))
+        ;(printout t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
+      )
+      (modify ?mspec (light-code (nth$ 1 ?light-codes)))
+      (bind ?light-codes (delete$ ?light-codes 1 1))
+    )
   )
-  ; Randomize light codes
-  (bind ?light-codes (randomize$ ?light-codes))
-  ; Assign random light codes
-  (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
-    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id (nth$ 1 ?light-codes))
+
+  (do-for-all-facts ((?mspec machine-spec)) TRUE
+    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?mspec:light-code)
       (printout t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
     )
-    (modify ?mspec (light-code (nth$ 1 ?light-codes)))
-    (bind ?light-codes (delete$ ?light-codes 1 1))
   )
 
   ; reset machines
@@ -59,12 +67,13 @@
   )
 
   ; assign random machine types out of the start distribution
-  (if ?*RANDOMIZE-MACHINE-TYPES*
-    then (bind ?machine-assignment (randomize$ ?*MACHINE-DISTRIBUTION*))
+  (printout t "Initial machine distribution:    " ?*MACHINE-DISTRIBUTION* crlf)
+  (if ?*RANDOMIZE-GAME*
+    then
+      (bind ?machine-assignment (randomize$ ?*MACHINE-DISTRIBUTION*))
+      (printout t "Randomized machine distribution: " ?machine-assignment crlf)
     else (bind ?machine-assignment ?*MACHINE-DISTRIBUTION*)
   )
-  (printout t "Initial machine distribution:    " ?*MACHINE-DISTRIBUTION* crlf)
-  (printout t "Randomized machine distribution: " ?machine-assignment crlf)
   (delayed-do-for-all-facts ((?machine machine))
     (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
     (if (= (length$ ?machine-assignment) 0)
@@ -78,42 +87,59 @@
   )
 
   ; assign random down times
-  (bind ?num-down-times (random 6 8))
-  (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
-  (loop-for-count (min ?num-down-times (length$ ?candidates))
-    (bind ?idx (random 1 (length$ ?candidates)))
-    (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
-    (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
-    (bind ?end-time (+ ?start-time ?duration))
-    (bind ?mf (nth$ ?idx ?candidates))
-    (printout t (fact-slot-value ?mf name) " down from "
-	      (time-sec-format ?start-time) " to " (time-sec-format ?end-time)
-	      " (" ?duration " sec)" crlf)
-    (modify ?mf (down-period ?start-time ?end-time))
-    (bind ?candidates (delete$ ?candidates ?idx ?idx))
+  (if ?*RANDOMIZE-GAME* then
+    (bind ?num-down-times (random 6 8))
+    (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
+    (loop-for-count (min ?num-down-times (length$ ?candidates))
+      (bind ?idx (random 1 (length$ ?candidates)))
+      (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
+      (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
+      (bind ?end-time (+ ?start-time ?duration))
+      (bind ?mf (nth$ ?idx ?candidates))
+      ;(printout t (fact-slot-value ?mf name) " down from "
+;		(time-sec-format ?start-time) " to " (time-sec-format ?end-time)
+;		" (" ?duration " sec)" crlf)
+      (modify ?mf (down-period ?start-time ?end-time))
+      (bind ?candidates (delete$ ?candidates ?idx ?idx))
+    )
+
+    ; assign random active delivery gate times
+    (bind ?delivery-gates (create$))
+    (do-for-all-facts ((?m machine)) (eq ?m:mtype DELIVER)
+      (bind ?delivery-gates (create$ ?delivery-gates ?m:name))
+    )
+    (bind ?deliver-period-end-time 0)
+    (bind ?last-delivery-gate NONE)
+    (while (< ?deliver-period-end-time ?*PRODUCTION-TIME*)
+      (bind ?start-time ?deliver-period-end-time)
+      (bind ?deliver-period-end-time
+        (min (+ ?start-time (random ?*DELIVERY-GATE-MIN-TIME* ?*DELIVERY-GATE-MAX-TIME*))
+	     ?*PRODUCTION-TIME*))
+      (if (>= ?deliver-period-end-time (- ?*PRODUCTION-TIME* ?*DELIVERY-GATE-MIN-TIME*))
+      ; expand this delivery gates' time
+        then (bind ?deliver-period-end-time ?*PRODUCTION-TIME*))
+      (bind ?candidates (delete-member$ ?delivery-gates ?last-delivery-gate))
+      (bind ?delivery-gate (nth$ (random 1 (length$ ?candidates)) ?candidates))
+      (bind ?last-delivery-gate ?delivery-gate)
+      (assert (delivery-period (delivery-gate ?delivery-gate)
+			       (period ?start-time ?deliver-period-end-time)))
+    )
+
+    ;(printout t "Assigning processing times to machines" crlf)
+    (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
+      (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))
+      (printout t "Proc time for " ?mspec:mtype " will be " ?proc-time " sec" crlf)
+      (modify ?mspec (proc-time ?proc-time))
+    )
   )
 
-  ; assign random active delivery gate times
-  (bind ?delivery-gates (create$))
-  (do-for-all-facts ((?m machine)) (eq ?m:mtype DELIVER)
-    (bind ?delivery-gates (create$ ?delivery-gates ?m:name))
+  (do-for-all-facts ((?m machine)) (> (nth$ 1 ?m:down-period) -1.0)
+    (printout t ?m:name " down from "
+		(time-sec-format (nth$ 1 ?m:down-period))
+		" to " (time-sec-format (nth$ 2 ?m:down-period))
+		" (" (- (nth$ 2 ?m:down-period) (nth$ 1 ?m:down-period)) " sec)" crlf)
   )
-  (bind ?deliver-period-end-time 0)
-  (bind ?last-delivery-gate NONE)
-  (while (< ?deliver-period-end-time ?*PRODUCTION-TIME*)
-    (bind ?start-time ?deliver-period-end-time)
-    (bind ?deliver-period-end-time
-      (min (+ ?start-time (random ?*DELIVERY-GATE-MIN-TIME* ?*DELIVERY-GATE-MAX-TIME*))
-	   ?*PRODUCTION-TIME*))
-    (if (>= ?deliver-period-end-time (- ?*PRODUCTION-TIME* ?*DELIVERY-GATE-MIN-TIME*))
-      ; expand this delivery gates' time
-      then (bind ?deliver-period-end-time ?*PRODUCTION-TIME*))
-    (bind ?candidates (delete-member$ ?delivery-gates ?last-delivery-gate))
-    (bind ?delivery-gate (nth$ (random 1 (length$ ?candidates)) ?candidates))
-    (bind ?last-delivery-gate ?delivery-gate)
-    (assert (delivery-period (delivery-gate ?delivery-gate)
-			     (period ?start-time ?deliver-period-end-time)))
-  )
+
   (do-for-all-facts ((?period delivery-period)) TRUE
     (printout t "Deliver time " ?period:delivery-gate ": "
 	      (time-sec-format (nth$ 1 ?period:period)) " to "
@@ -121,11 +147,8 @@
 	      (- (nth$ 2 ?period:period) (nth$ 1 ?period:period)) " sec)" crlf)
   )
 
-  ;(printout t "Assigning processing times to machines" crlf)
-  (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
-    (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))
-    (printout t "Proc time for " ?mspec:mtype " will be " ?proc-time " sec" crlf)
-    (modify ?mspec (proc-time ?proc-time))
+  (do-for-all-facts ((?mspec machine-spec)) TRUE
+    (printout t "Proc time for " ?mspec:mtype " will be " ?mspec:proc-time " sec" crlf)
   )
 
   (assert (machines-initialized))
