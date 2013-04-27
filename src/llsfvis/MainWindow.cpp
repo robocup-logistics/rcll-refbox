@@ -85,7 +85,8 @@ MainWindow::MainWindow() :
 	playFieldTabGrid_.attach(attentionMsg_, 0, 0, 2, 1);
 	playFieldTabGrid_.attach_next_to(aspectFrame_, attentionMsg_,
 			Gtk::POS_BOTTOM, 1, 2);
-	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, aspectFrame_,
+	playFieldTabGrid_.attach_next_to(pucksWidget_,aspectFrame_, Gtk::POS_RIGHT,1,2);
+	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, pucksWidget_,
 			Gtk::POS_RIGHT, 1, 1);
 	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, aspectFrame_,
 			Gtk::POS_BOTTOM, 2, 1);
@@ -160,6 +161,7 @@ void MainWindow::update_machines(llsf_msgs::MachineInfo& mSpecs) {
 void MainWindow::update_pucks(const llsf_msgs::PuckInfo& pucks) {
 	pucks_ = &pucks;
 	playFieldWidget_.update_pucks(pucks);
+	pucksWidget_.update_pucks(pucks);
 }
 
 bool MainWindow::clear_attention_msg() {

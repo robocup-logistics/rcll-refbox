@@ -37,7 +37,6 @@ RobotStatesWidget::RobotStatesWidget() :
 	box_.pack_start(bot1_frame_);
 	box_.pack_start(bot2_frame_);
 	box_.pack_start(bot3_frame_);
-
 	set_label("Robots");
 	add(box_);
 	Glib::signal_timeout().connect(

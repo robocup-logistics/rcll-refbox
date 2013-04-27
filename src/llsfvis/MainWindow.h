@@ -39,6 +39,7 @@
 #include "PlayFieldWidget.h"
 #include "StateWidget.h"
 #include "LogWidget.h"
+#include "PucksWidget.h"
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
@@ -101,7 +102,7 @@ private:
 	Gtk::ScrolledWindow logScrollWindow_;
 
 	StateWidget stateWidget_;
-
+	PucksWidget pucksWidget_;
 	LogWidget logWidget_;
 
 	const llsf_msgs::PuckInfo* pucks_ = NULL;
