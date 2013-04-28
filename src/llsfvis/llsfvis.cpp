@@ -38,15 +38,42 @@
 #include "RefboxClient.h"
 #include "msgs/MachineInfo.pb.h"
 #include "test_data.cpp"
+#include <pthread.h>
 
 #define DEBUG true
 
 using namespace llsf_msgs;
+using namespace std;
+
+
+
+LLSFVis::MainWindow* mWindow_;
+
+void* send_game_states(void* arg) {
+	GameState* gs = new GameState();
+	gs->set_phase(GameState_Phase_EXPLORATION);
+	gs->set_state(GameState_State_RUNNING);
+	Time* t = gs->mutable_game_time();
+	float seconds =0;
+	while (true) {
+		seconds+=0.1;
+		t->set_sec((int)seconds);
+		mWindow_->update_game_state(*gs);
+		usleep(100000);
+	}
+	return 0;
+}
+
+
 int main(int argc, char* argv[]) {
+	pthread_t p;
+
+
 	Glib::RefPtr<Gtk::Application> app = Gtk::Application::create(argc, argv,
 			"org.gtkmm.examples.base");
 
 	LLSFVis::MainWindow mainWindow;
+	mWindow_ = &mainWindow;
 	LLSFVis::RefboxClient refboxClient(mainWindow);
 	mainWindow.signal_remove_puck().connect(
 			sigc::mem_fun(refboxClient,
@@ -60,11 +87,13 @@ int main(int argc, char* argv[]) {
 		mainWindow.update_machines(*getMachineInfo());
 		mainWindow.update_robots(*getRobotInfo());
 		mainWindow.update_pucks(*getPuckInfo());
+		mainWindow.update_orders(*getOrderInfo());
 		AttentionMessage msg;
 		msg.set_message("BEWARE, WE ARE GONNA BLOW UP!!");
 		msg.set_time_to_show(10);
 		mainWindow.set_attention_msg(msg);
 	}
+	pthread_create(&p, NULL, &send_game_states, NULL);
 	return app->run(mainWindow);
 
 }

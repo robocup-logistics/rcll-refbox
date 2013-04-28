@@ -40,10 +40,12 @@
 #include "StateWidget.h"
 #include "LogWidget.h"
 #include "PucksWidget.h"
+#include "OrdersWidget.h"
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
 #include <msgs/MachineInfo.pb.h>
+#include <msgs/OrderInfo.pb.h>
 
 namespace LLSFVis {
 
@@ -56,6 +58,7 @@ public:
 	void update_robots(llsf_msgs::RobotInfo& robotInfo);
 	void update_machines(llsf_msgs::MachineInfo& mSpecs);
 	void update_pucks(const llsf_msgs::PuckInfo& pucks);
+	void update_orders(const llsf_msgs::OrderInfo& orderInfo);
 	void set_attention_msg(llsf_msgs::AttentionMessage& msg);
 
 	sigc::signal<void, llsf_msgs::SetGameState&> signal_set_game_state() {
@@ -103,6 +106,7 @@ private:
 
 	StateWidget stateWidget_;
 	PucksWidget pucksWidget_;
+	OrdersWidget orderWidget_;
 	LogWidget logWidget_;
 
 	const llsf_msgs::PuckInfo* pucks_ = NULL;

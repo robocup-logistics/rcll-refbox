@@ -28,7 +28,7 @@ HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 LIBS_llsfvis = stdc++ llsfrbcore llsf_protobuf_comm llsf_msgs
 OBJS_llsfvis = llsfvis.o MainWindow.o PlayFieldWidget.o StateWidget.o \
     RobotStatesWidget.o PuckDialog.o LogWidget.o RefboxClient.o PlacePuckDialog.o \
-    PucksWidget.o PuckStateWidget.o
+    PucksWidget.o PuckStateWidget.o OrdersWidget.o OrderWidget.o
 
 
 ifeq ($(HAVE_GTKMM_3)$(HAVE_BOOST_LIBS)$(HAVE_PROTOBUF),111)

@@ -8,6 +8,11 @@
 #include "msgs/MachineInfo.pb.h"
 
 using namespace llsf_msgs;
+using namespace std;
+
+float random_coordinate() {
+	return (float) rand() / ((float) RAND_MAX / 5.6f);
+}
 
 MachineInfo* getMachineInfo() {
 	MachineInfo* mSpecs = new MachineInfo();
@@ -51,29 +56,36 @@ RobotInfo* getRobotInfo() {
 	return rInfo;
 }
 
+OrderInfo* getOrderInfo() {
+	OrderInfo* oInfo = new OrderInfo();
+	for (unsigned int i = 0; i< 9; ++i){
+		Order* o = oInfo->add_orders();
+		o->set_id(i);
+		o->set_delivery_gate(Order_DeliveryGate_D1);
+		o->set_product(Order_ProductType_P3);
+		int delivery_time=rand()%120;
+		o->set_delivery_period_begin(delivery_time);
+		delivery_time+=rand()%20;
+		o->set_delivery_period_end(delivery_time);
+		o->set_quantity_requested(10);
+		o->set_quantity_delivered(1);
+	}
+	return oInfo;
+}
+
 PuckInfo* getPuckInfo() {
+	const PuckState states[] = { PuckState::S0, PuckState::S1, PuckState::S2,
+			PuckState::P1, PuckState::P2, PuckState::P3, PuckState::CONSUMED };
 	PuckInfo* pInfo = new PuckInfo();
-	Puck* p1 = pInfo->add_pucks();
-	Puck* p2 = pInfo->add_pucks();
-	Puck* p3 = pInfo->add_pucks();
-	p1->set_id(1);
-	p1->set_state(PuckState::S0);
-	p2->set_id(2);
-	p2->set_state(PuckState::S1);
-	p3->set_id(3);
-	p3->set_state(PuckState::S2);
+	for (unsigned int i = 0; i < 22; ++i) {
 
-	Pose2D* p1_pose = p1->mutable_pose();
-	Pose2D* p2_pose = p2->mutable_pose();
-	Pose2D* p3_pose = p3->mutable_pose();
+		Puck* p = pInfo->add_pucks();
+		p->set_id(i);
 
-	p1_pose->set_x(2.2);
-	p1_pose->set_y(3.0);
-
-	p2_pose->set_x(4.0);
-	p2_pose->set_y(1.0);
-
-	p3_pose->set_x(2.5);
-	p3_pose->set_y(3.2);
+		p->set_state(states[rand() % 7]);
+		Pose2D* p_pose = p->mutable_pose();
+		p_pose->set_x(random_coordinate());
+		p_pose->set_y(random_coordinate());
+	}
 	return pInfo;
 }

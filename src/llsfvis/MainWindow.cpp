@@ -85,7 +85,10 @@ MainWindow::MainWindow() :
 	playFieldTabGrid_.attach(attentionMsg_, 0, 0, 2, 1);
 	playFieldTabGrid_.attach_next_to(aspectFrame_, attentionMsg_,
 			Gtk::POS_BOTTOM, 1, 2);
-	playFieldTabGrid_.attach_next_to(pucksWidget_,aspectFrame_, Gtk::POS_RIGHT,1,2);
+	playFieldTabGrid_.attach_next_to(orderWidget_, aspectFrame_, Gtk::POS_RIGHT,
+			1, 2);
+	playFieldTabGrid_.attach_next_to(pucksWidget_, orderWidget_, Gtk::POS_RIGHT,
+			1, 2);
 	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, pucksWidget_,
 			Gtk::POS_RIGHT, 1, 1);
 	playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, aspectFrame_,
@@ -141,6 +144,7 @@ MainWindow::~MainWindow() {
 void MainWindow::update_game_state(llsf_msgs::GameState& gameState) {
 	//playFieldWidget_.update_game_state(gameState);
 	stateWidget_.update_game_state(gameState);
+	orderWidget_.update_game_time(gameState.game_time());
 }
 
 void MainWindow::set_attention_msg(llsf_msgs::AttentionMessage& msg) {
@@ -177,7 +181,6 @@ void MainWindow::update_robots(llsf_msgs::RobotInfo& robotInfo) {
 void MainWindow::on_add_puck_to_machine_button_clicked() {
 	find_free_pucks();
 
-
 	PlacePuckDialog pd(*freePucks_, *machines_);
 	int resp = pd.run();
 	if (resp == Gtk::RESPONSE_OK) {
@@ -213,6 +216,10 @@ void MainWindow::on_start_pause_button_clicked() {
 	signal_set_game_state_.emit(gsm);
 }
 
+void MainWindow::update_orders(const llsf_msgs::OrderInfo& orderInfo) {
+	orderWidget_.update_orders(orderInfo);
+}
+
 llsf_msgs::PuckInfo* MainWindow::find_free_pucks() {
 	freePucks_ = pucks_->New();
 
@@ -227,15 +234,18 @@ llsf_msgs::PuckInfo* MainWindow::find_free_pucks() {
 						loaded_puck_index
 								< machines_->machines(machine_index).loaded_with_size();
 						++loaded_puck_index) {
-					if (pucks_->pucks(puck_index).id() == machines_->machines(machine_index).loaded_with(loaded_puck_index).id()){
+					if (pucks_->pucks(puck_index).id()
+							== machines_->machines(machine_index).loaded_with(
+									loaded_puck_index).id()) {
 						found = true;
 						break;
 					}
 				}
-				if (found) break;
+				if (found)
+					break;
 			}
 
-			if (!found){
+			if (!found) {
 				llsf_msgs::Puck* puckCopy = freePucks_->add_pucks();
 				puckCopy->CopyFrom(pucks_->pucks(puck_index));
 			}
@@ -246,6 +256,5 @@ llsf_msgs::PuckInfo* MainWindow::find_free_pucks() {
 	}
 	return freePucks_;
 }
-
 
 } /* namespace LLSFVis */

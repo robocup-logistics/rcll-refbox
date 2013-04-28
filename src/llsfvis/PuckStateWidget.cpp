@@ -30,7 +30,6 @@ PuckStateWidget::PuckStateWidget(int puck_id) {
 }
 
 void PuckStateWidget::set_state(const llsf_msgs::PuckState& state) {
-	printf("State: %s\n", PuckState_Name(state).c_str());
 	state_label_.set_text(PuckState_Name(state));
 	Pango::FontDescription font;
 	Gdk::RGBA fg_color;
