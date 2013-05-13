@@ -84,14 +84,6 @@ int main(int argc, char* argv[]) {
 					&LLSFVis::RefboxClient::on_signal_send_msg));
 	if (DEBUG) {
 		mainWindow.add_log_message("Good Morning");
-		mainWindow.update_machines(*getMachineInfo());
-		mainWindow.update_robots(*getRobotInfo());
-		mainWindow.update_pucks(*getPuckInfo());
-		mainWindow.update_orders(*getOrderInfo());
-		AttentionMessage msg;
-		msg.set_message("BEWARE, WE ARE GONNA BLOW UP!!");
-		msg.set_time_to_show(10);
-		mainWindow.set_attention_msg(msg);
 	}
 	pthread_create(&p, NULL, &send_game_states, NULL);
 	return app->run(mainWindow);

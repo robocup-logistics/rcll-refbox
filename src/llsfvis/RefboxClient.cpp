@@ -35,7 +35,7 @@ RefboxClient::RefboxClient(MainWindow& mainWindow) :
 	client->signal_received().connect(
 			boost::bind(&RefboxClient::client_msg, this, _1, _2, _3));
 
-	client->async_connect("localhost", 4444);
+	client->async_connect("172.16.35.94", 4444);
 
 	// Construct a signal set registered for process termination.
 	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
@@ -89,14 +89,19 @@ void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
 
 	std::shared_ptr<llsf_msgs::PuckInfo> puck;
 	if ((puck = std::dynamic_pointer_cast < llsf_msgs::PuckInfo > (msg))) {
-			mainWindow_.update_pucks(*puck);
-			return;
-		}
+		mainWindow_.update_pucks(*puck);
+		return;
+	}
+
+	std::shared_ptr<llsf_msgs::OrderInfo> order;
+	if ((order = std::dynamic_pointer_cast < llsf_msgs::OrderInfo > (msg))){
+		mainWindow_.update_orders(*order);
+		return;
+	}
 
 }
 
-void RefboxClient::on_signal_send_msg(google::protobuf::Message &m)
-{
+void RefboxClient::on_signal_send_msg(google::protobuf::Message &m) {
 	std::cout << "Sending " << m.DebugString() << std::endl;
 	client->send(m);
 }
