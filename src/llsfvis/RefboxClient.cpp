@@ -7,10 +7,13 @@
 
 #include "RefboxClient.h"
 #include <msgs/GameState.pb.h>
+#include <msgs/OrderInfo.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
-
+#include <msgs/VersionInfo.pb.h>
+#include <msgs/MachineCommands.pb.h>
+#include <logging/llsf_log_msgs/LogMessage.pb.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
 
@@ -26,6 +29,11 @@ RefboxClient::RefboxClient(MainWindow& mainWindow) :
 	message_register.add_message_type<llsf_msgs::RobotInfo>();
 	message_register.add_message_type<llsf_msgs::MachineInfo>();
 	message_register.add_message_type<llsf_msgs::AttentionMessage>();
+	message_register.add_message_type<llsf_msgs::PuckInfo>();
+	message_register.add_message_type<llsf_msgs::OrderInfo>();
+	message_register.add_message_type<llsf_msgs::VersionInfo>();
+	message_register.add_message_type<llsf_log_msgs::LogMessage>();
+
 
 	client->signal_connected().connect(
 			boost::bind(&RefboxClient::client_connected, this));

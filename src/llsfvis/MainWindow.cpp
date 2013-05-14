@@ -46,6 +46,9 @@ MainWindow::MainWindow() :
 				Gtk::ORIENTATION_VERTICAL), buttonBoxLogging_(
 				Gtk::ORIENTATION_VERTICAL) {
 
+	have_machineinfo_ = false;
+	have_puckinfo_ = false;
+
 	//SETUP the GUI
 
 	set_default_size(750, 750);
@@ -134,7 +137,6 @@ MainWindow::MainWindow() :
 
 void MainWindow::add_log_message(std::string msg) {
 	logWidget_.add_log_message(msg);
-	//logPreviewWidget_.add_log_message(msg);
 }
 
 MainWindow::~MainWindow() {
@@ -142,7 +144,6 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::update_game_state(llsf_msgs::GameState& gameState) {
-	//playFieldWidget_.update_game_state(gameState);
 	stateWidget_.update_game_state(gameState);
 	orderWidget_.update_game_time(gameState.game_time());
 }
@@ -158,12 +159,14 @@ void MainWindow::set_attention_msg(llsf_msgs::AttentionMessage& msg) {
 }
 
 void MainWindow::update_machines(llsf_msgs::MachineInfo& mSpecs) {
-	machines_ = &mSpecs;
+	machines_.CopyFrom(mSpecs);
+	have_machineinfo_=true;
 	playFieldWidget_.update_machines(mSpecs);
 }
 
 void MainWindow::update_pucks(const llsf_msgs::PuckInfo& pucks) {
-	pucks_ = &pucks;
+	pucks_.CopyFrom(pucks);
+	have_puckinfo_=true;
 	playFieldWidget_.update_pucks(pucks);
 	pucksWidget_.update_pucks(pucks);
 }
@@ -181,7 +184,7 @@ void MainWindow::update_robots(llsf_msgs::RobotInfo& robotInfo) {
 void MainWindow::on_add_puck_to_machine_button_clicked() {
 	find_free_pucks();
 
-	PlacePuckDialog pd(*freePucks_, *machines_);
+	PlacePuckDialog pd(freePucks_, machines_);
 	int resp = pd.run();
 	if (resp == Gtk::RESPONSE_OK) {
 		const llsf_msgs::Machine& m = pd.get_selected_machine();
@@ -220,22 +223,22 @@ void MainWindow::update_orders(const llsf_msgs::OrderInfo& orderInfo) {
 	orderWidget_.update_orders(orderInfo);
 }
 
-llsf_msgs::PuckInfo* MainWindow::find_free_pucks() {
-	freePucks_ = pucks_->New();
+llsf_msgs::PuckInfo MainWindow::find_free_pucks() {
+	freePucks_.Clear();
 
-	if (machines_ != NULL && pucks_ != NULL) {
-		for (int puck_index = 0; puck_index < pucks_->pucks_size();
+	if (have_machineinfo_ && have_puckinfo_) {
+		for (int puck_index = 0; puck_index < pucks_.pucks_size();
 				++puck_index) {
 			bool found = false;
 			for (int machine_index = 0;
-					machine_index < machines_->machines_size();
+					machine_index < machines_.machines_size();
 					++machine_index) {
 				for (int loaded_puck_index = 0;
 						loaded_puck_index
-								< machines_->machines(machine_index).loaded_with_size();
+								< machines_.machines(machine_index).loaded_with_size();
 						++loaded_puck_index) {
-					if (pucks_->pucks(puck_index).id()
-							== machines_->machines(machine_index).loaded_with(
+					if (pucks_.pucks(puck_index).id()
+							== machines_.machines(machine_index).loaded_with(
 									loaded_puck_index).id()) {
 						found = true;
 						break;
@@ -246,13 +249,11 @@ llsf_msgs::PuckInfo* MainWindow::find_free_pucks() {
 			}
 
 			if (!found) {
-				llsf_msgs::Puck* puckCopy = freePucks_->add_pucks();
-				puckCopy->CopyFrom(pucks_->pucks(puck_index));
+				llsf_msgs::Puck* puckCopy = freePucks_.add_pucks();
+				puckCopy->CopyFrom(pucks_.pucks(puck_index));
 			}
 		}
 
-	} else {
-		freePucks_ = NULL;
 	}
 	return freePucks_;
 }

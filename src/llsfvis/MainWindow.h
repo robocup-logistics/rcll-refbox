@@ -79,7 +79,7 @@ private:
 	void on_add_puck_to_machine_button_clicked();
 	void on_set_puck_under_rfid_button_clicked();
 	void on_start_pause_button_clicked();
-	llsf_msgs::PuckInfo*  find_free_pucks();
+	llsf_msgs::PuckInfo  find_free_pucks();
 
 	Gtk::Notebook tabs_;
 	Gtk::Grid playFieldTabGrid_;
@@ -109,9 +109,12 @@ private:
 	OrdersWidget orderWidget_;
 	LogWidget logWidget_;
 
-	const llsf_msgs::PuckInfo* pucks_ = NULL;
-	llsf_msgs::PuckInfo* freePucks_ = NULL;
-	const llsf_msgs::MachineInfo* machines_ = NULL;
+
+	llsf_msgs::PuckInfo pucks_;
+	bool have_puckinfo_;
+	llsf_msgs::PuckInfo freePucks_;
+	llsf_msgs::MachineInfo machines_;
+	bool have_machineinfo_;
 	sigc::signal<void, llsf_msgs::SetGameState&> signal_set_game_state_;
 	sigc::signal<void, llsf_msgs::PlacePuckUnderMachine&> signal_place_puck_under_machine_;
 

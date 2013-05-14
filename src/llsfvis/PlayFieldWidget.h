@@ -40,6 +40,7 @@
 #include <list>
 #include "msgs/RobotInfo.pb.h"
 #include "msgs/MachineInfo.pb.h"
+#include "msgs/MachineCommands.pb.h"
 
 namespace LLSFVis {
 
@@ -50,8 +51,8 @@ class PlayFieldWidget: public Gtk::DrawingArea {
 public:
 	PlayFieldWidget();
 	virtual ~PlayFieldWidget();
-	void update_machines(llsf_msgs::MachineInfo& mSpecs);
-	void update_robot_info(llsf_msgs::RobotInfo& robotInfo);
+	void update_machines(const llsf_msgs::MachineInfo& mSpecs);
+	void update_robot_info(const llsf_msgs::RobotInfo& robotInfo);
 	void update_pucks(const llsf_msgs::PuckInfo& pucks);
 	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck();
 protected:
@@ -94,9 +95,12 @@ private:
 	sigc::signal<void,llsf_msgs::RemovePuckFromMachine&> signal_remove_puck_;
 
 
-	const llsf_msgs::MachineInfo* machines_ = NULL;
-	const llsf_msgs::PuckInfo* pucks_ = NULL;
-	const llsf_msgs::RobotInfo* robots_ = NULL;
+	llsf_msgs::MachineInfo machines_;
+	bool have_machine_info_;
+	llsf_msgs::PuckInfo pucks_;
+	bool have_puck_info_;
+	llsf_msgs::RobotInfo robots_;
+	bool have_robot_info_;
 	const llsf_msgs::Machine* clicked_machine_;
 
 	static constexpr double FIELDLINESSIZE = 0.02;

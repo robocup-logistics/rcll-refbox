@@ -15,9 +15,6 @@ namespace LLSFVis {
 
 RobotStatesWidget::RobotStatesWidget() :
 		box_(Gtk::ORIENTATION_VERTICAL) {
-	bot1_ = NULL;
-	bot2_ = NULL;
-	bot3_ = NULL;
 
 	Pango::FontDescription font;
 	font.set_size(Pango::SCALE * 28);
@@ -43,12 +40,12 @@ RobotStatesWidget::RobotStatesWidget() :
 			sigc::mem_fun(*this, &RobotStatesWidget::on_update), 1000);
 }
 
-void RobotStatesWidget::update_bot(boost::posix_time::time_duration time_since_update, const llsf_msgs::Robot* bot,
+void RobotStatesWidget::update_bot(boost::posix_time::time_duration time_since_update, const llsf_msgs::Robot& bot,
 		Gtk::Label* bot_label) {
-	if (bot != NULL) {
+	if (bot.IsInitialized()) {
 		Gdk::RGBA color;
 
-		boost::posix_time::seconds last_seen(bot->last_seen().sec());
+		boost::posix_time::seconds last_seen(bot.last_seen().sec());
 		time_since_update += last_seen;
 
 		if (time_since_update.seconds() > TIMEEXCEEDED) {
@@ -80,27 +77,27 @@ RobotStatesWidget::~RobotStatesWidget() {
 }
 
 void RobotStatesWidget::setBot1(const llsf_msgs::Robot& bot) {
-	bot1_ = &bot;
+	bot1_.CopyFrom(bot);
 	bot1_updated = boost::posix_time::microsec_clock::local_time();
 	bot1_frame_.set_label("[" + bot.team() + "]" + bot.name());
 }
 
 void RobotStatesWidget::setBot2(const llsf_msgs::Robot& bot) {
-	bot2_ = &bot;
+	bot2_.CopyFrom(bot);
 	bot2_updated = boost::posix_time::microsec_clock::local_time();
 	bot2_frame_.set_label("[" + bot.team() + "]" + bot.name());
 }
 
 void RobotStatesWidget::setBot3(const llsf_msgs::Robot& bot) {
-	bot3_ = &bot;
+	bot3_ .CopyFrom(bot);
 	bot3_updated = boost::posix_time::microsec_clock::local_time();
 	bot3_frame_.set_label("[" + bot.team() + "]" + bot.name());
 }
 
 void RobotStatesWidget::clear() {
-	bot1_ = NULL;
-	bot2_ = NULL;
-	bot3_ = NULL;
+	bot1_.Clear();
+	bot2_.Clear();
+	bot3_.Clear();
 	bot1_label_.set_text("----");
 	bot2_label_.set_text("----");
 	bot3_label_.set_text("----");

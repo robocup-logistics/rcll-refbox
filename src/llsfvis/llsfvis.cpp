@@ -66,7 +66,7 @@ void* send_game_states(void* arg) {
 
 
 int main(int argc, char* argv[]) {
-	pthread_t p;
+
 
 
 	Glib::RefPtr<Gtk::Application> app = Gtk::Application::create(argc, argv,
@@ -85,7 +85,8 @@ int main(int argc, char* argv[]) {
 	if (DEBUG) {
 		mainWindow.add_log_message("Good Morning");
 	}
-	pthread_create(&p, NULL, &send_game_states, NULL);
+	//pthread_t p;
+	//pthread_create(&p, NULL, &send_game_states, NULL);
 	return app->run(mainWindow);
 
 }

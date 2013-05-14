@@ -37,6 +37,8 @@
 #include "PuckDialog.h"
 #include <iostream>
 #include <sstream>
+
+
 namespace LLSFVis {
 
 PlayFieldWidget::PlayFieldWidget() {
@@ -44,6 +46,9 @@ PlayFieldWidget::PlayFieldWidget() {
 	signal_button_press_event().connect(
 			sigc::mem_fun(*this, &PlayFieldWidget::on_clicked));
 	uIManager_ = Gtk::UIManager::create();
+	have_machine_info_=false;
+	have_puck_info_=false;
+	have_robot_info_=false;
 
 }
 
@@ -97,23 +102,23 @@ bool PlayFieldWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	draw_starting_zone(cr);
 
 	//draw machines
-	if (machines_ != NULL) {
-		for (int i = 0; i < machines_->machines_size(); ++i) {
-			draw_machine(cr, machines_->machines(i));
+	if (have_machine_info_) {
+		for (int i = 0; i < machines_.machines_size(); ++i) {
+			draw_machine(cr, machines_.machines(i));
 		}
 	}
 
 	//draw pucks
-	if (pucks_ != NULL) {
-		for (int i = 0; i < pucks_->pucks_size(); ++i) {
-			draw_puck(cr, pucks_->pucks(i));
+	if (have_puck_info_) {
+		for (int i = 0; i < pucks_.pucks_size(); ++i) {
+			draw_puck(cr, pucks_.pucks(i));
 		}
 	}
 
 	//draw_robots
-	if (robots_ != NULL) {
-		for (int i = 0; i < robots_->robots_size(); ++i) {
-			draw_robot(cr, robots_->robots(i));
+	if (have_robot_info_) {
+		for (int i = 0; i < robots_.robots_size(); ++i) {
+			draw_robot(cr, robots_.robots(i));
 		}
 	}
 
@@ -126,6 +131,7 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
 	cr->set_line_width(FIELDLINESSIZE);
+	printf("%s\n",machine.DebugString().c_str());
 	double leftX = machine.pose().x() - MACHINESIZE / 2;
 	double upperY = machine.pose().y() + MACHINESIZE / 2;
 	double lowerY = machine.pose().y() - MACHINESIZE / 2;
@@ -411,12 +417,14 @@ void PlayFieldWidget::draw_field_border(
 	cr->restore();
 }
 
-void PlayFieldWidget::update_robot_info(llsf_msgs::RobotInfo& robotInfo) {
-	robots_ = &robotInfo;
+void PlayFieldWidget::update_robot_info(const llsf_msgs::RobotInfo& robotInfo) {
+	have_robot_info_=true;
+	robots_.CopyFrom(robotInfo);
 }
 
-void PlayFieldWidget::update_machines(llsf_msgs::MachineInfo& mSpecs) {
-	machines_ = &mSpecs;
+void PlayFieldWidget::update_machines(const llsf_msgs::MachineInfo& mSpecs) {
+	have_machine_info_=true;
+	machines_.CopyFrom(mSpecs);
 }
 
 sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> PlayFieldWidget::signal_remove_puck() {
@@ -424,7 +432,8 @@ sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> PlayFieldWidget::signal_re
 }
 
 void PlayFieldWidget::update_pucks(const llsf_msgs::PuckInfo& pucks) {
-	pucks_=&pucks;
+	have_puck_info_=true;
+	pucks_.CopyFrom(pucks);
 }
 
 const llsf_msgs::Machine* PlayFieldWidget::get_clicked_machine(gdouble x,
@@ -435,13 +444,13 @@ const llsf_msgs::Machine* PlayFieldWidget::get_clicked_machine(gdouble x,
 	gdouble scaled_y = FIELDSIZE
 			- (y / (get_allocated_height() / (FIELDSIZE + FIELDBORDERSIZE * 2))
 					- FIELDBORDERSIZE);
-	for (int i = 0; i < machines_->machines_size(); ++i) {
-		float x = machines_->machines(i).pose().x();
-		float y = machines_->machines(i).pose().y();
+	for (int i = 0; i < machines_.machines_size(); ++i) {
+		float x = machines_.machines(i).pose().x();
+		float y = machines_.machines(i).pose().y();
 		if (scaled_x >= x - MACHINESIZE / 2 && scaled_x <= x + MACHINESIZE / 2
 				&& scaled_y >= y - MACHINESIZE / 2
 				&& scaled_y <= y + MACHINESIZE / 2) {
-			return &(machines_->machines(i));
+			return &(machines_.machines(i));
 		}
 	}
 	return NULL;

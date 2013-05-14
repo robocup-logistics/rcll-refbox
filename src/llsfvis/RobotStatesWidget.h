@@ -25,11 +25,11 @@ public:
 private:
 	bool on_update();
 
-	const llsf_msgs::Robot* bot1_;
+	llsf_msgs::Robot bot1_;
 	boost::posix_time::ptime bot1_updated;
-	const llsf_msgs::Robot* bot2_;
+	llsf_msgs::Robot bot2_;
 	boost::posix_time::ptime bot2_updated;
-	const llsf_msgs::Robot* bot3_;
+	llsf_msgs::Robot bot3_;
 	boost::posix_time::ptime bot3_updated;
 
 	Gtk::Box box_;
@@ -41,7 +41,7 @@ private:
 	Gtk::Label bot3_label_;
 
 	void update_bot(boost::posix_time::time_duration time_since_update,
-			const llsf_msgs::Robot* bot, Gtk::Label* bot_label);
+			const llsf_msgs::Robot& bot, Gtk::Label* bot_label);
 
 	static const int TIMEEXCEEDED = 30;
 	static const int TIMEWARNING = 5;
