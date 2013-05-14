@@ -98,6 +98,7 @@ MainWindow::MainWindow() :
 			Gtk::POS_BOTTOM, 2, 1);
 	playFieldTabGrid_.attach_next_to(stateWidget_, buttonBoxPlayField_,
 			Gtk::POS_BOTTOM, 1, 1);
+	playFieldTabGrid_.attach_next_to(rulesWidget_,aspectFrame_,Gtk::POS_LEFT,1,3);
 
 	//Create the logging tab
 	logButton1_.set_label("log1");

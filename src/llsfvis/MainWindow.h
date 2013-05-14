@@ -41,6 +41,7 @@
 #include "LogWidget.h"
 #include "PucksWidget.h"
 #include "OrdersWidget.h"
+#include "HTMLWidget.h"
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/AttentionMessage.pb.h>
@@ -109,6 +110,7 @@ private:
 	OrdersWidget orderWidget_;
 	LogWidget logWidget_;
 
+	HTMLWidget rulesWidget_;
 
 	llsf_msgs::PuckInfo pucks_;
 	bool have_puckinfo_;
