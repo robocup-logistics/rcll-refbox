@@ -30,7 +30,7 @@ private:
 	GtkWidget* gtkhtml_;
 	Gtk::Widget* htmlWidget_;
 	void display_page(const gchar* uri);
-	std::vector<const gchar*> pages;
+	std::vector<std::string	> pages;
 
 };
 
