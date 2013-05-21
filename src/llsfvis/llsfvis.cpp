@@ -40,8 +40,6 @@
 #include "test_data.cpp"
 #include <pthread.h>
 
-#define DEBUG true
-
 using namespace llsf_msgs;
 using namespace std;
 
@@ -82,9 +80,6 @@ int main(int argc, char* argv[]) {
 	mainWindow.signal_set_game_state().connect(
 			sigc::mem_fun(refboxClient,
 					&LLSFVis::RefboxClient::on_signal_send_msg));
-	if (DEBUG) {
-		mainWindow.add_log_message("Good Morning");
-	}
 	//pthread_t p;
 	//pthread_create(&p, NULL, &send_game_states, NULL);
 	return app->run(mainWindow);
