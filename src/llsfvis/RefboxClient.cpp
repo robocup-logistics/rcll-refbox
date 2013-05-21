@@ -23,6 +23,9 @@ using namespace protobuf_comm;
 
 RefboxClient::RefboxClient(MainWindow& mainWindow) :
 		mainWindow_(mainWindow) {
+
+	dispatcher_.connect(sigc::mem_fun(*this,&RefboxClient::process_queue));
+
 	client = new ProtobufStreamClient();
 	MessageRegister & message_register = client->message_register();
 	message_register.add_message_type<llsf_msgs::GameState>();
@@ -68,8 +71,25 @@ void RefboxClient::client_disconnected(const boost::system::error_code &error) {
 	mainWindow_.add_log_message("Refbox disconnected: " + error.message());
 }
 
+
+
+
 void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
 		std::shared_ptr<google::protobuf::Message> msg) {
+	std::lock_guard<std::mutex> lock(mutex_);
+	msg_queue_.push(msg);
+	dispatcher_();
+}
+
+void RefboxClient::process_queue(){
+	std::shared_ptr<google::protobuf::Message> msg;
+	{
+		std::lock_guard<std::mutex> lock(mutex_);
+		msg = msg_queue_.front();
+		msg_queue_.pop();
+	}
+
+
 	std::shared_ptr<llsf_msgs::GameState> g;
 	if ((g = std::dynamic_pointer_cast < llsf_msgs::GameState > (msg))) {
 		mainWindow_.update_game_state(*g);
@@ -106,11 +126,9 @@ void RefboxClient::client_msg(uint16_t comp_id, uint16_t msg_type,
 		mainWindow_.update_orders(*order);
 		return;
 	}
-
 }
 
 void RefboxClient::on_signal_send_msg(google::protobuf::Message &m) {
-	std::cout << "Sending " << m.DebugString() << std::endl;
 	client->send(m);
 }
 

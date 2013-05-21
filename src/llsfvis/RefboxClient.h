@@ -11,6 +11,8 @@
 #include <protobuf_comm/client.h>
 #include <boost/asio.hpp>
 #include <sigc++/sigc++.h>
+#include <queue>
+#include <mutex>
 #include "MainWindow.h"
 #include "msgs/PuckInfo.pb.h"
 
@@ -21,6 +23,7 @@ public:
 	RefboxClient(MainWindow& mainWindow);
 	virtual ~RefboxClient();
 	void on_signal_send_msg(google::protobuf::Message &m);
+	void process_queue();
 private:
 	MainWindow& mainWindow_;
 	protobuf_comm::ProtobufStreamClient *client;
@@ -30,6 +33,9 @@ private:
 	void client_msg(uint16_t comp_id, uint16_t msg_type,
 			std::shared_ptr<google::protobuf::Message> msg);
 	void handle_signal(const boost::system::error_code& error, int signum);
+	std::queue<std::shared_ptr<google::protobuf::Message> > msg_queue_;
+	std::mutex mutex_;
+	Glib::Dispatcher dispatcher_;
 
 
 };
