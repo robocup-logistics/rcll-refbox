@@ -9,6 +9,7 @@
 #define PUCKSWIDGET_H_
 
 #include <gtkmm.h>
+#include <map>
 #include "PuckStateWidget.h"
 #include "msgs/PuckInfo.pb.h"
 

@@ -6,11 +6,13 @@
  */
 
 #include "PucksWidget.h"
+#include <map>
+
+
+namespace LLSFVis {
 
 using namespace llsf_msgs;
 using namespace std;
-
-namespace LLSFVis {
 
 PucksWidget::PucksWidget():
 	box_(Gtk::ORIENTATION_VERTICAL){
@@ -21,7 +23,9 @@ PucksWidget::PucksWidget():
 }
 
 PucksWidget::~PucksWidget() {
-	// TODO Auto-generated destructor stub
+	for ( std::map<int,PuckStateWidget*>::iterator it = pucks_.begin(); it!=pucks_.end();++it){
+		delete it->second;
+	}
 }
 
 void PucksWidget::add_puck(const Puck& puck) {
