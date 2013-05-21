@@ -38,7 +38,6 @@
 #include <iostream>
 #include <sstream>
 
-
 namespace LLSFVis {
 
 PlayFieldWidget::PlayFieldWidget() {
@@ -46,9 +45,9 @@ PlayFieldWidget::PlayFieldWidget() {
 	signal_button_press_event().connect(
 			sigc::mem_fun(*this, &PlayFieldWidget::on_clicked));
 	uIManager_ = Gtk::UIManager::create();
-	have_machine_info_=false;
-	have_puck_info_=false;
-	have_robot_info_=false;
+	have_machine_info_ = false;
+	have_puck_info_ = false;
+	have_robot_info_ = false;
 
 }
 
@@ -131,19 +130,32 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
 	cr->set_line_width(FIELDLINESSIZE);
-	printf("%s\n",machine.DebugString().c_str());
-	double leftX = machine.pose().x() - MACHINESIZE / 2;
-	double upperY = machine.pose().y() + MACHINESIZE / 2;
-	double lowerY = machine.pose().y() - MACHINESIZE / 2;
 
-	cr->rectangle(leftX, lowerY, MACHINESIZE, MACHINESIZE);
+	llsf_msgs::Machine machine_copy;
+	machine_copy.CopyFrom(machine);
+	if (machine.type() == "DELIVER") {
+		llsf_msgs::Pose2D* pose = machine_copy.mutable_pose();
+		pose->set_y(machine.pose().y() - (MACHINESIZE / 10.0f));
+		pose->set_x(machine.pose().x() + (MACHINESIZE / 10.0f));
+		machine_copy.set_type("");
+	}
+
+	double leftX = machine_copy.pose().x() - MACHINESIZE / 2;
+	double upperY = machine_copy.pose().y() + MACHINESIZE / 2;
+	double lowerY = machine_copy.pose().y() - MACHINESIZE / 2;
+
+	if (machine.type() != "DELIVER") {
+		cr->rectangle(leftX, lowerY, MACHINESIZE, MACHINESIZE);
+	}
 
 	draw_machine_t(cr, MACHINESIZE / 4, machine.pose().x(), machine.pose().y(),
 			machine.pose().ori());
+
 	draw_text(cr, leftX + MACHINESIZE / 10, upperY - MACHINESIZE / 15,
-			machine.name());
+			machine_copy.name());
 	draw_text(cr, leftX + MACHINESIZE / 10, lowerY + 4 * MACHINESIZE / 15,
-			machine.type());
+			machine_copy.type());
+
 	cr->stroke();
 
 	double puck_x = leftX + MACHINESIZE * 0.6;
@@ -175,7 +187,8 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 			break;
 		}
 	}
-	draw_machine_signal(cr, machine, redstate, yellowstate, greenstate);
+
+	draw_machine_signal(cr, machine_copy, redstate, yellowstate, greenstate);
 	cr->restore();
 }
 
@@ -266,7 +279,7 @@ void PlayFieldWidget::draw_machine_signal(
 void PlayFieldWidget::draw_machine_light(
 		const Cairo::RefPtr<Cairo::Context>& cr, double size, double x,
 		double y, double r, double g, double b, bool blink) {
-	//adjustment, so light is in the box
+//adjustment, so light is in the box
 	x -= FIELDLINESSIZE / 2;
 	y -= FIELDLINESSIZE / 2;
 
@@ -287,7 +300,7 @@ void PlayFieldWidget::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 		double size, double x, double y, double orientation) {
 	cr->save();
 	cr->translate(x, y);
-	cr->rotate(orientation);
+	cr->rotate(orientation - M_PI_2);
 	cr->move_to(-size / 2, 0);
 	cr->line_to(size / 2, 0);
 	cr->move_to(0, 0);
@@ -369,8 +382,8 @@ void PlayFieldWidget::draw_text(const Cairo::RefPtr<Cairo::Context>& cr,
 	Glib::RefPtr<Pango::Layout> layout = create_pango_layout(text);
 	layout->set_font_description(font);
 
-	//int textWidth, textHeight;
-	//layout->get_pixel_size(textWidth, textHeight);
+//int textWidth, textHeight;
+//layout->get_pixel_size(textWidth, textHeight);
 
 	cr->move_to(x, y * -1); //cope with flipped y-axis
 	layout->show_in_cairo_context(cr);
@@ -401,14 +414,14 @@ void PlayFieldWidget::draw_field_border(
 	cr->set_source_rgb(0, 0, 0);
 
 	cr->rectangle(0, 0, FIELDSIZE, FIELDSIZE);
-	//draw insertion area
+//draw insertion area
 	cr->move_to(ZONEWIDTH, 0);
 	cr->line_to(ZONEWIDTH, FIELDSIZE);
 
 	cr->move_to(FIELDSIZE - ZONEWIDTH, 0);
 	cr->line_to(FIELDSIZE - ZONEWIDTH, FIELDSIZE);
 
-	//draw late order slot
+//draw late order slot
 	cr->rectangle(LOSLOTX, LOSLOTY, LOSLOTSIZE, LOSLOTSIZE);
 	cr->move_to(0, FIELDSIZE / 2 + ZONEHEIGHT / 2 + LOAREAHEIGHT);
 	cr->line_to(ZONEWIDTH, FIELDSIZE / 2 + ZONEHEIGHT / 2 + LOAREAHEIGHT);
@@ -418,12 +431,12 @@ void PlayFieldWidget::draw_field_border(
 }
 
 void PlayFieldWidget::update_robot_info(const llsf_msgs::RobotInfo& robotInfo) {
-	have_robot_info_=true;
+	have_robot_info_ = true;
 	robots_.CopyFrom(robotInfo);
 }
 
 void PlayFieldWidget::update_machines(const llsf_msgs::MachineInfo& mSpecs) {
-	have_machine_info_=true;
+	have_machine_info_ = true;
 	machines_.CopyFrom(mSpecs);
 }
 
@@ -432,7 +445,7 @@ sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> PlayFieldWidget::signal_re
 }
 
 void PlayFieldWidget::update_pucks(const llsf_msgs::PuckInfo& pucks) {
-	have_puck_info_=true;
+	have_puck_info_ = true;
 	pucks_.CopyFrom(pucks);
 }
 
