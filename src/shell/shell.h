@@ -118,6 +118,8 @@ class LLSFRefBoxShell
 
   void logf(const char *format, ...);
 
+  void beep(int frequency, int duration_ms);
+
  private: // members
   bool        quit_;
   const char *error_;
@@ -162,6 +164,8 @@ class LLSFRefBoxShell
 
   std::shared_ptr<llsf_msgs::MachineInfo> last_minfo_;
   std::shared_ptr<llsf_msgs::PuckInfo> last_pinfo_;
+
+  bool beep_warning_shown_;
 };
 
 

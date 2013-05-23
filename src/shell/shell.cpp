@@ -85,7 +85,8 @@ LLSFRefBoxShell::LLSFRefBoxShell()
     p_phase_(nullptr), p_time_(nullptr), p_points_(nullptr), 
     m_state_(nullptr),  m_phase_(nullptr), 
     timer_(io_service_), reconnect_timer_(io_service_), try_reconnect_(true),
-    blink_timer_(io_service_), attmsg_timer_(io_service_), attmsg_toggle_(true)
+    blink_timer_(io_service_), attmsg_timer_(io_service_), attmsg_toggle_(true),
+    beep_warning_shown_(false)
 {
   stdin_ = new boost::asio::posix::stream_descriptor(io_service_, dup(STDIN_FILENO));
   client = new ProtobufStreamClient();
@@ -360,6 +361,7 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
 	p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
 	p_attmsg_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
       } else {
+	beep(1500, ATTMSG_TIMER_INTERVAL);
 	p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
 	p_attmsg_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
       }
@@ -827,6 +829,32 @@ LLSFRefBoxShell::logf(const char *format, ...)
     free(tmp);
   }
   va_end(arg);
+}
+
+void
+LLSFRefBoxShell::beep(int frequency, int duration_ms)
+{
+  if (access("/sys/module/pcspkr/initstate", R_OK) == -1) {
+    if (! beep_warning_shown_) {
+      log(llsf_log_msgs::LogMessage::LL_WARN, "L", "%s",
+	  "Cannot beep. Kernel module pcspkr seems not to be loaded");
+      beep_warning_shown_ = true;
+    }
+    return;
+  }
+
+  FILE *tty;
+  if ( NULL == (tty = fopen ("/dev/tty0", "w")) ) {
+    if (! beep_warning_shown_) {
+      log(llsf_log_msgs::LogMessage::LL_WARN, "L", "%s",
+	  "Cannot beep. No write access to /dev/tty0. Is user in tty group?");
+      beep_warning_shown_ = true;
+    }
+    return;
+  }
+  char ESC = 27;
+  fprintf(tty, "%c[10;%d]%c[11;%d]\a", ESC, frequency, ESC, duration_ms);
+  fclose(tty);
 }
 
 int
