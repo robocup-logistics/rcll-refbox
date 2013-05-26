@@ -70,6 +70,7 @@
 #define RECONNECT_TIMER_INTERVAL 1000
 #define BLINK_TIMER_INTERVAL 250
 #define ATTMSG_TIMER_INTERVAL 1000
+#define MAX_NUM_ROBOTS 6
 
 using namespace protobuf_comm;
 
@@ -974,7 +975,7 @@ LLSFRefBoxShell::run()
     m->second->refresh();
   }
 
-  robots_.resize(3, NULL);
+  robots_.resize(MAX_NUM_ROBOTS, NULL);
   for (size_t i = 0; i < robots_.size(); ++i) {
     robots_[i] = new LLSFRefBoxShellRobot(18 + 2 * i, panel_->width() - 25);
     robots_[i]->refresh();
