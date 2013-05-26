@@ -44,6 +44,17 @@
   (printout t "Client " ?client-id " ( " ?host ") disconnected" crlf)
 )
 
+; Sort robots by team and name, such that do-for-all-facts on the robot deftemplate
+; iterates in a nice order, e.g. for net-send-RobotInfo
+(defrule sort-robots
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?oa <- (robot (name ?name-a))
+  ?ob <- (robot (name ?name-b&:(> (str-compare ?name-a ?name-b) 0)&:(< (fact-index ?oa) (fact-index ?ob))))
+  =>
+  (modify ?ob)
+  (modify ?oa)
+)
+
 (defrule net-send-beacon
   (time $?now)
   ?f <- (signal (type beacon) (time $?t&:(timeout ?now ?t ?*BEACON-PERIOD*)) (seq ?seq))
