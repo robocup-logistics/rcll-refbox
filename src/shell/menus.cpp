@@ -172,9 +172,9 @@ GenericItemsMenu::max_cols(int n_items, NCursesMenuItem **items)
 
 MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
 					 std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : Menu(det_lines(minfo) + 1 + 2, 10 + 2,
+  : Menu(det_lines(minfo) + 1 + 2, 12 + 2,
 	 (parent->lines() - (det_lines(minfo) + 1))/2,
-	 (parent->cols() - 10)/2)
+	 (parent->cols() - 12)/2)
 {
   valid_item_ = false;
   int n_items = det_lines(minfo);
@@ -227,7 +227,7 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
 				       std::get<1>(items_[i]), std::get<2>(items_[i])));
     mitems[i] = item;
   }
-  s_cancel_ = "Cancel";
+  s_cancel_ = "** CANCEL **";
   mitems[ni] = new SignalItem(s_cancel_);
   mitems[ni+1] = new NCursesMenuItem();
 
@@ -321,7 +321,7 @@ MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
 				       std::get<2>(items_[i])));
     mitems[i] = item;
   }
-  s_cancel_ = "Cancel";
+  s_cancel_ = "** CANCEL **";
   mitems[ni] = new SignalItem(s_cancel_);
   mitems[ni+1] = new NCursesMenuItem();
 
@@ -435,7 +435,7 @@ PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *parent,
 				       std::get<1>(items_[i])));
     mitems[i] = item;
   }
-  s_cancel_ = "Cancel";
+  s_cancel_ = "** CANCEL **";
   mitems[ni] = new SignalItem(s_cancel_);
   mitems[ni+1] = new NCursesMenuItem();
 
@@ -546,7 +546,7 @@ MachinePlacingMenu::MachinePlacingMenu(NCursesWindow *parent,
   place_under_rfid_ = false;
   s_under_rfid_ = "Place " + puck.substr(0,2) + " under RFID of " + machine;
   s_loaded_with_ = "Load " + machine + " with " + puck.substr(0,2);
-  s_cancel_ = "Cancel";
+  s_cancel_ = "** CANCEL **";
   NCursesMenuItem **mitems = new NCursesMenuItem*[4];
 
   int idx = 0;
