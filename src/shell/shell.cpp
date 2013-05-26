@@ -704,6 +704,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       attmsg_endtime_ = now + boost::posix_time::seconds(am->time_to_show());
     }
     if (attmsg_string_ != "") {
+      log(llsf_log_msgs::LogMessage::LL_ERROR, "A", "%s", attmsg_string_.c_str());
+
       attmsg_toggle_ = true;
       attmsg_timer_.expires_from_now(boost::posix_time::milliseconds(0));
       attmsg_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_attmsg_timer, this,
