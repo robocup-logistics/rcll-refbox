@@ -46,3 +46,6 @@ llsfrb:
     #peer-send-port: !udp-port 4444
     #peer-recv-port: !udp-port 4445
     
+
+  game:
+    teams: [Carologistics]

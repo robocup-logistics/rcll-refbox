@@ -17,6 +17,15 @@
   (return ?vi)
 )
 
+(defrule net-read-known-teams
+  (declare (salience -1000))
+  (init)
+  (confval (path "/llsfrb/game/teams") (type STRING) (is-list TRUE) (list-value $?lv))
+  =>
+  (printout t "Teams: " ?lv crlf)
+  (assert (known-teams ?lv))
+)
+
 (defrule net-client-connected
   ?cf <- (protobuf-server-client-connected ?client-id ?host ?port)
   =>
@@ -34,6 +43,16 @@
   (bind ?vi (net-create-VersionInfo))
   (pb-send ?client-id ?vi)
   (pb-destroy ?vi)
+
+  ; Send game information
+  (bind ?gi (pb-create "llsf_msgs.GameInfo"))
+  (do-for-fact ((?teams known-teams)) TRUE
+    (foreach ?t ?teams:implied
+      (pb-add-list ?gi "known_teams" ?t)
+    )    
+  )
+  (pb-send ?client-id ?gi)
+  (pb-destroy ?gi)
 )
 
 (defrule net-client-disconnected
