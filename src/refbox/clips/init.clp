@@ -10,7 +10,7 @@
 (defglobal
   ?*CLIPS_DIRS* = (get-clips-dirs)
   ?*DEBUG* = 2  ;debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
-  ?*CONFIG_PREFIX* = "/llsfrb/clips"
+  ?*CONFIG_PREFIXES* = (create$ "/llsfrb/clips" "/llsfrb/game")
 )
 
 (deffunction resolve-file (?file)
@@ -37,7 +37,9 @@
 (defrule load-config
   (init)
   =>
-  (load-config ?*CONFIG_PREFIX*)
+  (foreach ?p ?*CONFIG_PREFIXES*
+    (load-config ?p)
+  )
 )
 
 (defrule load-refbox
