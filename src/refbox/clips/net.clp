@@ -96,6 +96,7 @@
   (time $?now)
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  (not (robot (host ?from-host) (port ?from-port)))
   ?sf <- (signal (type version-info))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
