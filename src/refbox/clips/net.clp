@@ -123,6 +123,12 @@
 					" (" ?other:team "/" ?other:name "@" ?other:port
 					" vs " ?team "/" ?from-host "@" ?from-port ")") 5))
   )
+  (if (and (eq ?team "LLSF") (eq ?name "RefBox"))
+   then
+    (printout warn "Detected another RefBox at " ?from-host ":" ?from-port crlf)
+    (assert (attention-message (str-cat "Detected another RefBox at "
+					?from-host ":" ?from-port) 5))
+  )
   (assert (robot (team (pb-field-value ?p "team_name"))
 		 (name (pb-field-value ?p "peer_name"))
 		 (host ?from-host) (port ?from-port)
