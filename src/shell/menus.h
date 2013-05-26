@@ -44,6 +44,7 @@
 #include <boost/asio.hpp>
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/PuckInfo.pb.h>
+#include <msgs/GameInfo.pb.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -200,6 +201,27 @@ class MachinePlacingMenu : public Menu
   bool valid_selected_;
   bool place_under_rfid_;
   std::string s_cancel_, s_under_rfid_, s_loaded_with_;
+};
+
+
+class TeamSelectMenu : public Menu
+{
+ public:
+  TeamSelectMenu(NCursesWindow *parent, std::shared_ptr<llsf_msgs::GameInfo> gameinfo);
+
+  std::string get_team_name();
+  operator bool() const { return valid_item_; }
+
+ private:
+  virtual void On_Menu_Init();
+  int det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo);
+  void team_selected(std::string team_name);
+
+ private:
+  bool valid_item_;
+  std::string s_cancel_;
+  std::string team_name_;
+  std::vector<std::string> items_;
 };
 
 

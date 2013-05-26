@@ -58,6 +58,7 @@ namespace protobuf_comm {
 namespace llsf_msgs {
   class MachineInfo;
   class PuckInfo;
+  class GameInfo;
 }
 
 namespace llsfrb_shell {
@@ -108,6 +109,7 @@ class LLSFRefBoxShell
   void set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id);
   void set_loaded_with(const std::string &machine_name, unsigned int puck_id);
   void send_remove_puck(std::string &machine_name, unsigned int puck_id);
+  void send_set_team(std::string &team_name);
 
   void log(llsf_log_msgs::LogMessage::LogLevel log_level,
 	   long int ts_sec, long int ts_nsec,
@@ -136,6 +138,7 @@ class LLSFRefBoxShell
   NCursesPanel *p_phase_;
   NCursesPanel *p_time_;
   NCursesPanel *p_points_;
+  NCursesPanel *p_team_;
 
   std::string   s_cancel_;
   NCursesMenu  *m_state_;
@@ -164,6 +167,7 @@ class LLSFRefBoxShell
 
   std::shared_ptr<llsf_msgs::MachineInfo> last_minfo_;
   std::shared_ptr<llsf_msgs::PuckInfo> last_pinfo_;
+  std::shared_ptr<llsf_msgs::GameInfo> last_gameinfo_;
 
   bool beep_warning_shown_;
 };

@@ -608,4 +608,64 @@ MachinePlacingMenu::operator bool() const
 }
 
 
+TeamSelectMenu::TeamSelectMenu(NCursesWindow *parent,
+			       std::shared_ptr<llsf_msgs::GameInfo> gameinfo)
+  : Menu(det_lines(gameinfo) + 1 + 2, 20 + 2,
+	 (parent->lines() - (det_lines(gameinfo) + 1))/2,
+	 (parent->cols() - 20)/2)
+{
+  valid_item_ = false;
+  int n_items = det_lines(gameinfo);
+  items_.resize(n_items);
+  int ni = 0;
+  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  for (int i = 0; i < gameinfo->known_teams_size(); ++i) {
+    items_[ni++] = gameinfo->known_teams(i);
+  }
+
+  std::sort(items_.begin(), items_.end());
+
+  for (int i = 0; i < ni; ++i) {
+    SignalItem *item = new SignalItem(items_[i]);
+    item->signal().connect(boost::bind(&TeamSelectMenu::team_selected, this, items_[i]));
+    mitems[i] = item;
+  }
+  s_cancel_ = "** CANCEL **";
+  mitems[ni] = new SignalItem(s_cancel_);
+  mitems[ni+1] = new NCursesMenuItem();
+
+  set_mark("");
+  set_format(ni+1, 1);
+  InitMenu(mitems, true, true);
+  frame("Team");
+}
+
+void
+TeamSelectMenu::team_selected(std::string team_name)
+{
+  valid_item_ = true;
+  team_name_ = team_name;
+}
+
+std::string
+TeamSelectMenu::get_team_name()
+{
+  return team_name_;
+}
+
+void
+TeamSelectMenu::On_Menu_Init()
+{
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+  //subWindow().bkgd(parent_->getbkgd());
+  refresh();
+}
+
+int
+TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo)
+{
+  return gameinfo->known_teams_size();
+}
+
+
 } // end of namespace llsfrb

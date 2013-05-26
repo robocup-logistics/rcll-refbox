@@ -54,6 +54,7 @@
 #include <msgs/OrderInfo.pb.h>
 #include <logging/llsf_log_msgs/LogMessage.pb.h>
 #include <msgs/VersionInfo.pb.h>
+#include <msgs/GameInfo.pb.h>
 
 #include <cursesp.h>
 #include <cursesf.h>
@@ -83,8 +84,8 @@ namespace llsfrb_shell {
 LLSFRefBoxShell::LLSFRefBoxShell()
   : quit_(false), error_(NULL), panel_(nullptr), navbar_(nullptr),
     rb_log_(nullptr), p_orders_(nullptr), p_attmsg_(nullptr), p_state_(nullptr),
-    p_phase_(nullptr), p_time_(nullptr), p_points_(nullptr), 
-    m_state_(nullptr),  m_phase_(nullptr), 
+    p_phase_(nullptr), p_time_(nullptr), p_points_(nullptr), p_team_(nullptr),
+    m_state_(nullptr),  m_phase_(nullptr),
     timer_(io_service_), reconnect_timer_(io_service_), try_reconnect_(true),
     blink_timer_(io_service_), attmsg_timer_(io_service_), attmsg_toggle_(true),
     beep_warning_shown_(false)
@@ -148,7 +149,12 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   delete p_phase_;
   delete p_time_;
   delete p_points_;
+  delete p_team_;
   delete p_attmsg_;
+
+  last_minfo_.reset();
+  last_pinfo_.reset();
+  last_gameinfo_.reset();
 }
 
 
@@ -261,6 +267,22 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
       case KEY_F(3):
 	(*m_phase_)();
 	io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+	break;
+
+      case KEY_F(4):
+	if (last_gameinfo_) {
+	  try {
+	    TeamSelectMenu m(panel_, last_gameinfo_);
+	    m();
+	    if (m) {
+	      std::string team_name = m.get_team_name();
+	      send_set_team(team_name);	      
+	    }
+	  } catch (NCursesException &e) {
+	    logf("Machine menu failed: %s", e.message);
+	  }
+	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+	}
 	break;
 
       case KEY_F(7):
@@ -477,6 +499,18 @@ LLSFRefBoxShell::send_remove_puck(std::string &machine_name, unsigned int puck_i
 }
 
 void
+LLSFRefBoxShell::send_set_team(std::string &team_name)
+{
+  llsf_msgs::SetTeamName msg;
+  msg.set_team_name(team_name);
+  try {
+    client->send(msg);
+  } catch (std::runtime_error &e) {
+    logf("Setting team info failed: %s", e.what());
+  }
+}
+
+void
 LLSFRefBoxShell::client_connected()
 {
   p_state_->erase();
@@ -506,6 +540,7 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
   p_phase_->erase();
   p_time_->erase();
   p_points_->erase();
+  p_team_->erase();
   p_state_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   p_state_->addstr("DISCONNECTED");
   p_state_->standend();
@@ -607,6 +642,11 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       p_points_->printw("%u", g->points());
     }
 
+    p_team_->erase();
+    if (g->has_team()) {
+      p_team_->printw("%s", g->team().c_str());
+    }
+
     navbar_->standend();
 
     if (g->state() == llsf_msgs::GameState::WAIT_START) {
@@ -619,6 +659,11 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       navbar_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
       navbar_->addstr(0, navbar_->cols() - 5, "STOP");
     }
+  }
+
+  std::shared_ptr<llsf_msgs::GameInfo> ginfo;
+  if ((ginfo = std::dynamic_pointer_cast<llsf_msgs::GameInfo>(msg))) {
+    last_gameinfo_ = ginfo;
   }
 
   std::shared_ptr<llsf_msgs::RobotInfo> r;
@@ -878,9 +923,9 @@ LLSFRefBoxShell::run()
   panel_->addch(0,                  panel_->width() - 26, ACS_TTEE);
   panel_->addch(height, panel_->width() - 26, ACS_BTEE);
 
-  panel_->hline(height-5, panel_->width() - 25, 24);
-  panel_->addch(height-5, panel_->width() - 26, ACS_LTEE);
-  panel_->addch(height-5, panel_->width() -  1, ACS_RTEE);
+  panel_->hline(height-6, panel_->width() - 25, 24);
+  panel_->addch(height-6, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(height-6, panel_->width() -  1, ACS_RTEE);
 
   panel_->hline(17, panel_->width() - 25, 24);
   panel_->addch(17, panel_->width() - 26, ACS_LTEE);
@@ -911,10 +956,11 @@ LLSFRefBoxShell::run()
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
-  panel_->addstr(height-4, panel_->width() - 24, "State:");
-  panel_->addstr(height-3, panel_->width() - 24, "Phase:");
-  panel_->addstr(height-2, panel_->width() - 24, "Time:");
-  panel_->addstr(height-1, panel_->width() - 24, "Points:");
+  panel_->addstr(height-5, panel_->width() - 24, "State:");
+  panel_->addstr(height-4, panel_->width() - 24, "Phase:");
+  panel_->addstr(height-3, panel_->width() - 24, "Time:");
+  panel_->addstr(height-2, panel_->width() - 24, "Points:");
+  panel_->addstr(height-1, panel_->width() - 24, "Team:");
   panel_->attroff(A_BOLD);
 
   panel_->show();
@@ -933,16 +979,22 @@ LLSFRefBoxShell::run()
   navbar_->addstr(0, 14, "PHASE");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 21, "F5");
+  navbar_->addstr(0, 21, "F4");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 24, "ADD PUCK");
+  navbar_->addstr(0, 24, "TEAM");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 34, "F7");
+  navbar_->addstr(0, 30, "F5");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 37, "REM PUCK");
+  navbar_->addstr(0, 33, "ADD PUCK");
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr(0, 43, "F7");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 46, "REM PUCK");
 
   navbar_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   navbar_->addstr(0, navbar_->cols() - 9, "SPC");
@@ -1001,16 +1053,17 @@ LLSFRefBoxShell::run()
   panel_->refresh();
 
   p_attmsg_ = new NCursesPanel(1, panel_->width() - 27, 1, 1);
-  p_state_  = new NCursesPanel(1, 15, height-4,  panel_->width() - 16);
-  p_phase_  = new NCursesPanel(1, 15, height-3,  panel_->width() - 16);
-  p_time_   = new NCursesPanel(1, 15, height-2,  panel_->width() - 16);
-  p_points_ = new NCursesPanel(1, 15, height-1,  panel_->width() - 16);
+  p_state_  = new NCursesPanel(1, 15, height-5,  panel_->width() - 16);
+  p_phase_  = new NCursesPanel(1, 15, height-4,  panel_->width() - 16);
+  p_time_   = new NCursesPanel(1, 15, height-3,  panel_->width() - 16);
+  p_points_ = new NCursesPanel(1, 15, height-2,  panel_->width() - 16);
+  p_team_   = new NCursesPanel(1, 15, height-1,  panel_->width() - 16);
 
   p_state_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   p_state_->addstr("DISCONNECTED");
   p_state_->standend();
 
-  p_points_->addstr("0");
+  p_team_->addstr("");
 
   // State menu
   const google::protobuf::EnumDescriptor *state_enum_desc =
@@ -1077,6 +1130,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::PuckInfo>();
   message_register.add_message_type<llsf_log_msgs::LogMessage>();
   message_register.add_message_type<llsf_msgs::VersionInfo>();
+  message_register.add_message_type<llsf_msgs::GameInfo>();
 
   client->signal_connected().connect(
     boost::bind(&LLSFRefBoxShell::dispatch_client_connected, this));
