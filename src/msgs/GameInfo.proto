@@ -1,8 +1,8 @@
 
 /***************************************************************************
- *  GameState.proto - GameState information
+ *  GameInfo.proto - General game information
  *
- *  Created: Mon Jan 21 12:05:03 2013
+ *  Created: Sun May 26 20:22:44 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
@@ -36,60 +36,26 @@
 
 package llsf_msgs;
 
-import "Time.proto";
-
 option java_package = "org.robocup_logistics.llsf_msgs";
-option java_outer_classname = "GameStateProtos";
+option java_outer_classname = "GameInfoProtos";
 
-message GameState {
+// Game information for controllers
+message GameInfo {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 20;
+    MSG_TYPE = 81;
   }
 
-  enum State {
-    INIT = 0;
-    WAIT_START = 1;
-    RUNNING = 2;
-    PAUSED = 3;
-  }
-
-  enum Phase {
-    PRE_GAME = 0;
-    EXPLORATION = 1;
-    PRODUCTION = 2;
-    POST_GAME = 3;
-  }
-
-  // Time in seconds since game start
-  required Time   game_time = 1;
-
-  // Current game state
-  required State  state = 3;
-  // Current game phase
-  required Phase  phase = 4;
-  // Awarded points
-  optional uint32 points = 5;
-  // Name of the currently playing team
-  optional string team = 6;
-}
-
-// Request setting of a new game state
-message SetGameState {
-  enum CompType {
-    COMP_ID  = 2000;
-    MSG_TYPE = 21;
-  }
-  // The new desired state
-  required GameState.State state = 1;
+  // The new desired phase
+  repeated string known_teams = 1;
 }
 
 // Request setting of a new game phase
-message SetGamePhase {
+message SetTeamName {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 22;
+    MSG_TYPE = 82;
   }
   // The new desired phase
-  required GameState.Phase phase = 1;
+  required string team_name = 1;
 }
