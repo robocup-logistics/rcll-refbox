@@ -115,6 +115,14 @@
 					" has a large time offset (" ?peer-time-diff " sec)")
 			       5))
   )
+  (do-for-fact ((?other robot)) (eq ?other:host ?from-host)
+    (printout warn "Received two BeaconSignals from host " ?from-host
+	      " (" ?other:team "/" ?other:name "@" ?other:port " vs "
+	      ?team "/" ?from-host "@" ?from-port ")" crlf)
+    (assert (attention-message (str-cat "Received two BeaconSignals form host " ?from-host
+					" (" ?other:team "/" ?other:name "@" ?other:port
+					" vs " ?team "/" ?from-host "@" ?from-port ")") 5))
+  )
   (assert (robot (team (pb-field-value ?p "team_name"))
 		 (name (pb-field-value ?p "peer_name"))
 		 (host ?from-host) (port ?from-port)
