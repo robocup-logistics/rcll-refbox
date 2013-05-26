@@ -241,6 +241,16 @@
   (printout warn "Illegal SetGamePhase message received from host " ?host crlf)
 )
 
+
+(defrule net-recv-SetTeamName
+  ?sf <- (gamestate)
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetTeamName") (ptr ?p) (rcvd-via STREAM))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
+  (printout t "Setting team to " (pb-field-value ?p "team_name") crlf)
+  (modify ?sf (team (pb-field-value ?p "team_name")))
+)
+
 (defrule net-recv-SetPucks
   ?mf <- (protobuf-msg (type "llsf_msgs.SetPucks") (ptr ?p))
   =>
@@ -255,7 +265,7 @@
 
 (defrule net-send-GameState
   (time $?now)
-  (gamestate (state ?state) (phase ?phase) (game-time ?game-time) (points ?points))
+  (gamestate (state ?state) (phase ?phase) (game-time ?game-time) (points ?points) (team ?team))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
@@ -271,6 +281,8 @@
   (pb-set-field ?gamestate "state" (str-cat ?state))
   (pb-set-field ?gamestate "phase" (str-cat ?phase))
   (pb-set-field ?gamestate "points" ?points)
+  (if (neq ?team "") then (pb-set-field ?gamestate "team" ?team))
+
   (do-for-all-facts ((?client network-client)) TRUE
     (pb-send ?client:id ?gamestate)
   )

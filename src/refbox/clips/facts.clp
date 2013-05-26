@@ -125,6 +125,7 @@
   (slot game-time (type FLOAT) (default 0.0))
   (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot points (type INTEGER) (default 0))
+  (slot team (type STRING))
 )
 
 (deftemplate exploration-report
