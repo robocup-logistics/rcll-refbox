@@ -93,8 +93,7 @@
 )
 
 (defrule net-recv-beacon-known
-  (time $?now)
-  ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p)
+  ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   ?rf <- (robot (host ?from-host) (port ?from-port))
   =>
@@ -117,14 +116,12 @@
     (pb-destroy ?p-pose-time)
     (pb-destroy ?p-pose)
   )
-  (modify ?rf (last-seen ?now) (warning-sent FALSE)
+  (modify ?rf (last-seen ?rcvd-at) (warning-sent FALSE)
               (pose ?pose) (pose-time ?pose-time))
 )
 
 (defrule net-recv-beacon-unknown
-  (declare (salience -10))
-  (time $?now)
-  ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p)
+  ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   (not (robot (host ?from-host) (port ?from-port)))
   ?sf <- (signal (type version-info))
@@ -136,7 +133,7 @@
   (bind ?name (pb-field-value ?p "peer_name"))
   (bind ?timef (pb-field-value ?p "time"))
   (bind ?time (create$ (pb-field-value ?timef "sec") (integer (/ (pb-field-value ?timef "nsec") 1000))))
-  (bind ?peer-time-diff (abs (time-diff-sec ?now ?time)))
+  (bind ?peer-time-diff (abs (time-diff-sec ?rcvd-at ?time)))
   (if (> ?peer-time-diff ?*PEER-TIME-DIFFERENCE-WARNING*)
    then
     (printout warn "Robot " ?name " of " ?team
@@ -162,7 +159,7 @@
   (assert (robot (team (pb-field-value ?p "team_name"))
 		 (name (pb-field-value ?p "peer_name"))
 		 (host ?from-host) (port ?from-port)
-		 (last-seen ?now)))
+		 (last-seen ?rcvd-at)))
 )
 
 (defrule net-robot-lost
