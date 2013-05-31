@@ -19,7 +19,7 @@
 	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
   (slot productions (type INTEGER) (default 0))
   (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
-  (slot prev-state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING INVALID))
+  (slot prev-state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
   (slot proc-time (type INTEGER))
   (multislot proc-start (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot down-possible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
