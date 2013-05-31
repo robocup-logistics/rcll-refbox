@@ -126,7 +126,7 @@
 (defrule machine-up
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
-  ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state)
+  ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state&~DOWN)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gtime)))
   =>
   (printout t "Machine " ?name " is up again" crlf)
