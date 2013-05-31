@@ -261,18 +261,6 @@
   )
 )
 
-(defrule deliver-proc-start
-  (time $?now)
-  (gamestate (state RUNNING) (phase PRODUCTION))
-  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE))
-  (puck (id ?id) (state ?ps))
-  (order (active TRUE) (product ?product&:(eq ?product ?ps)))
-  =>
-  (modify ?mf (puck-id ?id) (state PROCESSING) (proc-start ?now)
-	  (proc-time ?*DELIVER-PROC-TIME*) (desired-lights GREEN-ON YELLOW-ON))
-)
-
 (defrule delivery-gate-down-period "Setup next delivery gate down period"
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
   (delivery-period (period $?p&:(>= ?gtime (nth$ 1 ?p))&:(<= ?gtime (nth$ 2 ?p)))
@@ -292,6 +280,29 @@
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
 )
 
+(defrule deliver-down-machine
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id 0))
+  ?pf <- (puck (id ?id) (state ?ps))
+  =>
+  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> CONSUMED)" crlf)
+  (modify ?mf (puck-id ?id) (desired-lights RED-ON YELLOW-BLINK))
+  (modify ?pf (state CONSUMED))
+)
+
+(defrule deliver-proc-start
+  (time $?now)
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE))
+  (puck (id ?id) (state ?ps))
+  (order (active TRUE) (product ?product&:(eq ?product ?ps)))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING) (prev-state IDLE) (proc-start ?now)
+	  (proc-time ?*DELIVER-PROC-TIME*) (desired-lights GREEN-ON YELLOW-ON))
+)
+
 (defrule deliver-proc-done
   (time $?now)
   (gamestate (state RUNNING) (phase PRODUCTION))
@@ -302,15 +313,17 @@
   (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> CONSUMED)" crlf)
   (modify ?mf (state IDLE) (productions (+ ?p 1)) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   (modify ?pf (state CONSUMED))
-  (assert (product-delivered (time ?now) (product ?ps) (delivery-gate ?m))) 
+  (assert (product-delivered (time ?now) (product ?ps) (delivery-gate ?m)))
 )
 
 (defrule deliver-removal
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck FALSE))
-  ?mf <- (machine (name ?m) (mtype DELIVER) (puck-id ?id&~0))
+  ?mf <- (machine (name ?m) (state ?state) (mtype DELIVER) (puck-id ?id&~0))
   =>
-  (modify ?mf (state IDLE) (puck-id 0) (desired-lights GREEN-ON))
+  (modify ?mf (puck-id 0)
+	  (desired-lights (if (member$ ?state (create$ IDLE PROCESSING INVALID))
+			      then GREEN-ON else RED-ON)))
 )
 
 
