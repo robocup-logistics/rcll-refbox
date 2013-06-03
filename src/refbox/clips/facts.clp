@@ -21,7 +21,7 @@
   (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
   (slot prev-state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
   (slot proc-time (type INTEGER))
-  (multislot proc-start (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot proc-start (type FLOAT))
   (slot down-possible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (multislot down-period (type FLOAT) (cardinality 2 2) (default -1.0 -1.0))
   (slot puck-id (type INTEGER) (default 0))
@@ -108,7 +108,7 @@
 )  
  
 (deftemplate product-delivered
-  (multislot time (type INTEGER) (cardinality 2 2))
+  (multislot game-time (type FLOAT))
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
   (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3))
 )
@@ -139,7 +139,6 @@
 (deftemplate points
   (slot points (type INTEGER))
   (slot game-time (type FLOAT))
-  (multislot time (type INTEGER) (cardinality 2 2))
   (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION))
   (slot reason (type STRING))
 )

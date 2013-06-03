@@ -63,7 +63,7 @@
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (loaded-with) (productions 0) (state IDLE)
-	             (proc-start 0 0) (puck-id 0) (desired-lights GREEN-ON))
+	             (proc-start 0.0) (puck-id 0) (desired-lights GREEN-ON))
   )
 
   ; assign random machine types out of the start distribution

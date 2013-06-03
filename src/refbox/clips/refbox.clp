@@ -129,7 +129,6 @@
 )
 
 (defrule switch-to-production
-  (time $?now)
   ?gs <- (gamestate (phase EXPLORATION) (state RUNNING)
 		    (game-time ?game-time&:(>= ?game-time ?*EXPLORATION-TIME*)))
   =>
@@ -138,7 +137,6 @@
 )
 
 (defrule game-over
-  (time $?now)
   ?gs <- (gamestate (phase PRODUCTION) (state RUNNING) (points ?points)
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>

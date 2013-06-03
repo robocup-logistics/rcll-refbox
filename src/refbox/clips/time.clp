@@ -36,6 +36,10 @@
   (return (> (time-diff-sec ?now ?time) ?timeout))
 )
 
+(deffunction timeout-sec (?now ?time ?timeout)
+  (return (> (- ?now ?time) ?timeout))
+)
+
 (deffunction time-from-sec (?t)
   (return (create$ (integer ?t) (integer (* (- ?t (integer ?t)) 1000000.))))
 )

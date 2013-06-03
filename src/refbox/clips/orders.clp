@@ -33,7 +33,7 @@
 
 (defrule order-delivered-in-time
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (product-delivered (time $?time) (product ?p) (delivery-gate ?dg))
+  ?pf <- (product-delivered (game-time ?game-time) (product ?p) (delivery-gate ?dg))
   ; the actual order we are delivering
   ?of <- (order (id ?oid) (active TRUE) (product ?p) (quantity-requested ?q-req)
 		(points ?order-points) (points-supernumerous ?order-points-supernumerous)
@@ -68,6 +68,6 @@
   (modify ?of (quantity-delivered (+ ?q-del 1)))
   (bind ?addp (if (< ?q-del ?q-req) then ?order-points else ?order-points-supernumerous))
   (printout t "Product " ?p " delivered at " ?dg ". Awarding " ?addp " points" crlf)
-  (assert (points (time ?time) (game-time ?gt) (points ?addp)  (phase PRODUCTION)
+  (assert (points (game-time ?game-time) (points ?addp)  (phase PRODUCTION)
                   (reason (str-cat "Delivered " ?p " to " ?dg))))
 )
