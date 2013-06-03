@@ -27,7 +27,6 @@ HTMLWidget::HTMLWidget() {
 	add_page_to_display(RESDIR"/rules-2.html");
 	add_page_to_display(RESDIR"/rules-3.html");
 	page_index_ = 0;
-
 }
 
 HTMLWidget::~HTMLWidget() {
@@ -35,8 +34,8 @@ HTMLWidget::~HTMLWidget() {
 }
 
 bool HTMLWidget::switch_page() {
-
-	display_page(pages[page_index_].c_str());
+	string str = pages[page_index_];
+	display_page(str.c_str());
 	page_index_ = (page_index_ + 1) % pages.size();
 	return true;
 }
