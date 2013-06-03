@@ -71,7 +71,7 @@
 #define RECONNECT_TIMER_INTERVAL 1000
 #define BLINK_TIMER_INTERVAL 250
 #define ATTMSG_TIMER_INTERVAL 1000
-#define MAX_NUM_ROBOTS 6
+#define MIN_NUM_ROBOTS 3
 
 using namespace protobuf_comm;
 
@@ -1029,7 +1029,10 @@ LLSFRefBoxShell::run()
     m->second->refresh();
   }
 
-  robots_.resize(MAX_NUM_ROBOTS, NULL);
+  const int robots_max_height = (panel_->height() - 26);
+  const int max_robots = std::max(MIN_NUM_ROBOTS, robots_max_height/2);
+
+  robots_.resize(max_robots, NULL);
   for (size_t i = 0; i < robots_.size(); ++i) {
     robots_[i] = new LLSFRefBoxShellRobot(18 + 2 * i, panel_->width() - 25);
     robots_[i]->refresh();
