@@ -21,6 +21,8 @@
   ?*BC-MACHINE-INFO-PERIOD* = 2.0
   ?*BC-MACHINE-INFO-BURST-COUNT* = 30
   ?*BC-MACHINE-INFO-BURST-PERIOD* = 0.5
+  ; This value is set by the rule config-timer-interval from config.yaml
+  ?*TIMER-INTERVAL* = 0.0
   ; Time after which to warn about a robot lost
   ?*PEER-LOST-TIMEOUT* = 5.0
   ?*PEER-REMOVE-TIMEOUT* = 30.0

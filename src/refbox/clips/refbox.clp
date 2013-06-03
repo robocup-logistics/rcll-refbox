@@ -59,6 +59,11 @@
   ;  (printout t "Clearing unused RFID input (" ?m ", " ?hp ", " ?id ")" crlf))
 )
 
+(defrule config-timer-interval
+  (confval (path "/llsfrb/clips/timer-interval") (type ?t) (value ?v))
+  =>
+  (bind ?*TIMER-INTERVAL* (/ ?v 1000.))
+)
 
 (defrule silence-debug-facts
   (declare (salience -1000))
