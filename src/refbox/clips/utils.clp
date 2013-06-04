@@ -36,5 +36,6 @@
 )
 
 (deffunction non-zero-pose ($?pose)
-  (return (or (<> (nth$ 1 ?pose) 0.0) (<> (nth$ 2 ?pose) 0.0) (<> (nth$ 3 ?pose) 0.0)))
+  (foreach ?pf ?pose (if (<> ?pf 0.0) then (return TRUE)))
+  (return FALSE)
 )

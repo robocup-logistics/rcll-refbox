@@ -460,7 +460,7 @@
       (pb-set-field ?ps "timestamp" ?ps-time)
       (pb-set-field ?ps "x" (nth$ 1 ?puck:pose))
       (pb-set-field ?ps "y" (nth$ 2 ?puck:pose))
-      (pb-set-field ?ps "ori" (nth$ 3 ?puck:pose))
+      (pb-set-field ?ps "ori" 0.0)
       (pb-set-field ?p "pose" ?ps)
     )
     (pb-add-list ?pi "pucks" ?p) ; destroys ?p

@@ -10,7 +10,7 @@
 (defglobal
   ?*CLIPS_DIRS* = (get-clips-dirs)
   ?*DEBUG* = 2  ;debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
-  ?*CONFIG_PREFIXES* = (create$ "/llsfrb/clips" "/llsfrb/game")
+  ?*CONFIG_PREFIXES* = (create$ "/llsfrb")
 )
 
 (deffunction resolve-file (?file)
@@ -60,6 +60,14 @@
     (watch rules)
     ;(dribble-on "trace.txt")
   )
+)
+
+(defrule add-fake-pucks
+  (init)
+  (confval (path "/llsfrb/sps/enable") (type BOOL) (value false))
+  =>
+  (loop-for-count (?i 20) do (printout t "(puck (index " ?i") (id "?i"))" crlf))
+  (loop-for-count (?i 20) do (assert (puck (index ?i) (id ?i))))
 )
 
 (defrule debug-level
