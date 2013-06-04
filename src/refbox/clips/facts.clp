@@ -214,7 +214,7 @@
 		(light-code 5) (points 12)
 		(proc-time-min 40) (proc-time-max 60) (proc-time 4)) ; 40 60
   (machine-spec (mtype T5) (inputs S0) (output P3)
-		(light-code 10) (points 0)
+		(light-code 6) (points 0)
 		(proc-time-min 20) (proc-time-max 40) (proc-time 4)) ; 20 40
 )
 
