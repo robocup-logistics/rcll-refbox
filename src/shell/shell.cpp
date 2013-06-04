@@ -114,6 +114,10 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
     stdin_ = nullptr;
   } catch (std::exception &e) {} // ignored
 
+  last_minfo_.reset();
+  last_pinfo_.reset();
+  last_gameinfo_.reset();
+
   delete client;
   client = 0;
   delete panel_;
@@ -151,10 +155,6 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   delete p_points_;
   delete p_team_;
   delete p_attmsg_;
-
-  last_minfo_.reset();
-  last_pinfo_.reset();
-  last_gameinfo_.reset();
 }
 
 
