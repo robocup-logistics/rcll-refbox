@@ -192,7 +192,10 @@ ProtobufStreamClient::disconnect_nosig()
   boost::system::error_code err;
   if (socket_.is_open()) {
     socket_.shutdown(ip::tcp::socket::shutdown_both, err);
-    socket_.close();
+    try {
+      socket_.close();
+    } catch (boost::exception &e) {
+    }
   }
   connected_ = false;
 }
