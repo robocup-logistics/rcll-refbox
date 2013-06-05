@@ -66,7 +66,6 @@
   (init)
   (confval (path "/llsfrb/sps/enable") (type BOOL) (value false))
   =>
-  (loop-for-count (?i 20) do (printout t "(puck (index " ?i") (id "?i"))" crlf))
   (loop-for-count (?i 20) do (assert (puck (index ?i) (id ?i))))
 )
 
