@@ -57,6 +57,7 @@
 )
 
 (deftemplate robot
+  (slot number (type INTEGER))
   (slot team (type STRING))
   (slot name (type STRING))
   (slot host (type STRING))

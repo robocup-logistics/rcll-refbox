@@ -86,6 +86,7 @@
   (pb-set-field ?beacon-time "nsec" (integer (* (nth$ 2 ?now) 1000)))
   (pb-set-field ?beacon "time" ?beacon-time) ; destroys ?beacon-time!
   (pb-set-field ?beacon "seq" ?seq)
+  (pb-set-field ?beacon "number" 0)
   (pb-set-field ?beacon "team_name" "LLSF")
   (pb-set-field ?beacon "peer_name" "RefBox")
   (pb-broadcast ?beacon)
@@ -131,6 +132,7 @@
   (printout debug "Received initial beacon from " ?from-host ":" ?from-port crlf)
   (bind ?team (pb-field-value ?p "team_name"))
   (bind ?name (pb-field-value ?p "peer_name"))
+  (bind ?number (pb-field-value ?p "number"))
   (bind ?timef (pb-field-value ?p "time"))
   (bind ?time (create$ (pb-field-value ?timef "sec") (integer (/ (pb-field-value ?timef "nsec") 1000))))
   (bind ?peer-time-diff (abs (time-diff-sec ?rcvd-at ?time)))
@@ -150,16 +152,30 @@
 					" (" ?other:team "/" ?other:name "@" ?other:port
 					" vs " ?team "/" ?from-host "@" ?from-port ")") 5))
   )
+  (if (= ?number 0)
+   then
+    (printout warn "Robot " ?name "(" ?team ") has jersey number 0 "
+	      "(" ?from-host ":" ?from-port ")" crlf)
+    (assert (attention-message (str-cat "Robot " ?name "(" ?team ") has jersey number 0 "
+					"(" ?from-host ":" ?from-port ")") 5))
+  )
+  (do-for-fact ((?other robot))
+    (and (eq ?other:number ?number) (or (neq ?other:host ?from-host) (neq ?other:port ?from-port)))
+    (printout warn "Two robots with the same jersey number " ?number ": " ?from-host
+	      " (" ?other:name "@" ?other:host ":" ?other:port " and "
+	      ?name "@" ?from-host ":" ?from-port ")" crlf)
+    (assert (attention-message (str-cat "Duplicate jersey #" ?number
+					" (" ?other:name "@" ?other:host ":" ?other:port
+					", " ?name "@" ?from-host ":" ?from-port ")") 5))
+  )
   (if (and (eq ?team "LLSF") (eq ?name "RefBox"))
    then
     (printout warn "Detected another RefBox at " ?from-host ":" ?from-port crlf)
     (assert (attention-message (str-cat "Detected another RefBox at "
 					?from-host ":" ?from-port) 5))
   )
-  (assert (robot (team (pb-field-value ?p "team_name"))
-		 (name (pb-field-value ?p "peer_name"))
-		 (host ?from-host) (port ?from-port)
-		 (last-seen ?rcvd-at)))
+  (assert (robot (team ?team) (name ?name) (number ?number)
+		 (host ?from-host) (port ?from-port) (last-seen ?rcvd-at)))
 )
 
 (defrule net-robot-lost
@@ -319,6 +335,7 @@
 
     (pb-set-field ?r "name" ?robot:name)
     (pb-set-field ?r "team" ?robot:team)
+    (pb-set-field ?r "number" ?robot:number)
     (pb-set-field ?r "host" ?robot:host)
     (pb-add-list ?ri "robots" ?r) ; destroys ?r
   )
