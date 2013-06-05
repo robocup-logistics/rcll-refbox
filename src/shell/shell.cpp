@@ -55,6 +55,7 @@
 #include <logging/llsf_log_msgs/LogMessage.pb.h>
 #include <msgs/VersionInfo.pb.h>
 #include <msgs/GameInfo.pb.h>
+#include <msgs/RobotCommands.pb.h>
 
 #include <cursesp.h>
 #include <cursesf.h>
@@ -117,6 +118,7 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   last_minfo_.reset();
   last_pinfo_.reset();
   last_gameinfo_.reset();
+  last_robotinfo_.reset();
 
   delete client;
   client = 0;
@@ -349,6 +351,27 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	}
 	break;
 
+      case KEY_F(9):
+	if (last_robotinfo_) {
+	  try {
+	    RobotMaintenanceMenu rmm(panel_, last_robotinfo_);
+	    rmm();
+	    if (rmm) {
+	      //logf("Place %s under RFID of %s",
+	      //   llsf_msgs::PuckState_Name(p.state()).c_str(),
+	      //   m.name().c_str());
+	      unsigned int robot_number;
+	      bool maintenance;
+	      rmm.get_robot(robot_number, maintenance);
+	      send_robot_maintenance(robot_number, maintenance);
+	    }
+	  } catch (NCursesException &e) {
+	    logf("Machine menu failed: %s", e.message);
+	  }
+	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+	}
+	break;
+
       }
     }
     start_keyboard();
@@ -511,6 +534,20 @@ LLSFRefBoxShell::send_set_team(std::string &team_name)
 }
 
 void
+LLSFRefBoxShell::send_robot_maintenance(unsigned int robot_number, bool maintenance)
+{
+  llsf_msgs::SetRobotMaintenance msg;
+  msg.set_robot_number(robot_number);
+  msg.set_maintenance(maintenance);
+  logf("%sabling maintenance of robot %u", maintenance ? "En" : "Dis", robot_number);
+  try {
+    client->send(msg);
+  } catch (std::runtime_error &e) {
+    logf("Sending SetRobotMaintenance failed: %s", e.what());
+  }
+}
+
+void
 LLSFRefBoxShell::client_connected()
 {
   p_state_->erase();
@@ -668,6 +705,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 
   std::shared_ptr<llsf_msgs::RobotInfo> r;
   if ((r = std::dynamic_pointer_cast<llsf_msgs::RobotInfo>(msg))) {
+    last_robotinfo_ = r;
     size_t idx = 0;
     for (int i = 0; i < r->robots_size(); ++i) {
       const llsf_msgs::Robot &robot = r->robots(i);
@@ -997,6 +1035,12 @@ LLSFRefBoxShell::run()
   navbar_->standend();
   navbar_->attron(A_BOLD);
   navbar_->addstr(0, 46, "REM PUCK");
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr(0, 56, "F9");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 59, "ROBOT");
 
   navbar_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   navbar_->addstr(0, navbar_->cols() - 9, "SPC");

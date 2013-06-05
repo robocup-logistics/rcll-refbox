@@ -668,4 +668,109 @@ TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo)
 }
 
 
+RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent,
+					   std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
+  : Menu(det_lines(rinfo) + 1 + 2, 30 + 2,
+	 (parent->lines() - (det_lines(rinfo) + 1))/2,
+	 (parent->cols() - 32)/2)
+{
+  valid_item_ = false;
+  int n_items = det_lines(rinfo);
+  items_.resize(n_items);
+  int ni = 0;
+  //bool has_1 = false, has_2 = false, has_3 = false;
+  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  for (int i = 0; i < rinfo->robots_size(); ++i) {
+    const llsf_msgs::Robot &r = rinfo->robots(i);
+
+    std::string s = boost::str(boost::format("%s%s %u %s/%s")
+			       % (r.state() == llsf_msgs::MAINTENANCE ? "*" : 
+				  (r.state() == llsf_msgs::DISQUALIFIED ? "D" : " "))
+			       % (r.maintenance_cycles() > 0 ? "!" : " ")
+			       % r.number() % r.name() % r.team());
+    items_[ni++] = std::make_tuple(s, r.number(),
+				   (r.state() != llsf_msgs::MAINTENANCE &&
+				    r.state() != llsf_msgs::DISQUALIFIED));
+
+    /*
+    if (r.number() == 1)  has_1 = true;
+    if (r.number() == 2)  has_2 = true;
+    if (r.number() == 3)  has_3 = true;
+    */
+  }
+  /*
+  if (! has_1) {
+    items_[ni++] = std::make_tuple("  1 0x Unknown", 1, false);
+  }
+  if (! has_2) {
+    items_[ni++] = std::make_tuple("  2 0x Unknown", 2, false);
+  }
+  if (! has_3) {
+    items_[ni++] = std::make_tuple("  3 0x Unknown", 3, false);
+  }
+  */
+
+  std::sort(items_.begin(), items_.end(),
+	    [](const ItemTuple &i1, const ItemTuple &i2) -> bool
+	    {
+	      return std::get<1>(i1) < std::get<1>(i2);
+	    });
+
+  for (int i = 0; i < ni; ++i) {
+    SignalItem *item = new SignalItem(std::get<0>(items_[i]));
+    item->signal().connect(boost::bind(&RobotMaintenanceMenu::robot_selected, this,
+				       std::get<1>(items_[i]), std::get<2>(items_[i])));
+    mitems[i] = item;
+  }
+  s_cancel_ = "         ** CANCEL **         ";
+  mitems[ni] = new SignalItem(s_cancel_);
+  mitems[ni+1] = new NCursesMenuItem();
+
+  set_mark("");
+  set_format(ni+1, 1);
+  InitMenu(mitems, true, true);
+  frame("Robot Maintenance");
+}
+
+void
+RobotMaintenanceMenu::robot_selected(unsigned int number, bool maintenance)
+{
+  valid_item_ = true;
+  robot_number_ = number;
+  robot_maintenance_ = maintenance;
+}
+
+void
+RobotMaintenanceMenu::get_robot(unsigned int &number, bool &maintenance)
+{
+  if (valid_item_) {
+    number = robot_number_;
+    maintenance = robot_maintenance_;
+  }
+}
+
+void
+RobotMaintenanceMenu::On_Menu_Init()
+{
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+  refresh();
+}
+
+int
+RobotMaintenanceMenu::det_lines(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
+{
+  /*
+  int std_nums = 0;
+  for (int i = 0; i < rinfo->robots_size(); ++i) {
+    const llsf_msgs::Robot &r = rinfo->robots(i);
+    if (r.number() == 1 || r.number() == 2 || r.number() == 3) {
+      std_nums += 1;
+    }
+  }
+
+  return std::min(3, 3 + (rinfo->robots_size() - std_nums));
+  */
+  return rinfo->robots_size();
+}
+
 } // end of namespace llsfrb

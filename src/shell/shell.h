@@ -59,6 +59,7 @@ namespace llsf_msgs {
   class MachineInfo;
   class PuckInfo;
   class GameInfo;
+  class RobotInfo;
 }
 
 namespace llsfrb_shell {
@@ -110,6 +111,7 @@ class LLSFRefBoxShell
   void set_loaded_with(const std::string &machine_name, unsigned int puck_id);
   void send_remove_puck(std::string &machine_name, unsigned int puck_id);
   void send_set_team(std::string &team_name);
+  void send_robot_maintenance(unsigned int robot_number, bool maintenance);
 
   void log(llsf_log_msgs::LogMessage::LogLevel log_level,
 	   long int ts_sec, long int ts_nsec,
@@ -168,6 +170,7 @@ class LLSFRefBoxShell
   std::shared_ptr<llsf_msgs::MachineInfo> last_minfo_;
   std::shared_ptr<llsf_msgs::PuckInfo> last_pinfo_;
   std::shared_ptr<llsf_msgs::GameInfo> last_gameinfo_;
+  std::shared_ptr<llsf_msgs::RobotInfo> last_robotinfo_;
 
   bool beep_warning_shown_;
 };

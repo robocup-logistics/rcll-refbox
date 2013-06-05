@@ -45,6 +45,7 @@
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/PuckInfo.pb.h>
 #include <msgs/GameInfo.pb.h>
+#include <msgs/RobotInfo.pb.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -122,6 +123,29 @@ class MachineWithPuckMenu : public Menu
   std::string machine_name_;
   unsigned int puck_id_;
   typedef std::tuple<std::string, std::string, unsigned int, llsf_msgs::PuckState> ItemTuple;
+  std::vector<ItemTuple> items_;
+};
+
+
+class RobotMaintenanceMenu : public Menu
+{
+ public:
+  RobotMaintenanceMenu(NCursesWindow *parent, std::shared_ptr<llsf_msgs::RobotInfo> minfo);
+
+  void get_robot(unsigned int &number, bool &maintenance);
+  operator bool() const { return valid_item_; }
+
+ private:
+  virtual void On_Menu_Init();
+  int det_lines(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
+  void robot_selected(unsigned int number, bool maintenance);
+
+ private:
+  bool valid_item_;
+  unsigned int robot_number_;
+  bool robot_maintenance_;
+  std::string s_cancel_;
+  typedef std::tuple<std::string, unsigned int, bool> ItemTuple;
   std::vector<ItemTuple> items_;
 };
 
