@@ -42,6 +42,7 @@
 
 #include <string>
 #include <boost/date_time.hpp>
+#include <msgs/RobotInfo.pb.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -54,7 +55,9 @@ class LLSFRefBoxShellRobot : public NCursesPanel
  public:
   LLSFRefBoxShellRobot(int begin_y, int begin_x);
 
-  void update(std::string name, std::string team, std::string host);
+  void update(unsigned int number, std::string name, std::string team, std::string host,
+	      llsf_msgs::RobotState state, float maintenance_time_remaining,
+	      unsigned int maintenance_cycles);
   void set_last_seen(boost::posix_time::ptime &last_seen);
   void reset();
 
@@ -64,9 +67,13 @@ class LLSFRefBoxShellRobot : public NCursesPanel
   const std::string &  name() const { return name_; }
 
  private:
+  unsigned int  number_;
   std::string   name_;
   std::string   team_;
   std::string   host_;
+  llsf_msgs::RobotState state_;
+  float maintenance_time_remaining_;
+  unsigned int maintenance_cycles_;
   boost::posix_time::ptime last_seen_;
 };
 
