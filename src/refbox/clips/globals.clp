@@ -11,7 +11,7 @@
   ; network sending periods; seconds
   ?*BEACON-PERIOD* = 1.0
   ?*GAMESTATE-PERIOD* = 1.0
-  ?*ROBOTINFO-PERIOD* = 1.0
+  ?*ROBOTINFO-PERIOD* = 0.25
   ?*PUCKINFO-PERIOD* = 1.0
   ?*MACHINE-INFO-PERIOD* = 0.25
   ?*BC-ORDERINFO-PERIOD* = 5.0
@@ -50,6 +50,11 @@
   ?*RECYCLE-POINTS* = 3
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4
   ?*EXPLORATION-WRONG-REPORT-POINTS* = -3
+  ; number of allowed robot maintenance cycles
+  ?*MAINTENANCE-ALLOWED-CYCLES* = 1
+  ?*MAINTENANCE-ALLOWED-TIME*   = 120
+  ?*MAINTENANCE-WARN-TIME*      = 105
+  ?*MAINTENANCE-GRACE-TIME*     =  15
   ; Game phase time; seconds
   ?*EXPLORATION-TIME* = 180
   ?*PRODUCTION-TIME* = 900

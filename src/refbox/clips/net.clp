@@ -63,17 +63,6 @@
   (printout t "Client " ?client-id " ( " ?host ") disconnected" crlf)
 )
 
-; Sort robots by team and name, such that do-for-all-facts on the robot deftemplate
-; iterates in a nice order, e.g. for net-send-RobotInfo
-(defrule sort-robots
-  (declare (salience ?*PRIORITY_HIGH*))
-  ?oa <- (robot (name ?name-a))
-  ?ob <- (robot (name ?name-b&:(> (str-compare ?name-a ?name-b) 0)&:(< (fact-index ?oa) (fact-index ?ob))))
-  =>
-  (modify ?ob)
-  (modify ?oa)
-)
-
 (defrule net-send-beacon
   (time $?now)
   ?f <- (signal (type beacon) (time $?t&:(timeout ?now ?t ?*BEACON-PERIOD*)) (seq ?seq))
@@ -178,26 +167,6 @@
 		 (host ?from-host) (port ?from-port) (last-seen ?rcvd-at)))
 )
 
-(defrule net-robot-lost
-  (time $?now)
-  ?rf <- (robot (team ?team) (name ?name) (host ?host) (port ?port) (warning-sent FALSE)
-		(last-seen $?ls&:(timeout ?now ?ls ?*PEER-LOST-TIMEOUT*)))
-  =>
-  (modify ?rf (warning-sent TRUE))
-  (printout warn "Robot " ?name " of " ?team " at " ?host " lost" crlf)
-  (assert (attention-message (str-cat "Robot " ?name " of " ?team " at " ?host " lost") 10))
-)
-
-(defrule net-robot-remove
-  (time $?now)
-  ?rf <- (robot (team ?team) (name ?name) (host ?host) (port ?port)
-		(last-seen $?ls&:(timeout ?now ?ls ?*PEER-REMOVE-TIMEOUT*)))
-  =>
-  (retract ?rf)
-  (printout warn "Robot " ?name " of " ?team " at " ?host " definitely lost" crlf)
-  (assert
-   (attention-message (str-cat "Robot " ?name " of " ?team " at " ?host " definitely lost") 4))
-)
 
 (defrule send-attmsg
   ?af <- (attention-message ?message $?time-to-show)
@@ -306,6 +275,7 @@
 (defrule net-send-RobotInfo
   (time $?now)
   ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
+  (gamestate (game-time ?gtime))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?ri (pb-create "llsf_msgs.RobotInfo"))
@@ -336,7 +306,16 @@
     (pb-set-field ?r "name" ?robot:name)
     (pb-set-field ?r "team" ?robot:team)
     (pb-set-field ?r "number" ?robot:number)
+    (pb-set-field ?r "state" ?robot:state)
     (pb-set-field ?r "host" ?robot:host)
+
+    (if (eq ?robot:state MAINTENANCE) then
+      (bind ?maintenance-time-remaining
+	    (- ?*MAINTENANCE-ALLOWED-TIME* (- ?gtime ?robot:maintenance-start-time)))
+      (pb-set-field ?r "maintenance_time_remaining" ?maintenance-time-remaining)
+    )
+    (pb-set-field ?r "maintenance_cycles" ?robot:maintenance-cycles)
+
     (pb-add-list ?ri "robots" ?r) ; destroys ?r
   )
 

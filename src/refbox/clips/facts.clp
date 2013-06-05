@@ -58,6 +58,7 @@
 
 (deftemplate robot
   (slot number (type INTEGER))
+  (slot state (type SYMBOL) (allowed-values ACTIVE MAINTENANCE DISQUALIFIED) (default ACTIVE))
   (slot team (type STRING))
   (slot name (type STRING))
   (slot host (type STRING))
@@ -67,6 +68,9 @@
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot maintenance-start-time (type FLOAT))
+  (slot maintenance-cycles (type INTEGER) (default 0))
+  (slot maintenance-warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
 )
 
 (deftemplate signal

@@ -18,6 +18,7 @@
 
 (load* (resolve-file net.clp))
 (load* (resolve-file machines.clp))
+(load* (resolve-file robots.clp))
 (load* (resolve-file orders.clp))
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
