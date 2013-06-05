@@ -23,9 +23,9 @@
   ?*BC-MACHINE-INFO-BURST-PERIOD* = 0.5
   ; This value is set by the rule config-timer-interval from config.yaml
   ?*TIMER-INTERVAL* = 0.0
-  ; Time after which to warn about a robot lost
-  ?*PEER-LOST-TIMEOUT* = 5.0
-  ?*PEER-REMOVE-TIMEOUT* = 30.0
+  ; Time (sec) after which to warn about a robot lost
+  ?*PEER-LOST-TIMEOUT* = 5
+  ?*PEER-REMOVE-TIMEOUT* = 1080
   ?*PEER-TIME-DIFFERENCE-WARNING* = 3.0
   ; number of burst updates before falling back to slower updates
   ?*BC-ORDERINFO-BURST-COUNT* = 10
