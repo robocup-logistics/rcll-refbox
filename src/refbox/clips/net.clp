@@ -225,12 +225,17 @@
 
 
 (defrule net-recv-SetTeamName
-  ?sf <- (gamestate)
+  ?sf <- (gamestate (phase ?phase) (team ?old-team))
   ?mf <- (protobuf-msg (type "llsf_msgs.SetTeamName") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (printout t "Setting team to " (pb-field-value ?p "team_name") crlf)
-  (modify ?sf (team (pb-field-value ?p "team_name")))
+  (bind ?new-team (pb-field-value ?p "team_name"))
+  (printout t "Setting team to " ?new-team crlf)
+  (modify ?sf (team ?new-team))
+
+  ; Remove all known robots if the team is changed
+  (if (and (eq ?phase PRE_GAME) (neq ?old-team ?new-team))
+    then (delayed-do-for-all-facts ((?r robot)) TRUE (retract ?r)))
 )
 
 (defrule net-recv-SetPucks
