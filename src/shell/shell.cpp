@@ -1125,9 +1125,9 @@ LLSFRefBoxShell::run()
 				       state_enum_desc->value(i)->name()));
     state_items[i] = item;
   }
+  s_cancel_state_ = "** CANCEL **";
+  state_items[num_state_values]   = new SignalItem(s_cancel_state_);
   // termination sentinel element
-  s_cancel_ = "** CANCEL **";
-  state_items[num_state_values]   = new SignalItem(s_cancel_);
   state_items[num_state_values+1] = new NCursesMenuItem();
 
   try {
@@ -1143,15 +1143,22 @@ LLSFRefBoxShell::run()
     llsf_msgs::GameState_Phase_descriptor();
   const int num_phase_values = phase_enum_desc->value_count();
   NCursesMenuItem **phase_items = new NCursesMenuItem*[2 + num_phase_values];
+  size_t max_length = 0;
   for (int i = 0; i < phase_enum_desc->value_count(); ++i) {
     SignalItem *item = new SignalItem(phase_enum_desc->value(i)->name());
     item->signal().connect(boost::bind(&LLSFRefBoxShell::set_game_phase, this,
 				       phase_enum_desc->value(i)->name()));
     phase_items[i] = item;
+    max_length = std::max(max_length, phase_enum_desc->value(i)->name().size());
   }
+
+  s_cancel_phase_ = "** CANCEL **";
+  size_t num_spaces = (max_length - s_cancel_phase_.size()) / 2;
+  std::string spaces;
+  for (size_t i = 0; i < num_spaces; ++i) spaces += " ";
+  s_cancel_phase_ = spaces + s_cancel_phase_;
+  phase_items[num_phase_values]   = new SignalItem(s_cancel_phase_);
   // termination sentinel element
-  s_cancel_ = "** CANCEL **";
-  phase_items[num_phase_values]   = new SignalItem(s_cancel_);
   phase_items[num_phase_values+1] = new NCursesMenuItem();
 
   try {

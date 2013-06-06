@@ -142,7 +142,8 @@ class LLSFRefBoxShell
   NCursesPanel *p_points_;
   NCursesPanel *p_team_;
 
-  std::string   s_cancel_;
+  std::string   s_cancel_state_;
+  std::string   s_cancel_phase_;
   NCursesMenu  *m_state_;
   NCursesMenu  *m_phase_;
 
