@@ -111,7 +111,7 @@ LLSFRefBoxShellRobot::refresh()
       attron(' '|COLOR_PAIR(COLOR_DEFAULT));
     }
     attron(A_BOLD);
-    printw(0, 0, line_1.c_str());
+    printw(0, 0, "%s", line_1.c_str());
     attroff(A_BOLD);
     standend();
 
