@@ -47,6 +47,9 @@
   ?*DELIVERY-GATE-MAX-TIME* = 180
   ; Grace time for accepted delivery after machine down
   ?*DELIVERY-GATE-GRACE-TIME* = 3
+  ; number of products per order
+  ?*ORDER-QUANTITY-MIN* =  3
+  ?*ORDER-QUANTITY-MAX* = 10
   ; number of points for specific actoins
   ?*RECYCLE-POINTS* = 3
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4

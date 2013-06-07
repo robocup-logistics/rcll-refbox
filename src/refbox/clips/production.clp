@@ -87,7 +87,7 @@
 
     ; assign random quantities to non-late orders
     (delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
-      (modify ?order (quantity-requested (random 3 10)))
+      (modify ?order (quantity-requested (random ?*ORDER-QUANTITY-MIN* ?*ORDER-QUANTITY-MAX*)))
     )
   )
 
