@@ -43,8 +43,8 @@
   ?*DELIVER-PROC-TIME* = 1
   ?*INTERMEDIATE-PROC-TIME* = 2
   ; Delivery gate active times
-  ?*DELIVERY-GATE-MIN-TIME* =  30
-  ?*DELIVERY-GATE-MAX-TIME* = 120
+  ?*DELIVERY-GATE-MIN-TIME* =  60
+  ?*DELIVERY-GATE-MAX-TIME* = 180
   ; Grace time for accepted delivery after machine down
   ?*DELIVERY-GATE-GRACE-TIME* = 3
   ; number of points for specific actoins
