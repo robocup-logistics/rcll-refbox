@@ -165,6 +165,7 @@
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))
+  (signal (type bc-robot-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info-bc) (time (create$ 0 0)) (seq 1))
   (signal (type puck-info) (time (create$ 0 0)) (seq 1))

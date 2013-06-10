@@ -277,12 +277,7 @@
   (pb-destroy ?gamestate)
 )
 
-(defrule net-send-RobotInfo
-  (time $?now)
-  ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
-  (gamestate (game-time ?gtime))
-  =>
-  (modify ?f (time ?now) (seq (+ ?seq 1)))
+(deffunction net-create-RobotInfo (?gtime ?pub-pose)
   (bind ?ri (pb-create "llsf_msgs.RobotInfo"))
 
   (do-for-all-facts
@@ -295,8 +290,9 @@
       (pb-set-field ?r-time "nsec" (integer (* (nth$ 2 ?robot:last-seen) 1000)))
       (pb-set-field ?r "last_seen" ?r-time) ; destroys ?r-time!
     )
+
     ; If we have a pose publish it
-    (if (non-zero-pose ?robot:pose) then
+    (if (and ?pub-pose (non-zero-pose ?robot:pose)) then
       (bind ?p (pb-field-value ?r "pose"))
       (bind ?p-time (pb-field-value ?p "timestamp"))
       (pb-set-field ?p-time "sec" (nth$ 1 ?robot:pose-time))
@@ -324,8 +320,31 @@
     (pb-add-list ?ri "robots" ?r) ; destroys ?r
   )
 
+  (return ?ri)
+)
+
+(defrule net-send-RobotInfo
+  (time $?now)
+  ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
+  (gamestate (game-time ?gtime))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?ri (net-create-RobotInfo ?gtime TRUE))
+
   (do-for-all-facts ((?client network-client)) TRUE
     (pb-send ?client:id ?ri))
+  (pb-destroy ?ri)
+)
+
+(defrule net-broadcast-RobotInfo
+  (time $?now)
+  ?f <- (signal (type bc-robot-info)
+		(time $?t&:(timeout ?now ?t ?*BC-ROBOTINFO-PERIOD*)) (seq ?seq))
+  (gamestate (game-time ?gtime))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?ri (net-create-RobotInfo ?gtime FALSE))
+  (pb-broadcast ?ri)
   (pb-destroy ?ri)
 )
 
