@@ -34,6 +34,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
+
 #include <config/yaml.h>
 
 #include <protobuf_comm/peer.h>
@@ -46,7 +48,7 @@
 #include <msgs/ExplorationInfo.pb.h>
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/MachineReport.pb.h>
-
+#include <msgs/RobotInfo.pb.h>
 
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
@@ -188,6 +190,30 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       printf("  no machines reported, yet\n");
     }
   }
+
+  std::shared_ptr<RobotInfo> ri;
+  if ((ri = std::dynamic_pointer_cast<RobotInfo>(msg))) {
+    printf("Robot Info received:\n");
+    for (int i = 0; i < ri->robots_size(); ++i) {
+      const llsf_msgs::Robot &r = ri->robots(i);
+
+      const llsf_msgs::Time &time = r.last_seen();
+
+      boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
+      boost::posix_time::ptime last_seen =
+	boost::posix_time::from_time_t(time.sec())
+	+ boost::posix_time::nanoseconds(time.nsec());
+
+
+      boost::posix_time::time_duration const last_seen_ago_td = now - last_seen;
+      float last_seen_ago = last_seen_ago_td.total_milliseconds() / 1000.f;
+      
+      printf("  %u %s/%s @ %s: state %s, last seen %f sec ago  Maint cyc: %u  rem: %f\n",
+	     r.number(), r.name().c_str(), r.team().c_str(), r.host().c_str(),
+	     llsf_msgs::RobotState_Name(r.state()).substr(0,3).c_str(),
+	     last_seen_ago, r.maintenance_cycles(), r.maintenance_time_remaining());
+    }
+  }
 }
 
 
@@ -266,6 +292,7 @@ main(int argc, char **argv)
   message_register.add_message_type<ExplorationInfo>();
   message_register.add_message_type<MachineInfo>();
   message_register.add_message_type<MachineReportInfo>();
+  message_register.add_message_type<RobotInfo>();
 
   peer_->signal_received().connect(handle_message);
   peer_->signal_recv_error().connect(handle_recv_error);
