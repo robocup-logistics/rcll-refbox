@@ -16,6 +16,8 @@
 /cfg/host.yaml
 /doc/api
 /doc/man
+/etc/scripts/*.rrd
+/etc/scripts/*.png
 /lib/
 /lib_*/
 /log/
