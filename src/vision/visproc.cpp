@@ -42,7 +42,7 @@
 #include <csignal>
 
 #include "ssl_msgs/SslWrapper.pb.h"
-#include <msgs/MachineReport.pb.h>
+#include <msgs/VisionData.pb.h>
 
 // defined in miliseconds
 #define RECONNECT_TIMER_INTERVAL 1000
@@ -106,7 +106,9 @@ void
 LLSFRefBoxVisionProcessor::client_connected()
 {
   // put code here for what to do when connected to refbox
-  //get_ssl_messages();
+  printf("connected to refbox...\n");
+  sslclient.open(true);
+  pass_ssl_messages();
 }
 
 void
@@ -145,10 +147,10 @@ int
 LLSFRefBoxVisionProcessor::run()
 {
   // put initialization code here!
-  sslclient.open(true);
-  pass_ssl_messages();
+  //sslclient.open(true);
+  //pass_ssl_messages();
 
-
+  printf("trying to connect...\n");
 
   // Add messages you want to receive and process
   //MessageRegister & message_register = client->message_register();
@@ -190,8 +192,7 @@ LLSFRefBoxVisionProcessor::run()
 }
 
 void LLSFRefBoxVisionProcessor::pass_ssl_messages() {
-  llsf_msgs::MachineReport report;
-  llsf_msgs::MachineReportEntry *entry = report.add_machines();
+  llsf_msgs::VisionData *msg = new llsf_msgs::VisionData();
 
   while(true) {
     if( sslclient.receive(incoming_packet) ) {
@@ -199,15 +200,53 @@ void LLSFRefBoxVisionProcessor::pass_ssl_messages() {
         SSLDetectionFrame detection;
         int number_pucks = detection.balls_size();
         for (int i = 0; i < number_pucks; i++) {
+          SSLDetectionBall ball = detection.balls(i);
           printf("currently %d pucks visible!\n", i+1);
-          entry->set_name("testname");
-          entry->set_type("testtype");
+
+          VisionObject *p = msg->add_pucks();
+          p->set_id(i);
+          p->set_confidence(ball.confidence());
+
+          Pose2D *pose = p->mutable_pose();
+          pose->set_x(ball.x());
+          pose->set_y(ball.y());
+          pose->set_ori(0);
+          Time *t = pose->mutable_timestamp();
+          t->set_sec(123456);
+          t->set_nsec(654);
+
+          t = msg->mutable_time();
+          t->set_sec(123456);
+          t->set_nsec(654);
+        
+          printf("sending...\n");
+          client->send(*msg);
+        }
+        if(!number_pucks) {
+
+          VisionObject *p = msg->add_pucks();
+          p->set_id(123);
+          p->set_confidence(1.0f);
+  
+          Pose2D *pose_dummy = p->mutable_pose();
+          pose_dummy->set_x(1);
+          pose_dummy->set_y(2);
+          pose_dummy->set_ori(3);
+          Time *t = pose_dummy->mutable_timestamp();
+          t->set_sec(123456);
+          t->set_nsec(654);
+
+          t = msg->mutable_time();
+          t->set_sec(123456);
+          t->set_nsec(654);
+
+          printf("sending...\n");
+          client->send(*msg);
         }
       }
       else {
         printf("nothing to see from up here...\n");
       }
-      client->send(report);
     }
   }
 }
