@@ -567,3 +567,22 @@
   (pb-broadcast ?vi)
   (pb-destroy ?vi)
 )
+
+(deffunction net-print-VisionObject (?obj ?type-name)
+  (bind ?id (pb-field-value ?obj "id"))
+  (bind ?confidence (pb-field-value ?obj "confidence"))
+  (bind ?pose (pb-field-value ?obj "pose"))
+  (bind ?pose-x (pb-field-value ?pose "x"))
+  (bind ?pose-y (pb-field-value ?pose "y"))
+  (bind ?pose-ori (pb-field-value ?pose "ori"))
+  (printout t "  " ?type-name " " ?id " @ (" ?pose-x "," ?pose-y "," ?pose-ori ")"
+              "  confidence " ?confidence crlf)
+)
+
+(defrule net-print-VisionData
+  ?mf <- (protobuf-msg (type "llsf_msgs.VisionData") (ptr ?p) (rcvd-via STREAM))
+  =>
+  (printout "VisionData" crlf)
+  (foreach ?obj (pb-field-list ?p "pucks") (net-print-VisionObject ?obj "Puck")) 
+  (foreach ?obj (pb-field-list ?p "robots") (net-print-VisionObject ?obj "Robot")) 
+)
