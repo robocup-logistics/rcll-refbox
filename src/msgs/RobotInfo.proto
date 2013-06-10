@@ -50,7 +50,7 @@ enum RobotState {
 
 message Robot {
   enum CompType {
-    COMP_ID  = 2002;
+    COMP_ID  = 2000;
     MSG_TYPE = 31;
   }
 
@@ -83,7 +83,7 @@ message Robot {
 
 message RobotInfo {
   enum CompType {
-    COMP_ID  = 2002;
+    COMP_ID  = 2000;
     MSG_TYPE = 30;
   }
 
