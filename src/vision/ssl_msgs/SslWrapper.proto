@@ -1,0 +1,7 @@
+import "SslDetection.proto";
+import "SslGeometry.proto";
+
+message SSLWrapperPacket {
+  optional SSLDetectionFrame detection = 1;
+  optional SSLGeometryData geometry = 2;
+}

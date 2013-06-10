@@ -39,6 +39,7 @@
 
 #include <boost/asio.hpp>
 #include <google/protobuf/message.h>
+#include "robocup_ssl_client.h"
 
 namespace protobuf_comm {
   class ProtobufStreamClient;
@@ -48,12 +49,6 @@ namespace llsfrb_visproc {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
-
-
-class LLSFRefBoxShellMachine;
-class LLSFRefBoxShellRobot;
-class LLSFRefBoxShellOrder;
-class LLSFRefBoxShellPuck;
 
 class LLSFRefBoxVisionProcessor
 {
@@ -72,6 +67,8 @@ class LLSFRefBoxVisionProcessor
   void client_msg(uint16_t comp_id, uint16_t msg_type,
 		  std::shared_ptr<google::protobuf::Message> msg);
 
+  void pass_ssl_messages();
+
  private: // members
   bool        quit_;
   boost::asio::io_service      io_service_;
@@ -79,6 +76,9 @@ class LLSFRefBoxVisionProcessor
   bool                         try_reconnect_;
 
   protobuf_comm::ProtobufStreamClient *client;
+
+  RoboCupSSLClient sslclient;
+  SSLWrapperPacket incoming_packet;
 };
 
 

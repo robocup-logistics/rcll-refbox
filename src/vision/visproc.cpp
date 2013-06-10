@@ -39,13 +39,16 @@
 #include "visproc.h"
 
 #include <protobuf_comm/client.h>
+#include <csignal>
 
-// include <msgs/GameState.pb.h>
+#include "ssl_msgs/SslWrapper.pb.h"
+#include <msgs/MachineReport.pb.h>
 
 // defined in miliseconds
 #define RECONNECT_TIMER_INTERVAL 1000
 
 using namespace protobuf_comm;
+using namespace llsf_msgs;
 
 namespace llsfrb_visproc {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -103,6 +106,7 @@ void
 LLSFRefBoxVisionProcessor::client_connected()
 {
   // put code here for what to do when connected to refbox
+  //get_ssl_messages();
 }
 
 void
@@ -141,8 +145,8 @@ int
 LLSFRefBoxVisionProcessor::run()
 {
   // put initialization code here!
-
-
+  sslclient.open(true);
+  pass_ssl_messages();
 
 
 
@@ -185,6 +189,28 @@ LLSFRefBoxVisionProcessor::run()
   return 0;
 }
 
+void LLSFRefBoxVisionProcessor::pass_ssl_messages() {
+  llsf_msgs::MachineReport report;
+  llsf_msgs::MachineReportEntry *entry = report.add_machines();
+
+  while(true) {
+    if( sslclient.receive(incoming_packet) ) {
+      if ( incoming_packet.has_detection() ) {
+        SSLDetectionFrame detection;
+        int number_pucks = detection.balls_size();
+        for (int i = 0; i < number_pucks; i++) {
+          printf("currently %d pucks visible!\n", i+1);
+          entry->set_name("testname");
+          entry->set_type("testtype");
+        }
+      }
+      else {
+        printf("nothing to see from up here...\n");
+      }
+      client->send(report);
+    }
+  }
+}
 
 } // end of namespace llsfrb_visproc
 

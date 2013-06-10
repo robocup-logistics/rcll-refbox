@@ -35,6 +35,7 @@
  */
 
 #include "visproc.h"
+#include "robocup_ssl_client.h"
 
 #include <string>
 #include <google/protobuf/message.h>
@@ -42,6 +43,8 @@
 int
 main(int argc, char **argv)
 {
+  //RoboCupSSLClient sslclient;
+  //sslclient.open(true);
   llsfrb_visproc::LLSFRefBoxVisionProcessor visproc;
   int rv = visproc.run();
 

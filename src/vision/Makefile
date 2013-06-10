@@ -19,14 +19,15 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
+PRESUBDIRS = ssl_msgs
 CFLAGS += $(CFLAGS_CPP11)
 
 REQ_BOOST_LIBS = thread asio system signals2 format date_time
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 LIBS_llsf_vision_processor = m stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm \
-			 llsf_msgs
-OBJS_llsf_vision_processor = main.o visproc.o
+			 llsf_msgs ssl_msgs
+OBJS_llsf_vision_processor = main.o visproc.o robocup_ssl_client.o netraw.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   OBJS_all =	$(OBJS_llsf_vision_proc)
