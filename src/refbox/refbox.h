@@ -42,6 +42,7 @@
 #include <logging/logger.h>
 #include <core/threading/mutex.h>
 #include <core/threading/mutex_locker.h>
+#include <protobuf_comm/server.h>
 
 #include <clipsmm.h>
 
@@ -53,12 +54,20 @@ namespace llsf_sps {
   class SPSComm;
 }
 
+#ifdef HAVE_MONGODB
+class MongoDBLogProtobuf;
+namespace mongo {
+  class BSONObjBuilder;
+}
+#endif
+
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
 class Configuration;
+class MultiLogger;
 
 class LLSFRefBox
 {
@@ -86,11 +95,33 @@ class LLSFRefBox
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
   void          sps_read_rfids();
 
+  void handle_server_client_connected(protobuf_comm::ProtobufStreamServer::ClientID client,
+				      boost::asio::ip::tcp::endpoint &endpoint);
+  void handle_server_client_disconnected(protobuf_comm::ProtobufStreamServer::ClientID client,
+					 const boost::system::error_code &error);
+  void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
+				uint16_t component_id, uint16_t msg_type,
+				std::shared_ptr<google::protobuf::Message> msg);
+  void handle_server_client_fail(protobuf_comm::ProtobufStreamServer::ClientID client,
+				 uint16_t component_id, uint16_t msg_type,
+				 std::string msg);
+
+  void handle_server_sent_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
+			      std::shared_ptr<google::protobuf::Message> msg);
+
+  void handle_peer_sent_msg(std::shared_ptr<google::protobuf::Message> msg);
+
+  void handle_client_sent_msg(std::string host, unsigned short port,
+			      std::shared_ptr<google::protobuf::Message> msg);
+
+#ifdef HAVE_MONGODB
+  void add_comp_type(google::protobuf::Message &m, mongo::BSONObjBuilder *b);
+#endif
 
  private: // members
   Configuration *config_;
   Logger        *logger_;
-  Logger        *clips_logger_;
+  MultiLogger   *clips_logger_;
   Logger::LogLevel log_level_;
   llsf_sps::SPSComm *sps_;
   protobuf_clips::ClipsProtobufCommunicator *pb_comm_;
@@ -106,6 +137,13 @@ class LLSFRefBox
 
   unsigned int cfg_timer_interval_;
   std::string  cfg_clips_dir_;
+
+#ifdef HAVE_MONGODB
+  bool               cfg_mongodb_enabled_;
+  std::string        cfg_mongodb_hostport_;
+  std::string        cfg_mongodb_clips_coll_;
+  MongoDBLogProtobuf *mongodb_protobuf_;
+#endif
 };
 
 

@@ -50,6 +50,10 @@
 #if BOOST_ASIO_VERSION < 100601
 #  include <csignal>
 #endif
+#ifdef HAVE_MONGODB
+#  include <mongodb_log/mongodb_log_logger.h>
+#  include <mongodb_log/mongodb_log_protobuf.h>
+#endif
 
 using namespace llsf_sps;
 using namespace protobuf_comm;
@@ -148,6 +152,42 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   setup_clips();
 
   mlogger->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
+
+ #ifdef HAVE_MONGODB
+  bool enable_mongodb_log = false;
+  try {
+    enable_mongodb_log = config_->get_bool("/llsfrb/mongodb/enable");
+  } catch (fawkes:: Exception &e) {} // ignore, use default
+
+  if (enable_mongodb_log) {
+    cfg_mongodb_hostport_     = config_->get_string("/llsfrb/mongodb/hostport");
+    std::string mdb_text_log  = config_->get_string("/llsfrb/mongodb/collections/text-log");
+    std::string mdb_clips_log = config_->get_string("/llsfrb/mongodb/collections/clips-log");
+    std::string mdb_protobuf  = config_->get_string("/llsfrb/mongodb/collections/protobuf");
+    mlogger->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_text_log));
+
+    clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_,
+						   cfg_mongodb_clips_coll_));
+
+    mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
+
+    pb_comm_->server()->signal_connected()
+      .connect(boost::bind(&LLSFRefBox::handle_server_client_connected, this, _1, _2));
+    pb_comm_->server()->signal_disconnected()
+      .connect(boost::bind(&LLSFRefBox::handle_server_client_disconnected, this, _1, _2));
+    pb_comm_->server()->signal_received()
+      .connect(boost::bind(&LLSFRefBox::handle_server_client_msg, this, _1, _2, _3, _4));
+    pb_comm_->server()->signal_receive_failed()
+      .connect(boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
+
+    pb_comm_->signal_server_sent()
+      .connect(boost::bind(&LLSFRefBox::handle_server_sent_msg, this, _1, _2));
+    pb_comm_->signal_client_sent()
+      .connect(boost::bind(&LLSFRefBox::handle_client_sent_msg, this, _1, _2, _3));
+    pb_comm_->signal_peer_sent()
+      .connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _1));
+  }
+#endif
 }
 
 /** Destructor. */
@@ -252,6 +292,7 @@ LLSFRefBox::setup_clips()
     std::string logfile = config_->get_string("/llsfrb/log/clips");
     mlogger->add_logger(new FileLogger(logfile.c_str(), Logger::LL_DEBUG));
   } catch (fawkes::Exception &e) {} // ignored, use default
+
   clips_logger_ = mlogger;
 
   init_clips_logger(clips_->cobj(), logger_, clips_logger_);
@@ -365,6 +406,127 @@ LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::st
     logger_->log_warn("RefBox", "Failed to set signal: %s", e.what());
   }
 }
+
+
+#ifdef HAVE_MONGODB
+void
+LLSFRefBox::handle_server_client_connected(ProtobufStreamServer::ClientID client,
+					   boost::asio::ip::tcp::endpoint &endpoint)
+{
+}
+
+
+void
+LLSFRefBox::handle_server_client_disconnected(ProtobufStreamServer::ClientID client,
+					      const boost::system::error_code &error)
+{
+}
+
+
+/** Handle message that came from a client.
+ * @param client client ID
+ * @param component_id component the message was addressed to
+ * @param msg_type type of the message
+ * @param msg the message
+ */
+void
+LLSFRefBox::handle_server_client_msg(ProtobufStreamServer::ClientID client,
+				     uint16_t component_id, uint16_t msg_type,
+				     std::shared_ptr<google::protobuf::Message> msg)
+{
+  mongo::BSONObjBuilder meta;
+  meta.append("direction", "inbound");
+  meta.append("component_id", component_id);
+  meta.append("msg_type", msg_type);
+  meta.append("client_id", client);
+  mongo::BSONObj meta_obj(meta.obj());
+  mongodb_protobuf_->write(*msg, meta_obj);
+}
+
+/** Handle server reception failure
+ * @param client client ID
+ * @param component_id component the message was addressed to
+ * @param msg_type type of the message
+ * @param msg the message string
+ */
+void
+LLSFRefBox::handle_server_client_fail(ProtobufStreamServer::ClientID client,
+				      uint16_t component_id, uint16_t msg_type,
+				      std::string msg)
+{
+}
+
+
+void
+LLSFRefBox::add_comp_type(google::protobuf::Message &m, mongo::BSONObjBuilder *b)
+{
+  const google::protobuf::Descriptor *desc = m.GetDescriptor();
+  const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
+  if (! enumdesc) return;
+  const google::protobuf::EnumValueDescriptor *compdesc =
+    enumdesc->FindValueByName("COMP_ID");
+  const google::protobuf::EnumValueDescriptor *msgtdesc =
+    enumdesc->FindValueByName("MSG_TYPE");
+  if (! compdesc || ! msgtdesc)  return;
+  int comp_id = compdesc->number();
+  int msg_type = msgtdesc->number();
+  b->append("component_id", comp_id);
+  b->append("msg_type", msg_type);
+}
+
+/** Handle message that was sent to a server client.
+ * @param client client ID
+ * @param msg the message
+ */
+void
+LLSFRefBox::handle_server_sent_msg(ProtobufStreamServer::ClientID client,
+				   std::shared_ptr<google::protobuf::Message> msg)
+{
+  mongo::BSONObjBuilder meta;
+  meta.append("direction", "outbound");
+  meta.append("via", "server");
+  meta.append("client_id", client);
+  add_comp_type(*msg, &meta);
+  mongo::BSONObj meta_obj(meta.obj());
+  mongodb_protobuf_->write(*msg, meta_obj);
+}
+
+/** Handle message that was sent with a client.
+ * @param host host of the endpoint sent to
+ * @param port port of the endpoint sent to
+ * @param msg the message
+ */
+void
+LLSFRefBox::handle_client_sent_msg(std::string host, unsigned short int port,
+				   std::shared_ptr<google::protobuf::Message> msg)
+{
+  mongo::BSONObjBuilder meta;
+  meta.append("direction", "outbound");
+  meta.append("via", "client");
+  meta.append("host", host);
+  meta.append("port", port);
+  add_comp_type(*msg, &meta);
+  mongo::BSONObj meta_obj(meta.obj());
+  mongodb_protobuf_->write(*msg, meta_obj);
+}
+
+/** Handle message that was sent to a server client.
+ * @param client client ID
+ * @param msg the message
+ */
+void
+LLSFRefBox::handle_peer_sent_msg(std::shared_ptr<google::protobuf::Message> msg)
+{
+  mongo::BSONObjBuilder meta;
+  meta.append("direction", "outbound");
+  meta.append("via", "peer");
+  add_comp_type(*msg, &meta);
+  mongo::BSONObj meta_obj(meta.obj());
+  mongodb_protobuf_->write(*msg, meta_obj);
+}
+
+
+#endif
 
 
 void

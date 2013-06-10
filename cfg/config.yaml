@@ -46,6 +46,13 @@ llsfrb:
     #peer-send-port: !udp-port 4444
     #peer-recv-port: !udp-port 4445
     
+  mongodb:
+    enable: true
+    hostport: localhost
+    collections:
+      text-log: llsfrb.log
+      clips-log: llsfrb.clipslog
+      protobuf: llsfrb.protobuf
 
   game:
     teams: [Carologistics]
