@@ -11,6 +11,7 @@
   ?*CLIPS_DIRS* = (get-clips-dirs)
   ?*DEBUG* = 2  ;debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
   ?*CONFIG_PREFIXES* = (create$ "/llsfrb")
+  ?*START-TIME* = (now)
 )
 
 (deffunction resolve-file (?file)
