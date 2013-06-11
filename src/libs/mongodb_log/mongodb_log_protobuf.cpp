@@ -157,6 +157,10 @@ MongoDBLogProtobuf::add_message(const google::protobuf::Message &m, BSONObjBuild
 {
   b->append("_type", m.GetTypeName());
 
+  std::string data;
+  m.SerializeToString(&data);
+  b->appendBinData("_protobuf", data.size(), BinDataGeneral, data.c_str());
+
   const Reflection *refl = m.GetReflection();
 
   std::vector<const FieldDescriptor *> fields;
