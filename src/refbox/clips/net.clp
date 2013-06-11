@@ -170,7 +170,6 @@
 
 (defrule send-attmsg
   ?af <- (attention-message ?message $?time-to-show)
-  (network-client)
   =>
   (retract ?af)
   (bind ?attmsg (pb-create "llsf_msgs.AttentionMessage"))
@@ -181,13 +180,6 @@
   (do-for-all-facts ((?client network-client)) TRUE
 		    (pb-send ?client:id ?attmsg))
   (pb-destroy ?attmsg)
-)
-
-(defrule discard-attmsg
-  ?af <- (attention-message ?message $?time-to-show)
-  (not (network-client))
-  =>
-  (retract ?af)
 )
 
 (defrule net-recv-SetGameState

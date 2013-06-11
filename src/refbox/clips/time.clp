@@ -64,6 +64,10 @@
 	      (and (>= ?r1-end ?r2-start) (<= ?r1-end ?r2-end))))
 )
 
+(deffunction time-nonzero (?t)
+  (return (or (<> (nth$ 1 ?t) 0) (<> (nth$ 2 ?t) 0)))
+)
+
 ; --- RULES - general housekeeping
 (defrule retract-time
   (declare (salience ?*PRIORITY_TIME_RETRACT*))

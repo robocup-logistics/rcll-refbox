@@ -596,9 +596,13 @@ ClipsProtobufCommunicator::clips_pb_send(long int client_id, void *msgptr)
     if (server_ && server_clients_.find(client_id) != server_clients_.end()) {
       //printf("***** SENDING via SERVER\n");
       server_->send(server_clients_[client_id], *m);
+      sig_server_sent_(server_clients_[client_id], *m);
     } else if (clients_.find(client_id) != clients_.end()) {
       //printf("***** SENDING via CLIENT\n");
       clients_[client_id]->send(*m);
+
+      std::pair<std::string, unsigned short> &client_endpoint = client_endpoints_[client_id];
+      sig_client_sent_(client_endpoint.first, client_endpoint.second, *m);
     } else {
       //printf("Client ID %li is unknown, cannot send message of type %s\n",
       //     client_id, (*m)->GetTypeName().c_str());
@@ -631,6 +635,8 @@ ClipsProtobufCommunicator::clips_pb_broadcast(void *msgptr)
     //logger_->log_warn("RefBox", "Failed to broadcast message of type %s: %s",
     //   (*m)->GetTypeName().c_str(), e.what());
   }
+
+  sig_peer_sent_(*m);
 }
 
 
