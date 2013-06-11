@@ -19,10 +19,10 @@
   (bind ?doc (bson-create))
 
   (bson-append-array ?doc "start-timestamp" ?stime)
-  (bson-append-time ?doc "start-time" (nth$ 1 ?stime) (nth$ 2 ?stime))
+  (bson-append-time ?doc "start-time" ?stime)
 
   (if (time-nonzero ?etime) then
-    (bson-append-time ?doc "end-time" (nth$ 1 ?etime) (nth$ 2 ?etime))
+    (bson-append-time ?doc "end-time" ?etime)
   )
 
   (bind ?points-arr (bson-array-start ?doc "points"))

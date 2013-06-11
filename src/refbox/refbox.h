@@ -103,7 +103,7 @@ class LLSFRefBox
   void          clips_bson_append_array(void *bson,
 					std::string field_name, CLIPS::Values values);
   void          clips_bson_append_time(void *bson,
-				       std::string field_name, long int sec, long int usec);
+				       std::string field_name, CLIPS::Values time);
   CLIPS::Value  clips_bson_array_start(void *bson, std::string field_name);
   void          clips_bson_array_finish(void *barr);
   void          clips_bson_array_append(void *barr, CLIPS::Value value);

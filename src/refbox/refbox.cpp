@@ -542,7 +542,7 @@ LLSFRefBox::setup_clips_mongodb()
   clips_->add_function("bson-array-finish", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_array_finish)));
   clips_->add_function("bson-array-append", sigc::slot<void, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_array_append)));
 
-  clips_->add_function("bson-append-time", sigc::slot<void, void *, std::string, long int, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_append_time)));
+  clips_->add_function("bson-append-time", sigc::slot<void, void *, std::string, CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_append_time)));
   clips_->add_function("bson-tostring", sigc::slot<std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_tostring)));
   clips_->add_function("mongodb-insert", sigc::slot<void, std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_insert)));
   clips_->add_function("mongodb-upsert", sigc::slot<void, std::string, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_upsert)));
@@ -738,12 +738,20 @@ LLSFRefBox::clips_bson_array_append(void *barr, CLIPS::Value value)
 
 
 void
-LLSFRefBox::clips_bson_append_time(void *bson,
-				   std::string field_name, long int sec, long int usec)
+LLSFRefBox::clips_bson_append_time(void *bson, std::string field_name, CLIPS::Values time)
 {
+  if (time.size() != 2) {
+    logger_->log_warn("MongoDB", "Invalid time, %zu instead of 2 entries", time.size());
+    return;
+  }
+  if (time[0].type() != CLIPS::TYPE_INTEGER || time[1].type() != CLIPS::TYPE_INTEGER) {
+    logger_->log_warn("MongoDB", "Invalid time, type mismatch");
+    return;
+  }
+
   try {
     mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
-    struct timeval now = { sec, usec};
+    struct timeval now = { time[0].as_integer(), time[1].as_integer()};
     mongo::Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
     b->appendDate(field_name, nowd);
   } catch (bson::assertion &e) {
