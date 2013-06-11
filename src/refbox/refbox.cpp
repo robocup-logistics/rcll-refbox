@@ -545,7 +545,9 @@ LLSFRefBox::setup_clips_mongodb()
   clips_->add_function("bson-append-time", sigc::slot<void, void *, std::string, CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_append_time)));
   clips_->add_function("bson-tostring", sigc::slot<std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_tostring)));
   clips_->add_function("mongodb-insert", sigc::slot<void, std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_insert)));
-  clips_->add_function("mongodb-upsert", sigc::slot<void, std::string, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_upsert)));
+  clips_->add_function("mongodb-upsert", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_upsert)));
+  clips_->add_function("mongodb-update", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_update)));
+  clips_->add_function("mongodb-replace", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_replace)));
 
   clips_->build("(deffacts have-feature-mongodb (have-feature MongoDB))");
 }
@@ -779,21 +781,58 @@ LLSFRefBox::clips_mongodb_insert(std::string collection, void *bson)
 
 
 void
-LLSFRefBox::clips_mongodb_upsert(std::string collection, void *bson, std::string query)
+LLSFRefBox::mongodb_update(std::string &collection, mongo::BSONObj obj,
+			   CLIPS::Value &query, bool upsert)
 {
   if (! cfg_mongodb_enabled_) {
-    logger_->log_warn("MongoDB", "Upsert requested while MongoDB disabled");
+    logger_->log_warn("MongoDB", "Update requested while MongoDB disabled");
     return;
   }
 
-  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
   try {
-    mongodb_->update(collection, query, b->obj(), true);
+    mongo::BSONObj query_obj;
+    if (query.type() == CLIPS::TYPE_STRING) {
+      query_obj = mongo::fromjson(query.as_string());
+    } else if (query.type() == CLIPS::TYPE_EXTERNAL_ADDRESS) {
+      mongo::BSONObjBuilder *qb = static_cast<mongo::BSONObjBuilder *>(query.as_address());
+      query_obj = qb->asTempObj();
+    } else {
+      logger_->log_warn("MongoDB", "Invalid query, must be string or BSON document");
+      return;
+    }
+
+    mongodb_->update(collection, query_obj, obj, upsert);
   } catch (bson::assertion &e) {
     logger_->log_warn("MongoDB", "Compiling query failed: %s", e.what());
   } catch (mongo::DBException &e) {
     logger_->log_warn("MongoDB", "Insert failed: %s", e.what());
   }
+}
+
+
+void
+LLSFRefBox::clips_mongodb_upsert(std::string collection, void *bson, CLIPS::Value query)
+{
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  mongodb_update(collection, b->asTempObj(), query, true);
+}
+
+void
+LLSFRefBox::clips_mongodb_update(std::string collection, void *bson, CLIPS::Value query)
+{
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+  mongo::BSONObjBuilder update_doc;
+  update_doc.append("$set", b->asTempObj());
+
+  mongodb_update(collection, update_doc.obj(), query, false);
+}
+
+void
+LLSFRefBox::clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query)
+{
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  mongodb_update(collection, b->asTempObj(), query, false);
 }
 
 

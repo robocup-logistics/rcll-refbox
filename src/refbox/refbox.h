@@ -45,6 +45,10 @@
 #include <protobuf_comm/server.h>
 
 #include <clipsmm.h>
+#ifdef HAVE_MONGODB
+#  include <mongo/bson/bson.h>
+#endif
+
 
 namespace protobuf_clips {
   class ClipsProtobufCommunicator;
@@ -59,6 +63,7 @@ class MongoDBLogProtobuf;
 namespace mongo {
   class BSONObjBuilder;
   class DBClientBase;
+  class BSONObj;
 }
 #endif
 
@@ -108,8 +113,12 @@ class LLSFRefBox
   void          clips_bson_array_finish(void *barr);
   void          clips_bson_array_append(void *barr, CLIPS::Value value);
   std::string   clips_bson_tostring(void *bson);
-  void          clips_mongodb_upsert(std::string collection, void *bson, std::string query);
+  void          clips_mongodb_upsert(std::string collection, void *bson, CLIPS::Value query);
+  void          clips_mongodb_update(std::string collection, void *bson, CLIPS::Value query);
+  void          clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query);
   void          clips_mongodb_insert(std::string collection, void *bson);
+  void          mongodb_update(std::string &collection, mongo::BSONObj obj,
+			       CLIPS::Value &query, bool upsert);
 #endif
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
