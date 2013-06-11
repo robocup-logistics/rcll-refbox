@@ -47,10 +47,13 @@
   (bson-append ?doc "phase-points" ?phase-points-doc)
   (bson-append ?doc "total-points" ?points)
 
+  (bson-destroy ?phase-points-doc)
+
   ;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 
   (mongodb-upsert "llsfrb.game_report" ?doc
   		  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "]}"))
+  (bson-destroy ?doc)
 )
 
 (defrule mongodb-game-report-begin
