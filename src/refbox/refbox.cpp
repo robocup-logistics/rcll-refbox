@@ -184,10 +184,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
     setup_clips_mongodb();
 
-    pb_comm_->server()->signal_connected()
-      .connect(boost::bind(&LLSFRefBox::handle_server_client_connected, this, _1, _2));
-    pb_comm_->server()->signal_disconnected()
-      .connect(boost::bind(&LLSFRefBox::handle_server_client_disconnected, this, _1, _2));
     pb_comm_->server()->signal_received()
       .connect(boost::bind(&LLSFRefBox::handle_server_client_msg, this, _1, _2, _3, _4));
     pb_comm_->server()->signal_receive_failed()
@@ -428,19 +424,6 @@ LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::st
 
 
 #ifdef HAVE_MONGODB
-void
-LLSFRefBox::handle_server_client_connected(ProtobufStreamServer::ClientID client,
-					   boost::asio::ip::tcp::endpoint &endpoint)
-{
-}
-
-
-void
-LLSFRefBox::handle_server_client_disconnected(ProtobufStreamServer::ClientID client,
-					      const boost::system::error_code &error)
-{
-}
-
 
 /** Handle message that came from a client.
  * @param client client ID

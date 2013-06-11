@@ -124,10 +124,6 @@ class LLSFRefBox
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
   void          sps_read_rfids();
 
-  void handle_server_client_connected(protobuf_comm::ProtobufStreamServer::ClientID client,
-				      boost::asio::ip::tcp::endpoint &endpoint);
-  void handle_server_client_disconnected(protobuf_comm::ProtobufStreamServer::ClientID client,
-					 const boost::system::error_code &error);
   void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
 				uint16_t component_id, uint16_t msg_type,
 				std::shared_ptr<google::protobuf::Message> msg);
