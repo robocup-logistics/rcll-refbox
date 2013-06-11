@@ -51,6 +51,7 @@
 #  include <csignal>
 #endif
 #ifdef HAVE_MONGODB
+#  include <mongo/client/dbclient.h>
 #  include <mongodb_log/mongodb_log_logger.h>
 #  include <mongodb_log/mongodb_log_protobuf.h>
 #endif
@@ -154,12 +155,12 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   mlogger->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 
  #ifdef HAVE_MONGODB
-  bool enable_mongodb_log = false;
+  cfg_mongodb_enabled_ = false;
   try {
-    enable_mongodb_log = config_->get_bool("/llsfrb/mongodb/enable");
+    cfg_mongodb_enabled_ = config_->get_bool("/llsfrb/mongodb/enable");
   } catch (fawkes:: Exception &e) {} // ignore, use default
 
-  if (enable_mongodb_log) {
+  if (cfg_mongodb_enabled_) {
     cfg_mongodb_hostport_     = config_->get_string("/llsfrb/mongodb/hostport");
     std::string mdb_text_log  = config_->get_string("/llsfrb/mongodb/collections/text-log");
     std::string mdb_clips_log = config_->get_string("/llsfrb/mongodb/collections/clips-log");
@@ -170,6 +171,18 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 						   cfg_mongodb_clips_coll_));
 
     mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
+
+    
+    mongo::DBClientConnection *conn =
+      new mongo::DBClientConnection(/* auto reconnect */ true);
+    mongodb_ = conn;
+    std::string errmsg;
+    if (! conn->connect(cfg_mongodb_hostport_, errmsg)) {
+      throw fawkes::Exception("Could not connect to MongoDB at %s: %s",
+			      cfg_mongodb_hostport_.c_str(), errmsg.c_str());
+    }
+
+    setup_clips_mongodb();
 
     pb_comm_->server()->signal_connected()
       .connect(boost::bind(&LLSFRefBox::handle_server_client_connected, this, _1, _2));
@@ -188,6 +201,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       .connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _1));
   }
 #endif
+
+  start_clips();
 }
 
 /** Destructor. */
@@ -304,6 +319,11 @@ LLSFRefBox::setup_clips()
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
+}
+
+void
+LLSFRefBox::start_clips()
+{
   if (!clips_->batch_evaluate(cfg_clips_dir_ + "init.clp")) {
     logger_->log_warn("RefBox", "Failed to initialize CLIPS environment, batch file failed.");
     throw fawkes::Exception("Failed to initialize CLIPS environment, batch file failed.");
@@ -313,7 +333,6 @@ LLSFRefBox::setup_clips()
   clips_->refresh_agenda();
   clips_->run();
 }
-
 
 void
 LLSFRefBox::handle_clips_periodic()
@@ -510,6 +529,27 @@ LLSFRefBox::handle_client_sent_msg(std::string host, unsigned short int port,
   mongodb_protobuf_->write(*msg, meta_obj);
 }
 
+/** Setup MongoDB related CLIPS functions. */
+void
+LLSFRefBox::setup_clips_mongodb()
+{
+  clips_->add_function("bson-create", sigc::slot<CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_create)));
+  clips_->add_function("bson-parse", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_parse)));
+  clips_->add_function("bson-destroy", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_destroy)));
+  clips_->add_function("bson-append", sigc::slot<void, void *, std::string, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_append)));
+  clips_->add_function("bson-append-array", sigc::slot<void, void *, std::string, CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_append_array)));
+  clips_->add_function("bson-array-start", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_array_start)));
+  clips_->add_function("bson-array-finish", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_array_finish)));
+  clips_->add_function("bson-array-append", sigc::slot<void, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_array_append)));
+
+  clips_->add_function("bson-append-time", sigc::slot<void, void *, std::string, long int, long int>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_append_time)));
+  clips_->add_function("bson-tostring", sigc::slot<std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_tostring)));
+  clips_->add_function("mongodb-insert", sigc::slot<void, std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_insert)));
+  clips_->add_function("mongodb-upsert", sigc::slot<void, std::string, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_upsert)));
+
+  clips_->build("(deffacts have-feature-mongodb (have-feature MongoDB))");
+}
+
 /** Handle message that was sent to a server client.
  * @param client client ID
  * @param msg the message
@@ -523,6 +563,229 @@ LLSFRefBox::handle_peer_sent_msg(std::shared_ptr<google::protobuf::Message> msg)
   add_comp_type(*msg, &meta);
   mongo::BSONObj meta_obj(meta.obj());
   mongodb_protobuf_->write(*msg, meta_obj);
+}
+
+
+CLIPS::Value
+LLSFRefBox::clips_bson_create()
+{
+  mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+  return CLIPS::Value(b);
+}
+
+CLIPS::Value
+LLSFRefBox::clips_bson_parse(std::string document)
+{
+  mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+  try {
+    b->appendElements(mongo::fromjson(document));
+  } catch (bson::assertion &e) {
+    logger_->log_error("MongoDB", "Parsing JSON doc failed: %s\n%s",
+		       e.what(), document.c_str());
+  }
+  return CLIPS::Value(b);
+}
+
+void
+LLSFRefBox::clips_bson_destroy(void *bson)
+{
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  delete b;
+}
+
+std::string
+LLSFRefBox::clips_bson_tostring(void *bson)
+{
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  return b->asTempObj().jsonString(mongo::Strict, true);
+}
+
+void
+LLSFRefBox::clips_bson_append(void *bson, std::string field_name, CLIPS::Value value)
+{
+  try {
+    mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+    switch (value.type()) {
+    case CLIPS::TYPE_FLOAT:
+      b->append(field_name, value.as_float());
+      break;
+
+    case CLIPS::TYPE_INTEGER:
+      b->append(field_name, value.as_integer());
+      break;
+
+    case CLIPS::TYPE_SYMBOL:
+    case CLIPS::TYPE_STRING:
+    case CLIPS::TYPE_INSTANCE_NAME:
+      b->append(field_name, value.as_string());
+      break;
+
+    case CLIPS::TYPE_EXTERNAL_ADDRESS:
+      {
+	mongo::BSONObjBuilder *subb = static_cast<mongo::BSONObjBuilder *>(value.as_address());
+	b->append(field_name, subb->asTempObj());
+      }
+      break;
+
+    default:
+      logger_->log_warn("RefBox", "Tried to add unknown type to BSON field %s",
+			field_name.c_str());
+      break;
+    }
+  } catch (bson::assertion &e) {
+    logger_->log_error("MongoDB", "Failed to append array value to field %s: %s",
+		       field_name.c_str(), e.what());
+  }
+}
+
+
+void
+LLSFRefBox::clips_bson_append_array(void *bson,
+				    std::string field_name, CLIPS::Values values)
+{
+  try {
+    mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+    mongo::BSONArrayBuilder ab(b->subarrayStart(field_name));
+
+    for (auto value : values) {
+      switch (value.type()) {
+      case CLIPS::TYPE_FLOAT:
+	ab.append(value.as_float());
+	break;
+
+      case CLIPS::TYPE_INTEGER:
+	ab.append(value.as_integer());
+	break;
+      
+      case CLIPS::TYPE_SYMBOL:
+      case CLIPS::TYPE_STRING:
+      case CLIPS::TYPE_INSTANCE_NAME:
+	ab.append(value.as_string());
+	break;
+
+      case CLIPS::TYPE_EXTERNAL_ADDRESS:
+	{
+	  mongo::BSONObjBuilder *subb =
+	    static_cast<mongo::BSONObjBuilder *>(value.as_address());
+	  ab.append(subb->asTempObj());
+	}
+	break;
+      
+      default:
+	logger_->log_warn("MongoDB", "Tried to add unknown type to BSON array field %s",
+			  field_name.c_str());
+	break;
+      }
+    }
+  } catch (bson::assertion &e) {
+    logger_->log_error("MongoDB", "Failed to append array value to field %s: %s",
+		       field_name.c_str(), e.what());
+  }
+}
+
+CLIPS::Value
+LLSFRefBox::clips_bson_array_start(void *bson, std::string field_name)
+{
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  mongo::BufBuilder &bb = b->subarrayStart(field_name);
+  mongo::BSONArrayBuilder *arrb = new mongo::BSONArrayBuilder(bb);
+  return CLIPS::Value(arrb);
+}
+
+
+void
+LLSFRefBox::clips_bson_array_finish(void *barr)
+{
+  mongo::BSONArrayBuilder *ab = static_cast<mongo::BSONArrayBuilder *>(barr);
+  delete ab;
+}
+
+void
+LLSFRefBox::clips_bson_array_append(void *barr, CLIPS::Value value)
+{
+  try {
+    mongo::BSONArrayBuilder *ab = static_cast<mongo::BSONArrayBuilder *>(barr);
+    switch (value.type()) {
+    case CLIPS::TYPE_FLOAT:
+      ab->append(value.as_float());
+      break;
+
+    case CLIPS::TYPE_INTEGER:
+      ab->append(value.as_integer());
+      break;
+
+    case CLIPS::TYPE_SYMBOL:
+    case CLIPS::TYPE_STRING:
+    case CLIPS::TYPE_INSTANCE_NAME:
+      ab->append(value.as_string());
+      break;
+
+    case CLIPS::TYPE_EXTERNAL_ADDRESS:
+      {
+	mongo::BSONObjBuilder *subb = static_cast<mongo::BSONObjBuilder *>(value.as_address());
+	ab->append(subb->asTempObj());
+      }
+      break;
+
+    default:
+      logger_->log_warn("RefBox", "Tried to add unknown type to BSON array");
+      break;
+    }
+  } catch (bson::assertion &e) {
+    logger_->log_error("MongoDB", "Failed to append to array: %s", e.what());
+  }
+}
+
+
+void
+LLSFRefBox::clips_bson_append_time(void *bson,
+				   std::string field_name, long int sec, long int usec)
+{
+  try {
+    mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+    struct timeval now = { sec, usec};
+    mongo::Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
+    b->appendDate(field_name, nowd);
+  } catch (bson::assertion &e) {
+    logger_->log_error("MongoDB", "Failed to append time value to field %s: %s",
+		       field_name.c_str(), e.what());
+  }
+}
+
+void
+LLSFRefBox::clips_mongodb_insert(std::string collection, void *bson)
+{
+  if (! cfg_mongodb_enabled_) {
+    logger_->log_warn("MongoDB", "Insert requested while MongoDB disabled");
+    return;
+  }
+
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+  try {
+    mongodb_->insert(collection, b->obj());
+  } catch (mongo::DBException &e) {
+    logger_->log_warn("MongoDB", "Insert failed: %s", e.what());
+  }
+}
+
+
+void
+LLSFRefBox::clips_mongodb_upsert(std::string collection, void *bson, std::string query)
+{
+  if (! cfg_mongodb_enabled_) {
+    logger_->log_warn("MongoDB", "Upsert requested while MongoDB disabled");
+    return;
+  }
+
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  try {
+    mongodb_->update(collection, query, b->obj(), true);
+  } catch (bson::assertion &e) {
+    logger_->log_warn("MongoDB", "Compiling query failed: %s", e.what());
+  } catch (mongo::DBException &e) {
+    logger_->log_warn("MongoDB", "Insert failed: %s", e.what());
+  }
 }
 
 

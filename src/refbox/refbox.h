@@ -58,6 +58,7 @@ namespace llsf_sps {
 class MongoDBLogProtobuf;
 namespace mongo {
   class BSONObjBuilder;
+  class DBClientBase;
 }
 #endif
 
@@ -85,12 +86,31 @@ class LLSFRefBox
 
   void setup_protobuf_comm();
 
+  void          start_clips();
   void          setup_clips();
   void          handle_clips_periodic();
+  void          setup_clips_mongodb();
 
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
+
+#ifdef HAVE_MONGODB
+  CLIPS::Value  clips_bson_create();
+  CLIPS::Value  clips_bson_parse(std::string document);
+  void          clips_bson_destroy(void *bson);
+  void          clips_bson_append(void *bson, std::string field_name, CLIPS::Value value);
+  void          clips_bson_append_array(void *bson,
+					std::string field_name, CLIPS::Values values);
+  void          clips_bson_append_time(void *bson,
+				       std::string field_name, long int sec, long int usec);
+  CLIPS::Value  clips_bson_array_start(void *bson, std::string field_name);
+  void          clips_bson_array_finish(void *barr);
+  void          clips_bson_array_append(void *barr, CLIPS::Value value);
+  std::string   clips_bson_tostring(void *bson);
+  void          clips_mongodb_upsert(std::string collection, void *bson, std::string query);
+  void          clips_mongodb_insert(std::string collection, void *bson);
+#endif
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
   void          sps_read_rfids();
@@ -139,10 +159,11 @@ class LLSFRefBox
   std::string  cfg_clips_dir_;
 
 #ifdef HAVE_MONGODB
-  bool               cfg_mongodb_enabled_;
-  std::string        cfg_mongodb_hostport_;
-  std::string        cfg_mongodb_clips_coll_;
-  MongoDBLogProtobuf *mongodb_protobuf_;
+  bool                cfg_mongodb_enabled_;
+  std::string         cfg_mongodb_hostport_;
+  std::string         cfg_mongodb_clips_coll_;
+  MongoDBLogProtobuf  *mongodb_protobuf_;
+  mongo::DBClientBase *mongodb_;
 #endif
 };
 
