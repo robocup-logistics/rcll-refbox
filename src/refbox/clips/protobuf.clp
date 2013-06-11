@@ -19,7 +19,7 @@
   (slot ptr (type EXTERNAL-ADDRESS))
 )
 
-(deftemplate protobuf-receive-failed
+(deftemplate protobuf-server-receive-failed
   (slot comp-id (type INTEGER))
   (slot msg-type (type INTEGER))
   (slot rcvd-via (type SYMBOL) (allowed-values STREAM BROADCAST))
