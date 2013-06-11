@@ -20,9 +20,6 @@
     (retract ?report)
   )
 
-  (if (not (any-factp ((?mi machines-initialized)) TRUE))
-   then (machine-init-randomize))
-
   ; Set lights
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (bind ?dl (create$))

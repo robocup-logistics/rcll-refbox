@@ -67,13 +67,14 @@
   )
 
   ; assign random machine types out of the start distribution
-  (printout t "Initial machine distribution:    " ?*MACHINE-DISTRIBUTION* crlf)
+  ;(printout t "Initial machine distribution:    " ?*MACHINE-DISTRIBUTION* crlf)
   (if ?*RANDOMIZE-GAME*
     then
       (bind ?machine-assignment (randomize$ ?*MACHINE-DISTRIBUTION*))
-      (printout t "Randomized machine distribution: " ?machine-assignment crlf)
+      ;(printout t "Randomized machine distribution: " ?machine-assignment crlf)
     else (bind ?machine-assignment ?*MACHINE-DISTRIBUTION*)
   )
+  (bind ?pp-mach-assignment (create$))
   (delayed-do-for-all-facts ((?machine machine))
     (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
     (if (= (length$ ?machine-assignment) 0)
@@ -81,10 +82,13 @@
      else
        (bind ?mtype (nth$ 1 ?machine-assignment))
        (bind ?machine-assignment (delete$ ?machine-assignment 1 1))
-       (printout t "Assigning type " ?mtype " to machine " ?machine:name crlf)
+       (bind ?pp-mach-assignment
+         (append$ ?pp-mach-assignment (sym-cat ?machine:name "/" ?mtype)))
+       ;(printout t "Assigning type " ?mtype " to machine " ?machine:name crlf)
        (modify ?machine (mtype ?mtype))
     )
   )
+  (printout t "Machines: " ?pp-mach-assignment crlf)
 
   ; assign random down times
   (if ?*RANDOMIZE-GAME* then
@@ -131,7 +135,6 @@
     ;(printout t "Assigning processing times to machines" crlf)
     (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
       (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))
-      (printout t "Proc time for " ?mspec:mtype " will be " ?proc-time " sec" crlf)
       (modify ?mspec (proc-time ?proc-time))
     )
   )

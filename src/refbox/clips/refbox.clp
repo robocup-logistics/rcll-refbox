@@ -20,37 +20,9 @@
 (load* (resolve-file machines.clp))
 (load* (resolve-file robots.clp))
 (load* (resolve-file orders.clp))
+(load* (resolve-file game.clp))
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
-
-(defrule update-gametime-points
-  (declare (salience ?*PRIORITY_FIRST*))
-  (time $?now)
-  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (state RUNNING)
-		    (points ?old-points)
-		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
-  =>
-  (bind ?points 0)
-  (foreach ?phase (deftemplate-slot-allowed-values points phase)
-    (bind ?phase-points 0)
-    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
-      (bind ?phase-points (+ ?phase-points ?p:points))
-    )
-    (bind ?points (+ ?points (max ?phase-points 0)))
-  )
-  (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now)
-	  (points ?points))
-)
-
-(defrule update-last-time
-  (declare (salience ?*PRIORITY_FIRST*))
-  (time $?now)
-  (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP))
-      (gamestate (state ~RUNNING)))
-  ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
-  =>
-  (modify ?gf (last-time ?now))
-)
 
 (defrule rfid-input-learn-puck
   (declare (salience ?*PRIORITY_FIRST*))
@@ -132,17 +104,6 @@
   )
 )
 
-
-(defrule goto-pre-game
-  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
-  =>
-  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights GREEN-ON YELLOW-ON RED-ON))
-  )
-  (assert (reset-game))
-)
-
 (defrule retract-reset-game
   (declare (salience ?*PRIORITY_CLEANUP*))
   ?rf <- (reset-game)
@@ -150,86 +111,11 @@
   (retract ?rf)
 )
 
-(defrule start-game-training
-  ?gs <- (gamestate (team "") (phase PRE_GAME) (state RUNNING))
-  =>
-  (modify ?gs (phase EXPLORATION) (prev-phase PRE_GAME) (start-time (now)))
-  (assert (attention-message "Starting  *** TRAINING ***  game" 5))
-)
-
-(defrule start-game
-  ?gs <- (gamestate (team ?team&~"") (phase PRE_GAME) (state RUNNING))
-  =>
-  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now)))
-  (assert (attention-message (str-cat "Starting game for team " ?team) 5))
-)
-
-(defrule setup-warn-end-near
-  (gamestate (phase SETUP) (state RUNNING)
-	     (game-time ?game-time&:(>= ?game-time (* ?*SETUP-TIME* .9))))
-  (not (setup-warned))
-  =>
-  (assert (setup-warned))
-  (assert (attention-message "Setup phase is about to end" 5))
-)
-
-(defrule switch-to-exploration
-  ?gs <- (gamestate (phase SETUP) (state RUNNING)
-		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
-  =>
-  (modify ?gs (phase EXPLORATION) (prev-phase SETUP))
-  (assert (attention-message "Switching to exploration phase" 5))
-)
-
-(defrule switch-to-production
-  ?gs <- (gamestate (phase EXPLORATION) (state RUNNING)
-		    (game-time ?game-time&:(>= ?game-time ?*EXPLORATION-TIME*)))
-  =>
-  (modify ?gs (phase PRODUCTION) (prev-phase EXPLORATION))
-  (assert (attention-message "Switching to production phase" 5))
-)
-
-(deffunction print-points ()
-  (bind ?points 0)
-  (printout t "-- Awarded Points --" crlf)
-  (foreach ?phase (deftemplate-slot-allowed-values points phase)
-    (printout t ?phase crlf)
-    (bind ?phase-points 0)
-    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
-      (printout t
-        (format nil "  %s  %2d  %s" (time-sec-format ?p:game-time) ?p:points ?p:reason) crlf)
-      (bind ?phase-points (+ ?phase-points ?p:points))
-    )
-    (printout t ?phase " TOTAL: " ?phase-points crlf)
-    (bind ?points (+ ?points ?phase-points))
-  )
-  (printout t "OVERALL TOTAL POINTS: " ?points crlf)
-)
-
-(defrule game-over
-  ?gs <- (gamestate (phase PRODUCTION) (state RUNNING) (points ?points)
-		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
-  =>
-  (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
-  (print-points)
-  (assert (attention-message "Game Over" 60))
-  (printout t "===  Game Over  ===" crlf)
-)
-
 (defrule finalize-print-points
   (finalize)
   =>
-  (print-points)
+  (game-print-points)
   (printout t "===  Shutting down  ===" crlf)
-)
-
-(defrule goto-post-game
-  ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
-  =>
-  (modify ?gs (prev-phase POST_GAME))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights RED-BLINK))
-  )
 )
 
 ; Sort pucks by ID, such that do-for-all-facts on the puck deftemplate

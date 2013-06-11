@@ -32,8 +32,9 @@ llsfrb:
     # debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
     debug-level: 2
     unwatch-facts: [time, rfid-input, signal, gamestate]
-    unwatch-rules: [retract-time, rfid-input-cleanup, net-send-beacon, update-gametime-points,
-                    update-last-time, net-send-GameState, net-send-OrderInfo,
+    unwatch-rules: [retract-time, rfid-input-cleanup,
+                    game-update-gametime-points, game-update-last-time,
+                    net-send-beacon, net-send-GameState, net-send-OrderInfo,
                     net-send-MachineInfo, net-send-PuckInfo, net-send-RobotInfo,
                     exploration-send-MachineReportInfo, net-broadcast-MachineInfo,
                     net-send-VersionInfo]
