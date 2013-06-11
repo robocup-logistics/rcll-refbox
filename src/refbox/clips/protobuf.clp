@@ -34,8 +34,8 @@
 
 (defrule protobuf-cleanup-receive-failed
   (declare (salience -4000))
-  ?f <- (protobuf-receive-failed (comp-id ?cid) (msg-type ?mt)
-				 (rcvd-from ?host ?port) (message ?msg))
+  ?f <- (protobuf-server-receive-failed (comp-id ?cid) (msg-type ?mt)
+					(rcvd-from ?host ?port) (message ?msg))
   =>
   (retract ?f)
   (printout t "Protobuf rcv fail for " ?cid ":" ?mt " from " ?host ":" ?port ": " ?msg crlf)
