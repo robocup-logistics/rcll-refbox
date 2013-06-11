@@ -18,7 +18,9 @@
 (deffunction mongodb-write-game-report (?stime)
   (bind ?doc (bson-create))
 
-  (bson-append-array ?doc "start-time" ?stime)
+  (bson-append-array ?doc "start-timestamp" ?stime)
+  (bson-append-time ?doc "start-time" (nth$ 1 ?stime) (nth$ 2 ?stime))
+
   (bind ?points-arr (bson-array-start ?doc "points"))
   (bind ?phase-points-doc (bson-create))
 
@@ -44,7 +46,7 @@
   ;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 
   (mongodb-upsert "llsfrb.game_report" ?doc
-  		  (str-cat "{\"start-time\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "]}"))
+  		  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "]}"))
 )
 
 (defrule mongodb-game-report-begin
