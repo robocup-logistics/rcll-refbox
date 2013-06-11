@@ -116,6 +116,8 @@ private:
 	static constexpr double LOSLOTSIZE = 0.1;
 	static constexpr double LOSLOTX = 0.2 - LOSLOTSIZE / 2;
 	static constexpr double LOSLOTY = 3.6 - LOSLOTSIZE / 2;
+	static constexpr double DIST_TOLERANCE = 0.2;
+	static constexpr double ORI_TOLERANCE = 0.2;
 
 };
 

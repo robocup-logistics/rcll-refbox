@@ -40,6 +40,13 @@
 
 namespace LLSFVis {
 
+double pose_distance(const llsf_msgs::Pose2D& pose1,
+		const llsf_msgs::Pose2D& pose2) {
+	return sqrt(
+			pose1.x() - pose2.x() * pose1.x() - pose2.x() + pose1.y()
+					- pose2.y() * pose1.y() - pose2.y());
+}
+
 PlayFieldWidget::PlayFieldWidget() {
 	add_events(Gdk::BUTTON_PRESS_MASK);
 	signal_button_press_event().connect(
@@ -311,19 +318,43 @@ void PlayFieldWidget::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 
 void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 		const llsf_msgs::Robot& bot) {
-	cr->save();
-	cr->translate(bot.pose().x(), bot.pose().y());
-	cr->rotate(bot.pose().ori());
-	cr->set_line_width(0.01);
-	cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
-	cr->move_to(BOTSIZE / 2, 0);
-	cr->line_to(0, BOTSIZE / 2 * -1);
-	cr->line_to(0, BOTSIZE / 2);
-	cr->line_to(BOTSIZE / 2, 0);
-	cr->set_source_rgb(0, 0, 0);
-	cr->stroke();
-	cr->restore();
 
+	//Draw position reported by vision
+	if (bot.has_vision_pose()) {
+		cr->save();
+		cr->translate(bot.vision_pose().x(), bot.vision_pose().y());
+		cr->rotate(bot.vision_pose().ori());
+		cr->set_line_width(0.01);
+		cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
+		cr->move_to(BOTSIZE / 2, 0);
+		cr->line_to(0, BOTSIZE / 2 * -1);
+		cr->line_to(0, BOTSIZE / 2);
+		cr->line_to(BOTSIZE / 2, 0);
+		cr->set_source_rgb(0, 0, 0);
+		cr->stroke();
+		cr->restore();
+	}
+	if (bot.has_pose()) {
+		//Draw position reported by robot if it differs
+		if (!bot.has_vision_pose()
+				|| pose_distance(bot.pose(), bot.vision_pose()) > DIST_TOLERANCE
+				|| (bot.pose().ori() - bot.vision_pose().ori())
+						> ORI_TOLERANCE) {
+			cr->save();
+			cr->translate(bot.pose().x(), bot.pose().y());
+			cr->rotate(bot.pose().ori());
+			cr->set_line_width(0.02);
+			cr->set_source_rgb(0.9, 0, 0);
+			cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
+			cr->move_to(BOTSIZE / 2, 0);
+			cr->line_to(0, BOTSIZE / 2 * -1);
+			cr->line_to(0, BOTSIZE / 2);
+			cr->line_to(BOTSIZE / 2, 0);
+			cr->set_source_rgb(0, 0, 0);
+			cr->stroke();
+			cr->restore();
+		}
+	}
 }
 
 void PlayFieldWidget::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,

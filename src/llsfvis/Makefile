@@ -25,7 +25,7 @@ CFLAGS += $(CFLAGS_CPP11) -I/usr/include/webkitgtk-3.0 -I/usr/include/libsoup-2.
 REQ_BOOST_LIBS = thread asio system signals2 format date_time
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_llsfvis = stdc++ llsfrbcore llsf_protobuf_comm llsf_msgs llsf_log_msgs webkitgtk-3.0
+LIBS_llsfvis = stdc++ llsfrbcore llsf_protobuf_comm llsf_msgs llsf_log_msgs webkitgtk-3.0 m
 OBJS_llsfvis = llsfvis.o MainWindow.o PlayFieldWidget.o StateWidget.o \
     RobotStatesWidget.o PuckDialog.o LogWidget.o RefboxClient.o PlacePuckDialog.o \
     PucksWidget.o PuckStateWidget.o OrdersWidget.o OrderWidget.o HTMLWidget.o
