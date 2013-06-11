@@ -183,6 +183,13 @@
   (printout t "===  Game Over  ===" crlf)
 )
 
+(defrule finalize-print-points
+  (finalize)
+  =>
+  (print-points)
+  (printout t "===  Shutting down  ===" crlf)
+)
+
 (defrule goto-post-game
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
