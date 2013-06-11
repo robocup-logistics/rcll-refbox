@@ -682,6 +682,10 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     p_team_->erase();
     if (g->has_team()) {
       p_team_->printw("%s", g->team().c_str());
+    } else {
+      p_team_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
+      p_team_->printw("** TRAINING **");
+      p_team_->standend();
     }
 
     navbar_->standend();
