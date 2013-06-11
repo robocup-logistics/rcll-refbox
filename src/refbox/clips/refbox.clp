@@ -125,7 +125,7 @@
 
 
 (defrule goto-pre-game
-  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
+  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME&~NONE))
   =>
   (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
   (delayed-do-for-all-facts ((?machine machine)) TRUE

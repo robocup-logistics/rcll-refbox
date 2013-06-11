@@ -126,7 +126,7 @@
   (slot phase (type SYMBOL)
 	(allowed-values PRE_GAME EXPLORATION PRODUCTION POST_GAME) (default PRE_GAME))
   (slot prev-phase (type SYMBOL)
-	(allowed-values PRE_GAME EXPLORATION PRODUCTION POST_GAME) (default PRE_GAME))
+	(allowed-values NONE PRE_GAME EXPLORATION PRODUCTION POST_GAME) (default NONE))
   (slot game-time (type FLOAT) (default 0.0))
   (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot points (type INTEGER) (default 0))
