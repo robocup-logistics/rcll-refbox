@@ -130,6 +130,9 @@ class LLSFRefBox
   void handle_server_client_fail(protobuf_comm::ProtobufStreamServer::ClientID client,
 				 uint16_t component_id, uint16_t msg_type,
 				 std::string msg);
+  void handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
+		       uint16_t component_id, uint16_t msg_type,
+		       std::shared_ptr<google::protobuf::Message> msg);
 
   void handle_server_sent_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
 			      std::shared_ptr<google::protobuf::Message> msg);

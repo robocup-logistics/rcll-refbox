@@ -40,6 +40,7 @@
 #include <core/threading/mutex.h>
 #include <config/yaml.h>
 #include <protobuf_clips/communicator.h>
+#include <protobuf_comm/peer.h>
 #include <llsf_sps/sps_comm.h>
 #include <logging/multi.h>
 #include <logging/file.h>
@@ -188,6 +189,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       .connect(boost::bind(&LLSFRefBox::handle_server_client_msg, this, _1, _2, _3, _4));
     pb_comm_->server()->signal_receive_failed()
       .connect(boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
+
+    pb_comm_->peer()->signal_received()
+      .connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
 
     pb_comm_->signal_server_sent()
       .connect(boost::bind(&LLSFRefBox::handle_server_sent_msg, this, _1, _2));
@@ -438,9 +442,32 @@ LLSFRefBox::handle_server_client_msg(ProtobufStreamServer::ClientID client,
 {
   mongo::BSONObjBuilder meta;
   meta.append("direction", "inbound");
+  meta.append("via", "server");
   meta.append("component_id", component_id);
   meta.append("msg_type", msg_type);
   meta.append("client_id", client);
+  mongo::BSONObj meta_obj(meta.obj());
+  mongodb_protobuf_->write(*msg, meta_obj);
+}
+
+/** Handle message that came from a client.
+ * @param client client ID
+ * @param component_id component the message was addressed to
+ * @param msg_type type of the message
+ * @param msg the message
+ */
+void
+LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint &endpoint,
+			    uint16_t component_id, uint16_t msg_type,
+			    std::shared_ptr<google::protobuf::Message> msg)
+{
+  mongo::BSONObjBuilder meta;
+  meta.append("direction", "inbound");
+  meta.append("via", "peer");
+  meta.append("endpoint-host", endpoint.address().to_string());
+  meta.append("endpoint-port", endpoint.port());
+  meta.append("component_id", component_id);
+  meta.append("msg_type", msg_type);
   mongo::BSONObj meta_obj(meta.obj());
   mongodb_protobuf_->write(*msg, meta_obj);
 }
