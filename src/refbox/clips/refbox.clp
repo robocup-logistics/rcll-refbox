@@ -144,7 +144,7 @@
 (defrule start-game
   ?gs <- (gamestate (phase PRE_GAME) (state RUNNING))
   =>
-  (modify ?gs (phase EXPLORATION) (prev-phase PRE_GAME))
+  (modify ?gs (phase EXPLORATION) (prev-phase PRE_GAME) (start-time (now)))
   (assert (attention-message "Starting game" 5))
 )
 
@@ -156,12 +156,8 @@
   (assert (attention-message "Switching to production phase" 5))
 )
 
-(defrule game-over
-  ?gs <- (gamestate (phase PRODUCTION) (state RUNNING) (points ?points)
-		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
-  =>
-  (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED))
-  (assert (attention-message "Game Over" 60))
+(deffunction print-points ()
+  (bind ?points 0)
   (printout t "-- Awarded Points --" crlf)
   (foreach ?phase (deftemplate-slot-allowed-values points phase)
     (printout t ?phase crlf)
@@ -172,9 +168,18 @@
       (bind ?phase-points (+ ?phase-points ?p:points))
     )
     (printout t ?phase " TOTAL: " ?phase-points crlf)
+    (bind ?points (+ ?points ?phase-points))
   )
   (printout t "OVERALL TOTAL POINTS: " ?points crlf)
+)
 
+(defrule game-over
+  ?gs <- (gamestate (phase PRODUCTION) (state RUNNING) (points ?points)
+		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+  =>
+  (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
+  (print-points)
+  (assert (attention-message "Game Over" 60))
   (printout t "===  Game Over  ===" crlf)
 )
 

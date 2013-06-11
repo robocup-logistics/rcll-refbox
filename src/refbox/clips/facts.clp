@@ -128,6 +128,8 @@
   (slot prev-phase (type SYMBOL)
 	(allowed-values NONE PRE_GAME EXPLORATION PRODUCTION POST_GAME) (default NONE))
   (slot game-time (type FLOAT) (default 0.0))
+  (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot points (type INTEGER) (default 0))
   (slot team (type STRING))
