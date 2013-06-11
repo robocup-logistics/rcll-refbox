@@ -17,7 +17,6 @@
 )
 
 (load* (resolve-file net.clp))
-(load* (resolve-file mongodb.clp))
 (load* (resolve-file machines.clp))
 (load* (resolve-file robots.clp))
 (load* (resolve-file orders.clp))
@@ -99,6 +98,14 @@
   =>
   (printout t "Disabling watching of the following rules: " ?lv crlf)
   (foreach ?v ?lv (unwatch rules (sym-cat ?v)))
+)
+
+(defrule load-mongodb
+  (init)
+  (have-feature MongoDB)
+  =>
+  (printout t "Enabling MongoDB logging" crlf)
+  (load* (resolve-file mongodb.clp))
 )
 
 (defrule reset-game
