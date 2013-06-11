@@ -57,8 +57,9 @@
   ?*MAINTENANCE-WARN-TIME*      = 105
   ?*MAINTENANCE-GRACE-TIME*     =  15
   ; Game phase time; seconds
+  ?*SETUP-TIME*       = 300
   ?*EXPLORATION-TIME* = 180
-  ?*PRODUCTION-TIME* = 900
+  ?*PRODUCTION-TIME*  = 900
   ; Machine distribution
   ?*RANDOMIZE-GAME* = TRUE
   ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T4 T5)

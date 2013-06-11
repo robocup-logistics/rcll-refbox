@@ -26,7 +26,8 @@
 (defrule update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  ?gf <- (gamestate (phase PRODUCTION|EXPLORATION) (state RUNNING) (points ?old-points)
+  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (state RUNNING)
+		    (points ?old-points)
 		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
   =>
   (bind ?points 0)
@@ -44,7 +45,7 @@
 (defrule update-last-time
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  (or (gamestate (phase ~PRODUCTION&~EXPLORATION))
+  (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP))
       (gamestate (state ~RUNNING)))
   ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
   =>
@@ -133,7 +134,7 @@
 
 
 (defrule goto-pre-game
-  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME&~NONE))
+  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
   =>
   (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
@@ -149,11 +150,35 @@
   (retract ?rf)
 )
 
-(defrule start-game
-  ?gs <- (gamestate (phase PRE_GAME) (state RUNNING))
+(defrule start-game-training
+  ?gs <- (gamestate (team "") (phase PRE_GAME) (state RUNNING))
   =>
   (modify ?gs (phase EXPLORATION) (prev-phase PRE_GAME) (start-time (now)))
-  (assert (attention-message "Starting game" 5))
+  (assert (attention-message "Starting  *** TRAINING ***  game" 5))
+)
+
+(defrule start-game
+  ?gs <- (gamestate (team ?team&~"") (phase PRE_GAME) (state RUNNING))
+  =>
+  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now)))
+  (assert (attention-message (str-cat "Starting game for team " ?team) 5))
+)
+
+(defrule setup-warn-end-near
+  (gamestate (phase SETUP) (state RUNNING)
+	     (game-time ?game-time&:(>= ?game-time (* ?*SETUP-TIME* .9))))
+  (not (setup-warned))
+  =>
+  (assert (setup-warned))
+  (assert (attention-message "Setup phase is about to end" 5))
+)
+
+(defrule switch-to-exploration
+  ?gs <- (gamestate (phase SETUP) (state RUNNING)
+		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
+  =>
+  (modify ?gs (phase EXPLORATION) (prev-phase SETUP))
+  (assert (attention-message "Switching to exploration phase" 5))
 )
 
 (defrule switch-to-production
