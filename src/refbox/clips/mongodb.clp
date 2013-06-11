@@ -15,11 +15,15 @@
   (delayed-do-for-all-facts ((?r mongodb-wrote-gamereport)) TRUE (retract ?r))
 )
 
-(deffunction mongodb-write-game-report (?stime)
+(deffunction mongodb-write-game-report (?stime ?etime)
   (bind ?doc (bson-create))
 
   (bson-append-array ?doc "start-timestamp" ?stime)
   (bson-append-time ?doc "start-time" (nth$ 1 ?stime) (nth$ 2 ?stime))
+
+  (if (time-nonzero ?etime) then
+    (bson-append-time ?doc "end-time" (nth$ 1 ?etime) (nth$ 2 ?etime))
+  )
 
   (bind ?points-arr (bson-array-start ?doc "points"))
   (bind ?phase-points-doc (bson-create))
@@ -51,26 +55,26 @@
 
 (defrule mongodb-game-report-begin
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (team ?team&~"") (prev-phase PRE_GAME) (start-time $?stime))
+  (gamestate (team ?team&~"") (prev-phase PRE_GAME) (start-time $?stime) (end-time $?etime))
   (not (mongodb-game-report begin $?stime))
   =>
-  (mongodb-write-game-report ?stime)
+  (mongodb-write-game-report ?stime ?etime)
   (assert (mongodb-game-report begin ?stime))
 )
 
 (defrule mongodb-game-report-end
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (team ?team&~"") (phase POST_GAME) (start-time $?stime))
+  (gamestate (team ?team&~"") (phase POST_GAME) (start-time $?stime) (end-time $?etime))
   (not (mongodb-game-report end $?stime))
   =>
-  (mongodb-write-game-report ?stime)
+  (mongodb-write-game-report ?stime ?etime)
   (assert (mongodb-game-report end ?stime))
 )
 
 (defrule mongodb-game-report-finalize
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (team ?team&~"") (start-time $?stime))
+  (gamestate (team ?team&~"") (start-time $?stime) (end-time $?etime))
   (finalize)
   =>
-  (mongodb-write-game-report ?stime)
+  (mongodb-write-game-report ?stime ?etime)
 )
