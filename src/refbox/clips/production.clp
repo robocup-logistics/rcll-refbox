@@ -103,7 +103,7 @@
     (modify ?machine (desired-lights GREEN-ON))
   )
 
-  (assert (attention-message "Entering Production Phase" 5))
+  ;(assert (attention-message "Entering Production Phase" 5))
 )
 
 (defrule machine-down

@@ -35,7 +35,7 @@
     (modify ?machine (desired-lights ?dl))
   )
 
-  (assert (attention-message "Entering Exploration Phase" 5))
+  ;(assert (attention-message "Entering Exploration Phase" 5))
 )
 
 (defrule exploration-pause
