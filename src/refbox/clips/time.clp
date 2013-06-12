@@ -44,6 +44,10 @@
   (return (create$ (integer ?t) (integer (* (- ?t (integer ?t)) 1000000.))))
 )
 
+(deffunction time-to-sec (?t)
+  (return (+ (nth$ 1 ?t) (/ (nth$ 2 ?t) 1000000.)))
+)
+
 (deffunction time-sec-format (?time-sec)
   (bind ?hour (div ?time-sec 3600))
   (bind ?min  (div (- ?time-sec (* ?hour 3600)) 60))
