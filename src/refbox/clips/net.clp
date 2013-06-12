@@ -242,26 +242,33 @@
   )
 )
 
-(defrule net-send-GameState
-  (time $?now)
-  (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase)
-	     (game-time ?game-time) (points ?points) (team ?team))
-  ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
-  =>
-  (modify ?f (time ?now) (seq (+ ?seq 1)))
-  (if (debug 3) then (printout t "Sending GameState" crlf))
+(deffunction net-create-GameState (?gs)
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))
   (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then 
-    (bind ?gt (time-from-sec ?game-time))
+    (bind ?gt (time-from-sec (fact-slot-value ?gs game-time)))
     (pb-set-field ?gamestate-time "sec" (nth$ 1 ?gt))
     (pb-set-field ?gamestate-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
     (pb-set-field ?gamestate "game_time" ?gamestate-time) ; destroys ?gamestate-time!
   )
-  (pb-set-field ?gamestate "state" (str-cat ?state))
-  (pb-set-field ?gamestate "phase" (str-cat ?phase))
-  (pb-set-field ?gamestate "points" ?points)
-  (if (neq ?team "") then (pb-set-field ?gamestate "team" ?team))
+  (pb-set-field ?gamestate "state" (fact-slot-value ?gs state))
+  (pb-set-field ?gamestate "phase" (fact-slot-value ?gs phase))
+  (pb-set-field ?gamestate "points" (fact-slot-value ?gs points))
+  (if (neq (fact-slot-value ?gs team) "")
+    then (pb-set-field ?gamestate "team" (fact-slot-value ?gs team)))
+
+  (return ?gamestate)
+)
+
+(defrule net-send-GameState
+  (time $?now)
+  ?gs <- (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase)
+		    (game-time ?game-time) (points ?points) (team ?team))
+  ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (if (debug 3) then (printout t "Sending GameState" crlf))
+  (bind ?gamestate (net-create-GameState ?gs))
 
   (pb-broadcast ?gamestate)
 
