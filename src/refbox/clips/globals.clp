@@ -50,6 +50,8 @@
   ; number of products per order
   ?*ORDER-QUANTITY-MIN* =  3
   ?*ORDER-QUANTITY-MAX* = 10
+  ?*LATE-ORDER-TIME* = 120
+  ?*LATE-ORDER-ACTIVATION-PRE-TIME* = 5
   ; number of points for specific actoins
   ?*RECYCLE-POINTS* = 3
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4

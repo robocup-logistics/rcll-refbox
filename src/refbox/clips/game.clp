@@ -51,8 +51,8 @@
       (bind ?deliver-start
         (random (nth$ 1 ?order:late-order-start-period)
 		(nth$ 2 ?order:late-order-start-period)))
-      (bind ?deliver-end (+ ?deliver-start 120))
-      (bind ?activate-at (max (- ?deliver-start 5) 0))
+      (bind ?deliver-end (+ ?deliver-start ?*LATE-ORDER-TIME*))
+      (bind ?activate-at (max (- ?deliver-start ?*LATE-ORDER-ACTIVATION-PRE-TIME*) 0))
       (modify ?order (active FALSE) (activate-at ?activate-at)
 	      (delivery-period ?deliver-start ?deliver-end))
     )
