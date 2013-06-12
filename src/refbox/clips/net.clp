@@ -177,7 +177,7 @@
   (if (> (length$ ?time-to-show) 0) then
     (pb-set-field ?attmsg "time_to_show" (first$ ?time-to-show)))
 
-  (do-for-all-facts ((?client network-client)) TRUE
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
 		    (pb-send ?client:id ?attmsg))
   (pb-destroy ?attmsg)
 )
@@ -262,7 +262,7 @@
   (pb-set-field ?gamestate "points" ?points)
   (if (neq ?team "") then (pb-set-field ?gamestate "team" ?team))
 
-  (do-for-all-facts ((?client network-client)) TRUE
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?gamestate)
   )
   (pb-broadcast ?gamestate)
@@ -323,7 +323,7 @@
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?ri (net-create-RobotInfo ?gtime TRUE))
 
-  (do-for-all-facts ((?client network-client)) TRUE
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?ri))
   (pb-destroy ?ri)
 )
@@ -404,7 +404,7 @@
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
-  (do-for-all-facts ((?client network-client)) TRUE
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?s)
   )
   (pb-destroy ?s)
@@ -514,7 +514,7 @@
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
   (bind ?oi (net-create-OrderInfo))
-  (do-for-all-facts ((?client network-client)) TRUE
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?oi))
   (pb-broadcast ?oi)
   (pb-destroy ?oi)
