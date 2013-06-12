@@ -589,7 +589,11 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
     p_attmsg_->bkgd(' '|COLOR_PAIR(0));
     p_attmsg_->erase();
 
+    // Erase version string
     panel_->hline(panel_->height() - 1, 2, 20);
+
+    // Erase refbox mode string
+    panel_->hline(panel_->height() - 1, panel_->width() - 35, 8);
 
     std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
     for (m = machines_.begin(); m != machines_.end(); ++m) {
@@ -699,6 +703,15 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     } else {
       navbar_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
       navbar_->addstr(0, navbar_->cols() - 5, "STOP");
+    }
+
+    // RefBox mode
+    if (g->refbox_mode() != llsf_msgs::GameState::STANDALONE) {
+      panel_->standend();
+      panel_->attron(A_BOLD);
+      panel_->printw(panel_->height() - 1, panel_->width() - 35,
+		     " %s ", llsf_msgs::GameState_RefBoxMode_Name(g->refbox_mode()).c_str());
+      panel_->standend();
     }
   }
 
