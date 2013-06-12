@@ -300,6 +300,8 @@ LLSFRefBox::setup_protobuf_comm()
 void
 LLSFRefBox::setup_clips()
 {
+  fawkes::MutexLocker lock(&clips_mutex_);
+
   logger_->log_info("RefBox", "Creating CLIPS environment");
   MultiLogger *mlogger = new MultiLogger();
   mlogger->add_logger(new ConsoleLogger(log_level_));
@@ -324,6 +326,8 @@ LLSFRefBox::setup_clips()
 void
 LLSFRefBox::start_clips()
 {
+  fawkes::MutexLocker lock(&clips_mutex_);
+
   if (!clips_->batch_evaluate(cfg_clips_dir_ + "init.clp")) {
     logger_->log_warn("RefBox", "Failed to initialize CLIPS environment, batch file failed.");
     throw fawkes::Exception("Failed to initialize CLIPS environment, batch file failed.");
@@ -543,6 +547,8 @@ LLSFRefBox::handle_client_sent_msg(std::string host, unsigned short int port,
 void
 LLSFRefBox::setup_clips_mongodb()
 {
+  fawkes::MutexLocker lock(&clips_mutex_);
+
   clips_->add_function("bson-create", sigc::slot<CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_create)));
   clips_->add_function("bson-parse", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_parse)));
   clips_->add_function("bson-destroy", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_destroy)));
