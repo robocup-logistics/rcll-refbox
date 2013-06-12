@@ -90,6 +90,7 @@
   (slot id (type INTEGER))
   (slot host (type STRING))
   (slot port (type INTEGER))
+  (slot is-slave (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
 (deftemplate order
@@ -119,6 +120,7 @@
 )
 
 (deftemplate gamestate
+  (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE MASTER SLAVE) (default STANDALONE))
   (slot state (type SYMBOL)
 	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
   (slot prev-state (type SYMBOL)
