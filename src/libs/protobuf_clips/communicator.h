@@ -127,7 +127,6 @@ class ClipsProtobufCommunicator
   void          clips_pb_enable_server(int port);
   void          clips_pb_enable_peer(std::string host,
 				     int send_port, int recv_port);
-  CLIPS::Value  clips_pb_connect(std::string host, int port);
 
 
   typedef enum {
