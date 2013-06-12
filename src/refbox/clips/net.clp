@@ -345,6 +345,63 @@
   (pb-destroy ?ri)
 )
 
+(deffunction net-create-Machine (?mf)
+    (bind ?m (pb-create "llsf_msgs.Machine"))
+
+    (pb-set-field ?m "name" (fact-slot-value ?mf name))
+    (pb-set-field ?m "type" (fact-slot-value ?mf mtype))
+    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype (fact-slot-value ?mf mtype))
+      (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
+      (pb-set-field ?m "output" (str-cat ?mspec:output))
+    )
+    (foreach ?puck-id (fact-slot-value ?mf loaded-with)
+      (bind ?p (pb-create "llsf_msgs.Puck"))
+      (do-for-fact ((?puck puck)) (eq ?puck:id ?puck-id)
+        (pb-set-field ?p "id" ?puck:id)
+	(pb-set-field ?p "state" ?puck:state)
+      )
+      (pb-add-list ?m "loaded_with" ?p)
+    )
+    (foreach ?l (fact-slot-value ?mf actual-lights)
+      (bind ?ls (pb-create "llsf_msgs.LightSpec"))
+      (bind ?dashidx (str-index "-" ?l))
+      (bind ?color (sub-string 1 (- ?dashidx 1) ?l))
+      (bind ?state (sub-string (+ ?dashidx 1) (str-length ?l) ?l))
+      (pb-set-field ?ls "color" ?color)
+      (pb-set-field ?ls "state" ?state)
+      (pb-add-list ?m "lights" ?ls)
+    )
+    (if (<> (fact-slot-value ?mf puck-id) 0) then
+      (bind ?p (pb-create "llsf_msgs.Puck"))
+      (do-for-fact ((?puck puck)) (= ?puck:id (fact-slot-value ?mf puck-id))
+        (pb-set-field ?p "id" ?puck:id)
+	(pb-set-field ?p "state" ?puck:state)
+      )
+      (pb-set-field ?m "puck_under_rfid" ?p)
+    )
+    ; If we have a pose publish it
+    (if (non-zero-pose (fact-slot-value ?mf pose)) then
+      (bind ?p (pb-field-value ?m "pose"))
+      (bind ?p-time (pb-field-value ?p "timestamp"))
+      (pb-set-field ?p-time "sec" (nth$ 1 (fact-slot-value ?mf pose-time)))
+      (pb-set-field ?p-time "nsec" (integer (* (nth$ 2 (fact-slot-value ?mf pose-time)) 1000)))
+      (pb-set-field ?p "timestamp" ?p-time)
+      (pb-set-field ?p "x" (nth$ 1 (fact-slot-value ?mf pose)))
+      (pb-set-field ?p "y" (nth$ 2 (fact-slot-value ?mf pose)))
+      (pb-set-field ?p "ori" (nth$ 3 (fact-slot-value ?mf pose)))
+      (pb-set-field ?m "pose" ?p)
+    )
+      
+    ; In exploration phase, indicate whether this was correctly reported
+    (do-for-fact ((?gs gamestate)) (eq ?gs:phase EXPLORATION)
+      (do-for-fact ((?report exploration-report)) (eq ?report:name (fact-slot-value ?mf name))
+	(pb-set-field ?m "correctly_reported" (neq ?report:type WRONG))
+      )
+    )
+
+    (return ?m)
+)
+
 (defrule net-send-MachineInfo
   (time $?now)
   ?sf <- (signal (type machine-info)
@@ -354,58 +411,7 @@
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
 
   (do-for-all-facts ((?machine machine)) TRUE
-    (bind ?m (pb-create "llsf_msgs.Machine"))
-
-    (pb-set-field ?m "name" ?machine:name)
-    (pb-set-field ?m "type" ?machine:mtype)
-    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype)
-      (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
-      (pb-set-field ?m "output" (str-cat ?mspec:output))
-    )
-    (foreach ?puck-id ?machine:loaded-with
-      (bind ?p (pb-create "llsf_msgs.Puck"))
-      (do-for-fact ((?puck puck)) (eq ?puck:id ?puck-id)
-        (pb-set-field ?p "id" ?puck:id)
-	(pb-set-field ?p "state" ?puck:state)
-      )
-      (pb-add-list ?m "loaded_with" ?p)
-    )
-    (foreach ?l ?machine:actual-lights
-      (bind ?ls (pb-create "llsf_msgs.LightSpec"))
-      (bind ?dashidx (str-index "-" ?l))
-      (bind ?color (sub-string 1 (- ?dashidx 1) ?l))
-      (bind ?state (sub-string (+ ?dashidx 1) (str-length ?l) ?l))
-      (pb-set-field ?ls "color" ?color)
-      (pb-set-field ?ls "state" ?state)
-      (pb-add-list ?m "lights" ?ls)
-    )
-    (if (<> ?machine:puck-id 0) then
-      (bind ?p (pb-create "llsf_msgs.Puck"))
-      (do-for-fact ((?puck puck)) (= ?puck:id ?machine:puck-id)
-        (pb-set-field ?p "id" ?puck:id)
-	(pb-set-field ?p "state" ?puck:state)
-      )
-      (pb-set-field ?m "puck_under_rfid" ?p)
-    )
-    ; If we have a pose publish it
-    (if (non-zero-pose ?machine:pose) then
-      (bind ?p (pb-field-value ?m "pose"))
-      (bind ?p-time (pb-field-value ?p "timestamp"))
-      (pb-set-field ?p-time "sec" (nth$ 1 ?machine:pose-time))
-      (pb-set-field ?p-time "nsec" (integer (* (nth$ 2 ?machine:pose-time) 1000)))
-      (pb-set-field ?p "timestamp" ?p-time)
-      (pb-set-field ?p "x" (nth$ 1 ?machine:pose))
-      (pb-set-field ?p "y" (nth$ 2 ?machine:pose))
-      (pb-set-field ?p "ori" (nth$ 3 ?machine:pose))
-      (pb-set-field ?m "pose" ?p)
-    )
-      
-    ; In exploration phase, indicate whether this was correctly reported
-    (do-for-fact ((?gs gamestate)) (eq ?gs:phase EXPLORATION)
-      (do-for-fact ((?report exploration-report)) (eq ?report:name ?machine:name)
-	(pb-set-field ?m "correctly_reported" (neq ?report:type WRONG))
-      )
-    )
+    (bind ?m (net-create-Machine ?machine))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
@@ -483,9 +489,26 @@
     (pb-add-list ?pi "pucks" ?p) ; destroys ?p
   )
 
-  (do-for-all-facts ((?client network-client)) TRUE
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?pi))
   (pb-destroy ?pi)
+)
+
+
+(deffunction net-create-Order (?order-fact)
+  (bind ?o (pb-create "llsf_msgs.Order"))
+
+  (pb-set-field ?o "id" (fact-slot-value ?order-fact id))
+  (pb-set-field ?o "product" (fact-slot-value ?order-fact product))
+  (pb-set-field ?o "quantity_requested" (fact-slot-value ?order-fact quantity-requested))
+  (pb-set-field ?o "quantity_delivered" (fact-slot-value ?order-fact quantity-delivered))
+  (pb-set-field ?o "delivery_gate" (fact-slot-value ?order-fact delivery-gate))
+  (pb-set-field ?o "delivery_period_begin"
+		(nth$ 1 (fact-slot-value ?order-fact delivery-period)))
+  (pb-set-field ?o "delivery_period_end"
+		(nth$ 2 (fact-slot-value ?order-fact delivery-period)))
+
+  (return ?o)
 )
 
 (deffunction net-create-OrderInfo ()
@@ -493,16 +516,7 @@
 
   (do-for-all-facts
     ((?order order)) (eq ?order:active TRUE)
-
-    (bind ?o (pb-create "llsf_msgs.Order"))
-
-    (pb-set-field ?o "id" ?order:id)
-    (pb-set-field ?o "product" ?order:product)
-    (pb-set-field ?o "quantity_requested" ?order:quantity-requested)
-    (pb-set-field ?o "quantity_delivered" ?order:quantity-delivered)
-    (pb-set-field ?o "delivery_gate" ?order:delivery-gate)
-    (pb-set-field ?o "delivery_period_begin" (nth$ 1 ?order:delivery-period))
-    (pb-set-field ?o "delivery_period_end"   (nth$ 2 ?order:delivery-period))
+    (bind ?o (net-create-Order ?order))
     (pb-add-list ?oi "orders" ?o) ; destroys ?o
   )
   (return ?oi)
