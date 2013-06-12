@@ -57,3 +57,8 @@ llsfrb:
 
   game:
     teams: [Carologistics]
+
+  sync:
+    enable: false
+    master-host: localhost
+    master-port: 4444
