@@ -8,9 +8,8 @@
 ;---------------------------------------------------------------------------
 
 (defrule exploration-start
+  (declare (salience ?*PRIORITY_FIRST*))
   ?gf <- (gamestate (phase EXPLORATION) (prev-phase ~EXPLORATION))
-  ?mf <- (machine (mtype ?mtype))
-  (machine-spec (mtype ?mtype) (light-code ?lc))
   =>
   ; Set prev phase to avoid re-firing, reset game time
   (modify ?gf (prev-phase EXPLORATION) (game-time 0.0))
