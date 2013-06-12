@@ -21,7 +21,7 @@
   (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
   (slot prev-state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
   (slot proc-time (type INTEGER))
-  (multislot proc-start (type FLOAT))
+  (slot proc-start (type FLOAT))
   (slot down-possible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (multislot down-period (type FLOAT) (cardinality 2 2) (default -1.0 -1.0))
   (slot puck-id (type INTEGER) (default 0))
