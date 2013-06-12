@@ -284,6 +284,14 @@
   )
 )
 
+(deffunction sync-send-GameState-to-slaves (?state)
+  (bind ?sgs (pb-create "llsf_msgs.SetGameState"))
+  (pb-set-field ?sgs "state" ?state)
+  (do-for-all-facts ((?client network-client)) ?client:is-slave
+    (pb-send ?client:id ?sgs)
+  )
+  (pb-destroy ?sgs)
+)
 
 (defrule sync-master-start-game
   (gamestate (state RUNNING) (prev-state WAIT_START))
@@ -292,11 +300,99 @@
   (not (sync-game-started))
   =>
   (assert (sync-game-started))
-  (bind ?sgs (pb-create "llsf_msgs.SetGameState"))
-  (pb-set-field ?sgs "state" RUNNING)
+  (sync-send-GameState-to-slaves RUNNING)
+)
+
+
+(defrule sync-slave-send-GameState
+  (time $?now)
+  ?gs <- (gamestate (refbox-mode SLAVE))
+  (sync (client-id ?client-id) (state UP))
+  ?f <- (signal (type sync-gamestate)
+		(time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?gamestate (net-create-GameState ?gs))
+  (pb-send ?client-id ?gamestate)
+  (pb-destroy ?gamestate)
+)
+
+
+(defrule sync-master-send-GameState
+  (time $?now)
+  ?gs <- (gamestate (refbox-mode MASTER))
+  ?f <- (signal (type sync-gamestate)
+		(time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?gamestate (net-create-GameState ?gs))
   (do-for-all-facts ((?client network-client)) ?client:is-slave
-    (pb-send ?client:id ?sgs)
+    (pb-send ?client:id ?gamestate)
   )
-  (pb-destroy ?sgs)
+  (pb-destroy ?gamestate)
+)
+
+(defrule sync-master-recv-GameState
+  ?gs <- (gamestate (refbox-mode MASTER) (phase PRODUCTION) (state PAUSED) (points ?points)
+		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+  ?mf <- (protobuf-msg (type "llsf_msgs.GameState") (ptr ?p) (rcvd-via STREAM))
+  =>
+  (retract ?mf)
+  (bind ?p-gtime  (pb-field-value ?p "game_time"))
+
+  (bind ?r-phase  (pb-field-value ?p "phase"))
+  (bind ?r-state  (pb-field-value ?p "state"))
+  (bind ?r-points (pb-field-value ?p "points"))
+  (bind ?r-gtime  (time-to-sec (create$ (pb-field-value ?p-gtime "sec")
+					(/ (pb-field-value ?p-gtime "nsec") 1000))))
+
+  ;(printout t "Remote game: " ?r-phase " " ?r-state " " ?r-gtime crlf)
+
+  (if (and (eq ?r-phase PRODUCTION) (eq ?r-state PAUSED) (> ?r-gtime ?*PRODUCTION-TIME*))
+    then ; remote has finished regular game time as well
+    (if (and (= ?r-points ?points) (<> ?points 0))
+      then ; equal but non-zero points, extension time
+        (assert (attention-message "Entering overtime" 5))
+	(modify ?gs (state RUNNING) (prev-state PAUSED) (over-time TRUE))
+	(sync-send-GameState-to-slaves RUNNING)
+
+      else ; teams have differing or both have zero points, game is over
+        (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION))
+    )
+    ; else game still running on other side
+  )
+)
+  
+
+(defrule sync-slave-recv-GameState
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?gs <- (gamestate (refbox-mode SLAVE) (phase PRODUCTION) (state PAUSED)
+		    (over-time FALSE)
+		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+  (sync (client-id ?client-id))
+  ?mf <- (protobuf-msg (type "llsf_msgs.GameState") (ptr ?p)
+		       (rcvd-via STREAM) (client-id ?client-id))
+  =>
+  (retract ?mf)
+  (bind ?p-gtime  (pb-field-value ?p "game_time"))
+
+  (bind ?r-phase  (pb-field-value ?p "phase"))
+  (bind ?r-state  (pb-field-value ?p "state"))
+  (bind ?r-points (pb-field-value ?p "points"))
+  (bind ?r-gtime  (time-to-sec (create$ (pb-field-value ?p-gtime "sec")
+					(/ (pb-field-value ?p-gtime "nsec") 1000))))
+
+  ;(printout t "Remote game: " ?r-phase " " ?r-state " " ?r-gtime crlf)
+
+  (if (and (eq ?r-phase PRODUCTION) (eq ?r-state RUNNING) (> ?r-gtime ?*PRODUCTION-TIME*))
+   then ; master has decided for overtime
+    (modify ?gs (over-time TRUE) (state RUNNING))
+    (assert (attention-message "Entering overtime" 5))
+  )
+  (if (and (eq ?r-phase POST_GAME) (> ?r-gtime ?*PRODUCTION-TIME*))
+   then ; master has decided for NO overtime
+    (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION))
+  )
+  ; else still waiting for remote side to complete game
 )
 

@@ -172,7 +172,7 @@
   ?gs <- (gamestate (team ?team&~"") (phase PRE_GAME) (state RUNNING))
   =>
   (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now)))
-  (assert (attention-message (str-cat "Starting game for team " ?team) 5))
+  (assert (attention-message (str-cat "Starting setup phase for team " ?team) 15))
 )
 
 (defrule game-setup-warn-end-near
@@ -218,20 +218,37 @@
 )
 
 (defrule game-over
-  ?gs <- (gamestate (phase PRODUCTION) (state RUNNING) (points ?points)
+  ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
+		    (over-time FALSE) (points ?points)
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
-  (game-print-points)
-  (assert (attention-message "Game Over" 60))
-  (printout t "===  Game Over  ===" crlf)
 )
 
-(defrule goto-post-game
+(defrule game-over-after-overtime
+  ?gs <- (gamestate (refbox-mode ~STANDALONE) (phase PRODUCTION) (state RUNNING)
+		    (over-time TRUE) (points ?points)
+		    (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
+  =>
+  (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
+)
+
+(defrule game-over-waitsync
+  ?gs <- (gamestate (refbox-mode ~STANDALONE) (phase PRODUCTION) (state RUNNING)
+		    (over-time FALSE) (game-time ?gt&:(>= ?gt ?*PRODUCTION-TIME*)))
+  =>
+  (modify ?gs (state PAUSED) (end-time (now)))
+  (assert (attention-message "Waiting for synchronized game to end" ?*PRODUCTION-TIME*))
+)
+
+(defrule game-goto-post-game
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
   (modify ?gs (prev-phase POST_GAME))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (desired-lights RED-BLINK))
   )
+  (game-print-points)
+  (assert (attention-message "Game Over" 60))
+  (printout t "===  Game Over  ===" crlf)
 )

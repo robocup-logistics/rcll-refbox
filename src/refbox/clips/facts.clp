@@ -135,6 +135,7 @@
   (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot points (type INTEGER) (default 0))
   (slot team (type STRING))
+  (slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
 (deftemplate exploration-report
@@ -168,6 +169,7 @@
   (gamestate (phase PRE_GAME))
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
+  (signal (type sync-gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))
   (signal (type bc-robot-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info) (time (create$ 0 0)) (seq 1))
