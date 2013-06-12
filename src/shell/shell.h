@@ -54,6 +54,10 @@ class NCursesMenu;
 namespace protobuf_comm {
   class ProtobufStreamClient;
 }
+namespace llsfrb {
+  class Configuration;
+}
+
 
 namespace llsf_msgs {
   class MachineInfo;
@@ -125,6 +129,13 @@ class LLSFRefBoxShell
   void beep(int frequency, int duration_ms);
 
  private: // members
+  std::shared_ptr<llsf_msgs::MachineInfo> last_minfo_;
+  std::shared_ptr<llsf_msgs::PuckInfo> last_pinfo_;
+  std::shared_ptr<llsf_msgs::GameInfo> last_gameinfo_;
+  std::shared_ptr<llsf_msgs::RobotInfo> last_robotinfo_;
+
+  llsfrb::Configuration *config_;
+
   bool        quit_;
   const char *error_;
   std::string s_state_;
@@ -168,10 +179,8 @@ class LLSFRefBoxShell
 
   protobuf_comm::ProtobufStreamClient *client;
 
-  std::shared_ptr<llsf_msgs::MachineInfo> last_minfo_;
-  std::shared_ptr<llsf_msgs::PuckInfo> last_pinfo_;
-  std::shared_ptr<llsf_msgs::GameInfo> last_gameinfo_;
-  std::shared_ptr<llsf_msgs::RobotInfo> last_robotinfo_;
+  std::string  cfg_refbox_host_;
+  unsigned int cfg_refbox_port_;
 
   bool beep_warning_shown_;
 };

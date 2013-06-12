@@ -45,6 +45,7 @@
 #include "colors.h"
 
 #include <protobuf_comm/client.h>
+#include <config/yaml.h>
 
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
@@ -93,6 +94,8 @@ LLSFRefBoxShell::LLSFRefBoxShell()
 {
   stdin_ = new boost::asio::posix::stream_descriptor(io_service_, dup(STDIN_FILENO));
   client = new ProtobufStreamClient();
+  config_ = new llsfrb::YamlConfiguration(CONFDIR);
+  config_->load("config.yaml");
 }
 
 
@@ -157,6 +160,8 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   delete p_points_;
   delete p_team_;
   delete p_attmsg_;
+
+  delete config_;
 }
 
 
@@ -439,7 +444,7 @@ void
 LLSFRefBoxShell::handle_reconnect_timer(const boost::system::error_code& error)
 {
   if (! error && try_reconnect_ && ! quit_) {
-    client->async_connect("localhost", 4444);
+    client->async_connect(cfg_refbox_host_.c_str(), cfg_refbox_port_);
   }
 }
 
@@ -965,6 +970,9 @@ LLSFRefBoxShell::beep(int frequency, int duration_ms)
 int
 LLSFRefBoxShell::run()
 {
+  cfg_refbox_host_ = config_->get_string("/llsfrb/shell/refbox-host");
+  cfg_refbox_port_ = config_->get_uint("/llsfrb/shell/refbox-port");
+
   panel_ = new NCursesPanel(LINES - 1, COLS);
   navbar_ = new NCursesPanel(1, COLS, LINES - 1, 0);
 
@@ -1213,7 +1221,7 @@ LLSFRefBoxShell::run()
   client->signal_received().connect(
     boost::bind(&LLSFRefBoxShell::dispatch_client_msg, this, _1, _2, _3));
 
-  client->async_connect("localhost", 4444);
+  client->async_connect(cfg_refbox_host_.c_str(), cfg_refbox_port_);
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.

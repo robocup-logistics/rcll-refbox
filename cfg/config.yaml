@@ -62,3 +62,7 @@ llsfrb:
     enable: false
     master-host: localhost
     master-port: 4444
+
+  shell:
+    refbox-host: localhost
+    refbox-port: 4444
