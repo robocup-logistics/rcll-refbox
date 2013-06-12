@@ -7,39 +7,39 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(defrule game-update-gametime-points
-  (declare (salience ?*PRIORITY_FIRST*))
-  (time $?now)
-  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (state RUNNING)
-		    (points ?old-points)
-		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
-  =>
-  (bind ?points 0)
-  (foreach ?phase (deftemplate-slot-allowed-values points phase)
-    (bind ?phase-points 0)
-    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
-      (bind ?phase-points (+ ?phase-points ?p:points))
-    )
-    (bind ?points (+ ?points (max ?phase-points 0)))
+(deffunction game-reset ()
+
+  ; Retract machine initialization state, if set
+  (do-for-fact ((?mi machines-initialized)) TRUE
+    (retract ?mi)
   )
-  (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now)
-	  (points ?points))
+
+  ; retract all delivery periods
+  ;(printout t "Retracting delivery periods" crlf)
+  (delayed-do-for-all-facts ((?dp delivery-period)) TRUE
+    (retract ?dp)
+  )
+
+  ; reset all down periods
+  ;(printout t "Resetting down periods" crlf) 
+  (delayed-do-for-all-facts ((?m machine)) TRUE
+    (modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
+  )
 )
 
-(defrule game-update-last-time
-  (declare (salience ?*PRIORITY_FIRST*))
-  (time $?now)
-  (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP))
-      (gamestate (state ~RUNNING)))
-  ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
+(defrule game-reset
+  (game-reset) ; this is a fact
   =>
-  (modify ?gf (last-time ?now))
+  (game-reset) ; this is a function
 )
 
 (defrule game-parameterize
-  (declare (salience ?*PRIORITY_FIRST*))
+  (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (phase ~PRE_GAME) (prev-phase PRE_GAME))
+  (not (game-parameterized))
+  (not (sync)) ; will be initialized in rule sync-slave-receive
   =>
+  (assert (game-parameterized))
 
   ; machine assignment if not already done
   (if (not (any-factp ((?mi machines-initialized)) TRUE))
@@ -105,17 +105,51 @@
 
     ; assign random quantities to non-late orders
     (delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
-      (modify ?order (quantity-requested (random 3 10)))
+      (modify ?order (quantity-requested (random ?*ORDER-QUANTITY-MIN* ?*ORDER-QUANTITY-MAX*)))
     )
   )
+)
 
+(defrule game-print
+  (game-parameterized)
+  =>
   ; Print late orders
-  (do-for-all-facts ((?order order)) (eq ?order:late-order TRUE)
-    (printout t "Late order " ?order:id
+  (do-for-all-facts ((?order order)) TRUE
+    (printout t (if ?order:late-order then "Late " else "") "Order " ?order:id
 	      ": from " (time-sec-format (nth$ 1 ?order:delivery-period))
 	      " to " (time-sec-format (nth$ 2 ?order:delivery-period)) crlf)
   )
 )
+
+(defrule game-update-gametime-points
+  (declare (salience ?*PRIORITY_FIRST*))
+  (time $?now)
+  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (state RUNNING)
+		    (points ?old-points)
+		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
+  =>
+  (bind ?points 0)
+  (foreach ?phase (deftemplate-slot-allowed-values points phase)
+    (bind ?phase-points 0)
+    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
+      (bind ?phase-points (+ ?phase-points ?p:points))
+    )
+    (bind ?points (+ ?points (max ?phase-points 0)))
+  )
+  (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now)
+	  (points ?points))
+)
+
+(defrule game-update-last-time
+  (declare (salience ?*PRIORITY_FIRST*))
+  (time $?now)
+  (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP))
+      (gamestate (state ~RUNNING)))
+  ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
+  =>
+  (modify ?gf (last-time ?now))
+)
+
 
 (defrule game-switch-to-pre-game
   ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))

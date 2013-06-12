@@ -54,16 +54,11 @@
     )
   )
 
-  (do-for-all-facts ((?mspec machine-spec)) TRUE
-    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?mspec:light-code)
-      (printout t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
-    )
-  )
 
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (loaded-with) (productions 0) (state IDLE)
-	             (proc-start 0.0) (puck-id 0) (desired-lights GREEN-ON))
+	             (proc-start 0.0) (puck-id 0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
 
   ; assign random machine types out of the start distribution
@@ -74,7 +69,6 @@
       ;(printout t "Randomized machine distribution: " ?machine-assignment crlf)
     else (bind ?machine-assignment ?*MACHINE-DISTRIBUTION*)
   )
-  (bind ?pp-mach-assignment (create$))
   (delayed-do-for-all-facts ((?machine machine))
     (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
     (if (= (length$ ?machine-assignment) 0)
@@ -82,13 +76,10 @@
      else
        (bind ?mtype (nth$ 1 ?machine-assignment))
        (bind ?machine-assignment (delete$ ?machine-assignment 1 1))
-       (bind ?pp-mach-assignment
-         (append$ ?pp-mach-assignment (sym-cat ?machine:name "/" ?mtype)))
        ;(printout t "Assigning type " ?mtype " to machine " ?machine:name crlf)
        (modify ?machine (mtype ?mtype))
     )
   )
-  (printout t "Machines: " ?pp-mach-assignment crlf)
 
   ; assign random down times
   (if ?*RANDOMIZE-GAME* then
@@ -139,6 +130,29 @@
     )
   )
 
+
+  (assert (machines-initialized))
+)
+
+(defrule machines-print
+  (machines-initialized)
+  =>
+
+  (bind ?pp-mach-assignment (create$))
+  (do-for-all-facts ((?machine machine) (?mspec machine-spec))
+    (eq ?machine:mtype ?mspec:mtype)
+
+    (bind ?pp-mach-assignment
+	  (append$ ?pp-mach-assignment (sym-cat ?machine:name "/" ?machine:mtype)))
+  )
+  (printout t "Machines: " ?pp-mach-assignment crlf)
+
+  (do-for-all-facts ((?mspec machine-spec)) TRUE
+    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?mspec:light-code)
+      (printout t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
+    )
+  )
+
   (do-for-all-facts ((?m machine)) (> (nth$ 1 ?m:down-period) -1.0)
     (printout t ?m:name " down from "
 		(time-sec-format (nth$ 1 ?m:down-period))
@@ -155,30 +169,6 @@
 
   (do-for-all-facts ((?mspec machine-spec)) TRUE
     (printout t "Proc time for " ?mspec:mtype " will be " ?mspec:proc-time " sec" crlf)
-  )
-
-  (assert (machines-initialized))
-)
-
-
-(defrule machine-reset-game
-  (reset-game)
-  =>
-  ; Retract machine initialization state, if set
-  (do-for-fact ((?mi machines-initialized)) TRUE
-    (retract ?mi)
-  )
-
-  (printout t "Retracting delivery periods" crlf)
-  ; retract all delivery periods
-  (delayed-do-for-all-facts ((?dp delivery-period)) TRUE
-    (retract ?dp)
-  )
-
-  (printout t "Resetting down periods" crlf) 
-  ; reset all down periods
-  (delayed-do-for-all-facts ((?m machine)) TRUE
-    (modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
   )
 
 )
