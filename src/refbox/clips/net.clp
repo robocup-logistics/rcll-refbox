@@ -244,7 +244,8 @@
 
 (defrule net-send-GameState
   (time $?now)
-  (gamestate (state ?state) (phase ?phase) (game-time ?game-time) (points ?points) (team ?team))
+  (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase)
+	     (game-time ?game-time) (points ?points) (team ?team))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
@@ -262,10 +263,14 @@
   (pb-set-field ?gamestate "points" ?points)
   (if (neq ?team "") then (pb-set-field ?gamestate "team" ?team))
 
+  (pb-broadcast ?gamestate)
+
+  ; For stream clients set refbox mode
+  (pb-set-field ?gamestate "refbox_mode" ?refbox-mode)
+
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?gamestate)
   )
-  (pb-broadcast ?gamestate)
   (pb-destroy ?gamestate)
 )
 
