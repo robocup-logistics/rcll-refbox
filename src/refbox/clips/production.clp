@@ -15,7 +15,7 @@
 )
 
 (defrule production-start
-  (declare (salience ?*PRIORITY_FIRST*))
+  (declare (salience ?*PRIORITY_HIGH*))
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
   =>
   (modify ?gs (prev-phase PRODUCTION) (game-time 0.0))

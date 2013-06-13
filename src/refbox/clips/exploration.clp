@@ -8,7 +8,7 @@
 ;---------------------------------------------------------------------------
 
 (defrule exploration-start
-  (declare (salience ?*PRIORITY_FIRST*))
+  (declare (salience ?*PRIORITY_HIGH*))
   ?gf <- (gamestate (phase EXPLORATION) (prev-phase ~EXPLORATION))
   =>
   ; Set prev phase to avoid re-firing, reset game time

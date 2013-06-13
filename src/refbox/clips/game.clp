@@ -34,7 +34,7 @@
 )
 
 (defrule game-parameterize
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
   (not (sync)) ; will be initialized in rule sync-slave-receive
