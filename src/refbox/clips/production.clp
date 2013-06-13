@@ -234,9 +234,9 @@
 		  (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gtime ?pstart ?pt)))
   ?pf <- (puck (id ?id) (state ?ps))
   =>
-  (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> CONSUMED)" crlf)
+  (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> FINISHED)" crlf)
   (modify ?mf (state ?prev-state) (productions (+ ?p 1)) (desired-lights GREEN-ON YELLOW-ON RED-ON))
-  (modify ?pf (state CONSUMED))
+  (modify ?pf (state FINISHED))
   (assert (product-delivered (game-time ?gtime) (product ?ps) (delivery-gate ?m)))
 )
 
@@ -246,10 +246,10 @@
   ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id 0))
   ?pf <- (puck (id ?id) (state ?ps))
   =>
-  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> CONSUMED)" crlf)
+  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
   (assert (attention-message (str-cat "Remove puck " ?id " from field @ " ?m) 5))
   (modify ?mf (puck-id ?id) (desired-lights RED-ON YELLOW-BLINK))
-  (modify ?pf (state CONSUMED))
+  (modify ?pf (state FINISHED))
 )
 
 (defrule deliver-removal
@@ -302,6 +302,14 @@
   (modify ?mf (state IDLE) (puck-id 0) (desired-lights GREEN-ON))
 )
 
+(defrule test-finished
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype TEST) (state IDLE))
+  (puck (id ?id) (state FINISHED))
+  =>
+  (modify ?mf (puck-id ?id) (state PROCESSING)
+	  (desired-lights RED-BLINK YELLOW-BLINK GREEN-BLINK))
+)
 
 (defrule test-consumed
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))

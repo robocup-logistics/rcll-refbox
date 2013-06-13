@@ -50,7 +50,7 @@
 (deftemplate puck
   (slot index (type INTEGER))
   (slot id (type INTEGER))
-  (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 CONSUMED) (default S0))
+  (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 CONSUMED FINISHED) (default S0))
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 2 2) (default 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
