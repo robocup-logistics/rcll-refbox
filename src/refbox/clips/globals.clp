@@ -57,6 +57,8 @@
   ?*RECYCLE-POINTS* = 3
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4
   ?*EXPLORATION-WRONG-REPORT-POINTS* = -3
+  ; Setup light effects
+  ?*SETUP-LIGHT-PERIOD* = 1.0
   ; number of allowed robot maintenance cycles
   ?*MAINTENANCE-ALLOWED-CYCLES* = 1
   ?*MAINTENANCE-ALLOWED-TIME*   = 120

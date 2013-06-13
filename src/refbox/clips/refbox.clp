@@ -22,6 +22,7 @@
 (load* (resolve-file robots.clp))
 (load* (resolve-file orders.clp))
 (load* (resolve-file game.clp))
+(load* (resolve-file setup.clp))
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
 

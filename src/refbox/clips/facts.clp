@@ -179,6 +179,8 @@
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
   (signal (type exploration-info) (time (create$ 0 0)) (seq 1))
+  (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
+  (setup-light-toggle 0)
   ; Positions are the example ones from the rulebook and
   ; will most likely be different during the tournament
   (machine (name M1)  (mtype T1)      (pose 3.92 1.68 ?*M-DOWN*))
