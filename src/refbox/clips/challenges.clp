@@ -8,6 +8,7 @@
 ;---------------------------------------------------------------------------
 
 
+; ***** WHACK-A-MOLE challenge *****
 (defrule techal-wam-next
   ?gs <- (gamestate (phase WHACK_A_MOLE_CHALLENGE) (state RUNNING) (prev-state ~RUNNING))
   ?wf <- (whac-a-mole-light ?old-machine)
@@ -75,4 +76,13 @@
   =>
   (modify ?gs (phase POST_GAME) (prev-phase WHACK_A_MOLE_CHALLENGE) (state PAUSED)
 	  (end-time (now)))
+)
+
+
+; ***** NAVIGATION challenge *****
+(defrule techal-navigation-game-over
+  ?gs <- (gamestate (phase NAVIGATION_CHALLENGE) (state RUNNING)
+		    (game-time ?game-time&:(>= ?game-time ?*TECHCHALL-NAVIGATION-TIME*)))
+  =>
+  (modify ?gs (phase POST_GAME) (prev-phase NAVIGATION_CHALLENGE) (state PAUSED) (end-time (now)))
 )

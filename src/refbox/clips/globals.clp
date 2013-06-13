@@ -64,6 +64,7 @@
   ; maximum X or Y distance from signal to accept target reached
   ?*TECHCHALL-WAM-BOX-SIZE* = (create$ 0.65 0.65)
   ?*TECHCHALL-WAM-TIME* = 300
+  ?*TECHCHALL-NAVIGATION-TIME* = 60
   ; number of allowed robot maintenance cycles
   ?*MAINTENANCE-ALLOWED-CYCLES* = 1
   ?*MAINTENANCE-ALLOWED-TIME*   = 120
