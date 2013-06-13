@@ -61,9 +61,9 @@ message GameState {
     PRODUCTION  = 30;
     POST_GAME   = 40;
 
-    OPEN_CHALLENGE        = 1000;
-    NAVIGATION_CHALLENGE  = 1001;
-    WHAC_A_MOLE_CHALLENGE = 1002;
+    OPEN_CHALLENGE         = 1000;
+    NAVIGATION_CHALLENGE   = 1001;
+    WHACK_A_MOLE_CHALLENGE = 1002;
   }
 
   enum RefBoxMode {
