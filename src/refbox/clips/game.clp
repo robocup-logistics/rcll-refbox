@@ -35,7 +35,7 @@
 
 (defrule game-parameterize
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (phase ~PRE_GAME) (prev-phase PRE_GAME))
+  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
   (not (sync)) ; will be initialized in rule sync-slave-receive
   =>
@@ -143,7 +143,7 @@
 (defrule game-update-last-time
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP))
+  (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP&~WHACK_A_MOLE_CHALLENGE))
       (gamestate (state ~RUNNING)))
   ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
   =>
