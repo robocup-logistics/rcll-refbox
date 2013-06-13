@@ -68,6 +68,8 @@
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot vision-pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
+  (multislot vision-pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot maintenance-start-time (type FLOAT))
   (slot maintenance-cycles (type INTEGER) (default 0))
   (slot maintenance-warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
