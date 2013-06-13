@@ -12,8 +12,8 @@
 ; broadcasted whenever a new client is detected.
 (defglobal
   ?*VERSION-MAJOR* = 0
-  ?*VERSION-MINOR* = 5
-  ?*VERSION-MICRO* = 1
+  ?*VERSION-MINOR* = 6
+  ?*VERSION-MICRO* = 0
 )
 
 (load* (resolve-file net.clp))
