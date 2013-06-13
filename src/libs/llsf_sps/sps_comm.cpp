@@ -178,12 +178,16 @@ SPSComm::test_lights()
 {
   // yes, we could use modbus_write_registers to write it all at once,
   // but that would not test the typical code path
+
+  // Set all to blink
   for (int m = M_BEGIN; m < M_END; ++m) {
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
       set_light((Machine)m, (Light)l, SIGNAL_BLINK);
     }
   }
   usleep(2000000);
+
+  // Set all ON
   for (int m = M_BEGIN; m < M_END; ++m) {
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
       set_light((Machine)m, (Light)l, SIGNAL_ON);
@@ -191,6 +195,7 @@ SPSComm::test_lights()
   }
   usleep(500000);
 
+  // Turn on one color at a time
   for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
     reset_lights();
     for (int m = M_BEGIN; m < M_END; ++m) {
@@ -199,17 +204,20 @@ SPSComm::test_lights()
     usleep(250000);
   }
 
-  for (int m = M_BEGIN; m < M_END; ++m) {
-    for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light((Machine)m, (Light)l, SIGNAL_ON);
-    }
-  }
-  usleep(1000000);
+  // Turn all OFF
   for (int m = M_BEGIN; m < M_END; ++m) {
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
       set_light((Machine)m, (Light)l, SIGNAL_OFF);
     }
-    usleep(100000);
+  }
+  usleep(1000000);
+
+  // Turn them on one after another
+  for (int m = M_BEGIN; m < M_END; ++m) {
+    for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
+      set_light((Machine)m, (Light)l, SIGNAL_ON);
+    }
+    usleep(80000);
   }
 }
 
