@@ -168,8 +168,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     std::string mdb_protobuf  = config_->get_string("/llsfrb/mongodb/collections/protobuf");
     mlogger->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_text_log));
 
-    clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_,
-						   cfg_mongodb_clips_coll_));
+    clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_clips_log));
 
     mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
 

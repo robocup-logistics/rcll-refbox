@@ -169,7 +169,6 @@ class LLSFRefBox
 #ifdef HAVE_MONGODB
   bool                cfg_mongodb_enabled_;
   std::string         cfg_mongodb_hostport_;
-  std::string         cfg_mongodb_clips_coll_;
   MongoDBLogProtobuf  *mongodb_protobuf_;
   mongo::DBClientBase *mongodb_;
 #endif
