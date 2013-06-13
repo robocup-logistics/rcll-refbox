@@ -15,11 +15,12 @@
   (delayed-do-for-all-facts ((?r mongodb-wrote-gamereport)) TRUE (retract ?r))
 )
 
-(deffunction mongodb-write-game-report (?stime ?etime)
+(deffunction mongodb-write-game-report (?team ?stime ?etime)
   (bind ?doc (bson-create))
 
   (bson-append-array ?doc "start-timestamp" ?stime)
   (bson-append-time ?doc "start-time" ?stime)
+  (bson-append ?doc "team" ?team)
 
   (if (time-nonzero ?etime) then
     (bson-append-time ?doc "end-time" ?etime)
@@ -61,7 +62,7 @@
   (gamestate (team ?team&~"") (prev-phase PRE_GAME) (start-time $?stime) (end-time $?etime))
   (not (mongodb-game-report begin $?stime))
   =>
-  (mongodb-write-game-report ?stime ?etime)
+  (mongodb-write-game-report ?team ?stime ?etime)
   (assert (mongodb-game-report begin ?stime))
 )
 
@@ -70,7 +71,7 @@
   (gamestate (team ?team&~"") (phase POST_GAME) (start-time $?stime) (end-time $?etime))
   (not (mongodb-game-report end $?stime))
   =>
-  (mongodb-write-game-report ?stime ?etime)
+  (mongodb-write-game-report ?team ?stime ?etime)
   (assert (mongodb-game-report end ?stime))
 )
 
@@ -79,7 +80,7 @@
   (gamestate (team ?team&~"") (start-time $?stime) (end-time $?etime))
   (finalize)
   =>
-  (mongodb-write-game-report ?stime ?etime)
+  (mongodb-write-game-report ?team ?stime ?etime)
 )
 
 (defrule mongodb-net-client-connected
