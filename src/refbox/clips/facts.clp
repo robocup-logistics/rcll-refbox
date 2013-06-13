@@ -128,9 +128,13 @@
   (slot prev-state (type SYMBOL)
 	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
   (slot phase (type SYMBOL)
-	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default PRE_GAME))
+	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME
+			OPEN_CHALLENGE NAVIGATION_CHALLENGE WHACK_A_MOLE_CHALLENGE)
+	(default PRE_GAME))
   (slot prev-phase (type SYMBOL)
-	(allowed-values NONE PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default NONE))
+	(allowed-values NONE PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME
+			OPEN_CHALLENGE NAVIGATION_CHALLENGE WHACK_A_MOLE_CHALLENGE)
+	(default NONE))
   (slot game-time (type FLOAT) (default 0.0))
   (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
@@ -151,7 +155,7 @@
 (deftemplate points
   (slot points (type INTEGER))
   (slot game-time (type FLOAT))
-  (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION))
+  (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION WHACK_A_MOLE_CHALLENGE))
   (slot reason (type STRING))
 )
 
@@ -183,6 +187,7 @@
   (signal (type exploration-info) (time (create$ 0 0)) (seq 1))
   (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
   (setup-light-toggle 0)
+  (whac-a-mole-light NONE)
   ; Positions are the example ones from the rulebook and
   ; will most likely be different during the tournament
   (machine (name M1)  (mtype T1)      (pose 3.92 1.68 ?*M-DOWN*))

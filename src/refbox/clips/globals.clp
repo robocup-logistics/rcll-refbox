@@ -59,6 +59,11 @@
   ?*EXPLORATION-WRONG-REPORT-POINTS* = -3
   ; Setup light effects
   ?*SETUP-LIGHT-PERIOD* = 1.0
+  ; Technical challenge settings
+  ?*TECHCHALL-WAM-MACHINES* = (create$ M1 M2 M3 M4 M5 M6 M7 M8 M9 M10)
+  ; maximum X or Y distance from signal to accept target reached
+  ?*TECHCHALL-WAM-BOX-SIZE* = (create$ 0.65 0.65)
+  ?*TECHCHALL-WAM-TIME* = 300
   ; number of allowed robot maintenance cycles
   ?*MAINTENANCE-ALLOWED-CYCLES* = 1
   ?*MAINTENANCE-ALLOWED-TIME*   = 120

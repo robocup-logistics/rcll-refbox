@@ -39,3 +39,12 @@
   (foreach ?pf ?pose (if (<> ?pf 0.0) then (return TRUE)))
   (return FALSE)
 )
+
+
+(deffunction in-box (?pose ?box-center ?box-extent)
+  (bind ?box-half-x (/ (nth$ 1 ?box-extent) 2))
+  (bind ?box-half-y (/ (nth$ 2 ?box-extent) 2))
+
+  (return (and (<= (abs (- (nth$ 1 ?pose) (nth$ 1 ?box-center))) ?box-half-x)
+	       (<= (abs (- (nth$ 2 ?pose) (nth$ 2 ?box-center))) ?box-half-y)))
+)

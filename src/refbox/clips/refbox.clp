@@ -25,6 +25,7 @@
 (load* (resolve-file setup.clp))
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
+(load* (resolve-file challenges.clp))
 
 (defrule rfid-input-learn-puck
   (declare (salience ?*PRIORITY_FIRST*))
