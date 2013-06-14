@@ -683,9 +683,11 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       orders_[i]->set_gametime(g->game_time().sec());
     }
 
+    p_points_->erase();
     if (g->has_points()) {
-      p_points_->erase();
       p_points_->printw("%u", g->points());
+    } else {
+      p_points_->printw("---");
     }
 
     p_team_->erase();
