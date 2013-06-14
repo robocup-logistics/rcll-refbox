@@ -56,6 +56,10 @@
 #  include <mongodb_log/mongodb_log_logger.h>
 #  include <mongodb_log/mongodb_log_protobuf.h>
 #endif
+#ifdef HAVE_AVAHI
+#  include <netcomm/dns-sd/avahi_thread.h>
+#  include <netcomm/utils/resolver.h>
+#endif
 
 using namespace llsf_sps;
 using namespace protobuf_comm;
@@ -202,12 +206,31 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 #endif
 
   start_clips();
+
+#ifdef HAVE_AVAHI
+  unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
+  avahi_thread_ = new fawkes::AvahiThread();
+  avahi_thread_->start();
+  nnresolver_   = new fawkes::NetworkNameResolver(avahi_thread_);
+  fawkes::NetworkService *refbox_service =
+    new fawkes::NetworkService(nnresolver_, "RefBox on %h", "_refbox._tcp", refbox_port);
+  avahi_thread_->publish_service(refbox_service);
+  delete refbox_service;
+#endif
+
 }
 
 /** Destructor. */
 LLSFRefBox::~LLSFRefBox()
 {
   timer_.cancel();
+
+#ifdef HAVE_AVAHI
+  avahi_thread_->cancel();
+  avahi_thread_->join();
+  delete avahi_thread_;
+  delete nnresolver_;
+#endif
 
   //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
   {

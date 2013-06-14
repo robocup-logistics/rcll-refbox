@@ -21,13 +21,14 @@ include $(BUILDSYSDIR)/clips.mk
 include $(BUILDSYSDIR)/boost.mk
 include $(BUILDCONFDIR)/llsf_sps/llsf_sps.mk
 include $(BUILDCONFDIR)/mongodb_log/mongodb.mk
+include $(BUILDCONFDIR)/netcomm/netcomm.mk
 
 CFLAGS += $(CFLAGS_CPP11)
 
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_llsf_refbox = stdc++ llsfrbcore llsfrbconfig llsfrblogging \
+LIBS_llsf_refbox = stdc++ llsfrbcore llsfrbconfig llsfrblogging  llsfrbnetcomm \
 		   llsf_protobuf_comm llsf_protobuf_clips llsf_sps
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
@@ -40,6 +41,11 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_LIBMODBUS) $(LDFLAGS_CLIPS) $(LDFLAGS_MONGODB) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   #MANPAGES_all =  $(MANDIR)/man1/llsf-refbox.1
+
+  ifeq ($(HAVE_AVAHI),1)
+    CFLAGS  += $(CFLAGS_AVAHI)
+    LDFLAGS += $(LDFLAGS_AVAHI)
+  endif
 
   ifeq ($(HAVE_MONGODB),1)
     LIBS_llsf_refbox += llsf_mongodb_log

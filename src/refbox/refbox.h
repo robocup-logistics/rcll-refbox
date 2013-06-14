@@ -58,6 +58,14 @@ namespace llsf_sps {
   class SPSComm;
 }
 
+#ifdef HAVE_AVAHI
+namespace fawkes {
+  class AvahiThread;
+  class NetworkNameResolver;
+  class ServicePublisher;
+}
+#endif
+
 #ifdef HAVE_MONGODB
 class MongoDBLogProtobuf;
 namespace mongo {
@@ -165,6 +173,11 @@ class LLSFRefBox
 
   unsigned int cfg_timer_interval_;
   std::string  cfg_clips_dir_;
+
+#ifdef HAVE_AVAHI
+  fawkes::AvahiThread          *avahi_thread_;
+  fawkes::NetworkNameResolver  *nnresolver_;
+#endif
 
 #ifdef HAVE_MONGODB
   bool                cfg_mongodb_enabled_;
