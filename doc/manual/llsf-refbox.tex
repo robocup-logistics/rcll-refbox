@@ -543,7 +543,7 @@ situations may be necessary, e.g. to fix problems.
     \vspace{0pt}
     \lstinputlisting[showlines,style=really-small-protobuf,
       firstline=37, escapechar=\%,%    %caption=,belowcaptionskip=2mm,
-      framexleftmargin=4pt, xleftmargin=4pt,numbers=none,
+      framexleftmargin=4pt, xleftmargin=4pt,numbers=none,breakatwhitespace=true,
       morekeywords={\$?ms},emph={merge,m-prio}]
       {../../src/msgs/#1}
   \end{minipage}
@@ -565,47 +565,12 @@ situations may be necessary, e.g. to fix problems.
 \end{minipage}
 }
 
-\hspace{-1.1\parindent}
-\begin{minipage}{\linewidth}
-  \begin{minipage}[t]{.48\linewidth}
-    \vspace{0pt}
-    \begin{lstlisting}[showlines,style=really-small-protobuf,
-      escapechar=\%,
-      framexleftmargin=4pt, xleftmargin=4pt,numbers=none,
-      morekeywords={\$?ms},emph={merge,m-prio}]
-package llsf_msgs;
-
-message AttentionMessage {
-  enum CompType {
-    COMP_ID  = 2000;
-    MSG_TYPE = 2;
-  }
-
-  // The message to display, be brief!
-  required string %message% = 1;
-  // Time in sec the message is visible
-  optional float  time_to_show = 2;
+\msgspec{AttentionMessage.proto}{Client-Server}{events}{refbox}{controller}%
+{%
+  An AttentionMessage is sent when a particular event requires human
+  attention, e.g. if a late order puck must be placed or if
+  communication to a robot is lost.
 }
-    \end{lstlisting}
-  \end{minipage}
-  \hspace{.01\linewidth}
-  \begin{minipage}[t]{.51\linewidth}
-    \vspace{2pt}
-    \small
-    \begin{tabular}{>{\bfseries}ll>{\bfseries}ll}
-      File:&\multicolumn{3}{p{.95\linewidth}}{%
-        \texttt{AttentionMessage.proto}
-      }\\[3pt]
-      Via:&Client-Server&Period:&events\\
-      Sent by:&refbox&Sent to:&controller\\[3pt]
-      \multicolumn{4}{p{.95\linewidth}}{%
-        An AttentionMessage is sent when a particular event
-        requires human attention, e.g. if a late order puck must be
-        placed or if communication to a robot is lost.
-      }
-    \end{tabular}
-  \end{minipage}
-\end{minipage}
 
 \msgspec{BeaconSignal.proto}{Peer-to-Peer}{1\,sec}{robots \& refbox}{any}%
 {%
@@ -684,6 +649,14 @@ message AttentionMessage {
   allow the robot to catch up without jeopardizing the game.
 }
 
+\msgspec{GameInfo.proto}{Client-Server}{start}{refbox}{controller}%
+{%
+  Additional information about the game. This is sent on initial
+  connection by the refbox to controllers. At the moment it contains a
+  list of known teams that can be set by the controller as playing
+  team.
+}
+
 \msgspec{GameState.proto}{P2P \& C-S}{1\,sec}{refbox}{all}%
 {%
   The GameState message is periodically sent via peer-to-peer to all
@@ -736,6 +709,15 @@ message AttentionMessage {
   the log window). No team computer or robot is allowed to connect to
   the refbox as particularly the machine state information allows for
   cheating.
+}
+
+\msgspec{MachineCommands.proto}{Client-Server}{event}{controller}{refbox}%
+{%
+  This protobuf file contains messages for specific instructions to
+  the refbox, e.g. placing or loading a puck in the machine, or
+  removing it. The commands can be also be used to write a game
+  simulation that operates against a training refbox (without an
+  actual PLC).
 }
 
 \msgspec{MachineReport.proto}{Peer-to-Peer}{$2$\,sec}{robots}{refbox}%
@@ -809,6 +791,25 @@ message AttentionMessage {
   The pose information is optional. For teams which choose to provide
   this information in the BeaconSignal it is forwarded to the
   controller for visualization.
+}
+
+\msgspec{RobotCommands.proto}{Client-Server}{event}{controllers}{refbox}%
+{%
+  Commands related to robots that controllers can send to the
+  refbox. Currently the only message allows to set the maintenance
+  state of a particular robot.
+}
+
+\msgspec{Sync.proto}{Client-Server}{connect}{refbox}{refbox}%
+{%
+  The synchronization messages allow two refboxes to synchronize their
+  games, i.e. one master refbox determines the game configuration
+  which slaves can download.
+
+  \medskip
+  The slave initiates the synchronization by sending the InitiateSync
+  request. Afterwards the master refbox will send the SyncInfo message
+  (after the game has been parameterized).
 }
 
 \section{Further Development}
