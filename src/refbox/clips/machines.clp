@@ -137,9 +137,20 @@
   (assert (machines-initialized))
 )
 
+(defrule machines-reset-print
+  (game-reset)
+  ?mf <- (machines-printed)
+  =>
+  (retract ?mf)
+)
+
 (defrule machines-print
   (machines-initialized)
+  (gamestate (team ?team) (phase PRODUCTION|EXPLORATION))
+  (not (machines-printed))
   =>
+  (assert (machines-printed))
+  (bind ?t (if (eq ?team "") then t else debug))
 
   (bind ?pp-mach-assignment (create$))
   (do-for-all-facts ((?machine machine) (?mspec machine-spec))
@@ -148,30 +159,30 @@
     (bind ?pp-mach-assignment
 	  (append$ ?pp-mach-assignment (sym-cat ?machine:name "/" ?machine:mtype)))
   )
-  (printout t "Machines: " ?pp-mach-assignment crlf)
+  (printout ?t "Machines: " ?pp-mach-assignment crlf)
 
   (do-for-all-facts ((?mspec machine-spec)) TRUE
     (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?mspec:light-code)
-      (printout t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
+      (printout ?t "Light code " ?light-code:code " for machine type " ?mspec:mtype crlf)
     )
   )
 
   (do-for-all-facts ((?m machine)) (> (nth$ 1 ?m:down-period) -1.0)
-    (printout t ?m:name " down from "
+    (printout ?t ?m:name " down from "
 		(time-sec-format (nth$ 1 ?m:down-period))
 		" to " (time-sec-format (nth$ 2 ?m:down-period))
 		" (" (- (nth$ 2 ?m:down-period) (nth$ 1 ?m:down-period)) " sec)" crlf)
   )
 
   (do-for-all-facts ((?period delivery-period)) TRUE
-    (printout t "Deliver time " ?period:delivery-gate ": "
+    (printout ?t "Deliver time " ?period:delivery-gate ": "
 	      (time-sec-format (nth$ 1 ?period:period)) " to "
 	      (time-sec-format (nth$ 2 ?period:period)) " ("
 	      (- (nth$ 2 ?period:period) (nth$ 1 ?period:period)) " sec)" crlf)
   )
 
   (do-for-all-facts ((?mspec machine-spec)) TRUE
-    (printout t "Proc time for " ?mspec:mtype " will be " ?mspec:proc-time " sec" crlf)
+    (printout ?t "Proc time for " ?mspec:mtype " will be " ?mspec:proc-time " sec" crlf)
   )
 
 )

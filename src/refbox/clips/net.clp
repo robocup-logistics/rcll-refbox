@@ -352,23 +352,31 @@
   (pb-destroy ?ri)
 )
 
-(deffunction net-create-Machine (?mf)
+(deffunction net-create-Machine (?mf ?add-type-info)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
+    (bind ?mtype (fact-slot-value ?mf mtype))
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
-    (pb-set-field ?m "type" (fact-slot-value ?mf mtype))
-    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype (fact-slot-value ?mf mtype))
-      (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
-      (pb-set-field ?m "output" (str-cat ?mspec:output))
-    )
-    (foreach ?puck-id (fact-slot-value ?mf loaded-with)
-      (bind ?p (pb-create "llsf_msgs.Puck"))
-      (do-for-fact ((?puck puck)) (eq ?puck:id ?puck-id)
-        (pb-set-field ?p "id" ?puck:id)
-	(pb-set-field ?p "state" ?puck:state)
+    (if (or ?add-type-info (member$ ?mtype ?*MACHINE-UNRESTRICTED-TYPES*))
+     then
+      (pb-set-field ?m "type" ?mtype)
+
+      (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype (fact-slot-value ?mf mtype))
+        (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
+        (pb-set-field ?m "output" (str-cat ?mspec:output))
       )
-      (pb-add-list ?m "loaded_with" ?p)
+      (foreach ?puck-id (fact-slot-value ?mf loaded-with)
+        (bind ?p (pb-create "llsf_msgs.Puck"))
+	(do-for-fact ((?puck puck)) (eq ?puck:id ?puck-id)
+          (pb-set-field ?p "id" ?puck:id)
+	  (pb-set-field ?p "state" ?puck:state)
+        )
+        (pb-add-list ?m "loaded_with" ?p)
+      )
+     else
+      (pb-set-field ?m "type" "?")
     )
+
     (foreach ?l (fact-slot-value ?mf actual-lights)
       (bind ?ls (pb-create "llsf_msgs.LightSpec"))
       (bind ?dashidx (str-index "-" ?l))
@@ -411,6 +419,7 @@
 
 (defrule net-send-MachineInfo
   (time $?now)
+  (gamestate (phase ?phase))
   ?sf <- (signal (type machine-info)
 		 (time $?t&:(timeout ?now ?t ?*MACHINE-INFO-PERIOD*)) (seq ?seq))
   =>
@@ -418,7 +427,7 @@
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
 
   (do-for-all-facts ((?machine machine)) TRUE
-    (bind ?m (net-create-Machine ?machine))
+    (bind ?m (net-create-Machine ?machine (eq ?phase PRODUCTION)))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 

@@ -110,12 +110,31 @@
   )
 )
 
+(defrule game-reset-print
+  (game-reset)
+  ?gf <- (game-printed)
+  =>
+  (retract ?gf)
+)
+  
+
 (defrule game-print
   (game-parameterized)
+  (gamestate (team ?team))
+  (not (game-printed))
   =>
+  (assert (game-printed))
+
+  (bind ?t t)
+  (if (neq ?team "")
+   then
+    (bind ?t debug)
+    (printout warn "Printing game config to debug log only" crlf)
+  )
+
   ; Print late orders
-  (do-for-all-facts ((?order order)) TRUE
-    (printout t (if ?order:late-order then "Late " else "") "Order " ?order:id
+  (do-for-all-facts ((?order order)) ?order:late-order
+    (printout ?t (if ?order:late-order then "Late " else "") "Order " ?order:id
 	      ": from " (time-sec-format (nth$ 1 ?order:delivery-period))
 	      " to " (time-sec-format (nth$ 2 ?order:delivery-period)) crlf)
   )

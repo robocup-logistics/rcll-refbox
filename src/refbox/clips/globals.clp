@@ -75,6 +75,8 @@
   ?*EXPLORATION-TIME*     = 180
   ?*PRODUCTION-TIME*      = 900
   ?*PRODUCTION-OVERTIME*  = 300
+  ; Machine types that may always be announced
+  ?*MACHINE-UNRESTRICTED-TYPES* = (create$ DELIVER TEST RECYCLE)
   ; Machine distribution
   ?*RANDOMIZE-GAME* = TRUE
   ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T4 T5)
