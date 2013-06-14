@@ -124,7 +124,7 @@
 (defrule game-update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  ?gf <- (gamestate (phase EXPLORATION|PRODUCTION|WHACK_A_MOLE_CHALLENGE|NAVIGATION_CHALLENGE)
+  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION|WHACK_A_MOLE_CHALLENGE|NAVIGATION_CHALLENGE)
 		    (state RUNNING) (points ?old-points)
 		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
   =>
