@@ -39,10 +39,12 @@
 
 #include <boost/asio.hpp>
 #include <google/protobuf/message.h>
-#include "robocup_ssl_client.h"
 
 namespace protobuf_comm {
   class ProtobufStreamClient;
+}
+namespace llsfrb {
+  class Configuration;
 }
 
 namespace llsfrb_visproc {
@@ -67,9 +69,12 @@ class LLSFRefBoxVisionProcessor
   void client_msg(uint16_t comp_id, uint16_t msg_type,
 		  std::shared_ptr<google::protobuf::Message> msg);
 
-  void pass_ssl_messages();
+  void start_ssl_recv();
+  void handle_ssl_recv(const boost::system::error_code& error, size_t bytes_rcvd);
 
  private: // members
+  llsfrb::Configuration *config_;
+
   bool        quit_;
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  reconnect_timer_;
@@ -77,8 +82,11 @@ class LLSFRefBoxVisionProcessor
 
   protobuf_comm::ProtobufStreamClient *client;
 
-  RoboCupSSLClient sslclient;
-  SSLWrapperPacket incoming_packet;
+  size_t in_data_size_;
+  void * in_data_;
+  boost::asio::ip::udp::socket   ssl_socket_;
+  boost::asio::ip::udp::endpoint ssl_in_endpoint_;
+
 };
 
 

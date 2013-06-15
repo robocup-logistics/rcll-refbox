@@ -39,13 +39,16 @@
 #include "visproc.h"
 
 #include <protobuf_comm/client.h>
-#include <csignal>
+#include <config/yaml.h>
 
 #include "ssl_msgs/SslWrapper.pb.h"
 #include <msgs/VisionData.pb.h>
 
+#include <csignal>
+
 // defined in miliseconds
 #define RECONNECT_TIMER_INTERVAL 1000
+#define MAX_PACKET_LENGTH 65536
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
@@ -60,9 +63,14 @@ static bool g_quit = false;
 #endif
 
 LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
-  : quit_(false), reconnect_timer_(io_service_), try_reconnect_(true)
+  : quit_(false), reconnect_timer_(io_service_), try_reconnect_(true),
+    ssl_socket_(io_service_)
 {
   client = new ProtobufStreamClient();
+  in_data_size_ = MAX_PACKET_LENGTH;
+  in_data_ = malloc(in_data_size_);
+  config_ = new llsfrb::YamlConfiguration(CONFDIR);
+  config_->load("config.yaml");
 }
 
 
@@ -74,8 +82,13 @@ LLSFRefBoxVisionProcessor::~LLSFRefBoxVisionProcessor()
       
   reconnect_timer_.cancel();
 
+  ssl_socket_.close();
+  free(in_data_);
+
   delete client;
   client = 0;
+
+  delete config_;
 }
 
 
@@ -107,8 +120,6 @@ LLSFRefBoxVisionProcessor::client_connected()
 {
   // put code here for what to do when connected to refbox
   printf("connected to refbox...\n");
-  sslclient.open(true);
-  pass_ssl_messages();
 }
 
 void
@@ -124,7 +135,7 @@ LLSFRefBoxVisionProcessor::client_disconnected(const boost::system::error_code &
 
 void
 LLSFRefBoxVisionProcessor::client_msg(uint16_t comp_id, uint16_t msg_type,
-			    std::shared_ptr<google::protobuf::Message> msg)
+				      std::shared_ptr<google::protobuf::Message> msg)
 {
   // put code here to do when receiving a message from the refbox
   // only handle the ones you are interested in
@@ -143,18 +154,120 @@ static void old_handle_signal(int signum)
 }
 #endif
 
+
+void
+LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& error,
+					   size_t bytes_rcvd)
+{
+  if (! error) {
+    SSLWrapperPacket packet;
+    packet.ParseFromArray(in_data_, bytes_rcvd);
+
+    llsf_msgs::VisionData vd;
+
+    struct timespec now;;
+    clock_gettime(CLOCK_REALTIME, &now);
+    Time *pose_t = vd.mutable_time();
+    pose_t->set_sec(now.tv_sec);
+    pose_t->set_nsec(now.tv_nsec);
+
+    if (packet.has_detection()) {
+      const SSLDetectionFrame &detection = packet.detection();
+      // pucks
+	/*
+      const int number_pucks = detection.balls_size();
+      for (int i = 0; i < number_pucks; ++i) {
+	const SSLDetectionBall &ball = detection.balls(i);
+      
+	VisionObject *p = vd.add_pucks();
+	p->set_id(i);
+	p->set_confidence(ball.confidence());
+      
+	Pose2D *pose = p->mutable_pose();
+	pose->set_x(ball.x());
+	pose->set_y(ball.y());
+	pose->set_ori(0);
+	Time *t = pose->mutable_timestamp();
+	t->set_sec(123456);
+	t->set_nsec(654);
+      
+	t = msg->mutable_time();
+	t->set_sec(123456);
+	t->set_nsec(654);
+      }
+	*/
+
+      for (int i = 0; i < detection.robots_blue_size(); ++i) {
+	const SSLDetectionRobot &robot = detection.robots_blue(i);
+	if (! robot.has_robot_id()) {
+	  printf("Received robot without ID from SSL Vision, ignoring");
+	  continue;
+	}
+
+	printf("Received blue robot %u @ (%f,%f,%f)\n", robot.robot_id(),
+	       robot.x(), robot.y(), robot.orientation());
+
+	VisionObject *r = vd.add_robots();
+	r->set_id(robot.robot_id());
+	r->set_confidence(robot.confidence());
+	Pose2D *pose = r->mutable_pose();
+	pose->set_x(robot.x());
+	pose->set_y(robot.y());
+	pose->set_ori(robot.orientation());
+
+	struct timespec now;;
+	clock_gettime(CLOCK_REALTIME, &now);
+	Time *pose_t = pose->mutable_timestamp();
+	pose_t->set_sec(now.tv_sec);
+	pose_t->set_nsec(now.tv_nsec);
+      }
+    }
+    
+    try {
+      client->send(vd);
+    } catch (std::runtime_error &e) {
+      printf("Sending vision data failed: %s", e.what());
+    }
+  }
+
+  start_ssl_recv();
+}
+
+
+void
+LLSFRefBoxVisionProcessor::start_ssl_recv()
+{
+  ssl_socket_.async_receive_from(boost::asio::buffer(in_data_, in_data_size_),
+				 ssl_in_endpoint_,
+				 boost::bind(&LLSFRefBoxVisionProcessor::handle_ssl_recv,
+					     this, boost::asio::placeholders::error,
+					     boost::asio::placeholders::bytes_transferred));
+}
+
 int
 LLSFRefBoxVisionProcessor::run()
 {
   // put initialization code here!
-  //sslclient.open(true);
-  //pass_ssl_messages();
-
-  printf("trying to connect...\n");
 
   // Add messages you want to receive and process
   //MessageRegister & message_register = client->message_register();
   //message_register.add_message_type<llsf_msgs::GameState>();
+
+  std::string  listen_address = config_->get_string("/llsfrb/visproc/listen-address");
+  std::string  multicast_addr = config_->get_string("/llsfrb/visproc/ssl-multicast-addr");
+  unsigned int multicast_port = config_->get_uint("/llsfrb/visproc/ssl-multicast-port");
+  
+  boost::asio::ip::udp::endpoint
+    listen_endpoint(boost::asio::ip::address::from_string(listen_address), multicast_port);
+  ssl_socket_.open(listen_endpoint.protocol());
+  ssl_socket_.set_option(boost::asio::ip::udp::socket::reuse_address(true));
+  ssl_socket_.bind(listen_endpoint);
+
+  boost::asio::ip::address mc_addr =
+    boost::asio::ip::address::from_string(multicast_addr);
+  ssl_socket_.set_option(boost::asio::ip::multicast::join_group(mc_addr));
+
+  start_ssl_recv();
 
   // Connect signals for network client
   client->signal_connected().connect(
@@ -188,67 +301,9 @@ LLSFRefBoxVisionProcessor::run()
   // Run the I/O main loop, the rest happens in the callbacks
   io_service_.run();
 
+  ssl_socket_.set_option(boost::asio::ip::multicast::leave_group(mc_addr));
+
   return 0;
-}
-
-void LLSFRefBoxVisionProcessor::pass_ssl_messages() {
-  llsf_msgs::VisionData *msg = new llsf_msgs::VisionData();
-
-  while(true) {
-    if( sslclient.receive(incoming_packet) ) {
-      if ( incoming_packet.has_detection() ) {
-        SSLDetectionFrame detection;
-        int number_pucks = detection.balls_size();
-        for (int i = 0; i < number_pucks; i++) {
-          SSLDetectionBall ball = detection.balls(i);
-          printf("currently %d pucks visible!\n", i+1);
-
-          VisionObject *p = msg->add_pucks();
-          p->set_id(i);
-          p->set_confidence(ball.confidence());
-
-          Pose2D *pose = p->mutable_pose();
-          pose->set_x(ball.x());
-          pose->set_y(ball.y());
-          pose->set_ori(0);
-          Time *t = pose->mutable_timestamp();
-          t->set_sec(123456);
-          t->set_nsec(654);
-
-          t = msg->mutable_time();
-          t->set_sec(123456);
-          t->set_nsec(654);
-        
-          printf("sending...\n");
-          client->send(*msg);
-        }
-        if(!number_pucks) {
-
-          VisionObject *p = msg->add_pucks();
-          p->set_id(123);
-          p->set_confidence(1.0f);
-  
-          Pose2D *pose_dummy = p->mutable_pose();
-          pose_dummy->set_x(1);
-          pose_dummy->set_y(2);
-          pose_dummy->set_ori(3);
-          Time *t = pose_dummy->mutable_timestamp();
-          t->set_sec(123456);
-          t->set_nsec(654);
-
-          t = msg->mutable_time();
-          t->set_sec(123456);
-          t->set_nsec(654);
-
-          printf("sending...\n");
-          client->send(*msg);
-        }
-      }
-      else {
-        printf("nothing to see from up here...\n");
-      }
-    }
-  }
 }
 
 } // end of namespace llsfrb_visproc

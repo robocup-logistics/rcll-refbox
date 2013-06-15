@@ -35,7 +35,6 @@
  */
 
 #include "visproc.h"
-#include "robocup_ssl_client.h"
 
 #include <string>
 #include <google/protobuf/message.h>
