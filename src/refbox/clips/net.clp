@@ -582,7 +582,7 @@
 (defrule net-print-VisionData
   ?mf <- (protobuf-msg (type "llsf_msgs.VisionData") (ptr ?p) (rcvd-via STREAM))
   =>
-  (printout "VisionData" crlf)
+  (printout t "VisionData" crlf)
   (foreach ?obj (pb-field-list ?p "pucks") (net-print-VisionObject ?obj "Puck")) 
   (foreach ?obj (pb-field-list ?p "robots") (net-print-VisionObject ?obj "Robot")) 
 )
