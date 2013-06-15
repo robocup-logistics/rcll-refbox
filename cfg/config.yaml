@@ -66,3 +66,13 @@ llsfrb:
   shell:
     refbox-host: localhost
     refbox-port: 4444
+
+  visproc:
+    refbox-host: localhost
+    refbox-port: 4444
+    listen-address: 0.0.0.0
+    ssl-multicast-addr: 224.5.23.2
+    ssl-multicast-port: 10002
+    coord-offset-x: 2.8
+    coord-offset-y: 2.8
+

@@ -212,8 +212,11 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
 	r->set_id(robot.robot_id());
 	r->set_confidence(robot.confidence());
 	Pose2D *pose = r->mutable_pose();
-	pose->set_x(robot.x());
-	pose->set_y(robot.y());
+	float x = robot.x();
+	float y = robot.y();
+	ssl_to_llsf_coord(x, y);
+	pose->set_x(x);
+	pose->set_y(y);
 	pose->set_ori(robot.orientation());
 
 	struct timespec now;;
@@ -259,6 +262,9 @@ LLSFRefBoxVisionProcessor::run()
   // Add messages you want to receive and process
   //MessageRegister & message_register = client->message_register();
   //message_register.add_message_type<llsf_msgs::GameState>();
+
+  cfg_coord_offset_x_ = config_->get_float("/llsfrb/visproc/coord-offset-x");
+  cfg_coord_offset_y_ = config_->get_float("/llsfrb/visproc/coord-offset-y");
 
   std::string  listen_address = config_->get_string("/llsfrb/visproc/listen-address");
   std::string  multicast_addr = config_->get_string("/llsfrb/visproc/ssl-multicast-addr");

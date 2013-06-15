@@ -72,6 +72,12 @@ class LLSFRefBoxVisionProcessor
   void start_ssl_recv();
   void handle_ssl_recv(const boost::system::error_code& error, size_t bytes_rcvd);
 
+  void ssl_to_llsf_coord(float &x, float &y)
+  {
+    x = (x / 1000.f) + cfg_coord_offset_x_;
+    y = (y / 1000.f) + cfg_coord_offset_y_;
+  }
+
  private: // members
   llsfrb::Configuration *config_;
 
@@ -88,6 +94,9 @@ class LLSFRefBoxVisionProcessor
   boost::asio::ip::udp::endpoint ssl_in_endpoint_;
 
   bool printed_cannot_send_;
+
+  float cfg_coord_offset_x_;
+  float cfg_coord_offset_y_;
 };
 
 
