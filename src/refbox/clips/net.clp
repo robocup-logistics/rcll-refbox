@@ -579,10 +579,22 @@
               "  confidence " ?confidence crlf)
 )
 
-(defrule net-print-VisionData
+(defrule net-recv-VisionData
   ?mf <- (protobuf-msg (type "llsf_msgs.VisionData") (ptr ?p) (rcvd-via STREAM))
   =>
-  (printout t "VisionData" crlf)
-  (foreach ?obj (pb-field-list ?p "pucks") (net-print-VisionObject ?obj "Puck")) 
-  (foreach ?obj (pb-field-list ?p "robots") (net-print-VisionObject ?obj "Robot")) 
+  ;(printout t "VisionData" crlf)
+  (foreach ?r (pb-field-list ?p "robots")
+    ;(net-print-VisionObject ?r "Robot")
+    (bind ?pose (pb-field-value ?r "pose"))
+    (bind ?pose-x (pb-field-value ?pose "x"))
+    (bind ?pose-y (pb-field-value ?pose "y"))
+    (bind ?pose-ori (pb-field-value ?pose "ori"))
+    (bind ?pose-time (pb-field-value ?pose "timestamp"))
+    (bind ?pose-time-sec (pb-field-value ?pose-time "sec"))
+    (bind ?pose-time-usec (/ (pb-field-value ?pose-time "nsec") 1000))
+    (do-for-fact ((?robot robot)) (= ?robot:number (pb-field-value ?r "id"))
+      (modify ?robot (vision-pose ?pose-x ?pose-y ?pose-ori)
+	      (vision-pose-time ?pose-time-sec ?pose-time-usec))
+    )
+  )
 )
