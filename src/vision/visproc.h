@@ -87,6 +87,7 @@ class LLSFRefBoxVisionProcessor
   boost::asio::ip::udp::socket   ssl_socket_;
   boost::asio::ip::udp::endpoint ssl_in_endpoint_;
 
+  bool printed_cannot_send_;
 };
 
 

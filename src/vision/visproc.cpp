@@ -64,7 +64,7 @@ static bool g_quit = false;
 
 LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
   : quit_(false), reconnect_timer_(io_service_), try_reconnect_(true),
-    ssl_socket_(io_service_)
+    ssl_socket_(io_service_), printed_cannot_send_(false)
 {
   client = new ProtobufStreamClient();
   in_data_size_ = MAX_PACKET_LENGTH;
@@ -119,7 +119,8 @@ void
 LLSFRefBoxVisionProcessor::client_connected()
 {
   // put code here for what to do when connected to refbox
-  printf("connected to refbox...\n");
+  printf("%sconnected to refbox...\n", printed_cannot_send_ ? "\n" : "");
+  printed_cannot_send_ = false;
 }
 
 void
@@ -204,8 +205,8 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
 	  continue;
 	}
 
-	printf("Received blue robot %u @ (%f,%f,%f)\n", robot.robot_id(),
-	       robot.x(), robot.y(), robot.orientation());
+	//printf("Received blue robot %u @ (%f,%f,%f)\n", robot.robot_id(),
+	//       robot.x(), robot.y(), robot.orientation());
 
 	VisionObject *r = vd.add_robots();
 	r->set_id(robot.robot_id());
@@ -223,10 +224,18 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
       }
     }
     
-    try {
-      client->send(vd);
-    } catch (std::runtime_error &e) {
-      printf("Sending vision data failed: %s", e.what());
+    if (vd.pucks_size() > 0 || vd.robots_size() > 0) {
+      try {
+	client->send(vd);
+      } catch (std::runtime_error &e) {
+	if (printed_cannot_send_) {
+	  printf(".");
+	} else {
+	  printf("Sending vision data failed: %s...", e.what());
+	  printed_cannot_send_ = true;
+	}
+	fflush(stdout);
+      }
     }
   }
 
@@ -247,8 +256,6 @@ LLSFRefBoxVisionProcessor::start_ssl_recv()
 int
 LLSFRefBoxVisionProcessor::run()
 {
-  // put initialization code here!
-
   // Add messages you want to receive and process
   //MessageRegister & message_register = client->message_register();
   //message_register.add_message_type<llsf_msgs::GameState>();
