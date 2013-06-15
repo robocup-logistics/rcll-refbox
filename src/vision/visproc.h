@@ -40,6 +40,9 @@
 #include <boost/asio.hpp>
 #include <google/protobuf/message.h>
 
+#include "ssl_msgs/SslWrapper.pb.h"
+#include <msgs/VisionData.pb.h>
+
 namespace protobuf_comm {
   class ProtobufStreamClient;
 }
@@ -77,6 +80,8 @@ class LLSFRefBoxVisionProcessor
     x = (x / 1000.f) + cfg_coord_offset_x_;
     y = (y / 1000.f) + cfg_coord_offset_y_;
   }
+
+  void add_robot(llsf_msgs::VisionData &vd, const SSLDetectionRobot &robot);
 
  private: // members
   llsfrb::Configuration *config_;

@@ -41,9 +41,6 @@
 #include <protobuf_comm/client.h>
 #include <config/yaml.h>
 
-#include "ssl_msgs/SslWrapper.pb.h"
-#include <msgs/VisionData.pb.h>
-
 #include <csignal>
 
 // defined in miliseconds
@@ -157,6 +154,34 @@ static void old_handle_signal(int signum)
 
 
 void
+LLSFRefBoxVisionProcessor::add_robot(llsf_msgs::VisionData &vd, const SSLDetectionRobot &robot)
+{
+  if (! robot.has_robot_id()) {
+    printf("Received robot without ID from SSL Vision, ignoring");
+    return;
+  }
+
+  VisionObject *r = vd.add_robots();
+  r->set_id(robot.robot_id());
+  r->set_confidence(robot.confidence());
+  Pose2D *pose = r->mutable_pose();
+  float x = robot.x();
+  float y = robot.y();
+  ssl_to_llsf_coord(x, y);
+  pose->set_x(x);
+  pose->set_y(y);
+  pose->set_ori(robot.orientation());
+
+  printf("Robot %u @ (%f,%f,%f)\n", robot.robot_id(), x, y, robot.orientation());
+
+  struct timespec now;;
+  clock_gettime(CLOCK_REALTIME, &now);
+  Time *pose_t = pose->mutable_timestamp();
+  pose_t->set_sec(now.tv_sec);
+  pose_t->set_nsec(now.tv_nsec);
+}
+
+void
 LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& error,
 					   size_t bytes_rcvd)
 {
@@ -199,31 +224,10 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
 	*/
 
       for (int i = 0; i < detection.robots_blue_size(); ++i) {
-	const SSLDetectionRobot &robot = detection.robots_blue(i);
-	if (! robot.has_robot_id()) {
-	  printf("Received robot without ID from SSL Vision, ignoring");
-	  continue;
-	}
-
-	//printf("Received blue robot %u @ (%f,%f,%f)\n", robot.robot_id(),
-	//       robot.x(), robot.y(), robot.orientation());
-
-	VisionObject *r = vd.add_robots();
-	r->set_id(robot.robot_id());
-	r->set_confidence(robot.confidence());
-	Pose2D *pose = r->mutable_pose();
-	float x = robot.x();
-	float y = robot.y();
-	ssl_to_llsf_coord(x, y);
-	pose->set_x(x);
-	pose->set_y(y);
-	pose->set_ori(robot.orientation());
-
-	struct timespec now;;
-	clock_gettime(CLOCK_REALTIME, &now);
-	Time *pose_t = pose->mutable_timestamp();
-	pose_t->set_sec(now.tv_sec);
-	pose_t->set_nsec(now.tv_nsec);
+	add_robot(vd, detection.robots_blue(i));
+      }
+      for (int i = 0; i < detection.robots_yellow_size(); ++i) {
+	add_robot(vd, detection.robots_yellow(i));
       }
     }
     
