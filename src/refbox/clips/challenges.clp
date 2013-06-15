@@ -59,6 +59,19 @@
   (modify ?gs (state RUNNING) (prev-state PAUSED))
 )
 
+; (defrule techal-wam-print
+;   ?gs <- (gamestate (phase WHACK_A_MOLE_CHALLENGE) (state RUNNING) (game-time ?gtime))
+;   (whac-a-mole-light ?m)
+;   ?mf <- (machine (name ?m) (pose $?m-pose))
+;   (robot (number ?n) (vision-pose $?r-pose))
+;   =>
+;   (bind ?box-half-x (/ (nth$ 1 ?*TECHCHALL-WAM-BOX-SIZE*) 2))
+;   (bind ?box-half-y (/ (nth$ 2 ?*TECHCHALL-WAM-BOX-SIZE*) 2))
+
+;   (printout t "Robot " ?n " distance to " ?m ": " (abs (- (nth$ 1 ?r-pose) (nth$ 1 ?m-pose)))
+;               "  " (abs (- (nth$ 2 ?r-pose) (nth$ 2 ?m-pose))) crlf)
+; )
+
 (defrule techal-wam-reached
   ?gs <- (gamestate (phase WHACK_A_MOLE_CHALLENGE) (state RUNNING) (game-time ?gtime))
   (whac-a-mole-light ?m)
