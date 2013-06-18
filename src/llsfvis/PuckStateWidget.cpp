@@ -19,7 +19,7 @@ PuckStateWidget::PuckStateWidget(int puck_id) {
 	standard_fg_color_ = stylecontext->get_color();
 	standard_bg_color_ = stylecontext->get_background_color();
 	stringstream str("     "); //Allocate 5 Spaces as default size
-	str << "P " <<puck_id << ":";
+	str << "P " << puck_id << ":";
 	id_label_.set_text(str.str());
 	id_label_.set_justify(Gtk::JUSTIFY_LEFT);
 	state_label_.set_text("--");
@@ -60,6 +60,12 @@ void PuckStateWidget::set_state(const llsf_msgs::PuckState& state) {
 		break;
 	case CONSUMED:
 		state_label_.set_text("CO");
+		fg_color = Gdk::RGBA("dark grey");
+		bg_color = standard_bg_color_;
+		//black on white, bold
+		break;
+	case FINISHED:
+		state_label_.set_text("FIN");
 		fg_color = Gdk::RGBA("dark grey");
 		bg_color = standard_bg_color_;
 		//black on white, bold
