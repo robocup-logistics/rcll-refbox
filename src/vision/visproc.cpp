@@ -68,6 +68,7 @@ LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
   in_data_ = malloc(in_data_size_);
   config_ = new llsfrb::YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
+  read_areas();
 }
 
 
@@ -182,6 +183,44 @@ LLSFRefBoxVisionProcessor::add_robot(llsf_msgs::VisionData &vd, const SSLDetecti
 }
 
 void
+LLSFRefBoxVisionProcessor::add_puck(llsf_msgs::VisionData &vd, const SSLDetectionBall &puck)
+{
+  VisionObject *r = vd.add_pucks();
+  r->set_id(0);
+  r->set_confidence(puck.confidence());
+  Pose2D *pose = r->mutable_pose();
+  float x = puck.x();
+  float y = puck.y();
+  ssl_to_llsf_coord(x, y);
+  pose->set_x(x);
+  pose->set_y(y);
+  pose->set_ori(0);
+
+  printf("Puck @ (%f,%f)\n", x, y);
+
+  struct timespec now;;
+  clock_gettime(CLOCK_REALTIME, &now);
+  Time *pose_t = pose->mutable_timestamp();
+  pose_t->set_sec(now.tv_sec);
+  pose_t->set_nsec(now.tv_nsec);
+}
+
+void
+LLSFRefBoxVisionProcessor::process_pucks(llsf_msgs::VisionData &vd) {
+  for ( int i = 0; i < vd.pucks_size(); ++i ) {
+    
+  }
+}
+
+void
+LLSFRefBoxVisionProcessor::read_areas() {
+  for (int i = 0; i < 10; i++ ) {
+    areas[i].width = config_->get_uint("/llsfrb/visproc/machine-area-width");
+    areas[i].height= config_->get_uint("/llsfrb/visproc/machine-area-height");
+  }
+}
+
+void
 LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& error,
 					   size_t bytes_rcvd)
 {
@@ -224,13 +263,20 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
 	*/
 
       for (int i = 0; i < detection.robots_blue_size(); ++i) {
-	add_robot(vd, detection.robots_blue(i));
+	    add_robot(vd, detection.robots_blue(i));
       }
       for (int i = 0; i < detection.robots_yellow_size(); ++i) {
-	add_robot(vd, detection.robots_yellow(i));
+	    add_robot(vd, detection.robots_yellow(i));
+      }
+      for (int i = 0; i < detection.balls_size(); ++i) {
+        add_puck(vd, detection.balls(i));
       }
     }
     
+    if (vd.pucks_size() > 0 ) {
+      process_pucks(vd);
+    }
+ 
     if (vd.pucks_size() > 0 || vd.robots_size() > 0) {
       try {
 	client->send(vd);

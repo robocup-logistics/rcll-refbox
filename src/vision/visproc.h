@@ -43,6 +43,8 @@
 #include "ssl_msgs/SslWrapper.pb.h"
 #include <msgs/VisionData.pb.h>
 
+#include <list>
+
 namespace protobuf_comm {
   class ProtobufStreamClient;
 }
@@ -55,8 +57,23 @@ namespace llsfrb_visproc {
 }
 #endif
 
+class MachineArea{
+  public:
+    uint width;
+    uint height;
+    uint start_x;
+    uint start_y;
+    std::list<llsf_msgs::Pose2D *> pucks;
+  
+  public:
+    bool in_area(int x, int y);
+};
+
 class LLSFRefBoxVisionProcessor
 {
+ public:
+  MachineArea areas[10]; 
+
  public:
   LLSFRefBoxVisionProcessor();
   ~LLSFRefBoxVisionProcessor();
@@ -82,6 +99,11 @@ class LLSFRefBoxVisionProcessor
   }
 
   void add_robot(llsf_msgs::VisionData &vd, const SSLDetectionRobot &robot);
+  void add_puck(llsf_msgs::VisionData &vd, const SSLDetectionBall &puck);
+
+  void process_pucks(llsf_msgs::VisionData &vd);
+
+  void read_areas();
 
  private: // members
   llsfrb::Configuration *config_;
@@ -103,7 +125,6 @@ class LLSFRefBoxVisionProcessor
   float cfg_coord_offset_x_;
   float cfg_coord_offset_y_;
 };
-
 
 } // end of namespace llsfrb_visproc
 
