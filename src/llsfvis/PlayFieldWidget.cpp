@@ -464,6 +464,7 @@ void PlayFieldWidget::draw_field_border(
 void PlayFieldWidget::update_robot_info(const llsf_msgs::RobotInfo& robotInfo) {
 	have_robot_info_ = true;
 	robots_.CopyFrom(robotInfo);
+
 }
 
 void PlayFieldWidget::update_machines(const llsf_msgs::MachineInfo& mSpecs) {
@@ -478,6 +479,7 @@ sigc::signal<void, llsf_msgs::RemovePuckFromMachine&> PlayFieldWidget::signal_re
 void PlayFieldWidget::update_pucks(const llsf_msgs::PuckInfo& pucks) {
 	have_puck_info_ = true;
 	pucks_.CopyFrom(pucks);
+	queue_draw();
 }
 
 const llsf_msgs::Machine* PlayFieldWidget::get_clicked_machine(gdouble x,
