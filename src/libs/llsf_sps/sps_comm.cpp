@@ -201,7 +201,7 @@ SPSComm::test_lights()
     for (int m = M_BEGIN; m < M_END; ++m) {
       set_light((Machine)m, (Light)l, SIGNAL_ON);
     }
-    usleep(250000);
+    usleep(200000);
   }
 
   // Turn all OFF
