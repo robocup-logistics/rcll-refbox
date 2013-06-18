@@ -731,14 +731,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
   if ((r = std::dynamic_pointer_cast<llsf_msgs::RobotInfo>(msg))) {
     last_robotinfo_ = r;
     size_t idx = 0;
-    for (int i = 0; i < r->robots_size(); ++i) {
+    for (int i = 0; i < r->robots_size(); ++i, ++idx) {
       const llsf_msgs::Robot &robot = r->robots(i);
-
-      while (idx < robots_.size() && robots_[idx]->is_busy() &&
-	     robots_[idx]->name() != robot.name())
-      {
-	++idx;
-      }
 
       if ((size_t)idx >= robots_.size()) {
 	// more robots than we can show
