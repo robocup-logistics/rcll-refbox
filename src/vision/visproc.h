@@ -67,7 +67,7 @@ class MachineArea{
     std::string name;
   
   public:
-    bool in_area(int x, int y);
+    bool in_area(unsigned int x, unsigned int y, unsigned int tol);
 };
 
 class LLSFRefBoxVisionProcessor

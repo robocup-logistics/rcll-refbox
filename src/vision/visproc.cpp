@@ -61,6 +61,18 @@ namespace llsfrb_visproc {
 static bool g_quit = false;
 #endif
 
+bool MachineArea::in_area(unsigned int x, unsigned int y, unsigned int tol) {
+  if( (x >= start_x - tol &&
+       x <= start_x + tol)
+      &&
+      (y >= start_y - tol &&
+       y <= start_y + tol)) {
+    return true;
+  }
+  return false;
+}
+    
+
 LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
   : quit_(false), reconnect_timer_(io_service_), try_reconnect_(true),
     ssl_socket_(io_service_), printed_cannot_send_(false)
@@ -137,7 +149,7 @@ void
 LLSFRefBoxVisionProcessor::client_msg(uint16_t comp_id, uint16_t msg_type,
 				      std::shared_ptr<google::protobuf::Message> msg)
 {
-  if ( areas.size() == 0 ) {
+  if ( areas.empty() ) {
   printf("Received machine info for the first time\n");
   std::shared_ptr<llsf_msgs::MachineInfo> minfo;
     if ((minfo = std::dynamic_pointer_cast<llsf_msgs::MachineInfo>(msg))) {
@@ -224,8 +236,10 @@ LLSFRefBoxVisionProcessor::add_puck(llsf_msgs::VisionData &vd, const SSLDetectio
 
 void
 LLSFRefBoxVisionProcessor::process_pucks(llsf_msgs::VisionData &vd) {
-  for ( int i = 0; i < vd.pucks_size(); ++i ) {
-    
+  if( !areas.empty() ) {
+    while( vd.pucks_size() > 0) {
+      //llsf_msgs::VisionObject *vo = vd.mutable_pucks();
+    }
   }
 }
 
