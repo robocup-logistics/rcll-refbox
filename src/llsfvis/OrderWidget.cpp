@@ -35,9 +35,9 @@ void OrderWidget::update_order(const llsf_msgs::Order& order) {
 	order_info << seconds_to_str(order.delivery_period_begin()) << " - "
 			<< seconds_to_str(order.delivery_period_end()) << "\n Deliver "
 			<< Order_ProductType_Name(order.product()) << " to "
-			<< Order_DeliveryGate_Name(order.delivery_gate()) << "\n Done "
+			<< Order_DeliveryGate_Name(order.delivery_gate()) << " ("
 			<< order.quantity_delivered() << " of "
-			<< order.quantity_requested();
+			<< order.quantity_requested() << ").";
 	label_.set_text(order_info.str());
 
 }
