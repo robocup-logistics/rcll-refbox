@@ -235,13 +235,39 @@ LLSFRefBoxVisionProcessor::add_puck(llsf_msgs::VisionData &vd, const SSLDetectio
 }
 
 void
-LLSFRefBoxVisionProcessor::process_pucks(llsf_msgs::VisionData &vd) {
+LLSFRefBoxVisionProcessor::process_pucks() {
   if( !areas.empty() ) {
-    while( vd.pucks_size() > 0) {
+    while( !ssl_pucklist.empty() ) {
       //llsf_msgs::VisionObject *vo = vd.mutable_pucks();
+      
     }
   }
 }
+
+void
+LLSFRefBoxVisionProcessor::create_pucklist(const SSLDetectionBall &puck) {
+  VisionObject *p = new VisionObject;
+  
+  p->set_id(0);
+  p->set_confidence(puck.confidence());
+
+  Pose2D *pose = p->mutable_pose();
+  float x = puck.x();
+  float y = puck.y();
+  ssl_to_llsf_coord(x, y);
+  pose->set_x(x);
+  pose->set_y(y);
+  pose->set_ori(0);
+
+  struct timespec now;;
+  clock_gettime(CLOCK_REALTIME, &now);
+  Time *pose_t = pose->mutable_timestamp();
+  pose_t->set_sec(now.tv_sec);
+  pose_t->set_nsec(now.tv_nsec);
+  
+  ssl_pucklist.push_back(p);
+  delete p;
+}  
 
 void
 LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& error,
@@ -258,6 +284,8 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
     Time *pose_t = vd.mutable_time();
     pose_t->set_sec(now.tv_sec);
     pose_t->set_nsec(now.tv_nsec);
+
+    ssl_pucklist.clear();
 
     if (packet.has_detection()) {
       const SSLDetectionFrame &detection = packet.detection();
@@ -291,13 +319,15 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
       for (int i = 0; i < detection.robots_yellow_size(); ++i) {
 	    add_robot(vd, detection.robots_yellow(i));
       }
+    
       for (int i = 0; i < detection.balls_size(); ++i) {
-        add_puck(vd, detection.balls(i));
+        //add_puck(vd, detection.balls(i));
+        create_pucklist(detection.balls(i));
       }
     }
     
-    if (vd.pucks_size() > 0 ) {
-      process_pucks(vd);
+    if ( !ssl_pucklist.empty() ) {
+      process_pucks();
     }
  
     if (vd.pucks_size() > 0 || vd.robots_size() > 0) {

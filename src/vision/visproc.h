@@ -64,6 +64,7 @@ class MachineArea{
     unsigned int start_x;
     unsigned int start_y;
     std::list<llsf_msgs::Pose2D *> pucks;
+    std::list<llsf_msgs::Pose2D *> new_pucks;
     std::string name;
   
   public:
@@ -102,7 +103,9 @@ class LLSFRefBoxVisionProcessor
   void add_robot(llsf_msgs::VisionData &vd, const SSLDetectionRobot &robot);
   void add_puck(llsf_msgs::VisionData &vd, const SSLDetectionBall &puck);
 
-  void process_pucks(llsf_msgs::VisionData &vd);
+  void create_pucklist(const SSLDetectionBall &puck);
+
+  void process_pucks();
 
  private: // members
   llsfrb::Configuration *config_;
@@ -123,6 +126,8 @@ class LLSFRefBoxVisionProcessor
 
   float cfg_coord_offset_x_;
   float cfg_coord_offset_y_;
+
+  std::vector<llsf_msgs::VisionObject *> ssl_pucklist;
 };
 
 } // end of namespace llsfrb_visproc
