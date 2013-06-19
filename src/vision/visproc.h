@@ -72,7 +72,7 @@ class MachineArea{
 class LLSFRefBoxVisionProcessor
 {
  public:
-  MachineArea areas[10]; 
+  std::vector<MachineArea *> areas; 
 
  public:
   LLSFRefBoxVisionProcessor();

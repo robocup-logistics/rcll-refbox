@@ -137,18 +137,27 @@ void
 LLSFRefBoxVisionProcessor::client_msg(uint16_t comp_id, uint16_t msg_type,
 				      std::shared_ptr<google::protobuf::Message> msg)
 {
+  if ( areas.size() == 0 ) {
+  printf("Received machine info for the first time\n");
   std::shared_ptr<llsf_msgs::MachineInfo> minfo;
-  if ((minfo = std::dynamic_pointer_cast<llsf_msgs::MachineInfo>(msg))) {
-    // use machine info
-    for( int i = 0; i < minfo->machines_size(); i++ ) {
-      Machine m = minfo->machines(i);
-      Pose2D p = m.pose();
-      int x = p.x() * 1000;
-      int y = p.y() * 1000;
-      areas[i].start_x = x - areas[i].width/2;
-      areas[i].start_y = y - areas[i].height/2;
-      areas[i].width = config_->get_uint("/llsfrb/visproc/machine-area-width");
-      areas[i].height= config_->get_uint("/llsfrb/visproc/machine-area-height");
+    if ((minfo = std::dynamic_pointer_cast<llsf_msgs::MachineInfo>(msg))) {
+      // use machine info
+      for( int i = 0; i < minfo->machines_size(); i++ ) {
+        MachineArea * new_area = new MachineArea;
+        Machine m = minfo->machines(i);
+        std::string type = m.type();
+        if ( type[0] == 'T') {
+          Pose2D p = m.pose();
+          int x = p.x() * 1000;
+          int y = p.y() * 1000;
+          new_area->width = config_->get_uint("/llsfrb/visproc/machine-area-width");
+          new_area->height = config_->get_uint("/llsfrb/visproc/machine-area-height");
+          new_area->start_x = x - (new_area->width)/2;
+          new_area->start_y = y - (new_area->height)/2;
+          areas.push_back(new_area);
+        }
+      delete new_area;
+      }
     }
   }
 }
