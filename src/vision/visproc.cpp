@@ -238,8 +238,18 @@ void
 LLSFRefBoxVisionProcessor::process_pucks() {
   if( !areas.empty() ) {
     while( !ssl_pucklist.empty() ) {
-      //llsf_msgs::VisionObject *vo = vd.mutable_pucks();
-      
+      VisionObject * p = ssl_pucklist.back();
+      ssl_pucklist.pop_back();
+      Pose2D pose = p->pose();
+      unsigned int x = (unsigned int)pose.x();
+      unsigned int y = (unsigned int)pose.y();
+
+      for( unsigned int i = 0; i < areas.size(); i++ ) {
+        if( areas[i]->in_area(x, y, 10) ) {
+          areas[i]->new_pucks.push_back(p);
+        }
+
+      }
     }
   }
 }

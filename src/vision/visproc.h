@@ -63,8 +63,8 @@ class MachineArea{
     unsigned int height;
     unsigned int start_x;
     unsigned int start_y;
-    std::list<llsf_msgs::Pose2D *> pucks;
-    std::list<llsf_msgs::Pose2D *> new_pucks;
+    std::vector<llsf_msgs::VisionObject *> pucks;
+    std::vector<llsf_msgs::VisionObject *> new_pucks;
     std::string name;
   
   public:
