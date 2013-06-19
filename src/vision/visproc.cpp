@@ -41,6 +41,8 @@
 #include <protobuf_comm/client.h>
 #include <config/yaml.h>
 
+#include <msgs/MachineInfo.pb.h>
+
 #include <csignal>
 
 // defined in miliseconds
@@ -136,14 +138,10 @@ void
 LLSFRefBoxVisionProcessor::client_msg(uint16_t comp_id, uint16_t msg_type,
 				      std::shared_ptr<google::protobuf::Message> msg)
 {
-  // put code here to do when receiving a message from the refbox
-  // only handle the ones you are interested in
-
-  // Example:
-  // std::shared_ptr<llsf_msgs::GameState> g;
-  // if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
-  //   // do something with message
-  // }
+  std::shared_ptr<llsf_msgs::MachineInfo> minfo;
+  if ((minfo = std::dynamic_pointer_cast<llsf_msgs::MachineInfo>(msg))) {
+    // use machine info
+  }
 }
 
 #if BOOST_ASIO_VERSION < 100601
