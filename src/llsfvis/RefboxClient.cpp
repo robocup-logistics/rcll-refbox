@@ -16,6 +16,7 @@
 #include <logging/llsf_log_msgs/LogMessage.pb.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
+#include <config/yaml.h>
 
 namespace LLSFVis {
 
@@ -26,7 +27,23 @@ RefboxClient::RefboxClient(MainWindow& mainWindow) :
 
 	dispatcher_.connect(sigc::mem_fun(*this,&RefboxClient::process_queue));
 
+
 	client = new ProtobufStreamClient();
+	llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
+	  config->load("config.yaml");
+
+	  std::string refbox_host;
+	  int refbox_port;
+	  if (config->exists("/llsfrb/shell/refbox-host") &&
+	      config->exists("/llsfrb/shell/refbox-port") )
+	  {
+	    refbox_host = config->get_string("/llsfrb/shell/refbox-host");
+	    refbox_port = config->get_uint("/llsfrb/shell/refbox-port");
+	  } else {
+	    refbox_host = "localhost";
+	    refbox_port = 4444;
+	  }
+
 	MessageRegister & message_register = client->message_register();
 	message_register.add_message_type<llsf_msgs::GameState>();
 	message_register.add_message_type<llsf_msgs::RobotInfo>();
@@ -46,7 +63,7 @@ RefboxClient::RefboxClient(MainWindow& mainWindow) :
 	client->signal_received().connect(
 			boost::bind(&RefboxClient::client_msg, this, _1, _2, _3));
 
-	client->async_connect("172.16.35.94", 4444);
+	client->async_connect(refbox_host.c_str(), refbox_port);
 
 	// Construct a signal set registered for process termination.
 	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
