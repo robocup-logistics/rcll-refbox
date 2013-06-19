@@ -70,7 +70,6 @@ LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
   in_data_ = malloc(in_data_size_);
   config_ = new llsfrb::YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
-  read_areas();
 }
 
 
@@ -141,6 +140,16 @@ LLSFRefBoxVisionProcessor::client_msg(uint16_t comp_id, uint16_t msg_type,
   std::shared_ptr<llsf_msgs::MachineInfo> minfo;
   if ((minfo = std::dynamic_pointer_cast<llsf_msgs::MachineInfo>(msg))) {
     // use machine info
+    for( int i = 0; i < minfo->machines_size(); i++ ) {
+      Machine m = minfo->machines(i);
+      Pose2D p = m.pose();
+      int x = p.x() * 1000;
+      int y = p.y() * 1000;
+      areas[i].start_x = x - areas[i].width/2;
+      areas[i].start_y = y - areas[i].height/2;
+      areas[i].width = config_->get_uint("/llsfrb/visproc/machine-area-width");
+      areas[i].height= config_->get_uint("/llsfrb/visproc/machine-area-height");
+    }
   }
 }
 
@@ -207,14 +216,6 @@ void
 LLSFRefBoxVisionProcessor::process_pucks(llsf_msgs::VisionData &vd) {
   for ( int i = 0; i < vd.pucks_size(); ++i ) {
     
-  }
-}
-
-void
-LLSFRefBoxVisionProcessor::read_areas() {
-  for (int i = 0; i < 10; i++ ) {
-    areas[i].width = config_->get_uint("/llsfrb/visproc/machine-area-width");
-    areas[i].height= config_->get_uint("/llsfrb/visproc/machine-area-height");
   }
 }
 

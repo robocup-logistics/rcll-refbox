@@ -59,10 +59,10 @@ namespace llsfrb_visproc {
 
 class MachineArea{
   public:
-    uint width;
-    uint height;
-    uint start_x;
-    uint start_y;
+    unsigned int width;
+    unsigned int height;
+    unsigned int start_x;
+    unsigned int start_y;
     std::list<llsf_msgs::Pose2D *> pucks;
   
   public:
@@ -102,8 +102,6 @@ class LLSFRefBoxVisionProcessor
   void add_puck(llsf_msgs::VisionData &vd, const SSLDetectionBall &puck);
 
   void process_pucks(llsf_msgs::VisionData &vd);
-
-  void read_areas();
 
  private: // members
   llsfrb::Configuration *config_;
