@@ -47,10 +47,12 @@ void OrderWidget::set_game_time(const llsf_msgs::Time& time) {
 	if (time.sec() > order_.delivery_period_begin()
 			&& time.sec() < order_.delivery_period_end()) {
 		label_.override_background_color(Gdk::RGBA("green"));
+		label_.override_color(Gdk::RGBA("white"));
 		override_background_color(Gdk::RGBA("green"));
 
 	} else {
 		label_.override_background_color(standard_bg_color_);
+		label_.override_color(Gdk::RGBA("black"));
 		override_background_color(standard_bg_color_);
 	}
 
