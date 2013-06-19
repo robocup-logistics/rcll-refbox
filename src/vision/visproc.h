@@ -64,6 +64,7 @@ class MachineArea{
     unsigned int start_x;
     unsigned int start_y;
     std::list<llsf_msgs::Pose2D *> pucks;
+    std::string name;
   
   public:
     bool in_area(int x, int y);

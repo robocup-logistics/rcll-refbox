@@ -147,6 +147,7 @@ LLSFRefBoxVisionProcessor::client_msg(uint16_t comp_id, uint16_t msg_type,
         Machine m = minfo->machines(i);
         std::string type = m.type();
         if ( type[0] == 'T') {
+          new_area->name = m.name();
           Pose2D p = m.pose();
           int x = p.x() * 1000;
           int y = p.y() * 1000;
