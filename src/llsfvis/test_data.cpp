@@ -89,3 +89,19 @@ PuckInfo* getPuckInfo() {
 	}
 	return pInfo;
 }
+
+void* send_game_states(void* arg) {
+	LLSFVis::MainWindow* mWindow = (LLSFVis::MainWindow*) arg;
+	GameState* gs = new GameState();
+	gs->set_phase(GameState_Phase_EXPLORATION);
+	gs->set_state(GameState_State_RUNNING);
+	Time* t = gs->mutable_game_time();
+	float seconds =0;
+	while (true) {
+		seconds+=0.1;
+		t->set_sec((int)seconds);
+		mWindow->update_game_state(*gs);
+		usleep(100000);
+	}
+	return 0;
+}
