@@ -81,23 +81,8 @@
     )
   )
 
-  ; assign random down times
-  (if ?*RANDOMIZE-GAME* then
-    (bind ?num-down-times (random 6 8))
-    (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
-    (loop-for-count (min ?num-down-times (length$ ?candidates))
-      (bind ?idx (random 1 (length$ ?candidates)))
-      (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
-      (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
-      (bind ?end-time (+ ?start-time ?duration))
-      (bind ?mf (nth$ ?idx ?candidates))
-      ;(printout t (fact-slot-value ?mf name) " down from "
-;		(time-sec-format ?start-time) " to " (time-sec-format ?end-time)
-;		" (" ?duration " sec)" crlf)
-      (modify ?mf (down-period ?start-time ?end-time))
-      (bind ?candidates (delete$ ?candidates ?idx ?idx))
-    )
-
+  (if (or (not (any-factp ((?dp delivery-period)) TRUE)) ?*RANDOMIZE-GAME*)
+   then ; no delivery periods exist at all or randomization has been enabled
     ; erase all existing delivery periods, might be left-overs
     ; from pre-defined facts for non-random game
     (delayed-do-for-all-facts ((?p delivery-period)) TRUE (retract ?p))
@@ -106,6 +91,7 @@
     (do-for-all-facts ((?m machine)) (eq ?m:mtype DELIVER)
       (bind ?delivery-gates (create$ ?delivery-gates ?m:name))
     )
+
     (bind ?PROD-END-TIME ?*PRODUCTION-TIME*)
     (if (any-factp ((?gs gamestate)) (neq ?gs:refbox-mode STANDALONE))
       then (bind ?PROD-END-TIME (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*)))
@@ -124,6 +110,24 @@
       (bind ?last-delivery-gate ?delivery-gate)
       (assert (delivery-period (delivery-gate ?delivery-gate)
 			       (period ?start-time ?deliver-period-end-time)))
+    )
+  )
+
+  ; assign random down times
+  (if ?*RANDOMIZE-GAME* then
+    (bind ?num-down-times (random 6 8))
+    (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
+    (loop-for-count (min ?num-down-times (length$ ?candidates))
+      (bind ?idx (random 1 (length$ ?candidates)))
+      (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
+      (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
+      (bind ?end-time (+ ?start-time ?duration))
+      (bind ?mf (nth$ ?idx ?candidates))
+      ;(printout t (fact-slot-value ?mf name) " down from "
+;		(time-sec-format ?start-time) " to " (time-sec-format ?end-time)
+;		" (" ?duration " sec)" crlf)
+      (modify ?mf (down-period ?start-time ?end-time))
+      (bind ?candidates (delete$ ?candidates ?idx ?idx))
     )
 
     ;(printout t "Assigning processing times to machines" crlf)
