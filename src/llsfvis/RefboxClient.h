@@ -25,6 +25,10 @@ public:
 	void on_signal_send_msg(google::protobuf::Message &m);
 	void process_queue();
 private:
+	void establish_connection();
+
+
+private:
 	MainWindow& mainWindow_;
 	protobuf_comm::ProtobufStreamClient *client;
 	boost::asio::io_service io_service_;
@@ -36,6 +40,10 @@ private:
 	std::queue<std::shared_ptr<google::protobuf::Message> > msg_queue_;
 	std::mutex mutex_;
 	Glib::Dispatcher dispatcher_;
+
+	bool connected_;
+	std::string refbox_host_;
+	int refbox_port_;
 
 
 };
