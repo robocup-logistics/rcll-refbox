@@ -37,6 +37,7 @@
 #include "PuckDialog.h"
 #include <iostream>
 #include <sstream>
+#include <boost/lexical_cast.hpp>
 
 namespace LLSFVis {
 
@@ -320,38 +321,48 @@ void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 		const llsf_msgs::Robot& bot) {
 
 	//Draw position reported by vision
-	if (bot.has_vision_pose()) {
+	if (bot.has_pose()) {
 		cr->save();
-		cr->translate(bot.vision_pose().x(), bot.vision_pose().y());
-		cr->rotate(bot.vision_pose().ori());
-		cr->set_line_width(0.01);
+		cr->set_source_rgb(0, 0, 0);
+		cr->translate(bot.pose().x(), bot.pose().y());
+		cr->rotate(bot.pose().ori());
+		cr->set_line_width(0.02);
 		cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
 		cr->move_to(BOTSIZE / 2, 0);
 		cr->line_to(0, BOTSIZE / 2 * -1);
 		cr->line_to(0, BOTSIZE / 2);
 		cr->line_to(BOTSIZE / 2, 0);
-		cr->set_source_rgb(0, 0, 0);
 		cr->stroke();
+		cr->rotate(-bot.pose().ori());
+		cr->translate(-0.1 * cos(bot.vision_pose().ori()),
+			      -0.1 * sin(bot.vision_pose().ori()));
+		draw_text(cr, 0.0, 0.0, boost::lexical_cast<std::string>(bot.number()), true);
+		//cr->stroke();
 		cr->restore();
 	}
-	if (bot.has_pose()) {
+	if (bot.has_vision_pose()) {
 		//Draw position reported by robot if it differs
 		if (!bot.has_vision_pose()
 				|| pose_distance(bot.pose(), bot.vision_pose()) > DIST_TOLERANCE
-				|| (bot.pose().ori() - bot.vision_pose().ori())
+				|| fabs(bot.pose().ori() - bot.vision_pose().ori())
 						> ORI_TOLERANCE) {
 			cr->save();
-			cr->translate(bot.pose().x(), bot.pose().y());
-			cr->rotate(bot.pose().ori());
-			cr->set_line_width(0.02);
+			cr->translate(bot.vision_pose().x(), bot.vision_pose().y());
+			cr->rotate(bot.vision_pose().ori());
+			cr->set_line_width(0.01);
 			cr->set_source_rgb(0.9, 0, 0);
 			cr->arc(0, 0, BOTSIZE / 2, 0.0, 2.0 * M_PI);
 			cr->move_to(BOTSIZE / 2, 0);
 			cr->line_to(0, BOTSIZE / 2 * -1);
 			cr->line_to(0, BOTSIZE / 2);
 			cr->line_to(BOTSIZE / 2, 0);
-			cr->set_source_rgb(0, 0, 0);
+			cr->set_source_rgba(0.0, 0.0, 0.0, 0.2);
 			cr->stroke();
+			cr->rotate(-bot.pose().ori());
+			cr->translate(-0.1 * cos(bot.vision_pose().ori()),
+				      -0.1 * sin(bot.vision_pose().ori()));
+			draw_text(cr, 0.0, 0.0,
+				  boost::lexical_cast<std::string>(bot.number()), true);
 			cr->restore();
 		}
 	}
