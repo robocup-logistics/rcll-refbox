@@ -17,7 +17,7 @@ StateWidget::StateWidget() {
 	scoreLabel_.set_justify(Gtk::JUSTIFY_CENTER);
 	timeLabel_.set_justify(Gtk::JUSTIFY_CENTER);
 	Pango::FontDescription font;
-	font.set_size(Pango::SCALE * 28);
+	font.set_size(Pango::SCALE * 24);
 	font.set_weight(Pango::WEIGHT_BOLD);
 	scoreLabel_.override_font(font);
 	timeLabel_.override_font(font);
@@ -77,23 +77,8 @@ StateWidget::~StateWidget() {
 }
 
 void StateWidget::set_game_phase(llsf_msgs::GameState::Phase phase) {
-	Glib::ustring label;
-	switch (phase) {
-	case llsf_msgs::GameState::PRE_GAME:
-		label = "Preparation";
-		break;
-	case llsf_msgs::GameState::EXPLORATION:
-		label = "Exploration";
-		break;
-	case llsf_msgs::GameState::PRODUCTION:
-		label = "Production";
-		break;
-	case llsf_msgs::GameState::POST_GAME:
-		label = "Cleanup";
-		break;
-	default:
-		break;
-	}
+	Glib::ustring label = llsf_msgs::GameState::Phase_Name(phase);
+
 	gamePhaseLabel_.set_text(label);
 }
 
@@ -108,23 +93,7 @@ void StateWidget::update_game_state(llsf_msgs::GameState& gameState) {
 }
 
 void StateWidget::set_game_state(llsf_msgs::GameState::State state) {
-	Glib::ustring label;
-	switch(state){
-	case llsf_msgs::GameState::INIT:
-		label = "Initializing..";
-		break;
-	case llsf_msgs::GameState::WAIT_START:
-		label = "Ready";
-		break;
-	case llsf_msgs::GameState::RUNNING:
-		label = "Running..";
-		break;
-	case llsf_msgs::GameState::PAUSED:
-		label = "Paused";
-		break;
-	default:
-		break;
-	}
+	Glib::ustring label = llsf_msgs::GameState::State_Name(state);
 	gameStateLabel_.set_text(label);
 
 }
