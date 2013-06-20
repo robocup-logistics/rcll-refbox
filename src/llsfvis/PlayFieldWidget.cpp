@@ -213,8 +213,8 @@ void PlayFieldWidget::draw_machine_signal(
 	switch (redState) {
 	case llsf_msgs::LightState::OFF:
 		r = 0.6;
-		g = 0.1;
-		b = 0.1;
+		g = 0.0;
+		b = 0.0;
 		blink = false;
 		break;
 	case llsf_msgs::LightState::BLINK:
@@ -239,7 +239,7 @@ void PlayFieldWidget::draw_machine_signal(
 	case llsf_msgs::LightState::OFF:
 		r = 0.6;
 		g = 0.6;
-		b = 0.1;
+		b = 0.0;
 		blink = false;
 		break;
 	case llsf_msgs::LightState::BLINK:
@@ -262,9 +262,9 @@ void PlayFieldWidget::draw_machine_signal(
 
 	switch (greenState) {
 	case llsf_msgs::LightState::OFF:
-		r = 0.1;
+		r = 0.0;
 		g = 0.6;
-		b = 0.1;
+		b = 0.0;
 		blink = false;
 		break;
 	case llsf_msgs::LightState::BLINK:
