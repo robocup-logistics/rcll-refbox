@@ -20,7 +20,8 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/gui.mk
 include $(BUILDSYSDIR)/boost.mk
 
-CFLAGS += $(CFLAGS_CPP11) -I/usr/include/webkitgtk-3.0 -I/usr/include/libsoup-2.4/
+CFLAGS += $(CFLAGS_CPP11) -I/usr/include/webkitgtk-3.0 -I/usr/include/libsoup-2.4/ \
+	  -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 REQ_BOOST_LIBS = thread asio system signals2 format date_time
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
@@ -34,12 +35,12 @@ OBJS_llsfvis = llsfvis.o MainWindow.o PlayFieldWidget.o StateWidget.o \
 ifeq ($(HAVE_GTKMM_3)$(HAVE_BOOST_LIBS)$(HAVE_PROTOBUF),111)
   OBJS_all =	$(OBJS_llsfvis)
   BINS_all =	$(BINDIR)/llsfvis
-  
+
   CFLAGS  += $(CFLAGS_PROTOBUF)$(CFLAGS_GUI)\
-  	$(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+	$(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS += $(LDFLAGS_PROTOBUF)$(LDFLAGS_GUI)\
-  	$(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-  
+	$(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
 else
    ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
