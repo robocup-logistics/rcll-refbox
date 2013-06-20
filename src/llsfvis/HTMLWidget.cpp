@@ -17,7 +17,7 @@ HTMLWidget::HTMLWidget() {
 	set_label("The Logistics League");
 	gtkhtml_ = webkit_web_view_new();
 	htmlWidget_ = Glib::wrap(gtkhtml_);
-	htmlWidget_->set_size_request(300, 400);
+	htmlWidget_->set_size_request(300, 300);
 	htmlWidget_->set_vexpand_set(false);
 	add(*htmlWidget_);
 	show_all_children();
