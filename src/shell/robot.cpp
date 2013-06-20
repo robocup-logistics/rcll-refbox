@@ -93,7 +93,7 @@ LLSFRefBoxShellRobot::refresh()
 
     boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
     boost::posix_time::time_duration td = now - last_seen_;
-    long td_seconds = td.seconds();
+    long td_seconds = td.total_seconds();
 
     std::string line_1 =
       boost::str(boost::format("%u %s (%s)") % number_ % name_ % team_).substr(0, width());;
