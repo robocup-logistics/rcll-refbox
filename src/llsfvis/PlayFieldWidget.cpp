@@ -42,9 +42,9 @@ namespace LLSFVis {
 
 double pose_distance(const llsf_msgs::Pose2D& pose1,
 		const llsf_msgs::Pose2D& pose2) {
-	return sqrt(
-			pose1.x() - pose2.x() * pose1.x() - pose2.x() + pose1.y()
-					- pose2.y() * pose1.y() - pose2.y());
+  double xd = pose1.x() - pose2.x();
+  double yd = pose1.y() - pose2.y();
+  return sqrt(xd*xd + yd*yd);
 }
 
 PlayFieldWidget::PlayFieldWidget() {
