@@ -73,7 +73,7 @@ private:
 	void draw_machine_light(const Cairo::RefPtr<Cairo::Context>& cr,
 			double size, double x, double y, double r, double g, double b, bool blink);
 	void draw_text(const Cairo::RefPtr<Cairo::Context>& cr, double x, double y,
-			std::string text);
+		       std::string text, bool centered = false);
 
 	void draw_field_border(const Cairo::RefPtr<Cairo::Context>& cr);
 	void draw_delivery_zone(const Cairo::RefPtr<Cairo::Context>& cr);

@@ -399,25 +399,27 @@ void PlayFieldWidget::draw_delivery_zone(
 }
 
 void PlayFieldWidget::draw_text(const Cairo::RefPtr<Cairo::Context>& cr,
-		double x, double y, std::string text) {
+				double x, double y, std::string text, bool centered) {
 	cr->save();
-	cr->scale(1, -1); //Temporary flip y-axis back, otherwise text is shown head down
-	cr->set_source_rgb(0, 0, 0);
-	Pango::FontDescription font;
+	cr->scale(1, -1);
+	//cr->set_source_rgb(0, 0, 0);
 
-	font.set_family("Monospace");
-	font.set_stretch(Pango::STRETCH_CONDENSED);
-	font.set_weight(Pango::WEIGHT_NORMAL);
-	font.set_size(Pango::SCALE * 0.06);
-
-	Glib::RefPtr<Pango::Layout> layout = create_pango_layout(text);
-	layout->set_font_description(font);
+	cr->select_font_face("Monospace", Cairo::FONT_SLANT_NORMAL, Cairo::FONT_WEIGHT_NORMAL);
+	cr->set_font_size(0.1);
 
 //int textWidth, textHeight;
 //layout->get_pixel_size(textWidth, textHeight);
 
-	cr->move_to(x, y * -1); //cope with flipped y-axis
-	layout->show_in_cairo_context(cr);
+	Cairo::TextExtents extents;
+	cr->get_text_extents(text, extents);
+
+	if (centered) {
+	  cr->move_to(x - extents.width/2, -y + extents.height/2); //cope with flipped y-axis
+	} else {
+	  cr->move_to(x, -y + extents.height); //cope with flipped y-axis
+	}
+	cr->text_path(text);
+	cr->fill();
 	cr->restore();
 }
 
