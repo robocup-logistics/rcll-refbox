@@ -92,12 +92,14 @@ MainWindow::MainWindow() :
 			1, 2);
 	playFieldTabGrid_.attach_next_to(pucksWidget_, orderWidget_, Gtk::POS_RIGHT,
 			1, 2);
-	playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, pucksWidget_,
-			Gtk::POS_RIGHT, 1, 1);
+	//playFieldTabGrid_.attach_next_to(buttonBoxPlayField_, pucksWidget_,
+	//		Gtk::POS_RIGHT, 1, 1);
 	//playFieldTabGrid_.attach_next_to(logPreviewScrollWindow_, aspectFrame_,
 	//		Gtk::POS_BOTTOM, 2, 1);
-	playFieldTabGrid_.attach_next_to(stateWidget_, buttonBoxPlayField_,
-			Gtk::POS_BOTTOM, 1, 1);
+	//playFieldTabGrid_.attach_next_to(stateWidget_, buttonBoxPlayField_,
+	//		Gtk::POS_BOTTOM, 1, 1);
+	playFieldTabGrid_.attach_next_to(stateWidget_, pucksWidget_,
+			Gtk::POS_RIGHT, 1, 1);
 	playFieldTabGrid_.attach_next_to(rulesWidget_,aspectFrame_,Gtk::POS_LEFT,1,3);
 
 	//Create the logging tab
