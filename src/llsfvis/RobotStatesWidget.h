@@ -43,7 +43,7 @@ private:
 	void update_bot(boost::posix_time::time_duration time_since_update,
 			const llsf_msgs::Robot& bot, Gtk::Label* bot_label);
 
-	static const int TIMEEXCEEDED = 30;
+	static const int TIMEEXCEEDED = 10;
 	static const int TIMEWARNING = 5;
 };
 

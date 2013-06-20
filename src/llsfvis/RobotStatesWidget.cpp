@@ -9,8 +9,6 @@
 #include <iostream>
 
 
-#define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
-
 namespace LLSFVis {
 
 RobotStatesWidget::RobotStatesWidget() :
@@ -45,19 +43,28 @@ void RobotStatesWidget::update_bot(boost::posix_time::time_duration time_since_u
 	if (bot.IsInitialized()) {
 		Gdk::RGBA color;
 
-		boost::posix_time::seconds last_seen(bot.last_seen().sec());
-		time_since_update += last_seen;
+		boost::posix_time::ptime
+		  now(boost::posix_time::microsec_clock::universal_time());
+		boost::posix_time::ptime
+		  last_seen(boost::posix_time::from_time_t(bot.last_seen().sec()));
+		last_seen += boost::posix_time::nanoseconds(bot.last_seen().nsec());
 
-		if (time_since_update.seconds() > TIMEEXCEEDED) {
-			color = Gdk::RGBA("dark red");
-		} else if (time_since_update.seconds() > TIMEWARNING) {
+		boost::posix_time::time_duration td = now - last_seen;
+		long td_seconds = td.total_seconds();
+
+
+		if (td_seconds >= TIMEEXCEEDED) {
+			color = Gdk::RGBA("red");
+		} else if (td_seconds >= TIMEWARNING) {
 			color = Gdk::RGBA("yellow2");
 		} else {
 			color = Gdk::RGBA("black");
 		}
 		bot_label->override_color(color, Gtk::STATE_FLAG_NORMAL);
 		char time_string[10];
-		sprintf(time_string,"%02d:%02d", time_since_update.minutes(),time_since_update.seconds());
+		long int time_min = td_seconds / 60;
+		long int time_sec = td_seconds % 60;
+		sprintf(time_string,"%02li:%02li", time_min, time_sec);
 		bot_label->set_text(time_string);
 	}
 }
