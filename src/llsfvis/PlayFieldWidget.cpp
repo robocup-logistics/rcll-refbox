@@ -359,7 +359,7 @@ void PlayFieldWidget::draw_robot(const Cairo::RefPtr<Cairo::Context>& cr,
 			cr->line_to(BOTSIZE / 2, 0);
 			cr->set_source_rgba(0.0, 0.0, 0.0, 0.2);
 			cr->stroke();
-			cr->rotate(-bot.pose().ori());
+			cr->rotate(-bot.vision_pose().ori());
 			cr->translate(-0.1 * cos(bot.vision_pose().ori()),
 				      -0.1 * sin(bot.vision_pose().ori()));
 			draw_text(cr, 0.0, 0.0,
