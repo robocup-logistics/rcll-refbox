@@ -159,12 +159,13 @@ void PlayFieldWidget::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	draw_machine_t(cr, MACHINESIZE / 4, machine.pose().x(), machine.pose().y(),
 			machine.pose().ori());
 
+	cr->stroke();
+
 	draw_text(cr, leftX + MACHINESIZE / 10, upperY - MACHINESIZE / 15,
 			machine_copy.name());
 	draw_text(cr, leftX + MACHINESIZE / 10, lowerY + 4 * MACHINESIZE / 15,
-			machine_copy.type());
+		  machine_copy.type().substr(0, 4));
 
-	cr->stroke();
 
 	double puck_x = leftX + MACHINESIZE * 0.6;
 	double puck_y = lowerY + MACHINESIZE * 0.15;
