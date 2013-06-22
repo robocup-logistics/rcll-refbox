@@ -14,7 +14,6 @@
   ?oa <- (robot (number ?number-a))
   ?ob <- (robot (number ?number-b&:(> ?number-a ?number-b)&:(< (fact-index ?oa) (fact-index ?ob))))
   =>
-  (modify ?ob)
   (modify ?oa)
 )
 

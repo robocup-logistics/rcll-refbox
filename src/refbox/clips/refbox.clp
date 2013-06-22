@@ -128,7 +128,6 @@
   ?oa <- (puck (id ?id-a))
   ?ob <- (puck (id ?id-b&:(> ?id-a ?id-b)&:(< (fact-index ?oa) (fact-index ?ob))))
   =>
-  (modify ?ob)
   (modify ?oa)
 )
 
