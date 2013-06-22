@@ -42,8 +42,10 @@
 #include <config/yaml.h>
 
 #include <msgs/MachineInfo.pb.h>
+#include <libs/utils/hungarian_method/hungarian.h>
 
 #include <csignal>
+#include <cmath>
 
 // defined in miliseconds
 #define RECONNECT_TIMER_INTERVAL 1000
@@ -51,6 +53,7 @@
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
+using namespace fawkes;
 
 namespace llsfrb_visproc {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -73,7 +76,25 @@ bool MachineArea::in_area(unsigned int x, unsigned int y, unsigned int tol) {
 }
 
 bool MachineArea::apply_hungarian() {
-  
+  hungarian_problem_t hp;
+  std::vector<unsigned int> obj_ids(pucks.size());
+  hp.num_rows = new_pucks.size();
+  hp.num_cols = pucks.size();
+  hp.cost = (int**) calloc(hp.num_rows, sizeof(int*));
+  for (int i = 0; i < hp.num_rows; i++)
+    hp.cost[i] = (int*) calloc(hp.num_cols, sizeof(int));
+  for (int row = 0; row < hp.num_rows; row++) { // new centroids
+    unsigned int col = 0;
+    for (std::vector<llsf_msgs::VisionObject *>::iterator col_it = pucks.begin(); col_it != pucks.end(); col_it++, col++) {
+      Pose2D old_pose = (*col_it)->pose();
+      Pose2D new_pose = new_pucks[row]->pose();
+      double distance = ( old_pose.x()-new_pose.x() ) * ( old_pose.x()-new_pose.x() )
+                      + ( old_pose.y()-new_pose.y() ) * ( old_pose.y()-new_pose.y() );
+      distance = sqrt(distance);
+      hp.cost[row][col] = (int)(distance * 1000);
+    }
+  }  
+  return true; 
 }    
 
 LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
@@ -261,10 +282,10 @@ LLSFRefBoxVisionProcessor::process_pucks() {
 }
 
 void
-LLSFRefBoxVisionProcessor::create_pucklist(const SSLDetectionBall &puck) {
+LLSFRefBoxVisionProcessor::create_pucklist(const SSLDetectionBall &puck, unsigned int id) {
   VisionObject *p = new VisionObject;
   
-  p->set_id(0);
+  p->set_id(id);
   p->set_confidence(puck.confidence());
 
   Pose2D *pose = p->mutable_pose();
@@ -338,7 +359,7 @@ LLSFRefBoxVisionProcessor::handle_ssl_recv(const boost::system::error_code& erro
     
       for (int i = 0; i < detection.balls_size(); ++i) {
         //add_puck(vd, detection.balls(i));
-        create_pucklist(detection.balls(i));
+        create_pucklist(detection.balls(i),i);
       }
     }
     

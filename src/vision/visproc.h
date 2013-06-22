@@ -66,6 +66,7 @@ class MachineArea{
     std::vector<llsf_msgs::VisionObject *> pucks;
     std::vector<llsf_msgs::VisionObject *> new_pucks;
     std::string name;
+    bool first_run_;
   
   public:
     bool in_area(unsigned int x, unsigned int y, unsigned int tol);
@@ -104,7 +105,7 @@ class LLSFRefBoxVisionProcessor
   void add_robot(llsf_msgs::VisionData &vd, const SSLDetectionRobot &robot);
   void add_puck(llsf_msgs::VisionData &vd, const SSLDetectionBall &puck);
 
-  void create_pucklist(const SSLDetectionBall &puck);
+  void create_pucklist(const SSLDetectionBall &puck, unsigned int id);
 
   void process_pucks();
 
