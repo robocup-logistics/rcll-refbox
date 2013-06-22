@@ -71,7 +71,10 @@ bool MachineArea::in_area(unsigned int x, unsigned int y, unsigned int tol) {
   }
   return false;
 }
-    
+
+bool MachineArea::apply_hungarian() {
+  
+}    
 
 LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
   : quit_(false), reconnect_timer_(io_service_), try_reconnect_(true),
@@ -251,6 +254,9 @@ LLSFRefBoxVisionProcessor::process_pucks() {
 
       }
     }
+  for( unsigned int i = 0; i < areas.size(); i++ ) {
+    areas[i]->apply_hungarian();
+  }
   }
 }
 

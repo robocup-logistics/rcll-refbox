@@ -69,6 +69,7 @@ class MachineArea{
   
   public:
     bool in_area(unsigned int x, unsigned int y, unsigned int tol);
+    bool apply_hungarian();
 };
 
 class LLSFRefBoxVisionProcessor
