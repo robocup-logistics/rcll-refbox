@@ -76,6 +76,7 @@ bool MachineArea::in_area(unsigned int x, unsigned int y, unsigned int tol) {
 }
 
 bool MachineArea::apply_hungarian() {
+  std::vector<llsf_msgs::VisionObject *> tmp_pucks;
   hungarian_problem_t hp;
   std::vector<unsigned int> obj_ids(pucks.size());
   hp.num_rows = new_pucks.size();
@@ -116,11 +117,21 @@ bool MachineArea::apply_hungarian() {
           id = (*it)->id();
           old_pucks.erase(it);
           assigned = true;
-          if(assigned&&id) {};
+          break;
         }
       }
+      if( !assigned ) { continue }
     }
-  }
+    else { 
+      id = pucks[assignment]->id();
+      if ( distance(pucks[id]->pose(), new_pucks[row]) <= 5 ) {
+        old_pucks.push_back(pucks[id]);
+        continue;
+      }
+    }
+    tmp_pucks[id] = new_pucks[row];
+  }   
+  
 
 
 
