@@ -88,14 +88,52 @@ bool MachineArea::apply_hungarian() {
     for (std::vector<llsf_msgs::VisionObject *>::iterator col_it = pucks.begin(); col_it != pucks.end(); col_it++, col++) {
       Pose2D old_pose = (*col_it)->pose();
       Pose2D new_pose = new_pucks[row]->pose();
-      double distance = ( old_pose.x()-new_pose.x() ) * ( old_pose.x()-new_pose.x() )
-                      + ( old_pose.y()-new_pose.y() ) * ( old_pose.y()-new_pose.y() );
-      distance = sqrt(distance);
-      hp.cost[row][col] = (int)(distance * 1000);
+      //double distance = ( old_pose.x()-new_pose.x() ) * ( old_pose.x()-new_pose.x() )
+      //                + ( old_pose.y()-new_pose.y() ) * ( old_pose.y()-new_pose.y() );
+      //distance = sqrt(distance);
+      double dist = distance( old_pose, new_pose );
+      hp.cost[row][col] = (int)(dist);
     }
   }  
+ 
+  HungarianMethod solver;
+  solver.init(hp.cost, hp.num_rows, hp.num_cols, HUNGARIAN_MODE_MINIMIZE_COST);
+  solver.solve();
+
+  int assignment_size;
+  int *assignment = solver.get_assignment(assignment_size);
+  unsigned int id;
+  for( int row = 0; row < assignment_size; row++) {
+    if( row >= hp.num_rows ) {  //object disappeared
+      id = pucks[assignment[row]]->id();
+      old_pucks.push_back(pucks[row]);
+      continue;
+    }
+    else if (assignment[row] >= hp.num_cols ) { //object is new or has reappeared
+      bool assigned = false;
+      for( std::vector<llsf_msgs::VisionObject *>::iterator it = old_pucks.begin(); it != old_pucks.end(); it++ ) {
+        if( distance(new_pucks[row]->pose(), (*it)->pose()) <= 5 ) { //check distance
+          id = (*it)->id();
+          old_pucks.erase(it);
+          assigned = true;
+          if(assigned&&id) {};
+        }
+      }
+    }
+  }
+
+
+
   return true; 
 }    
+
+double MachineArea::distance(float x1, float x2, float y1, float y2) {
+  return sqrt( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) );
+}
+
+double MachineArea::distance(const llsf_msgs::Pose2D &a, const llsf_msgs::Pose2D &b) {
+  return sqrt( (a.x() - b.x())*(a.x() - b.x()) + (a.y() - b.y())*(a.y() - b.y()) );
+}
 
 LLSFRefBoxVisionProcessor::LLSFRefBoxVisionProcessor()
   : quit_(false), reconnect_timer_(io_service_), try_reconnect_(true),

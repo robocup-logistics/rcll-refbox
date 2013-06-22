@@ -65,12 +65,15 @@ class MachineArea{
     unsigned int start_y;
     std::vector<llsf_msgs::VisionObject *> pucks;
     std::vector<llsf_msgs::VisionObject *> new_pucks;
+    std::vector<llsf_msgs::VisionObject *> old_pucks;
     std::string name;
     bool first_run_;
   
   public:
     bool in_area(unsigned int x, unsigned int y, unsigned int tol);
     bool apply_hungarian();
+    double distance(float x1, float x2, float y1, float y2);
+    double distance(const llsf_msgs::Pose2D &a, const llsf_msgs::Pose2D &b);
 };
 
 class LLSFRefBoxVisionProcessor
