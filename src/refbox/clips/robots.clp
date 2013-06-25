@@ -81,7 +81,7 @@
   =>
   (retract ?pf) ; message will be destroyed after rule completes
   (do-for-fact ((?robot robot)) (eq ?robot:number (pb-field-value ?p "robot_number"))
-    (if (eq (pb-field-value ?p "maintenance") 1)
+    (if (pb-field-value ?p "maintenance")
     then
       (if (eq ?robot:state ACTIVE) then
 	(bind ?cycle (+ ?robot:maintenance-cycles 1))
