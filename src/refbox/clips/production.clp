@@ -36,7 +36,8 @@
 (defrule machine-down
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
-  ?mf <- (machine (name ?name) (state ?state&~DOWN) (proc-start ?proc-start)
+  ?mf <- (machine (name ?name) (mtype ?mtype) (puck-id ?puck-id)
+		  (state ?state&~DOWN) (proc-start ?proc-start)
 		  (down-period $?dp&:(<= (nth$ 1 ?dp) ?gtime)&:(>= (nth$ 2 ?dp) ?gtime)))
   =>
   (bind ?down-time (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
@@ -46,7 +47,12 @@
     (modify ?mf (state DOWN) (desired-lights RED-ON) (prev-state ?state)
 	    (proc-start (+ ?proc-start ?down-time)))
    else
-    (modify ?mf (state DOWN) (prev-state ?state) (desired-lights RED-ON))
+    (if (and (<> ?puck-id 0) (eq ?mtype DELIVER))
+     then
+      (modify ?mf (state DOWN) (prev-state ?state) (desired-lights RED-ON YELLOW-BLINK))
+     else
+      (modify ?mf (state DOWN) (prev-state ?state) (desired-lights RED-ON))
+    )
   )
 )
 
@@ -189,7 +195,7 @@
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
   (delivery-period (period $?p&:(>= ?gtime (nth$ 1 ?p))&:(<= ?gtime (nth$ 2 ?p)))
 		   (delivery-gate ?dgate))
-  ?mf <- (machine (mtype DELIVER) (name ~?dgate) (state IDLE))
+  ?mf <- (machine (mtype DELIVER) (name ~?dgate) (state IDLE|INVALID))
   =>
   (modify ?mf (down-period ?p))
 )
@@ -197,11 +203,13 @@
 (defrule deliver-invalid-input
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  ?mf <- (machine (name ?m) (mtype DELIVER) (state IDLE) (puck-id 0))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state ?ms&IDLE|DOWN) (puck-id 0))
   (puck (id ?id) (state ?ps))
   (not (order (active TRUE) (product ?product&:(eq ?product ?ps))))
   =>
-  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
+  (bind ?lights (create$ YELLOW-BLINK))
+  (if (eq ?ms DOWN) then (bind ?lights (create$ RED-ON YELLOW-BLINK)))
+  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights ?lights))
 )
 
 (defrule deliver-proc-start
@@ -236,15 +244,15 @@
   =>
   (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> FINISHED)" crlf)
   (modify ?mf (state ?prev-state) (productions (+ ?p 1)) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+  (assert (attention-message (str-cat "Remove puck " ?id " from field @ " ?m) 5))
   (modify ?pf (state FINISHED))
   (assert (product-delivered (game-time ?gtime) (product ?ps) (delivery-gate ?m)))
 )
 
 (defrule deliver-down-machine
   (gamestate (state RUNNING) (phase PRODUCTION))
-  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id 0))
-  ?pf <- (puck (id ?id) (state ?ps))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id ?id&~0))
+  ?pf <- (puck (id ?id) (state ?ps&~FINISHED))
   =>
   (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
   (assert (attention-message (str-cat "Remove puck " ?id " from field @ " ?m) 5))
