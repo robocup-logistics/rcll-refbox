@@ -7,6 +7,18 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(defrule setup-speedup-light
+  (gamestate (phase SETUP) (state RUNNING) (game-time ?gt&:(>= ?gt 240)))
+  =>
+  (bind ?*SETUP-LIGHT-PERIOD* 0.5)
+)
+
+(defrule setup-speedup-light-more
+  (gamestate (phase SETUP) (state RUNNING) (game-time ?gt&:(>= ?gt 270)))
+  =>
+  (bind ?*SETUP-LIGHT-PERIOD* 0.25)
+)
+
 (defrule setup-toggle-light
   (time $?now)
   ?f <- (signal (type setup-light-toggle)
