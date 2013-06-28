@@ -136,6 +136,7 @@
 			OPEN_CHALLENGE NAVIGATION_CHALLENGE WHACK_A_MOLE_CHALLENGE)
 	(default NONE))
   (slot game-time (type FLOAT) (default 0.0))
+  (slot cont-time (type FLOAT) (default 0.0))
   (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))

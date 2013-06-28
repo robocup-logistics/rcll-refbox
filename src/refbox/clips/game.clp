@@ -143,7 +143,8 @@
   (time $?now)
   ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION|WHACK_A_MOLE_CHALLENGE|NAVIGATION_CHALLENGE)
 		    (state RUNNING) (points ?old-points)
-		    (game-time ?game-time) (last-time $?last-time&:(neq ?last-time ?now)))
+		    (game-time ?game-time) (cont-time ?cont-time)
+		    (last-time $?last-time&:(neq ?last-time ?now)))
   =>
   (bind ?points 0)
   (foreach ?phase (deftemplate-slot-allowed-values points phase)
@@ -153,8 +154,9 @@
     )
     (bind ?points (+ ?points (max ?phase-points 0)))
   )
-  (modify ?gf (game-time (+ ?game-time (time-diff-sec ?now ?last-time))) (last-time ?now)
-	  (points ?points))
+  (bind ?timediff (time-diff-sec ?now ?last-time))
+  (modify ?gf (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
+	  (last-time ?now) (points ?points))
 )
 
 (defrule game-update-last-time
