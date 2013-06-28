@@ -38,7 +38,7 @@
     (bind ?new-index (max (+ ?puck:index 1) ?new-index))
   )
   (printout t "Learned new puck ID " ?id " (index " ?new-index ", state S0)" crlf)
-  (assert (puck (index ?new-index) (id ?id) (state S0) (pose ?mpose-x ?mpose-y)) (pose-time (now)))
+  (assert (puck (index ?new-index) (id ?id) (state S0)))
 )
 
 (defrule rfid-input-cleanup
