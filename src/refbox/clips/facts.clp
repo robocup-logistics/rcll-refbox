@@ -116,7 +116,7 @@
 )  
  
 (deftemplate product-delivered
-  (multislot game-time (type FLOAT))
+  (slot game-time (type FLOAT))
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
   (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3))
 )
