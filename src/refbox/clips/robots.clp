@@ -40,10 +40,10 @@
 )
 
 (defrule robot-maintenance-warning
-  (gamestate (game-time ?gtime))
+  (gamestate (cont-time ?ctime))
   ?rf <- (robot (state MAINTENANCE) (number ?number) (name ?name) (team ?team)
 		(maintenance-warning-sent FALSE)
-		(maintenance-start-time ?st&:(timeout-sec ?gtime ?st ?*MAINTENANCE-WARN-TIME*)))
+		(maintenance-start-time ?st&:(timeout-sec ?ctime ?st ?*MAINTENANCE-WARN-TIME*)))
 
   =>
   (modify ?rf (maintenance-warning-sent TRUE))
@@ -52,9 +52,9 @@
 )
 
 (defrule robot-disqualify-maintenance-timeout
-  (gamestate (game-time ?gtime))
+  (gamestate (cont-time ?ctime))
   ?rf <- (robot (state MAINTENANCE) (number ?number) (name ?name) (team ?team)
-		(maintenance-start-time ?st&:(timeout-sec ?gtime ?st (+ ?*MAINTENANCE-ALLOWED-TIME* ?*MAINTENANCE-GRACE-TIME*))))
+		(maintenance-start-time ?st&:(timeout-sec ?ctime ?st (+ ?*MAINTENANCE-ALLOWED-TIME* ?*MAINTENANCE-GRACE-TIME*))))
 
   =>
   (modify ?rf (state DISQUALIFIED))
@@ -77,7 +77,7 @@
 
 (defrule robot-recv-SetRobotMaintenance
   ?pf <- (protobuf-msg (type "llsf_msgs.SetRobotMaintenance") (ptr ?p) (rcvd-via STREAM))
-  (gamestate (game-time ?gtime))
+  (gamestate (cont-time ?ctime))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
   (do-for-fact ((?robot robot)) (eq ?robot:number (pb-field-value ?p "robot_number"))
@@ -86,11 +86,11 @@
       (if (eq ?robot:state ACTIVE) then
 	(bind ?cycle (+ ?robot:maintenance-cycles 1))
 	(printout t "Robot " ?robot:number " scheduled for maintenance cycle " ?cycle crlf)
-	(modify ?robot (state MAINTENANCE) (maintenance-start-time ?gtime)
+	(modify ?robot (state MAINTENANCE) (maintenance-start-time ?ctime)
 		(maintenance-cycles ?cycle) (maintenance-warning-sent FALSE))
       )
     else
-      (bind ?maint-time (- ?gtime ?robot:maintenance-start-time))
+      (bind ?maint-time (- ?ctime ?robot:maintenance-start-time))
       (if (<= ?maint-time (+ ?*MAINTENANCE-ALLOWED-TIME* ?*MAINTENANCE-GRACE-TIME*))
       then
         (printout t "Robot " ?robot:number " back from maintenance" crlf)

@@ -281,7 +281,7 @@
   (pb-destroy ?gamestate)
 )
 
-(deffunction net-create-RobotInfo (?gtime ?pub-pose)
+(deffunction net-create-RobotInfo (?ctime ?pub-pose)
   (bind ?ri (pb-create "llsf_msgs.RobotInfo"))
 
   (do-for-all-facts
@@ -316,7 +316,7 @@
 
     (if (eq ?robot:state MAINTENANCE) then
       (bind ?maintenance-time-remaining
-	    (- ?*MAINTENANCE-ALLOWED-TIME* (- ?gtime ?robot:maintenance-start-time)))
+	    (- ?*MAINTENANCE-ALLOWED-TIME* (- ?ctime ?robot:maintenance-start-time)))
       (pb-set-field ?r "maintenance_time_remaining" ?maintenance-time-remaining)
     )
     (pb-set-field ?r "maintenance_cycles" ?robot:maintenance-cycles)
@@ -330,10 +330,10 @@
 (defrule net-send-RobotInfo
   (time $?now)
   ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
-  (gamestate (game-time ?gtime))
+  (gamestate (cont-time ?ctime))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
-  (bind ?ri (net-create-RobotInfo ?gtime TRUE))
+  (bind ?ri (net-create-RobotInfo ?ctime TRUE))
 
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?ri))
