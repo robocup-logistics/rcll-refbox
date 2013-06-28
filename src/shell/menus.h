@@ -138,6 +138,7 @@ class RobotMaintenanceMenu : public Menu
  private:
   virtual void On_Menu_Init();
   int det_lines(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
+  int det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
   void robot_selected(unsigned int number, bool maintenance);
 
  private:

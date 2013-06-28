@@ -670,9 +670,9 @@ TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo)
 
 RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent,
 					   std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
-  : Menu(det_lines(rinfo) + 1 + 2, 30 + 2,
+  : Menu(det_lines(rinfo) + 1 + 2, det_cols(rinfo) + 2,
 	 (parent->lines() - (det_lines(rinfo) + 1))/2,
-	 (parent->cols() - 32)/2)
+	 (parent->cols() - (det_cols(rinfo) + 2))/2)
 {
   valid_item_ = false;
   int n_items = det_lines(rinfo);
@@ -722,7 +722,18 @@ RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent,
 				       std::get<1>(items_[i]), std::get<2>(items_[i])));
     mitems[i] = item;
   }
-  s_cancel_ = "         ** CANCEL **         ";
+
+  int cols = det_cols(rinfo) - std::string("** CANCEL **").length();
+  int cols_half = cols / 2;
+  s_cancel_ = "";
+  for (int i = 0; i < cols_half; ++i) {
+    s_cancel_ += " ";
+  }
+  s_cancel_ += "** CANCEL **";
+  for (int i = 0; i < cols_half; ++i) {
+    s_cancel_ += " ";
+  }
+  if (cols_half * 2 < cols) s_cancel_ += " ";
   mitems[ni] = new SignalItem(s_cancel_);
   mitems[ni+1] = new NCursesMenuItem();
 
@@ -771,6 +782,18 @@ RobotMaintenanceMenu::det_lines(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
   return std::min(3, 3 + (rinfo->robots_size() - std_nums));
   */
   return rinfo->robots_size();
+}
+
+int
+RobotMaintenanceMenu::det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
+{
+  int cols = std::string("** CANCEL **").length();
+  for (int i = 0; i < rinfo->robots_size(); ++i) {
+    const llsf_msgs::Robot &r = rinfo->robots(i);
+    cols = std::max(cols, (int)(r.name().length() + r.team().length() + 7));
+  }
+
+  return cols;
 }
 
 } // end of namespace llsfrb
