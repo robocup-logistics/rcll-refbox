@@ -246,7 +246,7 @@
   ; processing times
   ;(printout t "Setting processing times" crlf)
   (foreach ?pt (pb-field-list ?p "proc_times")
-    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype (pb-field-value ?pt "machine_type"))
+    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype (sym-cat (pb-field-value ?pt "machine_type")))
       (modify ?mspec (proc-time (pb-field-value ?pt "proc_time")))
     )
   )
