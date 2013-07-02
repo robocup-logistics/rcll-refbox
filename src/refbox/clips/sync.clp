@@ -127,7 +127,7 @@
     (eq ?ms:light-code ?lc:id)
 
     (bind ?mls (pb-create "llsf_msgs.MachineLightSpec"))
-    (pb-set-field ?mls "machine_type" ?ms:mtype)
+    (pb-set-field ?mls "machine_type" (str-cat ?ms:mtype))
     (foreach ?l ?lc:code
       (bind ?ls (pb-create "llsf_msgs.LightSpec"))
       (bind ?dashidx (str-index "-" ?l))
