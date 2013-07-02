@@ -208,10 +208,13 @@
   (foreach ?o (pb-field-list ?p "orders")
     (bind ?delivery-begin (pb-field-value ?o "delivery_period_begin"))
     (bind ?activate-at (max (- ?delivery-begin ?*LATE-ORDER-ACTIVATION-PRE-TIME*) 0))
+    (bind ?points 10)
+    (if (pb-field-value ?o "late_order") then (bind ?points 20))
 
     (assert (order (id (pb-field-value ?o "id"))
 		   (product (sym-cat (pb-field-value ?o "product")))
 		   (late-order (pb-field-value ?o "late_order"))
+		   (points ?points)
 		   (quantity-requested (pb-field-value ?o "quantity_requested"))
 		   (delivery-period ?delivery-begin (pb-field-value ?o "delivery_period_end"))
 		   (activate-at ?activate-at)
