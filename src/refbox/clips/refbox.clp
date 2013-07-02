@@ -13,7 +13,7 @@
 (defglobal
   ?*VERSION-MAJOR* = 0
   ?*VERSION-MINOR* = 6
-  ?*VERSION-MICRO* = 0
+  ?*VERSION-MICRO* = 1
 )
 
 (load* (resolve-file net.clp))
