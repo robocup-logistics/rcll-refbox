@@ -42,13 +42,13 @@ llsfrb:
   comm:
     protobuf-dirs: ["@BASEDIR@/src/msgs"]
     server-port: !tcp-port 4444
-    peer-host: !ipv4 172.26.255.255
-    peer-port: !udp-port 4444
-    #peer-send-port: !udp-port 4444
-    #peer-recv-port: !udp-port 4445
+    peer-host: !ipv4 127.0.0.1 #172.26.255.255
+    #peer-port: !udp-port 4444
+    peer-send-port: !udp-port 4444
+    peer-recv-port: !udp-port 4445
     
   mongodb:
-    enable: true
+    enable: false
     hostport: localhost
     collections:
       text-log: llsfrb.log
@@ -61,3 +61,10 @@ llsfrb:
   shell:
     refbox-host: localhost
     refbox-port: 4444
+
+  simulation:
+    #synchronize refbox time with the time of a simulation 
+    time-sync:
+      enable: true
+      #estimate time by using the last given simulation time speed (helps reducing the amount of messages to send)
+      estimate-time: true
