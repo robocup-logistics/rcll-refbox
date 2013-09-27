@@ -110,6 +110,36 @@
 	     (- ?t1-end ?t1-start)))
 )
 
+(deffunction time-add (?t1 ?t2)
+  (bind ?sec (+ (nth$ 1 ?t1) (nth$ 1 ?t2)))
+  (bind ?usec (+ (nth$ 2 ?t1) (nth$ 2 ?t2)))
+  (if (> ?usec 1000000)
+    then
+    (bind ?usec (- ?usec 1000000))
+    (bind ?sec (+ ?sec 1))
+  )
+  (return (create$ ?sec ?usec))
+)
+
+(deffunction time-max (?t1 ?t2)
+  (if (> (nth$ 1 ?t1) (nth$ 1 ?t2))
+    then
+    (return ?t1)
+    else
+    (if (< (nth$ 1 ?t1) (nth$ 1 ?t2))
+      then
+      (return ?t2)
+      else
+      (if (> (nth$ 2 ?t1) (nth$ 2 ?t2))
+	then
+	(return ?t1)
+	else
+	(return ?t2)
+      )
+    )
+  )
+)
+
 ; --- RULES - general housekeeping
 (defrule retract-time
   (declare (salience ?*PRIORITY_TIME_RETRACT*))
