@@ -26,5 +26,6 @@ netcomm config mongodb_log: core utils
 utils llsf_sps: core
 logging: core protobuf_comm
 protobuf_clips: protobuf_comm
+mongodb_log: logging
 
 include $(BUILDSYSDIR)/base.mk
