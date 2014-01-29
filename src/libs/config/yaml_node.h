@@ -29,40 +29,144 @@
 #endif
 
 #include <utils/misc/string_conversions.h>
+#include <utils/misc/string_split.h>
 #include <fstream>
 #include <stack>
 #include <cerrno>
 #include <unistd.h>
+#include <algorithm>
+#include <yaml-cpp/traits.h>
+
+#ifndef HAVE_YAMLCPP_0_5
+// older versions of yaml-cpp had these functions in the
+// YAML, rather than in the YAML::conversion namespace.
+namespace YAML {
+  namespace conversion {
+    using YAML::IsInfinity;
+    using YAML::IsNegativeInfinity;
+    using YAML::IsNaN;
+  }
+}
+#endif
 
 namespace llsfrb {
 
 /// @cond INTERNALS
-namespace yaml_config {
-  static inline
-    std::vector<std::string> split(const std::string &s, char delim = '/')
-  {
-    std::vector<std::string> elems;
-    std::stringstream ss(s);
-    std::string item;
-    while(std::getline(ss, item, delim)) {
-      if (item != "")  elems.push_back(item);
-    }
-    return elems;
-  }
 
-  static inline
-    std::queue<std::string> split_to_queue(const std::string &s, char delim = '/')
-  {
-    std::queue<std::string> elems;
-    std::stringstream ss(s);
-    std::string item;
-    while(std::getline(ss, item, delim)) {
-      if (item != "")  elems.push(item);
-    }
-    return elems;
-  }
-}
+  namespace yaml_utils {
 
+    namespace detail {
+      // we're not gonna mess with the mess that is all the isupper/etc. functions
+      inline bool IsLower(char ch) { return 'a' <= ch && ch <= 'z'; }
+      inline bool IsUpper(char ch) { return 'A' <= ch && ch <= 'Z'; }
+      inline char ToLower(char ch) { return IsUpper(ch) ? ch + 'a' - 'A' : ch; }
+
+      inline std::string tolower(const std::string& str)
+      {
+	std::string s(str);
+	std::transform(s.begin(), s.end(), s.begin(), ToLower);
+	return s;
+      }
+
+      template <typename T>
+      inline bool IsEntirely(const std::string& str, T func)
+      {
+	for(std::size_t i=0;i<str.size();i++)
+	  if(!func(str[i]))
+	    return false;
+
+	return true;
+      }
+
+      // IsFlexibleCase
+      // . Returns true if 'str' is:
+      //   . UPPERCASE
+      //   . lowercase
+      //   . Capitalized
+      inline bool IsFlexibleCase(const std::string& str)
+      {
+	if(str.empty())
+	  return true;
+
+	if(IsEntirely(str, IsLower))
+	  return true;
+
+	bool firstcaps = IsUpper(str[0]);
+	std::string rest = str.substr(1);
+	return firstcaps && (IsEntirely(rest, IsLower) || IsEntirely(rest, IsUpper));
+      }
+    }
+
+    inline bool convert(const std::string& input, std::string& output) {
+      output = input;
+      return true;
+    }
+
+    inline bool convert(const std::string& input, bool& output)
+    {
+      // we can't use iostream bool extraction operators as they don't
+      // recognize all possible values in the table below (taken from
+      // http://yaml.org/type/bool.html)
+      static const struct {
+	std::string truename, falsename;
+      } names[] = {
+	{ "y", "n" },
+	{ "yes", "no" },
+	{ "true", "false" },
+	{ "on", "off" },
+      };
+
+      if(! detail::IsFlexibleCase(input))
+	return false;
+
+      for(unsigned i=0;i<sizeof(names)/sizeof(names[0]);i++) {
+	if(names[i].truename == detail::tolower(input)) {
+	  output = true;
+	  return true;
+	}
+
+	if(names[i].falsename == detail::tolower(input)) {
+	  output = false;
+	  return true;
+	}
+      }
+
+      return false;
+    }
+
+    inline bool
+    convert(const std::string& input, YAML::_Null& output)
+    {
+      return input.empty() || input == "~" || input == "null" || input == "Null" || input == "NULL";
+    }
+
+
+    template <typename T>
+    inline bool convert(const std::string &input, T &rhs,
+			typename YAML::enable_if<YAML::is_numeric<T> >::type * = 0)
+    {
+      std::stringstream stream(input);
+      stream.unsetf(std::ios::dec);
+      if((stream >> rhs) && (stream >> std::ws).eof())
+	return true;
+      else {
+      }
+      if(std::numeric_limits<T>::has_infinity) {
+	if(YAML::conversion::IsInfinity(input) || YAML::conversion::IsNegativeInfinity(input) )
+	{
+	  rhs = std::numeric_limits<T>::infinity();
+	  return true;
+	}
+      }
+
+      if(std::numeric_limits<T>::has_quiet_NaN && YAML::conversion::IsNaN(input)) {
+	rhs = std::numeric_limits<T>::quiet_NaN();
+	return true;
+      }
+
+      return false;
+    }
+  }
 
 class YamlConfigurationNode
 {
@@ -99,7 +203,11 @@ class YamlConfigurationNode
   YamlConfigurationNode(std::string name, const YAML::Node &node)
     : name_(name), type_(Type::UNKNOWN), is_default_(false)
   {
+#ifdef HAVE_YAMLCPP_0_5
+    scalar_value_ = node.Scalar();
+#else
     node.GetScalar(scalar_value_);
+#endif
     switch (node.Type()) {
     case YAML::NodeType::Null:      type_ = Type::NONE; break;
     case YAML::NodeType::Scalar:    type_ = determine_scalar_type(); break;
@@ -167,7 +275,7 @@ class YamlConfigurationNode
 
   YamlConfigurationNode * find_or_insert(const char *path)
   {
-    std::queue<std::string> q = yaml_config::split_to_queue(path);
+    std::queue<std::string> q = fawkes::str_split_to_queue(path);
 
     YamlConfigurationNode *n = this;
     while (! q.empty()) {
@@ -184,7 +292,7 @@ class YamlConfigurationNode
 
   void erase(const char *path)
   {
-    std::queue<std::string> q = yaml_config::split_to_queue(path);
+    std::queue<std::string> q = fawkes::str_split_to_queue(path);
     std::stack<YamlConfigurationNode *> qs;
     std::string full_path;
 
@@ -228,7 +336,7 @@ class YamlConfigurationNode
   YamlConfigurationNode * find(const char *path)
   {
     try {
-      std::queue<std::string> pel_q = yaml_config::split_to_queue(path);
+      std::queue<std::string> pel_q = fawkes::str_split_to_queue(path);
       return find(pel_q);
     } catch (fawkes::Exception &e) {
       throw;
@@ -352,7 +460,7 @@ class YamlConfigurationNode
       throw fawkes::Exception("YamlConfiguration: value of %s is a list", name_.c_str());
     }
     T rv;
-    if (YAML::Convert(scalar_value_, rv)) {
+    if (yaml_utils::convert(scalar_value_, rv)) {
       return rv;
     } else {
       // might want to have custom exception here later
@@ -406,7 +514,7 @@ class YamlConfigurationNode
     rv.resize(N);
     for (typename std::vector<T>::size_type i = 0; i < N; ++i) {
       T t;
-      if (! YAML::Convert(list_values_[i], t)) {
+      if (! yaml_utils::convert(list_values_[i], t)) {
 	// might want to have custom exception here later
 	throw fawkes::Exception("YamlConfig: value or type error on %s", name_.c_str());
       }
@@ -521,12 +629,13 @@ class YamlConfigurationNode
     T rv;
     if (type_ == Type::SEQUENCE) {
       if (! list_values_.empty()) {
-	return YAML::Convert(list_values_[0], rv);
+	T rv;
+	return (yaml_utils::convert(list_values_[0], rv));
       } else {
 	return false;
       }
     } else {
-      return YAML::Convert(scalar_value_, rv);
+      return (yaml_utils::convert(scalar_value_, rv));
     }
   }
 
@@ -619,8 +728,13 @@ class YamlConfigurationNode
     type_ = Type::SEQUENCE;
     list_values_.resize(n.size());
     unsigned int i = 0;
+#ifdef HAVE_YAMLCPP_0_5
+    for (YAML::const_iterator it = n.begin(); it != n.end(); ++it) {
+      list_values_[i++] = it->as<std::string>();
+#else
     for (YAML::Iterator it = n.begin(); it != n.end(); ++it) {
       *it >> list_values_[i++];
+#endif
     }
   }
 

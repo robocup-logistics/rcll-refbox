@@ -43,13 +43,6 @@
 #include <vector>
 #include <queue>
 
-namespace fawkes {
-  class Mutex;
-#ifdef HAVE_FAM
-  class FamThread;
-#endif
-}
-
 namespace llsfrb {
 
 class YamlConfigurationNode;
