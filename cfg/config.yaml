@@ -18,7 +18,7 @@ llsfrb:
     game: game.log
 
   sps:
-    enable: true
+    enable: false
     host: !ipv4 192.168.1.77
     port: !tcp-port 502
     test-lights: true
