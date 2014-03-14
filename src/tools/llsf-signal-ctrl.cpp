@@ -50,6 +50,7 @@ void
 usage(const char *progname)
 {
   printf("Usage: %s -m MACHINE_ID -r S -g S -b S \n\n"
+	 "-R               reset all lights\n"
 	 "-m MACHINE_ID    use this machine to write puck\n"
 	 "-r S             set red light to state S (ON, OFF, or BLINK)\n"
 	 "-g S             set green light to state S (ON, OFF, or BLINK)\n"
@@ -60,7 +61,7 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "m:r:g:y:");
+  ArgumentParser argp(argc, argv, "Rm:r:g:y:");
 
   std::auto_ptr<llsfrb::Configuration> config(new llsfrb::YamlConfiguration(CONFDIR));
   config->load("config.yaml");
@@ -68,13 +69,17 @@ main(int argc, char **argv)
   //printf("Connecting to SPS...\n");
   sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
 		     config->get_uint("/llsfrb/sps/port"));
-  sps_->reset_lights();
+  //sps_->reset_lights();
   sps_->reset_rfids();
 
   SPSComm::Machine machine      = SPSComm::M1;
   SPSComm::SignalState red_s    = SPSComm::SIGNAL_OFF;
   SPSComm::SignalState green_s  = SPSComm::SIGNAL_OFF;
   SPSComm::SignalState yellow_s = SPSComm::SIGNAL_OFF;
+
+  if (argp.has_arg("R")) {
+    sps_->reset_lights();
+  }
 
   if (argp.has_arg("m")) {
     std::string machine_name = argp.arg("m");
