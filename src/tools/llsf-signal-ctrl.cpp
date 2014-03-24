@@ -37,14 +37,14 @@
 #include <config/yaml.h>
 
 #include <utils/system/argparser.h>
-#include <llsf_sps/sps_comm.h> 
+#include <llsf_sps/sps_comm.h>
+#include <utils/llsf/machines.h>
 
 #include <unistd.h>
 
 using namespace llsf_sps;
 using namespace fawkes;
-
-SPSComm                      *sps_;
+using namespace llsf_utils;
 
 void
 usage(const char *progname)
@@ -54,36 +54,79 @@ usage(const char *progname)
 	 "-m MACHINE_ID    use this machine to write puck\n"
 	 "-r S             set red light to state S (ON, OFF, or BLINK)\n"
 	 "-g S             set green light to state S (ON, OFF, or BLINK)\n"
-	 "-y S             set yellow light to state S (ON, OFF, or BLINK)\n",
+	 "-y S             set yellow light to state S (ON, OFF, or BLINK)\n"
+	 "-t TEAM          Team, cyan or magenta (only 2014 assignment)\n"
+	 "-Y Y             set assignment of year Y (2013 or 2014)\n",
 	 progname);
 }
+
 
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "Rm:r:g:y:");
+  MachineAssignment machine_assignment = ASSIGNMENT_2014;
+  TeamAssignment    team_assignment    = TEAM_CYAN;
+
+  ArgumentParser argp(argc, argv, "hRm:r:g:y:Y:T:");
+
+  if (argp.has_arg("h")) {
+    usage(argv[0]);
+    exit(0);
+  }
 
   std::auto_ptr<llsfrb::Configuration> config(new llsfrb::YamlConfiguration(CONFDIR));
   config->load("config.yaml");
 
-  //printf("Connecting to SPS...\n");
-  sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
-		     config->get_uint("/llsfrb/sps/port"));
+  //printf("Connecting to SPS...\n");  
+  SPSComm *sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
+			      config->get_uint("/llsfrb/sps/port"));
   //sps_->reset_lights();
   sps_->reset_rfids();
 
-  SPSComm::Machine machine      = SPSComm::M1;
+  unsigned int         machine  = 0;
   SPSComm::SignalState red_s    = SPSComm::SIGNAL_OFF;
   SPSComm::SignalState green_s  = SPSComm::SIGNAL_OFF;
   SPSComm::SignalState yellow_s = SPSComm::SIGNAL_OFF;
+
+  if (argp.has_arg("Y")) {
+    std::string year = argp.arg("Y");
+    if (year == "2013") {
+      machine_assignment = ASSIGNMENT_2013;
+    } else if (year == "2014") {
+      machine_assignment = ASSIGNMENT_2014;
+    } else {
+      printf("Invalid assignment, must be 2013 or 2014\n");
+      usage(argv[0]);
+      exit(-1);
+    }
+  }
+
+  if (argp.has_arg("T")){
+    if (machine_assignment == ASSIGNMENT_2013) {
+      printf("Team makes only sense with assignment 2014 or later\n");
+      usage(argv[0]);
+      exit(-2);
+    }
+
+    std::string team = argp.arg("T");
+    if (team == "cyan") {
+      team_assignment = TEAM_CYAN;
+    } else if (team == "magenta") {
+      team_assignment = TEAM_MAGENTA;
+    } else {
+      printf("Invalid team color, must be cyan or magenta.\n");
+      usage(argv[0]);
+      exit(-3);
+    }
+  }
 
   if (argp.has_arg("R")) {
     sps_->reset_lights();
   }
 
   if (argp.has_arg("m")) {
-    std::string machine_name = argp.arg("m");
-    machine = sps_->to_machine(machine_name);
+    std::string machine_str = argp.arg("m");
+    machine = to_machine(machine_str, machine_assignment, team_assignment);
   }
 
   if (argp.has_arg("r")) {

@@ -39,11 +39,13 @@
 #include <utils/system/argparser.h>
 #include <llsf_sps/sps_comm.h> 
 #include <boost/asio.hpp>
+#include <utils/llsf/machines.h>
 
 #include <memory>
 
 using namespace llsf_sps;
 using namespace fawkes;
+using namespace llsf_utils;
 
 #define TIMER_INTERVAL 50
 
@@ -55,7 +57,7 @@ typedef enum {
 boost::asio::deadline_timer  *timer_;
 boost::asio::signal_set      *signal_set_;
 SPSComm                      *sps_;
-SPSComm::Machine              machine_;
+unsigned int                  machine_;
 uint32_t                      new_puck_id_;
 OpMode                        op_mode_;
 
@@ -95,14 +97,24 @@ usage(const char *progname)
   printf("Usage: %s [-m MACHINE_ID] read|write <puck-id>\n\n"
 	 "read             read ID from puck under machine and print it\n"
 	 "write <puck-id>  write new ID <puck-id> to puck, must be a number\n"
-	 "-m MACHINE_ID    use this machine to write puck (M1 by default)\n",
+	 "-m MACHINE_ID    use this machine to write puck (M1 by default)\n"
+	 "-t TEAM          Team, cyan or magenta (only 2014 assignment)\n"
+	 "-Y Y             set assignment of year Y (2013 or 2014)\n",
 	 progname);
 }
 
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "m:");
+  MachineAssignment machine_assignment = ASSIGNMENT_2014;
+  TeamAssignment    team_assignment    = TEAM_CYAN;
+
+  ArgumentParser argp(argc, argv, "hm:Y:T:");
+
+  if (argp.has_arg("h")) {
+    usage(argv[0]);
+    exit(0);
+  }
 
   std::auto_ptr<llsfrb::Configuration> config(new llsfrb::YamlConfiguration(CONFDIR));
   config->load("config.yaml");
@@ -113,10 +125,44 @@ main(int argc, char **argv)
   sps_->reset_lights();
   sps_->reset_rfids();
 
-  machine_ = SPSComm::M1;
+  machine_ = 0;
+
+
+  if (argp.has_arg("Y")) {
+    std::string year = argp.arg("Y");
+    if (year == "2013") {
+      machine_assignment = ASSIGNMENT_2013;
+    } else if (year == "2014") {
+      machine_assignment = ASSIGNMENT_2014;
+    } else {
+      printf("Invalid assignment, must be 2013 or 2014");
+      usage(argv[0]);
+      exit(-1);
+    }
+  }
+
+  if (argp.has_arg("T")){
+    if (machine_assignment == ASSIGNMENT_2013) {
+      printf("Team makes only sense with assignment 2014 or later\n");
+      usage(argv[0]);
+      exit(-2);
+    }
+
+    std::string team = argp.arg("T");
+    if (team == "cyan") {
+      team_assignment = TEAM_CYAN;
+    } else if (team == "magenta") {
+      team_assignment = TEAM_MAGENTA;
+    } else {
+      printf("Invalid team color, must be cyan or magenta.\n");
+      usage(argv[0]);
+      exit(-3);
+    }
+  }
+
   if (argp.has_arg("m")) {
-    std::string machine_name = argp.arg("m");
-    machine_ = sps_->to_machine(machine_name);
+    std::string machine_str = argp.arg("m");
+    machine_ = to_machine(machine_str, machine_assignment, team_assignment);
   }
 
   if (argp.num_items() == 0) {
