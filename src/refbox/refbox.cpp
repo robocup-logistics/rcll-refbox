@@ -130,6 +130,23 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   } catch (fawkes::Exception &e) {} // ignored, use default
   logger_ = mlogger;
 
+
+  cfg_machine_assignment_ = ASSIGNMENT_2014;
+  try {
+    std::string m_ass_str = config_->get_string("/llsfrb/game/machine-assignment");
+    if (m_ass_str == "2013") {
+      cfg_machine_assignment_ = ASSIGNMENT_2013;
+    } else if (m_ass_str == "2014") {
+      cfg_machine_assignment_ = ASSIGNMENT_2014;
+    } else {
+      logger_->log_warn("RefBox", "Invalid machine assignment '%s', using 2014",
+			m_ass_str.c_str());
+      cfg_machine_assignment_ = ASSIGNMENT_2014;
+    }
+  } catch (fawkes::Exception &e) {} // ignored, use default
+  logger_->log_info("RefBox", "Using %s machine assignment",
+		    (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
+
   try {
     sps_ = NULL;
     if (config_->get_bool("/llsfrb/sps/enable")) {
@@ -447,7 +464,7 @@ LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::st
 {
   if (! sps_)  return;
   try {
-    unsigned int m = to_machine(machine, ASSIGNMENT_2013);
+    unsigned int m = to_machine(machine, cfg_machine_assignment_);
     sps_->set_light(m, light, state);
   } catch (fawkes::Exception &e) {
     logger_->log_warn("RefBox", "Failed to set signal: %s", e.what());
@@ -891,7 +908,7 @@ LLSFRefBox::sps_read_rfids()
   try {
     std::vector<uint32_t> puck_ids = sps_->read_rfids();
     for (unsigned int i = 0; i < puck_ids.size(); ++i) {
-      const char *machine_name = to_string(i, ASSIGNMENT_2013);
+      const char *machine_name = to_string(i, cfg_machine_assignment_);
       if (puck_ids[i] == SPSComm::NO_PUCK) {
         clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
 			      machine_name);

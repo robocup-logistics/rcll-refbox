@@ -174,6 +174,7 @@ class LLSFRefBox
 
   unsigned int cfg_timer_interval_;
   std::string  cfg_clips_dir_;
+  llsf_utils::MachineAssignment cfg_machine_assignment_;
 
 #ifdef HAVE_AVAHI
   fawkes::AvahiThread          *avahi_thread_;
