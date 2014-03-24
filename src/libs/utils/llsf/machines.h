@@ -57,12 +57,10 @@ typedef enum {
 } TeamAssignment;
 
 extern unsigned int
-to_machine(std::string &machine_name,
-	   MachineAssignment machine_assignment, TeamAssignment team_assignment = TEAM_CYAN);
+to_machine(std::string &machine_name, MachineAssignment machine_assignment);
 
 extern const char *
-to_string(unsigned int machine,
-	  MachineAssignment machine_assignment, TeamAssignment team_assignment = TEAM_CYAN);
+to_string(unsigned int machine, MachineAssignment machine_assignment);
 
 
 } // end of namespace llsfrb
