@@ -177,13 +177,14 @@ SPSComm::try_reconnect()
  *      each 150ms one machine is turned off.</li>
  * </ul>
  * The operation is blocking until the full sequence has completed.
- * @param num_machines number of machines/light signals connected
  */
 void
-SPSComm::test_lights(unsigned int num_machines)
+SPSComm::test_lights()
 {
   // yes, we could use modbus_write_registers to write it all at once,
   // but that would not test the typical code path
+
+  const unsigned num_machines = mbs_.size() * SPS_NUM_MACHINES;
 
   // Set all to blink
   for (unsigned int m = 0; m < num_machines; ++m) {
@@ -223,7 +224,7 @@ SPSComm::test_lights(unsigned int num_machines)
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
       set_light(m, (Light)l, SIGNAL_ON);
     }
-    usleep(80000);
+    usleep(50000);
   }
 }
 

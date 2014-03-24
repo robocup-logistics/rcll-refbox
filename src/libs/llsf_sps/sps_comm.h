@@ -83,7 +83,7 @@ class SPSComm
   void try_reconnect();
 
   void reset_lights();
-  void test_lights(unsigned int num_machines);
+  void test_lights();
   void set_light(unsigned int m, std::string &light, std::string &state);
   void set_light(unsigned int m, Light light, SignalState state);
 
