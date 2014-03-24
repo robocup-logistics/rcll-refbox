@@ -8,7 +8,10 @@
 ;---------------------------------------------------------------------------
 
 (deftemplate machine
-  (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3  R1))
+  (slot name (type SYMBOL)
+	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3 R1
+			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 D4 D5 D6 R2))
+  (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
   (multislot loaded-with (type INTEGER) (default))
   (multislot actual-lights (type SYMBOL)
@@ -84,7 +87,8 @@
 
 (deftemplate rfid-input
   (slot machine (type SYMBOL)
-	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3 R1))
+	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3 R1
+			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 D4 D5 D6 R2))
   (slot has-puck (type SYMBOL))
   (slot id (type INTEGER))
 )
@@ -147,7 +151,9 @@
 )
 
 (deftemplate exploration-report
-  (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10))
+  (slot name (type SYMBOL)
+	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12
+			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24))
   (slot type (type SYMBOL) (allowed-values WRONG T1 T2 T3 T4 T5))
   (slot host (type STRING))
   (slot port (type INTEGER))
@@ -192,22 +198,39 @@
   (whac-a-mole-light NONE)
   ; Positions are the example ones from the rulebook and
   ; will most likely be different during the tournament
-  (machine (name M1)  (mtype T1)      (pose 3.92 1.68 ?*M-DOWN*))
-  (machine (name M2)  (mtype T1)      (pose 3.92 3.92 ?*M-RIGHT*))
-  (machine (name M3)  (mtype T2)      (pose 2.80 0.56 ?*M-UP*))
-  (machine (name M4)  (mtype T2)      (pose 2.80 1.68 ?*M-UP*))
-  (machine (name M5)  (mtype T3)      (pose 2.80 2.80 ?*M-LEFT*))
-  (machine (name M6)  (mtype T3)      (pose 2.80 3.92 ?*M-UP*))
-  (machine (name M7)  (mtype T4)      (pose 2.80 5.04 ?*M-DOWN*))
-  (machine (name M8)  (mtype T5)      (pose 1.68 1.68 ?*M-LEFT*))
-  (machine (name M9)  (mtype T4)      (pose 1.68 3.92 ?*M-DOWN*))
-  (machine (name M10) (mtype T5)      (pose 1.68 5.04 ?*M-RIGHT*))
-  (machine (name D1)  (mtype DELIVER) (pose 5.34 3.15 ?*M-LEFT*)      (down-possible FALSE))
-  (machine (name D2)  (mtype DELIVER) (pose 5.34 2.80 ?*M-LEFT*)      (down-possible FALSE))
-  (machine (name D3)  (mtype DELIVER) (pose 5.34 2.45 ?*M-LEFT*)      (down-possible FALSE))
-  (machine (name M11) (mtype T3)    (pose 5.40 5.40 ?*M-DOWN-LEFT*))
-  (machine (name R1)  (mtype RECYCLE) (pose 5.40 0.20 ?*M-UP-LEFT*))
-  (machine (name M12)  (mtype T4) (pose 0.20 5.40 ?*M-DOWN-RIGHT*))
+  (machine (name M1)  (team CYAN) (mtype T1)      (pose 3.92 1.68 ?*M-DOWN*))
+  (machine (name M2)  (team CYAN) (mtype T1)      (pose 3.92 3.92 ?*M-RIGHT*))
+  (machine (name M3)  (team CYAN) (mtype T2)      (pose 2.80 0.56 ?*M-UP*))
+  (machine (name M4)  (team CYAN) (mtype T2)      (pose 2.80 1.68 ?*M-UP*))
+  (machine (name M5)  (team CYAN) (mtype T3)      (pose 2.80 2.80 ?*M-LEFT*))
+  (machine (name M6)  (team CYAN) (mtype T3)      (pose 2.80 3.92 ?*M-UP*))
+  (machine (name M7)  (team CYAN) (mtype T4)      (pose 2.80 5.04 ?*M-DOWN*))
+  (machine (name M8)  (team CYAN) (mtype T5)      (pose 1.68 1.68 ?*M-LEFT*))
+  (machine (name M9)  (team CYAN) (mtype T4)      (pose 1.68 3.92 ?*M-DOWN*))
+  (machine (name M10) (team CYAN) (mtype T5)      (pose 1.68 5.04 ?*M-RIGHT*))
+  (machine (name M11) (team CYAN) (mtype T3)      (pose 5.40 5.40 ?*M-DOWN-LEFT*))
+  (machine (name M12)  (team CYAN) (mtype T4)     (pose 0.20 5.40 ?*M-DOWN-RIGHT*))
+  (machine (name D1)  (team CYAN) (mtype DELIVER) (pose 5.34 3.15 ?*M-LEFT*)      (down-possible FALSE))
+  (machine (name D2)  (team CYAN) (mtype DELIVER) (pose 5.34 2.80 ?*M-LEFT*)      (down-possible FALSE))
+  (machine (name D3)  (team CYAN) (mtype DELIVER) (pose 5.34 2.45 ?*M-LEFT*)      (down-possible FALSE))
+  (machine (name R1)  (team CYAN) (mtype RECYCLE) (pose 5.40 0.20 ?*M-UP-LEFT*))
+
+  (machine (name M13)  (team MAGENTA) (mtype T1)      (pose 3.92 1.68 ?*M-DOWN*))
+  (machine (name M14)  (team MAGENTA) (mtype T1)      (pose 3.92 3.92 ?*M-RIGHT*))
+  (machine (name M15)  (team MAGENTA) (mtype T2)      (pose 2.80 0.56 ?*M-UP*))
+  (machine (name M16)  (team MAGENTA) (mtype T2)      (pose 2.80 1.68 ?*M-UP*))
+  (machine (name M17)  (team MAGENTA) (mtype T3)      (pose 2.80 2.80 ?*M-LEFT*))
+  (machine (name M18)  (team MAGENTA) (mtype T3)      (pose 2.80 3.92 ?*M-UP*))
+  (machine (name M19)  (team MAGENTA) (mtype T4)      (pose 2.80 5.04 ?*M-DOWN*))
+  (machine (name M20)  (team MAGENTA) (mtype T5)      (pose 1.68 1.68 ?*M-LEFT*))
+  (machine (name M21)  (team MAGENTA) (mtype T4)      (pose 1.68 3.92 ?*M-DOWN*))
+  (machine (name M22) (team MAGENTA) (mtype T5)      (pose 1.68 5.04 ?*M-RIGHT*))
+  (machine (name M23) (team MAGENTA) (mtype T3)    (pose 5.40 5.40 ?*M-DOWN-LEFT*))
+  (machine (name M24)  (team MAGENTA) (mtype T4) (pose 0.20 5.40 ?*M-DOWN-RIGHT*))
+  (machine (name D4)  (team MAGENTA) (mtype DELIVER) (pose 5.34 3.15 ?*M-LEFT*)      (down-possible FALSE))
+  (machine (name D5)  (team MAGENTA) (mtype DELIVER) (pose 5.34 2.80 ?*M-LEFT*)      (down-possible FALSE))
+  (machine (name D6)  (team MAGENTA) (mtype DELIVER) (pose 5.34 2.45 ?*M-LEFT*)      (down-possible FALSE))
+  (machine (name R2)  (team MAGENTA) (mtype RECYCLE) (pose 5.40 0.20 ?*M-UP-LEFT*))
 )
 
 (deffacts light-codes
