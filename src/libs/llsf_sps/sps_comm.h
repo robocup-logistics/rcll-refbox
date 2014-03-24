@@ -77,6 +77,7 @@ class SPSComm
   };
 
   SPSComm(const char *host, unsigned short port);
+  SPSComm(std::vector<std::string> hosts, unsigned short port);
   ~SPSComm();
 
   void try_reconnect();
@@ -95,7 +96,11 @@ class SPSComm
   SignalState  to_signal_state(std::string &signal_state);
 
  private:
-  modbus_t *mb_;
+  void construct_mappings();
+  unsigned int plc_index(unsigned int &m);
+
+ private:
+  std::vector<modbus_t *>            mbs_;
   std::map<std::string, Light>       name_to_light_;
   std::map<std::string, SignalState> name_to_signal_state_;
 };
