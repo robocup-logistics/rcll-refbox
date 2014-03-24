@@ -42,6 +42,7 @@
 #include <logging/logger.h>
 #include <core/threading/mutex.h>
 #include <core/threading/mutex_locker.h>
+#include <utils/llsf/machines.h>
 #include <protobuf_comm/server.h>
 
 #include <clipsmm.h>

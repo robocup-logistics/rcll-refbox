@@ -64,6 +64,7 @@
 using namespace llsf_sps;
 using namespace protobuf_comm;
 using namespace protobuf_clips;
+using namespace llsf_utils;
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -144,7 +145,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       sps_->reset_lights();
       sps_->reset_rfids();
       if (test_lights) {
-	sps_->test_lights();
+	sps_->test_lights(SPS_NUM_MACHINES);
       }
     }
   } catch (fawkes::Exception &e) {
@@ -446,7 +447,8 @@ LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::st
 {
   if (! sps_)  return;
   try {
-    sps_->set_light(machine, light, state);
+    unsigned int m = to_machine(machine, ASSIGNMENT_2013);
+    sps_->set_light(m, light, state);
   } catch (fawkes::Exception &e) {
     logger_->log_warn("RefBox", "Failed to set signal: %s", e.what());
   }
@@ -889,13 +891,13 @@ LLSFRefBox::sps_read_rfids()
   try {
     std::vector<uint32_t> puck_ids = sps_->read_rfids();
     for (unsigned int i = 0; i < puck_ids.size(); ++i) {
-      std::string & machine_name = sps_->index_to_name(i);
+      const char *machine_name = to_string(i, ASSIGNMENT_2013);
       if (puck_ids[i] == SPSComm::NO_PUCK) {
         clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
-			      machine_name.c_str());
+			      machine_name);
       } else {
         clips_->assert_fact_f("(rfid-input (machine %s) (has-puck TRUE) (id %u))",
-			      machine_name.c_str(), puck_ids[i]);
+			      machine_name, puck_ids[i]);
       }
     }
   } catch (fawkes::Exception &e) {
