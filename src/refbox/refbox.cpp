@@ -156,13 +156,18 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	test_lights = config_->get_bool("/llsfrb/sps/test-lights");
       } catch (fawkes::Exception &e) {} // ignore, use default
 
-      sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
-			 config_->get_uint("/llsfrb/sps/port"));
+      if (config_->exists("/llsfrb/sps/hosts") && cfg_machine_assignment_ == ASSIGNMENT_2014) {
+	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
+			   config_->get_uint("/llsfrb/sps/port"));
+      } else {
+	sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
+			   config_->get_uint("/llsfrb/sps/port"));
+      }
 
       sps_->reset_lights();
       sps_->reset_rfids();
       if (test_lights) {
-	sps_->test_lights(SPS_NUM_MACHINES);
+	sps_->test_lights();
       }
     }
   } catch (fawkes::Exception &e) {
