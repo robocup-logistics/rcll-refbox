@@ -8,7 +8,7 @@
 ;---------------------------------------------------------------------------
 
 (deftemplate machine
-  (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TST R1 R2))
+  (slot name (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3  R1))
   (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
   (multislot loaded-with (type INTEGER) (default))
   (multislot actual-lights (type SYMBOL)
@@ -83,7 +83,8 @@
 )
 
 (deftemplate rfid-input
-  (slot machine (type SYMBOL) (allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 D1 D2 D3 TST R1 R2))
+  (slot machine (type SYMBOL)
+	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3 R1))
   (slot has-puck (type SYMBOL))
   (slot id (type INTEGER))
 )
@@ -204,9 +205,9 @@
   (machine (name D1)  (mtype DELIVER) (pose 5.34 3.15 ?*M-LEFT*)      (down-possible FALSE))
   (machine (name D2)  (mtype DELIVER) (pose 5.34 2.80 ?*M-LEFT*)      (down-possible FALSE))
   (machine (name D3)  (mtype DELIVER) (pose 5.34 2.45 ?*M-LEFT*)      (down-possible FALSE))
-  (machine (name TST) (mtype TEST)    (pose 5.40 5.40 ?*M-DOWN-LEFT*) (down-possible FALSE))
+  (machine (name M11) (mtype T3)    (pose 5.40 5.40 ?*M-DOWN-LEFT*))
   (machine (name R1)  (mtype RECYCLE) (pose 5.40 0.20 ?*M-UP-LEFT*))
-  (machine (name R2)  (mtype RECYCLE) (pose 0.20 5.40 ?*M-DOWN-RIGHT*))
+  (machine (name M12)  (mtype T4) (pose 0.20 5.40 ?*M-DOWN-RIGHT*))
 )
 
 (deffacts light-codes
