@@ -78,8 +78,15 @@ main(int argc, char **argv)
   config->load("config.yaml");
 
   //printf("Connecting to SPS...\n");  
-  SPSComm *sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
-			      config->get_uint("/llsfrb/sps/port"));
+  SPSComm *sps_;
+  if (config->exists("/llsfrb/sps/hosts") && machine_assignment == ASSIGNMENT_2014) {
+    sps_ = new SPSComm(config->get_strings("/llsfrb/sps/hosts"),
+		       config->get_uint("/llsfrb/sps/port"));
+  } else {
+    sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
+		       config->get_uint("/llsfrb/sps/port"));
+  }
+
   //sps_->reset_lights();
   sps_->reset_rfids();
 
