@@ -55,7 +55,6 @@ usage(const char *progname)
 	 "-r S             set red light to state S (ON, OFF, or BLINK)\n"
 	 "-g S             set green light to state S (ON, OFF, or BLINK)\n"
 	 "-y S             set yellow light to state S (ON, OFF, or BLINK)\n"
-	 "-t TEAM          Team, cyan or magenta (only 2014 assignment)\n"
 	 "-Y Y             set assignment of year Y (2013 or 2014)\n",
 	 progname);
 }
@@ -65,9 +64,8 @@ int
 main(int argc, char **argv)
 {
   MachineAssignment machine_assignment = ASSIGNMENT_2014;
-  TeamAssignment    team_assignment    = TEAM_CYAN;
 
-  ArgumentParser argp(argc, argv, "hRm:r:g:y:Y:T:");
+  ArgumentParser argp(argc, argv, "hRm:r:g:y:Y:");
 
   if (argp.has_arg("h")) {
     usage(argv[0]);
@@ -108,32 +106,13 @@ main(int argc, char **argv)
     }
   }
 
-  if (argp.has_arg("T")){
-    if (machine_assignment == ASSIGNMENT_2013) {
-      printf("Team makes only sense with assignment 2014 or later\n");
-      usage(argv[0]);
-      exit(-2);
-    }
-
-    std::string team = argp.arg("T");
-    if (team == "cyan") {
-      team_assignment = TEAM_CYAN;
-    } else if (team == "magenta") {
-      team_assignment = TEAM_MAGENTA;
-    } else {
-      printf("Invalid team color, must be cyan or magenta.\n");
-      usage(argv[0]);
-      exit(-3);
-    }
-  }
-
   if (argp.has_arg("R")) {
     sps_->reset_lights();
   }
 
   if (argp.has_arg("m")) {
     std::string machine_str = argp.arg("m");
-    machine = to_machine(machine_str, machine_assignment, team_assignment);
+    machine = to_machine(machine_str, machine_assignment);
   }
 
   if (argp.has_arg("r")) {
