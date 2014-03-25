@@ -12,7 +12,7 @@
 	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3 R1
 			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 D4 D5 D6 R2))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
-  (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
+  (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER RECYCLE))
   (multislot loaded-with (type INTEGER) (default))
   (multislot actual-lights (type SYMBOL)
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
@@ -34,7 +34,7 @@
 )
 
 (deftemplate machine-spec
-  (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER TEST RECYCLE))
+  (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER RECYCLE))
   (multislot inputs (type SYMBOL) (allowed-symbols S0 S1 S2) (default))
   (slot output (type SYMBOL) (allowed-symbols NONE S0 S1 S2 P1 P2 P3))
   (slot proc-time-min (type INTEGER))
@@ -53,6 +53,7 @@
 (deftemplate puck
   (slot index (type INTEGER))
   (slot id (type INTEGER))
+  (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA) (default nil))
   (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 CONSUMED FINISHED) (default S0))
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 2 2) (default 0.0 0.0))
@@ -63,6 +64,7 @@
   (slot number (type INTEGER))
   (slot state (type SYMBOL) (allowed-values ACTIVE MAINTENANCE DISQUALIFIED) (default ACTIVE))
   (slot team (type STRING))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
   (slot name (type STRING))
   (slot host (type STRING))
   (slot port (type INTEGER))
@@ -100,8 +102,15 @@
   (slot is-slave (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
+(deftemplate attention-message
+  (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA) (default nil))
+  (slot text (type STRING))
+  (slot time (type INTEGER) (default 5))
+)
+
 (deftemplate order
   (slot id (type INTEGER))
+  (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
   (slot quantity-requested (type INTEGER) (default 1))
   (slot quantity-delivered (type INTEGER) (default 0))
@@ -122,6 +131,7 @@
  
 (deftemplate product-delivered
   (slot game-time (type FLOAT))
+  (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
   (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3))
 )
@@ -142,11 +152,14 @@
 	(default NONE))
   (slot game-time (type FLOAT) (default 0.0))
   (slot cont-time (type FLOAT) (default 0.0))
+  ; cardinality 2: sec msec
   (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
-  (slot points (type INTEGER) (default 0))
-  (slot team (type STRING))
+  ; cardinality 2: team cyan and magenta
+  (multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot teams (type STRING) (cardinality 2 2) (default "" ""))
+
   (slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
@@ -154,6 +167,7 @@
   (slot name (type SYMBOL)
 	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12
 			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24))
+  (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot type (type SYMBOL) (allowed-values WRONG T1 T2 T3 T4 T5))
   (slot host (type STRING))
   (slot port (type INTEGER))
@@ -162,6 +176,7 @@
 
 (deftemplate points
   (slot points (type INTEGER))
+  (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot game-time (type FLOAT))
   (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION WHACK_A_MOLE_CHALLENGE))
   (slot reason (type STRING))

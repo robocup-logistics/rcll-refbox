@@ -27,6 +27,23 @@
   )
 )
 
+(deffunction game-calc-phase-points (?team-color ?phase)
+  (bind ?phase-points 0)
+  (do-for-all-facts ((?p points)) (and (eq ?p:phase ?phase) (eq ?p:team ?team-color))
+    (bind ?phase-points (+ ?phase-points ?p:points))
+  )
+  (return ?phase-points)
+)
+
+(deffunction game-calc-points (?team-color)
+  (bind ?points 0)
+  (foreach ?phase (deftemplate-slot-allowed-values points phase)
+    (bind ?phase-points (game-calc-phase-points ?team-color ?phase))
+    (bind ?points (+ ?points (max ?phase-points 0)))
+  )
+  (return ?points)
+)
+
 (defrule game-reset
   (game-reset) ; this is a fact
   =>
@@ -118,13 +135,13 @@
 
 (defrule game-print
   (game-parameterized)
-  (gamestate (team ?team))
+  (gamestate (teams $?teams))
   (not (game-printed))
   =>
   (assert (game-printed))
 
   (bind ?t t)
-  (if (neq ?team "")
+  (if (neq ?teams (create$ "" ""))
    then
     (bind ?t debug)
     (printout warn "Printing game config to debug log only" crlf)
@@ -142,21 +159,15 @@
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
   ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION|WHACK_A_MOLE_CHALLENGE|NAVIGATION_CHALLENGE)
-		    (state RUNNING) (points ?old-points)
+		    (state RUNNING)
 		    (game-time ?game-time) (cont-time ?cont-time)
 		    (last-time $?last-time&:(neq ?last-time ?now)))
   =>
-  (bind ?points 0)
-  (foreach ?phase (deftemplate-slot-allowed-values points phase)
-    (bind ?phase-points 0)
-    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
-      (bind ?phase-points (+ ?phase-points ?p:points))
-    )
-    (bind ?points (+ ?points (max ?phase-points 0)))
-  )
+  (bind ?points-cyan (game-calc-points CYAN))
+  (bind ?points-magenta (game-calc-points MAGENTA))
   (bind ?timediff (time-diff-sec ?now ?last-time))
   (modify ?gf (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
-	  (last-time ?now) (points ?points))
+	  (last-time ?now) (points ?points-cyan ?points-magenta))
 )
 
 (defrule game-update-last-time
@@ -181,17 +192,17 @@
 )
 
 (defrule game-start-training
-  ?gs <- (gamestate (team "") (phase PRE_GAME) (state RUNNING))
+  ?gs <- (gamestate (teams "" "") (phase PRE_GAME) (state RUNNING))
   =>
   (modify ?gs (phase EXPLORATION) (prev-phase PRE_GAME) (game-time 0.0) (start-time (now)))
-  (assert (attention-message "Starting  *** TRAINING ***  game" 5))
+  (assert (attention-message (text "Starting  *** TRAINING ***  game")))
 )
 
 (defrule game-start
-  ?gs <- (gamestate (team ?team&~"") (phase PRE_GAME) (state RUNNING))
+  ?gs <- (gamestate (teams ?team_cyan ?team_magenta) (phase PRE_GAME) (state RUNNING))
   =>
   (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now)))
-  (assert (attention-message (str-cat "Starting setup phase for team " ?team) 15))
+  (assert (attention-message (text "Starting setup phase") (time 15)))
 )
 
 (defrule game-setup-warn-end-near
@@ -200,7 +211,7 @@
   (not (setup-warned))
   =>
   (assert (setup-warned))
-  (assert (attention-message "Setup phase is about to end" 5))
+  (assert (attention-message (text "Setup phase is about to end")))
 )
 
 (defrule game-switch-to-exploration
@@ -208,7 +219,7 @@
 		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
   =>
   (modify ?gs (phase EXPLORATION) (prev-phase SETUP) (game-time 0.0))
-  (assert (attention-message "Switching to exploration phase" 5))
+  (assert (attention-message (text "Switching to exploration phase")))
 )
 
 (defrule game-switch-to-production
@@ -216,18 +227,18 @@
 		    (game-time ?game-time&:(>= ?game-time ?*EXPLORATION-TIME*)))
   =>
   (modify ?gs (phase PRODUCTION) (prev-phase EXPLORATION) (game-time 0.0))
-  (assert (attention-message "Switching to production phase" 5))
+  (assert (attention-message (text "Switching to production phase")))
 )
 
-(deffunction game-print-points ()
+(deffunction game-print-points-team (?team)
   (bind ?points 0)
-  (printout t "-- Awarded Points --" crlf)
+  (printout t "-- Awarded Points -- " ?team " --" crlf)
   (foreach ?phase (deftemplate-slot-allowed-values points phase)
-    (if (any-factp ((?p points)) (and (eq ?phase ?p:phase) (> ?p:points 0)))
+    (if (any-factp ((?p points)) (and (eq ?phase ?p:phase) (eq ?team ?p:team) (> ?p:points 0)))
     then
       (printout t ?phase crlf)
       (bind ?phase-points 0)
-      (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
+      (do-for-all-facts ((?p points)) (and (eq ?p:team ?team) (eq ?p:phase ?phase))
         (printout t
           (format nil "  %s  %2d  %s" (time-sec-format ?p:game-time) ?p:points ?p:reason) crlf)
         (bind ?phase-points (+ ?phase-points ?p:points))
@@ -239,9 +250,14 @@
   (printout t "OVERALL TOTAL POINTS: " ?points crlf)
 )
 
+(deffunction game-print-points ()
+  (game-print-points-team CYAN)
+  (game-print-points-team MAGENTA)
+)
+
 (defrule game-over
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time FALSE) (points ?points)
+		    (over-time FALSE)
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
@@ -249,7 +265,7 @@
 
 (defrule game-over-after-overtime
   ?gs <- (gamestate (refbox-mode ~STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time TRUE) (points ?points)
+		    (over-time TRUE)
 		    (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
@@ -260,7 +276,8 @@
 		    (over-time FALSE) (game-time ?gt&:(>= ?gt ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (state PAUSED) (end-time (now)))
-  (assert (attention-message "Waiting for synchronized game to end" ?*PRODUCTION-TIME*))
+  (assert (attention-message (text "Waiting for synchronized game to end")
+			     (time ?*PRODUCTION-TIME*)))
 )
 
 (defrule game-goto-post-game
@@ -271,6 +288,6 @@
     (modify ?machine (desired-lights RED-BLINK))
   )
   (game-print-points)
-  (assert (attention-message "Game Over" 60))
+  (assert (attention-message (text "Game Over") (time 60)))
   (printout t "===  Game Over  ===" crlf)
 )

@@ -92,6 +92,7 @@
   (bind ?time (pb-field-value ?p "time"))
   (bind ?pose-time (create$ 0 0))
   (bind ?pose (create$ 0.0 0.0 0.0))
+   
   (if (pb-has-field ?p "pose")
    then
     (bind ?p-pose (pb-field-value ?p "pose"))
@@ -120,6 +121,7 @@
   (modify ?sf (count 0) (time 0 0))
   (printout debug "Received initial beacon from " ?from-host ":" ?from-port crlf)
   (bind ?team (pb-field-value ?p "team_name"))
+  (bind ?team-color nil)
   (bind ?name (pb-field-value ?p "peer_name"))
   (bind ?number (pb-field-value ?p "number"))
   (bind ?timef (pb-field-value ?p "time"))
@@ -129,53 +131,63 @@
    then
     (printout warn "Robot " ?name " of " ?team
 	      " has a large time offset (" ?peer-time-diff " sec)" crlf)
-    (assert (attention-message (str-cat "Robot " ?name " of " ?team
-					" has a large time offset (" ?peer-time-diff " sec)")
-			       5))
+    (assert (attention-message (text (str-cat "Robot " ?name " of " ?team
+					      " has a large time offset ("
+					      ?peer-time-diff " sec)"))))
   )
   (do-for-fact ((?other robot)) (eq ?other:host ?from-host)
     (printout warn "Received two BeaconSignals from host " ?from-host
 	      " (" ?other:team "/" ?other:name "@" ?other:port " vs "
 	      ?team "/" ?from-host "@" ?from-port ")" crlf)
-    (assert (attention-message (str-cat "Received two BeaconSignals form host " ?from-host
-					" (" ?other:team "/" ?other:name "@" ?other:port
-					" vs " ?team "/" ?from-host "@" ?from-port ")") 5))
+    (assert (attention-message (text (str-cat "Received two BeaconSignals form host "
+					      ?from-host " (" ?other:team "/" ?other:name
+					      "@" ?other:port " vs " ?team "/" ?from-host
+					      "@" ?from-port ")"))))
   )
   (if (= ?number 0)
    then
     (printout warn "Robot " ?name "(" ?team ") has jersey number 0 "
 	      "(" ?from-host ":" ?from-port ")" crlf)
-    (assert (attention-message (str-cat "Robot " ?name "(" ?team ") has jersey number 0 "
-					"(" ?from-host ":" ?from-port ")") 5))
+    (assert (attention-message (text (str-cat "Robot " ?name "(" ?team ") has jersey number"
+					      " 0 (" ?from-host ":" ?from-port ")"))))
   )
   (do-for-fact ((?other robot))
     (and (eq ?other:number ?number) (or (neq ?other:host ?from-host) (neq ?other:port ?from-port)))
     (printout warn "Two robots with the same jersey number " ?number ": " ?from-host
 	      " (" ?other:name "@" ?other:host ":" ?other:port " and "
 	      ?name "@" ?from-host ":" ?from-port ")" crlf)
-    (assert (attention-message (str-cat "Duplicate jersey #" ?number
-					" (" ?other:name "@" ?other:host ":" ?other:port
-					", " ?name "@" ?from-host ":" ?from-port ")") 5))
+    (assert (attention-message (text (str-cat "Duplicate jersey #" ?number
+					      " (" ?other:name "@" ?other:host ":" ?other:port
+					      ", " ?name "@" ?from-host ":" ?from-port ")"))))
+  )
+
+  (if (pb-has-field ?p "team_color")
+   then
+    (bind ?team-color (pb-field-value ?p "team_color"))
+   else
+    (assert (attention-message (text (str-cat "Robot " ?name " of " ?team
+					      " does not provide its team color"))))
   )
   (if (and (eq ?team "LLSF") (eq ?name "RefBox"))
    then
     (printout warn "Detected another RefBox at " ?from-host ":" ?from-port crlf)
-    (assert (attention-message (str-cat "Detected another RefBox at "
-					?from-host ":" ?from-port) 5))
+    (assert (attention-message (text (str-cat "Detected another RefBox at "
+					      ?from-host ":" ?from-port))))
   )
-  (assert (robot (team ?team) (name ?name) (number ?number)
+  (assert (robot (team ?team) (team-color ?team-color) (name ?name) (number ?number)
 		 (host ?from-host) (port ?from-port) (last-seen ?rcvd-at)))
 )
 
 
 (defrule send-attmsg
-  ?af <- (attention-message ?message $?time-to-show)
+  ?af <- (attention-message (text ?text) (team ?team) (time ?time-to-show))
   =>
   (retract ?af)
   (bind ?attmsg (pb-create "llsf_msgs.AttentionMessage"))
-  (pb-set-field ?attmsg "message" (str-cat ?message))
-  (if (> (length$ ?time-to-show) 0) then
-    (pb-set-field ?attmsg "time_to_show" (first$ ?time-to-show)))
+  (pb-set-field ?attmsg "message" (str-cat ?text))
+  (if (neq ?team nil) then (pb-set-field ?attmsg "team" ?team))
+  (if (> ?time-to-show 0) then
+    (pb-set-field ?attmsg "time_to_show" ?time-to-show))
 
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
 		    (pb-send ?client:id ?attmsg))
@@ -217,16 +229,22 @@
 
 
 (defrule net-recv-SetTeamName
-  ?sf <- (gamestate (phase ?phase) (team ?old-team))
+  ?sf <- (gamestate (phase ?phase) (teams $?old-teams))
   ?mf <- (protobuf-msg (type "llsf_msgs.SetTeamName") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
+  (bind ?team-color (sym-cat (pb-field-value ?p "team_color")))
   (bind ?new-team (pb-field-value ?p "team_name"))
-  (printout t "Setting team to " ?new-team crlf)
-  (modify ?sf (team ?new-team))
+  (bind ?new-teams ?old-teams)
+  (printout t "Setting team " ?team-color " to " ?new-team crlf)
+  (if (eq ?team-color CYAN)
+   then (bind ?new-teams (replace$ ?new-teams 1 1 ?new-team))
+   else (bind ?new-teams (replace$ ?new-teams 2 2 ?new-team))
+  )
+  (modify ?sf (teams ?new-teams))
 
   ; Remove all known robots if the team is changed
-  (if (and (eq ?phase PRE_GAME) (neq ?old-team ?new-team))
+  (if (and (eq ?phase PRE_GAME) (neq ?old-teams ?new-teams))
     then (delayed-do-for-all-facts ((?r robot)) TRUE (retract ?r)))
 )
 
@@ -253,9 +271,10 @@
   )
   (pb-set-field ?gamestate "state" (fact-slot-value ?gs state))
   (pb-set-field ?gamestate "phase" (fact-slot-value ?gs phase))
-  (pb-set-field ?gamestate "points" (fact-slot-value ?gs points))
-  (if (neq (fact-slot-value ?gs team) "")
-    then (pb-set-field ?gamestate "team" (fact-slot-value ?gs team)))
+  (pb-set-field ?gamestate "points_cyan"    (nth$ 1 (fact-slot-value ?gs points)))
+  (pb-set-field ?gamestate "points_magenta" (nth$ 2 (fact-slot-value ?gs points)))
+  (pb-set-field ?gamestate "team_cyan"    (nth$ 1 (fact-slot-value ?gs teams)))
+  (pb-set-field ?gamestate "team_magenta" (nth$ 2 (fact-slot-value ?gs teams)))
 
   (return ?gamestate)
 )
@@ -263,7 +282,7 @@
 (defrule net-send-GameState
   (time $?now)
   ?gs <- (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase)
-		    (game-time ?game-time) (points ?points) (team ?team))
+		    (game-time ?game-time) (teams $?teams))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
@@ -310,6 +329,7 @@
 
     (pb-set-field ?r "name" ?robot:name)
     (pb-set-field ?r "team" ?robot:team)
+    (pb-set-field ?r "team_color" ?robot:team-color)
     (pb-set-field ?r "number" ?robot:number)
     (pb-set-field ?r "state" ?robot:state)
     (pb-set-field ?r "host" ?robot:host)
@@ -357,6 +377,7 @@
 
     (bind ?mtype (fact-slot-value ?mf mtype))
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
+    (pb-set-field ?m "team" (fact-slot-value ?mf team))
     (if (or ?add-type-info (member$ ?mtype ?*MACHINE-UNRESTRICTED-TYPES*))
      then
       (pb-set-field ?m "type" ?mtype)
@@ -453,6 +474,7 @@
 
     (pb-set-field ?m "name" ?machine:name)
     (pb-set-field ?m "type" ?machine:mtype)
+    (pb-set-field ?m "team" ?machine:team)
     (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype)
       (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
       (pb-set-field ?m "output" (str-cat ?mspec:output))
@@ -502,6 +524,7 @@
       (pb-set-field ?ps "ori" 0.0)
       (pb-set-field ?p "pose" ?ps)
     )
+    (if (neq ?puck:team nil) then (pb-set-field ?p "team" ?puck:team))
     (pb-add-list ?pi "pucks" ?p) ; destroys ?p
   )
 

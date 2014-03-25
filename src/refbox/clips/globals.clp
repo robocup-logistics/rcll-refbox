@@ -53,10 +53,12 @@
   ?*ORDER-QUANTITY-MAX* = 10
   ?*LATE-ORDER-TIME* = 120
   ?*LATE-ORDER-ACTIVATION-PRE-TIME* = 5
-  ; number of points for specific actoins
+  ; number of points for specific actions
   ?*RECYCLE-POINTS* = 3
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4
   ?*EXPLORATION-WRONG-REPORT-POINTS* = -3
+  ?*EXPLORATION-INVALID-REPORT-POINTS* = -3
+  ?*PRODUCTION-WRONG-TEAM-MACHINE-POINTS* = -2
   ; Setup light effects
   ?*SETUP-LIGHT-PERIOD* = 1.0
   ; Technical challenge settings
@@ -76,7 +78,7 @@
   ?*PRODUCTION-TIME*      = 900
   ?*PRODUCTION-OVERTIME*  = 300
   ; Machine types that may always be announced
-  ?*MACHINE-UNRESTRICTED-TYPES* = (create$ DELIVER TEST RECYCLE)
+  ?*MACHINE-UNRESTRICTED-TYPES* = (create$ DELIVER RECYCLE)
   ; Machine distribution
   ?*RANDOMIZE-GAME* = TRUE
   ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T4 T5)

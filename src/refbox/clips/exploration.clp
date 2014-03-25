@@ -31,7 +31,7 @@
     (modify ?machine (desired-lights ?dl))
   )
 
-  ;(assert (attention-message "Entering Exploration Phase" 5))
+  ;(assert (attention-message (text "Entering Exploration Phase")))
 )
 
 (defrule exploration-pause
@@ -61,35 +61,54 @@
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   =>
   (retract ?mf)
+  (bind ?team (sym-cat (pb-field-value ?p "team")))
   (foreach ?m (pb-field-list ?p "machines")
     (bind ?name (sym-cat (pb-field-value ?m "name")))
     (bind ?type (sym-cat (pb-field-value ?m "type")))
     (if (member$ ?name (deftemplate-slot-allowed-values exploration-report name))
     then
       (do-for-fact ((?machine machine)) (eq ?machine:name ?name)
-        ; If it has not been reported, yet
-        (if (not (any-factp ((?report exploration-report)) (eq ?report:name ?name)))
-        then
-          (if (eq ?machine:mtype ?type)
-          then ; correct report
-	    (printout t "Correct report: " ?name " of type " ?type ". "
-		      "Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
-	    (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
-			    (phase EXPLORATION) (game-time ?game-time)
-			    (reason (str-cat "Correct exploration report for "
+        (if (neq (sym-cat ?machine:team) ?team)
+	then
+          (if (not (any-factp ((?report exploration-report))
+			      (and (eq ?report:name ?name) (eq ?report:team ?team))))
+	  then
+	    (printout t "Invalid report: " ?name " of type " ?type " from other team. "
+		      "Awarding " ?*EXPLORATION-INVALID-REPORT-POINTS* " points" crlf)
+	    (assert (points (points ?*EXPLORATION-INVALID-REPORT-POINTS*)
+			    (phase EXPLORATION) (team ?team) (game-time ?game-time)
+			    (reason (str-cat "Report for machine of other team"
 					     ?name "|" ?type))))
-	    (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
-					(host ?from-host) (port ?from-port)))
-          else ; wrong report
-	    (printout t "Wrong report: " ?name " of type " ?type ". "
-		      "Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
-	    (assert (points (points ?*EXPLORATION-WRONG-REPORT-POINTS*)
-			    (phase EXPLORATION) (game-time ?game-time)
-			    (reason (str-cat "Wrong exploration report for "
-					     ?name "|" ?type))))
-	    (assert (exploration-report (name ?name) (type WRONG) (game-time ?game-time)
+	    (assert (exploration-report (name ?name) (team ?team)(type WRONG)
+					(game-time ?game-time)
 					(host ?from-host) (port ?from-port)))
 	  )
+	else
+          ; If it has not been reported, yet
+          (if (not (any-factp ((?report exploration-report))
+			      (and (eq ?report:name ?name) (eq ?report:team ?team))))
+	  then
+            (if (eq ?machine:mtype ?type)
+            then ; correct report
+	      (printout t "Correct report: " ?name " of type " ?type ". "
+			"Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
+	      (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
+			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
+			      (reason (str-cat "Correct exploration report for "
+					       ?name "|" ?type))))
+	      (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
+					  (team ?team) (host ?from-host) (port ?from-port)))
+            else ; wrong report
+	      (printout t "Wrong report: " ?name " of type " ?type ". "
+			"Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
+	      (assert (points (points ?*EXPLORATION-WRONG-REPORT-POINTS*)
+			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
+			      (reason (str-cat "Wrong exploration report for "
+					       ?name "|" ?type))))
+	      (assert (exploration-report (name ?name) (type WRONG) (game-time ?game-time)
+					  (team ?team) (host ?from-host) (port ?from-port)))
+	    )
+          )
         )
       )
     )
@@ -142,6 +161,7 @@
 
     (bind ?em (pb-create "llsf_msgs.ExplorationMachine"))
     (pb-set-field ?em "name" ?m:name)
+    (pb-set-field ?em "team" ?m:team)
     (bind ?p (pb-field-value ?em "pose"))
     (bind ?p-time (pb-field-value ?p "timestamp"))
     (pb-set-field ?p-time "sec" (nth$ 1 ?m:pose-time))
@@ -165,9 +185,23 @@
 		 (time $?t&:(timeout ?now ?t ?*BC-MACHINE-REPORT-INFO-PERIOD*)) (seq ?seq))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)))
+
+  ; CYAN
   (bind ?s (pb-create "llsf_msgs.MachineReportInfo"))
 
-  (do-for-all-facts ((?report exploration-report)) TRUE
+  (pb-set-field ?s "team" CYAN)
+  (do-for-all-facts ((?report exploration-report)) (eq ?report:team CYAN)
+    (pb-add-list ?s "reported_machines" ?report:name)
+  )
+
+  (pb-broadcast ?s)
+  (pb-destroy ?s)
+
+  ; MAGENTA
+  (bind ?s (pb-create "llsf_msgs.MachineReportInfo"))
+
+  (pb-set-field ?s "team" MAGENTA)
+  (do-for-all-facts ((?report exploration-report)) (eq ?report:team MAGENTA)
     (pb-add-list ?s "reported_machines" ?report:name)
   )
 

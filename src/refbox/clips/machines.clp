@@ -72,7 +72,7 @@
   (delayed-do-for-all-facts ((?machine machine))
     (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
     (if (= (length$ ?machine-assignment) 0)
-     then (printout logerror "No machine assignment available for " ?machine:name crlf)
+     then (printout error "No machine assignment available for " ?machine:name crlf)
      else
        (bind ?mtype (nth$ 1 ?machine-assignment))
        (bind ?machine-assignment (delete$ ?machine-assignment 1 1))
@@ -150,11 +150,11 @@
 
 (defrule machines-print
   (machines-initialized)
-  (gamestate (team ?team) (phase PRODUCTION|EXPLORATION))
+  (gamestate (teams $?teams) (phase PRODUCTION|EXPLORATION))
   (not (machines-printed))
   =>
   (assert (machines-printed))
-  (bind ?t (if (eq ?team "") then t else debug))
+  (bind ?t (if (neq ?teams (create$ "" "")) then t else debug))
 
   (bind ?pp-mach-assignment (create$))
   (do-for-all-facts ((?machine machine) (?mspec machine-spec))

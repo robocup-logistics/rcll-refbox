@@ -30,15 +30,16 @@
 (defrule rfid-input-learn-puck
   (declare (salience ?*PRIORITY_FIRST*))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  (machine (name ?m) (pose ?mpose-x ?mpose-y ?mpose-ori))
+  (machine (name ?m) (pose ?mpose-x ?mpose-y ?mpose-ori) (team ?team))
   (not (puck (id ?id)))
   =>
   (bind ?new-index 1)
   (do-for-all-facts ((?puck puck)) TRUE
     (bind ?new-index (max (+ ?puck:index 1) ?new-index))
   )
-  (printout t "Learned new puck ID " ?id " (index " ?new-index ", state S0)" crlf)
-  (assert (puck (index ?new-index) (id ?id) (state S0)))
+  (printout t "Learned new puck ID " ?id " for team " ?team
+	    " (index " ?new-index ", state S0)" crlf)
+  (assert (puck (index ?new-index) (id ?id) (state S0) (team ?team)))
 )
 
 (defrule rfid-input-cleanup
