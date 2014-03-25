@@ -82,8 +82,6 @@ message Order {
   optional DeliveryGate delivery_gate = 8
   	   [default = ANY];
 
-  // Only sync: is order a late order?
-  optional bool late_order = 20;
 }
 
 message OrderInfo {
