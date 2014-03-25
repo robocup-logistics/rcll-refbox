@@ -36,6 +36,8 @@
 
 package llsf_msgs;
 
+import "Team.proto";
+
 option java_package = "org.robocup_logistics.llsf_msgs";
 option java_outer_classname = "OrderInfoProtos";
 
@@ -86,6 +88,9 @@ message OrderInfo {
     COMP_ID  = 2000;
     MSG_TYPE = 41;
   }
+
+  // Team for which the order is
+  required Team  team   = 2;
 
   // The current orders
   repeated Order orders = 1;

@@ -36,6 +36,8 @@
 
 package llsf_msgs;
 
+import "Team.proto";
+
 option java_package = "org.robocup_logistics.llsf_msgs";
 option java_outer_classname = "RobotCommandsProtos";
 
@@ -51,4 +53,6 @@ message SetRobotMaintenance {
   // True to activate maintenance,
   // false to bring back robot
   required bool   maintenance  = 3;
+  // Team the robot belongs to
+  required Team   team         = 4;
 }
