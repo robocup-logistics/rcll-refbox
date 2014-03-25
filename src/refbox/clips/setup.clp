@@ -28,8 +28,8 @@
   =>
   (modify ?f (time ?now))
   (retract ?sf)
-  (bind ?next-m (+ (mod ?m 10) 1))
-  (assert(setup-light-toggle ?next-m))
+  (bind ?next-m (+ (mod ?m 24) 1))
+  (assert (setup-light-toggle ?next-m))
 
   (do-for-fact ((?machine machine)) (eq ?machine:name (sym-cat M ?m))
     (modify ?machine (desired-lights RED-ON YELLOW-ON GREEN-ON))
