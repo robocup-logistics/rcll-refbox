@@ -133,7 +133,7 @@
   (slot game-time (type FLOAT))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
-  (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3))
+  (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6))
 )
 
 (deftemplate gamestate
