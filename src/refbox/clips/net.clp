@@ -248,18 +248,6 @@
     then (delayed-do-for-all-facts ((?r robot)) TRUE (retract ?r)))
 )
 
-(defrule net-recv-SetPucks
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetPucks") (ptr ?p))
-  =>
-  (retract ?mf) ; message will be destroyed after rule completes
-  ; retract all puck facts, we store new ones
-  (do-for-all-facts ((?puck puck)) TRUE (retract ?puck))
-  ; store new pucks
-  (foreach ?m (pb-field-list ?p "ids")
-    (assert (puck (index ?m-index) (id ?m)))
-  )
-)
-
 (deffunction net-create-GameState (?gs)
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))
