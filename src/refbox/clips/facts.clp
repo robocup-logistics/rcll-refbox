@@ -137,7 +137,7 @@
 )
 
 (deftemplate gamestate
-  (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE MASTER SLAVE) (default STANDALONE))
+  (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE) (default STANDALONE))
   (slot state (type SYMBOL)
 	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
   (slot prev-state (type SYMBOL)
@@ -198,7 +198,6 @@
   (gamestate (phase PRE_GAME))
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
-  (signal (type sync-gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))
   (signal (type bc-robot-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info) (time (create$ 0 0)) (seq 1))

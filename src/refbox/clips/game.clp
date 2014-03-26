@@ -54,7 +54,6 @@
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
-  (not (sync)) ; will be initialized in rule sync-slave-receive
   =>
   (assert (game-parameterized))
 
@@ -264,20 +263,11 @@
 )
 
 (defrule game-over-after-overtime
-  ?gs <- (gamestate (refbox-mode ~STANDALONE) (phase PRODUCTION) (state RUNNING)
+  ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
 		    (over-time TRUE)
 		    (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
-)
-
-(defrule game-over-waitsync
-  ?gs <- (gamestate (refbox-mode ~STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time FALSE) (game-time ?gt&:(>= ?gt ?*PRODUCTION-TIME*)))
-  =>
-  (modify ?gs (state PAUSED) (end-time (now)))
-  (assert (attention-message (text "Waiting for synchronized game to end")
-			     (time ?*PRODUCTION-TIME*)))
 )
 
 (defrule game-goto-post-game
