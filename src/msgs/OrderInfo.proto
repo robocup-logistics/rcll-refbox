@@ -67,6 +67,7 @@ message Order {
   // ID and requested product of this order
   required uint32       id = 1;
   required ProductType  product = 2;
+  optional Team         team    = 11;
 
   // Quantity requested and delivered
   required uint32 quantity_requested = 3;
@@ -90,9 +91,11 @@ message OrderInfo {
     MSG_TYPE = 41;
   }
 
-  // Team for which the order is
-  required Team  team   = 2;
-
   // The current orders
   repeated Order orders = 1;
+
+  // Team for which the orders are
+  // only send if all orders are for
+  // the same team (broadcast)
+  optional Team  team   = 2;
 }

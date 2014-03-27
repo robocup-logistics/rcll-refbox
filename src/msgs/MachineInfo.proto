@@ -102,4 +102,8 @@ message MachineInfo {
 
   // List of machines states
   repeated Machine machines = 1;
+
+  // Team name if all machines belong
+  // only to a single team (broadcast)
+  optional Team    team     = 2;
 }
