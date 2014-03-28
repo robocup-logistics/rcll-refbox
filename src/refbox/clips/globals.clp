@@ -77,7 +77,7 @@
   ?*MAINTENANCE-GRACE-TIME*     =  15
   ; Game phase time; seconds
   ?*SETUP-TIME*           = 300
-  ?*EXPLORATION-TIME*     = 180
+  ?*EXPLORATION-TIME*     = 240
   ?*PRODUCTION-TIME*      = 900
   ?*PRODUCTION-OVERTIME*  = 300
   ; Machine types that may always be announced
