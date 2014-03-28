@@ -39,6 +39,8 @@
 #include <protobuf_comm/peer.h>
 #include <boost/asio.hpp>
 #include <msgs/BeaconSignal.pb.h>
+#include <msgs/GameState.pb.h>
+#include <msgs/RobotInfo.pb.h>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
@@ -89,14 +91,25 @@ main(int argc, char **argv)
   llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
   config->load("config.yaml");
 
-  ProtobufBroadcastPeer *peer =
-    new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-			      config->get_uint("/llsfrb/comm/peer-port"));
+  ProtobufBroadcastPeer *peer;
+
+  if (config->exists("/llsfrb/comm/peer-send-port") &&
+      config->exists("/llsfrb/comm/peer-recv-port") )
+  {
+    peer = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
+				     config->get_uint("/llsfrb/comm/peer-recv-port"),
+				     config->get_uint("/llsfrb/comm/peer-send-port"));
+  } else {
+    peer = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
+				     config->get_uint("/llsfrb/comm/peer-port"));
+  }
 
   boost::asio::io_service io_service;
 
   MessageRegister & message_register = peer->message_register();
   message_register.add_message_type<BeaconSignal>();
+  message_register.add_message_type<GameState>();
+  message_register.add_message_type<RobotInfo>();
 
   peer->signal_received().connect(handle_message);
   peer->signal_recv_error().connect(handle_recv_error);
