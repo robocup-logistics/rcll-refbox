@@ -185,7 +185,7 @@
   (retract ?af)
   (bind ?attmsg (pb-create "llsf_msgs.AttentionMessage"))
   (pb-set-field ?attmsg "message" (str-cat ?text))
-  (if (neq ?team nil) then (pb-set-field ?attmsg "team" ?team))
+  (if (neq ?team nil) then (pb-set-field ?attmsg "team_color" ?team))
   (if (> ?time-to-show 0) then
     (pb-set-field ?attmsg "time_to_show" ?time-to-show))
 
@@ -365,7 +365,7 @@
 
     (bind ?mtype (fact-slot-value ?mf mtype))
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
-    (pb-set-field ?m "team" (fact-slot-value ?mf team))
+    (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (or ?add-type-info (member$ ?mtype ?*MACHINE-UNRESTRICTED-TYPES*))
      then
       (pb-set-field ?m "type" ?mtype)
@@ -448,14 +448,14 @@
 
 (deffunction net-create-broadcast-MachineInfo (?team-color)
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
-  (pb-set-field ?s "team" ?team-color)
+  (pb-set-field ?s "team_color" ?team-color)
 
   (do-for-all-facts ((?machine machine)) (eq ?machine:team ?team-color)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (pb-set-field ?m "name" ?machine:name)
     (pb-set-field ?m "type" ?machine:mtype)
-    (pb-set-field ?m "team" ?machine:team)
+    (pb-set-field ?m "team_color" ?machine:team)
     (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype)
       (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
       (pb-set-field ?m "output" (str-cat ?mspec:output))
@@ -522,7 +522,7 @@
       (pb-set-field ?ps "ori" 0.0)
       (pb-set-field ?p "pose" ?ps)
     )
-    (if (neq ?puck:team nil) then (pb-set-field ?p "team" ?puck:team))
+    (if (neq ?puck:team nil) then (pb-set-field ?p "team_color" ?puck:team))
     (pb-add-list ?pi "pucks" ?p) ; destroys ?p
   )
 
@@ -536,7 +536,7 @@
   (bind ?o (pb-create "llsf_msgs.Order"))
 
   (pb-set-field ?o "id" (fact-slot-value ?order-fact id))
-  (pb-set-field ?o "team" (fact-slot-value ?order-fact team))
+  (pb-set-field ?o "team_color" (fact-slot-value ?order-fact team))
   (pb-set-field ?o "product" (fact-slot-value ?order-fact product))
   (pb-set-field ?o "quantity_requested" (fact-slot-value ?order-fact quantity-requested))
   (pb-set-field ?o "quantity_delivered" (fact-slot-value ?order-fact quantity-delivered))
@@ -555,7 +555,7 @@
   (if (> (length$ ?team-color) 0)
   then
     (bind ?team (nth$ 1 ?team-color))
-    (pb-set-field ?oi "team" ?team)
+    (pb-set-field ?oi "team_color" ?team)
     (do-for-all-facts
       ((?order order)) (and (eq ?order:active TRUE) (eq ?order:team ?team))
       (bind ?o (net-create-Order ?order))

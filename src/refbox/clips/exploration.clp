@@ -61,7 +61,7 @@
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   =>
   (retract ?mf)
-  (bind ?team (sym-cat (pb-field-value ?p "team")))
+  (bind ?team (sym-cat (pb-field-value ?p "team_color")))
   (foreach ?m (pb-field-list ?p "machines")
     (bind ?name (sym-cat (pb-field-value ?m "name")))
     (bind ?type (sym-cat (pb-field-value ?m "type")))
@@ -161,7 +161,7 @@
 
     (bind ?em (pb-create "llsf_msgs.ExplorationMachine"))
     (pb-set-field ?em "name" ?m:name)
-    (pb-set-field ?em "team" ?m:team)
+    (pb-set-field ?em "team_color" ?m:team)
     (bind ?p (pb-field-value ?em "pose"))
     (bind ?p-time (pb-field-value ?p "timestamp"))
     (pb-set-field ?p-time "sec" (nth$ 1 ?m:pose-time))
@@ -189,7 +189,7 @@
   ; CYAN
   (bind ?s (pb-create "llsf_msgs.MachineReportInfo"))
 
-  (pb-set-field ?s "team" CYAN)
+  (pb-set-field ?s "team_color" CYAN)
   (do-for-all-facts ((?report exploration-report)) (eq ?report:team CYAN)
     (pb-add-list ?s "reported_machines" ?report:name)
   )
@@ -200,7 +200,7 @@
   ; MAGENTA
   (bind ?s (pb-create "llsf_msgs.MachineReportInfo"))
 
-  (pb-set-field ?s "team" MAGENTA)
+  (pb-set-field ?s "team_color" MAGENTA)
   (do-for-all-facts ((?report exploration-report)) (eq ?report:team MAGENTA)
     (pb-add-list ?s "reported_machines" ?report:name)
   )
