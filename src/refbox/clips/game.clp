@@ -291,10 +291,19 @@
 
 (defrule game-over
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time FALSE)
+		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta))
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
+)
+
+(defrule game-enter-overtime
+  ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
+		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(= ?p-cyan ?p-magenta))
+		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+  =>
+  (assert (attention-message (text "Entering over-time") (time 15)))
+  (modify ?gs (over-time TRUE))
 )
 
 (defrule game-over-after-overtime
