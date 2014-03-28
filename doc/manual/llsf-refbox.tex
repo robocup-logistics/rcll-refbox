@@ -1,5 +1,5 @@
 
-% Copyright 2013 Tim Niemueller
+% Copyright 2013-2014 Tim Niemueller
 
 \documentclass[a4paper]{article}
 \usepackage{a4wide}
@@ -28,7 +28,7 @@
   pdftitle      = {Referee Box for the RoboCup Logistics League},
   pdfauthor     = {Tim Niemueller},
   pdfkeywords   = {Robotics, RoboCup, LLSF, Referee Box},
-  pdfsubject    = {Integration Manual},
+  pdfsubject    = {Integration Manual 2014},
   %pdfpagemode   = {UseOutlines},        % PageWdth, FullScreen, None ...
   hidelinks    = true,          % true colored links, false colored boxes
 %  linkcolor     = black,
@@ -195,7 +195,7 @@
 
 \begin{document}
 \title{\textbf{Referee Box for the RoboCup Logistics League}\\%
-  \Large Integrator Manual}
+  \Large Integration Manual 2014}
 \author{Tim Niemueller\\\href{mailto:niemueller@cs.rwth-aachen.de}{niemueller@kbsg.rwth-aachen.de}}
 \maketitle
 
@@ -213,7 +213,8 @@ Already at this early stage it became apparent, that just observing
 the game and awarding points is complex. For the future, when
 introducing more goods that can be processed, or when expecting more
 robots operating concurrently, we need to consider options to automate
-the evaluation of the game.
+the evaluation of the game. This is the task of the referee
+box~\cite{LLSF2013, LLSF2015}.
 
 The Referee Box (refbox) controls and monitors the game to perform
 this very evaluation. We have tried to make the refbox as autonomous
@@ -226,8 +227,8 @@ for more goods). Several parts of the refbox were influenced by the
 Fawkes Robot Software Framework~\cite{Fawkes} -- some libraries like
 the configuration and logging facilities are simplified versions of
 the Fawkes libraries -- and ROS~\cite{ROS}. The internally used CLIPS
-environment is based on the Carologistics' task coordination
-approach~\cite{CLIPS-Agent}.
+environment is based on the Carologistics'~\cite{Carologistics-2013}
+task coordination approach~\cite{CLIPS-Agent}.
 
 This manual describes how to integrate a robot system with the refbox,
 in particular the communication protocols involved. For detailed
@@ -421,7 +422,7 @@ main thread.
 
 \begin{figure}
   \lstinputlisting[name=peer,showlines,style=really-small-cpp,
-    firstline=37, lastline=84, numbers=left, stepnumber=5,
+    firstline=37, lastline=94, numbers=left, stepnumber=5,
     numberfirstline=true,numberblanklines=true,
     framexleftmargin=16pt, xleftmargin=4pt]
     {../../src/examples/peer.cpp}
@@ -430,7 +431,7 @@ main thread.
 \end{figure}
 \begin{figure}
   \lstinputlisting[name=client,showlines,style=really-small-cpp,
-    firstline=37, lastline=94,numbers=left,stepnumber=5,
+    firstline=37, lastline=95,numbers=left,stepnumber=5,
     framexleftmargin=16pt, xleftmargin=4pt]
     {../../src/examples/client.cpp}
 \caption{Example program for a protobuf\_comm client}
@@ -569,7 +570,9 @@ situations may be necessary, e.g. to fix problems.
 {%
   An AttentionMessage is sent when a particular event requires human
   attention, e.g. if a late order puck must be placed or if
-  communication to a robot is lost.
+  communication to a robot is lost. If the team color is set the
+  message should only be displayed if the color matches the monitored
+  team (or indicate to which team it belongs to).
 }
 
 \msgspec{BeaconSignal.proto}{Peer-to-Peer}{1\,sec}{robots \& refbox}{any}%
@@ -580,7 +583,9 @@ situations may be necessary, e.g. to fix problems.
   delays into account). The controller may issue a warning if this is
   too large. The team and robot name are required to be able to
   diagnose possible connection problems. The refbox will set these
-  fields to ``LLSF'' and ``RefBox'' respectively.
+  fields to ``LLSF'' and ``RefBox'' respectively. The robots
+  \emph{must} set the team color appropriately, only the refbox itself
+  is allowed to not set it.
 
   \smallskip
 
@@ -594,7 +599,8 @@ situations may be necessary, e.g. to fix problems.
   We encourage teams to provide the position of the robot in the pose
   field to use it for visualization. Not only does it help the
   referee, but it will make the games more interesting to watch for
-  visitors.  }
+  visitors.
+}
 
 \msgspec{VersionInfo.proto}{P2P \& C-S}{event}{refbox}{any}%
 {%
@@ -629,6 +635,13 @@ situations may be necessary, e.g. to fix problems.
   frame is aligned as described in the rule book.
 }
 
+\msgspec{Team.proto}{---}{---}{---}{---}%
+{%
+  This structure is used as a sub-message type within other messages
+  and is never send by itself. It describes the team color, being
+  either CYAN or MAGENTA (primary field side one or two respectively).
+}
+
 \msgspec{ExplorationInfo.proto}{Peer-to-Peer}{1\,sec}{refbox}{robots}%
 {%
   This ExplorationInfo message is periodically sent during the
@@ -641,6 +654,10 @@ situations may be necessary, e.g. to fix problems.
   identify. The machines are referenced by a name bound to a specified
   position. Note that this name to position mapping might be different
   from the example in the rulebook.
+
+  \smallskip
+  Note the team color per machine. Only machines matching the team's
+  color are to be reported.
 
   \medskip
   If one or more robots are presumably not receiving this message it
@@ -701,6 +718,15 @@ situations may be necessary, e.g. to fix problems.
   beginning of the phase, the message is sent at a $0.5$\,sec period
   for 15\,sec. Afterwards the message is sent every 2\,sec.
  
+  \medskip
+  Both, the MachineInfo and Machine message types feature a team
+  color. The team color on the latter is \emph{always} set. For the
+  MachineInfo, the behavior differs between stream and broadcast
+  messages. For stream messages, it is left out an a common
+  MachineInfo message comprising \emph{all} machines of both teams is
+  sent. For broadcasting, two messages are sent, one for each team. In
+  these MachineInfo messages the team color will be set and only
+  machines matching this color will be included.
 
   \medskip
 
@@ -735,7 +761,10 @@ situations may be necessary, e.g. to fix problems.
   Note that for each machine only the first report received is
   accepted and points are awarded according to the rule book and the
   correctness. It is not possible to correct a once given wrong
-  report. Every subsequent repetition will be silently ignored.
+  report. Every subsequent repetition will be silently ignored. Also
+  ensure that you send reports only for the appropriate team color or
+  your report will be ignored. Sending machine reports for another
+  team's machine with the other team's color is an offense.
 
   \medskip
 
@@ -755,6 +784,18 @@ situations may be necessary, e.g. to fix problems.
   delivery period of orders. In a message, there will most likely be
   orders with an active delivery period, while others have already
   passed or are yet to come.
+
+  \medskip
+
+  Both, the OrderInfo and Order message types feature a team
+  color. The team color on the latter is \emph{always} set. For the
+  OrderInfo, the behavior differs between stream and broadcast
+  messages. For stream messages, it is left out an a common OrderInfo
+  message comprising \emph{all} orders of both teams is sent. For
+  broadcasting, two messages are sent, one for each team. In these
+  OrderInfo messages the team color will be set and only orders
+  matching this color will be included.
+
 
   \medskip
 
@@ -797,19 +838,7 @@ situations may be necessary, e.g. to fix problems.
 {%
   Commands related to robots that controllers can send to the
   refbox. Currently the only message allows to set the maintenance
-  state of a particular robot.
-}
-
-\msgspec{Sync.proto}{Client-Server}{connect}{refbox}{refbox}%
-{%
-  The synchronization messages allow two refboxes to synchronize their
-  games, i.e. one master refbox determines the game configuration
-  which slaves can download.
-
-  \medskip
-  The slave initiates the synchronization by sending the InitiateSync
-  request. Afterwards the master refbox will send the SyncInfo message
-  (after the game has been parameterized).
+  state of a particular robot of a particular team.
 }
 
 \section{Further Development}
