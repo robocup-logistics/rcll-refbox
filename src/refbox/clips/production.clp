@@ -207,8 +207,8 @@
 (defrule delivery-gate-down-period "Setup next delivery gate down period"
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gtime))
   (delivery-period (period $?p&:(>= ?gtime (nth$ 1 ?p))&:(<= ?gtime (nth$ 2 ?p)))
-		   (delivery-gate ?dgate))
-  ?mf <- (machine (mtype DELIVER) (name ~?dgate) (state IDLE|INVALID))
+		   (delivery-gates $?dgates))
+  ?mf <- (machine (mtype DELIVER) (name ?name&~:(member$ ?name ?dgates)) (state IDLE|INVALID))
   =>
   (modify ?mf (down-period ?p))
 )

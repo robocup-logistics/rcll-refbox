@@ -34,8 +34,18 @@
   )
 )
 
-(deffunction machine-init-randomize ()
+(deffunction machine-magenta-for-cyan-gate (?cyan-gate)
+  (return
+    (switch ?cyan-gate
+      (case D1 then D4)
+      (case D2 then D5)
+      (case D3 then D6)
+      (default ANY)
+    )
+  )
+)
 
+(deffunction machine-init-randomize ()
   (if ?*RANDOMIZE-GAME* then
     ; Gather all available light codes
     (bind ?light-codes (create$))
@@ -82,19 +92,18 @@
   )
 
   (if (or (not (any-factp ((?dp delivery-period)) TRUE)) ?*RANDOMIZE-GAME*)
-   then ; no delivery periods exist at all or randomization has been enabled
+   then
+    ; no delivery periods exist at all or randomization has been enabled
     ; erase all existing delivery periods, might be left-overs
     ; from pre-defined facts for non-random game
     (delayed-do-for-all-facts ((?p delivery-period)) TRUE (retract ?p))
     ; assign random active delivery gate times
     (bind ?delivery-gates (create$))
-    (do-for-all-facts ((?m machine)) (eq ?m:mtype DELIVER)
+    (do-for-all-facts ((?m machine)) (and (eq ?m:mtype DELIVER) (eq ?m:team CYAN))
       (bind ?delivery-gates (create$ ?delivery-gates ?m:name))
     )
 
-    (bind ?PROD-END-TIME ?*PRODUCTION-TIME*)
-    (if (any-factp ((?gs gamestate)) (neq ?gs:refbox-mode STANDALONE))
-      then (bind ?PROD-END-TIME (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*)))
+    (bind ?PROD-END-TIME (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))
     (bind ?deliver-period-end-time 0)
     (bind ?last-delivery-gate NONE)
     (while (< ?deliver-period-end-time ?PROD-END-TIME)
@@ -179,7 +188,7 @@
   )
 
   (do-for-all-facts ((?period delivery-period)) TRUE
-    (printout ?t "Deliver time " ?period:delivery-gate ": "
+    (printout ?t "Deliver time " ?period:delivery-gates ": "
 	      (time-sec-format (nth$ 1 ?period:period)) " to "
 	      (time-sec-format (nth$ 2 ?period:period)) " ("
 	      (- (nth$ 2 ?period:period) (nth$ 1 ?period:period)) " sec)" crlf)

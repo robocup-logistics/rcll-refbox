@@ -130,7 +130,7 @@
 )
 
 (deftemplate delivery-period
-  (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3))
+  (multislot delivery-gates (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6) (cardinality 2 2))
   (multislot period (type INTEGER) (cardinality 2 2))
 )  
  
