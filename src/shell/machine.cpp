@@ -51,17 +51,29 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellMachine::LLSFRefBoxShellMachine(std::string name, std::string type,
-					       int begin_y, int begin_x)
+					       int begin_y, int begin_x, bool visible)
   : NCursesPanel(1, 22, begin_y, begin_x),
-    name_(name), type_(type), puck_under_rfid_(false),
+    visible_(visible), name_(name), type_(type), puck_under_rfid_(false),
     has_correctly_reported_field_(false), correctly_reported_(false)
 {
+  set_visible(visible_);
 }
 
 
 LLSFRefBoxShellMachine::~LLSFRefBoxShellMachine()
 {
   blink_state_.clear();
+}
+
+void
+LLSFRefBoxShellMachine::set_visible(bool visible)
+{
+  visible_ = visible;
+  if (visible) {
+    show();
+  } else {
+    hide();
+  }
 }
 
 void
@@ -142,6 +154,8 @@ LLSFRefBoxShellMachine::reset()
 int
 LLSFRefBoxShellMachine::refresh()
 {
+  if (! visible_)  return OK;
+
   standend();
   erase();
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));

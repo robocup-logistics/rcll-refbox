@@ -1,9 +1,9 @@
 
 /***************************************************************************
- *  machine.h - LLSF RefBox shell - Machine
+ *  team.h - LLSF RefBox team identifier
  *
- *  Created: Thu Feb 21 18:02:53 2013
- *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *  Created: Thu Mar 27 21:44:49 2014
+ *  Copyright  2014  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -34,59 +34,44 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __LLSF_REFBOX_SHELL_MACHINE_H_
-#define __LLSF_REFBOX_SHELL_MACHINE_H_
+#ifndef __LLSF_REFBOX_SHELL_TEAM_H_
+#define __LLSF_REFBOX_SHELL_TEAM_H_
 
-#include <cstddef>
-#include <cursesp.h>
-
-#include <msgs/MachineInfo.pb.h>
-
-#include <vector>
-#include <map>
+#include <msgs/Team.pb.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
+typedef enum {
+  CYAN = 0,
+  MAGENTA = 1
+} Team;
 
-class LLSFRefBoxShellMachine : public NCursesPanel
+#define TEAM_NUM 2
+#define TEAM_NUM_MACHINES 16
+
+static const char * TEAM_MACHINES[TEAM_NUM][TEAM_NUM_MACHINES] __attribute((__used__)) =
+  { /* CYAN */    { "M1", "M2", "M3", "M4", "M5", "M6",
+		    "M7", "M8", "M9", "M10", "M11", "M12", "D1", "D2", "D3", "R1" },
+    /* MAGENTA */ { "M13", "M14", "M15", "M16", "M17", "M18", "M19",
+		    "M20", "M21", "M22", "M23", "M24", "D4", "D5", "D6", "R2"}};
+
+inline bool
+operator==(const llsf_msgs::Team &t1, const Team &t2)
 {
- public:
-  LLSFRefBoxShellMachine(std::string name, std::string type,
-			 int begin_y, int begin_x, bool visible);
-  ~LLSFRefBoxShellMachine();
+  return ((t1 == llsf_msgs::CYAN) && (t2 == CYAN)) ||
+         ((t1 == llsf_msgs::MAGENTA) && (t2 == MAGENTA));
+}
 
-  void set_type(std::string type);
-  void set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights);
-  void set_inputs(std::vector<llsf_msgs::PuckState> &inputs);
-  void set_loaded_with(std::vector<llsf_msgs::PuckState> &loaded_with);
-  void set_correctly_reported(bool has_field, bool correctly_reported = false);
-  void set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state = llsf_msgs::S0);
-  void flip_blink_states();
+inline bool
+operator!=(const llsf_msgs::Team &t1, const Team &t2)
+{
+  return ((t1 == llsf_msgs::CYAN) && (t2 != CYAN)) ||
+         ((t1 == llsf_msgs::MAGENTA) && (t2 != MAGENTA));
+}
 
-  void set_visible(bool visible);
-
-  void reset();
-
-  int refresh();
-
- private:
-  bool          visible_;
-  std::string   name_;
-  std::string   type_;
-  std::vector<llsf_msgs::PuckState> inputs_;
-  std::vector<llsf_msgs::PuckState> loaded_with_;
-  bool                              puck_under_rfid_;
-  llsf_msgs::PuckState              puck_under_rfid_state_;
-  bool                              has_correctly_reported_field_;
-  bool                              correctly_reported_;
-  std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;
-  std::map<llsf_msgs::LightColor, bool> blink_state_;
-};
-
-
-} // end of namespace llsfrb
+} // end of namespace llsfrb_shell
 
 #endif
