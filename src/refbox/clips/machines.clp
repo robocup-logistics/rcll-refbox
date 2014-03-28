@@ -174,7 +174,7 @@
   (not (machines-printed))
   =>
   (assert (machines-printed))
-  (bind ?t (if (neq ?teams (create$ "" "")) then t else debug))
+  (bind ?t (if (eq ?teams (create$ "" "")) then t else debug))
 
   (bind ?pp-mach-assignment (create$))
   (do-for-all-facts ((?machine machine) (?mspec machine-spec))
