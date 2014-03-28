@@ -148,7 +148,9 @@
   ; assign random down times
   (if ?*RANDOMIZE-GAME* then
     (bind ?num-down-times (random ?*DOWN-NUM-MIN* ?*DOWN-NUM-MAX*))
-    (bind ?candidates (find-all-facts ((?m machine)) (and ?m:down-possible (eq ?m:team CYAN))))
+    (bind ?candidates
+	  (find-all-facts ((?m machine))
+	    (and (neq ?m:mtype DELIVER) (neq ?m:mtype RECYCLE) (eq ?m:team CYAN))))
     (loop-for-count (min ?num-down-times (length$ ?candidates))
       (bind ?idx (random 1 (length$ ?candidates)))
       (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
