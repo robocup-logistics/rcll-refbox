@@ -502,10 +502,6 @@ LLSFRefBoxShell::set_game_team_color(std::string team_color)
   }
 
   if (new_team != team_) {
-    for (int m = 0; m < TEAM_NUM_MACHINES; ++m) {
-      machines_[TEAM_MACHINES[team_][m]]->set_visible(false);
-      machines_[TEAM_MACHINES[new_team][m]]->set_visible(true);
-    }
     team_ = new_team;
 
     // Reset all data, we need to get them fresh for the other team
@@ -869,6 +865,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 	  mpanel->second->set_correctly_reported(false, false);
 	}
 
+	mpanel->second->set_visible(mspec.team_color() == team_);
 	mpanel->second->refresh();
       }
     }
