@@ -8,13 +8,7 @@
 ;---------------------------------------------------------------------------
 
 ; LLSF RefBox Version
-; This information is send to newly connected clients over the network and
-; broadcasted whenever a new client is detected.
-(defglobal
-  ?*VERSION-MAJOR* = 0
-  ?*VERSION-MINOR* = 6
-  ?*VERSION-MICRO* = 1
-)
+; Set from refbox.cpp according to src/libs/core/version.h
 
 (load* (resolve-file net.clp))
 (load* (resolve-file machines.clp))

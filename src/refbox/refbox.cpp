@@ -38,6 +38,7 @@
 #include "clips_logger.h"
 
 #include <core/threading/mutex.h>
+#include <core/version.h>
 #include <config/yaml.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
@@ -48,6 +49,7 @@
 #include <logging/console.h>
 
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 #if BOOST_ASIO_VERSION < 100601
 #  include <csignal>
 #endif
@@ -358,6 +360,18 @@ LLSFRefBox::setup_clips()
   clips_logger_ = mlogger;
 
   init_clips_logger(clips_->cobj(), logger_, clips_logger_);
+
+  std::string defglobal_ver =
+    boost::str(boost::format("(defglobal\n"
+			     "  ?*VERSION-MAJOR* = %u\n"
+			     "  ?*VERSION-MINOR* = %u\n"
+			     "  ?*VERSION-MICRO* = %u\n"
+			     ")")
+	       % FAWKES_VERSION_MAJOR
+	       % FAWKES_VERSION_MINOR
+	       % FAWKES_VERSION_MICRO);
+
+  clips_->build(defglobal_ver);
 
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
