@@ -83,7 +83,8 @@ class ExampleClient
   {
     std::shared_ptr<llsf_msgs::GameState> g;
     if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
-      printf("GameState received: %u points\n", g->points());
+      printf("GameState received: %u/%u points\n",
+	     g->points_cyan(), g->points_magenta());
     }
   }
 
