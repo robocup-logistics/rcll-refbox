@@ -80,6 +80,13 @@
   ?*PRODUCTION-OVERTIME*  = 300
   ; Machine types that may always be announced
   ?*MACHINE-UNRESTRICTED-TYPES* = (create$ DELIVER RECYCLE)
+  ; Machine types that might be swapped in phase 1
+  ?*TOURNAMENT-PHASES* = (create$ ROUND-ROBIN PLAY-OFFS FINALS)
+  ?*TOURNAMENT-PHASE* = ROUND-ROBIN
+  ?*MACHINE-SWAP-ROUND-ROBIN* = (create$ T3 T4 T5)
+  ?*MACHINE-SWAP-PLAY-OFFS-NUM* = 6
+  ?*MACHINE-SWAP-PLAY-OFFS-TYPES* = (create$ T1 T2 T3 T4 T5)
+  ?*MACHINE-SWAP-FINALS-TYPES* = (create$ T1 T2 T3 T4 T5)
   ; Machine distribution
   ?*RANDOMIZE-GAME* = TRUE
   ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T3 T4 T4 T5)

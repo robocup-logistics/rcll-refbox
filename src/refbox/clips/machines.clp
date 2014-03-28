@@ -45,6 +45,27 @@
   )
 )
 
+
+(deffunction machine-magenta-for-cyan-field (?m-cyan)
+  (return
+    (switch ?m-cyan
+      (case M1  then M13)
+      (case M2  then M14)
+      (case M3  then M15)
+      (case M4  then M16)
+      (case M5  then M17)
+      (case M6  then M18)
+      (case M7  then M19)
+      (case M8  then M20)
+      (case M9  then M21)
+      (case M10 then M22)
+      (case M11 then M23)
+      (case M12 then M24)
+      (default M13)
+    )
+  )
+)
+
 (deffunction machine-init-randomize ()
   (if ?*RANDOMIZE-GAME* then
     ; Gather all available light codes
@@ -158,6 +179,61 @@
     )
   )
 
+  ; Switch some machines
+  (switch ?*TOURNAMENT-PHASE*
+    (case ROUND-ROBIN then
+      (bind ?mtype-to-swap (pick-random$ ?*MACHINE-SWAP-ROUND-ROBIN*))
+      (printout t "Round-robin: chose " ?mtype-to-swap " for machine swap" crlf)
+      (delayed-do-for-all-facts ((?m-cyan machine) (?m-magenta machine))
+        (and (eq ?m-cyan:team CYAN) (eq ?m-magenta:team MAGENTA)
+	     (eq ?m-cyan:mtype ?mtype-to-swap)
+	     (eq ?m-magenta:name (machine-magenta-for-cyan-field ?m-cyan:name)))
+
+	(printout t "Swapping " ?m-cyan:name " and " ?m-magenta:name crlf)
+        (modify ?m-cyan (team MAGENTA))
+	(modify ?m-magenta (team CYAN))
+      )
+    )
+    (case PLAY-OFFS then
+      (bind ?candidates (create$))
+      (do-for-all-facts ((?m machine))
+	(and (eq ?m:team CYAN) (member$ ?m:mtype ?*MACHINE-SWAP-PLAY-OFFS-TYPES*))
+	(bind ?candidates (append$ ?candidates ?m:name))
+      )
+      (bind ?candidates (subseq$ (randomize$ ?candidates) 1 ?*MACHINE-SWAP-PLAY-OFFS-NUM*))
+      (printout t "Candidates: " ?candidates crlf)
+      
+      (delayed-do-for-all-facts ((?m-cyan machine) (?m-magenta machine))
+        (and (eq ?m-cyan:team CYAN) (eq ?m-magenta:team MAGENTA)
+	     (member$ ?m-cyan:name ?candidates)
+	     (eq ?m-magenta:name (machine-magenta-for-cyan-field ?m-cyan:name)))
+
+	(printout t "Swapping " ?m-cyan:name " and " ?m-magenta:name crlf)
+        (modify ?m-cyan (team MAGENTA))
+	(modify ?m-magenta (team CYAN))
+      )
+
+    )
+    (case FINALS then
+      (delayed-do-for-all-facts ((?m-cyan machine) (?m-magenta machine))
+        (and (eq ?m-cyan:team CYAN) (eq ?m-magenta:team MAGENTA)
+	     (member$ ?m-cyan:mtype ?*MACHINE-SWAP-FINALS-TYPES*)
+	     (eq ?m-magenta:name (machine-magenta-for-cyan-field ?m-cyan:name)))
+
+	(if (= (random 0 1) 1)
+         then
+	  (printout t "Swapping " ?m-cyan:name " and " ?m-magenta:name crlf)
+          (modify ?m-cyan (team MAGENTA))
+	  (modify ?m-magenta (team CYAN))
+        )
+      )
+    )
+    (default
+      (printout error "Unknown tournament phase " ?*TOURNAMENT-PHASE* crlf)
+    )
+  )
+
+
   (assert (machines-initialized))
 )
 
@@ -181,7 +257,8 @@
     (eq ?machine:mtype ?mspec:mtype)
 
     (bind ?pp-mach-assignment
-	  (append$ ?pp-mach-assignment (sym-cat ?machine:name "/" ?machine:mtype)))
+	  (append$ ?pp-mach-assignment
+		   (sym-cat ?machine:name "/" ?machine:mtype "/" ?machine:team)))
   )
   (printout ?t "Machines: " ?pp-mach-assignment crlf)
 
