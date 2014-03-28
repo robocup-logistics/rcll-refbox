@@ -114,11 +114,16 @@
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
   (slot quantity-requested (type INTEGER) (default 1))
   (slot quantity-delivered (type INTEGER) (default 0))
+  ; Time window in which the order should start, used for
+  ; randomizing delivery-period's first element (start time)
+  (multislot start-range (type INTEGER) (cardinality 2 2))
+  ; Time the production should take, used for randomizing the second
+  ; element of delivery-period (end time)
+  (multislot duration-range (type INTEGER) (cardinality 2 2) (default 30 180))
+  ; Time window in which it must be delivered, set during initial randomization
   (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
   (slot delivery-gate (type SYMBOL) (allowed-values ANY D1 D2 D3) (default ANY))
-  (slot late-order (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
-  (multislot late-order-start-period (type INTEGER) (cardinality 2 2))
-  (slot active (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (slot active (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot activate-at (type INTEGER) (default 0))
   (slot points (type INTEGER) (default 10))
   (slot points-supernumerous (type INTEGER) (default 1))
@@ -279,20 +284,14 @@
 )
 
 (deffacts orders
-  (order (id 1) (product P1) (quantity-requested 3) (delivery-period   0 299))
-  (order (id 2) (product P2) (quantity-requested 2) (delivery-period   0 299))
-  (order (id 3) (product P3) (quantity-requested 4) (delivery-period   0 299))
-  (order (id 4) (product P1) (quantity-requested 1) (delivery-period 300 599))
-  (order (id 5) (product P2) (quantity-requested 6) (delivery-period 300 599))
-  (order (id 6) (product P3) (quantity-requested 2) (delivery-period 300 599))
-  (order (id 7) (product P1) (quantity-requested 3) (delivery-period 600 900))
-  (order (id 8) (product P2) (quantity-requested 3) (delivery-period 600 900))
-  (order (id 9) (product P3) (quantity-requested 3) (delivery-period 600 900))
-  ; Late orders
-  (order (id 10) (product P3) (quantity-requested 1) (points 20) (points-supernumerous 0)
-	 (active FALSE) (activate-at 5)
-	 (late-order TRUE) (late-order-start-period 120 400))
-  (order (id 11) (product P3) (quantity-requested 1) (points 20) (points-supernumerous 0)
-	 (active FALSE) (activate-at 395)
-	 (late-order TRUE) (late-order-start-period 520 780))
+  ; CYAN
+  ; 40 points in P3
+  (order (id  1) (team CYAN) (product P3) (quantity-requested 1) (start-range 0 120))
+  (order (id  2) (team CYAN) (product P3) (quantity-requested 1) (start-range 100 300))
+  (order (id  3) (team CYAN) (product P3) (quantity-requested 2) (start-range 300 700))
+  ; 20 points as P1 and P2 each
+  (order (id  4) (team CYAN) (product P1) (quantity-requested 1) (start-range 300 420))
+  (order (id  5) (team CYAN) (product P2) (quantity-requested 1) (start-range 500 700))
+
+  ; MAGENTA orders will be created automatically after parameterizing CYAN orders
 )

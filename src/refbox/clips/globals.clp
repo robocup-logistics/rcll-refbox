@@ -49,10 +49,9 @@
   ; Grace time for accepted delivery after machine down
   ?*DELIVERY-GATE-GRACE-TIME* = 3
   ; number of products per order
-  ?*ORDER-QUANTITY-MIN* =  3
-  ?*ORDER-QUANTITY-MAX* = 10
-  ?*LATE-ORDER-TIME* = 120
-  ?*LATE-ORDER-ACTIVATION-PRE-TIME* = 5
+  ?*ORDER-ACTIVATION-PRE-TIME-MIN* = 10
+  ?*ORDER-ACTIVATION-PRE-TIME-MAX* = 60
+  ?*ORDER-MIN-DELIVER-TIME* = 30
   ; number of points for specific actions
   ?*RECYCLE-POINTS* = 3
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 4

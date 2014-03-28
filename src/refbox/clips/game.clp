@@ -61,67 +61,100 @@
   (if (not (any-factp ((?mi machines-initialized)) TRUE))
    then (machine-init-randomize))
 
-  ; reset late orders, assign random times
-  (delayed-do-for-all-facts ((?order order)) (eq ?order:late-order TRUE)
+  ; reset orders, assign random times
+  (bind ?highest-order-id 0)
+  (delayed-do-for-all-facts ((?order order)) (eq ?order:team CYAN)
+    (if (> ?order:id ?highest-order-id) then (bind ?highest-order-id ?order:id))
     (bind ?deliver-start
-      (random (nth$ 1 ?order:late-order-start-period)
-	      (nth$ 2 ?order:late-order-start-period)))
-    (bind ?deliver-end (+ ?deliver-start ?*LATE-ORDER-TIME*))
-    (bind ?activate-at (max (- ?deliver-start ?*LATE-ORDER-ACTIVATION-PRE-TIME*) 0))
+      (random (nth$ 1 ?order:start-range)
+	      (nth$ 2 ?order:start-range)))
+    (bind ?deliver-end
+      (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
+				(nth$ 2 ?order:duration-range))))
+    (bind ?activation-pre-time
+	  (random ?*ORDER-ACTIVATION-PRE-TIME-MIN* ?*ORDER-ACTIVATION-PRE-TIME-MAX*))
+    (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
     (modify ?order (active FALSE) (activate-at ?activate-at)
 	    (delivery-period ?deliver-start ?deliver-end))
   )
 
-  ; make sure T5 machines are not down during late orders
-  (do-for-all-facts ((?machine machine) (?spec machine-spec))
-    (and (eq ?machine:mtype T5) (eq ?spec:mtype T5) (>= (nth$ 1 ?machine:down-period) 0.0))
+  ; retract all MAGENTA orders, then copy CYAN orders
+  (delayed-do-for-all-facts ((?order order)) (eq ?order:team MAGENTA)
+    (retract ?order)
+  )
+  (do-for-all-facts ((?order order)) (eq ?order:team CYAN)
+    (bind ?highest-order-id (+ ?highest-order-id 1))
+    (assert (order (id ?highest-order-id) (team MAGENTA) (product ?order:product)
+		   (quantity-requested ?order:quantity-requested)
+		   (start-range ?order:start-range)
+		   (duration-range ?order:duration-range)
+		   (delivery-period ?order:delivery-period)
+		   (delivery-gate (machine-magenta-for-cyan-gate ?order:delivery-gate))
+		   (active ?order:active) (activate-at ?order:activate-at)
+		   (points ?order:points) (points-supernumerous ?order:points-supernumerous)))
+  )
+
+  ; Make sure all order periods are at least last production time + 30 seconds long
+  (delayed-do-for-all-facts ((?order order) (?mspec machine-spec))
+    (eq ?order:product ?mspec:output)
+    (bind ?min-time (+ ?mspec:proc-time ?*ORDER-MIN-DELIVER-TIME*))
+    (bind ?delivery-time (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
+    (if (< ?delivery-time ?min-time)
+    then
+      (bind ?new-end-time (+ (nth$ 2 ?order:delivery-period) (- ?min-time ?delivery-time)))
+      (modify ?order (delivery-period (nth$ 1 ?order:delivery-period) ?new-end-time))
+    )
+  )
+
+  ; make sure associated machines are not down during orders
+  (do-for-all-facts ((?order order) (?machine machine) (?spec machine-spec))
+    (and (eq ?order:product ?spec:output) (eq ?machine:mtype ?spec:mtype)
+	 (>= (nth$ 1 ?machine:down-period) 0.0))
 
     (bind ?down-start (nth$ 1 ?machine:down-period))
     (bind ?down-end   (nth$ 2 ?machine:down-period))
 
     ;(printout warn "Checking T5 " ?machine:name "(" ?down-start " to " ?down-end ")" crlf)
 
-    (do-for-all-facts ((?order order)) ?order:late-order
-      (bind ?order-start (nth$ 1 ?order:delivery-period))
-      (bind ?order-end   (nth$ 2 ?order:delivery-period))
-      (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
-       then
-        ; the end of the order time is within the down time
-        ; push down-time back, and shrink if necessary to not exceed game time.
+    (bind ?order-start (nth$ 1 ?order:delivery-period))
+    (bind ?order-end   (nth$ 2 ?order:delivery-period))
+    (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
+      then
+      ; the end of the order time is within the down time
+      ; push down-time back, and shrink if necessary to not exceed game time.
+      ; this might even eliminate the down time, lucky team I guess...
+      (bind ?new-down-start ?order-end)
+      (bind ?new-down-end
+	    (min (+ ?new-down-start (- ?down-end ?down-start)) ?*PRODUCTION-TIME*))
+      (printout t "Order down-time conflict (1) for " ?machine:name "|T5" crlf)
+      (printout t "New downtime for " ?machine:name ": "
+		(time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
+		" (was " (time-sec-format ?down-start) " to "
+		(time-sec-format ?down-end) ")" crlf)
+      (modify ?machine (down-period ?new-down-start ?new-down-end))
+     else
+      (if (and (>= ?order-start ?down-start) (< ?order-start ?down-end))
+        then
+        ; the start of the order time is within the down time
+        ; pull down-time forward, and shrink if necessary to not exceed game time.
         ; this might even eliminate the down time, lucky team I guess...
-        (bind ?new-down-start ?order-end)
-	(bind ?new-down-end
-	      (min (+ ?new-down-start (- ?down-end ?down-start)) ?*PRODUCTION-TIME*))
-	(printout t "Late order down-time conflict (1) for " ?machine:name "|T5" crlf)
+        (bind ?new-down-end ?order-start)
+	(bind ?new-down-start
+	      (max (- ?new-down-end (- ?down-end ?down-start)) 0))
+	(printout t "Order down-time conflict (2) for " ?machine:name "|T5" crlf)
 	(printout t "New downtime for " ?machine:name ": "
 		  (time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
 		  " (was " (time-sec-format ?down-start) " to "
 		  (time-sec-format ?down-end) ")" crlf)
 	(modify ?machine (down-period ?new-down-start ?new-down-end))
-       else
-        (if (and (>= ?order-start ?down-start) (< ?order-start ?down-end))
-          then
-          ; the start of the order time is within the down time
-          ; pull down-time forward, and shrink if necessary to not exceed game time.
-          ; this might even eliminate the down time, lucky team I guess...
-          (bind ?new-down-end ?order-start)
-	  (bind ?new-down-start
-		(max (- ?new-down-end (- ?down-end ?down-start)) 0))
-	  (printout t "Late order down-time conflict (2) for " ?machine:name "|T5" crlf)
-	  (printout t "New downtime for " ?machine:name ": "
-		    (time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
-		    " (was " (time-sec-format ?down-start) " to "
-		    (time-sec-format ?down-end) ")" crlf)
-	  (modify ?machine (down-period ?new-down-start ?new-down-end))
-        )
       )
     )
-
-    ; assign random quantities to non-late orders
-    (delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
-      (modify ?order (quantity-requested (random ?*ORDER-QUANTITY-MIN* ?*ORDER-QUANTITY-MAX*)))
-    )
   )
+
+  ; assign random quantities to non-late orders
+  ;(delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
+  ;  (modify ?order (quantity-requested (random ?*ORDER-QUANTITY-MIN* ?*ORDER-QUANTITY-MAX*)))
+  ;)
 )
 
 (defrule game-reset-print
@@ -146,11 +179,13 @@
     (printout warn "Printing game config to debug log only" crlf)
   )
 
-  ; Print late orders
-  (do-for-all-facts ((?order order)) ?order:late-order
-    (printout ?t (if ?order:late-order then "Late " else "") "Order " ?order:id
+  ; Print orders
+  (do-for-all-facts ((?order order)) TRUE
+    (bind ?duration (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
+    (printout ?t "Order " ?order:id " " (sub-string 1 2 ?order:team)
 	      ": from " (time-sec-format (nth$ 1 ?order:delivery-period))
-	      " to " (time-sec-format (nth$ 2 ?order:delivery-period)) crlf)
+	      " to " (time-sec-format (nth$ 2 ?order:delivery-period))
+	      " (@" (time-sec-format ?order:activate-at) " ~" ?duration "s)" crlf)
   )
 )
 
