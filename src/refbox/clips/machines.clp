@@ -151,17 +151,20 @@
     (bind ?candidates
 	  (find-all-facts ((?m machine))
 	    (and (neq ?m:mtype DELIVER) (neq ?m:mtype RECYCLE) (eq ?m:team CYAN))))
-    (loop-for-count (min ?num-down-times (length$ ?candidates))
-      (bind ?idx (random 1 (length$ ?candidates)))
+    (bind ?candidates (subseq$ (randomize$ ?candidates) 1 ?num-down-times))
+    (foreach ?c ?candidates
       (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
       (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
       (bind ?end-time (+ ?start-time ?duration))
-      (bind ?mf (nth$ ?idx ?candidates))
-      ;(printout t (fact-slot-value ?mf name) " down from "
-;		(time-sec-format ?start-time) " to " (time-sec-format ?end-time)
-;		" (" ?duration " sec)" crlf)
-      (modify ?mf (down-period ?start-time ?end-time))
-      (bind ?candidates (delete$ ?candidates ?idx ?idx))
+      (modify ?c (down-period ?start-time ?end-time))
+    )
+
+    ; assign down-time to recycling machine
+    (bind ?recycling-down-time  (random ?*RECYCLE-DOWN-TIME-MIN* ?*RECYCLE-DOWN-TIME-MAX*))
+    (bind ?recycling-down-start (random 1 (- ?*PRODUCTION-TIME* ?recycling-down-time)))
+    (bind ?recycling-down-end   (+ ?recycling-down-start ?recycling-down-time))
+    (delayed-do-for-all-facts ((?m-rec machine)) (eq ?m-rec:mtype RECYCLE)
+      (modify ?m-rec (down-period ?recycling-down-start ?recycling-down-end))
     )
 
     ;(printout t "Assigning processing times to machines" crlf)

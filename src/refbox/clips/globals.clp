@@ -41,6 +41,8 @@
   ?*DOWN-TIME-MAX* = 120 ; 120
   ?*DOWN-NUM-MIN*  =   6
   ?*DOWN-NUM-MAX*  =   8
+  ?*RECYCLE-DOWN-TIME-MIN* = 20
+  ?*RECYCLE-DOWN-TIME-MAX* = 30
   ; Machine processing times; seconds
   ?*RECYCLE-PROC-TIME* = 2
   ?*DELIVER-PROC-TIME* = 1
