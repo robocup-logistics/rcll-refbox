@@ -45,13 +45,13 @@ namespace llsfrb_shell {
 void
 init_colors()
 {
-  //short default_fore, default_back;
-  //pair_content(0, &default_fore, &default_back);
-  chtype default_back = getbkgd(stdscr);
+  short default_fore, default_back;
+  pair_content(0, &default_fore, &default_back);
+  //chtype default_back = getbkgd(stdscr);
 
   init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
   init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW, default_back);
-  init_pair(COLOR_BLACK_ON_BACK, COLOR_BLACK, default_back);
+  init_pair(COLOR_BLACK_ON_BACK, default_fore, default_back);
   init_pair(COLOR_WHITE_ON_BACK, COLOR_WHITE, default_back);
   init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
   init_pair(COLOR_GREEN_ON_BACK, COLOR_GREEN, default_back);
