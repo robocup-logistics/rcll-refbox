@@ -80,7 +80,8 @@
     else (bind ?machine-assignment ?*MACHINE-DISTRIBUTION*)
   )
   (delayed-do-for-all-facts ((?machine machine))
-    (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
+    (and (any-factp ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype))
+	 (eq ?machine:team CYAN))
     (if (= (length$ ?machine-assignment) 0)
      then (printout error "No machine assignment available for " ?machine:name crlf)
      else
@@ -117,15 +118,16 @@
       (bind ?candidates (delete-member$ ?delivery-gates ?last-delivery-gate))
       (bind ?delivery-gate (nth$ (random 1 (length$ ?candidates)) ?candidates))
       (bind ?last-delivery-gate ?delivery-gate)
-      (assert (delivery-period (delivery-gate ?delivery-gate)
+      (assert (delivery-period (delivery-gates ?delivery-gate
+					       (machine-magenta-for-cyan-gate ?delivery-gate))
 			       (period ?start-time ?deliver-period-end-time)))
     )
   )
 
   ; assign random down times
   (if ?*RANDOMIZE-GAME* then
-    (bind ?num-down-times (random 6 8))
-    (bind ?candidates (find-all-facts ((?m machine)) ?m:down-possible))
+    (bind ?num-down-times (random ?*DOWN-NUM-MIN* ?*DOWN-NUM-MAX*))
+    (bind ?candidates (find-all-facts ((?m machine)) (and ?m:down-possible (eq ?m:team CYAN))))
     (loop-for-count (min ?num-down-times (length$ ?candidates))
       (bind ?idx (random 1 (length$ ?candidates)))
       (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
@@ -146,6 +148,15 @@
     )
   )
 
+  ; Copy randomization from CYAN to MAGENTA
+  (loop-for-count (?i 12) do
+    (bind ?m-cyan-name    (sym-cat M ?i))
+    (bind ?m-magenta-name (sym-cat M (+ ?i 12)))
+    (do-for-fact ((?m-cyan machine) (?m-magenta machine))
+      (and (eq ?m-cyan:name ?m-cyan-name) (eq ?m-magenta:name ?m-magenta-name))
+      (modify ?m-magenta (mtype ?m-cyan:mtype) (down-period ?m-cyan:down-period))
+    )
+  )
 
   (assert (machines-initialized))
 )

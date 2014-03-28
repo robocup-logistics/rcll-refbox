@@ -39,6 +39,8 @@
   ; chosen randomly from this range
   ?*DOWN-TIME-MIN* =  30 ;  30
   ?*DOWN-TIME-MAX* = 120 ; 120
+  ?*DOWN-NUM-MIN*  =   6
+  ?*DOWN-NUM-MAX*  =   8
   ; Machine processing times; seconds
   ?*RECYCLE-PROC-TIME* = 2
   ?*DELIVER-PROC-TIME* = 1
@@ -80,5 +82,5 @@
   ?*MACHINE-UNRESTRICTED-TYPES* = (create$ DELIVER RECYCLE)
   ; Machine distribution
   ?*RANDOMIZE-GAME* = TRUE
-  ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T4 T5)
+  ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T3 T4 T4 T5)
 )
