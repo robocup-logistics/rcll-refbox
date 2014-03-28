@@ -446,18 +446,11 @@
   (pb-destroy ?s)
 )
 
-(defrule net-broadcast-MachineInfo
-  (time $?now)
-  (gamestate (phase PRODUCTION))
-  ?sf <- (signal (type machine-info-bc) (seq ?seq) (count ?count)
-		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-MACHINE-INFO-BURST-COUNT*)
-					       then ?*BC-MACHINE-INFO-PERIOD*
-					       else ?*BC-MACHINE-INFO-BURST-PERIOD*))))
-  =>
-  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+(deffunction net-create-broadcast-MachineInfo (?team-color)
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
+  (pb-set-field ?s "team" ?team-color)
 
-  (do-for-all-facts ((?machine machine)) TRUE
+  (do-for-all-facts ((?machine machine)) (eq ?machine:team ?team-color)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (pb-set-field ?m "name" ?machine:name)
@@ -481,7 +474,24 @@
     )
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
+  (return ?s)
+)
 
+(defrule net-broadcast-MachineInfo
+  (time $?now)
+  (gamestate (phase PRODUCTION))
+  ?sf <- (signal (type machine-info-bc) (seq ?seq) (count ?count)
+		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-MACHINE-INFO-BURST-COUNT*)
+					       then ?*BC-MACHINE-INFO-PERIOD*
+					       else ?*BC-MACHINE-INFO-BURST-PERIOD*))))
+  =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+
+  (bind ?s (net-create-broadcast-MachineInfo CYAN))
+  (pb-broadcast ?s)
+  (pb-destroy ?s)
+
+  (bind ?s (net-create-broadcast-MachineInfo MAGENTA))
   (pb-broadcast ?s)
   (pb-destroy ?s)
 )
