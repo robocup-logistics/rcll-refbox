@@ -66,7 +66,7 @@ message ExplorationMachine {
   // Pose of the machine on the field
   required Pose2D  pose = 2;
   // Team the machine belongs to
-  required Team    team = 3;
+  required Team    team_color = 3;
 }
 
 message ExplorationInfo {

@@ -54,5 +54,5 @@ message SetRobotMaintenance {
   // false to bring back robot
   required bool   maintenance  = 3;
   // Team the robot belongs to
-  required Team   team         = 4;
+  required Team   team_color   = 4;
 }

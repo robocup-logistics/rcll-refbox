@@ -72,9 +72,9 @@ message Machine {
     MSG_TYPE = 12;
   }
   // Machine name, type, and team
-  required string    name     =  1;
-  optional string    type     =  2;
-  optional Team      team     = 10;
+  required string    name       =  1;
+  optional string    type       =  2;
+  optional Team      team_color = 10;
 
   // Required inputs and produced output
   // Only set for field machines T*
@@ -101,9 +101,9 @@ message MachineInfo {
   }
 
   // List of machines states
-  repeated Machine machines = 1;
+  repeated Machine machines   = 1;
 
   // Team name if all machines belong
   // only to a single team (broadcast)
-  optional Team    team     = 2;
+  optional Team    team_color = 2;
 }

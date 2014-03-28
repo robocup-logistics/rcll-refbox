@@ -52,5 +52,5 @@ message AttentionMessage {
   // Time (sec) the msg should be visible
   optional float  time_to_show = 2;
   // if the message only regards one team
-  optional Team   team = 3;
+  optional Team   team_color = 3;
 }

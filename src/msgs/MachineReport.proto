@@ -63,7 +63,7 @@ message MachineReport {
   }
 
   // Team for which the report is sent
-  required Team team = 2;
+  required Team team_color = 2;
 
   // All machines already already recognized
   // or a subset thereof
@@ -85,5 +85,5 @@ message MachineReportInfo {
   repeated string reported_machines = 1;
 
   // Team for which the report is sent
-  required Team team = 2;
+  required Team team_color = 2;
 }

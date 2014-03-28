@@ -69,7 +69,7 @@ message Puck {
   optional Pose2D    pose = 3;
 
   // Team the puck belongs to
-  optional Team      team = 4;
+  optional Team      team_color = 4;
 }
 
 message PuckInfo {
