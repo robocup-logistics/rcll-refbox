@@ -54,6 +54,7 @@ using namespace fawkes;
 static bool quit = false;
 std::string machine_name_;
 std::string machine_type_;
+Team        team_;
 ProtobufBroadcastPeer *peer_ = NULL;
 
 void
@@ -87,6 +88,7 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     if (b->team_name() == "LLSF" && b->peer_name() == "RefBox") {
       printf("Announcing machine type\n");
       llsf_msgs::MachineReport report;
+      report.set_team_color(team_);
       llsf_msgs::MachineReportEntry *entry = report.add_machines();
       entry->set_name(machine_name_);
       entry->set_type(machine_type_);
@@ -96,21 +98,26 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 
   std::shared_ptr<MachineReportInfo> mrinfo;
   if ((mrinfo = std::dynamic_pointer_cast<MachineReportInfo>(msg))) {
-    printf("Reported machines:");
-    for (int i = 0; i < mrinfo->reported_machines_size(); ++i) {
-      printf(" %s", mrinfo->reported_machines(i).c_str());
+    if (mrinfo->team_color() == team_) {
+      printf("Reported machines (%s):", llsf_msgs::Team_Name(team_).c_str());
+      for (int i = 0; i < mrinfo->reported_machines_size(); ++i) {
+	printf(" %s", mrinfo->reported_machines(i).c_str());
+      }
+      printf("\n");
     }
-    printf("\n");
   }
 }
 
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "");
+  ArgumentParser argp(argc, argv, "T:");
 
   if (argp.num_items() != 2) {
-    printf("Usage: %s <machine-name> <machine-type>\n", argv[0]);
+    printf("Usage: %s [-T team] <machine-name> <machine-type>\n"
+	   "\n"
+	   "-T team	Select team to send for, CYAN (default) or MAGENTA\n",
+	   argv[0]);
     exit(1);
   }
 
@@ -129,6 +136,18 @@ main(int argc, char **argv)
   } else {
     peer_ = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
 				      config->get_uint("/llsfrb/comm/peer-port"));
+  }
+
+  team_ = CYAN;
+  if (argp.has_arg("T")) {
+    std::string team_str = argp.arg("T");
+    if (team_str == "cyan") {
+      team_ = CYAN;
+    } else if (team_str == "magenta") {
+      team_ = MAGENTA;
+    } else {
+      printf("Unknonw team value, using cyan\n");
+    }
   }
 
   boost::asio::io_service io_service;
