@@ -85,10 +85,12 @@
 (defrule net-recv-beacon-known
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
-  ?rf <- (robot (host ?from-host) (port ?from-port))
+  ?rf <- (robot (host ?from-host) (port ?from-port) (team-color ?team-color))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
+  (bind ?team (pb-field-value ?p "team_name"))
+  (bind ?name (pb-field-value ?p "peer_name"))
   (bind ?time (pb-field-value ?p "time"))
   (bind ?pose-time (create$ 0 0))
   (bind ?pose (create$ 0.0 0.0 0.0))
@@ -107,8 +109,21 @@
     (pb-destroy ?p-pose-time)
     (pb-destroy ?p-pose)
   )
+  (if (pb-has-field ?p "team_color")
+   then
+    (bind ?new-team-color (sym-cat (pb-field-value ?p "team_color")))
+    (if (neq ?team-color ?new-team-color) then
+      (printout warn "Robot " ?name " of " ?team
+		" has changed team color from " ?team-color " to " ?new-team-color crlf)
+      (assert (attention-message (text (str-cat "Robot " ?name " of " ?team
+						" has changed team color from("
+						?team-color " to " ?new-team-color))))
+    )
+    (bind ?team-color ?new-team-color)
+  )
+
   (modify ?rf (last-seen ?rcvd-at) (warning-sent FALSE)
-              (pose ?pose) (pose-time ?pose-time))
+              (pose ?pose) (pose-time ?pose-time) (team-color ?team-color))
 )
 
 (defrule net-recv-beacon-unknown
@@ -163,7 +178,7 @@
 
   (if (pb-has-field ?p "team_color")
    then
-    (bind ?team-color (pb-field-value ?p "team_color"))
+    (bind ?team-color (sym-cat (pb-field-value ?p "team_color")))
    else
     (assert (attention-message (text (str-cat "Robot " ?name " of " ?team
 					      " does not provide its team color"))))
