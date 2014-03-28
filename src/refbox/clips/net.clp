@@ -536,6 +536,7 @@
   (bind ?o (pb-create "llsf_msgs.Order"))
 
   (pb-set-field ?o "id" (fact-slot-value ?order-fact id))
+  (pb-set-field ?o "team" (fact-slot-value ?order-fact team))
   (pb-set-field ?o "product" (fact-slot-value ?order-fact product))
   (pb-set-field ?o "quantity_requested" (fact-slot-value ?order-fact quantity-requested))
   (pb-set-field ?o "quantity_delivered" (fact-slot-value ?order-fact quantity-delivered))
@@ -548,13 +549,24 @@
   (return ?o)
 )
 
-(deffunction net-create-OrderInfo ()
+(deffunction net-create-OrderInfo ($?team-color)
   (bind ?oi (pb-create "llsf_msgs.OrderInfo"))
 
-  (do-for-all-facts
-    ((?order order)) (eq ?order:active TRUE)
-    (bind ?o (net-create-Order ?order))
-    (pb-add-list ?oi "orders" ?o) ; destroys ?o
+  (if (> (length$ ?team-color) 0)
+  then
+    (bind ?team (nth$ 1 ?team-color))
+    (pb-set-field ?oi "team" ?team)
+    (do-for-all-facts
+      ((?order order)) (and (eq ?order:active TRUE) (eq ?order:team ?team))
+      (bind ?o (net-create-Order ?order))
+      (pb-add-list ?oi "orders" ?o) ; destroys ?o
+    )
+  else
+    (do-for-all-facts
+      ((?order order)) (eq ?order:active TRUE)
+      (bind ?o (net-create-Order ?order))
+      (pb-add-list ?oi "orders" ?o) ; destroys ?o
+    )
   )
   (return ?oi)
 )
@@ -572,6 +584,14 @@
   (bind ?oi (net-create-OrderInfo))
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?oi))
+  (pb-broadcast ?oi)
+  (pb-destroy ?oi)
+
+  (bind ?oi (net-create-OrderInfo CYAN))
+  (pb-broadcast ?oi)
+  (pb-destroy ?oi)
+
+  (bind ?oi (net-create-OrderInfo MAGENTA))
   (pb-broadcast ?oi)
   (pb-destroy ?oi)
 )
