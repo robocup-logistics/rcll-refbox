@@ -208,7 +208,7 @@
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
   (signal (type exploration-info) (time (create$ 0 0)) (seq 1))
   (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
-  (setup-light-toggle 0)
+  (setup-light-toggle 0 0)
   (whac-a-mole-light NONE)
   ; Positions are the example ones from the rulebook and
   ; will most likely be different during the tournament

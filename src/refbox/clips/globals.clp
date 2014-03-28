@@ -64,6 +64,10 @@
   ?*PRODUCTION-WRONG-TEAM-MACHINE-POINTS* = -2
   ; Setup light effects
   ?*SETUP-LIGHT-PERIOD* = 1.0
+  ?*SETUP-LIGHT-PERIOD-1* = 0.5
+  ?*SETUP-LIGHT-PERIOD-2* = 0.25
+  ?*SETUP-LIGHT-SPEEDUP-TIME-1* = 240
+  ?*SETUP-LIGHT-SPEEDUP-TIME-2* = 270
   ; Technical challenge settings
   ?*TECHCHALL-WAM-MACHINES* = (create$ M1 M2 M3 M4 M5 M6 M7 M8 M9 M10)
   ; maximum X or Y distance from signal to accept target reached
