@@ -56,3 +56,37 @@
 (deffunction string-gt (?s1 ?s2)
   (return (> (str-compare ?s1 ?s2) 0))
 )
+
+(deffunction time-range-overlap-length (?t1-start ?t1-end ?t2-start ?t2-end)
+  (if (and (>= ?t1-start ?t2-start) (<= ?t1-start ?t2-end))
+   then ; start time of t1 is within t2
+    (if (<= ?t1-end ?t2-end)
+     then ; even end time is, so length of t1 is overlap
+      (return (- ?t1-end ?t1-start))
+     else ; t1 end is beyond t2 end, use that as boundary
+      (return (- ?t2-end ?t1-start))
+    )
+   else
+    (if (and (>= ?t1-end ?t2-start) (<= ?t1-end ?t2-end))
+     then ; t1 end is within t2, t1 start cannot, otherwise
+          ;case above would have been used
+      (return (- ?t1-end ?t2-start))
+     else
+      (if (and (<= ?t1-start ?t2-start) (>= ?t1-end ?t2-end))
+       then ; t1 includes t2
+         (return (- ?t2-end ?t2-start))
+       else
+        (if (and (<= ?t2-start ?t1-start) (>= ?t2-end ?t1-end))
+         then ; t2 includes t1
+          (return (- ?t1-end ?t1-start))
+        )
+      )
+    )
+  )
+  (return 0.0)
+)
+
+(deffunction time-range-overlap-ratio (?t1-start ?t1-end ?t2-start ?t2-end)
+  (return (/ (time-range-overlap-length ?t1-start ?t1-end ?t2-start ?t2-end)
+	     (- ?t1-end ?t1-start)))
+)
