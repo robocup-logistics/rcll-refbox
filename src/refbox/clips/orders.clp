@@ -72,3 +72,17 @@
   (assert (points (game-time ?game-time) (points ?addp) (team ?t) (phase PRODUCTION)
                   (reason (str-cat "Delivered " ?p " to " ?dg))))
 )
+
+(defrule order-delivered-out-of-time
+  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (product-delivered (game-time ?game-time) (team ?t) (product ?p) (delivery-gate ?dg))
+  ; the actual order we are delivering
+  (not (order (active TRUE) (product ?p)))
+  =>
+  (retract ?pf)
+  (bind ?addp ?*DELIVER-WITH-NO-ACTIVE-ORDER*)
+  (printout t "Product " ?p " delivered at " ?dg ". Awarding " ?addp
+	    " points (no active order)" crlf)
+  (assert (points (game-time ?game-time) (points ?addp) (team ?t) (phase PRODUCTION)
+                  (reason (str-cat "Delivered " ?p " to " ?dg " (no active order)"))))
+)
