@@ -475,6 +475,7 @@
       (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
       (pb-set-field ?m "output" (str-cat ?mspec:output))
     )
+    (if (eq ?machine:mtype RECYCLE) then (pb-set-field ?m "output" "S0"))
     ; If we have a pose publish it
     (if (non-zero-pose ?machine:pose) then
       (bind ?p (pb-field-value ?m "pose"))
