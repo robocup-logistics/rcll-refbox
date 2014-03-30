@@ -172,8 +172,9 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     for (int i = 0; i < mi->machines_size(); ++i) {
       const Machine &m = mi->machines(i);
       const Pose2D &p = m.pose();
-      printf("  %-3s|%2s @ (%f, %f, %f)\n",
+      printf("  %-3s|%2s|%s @ (%f, %f, %f)\n",
 	     m.name().c_str(), m.type().substr(0, 2).c_str(),
+	     Team_Name(m.team_color()).substr(0, 2).c_str(),
 	     p.x(), p.y(), p.ori());
     }
   }
