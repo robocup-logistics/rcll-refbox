@@ -50,6 +50,27 @@
   (game-reset) ; this is a function
 )
 
+(defrule game-reset-re-parameterize
+  (game-reset)
+  ?gf <- (game-parameterized)
+  =>
+  (retract ?gf)
+)
+
+(defrule game-reset-print
+  (game-reset)
+  ?gf <- (game-printed)
+  =>
+  (retract ?gf)
+)
+  
+(defrule game-reset-done
+  (declare (salience -10000))
+  ?gf <- (game-reset)
+  =>
+  (retract ?gf)
+)
+
 (defrule game-parameterize
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
@@ -156,14 +177,6 @@
   ;  (modify ?order (quantity-requested (random ?*ORDER-QUANTITY-MIN* ?*ORDER-QUANTITY-MAX*)))
   ;)
 )
-
-(defrule game-reset-print
-  (game-reset)
-  ?gf <- (game-printed)
-  =>
-  (retract ?gf)
-)
-  
 
 (defrule game-print
   (game-parameterized)
