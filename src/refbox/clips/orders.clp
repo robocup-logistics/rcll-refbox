@@ -9,15 +9,17 @@
 
 (defrule activate-order
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?of <- (order (active FALSE) (activate-at ?at&:(>= ?gt ?at))
+  ?of <- (order (active FALSE) (activate-at ?at&:(>= ?gt ?at)) (team ?team)
 		(product ?p) (quantity-requested ?q) (delivery-period $?period))
   ?sf <- (signal (type order-info))
   =>
   (modify ?of (active TRUE))
   (modify ?sf (count 1) (time 0 0))
-  (assert (attention-message (text (str-cat "Order: " ?q " x " ?p " from "
+  (bind ?atime (- (nth$ 1 ?period) ?at))
+  (assert (attention-message (text (str-cat "Order (" ?team "): " ?q " x " ?p " from "
 					    (time-sec-format (nth$ 1 ?period)) " to "
-					    (time-sec-format (nth$ 2 ?period)))) (time 15)))
+					    (time-sec-format (nth$ 2 ?period))))
+			     (team ?team) (time ?atime)))
 )
 
 ; Sort orders by ID, such that do-for-all-facts on the orders deftemplate
