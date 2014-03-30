@@ -118,10 +118,12 @@
 (defrule machine-wrong-team-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  ?mf <- (machine (name ?m) (mtype ?mtype&~DELIVER&~RECYCLE) (team ?machine-team))
-  (puck (id ?id) (team ?puck-team&~?machine-team))
+  ?mf <- (machine (name ?m) (state ~INVALID)
+                  (mtype ?mtype&~DELIVER&~RECYCLE) (team ?machine-team))
+  ?pf <- (puck (id ?id) (team ?puck-team&~?machine-team))
   =>
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights RED-BLINK YELLOW-BLINK))
+  (modify ?pf (state FINISHED))
   (assert (points (game-time ?gt) (team ?machine-team) (phase PRODUCTION)
 		  (points ?*PRODUCTION-WRONG-TEAM-MACHINE-POINTS*)
 		  (reason (str-cat "Puck of team " ?puck-team " at "
@@ -217,12 +219,30 @@
   (gamestate (state RUNNING) (phase PRODUCTION))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype DELIVER) (state ?ms&IDLE|DOWN) (puck-id 0) (team ?team))
-  (puck (id ?id) (state ?ps) (team ?team))
-  (not (order (active TRUE) (product ?product&:(eq ?product ?ps))))
+  ?pf <- (puck (id ?id) (state ?ps&~P1&~P2&~P3) (team ?team))
+  ;(not (order (active TRUE) (product ?product&:(eq ?product ?ps))))
   =>
   (bind ?lights (create$ YELLOW-BLINK))
   (if (eq ?ms DOWN) then (bind ?lights (create$ RED-ON YELLOW-BLINK)))
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights ?lights))
+  (modify ?pf (state FINISHED))
+
+  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
+  (assert (attention-message (text (str-cat "Remove puck " ?id " from field @ " ?m))))
+)
+
+(defrule deliver-down-machine
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id 0) (team ?team))
+  ?pf <- (puck (id ?id) (state ?ps&P1|P2|P3) (team ?team))
+  =>
+  (bind ?lights (create$ RED-ON YELLOW-BLINK))
+  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights ?lights))
+  (modify ?pf (state FINISHED))
+
+  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
+  (assert (attention-message (text (str-cat "Remove puck " ?id " from field @ " ?m))))
 )
 
 (defrule deliver-wrong-team-input
@@ -230,10 +250,11 @@
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (mtype DELIVER) (team ?machine-team)
 		  (state ?ms&IDLE|DOWN) (puck-id 0))
-  (puck (id ?id) (team ?puck-team&~?machine-team))
+  ?pf <- (puck (id ?id) (team ?puck-team&~?machine-team))
   =>
   (bind ?lights (create$ RED-BLINK YELLOW-BLINK))
   (modify ?mf (puck-id ?id) (state INVALID) (desired-lights ?lights))
+  (modify ?pf (state FINISHED))
   (assert (points (game-time ?gt) (team ?machine-team) (phase PRODUCTION)
 		  (points ?*PRODUCTION-WRONG-TEAM-MACHINE-POINTS*)
 		  (reason (str-cat "Delivery of puck of team " ?puck-team " at "
@@ -250,8 +271,8 @@
    (machine (name ?m) (state DOWN)
 	    (down-period $?dp&:(<= (- ?gtime (nth$ 1 ?dp)) ?*DELIVERY-GATE-GRACE-TIME*)))
   )
-  (puck (id ?id) (state ?ps) (team ?team))
-  (order (active TRUE) (team ?team) (product ?product&:(eq ?product ?ps)))
+  (puck (id ?id) (state ?ps&~FINISHED) (team ?team))
+  ;(order (active TRUE) (team ?team) (product ?product&:(eq ?product ?ps)))
   =>
   (if (eq ?state DOWN)
    then
@@ -268,24 +289,13 @@
   ?mf <- (machine (name ?m) (mtype DELIVER) (state PROCESSING) (prev-state ?prev-state)
 		  (team ?team) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gtime ?pstart ?pt)))
-  ?pf <- (puck (id ?id) (state ?ps) (team ?team))
+  ?pf <- (puck (id ?id) (state ?ps&~FINISHED) (team ?team))
   =>
   (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> FINISHED)" crlf)
   (modify ?mf (state ?prev-state) (productions (+ ?p 1)) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   (assert (attention-message (text (str-cat "Remove puck " ?id " from field @ " ?m))))
   (modify ?pf (state FINISHED))
   (assert (product-delivered (game-time ?gtime) (product ?ps) (delivery-gate ?m)))
-)
-
-(defrule deliver-down-machine
-  (gamestate (state RUNNING) (phase PRODUCTION))
-  ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id ?id&~0) (team ?team))
-  ?pf <- (puck (id ?id) (state ?ps&~FINISHED) (team ?team))
-  =>
-  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
-  (assert (attention-message (text (str-cat "Remove puck " ?id " from field @ " ?m))))
-  (modify ?mf (puck-id ?id) (desired-lights RED-ON YELLOW-BLINK))
-  (modify ?pf (state FINISHED))
 )
 
 (defrule deliver-removal
@@ -320,9 +330,10 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
   ?mf <- (machine (name ?m) (team ?machine-team) (mtype RECYCLE) (state IDLE) (puck-id 0))
-  (puck (id ?id) (team ?puck-team&~?machine-team))
+  ?pf <- (puck (id ?id) (team ?puck-team&~?machine-team))
   =>
-  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights YELLOW-BLINK))
+  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights RED-BLINK YELLOW-BLINK))
+  (modify ?pf (state FINISHED))
   (assert (points (game-time ?gt) (team ?machine-team) (phase PRODUCTION)
 		  (points ?*PRODUCTION-WRONG-TEAM-MACHINE-POINTS*)
 		  (reason (str-cat "Recycling of puck of team " ?puck-team " at machine "
