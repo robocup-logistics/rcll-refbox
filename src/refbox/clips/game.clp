@@ -213,7 +213,7 @@
   (do-for-all-facts ((?order order)) TRUE
     (bind ?duration (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
     (printout ?t "Order " ?order:id " " (sub-string 1 2 ?order:team)
-	      ": from " (time-sec-format (nth$ 1 ?order:delivery-period))
+	      ": " ?order:product " from " (time-sec-format (nth$ 1 ?order:delivery-period))
 	      " to " (time-sec-format (nth$ 2 ?order:delivery-period))
 	      " (@" (time-sec-format ?order:activate-at) " ~" ?duration "s)" crlf)
   )
