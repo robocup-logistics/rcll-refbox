@@ -175,6 +175,7 @@ class LLSFRefBoxShell
   boost::asio::deadline_timer  blink_timer_;
   boost::asio::deadline_timer  attmsg_timer_;
   bool                         attmsg_toggle_;
+  bool                         attmsg_team_specific_;
   std::mutex                   attmsg_mutex_;
   std::string                  attmsg_string_;
   bool                         attmsg_has_endtime_;

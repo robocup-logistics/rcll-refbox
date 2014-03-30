@@ -90,7 +90,7 @@ LLSFRefBoxShell::LLSFRefBoxShell()
     m_state_(nullptr),  m_phase_(nullptr), m_team_(nullptr),
     timer_(io_service_), reconnect_timer_(io_service_), try_reconnect_(true),
     blink_timer_(io_service_), attmsg_timer_(io_service_), attmsg_toggle_(true),
-    beep_warning_shown_(false), team_(CYAN)
+    attmsg_team_specific_(false), beep_warning_shown_(false), team_(CYAN)
 {
   stdin_ = new boost::asio::posix::stream_descriptor(io_service_, dup(STDIN_FILENO));
   client = new ProtobufStreamClient();
@@ -415,12 +415,32 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
       attmsg_toggle_ = ! attmsg_toggle_;
 
       if (attmsg_toggle_) {
-	p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
-	p_attmsg_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
+	if (attmsg_team_specific_) {
+	  if (team_ == CYAN) {
+	    p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+	    p_attmsg_->attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK)|A_BOLD);
+	  } else {
+	    p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+	    p_attmsg_->attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK)|A_BOLD);
+	  }
+	} else {
+	  p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
+	  p_attmsg_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK)|A_BOLD);
+	}
       } else {
 	beep(1500, ATTMSG_TIMER_INTERVAL);
-	p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
-	p_attmsg_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
+	if (attmsg_team_specific_) {
+	  if (team_ == CYAN) {
+	    p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN));
+	    p_attmsg_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
+	  } else {
+	    p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA));
+	    p_attmsg_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA)|A_BOLD);
+	  }
+	} else {
+	  p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
+	  p_attmsg_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
+	}
       }
       if ((int)attmsg_string_.length() >= p_attmsg_->width()) {
 	p_attmsg_->addstr(attmsg_string_.c_str());
@@ -875,12 +895,13 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
   if ((am = std::dynamic_pointer_cast<llsf_msgs::AttentionMessage>(msg))) {
     std::lock_guard<std::mutex> lock(attmsg_mutex_);
 
-    if (am->team_color() == team_) {
+    if (! am->has_team_color() || am->team_color() == team_) {
 
       if (attmsg_string_ != "") {
 	attmsg_timer_.cancel();
       }
       attmsg_string_ = am->message();
+      attmsg_team_specific_ = am->has_team_color();
       attmsg_has_endtime_ = am->has_time_to_show();
       if (attmsg_has_endtime_) {
 	boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
