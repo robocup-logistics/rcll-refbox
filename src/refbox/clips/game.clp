@@ -135,39 +135,56 @@
     (bind ?down-start (nth$ 1 ?machine:down-period))
     (bind ?down-end   (nth$ 2 ?machine:down-period))
 
-    ;(printout warn "Checking T5 " ?machine:name "(" ?down-start " to " ?down-end ")" crlf)
-
     (bind ?order-start (nth$ 1 ?order:delivery-period))
     (bind ?order-end   (nth$ 2 ?order:delivery-period))
-    (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
-      then
-      ; the end of the order time is within the down time
-      ; push down-time back, and shrink if necessary to not exceed game time.
-      ; this might even eliminate the down time, lucky team I guess...
-      (bind ?new-down-start ?order-end)
-      (bind ?new-down-end
-	    (min (+ ?new-down-start (- ?down-end ?down-start)) ?*PRODUCTION-TIME*))
-      (printout t "Order down-time conflict (1) for " ?machine:name "|T5" crlf)
-      (printout t "New downtime for " ?machine:name ": "
-		(time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
-		" (was " (time-sec-format ?down-start) " to "
-		(time-sec-format ?down-end) ")" crlf)
-      (modify ?machine (down-period ?new-down-start ?new-down-end))
-     else
-      (if (and (>= ?order-start ?down-start) (< ?order-start ?down-end))
-        then
-        ; the start of the order time is within the down time
-        ; pull down-time forward, and shrink if necessary to not exceed game time.
-        ; this might even eliminate the down time, lucky team I guess...
-        (bind ?new-down-end ?order-start)
-	(bind ?new-down-start
-	      (max (- ?new-down-end (- ?down-end ?down-start)) 0))
-	(printout t "Order down-time conflict (2) for " ?machine:name "|T5" crlf)
+
+    (bind ?order-downtime-overlap-ratio
+	  (time-range-overlap-ratio ?order-start ?order-end ?down-start ?down-end))
+
+    (if (> ?order-downtime-overlap-ratio ?*ORDER-MAX-DOWN-RATIO*)
+     then ; final machine is down for at least half of the order time, reduce it
+      (printout t "Order " ?order:id " and down-time " ?machine:name
+		" overlap too large: " ?order-downtime-overlap-ratio crlf)
+      (printout t "M1 downtime: " 
+		  (time-sec-format ?down-start) " to " (time-sec-format ?down-end) crlf)
+      (printout t "Order time:  " 
+		  (time-sec-format ?order-start) " to " (time-sec-format ?order-end) crlf)
+      (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
+       then
+        ; the end of the order time is within the down time, shrink it
+        (bind ?new-down-start (- ?order-end ?*ORDER-DOWN-SHRINK*))
+
+	(printout t "Order down-time conflict (1) for " ?machine:name "|" ?machine:mtype crlf)
 	(printout t "New downtime for " ?machine:name ": "
-		  (time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
+		  (time-sec-format ?new-down-start) " to " (time-sec-format ?down-end)
 		  " (was " (time-sec-format ?down-start) " to "
 		  (time-sec-format ?down-end) ")" crlf)
-	(modify ?machine (down-period ?new-down-start ?new-down-end))
+	(modify ?machine (down-period ?new-down-start ?down-end))
+       else
+        (if (and (>= ?order-start ?down-start) (< ?order-start ?down-end))
+          then
+          ; the start of the order time is within the down time, shrink it
+	  (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
+	  (printout t "Order down-time conflict (2) for " ?machine:name "|" ?machine:mtype crlf)
+	  (printout t "New downtime for " ?machine:name ": "
+		    (time-sec-format ?down-start) " to " (time-sec-format ?new-down-end)
+		    " (was " (time-sec-format ?down-start) " to "
+		    (time-sec-format ?down-end) ")" crlf)
+	  (modify ?machine (down-period ?down-start ?new-down-end))
+         else
+          (if (and (< ?order-start ?down-start) (> ?order-end ?down-end))
+	   then ; down time within order time
+	    (bind ?new-down-start ?order-start)
+	    (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
+	    (printout t "Order down-time conflict (3) for "
+		      ?machine:name "|" ?machine:mtype crlf)
+	    (printout t "New downtime for " ?machine:name ": "
+		      (time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
+		      " (was " (time-sec-format ?down-start) " to "
+		      (time-sec-format ?down-end) ")" crlf)
+	    (modify ?machine (down-period ?new-down-start ?new-down-end))
+	  )
+        )
       )
     )
   )
