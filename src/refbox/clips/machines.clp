@@ -184,7 +184,7 @@
     )
   )
 
-  ; Switch some machines
+  ; Swap some machines
   (switch ?*TOURNAMENT-PHASE*
     (case ROUND-ROBIN then
       (bind ?mtype-to-swap (pick-random$ ?*MACHINE-SWAP-ROUND-ROBIN*))
@@ -238,6 +238,14 @@
     )
   )
 
+  ; if PLC is disabled do not clear, we generated fake pucks
+  (if (not (any-factp ((?c confval))
+             (and (eq c:path "/llsfrb/sps/enable") (eq c:type BOOL) (eq c:value false))))
+   then
+    ; retract all pucks, they might have been auto-learned because they were
+    ; still lying under the machine when the refbox was started
+    (delayed-do-for-all-facts ((?p puck)) TRUE (retract ?p))
+  )
 
   (assert (machines-initialized))
 )
