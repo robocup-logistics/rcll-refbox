@@ -220,9 +220,11 @@ SPSComm::test_lights()
   usleep(1000000);
 
   // Turn them on one after another
-  for (unsigned int m = 0; m < num_machines; ++m) {
-    for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light(m, (Light)l, SIGNAL_ON);
+  for (unsigned int m = 0; m < SPS_NUM_MACHINES; ++m) {
+    for (unsigned int s = 0; s < mbs_.size(); ++s) {
+      for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
+        set_light(s * SPS_NUM_MACHINES + m, (Light)l, SIGNAL_ON);
+      }
     }
     usleep(50000);
   }
