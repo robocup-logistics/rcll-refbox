@@ -54,6 +54,7 @@
   (slot id (type INTEGER))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA) (default nil))
   (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 CONSUMED FINISHED) (default S0))
+  (slot state-change-game-time (type FLOAT))
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 2 2) (default 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
@@ -135,6 +136,7 @@
  
 (deftemplate product-delivered
   (slot game-time (type FLOAT))
+  (slot production-time (type FLOAT))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot product (type SYMBOL) (allowed-values P1 P2 P3))
   (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6))

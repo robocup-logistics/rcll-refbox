@@ -34,7 +34,8 @@
 
 (defrule order-delivered-in-time
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (product-delivered (game-time ?game-time) (team ?t) (product ?p) (delivery-gate ?dg))
+  ?pf <- (product-delivered (game-time ?game-time) (production-time ?prod-time)
+			    (team ?t) (product ?p) (delivery-gate ?dg))
   ; the actual order we are delivering
   ?of <- (order (id ?oid) (active TRUE) (product ?p) (quantity-requested ?q-req) (team ?t)
 		(points ?order-points) (points-supernumerous ?order-points-supernumerous)
@@ -67,7 +68,21 @@
   =>
   (retract ?pf)
   (modify ?of (quantity-delivered (+ ?q-del 1)))
-  (bind ?addp (if (< ?q-del ?q-req) then ?order-points else ?order-points-supernumerous))
+  (if (< ?q-del ?q-req)
+   then
+    (bind ?addp ?order-points)
+    (if (time-in-range ?prod-time ?dp)
+     then
+     (printout t "Product " ?p " produced in delivery time slot. Awarding "
+	       ?*PRODUCED-IN-DELIVER-TIME-POINTS* " extra points" crlf)
+     (assert (points (game-time ?game-time) (points ?*PRODUCED-IN-DELIVER-TIME-POINTS*)
+		     (team ?t) (phase PRODUCTION)
+		     (reason (str-cat "Produced " ?p " in delivery time (order "
+				      ?oid " , time " ?prod-time ")"))))
+    )
+   else
+    (bind ?addp ?order-points-supernumerous)
+  )
   (printout t "Product " ?p " delivered at " ?dg ". Awarding " ?addp " points" crlf)
   (assert (points (game-time ?game-time) (points ?addp) (team ?t) (phase PRODUCTION)
                   (reason (str-cat "Delivered " ?p " to " ?dg))))

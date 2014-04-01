@@ -176,7 +176,7 @@
 	  (productions (+ ?p 1)))
   (assert (points (game-time ?gt) (team ?team) (points ?machine-points) (phase PRODUCTION)
 		  (reason (str-cat ?mtype " production done at " ?m))))
-  (modify ?pf (state ?output))
+  (modify ?pf (state ?output) (state-change-game-time ?gt))
   (foreach ?puck-id ?lw
     (do-for-fact ((?puck puck)) (= ?puck:id ?puck-id)
       (modify ?puck (state CONSUMED))
