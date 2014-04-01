@@ -60,6 +60,10 @@
   )
 )
 
+(deffunction time-in-range (?time $?range)
+  (return (and (>= ?time (nth$ 1 ?range)) (<= ?time (nth$ 2 ?range))))
+)
+
 ; Check if two time ranges overlap each other.
 ; The parameters are two time ranges start and end times respectively.
 ; The units do not matter as long as they are the same for all values.
