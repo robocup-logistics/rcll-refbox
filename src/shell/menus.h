@@ -37,6 +37,8 @@
 #ifndef __LLSF_REFBOX_SHELL_MENUS_H_
 #define __LLSF_REFBOX_SHELL_MENUS_H_
 
+#include "team.h"
+
 #include <cstddef>
 #include <cursesm.h>
 #include <string>
@@ -107,14 +109,15 @@ class GenericItemsMenu : public Menu
 class MachineWithPuckMenu : public Menu
 {
  public:
-  MachineWithPuckMenu(NCursesWindow *parent, std::shared_ptr<llsf_msgs::MachineInfo> minfo);
+  MachineWithPuckMenu(NCursesWindow *parent, Team team,
+		      std::shared_ptr<llsf_msgs::MachineInfo> minfo);
 
   void get_machine_puck(std::string &machine_name, unsigned int &puck_id);
   operator bool() const { return valid_item_; }
 
  private:
   virtual void On_Menu_Init();
-  int det_lines(std::shared_ptr<llsf_msgs::MachineInfo> &minfo);
+  int det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo> &minfo);
   void puck_selected(std::string machine, unsigned int puck_id);
 
  private:
@@ -130,14 +133,15 @@ class MachineWithPuckMenu : public Menu
 class RobotMaintenanceMenu : public Menu
 {
  public:
-  RobotMaintenanceMenu(NCursesWindow *parent, std::shared_ptr<llsf_msgs::RobotInfo> minfo);
+  RobotMaintenanceMenu(NCursesWindow *parent, Team team,
+		       std::shared_ptr<llsf_msgs::RobotInfo> minfo);
 
   void get_robot(unsigned int &number, bool &maintenance);
   operator bool() const { return valid_item_; }
 
  private:
   virtual void On_Menu_Init();
-  int det_lines(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
+  int det_lines(Team team, std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
   int det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
   void robot_selected(unsigned int number, bool maintenance);
 
@@ -154,7 +158,7 @@ class RobotMaintenanceMenu : public Menu
 class MachineThatCanTakePuckMenu : public Menu
 {
  public:
-  MachineThatCanTakePuckMenu(NCursesWindow *parent,
+  MachineThatCanTakePuckMenu(NCursesWindow *parent, Team team,
 			     std::shared_ptr<llsf_msgs::MachineInfo> minfo);
 
 
@@ -163,7 +167,7 @@ class MachineThatCanTakePuckMenu : public Menu
 
  private:
   virtual void On_Menu_Init();
-  int det_lines(std::shared_ptr<llsf_msgs::MachineInfo> &minfo);
+  int det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo> &minfo);
   void machine_selected(int i);
 
  private:
@@ -179,7 +183,7 @@ class MachineThatCanTakePuckMenu : public Menu
 class PuckForMachineMenu : public Menu
 {
  public:
-  PuckForMachineMenu(NCursesWindow *parent,
+  PuckForMachineMenu(NCursesWindow *parent, Team team,
 		     std::shared_ptr<llsf_msgs::PuckInfo> pinfo,
 		     std::shared_ptr<llsf_msgs::MachineInfo> minfo,
 		     const llsf_msgs::Machine &machine);
@@ -193,10 +197,10 @@ class PuckForMachineMenu : public Menu
   virtual void On_Menu_Init();
   std::list<int> relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
 				std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-				const llsf_msgs::Machine &machine);
+				const llsf_msgs::Machine &machine, Team team);
   int det_lines(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
 		std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-		const llsf_msgs::Machine &machine);
+		const llsf_msgs::Machine &machine, Team team);
 
  private:
   std::shared_ptr<llsf_msgs::PuckInfo> pinfo_;

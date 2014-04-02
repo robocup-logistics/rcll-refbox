@@ -296,7 +296,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
       case KEY_F(7):
 	if (last_minfo_) {
 	  try {
-	    MachineWithPuckMenu m(panel_, last_minfo_);
+	    MachineWithPuckMenu m(panel_, team_, last_minfo_);
 	    m();
 	    if (m) {
 	      std::string machine_name;
@@ -314,11 +314,12 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
       case KEY_F(5):
 	if (last_minfo_ && last_pinfo_) {
 	  try {
-	    MachineThatCanTakePuckMenu mtctpm(panel_, last_minfo_);
+	    MachineThatCanTakePuckMenu mtctpm(panel_, team_, last_minfo_);
 	    mtctpm();
 	    if (mtctpm) {
 	      //rb_log_->printw("Valid machine selected\n");
-	      PuckForMachineMenu pfmm(panel_, last_pinfo_, last_minfo_, mtctpm.machine());
+	      PuckForMachineMenu pfmm(panel_, team_,
+				      last_pinfo_, last_minfo_, mtctpm.machine());
 	      pfmm();
 	      if (pfmm) {
 		//rb_log_->printw("Valid puck selected\n");
@@ -360,7 +361,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
       case KEY_F(9):
 	if (last_robotinfo_) {
 	  try {
-	    RobotMaintenanceMenu rmm(panel_, last_robotinfo_);
+	    RobotMaintenanceMenu rmm(panel_, team_, last_robotinfo_);
 	    rmm();
 	    if (rmm) {
 	      //logf("Place %s under RFID of %s",

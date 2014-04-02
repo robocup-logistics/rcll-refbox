@@ -170,19 +170,20 @@ GenericItemsMenu::max_cols(int n_items, NCursesMenuItem **items)
   return rv;
 }
 
-MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent,
+MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent, Team team,
 					 std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : Menu(det_lines(minfo) + 1 + 2, 12 + 2,
-	 (parent->lines() - (det_lines(minfo) + 1))/2,
+  : Menu(det_lines(team, minfo) + 1 + 2, 12 + 2,
+	 (parent->lines() - (det_lines(team, minfo) + 1))/2,
 	 (parent->cols() - 12)/2)
 {
   valid_item_ = false;
-  int n_items = det_lines(minfo);
+  int n_items = det_lines(team, minfo);
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
+    if (m.team_color() != team) continue;
     if (m.has_puck_under_rfid()) {
       items_[ni++] =
 	std::make_tuple("* " + m.name() + " " +
@@ -261,11 +262,12 @@ MachineWithPuckMenu::On_Menu_Init()
 }
 
 int
-MachineWithPuckMenu::det_lines(std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
+MachineWithPuckMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
 {
   int rv = 0;
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
+    if (m.team_color() != team) continue;
     if (m.has_puck_under_rfid()) {
       rv += 1;
     }
@@ -276,20 +278,21 @@ MachineWithPuckMenu::det_lines(std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
 
 
 MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
-  NCursesWindow *parent,
+  NCursesWindow *parent, Team team,
   std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : Menu(det_lines(minfo) + 1 + 2, 24 + 2,
-	 (parent->lines() - (det_lines(minfo) + 1))/2,
+  : Menu(det_lines(team, minfo) + 1 + 2, 24 + 2,
+	 (parent->lines() - (det_lines(team, minfo) + 1))/2,
 	 (parent->cols() - 26)/2),
     minfo_(minfo)
 {
   machine_selected_ = false;
-  int n_items = det_lines(minfo);
+  int n_items = det_lines(team, minfo);
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
+    if (m.team_color() != team) continue;
     if (! m.has_puck_under_rfid() || (m.inputs_size() - m.loaded_with_size() > 0)) {
       std::string s = boost::str(boost::format("%-3s|%s") % m.name() % m.type());
       items_[ni++] = std::make_tuple(s, m.name(), i);
@@ -389,11 +392,13 @@ MachineThatCanTakePuckMenu::On_Menu_Init()
 }
 
 int
-MachineThatCanTakePuckMenu::det_lines(std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
+MachineThatCanTakePuckMenu::det_lines(Team team,
+				      std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
 {
   int rv = 0;
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
+    if (m.team_color() != team) continue;
     if (! m.has_puck_under_rfid() || (m.inputs_size() - m.loaded_with_size() > 0)) {
       rv += 1;
     }
@@ -407,17 +412,17 @@ MachineThatCanTakePuckMenu::operator bool() const
 }
 
 
-PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *parent,
+PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *parent, Team team,
 				       std::shared_ptr<llsf_msgs::PuckInfo> pinfo,
 				       std::shared_ptr<llsf_msgs::MachineInfo> minfo,
 				       const llsf_msgs::Machine &machine)
-  : Menu(det_lines(pinfo, minfo, machine) + 1 + 2, 14 + 2,
-	 (parent->lines() - (det_lines(pinfo, minfo, machine) + 1))/2,
+  : Menu(det_lines(pinfo, minfo, machine, team) + 1 + 2, 14 + 2,
+	 (parent->lines() - (det_lines(pinfo, minfo, machine, team) + 1))/2,
 	 (parent->cols() - 14)/2),
     pinfo_(pinfo)
 {
   puck_selected_ = false;
-  std::list<int> rel_pucks = relevant_pucks(pinfo, minfo, machine);
+  std::list<int> rel_pucks = relevant_pucks(pinfo, minfo, machine, team);
   items_.resize(rel_pucks.size() + 1);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + rel_pucks.size()];
@@ -469,10 +474,12 @@ PuckForMachineMenu::On_Menu_Init()
 std::list<int>
 PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
 				   std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-				   const llsf_msgs::Machine &machine)
+				   const llsf_msgs::Machine &machine, Team team)
 {
   std::list<int> rv;
   for (int i = 0; i < pinfo->pucks_size(); ++i) {
+    const llsf_msgs::Puck &p = pinfo->pucks(i);
+    if (p.team_color() != team) continue;
     rv.push_back(i);
   }
 
@@ -525,9 +532,9 @@ PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
 int
 PuckForMachineMenu::det_lines(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
 			      std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-			      const llsf_msgs::Machine &machine)
+			      const llsf_msgs::Machine &machine, Team team)
 {
-  return relevant_pucks(pinfo, minfo, machine).size();
+  return relevant_pucks(pinfo, minfo, machine, team).size();
 }
 
 PuckForMachineMenu::operator bool() const
@@ -668,20 +675,21 @@ TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo)
 }
 
 
-RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent,
+RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent, Team team,
 					   std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
-  : Menu(det_lines(rinfo) + 1 + 2, det_cols(rinfo) + 2,
-	 (parent->lines() - (det_lines(rinfo) + 1))/2,
+  : Menu(det_lines(team, rinfo) + 1 + 2, det_cols(rinfo) + 2,
+	 (parent->lines() - (det_lines(team, rinfo) + 1))/2,
 	 (parent->cols() - (det_cols(rinfo) + 2))/2)
 {
   valid_item_ = false;
-  int n_items = det_lines(rinfo);
+  int n_items = det_lines(team, rinfo);
   items_.resize(n_items);
   int ni = 0;
   //bool has_1 = false, has_2 = false, has_3 = false;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
   for (int i = 0; i < rinfo->robots_size(); ++i) {
     const llsf_msgs::Robot &r = rinfo->robots(i);
+    if (r.team_color() != team) continue;
 
     std::string s = boost::str(boost::format("%s%s %u %s/%s")
 			       % (r.state() == llsf_msgs::MAINTENANCE ? "*" : 
@@ -768,20 +776,15 @@ RobotMaintenanceMenu::On_Menu_Init()
 }
 
 int
-RobotMaintenanceMenu::det_lines(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
+RobotMaintenanceMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
 {
-  /*
-  int std_nums = 0;
+  int rv = 0;
   for (int i = 0; i < rinfo->robots_size(); ++i) {
     const llsf_msgs::Robot &r = rinfo->robots(i);
-    if (r.number() == 1 || r.number() == 2 || r.number() == 3) {
-      std_nums += 1;
-    }
+    if (r.team_color() != team) continue;
+    rv += 1;
   }
-
-  return std::min(3, 3 + (rinfo->robots_size() - std_nums));
-  */
-  return rinfo->robots_size();
+  return rv;
 }
 
 int
