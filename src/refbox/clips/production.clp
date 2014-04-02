@@ -228,7 +228,8 @@
   (modify ?pf (state FINISHED))
 
   (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
-  (assert (attention-message (text (str-cat "Remove puck " ?id " from field @ " ?m))))
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
 )
 
 (defrule deliver-down-machine
@@ -242,7 +243,8 @@
   (modify ?pf (state FINISHED))
 
   (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
-  (assert (attention-message (text (str-cat "Remove puck " ?id " from field @ " ?m))))
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
 )
 
 (defrule deliver-wrong-team-input
@@ -293,9 +295,10 @@
   =>
   (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> FINISHED)" crlf)
   (modify ?mf (state ?prev-state) (productions (+ ?p 1)) (desired-lights GREEN-ON YELLOW-ON RED-ON))
-  (assert (attention-message (text (str-cat "Remove puck " ?id " from field @ " ?m))))
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
   (modify ?pf (state FINISHED))
-  (assert (product-delivered (game-time ?gtime) (product ?ps) (delivery-gate ?m)))
+  (assert (product-delivered (game-time ?gtime) (product ?ps) (delivery-gate ?m) (team ?team)))
 )
 
 (defrule deliver-removal
