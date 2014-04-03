@@ -287,8 +287,8 @@
   (order (id  2) (team CYAN) (product P3) (quantity-requested 1) (start-range 100 300))
   (order (id  3) (team CYAN) (product P3) (quantity-requested 2) (start-range 300 700))
   ; 20 points as P1 and P2 each
-  (order (id  4) (team CYAN) (product P1) (quantity-requested 1) (start-range 300 420))
-  (order (id  5) (team CYAN) (product P2) (quantity-requested 1) (start-range 500 700))
+  (order (id  4) (team CYAN) (product P1) (quantity-requested 1) (start-range 400 520))
+  (order (id  5) (team CYAN) (product P2) (quantity-requested 1) (start-range 600 720))
 
   ; MAGENTA orders will be created automatically after parameterizing CYAN orders
 )
