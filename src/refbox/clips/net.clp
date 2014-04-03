@@ -307,7 +307,7 @@
   (bind ?ri (pb-create "llsf_msgs.RobotInfo"))
 
   (do-for-all-facts
-    ((?robot robot)) TRUE
+    ((?robot robot)) (neq ?robot:team-color nil)
 
     (bind ?r (pb-create "llsf_msgs.Robot"))
     (bind ?r-time (pb-field-value ?r "last_seen"))
