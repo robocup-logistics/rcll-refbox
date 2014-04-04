@@ -232,21 +232,6 @@
 			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
 )
 
-(defrule deliver-down-machine
-  (gamestate (state RUNNING) (phase PRODUCTION))
-  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id 0) (team ?team))
-  ?pf <- (puck (id ?id) (state ?ps&P1|P2|P3) (team ?team))
-  =>
-  (bind ?lights (create$ RED-ON YELLOW-BLINK))
-  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights ?lights))
-  (modify ?pf (state FINISHED))
-
-  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
-  (assert (attention-message (team ?team)
-			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
-)
-
 (defrule deliver-wrong-team-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
@@ -299,6 +284,21 @@
 			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
   (modify ?pf (state FINISHED))
   (assert (product-delivered (game-time ?gtime) (product ?ps) (delivery-gate ?m) (team ?team)))
+)
+
+(defrule deliver-down-machine
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+  ?mf <- (machine (name ?m) (mtype DELIVER) (state DOWN) (puck-id 0) (team ?team))
+  ?pf <- (puck (id ?id) (state ?ps&P1|P2|P3) (team ?team))
+  =>
+  (bind ?lights (create$ RED-ON YELLOW-BLINK))
+  (modify ?mf (puck-id ?id) (state INVALID) (desired-lights ?lights))
+  (modify ?pf (state FINISHED))
+
+  (printout warn "Invalid delivery " ?ps " @ " ?m " (DOWN): " ?id " (" ?ps " -> FINISHED)" crlf)
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
 )
 
 (defrule deliver-removal
