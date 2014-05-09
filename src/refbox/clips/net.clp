@@ -310,6 +310,18 @@
   )
   (modify ?sf (teams ?new-teams))
 
+  (bind ?confpfx (str-cat "/llsfrb/game/crypto-keys/" ?new-team))
+  (bind ?crypto-done FALSE)
+  (do-for-fact ((?ckey confval))
+	       (and (eq ?ckey:path (str-cat "/llsfrb/game/crypto-keys/" ?new-team)) (eq ?ckey:type STRING))
+    (net-set-crypto ?team-color ?ckey:value)
+    (bind ?crypto-done TRUE)
+  )
+  (if (not ?crypto-done) then
+    (printout warn "No encryption configured for team " ?new-team ", disabling" crlf)
+    (net-set-crypto ?team-color "")
+  )
+
   ; Remove all known robots if the team is changed
   (if (and (eq ?phase PRE_GAME) (neq ?old-teams ?new-teams))
     then (delayed-do-for-all-facts ((?r robot)) TRUE (retract ?r)))
