@@ -1,9 +1,9 @@
 
 /***************************************************************************
- *  colors.cpp - LLSF RefBox shell
+ *  team.h - LLSF RefBox team identifier
  *
- *  Created: Wed Mar 06 14:25:31 2013
- *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *  Created: Thu Mar 27 21:44:49 2014
+ *  Copyright  2014  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -34,36 +34,44 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "colors.h"
-#include <curses.h>
+#ifndef __LLSF_REFBOX_SHELL_TEAM_H_
+#define __LLSF_REFBOX_SHELL_TEAM_H_
+
+#include <msgs/Team.pb.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-void
-init_colors()
+typedef enum {
+  CYAN = 0,
+  MAGENTA = 1
+} Team;
+
+#define TEAM_NUM 2
+#define TEAM_NUM_MACHINES 16
+
+static const char * TEAM_MACHINES[TEAM_NUM][TEAM_NUM_MACHINES] __attribute((__used__)) =
+  { /* CYAN */    { "M1", "M2", "M3", "M4", "M5", "M6",
+		    "M7", "M8", "M9", "M10", "M11", "M12", "D1", "D2", "D3", "R1" },
+    /* MAGENTA */ { "M13", "M14", "M15", "M16", "M17", "M18", "M19",
+		    "M20", "M21", "M22", "M23", "M24", "D4", "D5", "D6", "R2"}};
+
+inline bool
+operator==(const llsf_msgs::Team &t1, const Team &t2)
 {
-  short default_fore, default_back;
-  pair_content(0, &default_fore, &default_back);
-  //chtype default_back = getbkgd(stdscr);
+  return ((t1 == llsf_msgs::CYAN) && (t2 == CYAN)) ||
+         ((t1 == llsf_msgs::MAGENTA) && (t2 == MAGENTA));
+}
 
-  init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
-  init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW, default_back);
-  init_pair(COLOR_BLACK_ON_BACK, default_fore, default_back);
-  init_pair(COLOR_WHITE_ON_BACK, COLOR_WHITE, default_back);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_GREEN_ON_BACK, COLOR_GREEN, default_back);
-  init_pair(COLOR_BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_WHITE_ON_YELLOW, COLOR_WHITE, COLOR_YELLOW);
-  init_pair(COLOR_WHITE_ON_GREEN, COLOR_WHITE, COLOR_GREEN);
-  init_pair(COLOR_CYAN_ON_BACK, COLOR_CYAN, default_back);
-  init_pair(COLOR_MAGENTA_ON_BACK, COLOR_MAGENTA, default_back);
-  init_pair(COLOR_WHITE_ON_CYAN, COLOR_WHITE, COLOR_CYAN);
-  init_pair(COLOR_WHITE_ON_MAGENTA, COLOR_WHITE, COLOR_MAGENTA);
-
+inline bool
+operator!=(const llsf_msgs::Team &t1, const Team &t2)
+{
+  return ((t1 == llsf_msgs::CYAN) && (t2 != CYAN)) ||
+         ((t1 == llsf_msgs::MAGENTA) && (t2 != MAGENTA));
 }
 
 } // end of namespace llsfrb_shell
+
+#endif

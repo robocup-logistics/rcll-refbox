@@ -55,7 +55,7 @@ class LLSFRefBoxShellMachine : public NCursesPanel
 {
  public:
   LLSFRefBoxShellMachine(std::string name, std::string type,
-			 int begin_y, int begin_x);
+			 int begin_y, int begin_x, bool visible);
   ~LLSFRefBoxShellMachine();
 
   void set_type(std::string type);
@@ -66,11 +66,14 @@ class LLSFRefBoxShellMachine : public NCursesPanel
   void set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state = llsf_msgs::S0);
   void flip_blink_states();
 
+  void set_visible(bool visible);
+
   void reset();
 
   int refresh();
 
  private:
+  bool          visible_;
   std::string   name_;
   std::string   type_;
   std::vector<llsf_msgs::PuckState> inputs_;

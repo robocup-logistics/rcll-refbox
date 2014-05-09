@@ -67,7 +67,8 @@
   (init)
   (confval (path "/llsfrb/sps/enable") (type BOOL) (value false))
   =>
-  (loop-for-count (?i 20) do (assert (puck (index ?i) (id ?i))))
+  (loop-for-count (?i 22) do (assert (puck (index ?i) (id ?i) (team CYAN))))
+  (loop-for-count (?i 23 44) do (assert (puck (index ?i) (id ?i) (team MAGENTA))))
 )
 
 (defrule debug-level

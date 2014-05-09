@@ -26,23 +26,36 @@ GCC_VERSION_SPLITTED=$(call split,.,$(GCC_VERSION))
 GCC_VERSION_MAJOR=$(word 1,$(GCC_VERSION_SPLITTED))
 GCC_VERSION_MINOR=$(word 2,$(GCC_VERSION_SPLITTED))
 
-ifeq ($(call gte,$(GCC_VERSION_MAJOR),4),$(true))
-  ifeq ($(call gte,$(GCC_VERSION_MINOR),3),$(true))
-    HAVE_CPP11=1
-    CFLAGS_CPP11=-std=c++0x
-    ifeq ($(call gte,$(GCC_VERSION_MINOR),7),$(true))
-      CFLAGS_CPP11=-std=c++11
-    endif
+# Use with:
+# ifeq ($(call gcc_atleast_version,M,N),1)
+# ...
+# endif
+# where M.N is the minimum requires GCC version
+gcc_atleast_version = $(strip $(if $(call gt,$(GCC_VERSION_MAJOR),$1),1,	\
+                         $(if $(call eq,$(GCC_VERSION_MAJOR),$1),		\
+                           $(if $(call gte,$(GCC_VERSION_MINOR),$2),1))))
+
+# Check für C++0x/C++11 availability
+ifeq ($(call gcc_atleast_version,4,3),1)
+  HAVE_CPP11=1
+  CFLAGS_CPP11=-std=c++0x
+  ifeq ($(call gcc_atleast_version,4,7),1)
+    CFLAGS_CPP11=-std=c++11
   endif
 endif
 
-ifeq ($(USE_OPENMP),1)
-  CFLAGS_OPENMP  = -fopenmp
-  LDFLAGS_OPENMP = -lgomp
+OPENMP_LIBRARY = gomp
+CFLAGS_OPENMP  = -fopenmp
+LDFLAGS_OPENMP = -l$(OPENMP_LIBRARY)
 
+ifeq ($(USE_OPENMP),1)
   CFLAGS_MINIMUM  += $(CFLAGS_OPENMP)
   LDFLAGS_MINIMUM += $(LDFLAGS_OPENMP)
 endif
 
-endif # __buildsys_gcc_mk_
+# Get rid of some annoying (useless) warnings on Raspberry Pi
+ifeq ($(ARCH),armv6l)
+  CFLAGS_MINIMUM += -Wno-psabi
+endif
 
+endif # __buildsys_gcc_mk_

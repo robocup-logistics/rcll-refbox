@@ -24,7 +24,9 @@
   =>
   (modify ?rf (warning-sent TRUE))
   (printout warn "Robot " ?number " " ?name "/" ?team " at " ?host " lost" crlf)
-  (assert (attention-message (str-cat "Robot " ?number " " ?name "/" ?team " at " ?host " lost") 10))
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Robot " ?number " " ?name "/" ?team
+					    " at " ?host " lost"))))
 )
 
 (defrule robot-remove
@@ -35,8 +37,8 @@
   (retract ?rf)
   (printout warn "Robot " ?number " " ?name "/" ?team " at " ?host " definitely lost" crlf)
   (assert
-   (attention-message (str-cat "Robot " ?number " " ?name "/" ?team
-			       " at " ?host " definitely lost") 4))
+   (attention-message (text (str-cat "Robot " ?number " " ?name "/" ?team
+				     " at " ?host " definitely lost"))))
 )
 
 (defrule robot-maintenance-warning
@@ -47,8 +49,9 @@
 
   =>
   (modify ?rf (maintenance-warning-sent TRUE))
-  (assert (attention-message (str-cat "Robot " ?number " " ?name "/" ?team
-				      " maintenance almost over") 4))
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Robot " ?number " " ?name "/" ?team
+					    " maintenance almost over"))))
 )
 
 (defrule robot-disqualify-maintenance-timeout
@@ -59,8 +62,9 @@
   =>
   (modify ?rf (state DISQUALIFIED))
   (printout warn "Disqualifying robot " ?number " " ?name "/" ?team " for maintenance timeout" crlf)
-  (assert (attention-message (str-cat "Robot " ?number " " ?name "/" ?team
-				      " disqualified (maintenance timeout)") 4))
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Robot " ?number " " ?name "/" ?team
+					    " disqualified (maintenance timeout)"))))
 )
 
 (defrule robot-disqualify-maintenance-cycles
@@ -71,8 +75,9 @@
   (modify ?rf (state DISQUALIFIED))
   (printout warn "Disqualifying robot " ?number " " ?name "/" ?team
 	    " for too many maintenance cycles" crlf)
-  (assert (attention-message (str-cat "Robot " ?number " " ?name "/" ?team
-				      " disqualified (maintenance cycles)") 4))
+  (assert (attention-message (team ?team)
+			     (text (str-cat "Robot " ?number " " ?name "/" ?team
+					    " disqualified (maintenance cycles)"))))
 )
 
 (defrule robot-recv-SetRobotMaintenance
@@ -80,7 +85,10 @@
   (gamestate (cont-time ?ctime))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
-  (do-for-fact ((?robot robot)) (eq ?robot:number (pb-field-value ?p "robot_number"))
+  (do-for-fact ((?robot robot))
+    (and (eq ?robot:number (pb-field-value ?p "robot_number"))
+	 (eq ?robot:team-color (sym-cat (pb-field-value ?p "team_color"))))
+
     (if (pb-field-value ?p "maintenance")
     then
       (if (eq ?robot:state ACTIVE) then

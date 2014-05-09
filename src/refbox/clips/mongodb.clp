@@ -15,40 +15,50 @@
   (delayed-do-for-all-facts ((?r mongodb-wrote-gamereport)) TRUE (retract ?r))
 )
 
-(deffunction mongodb-write-game-report (?team ?stime ?etime)
+(deffunction mongodb-write-game-report (?teams ?stime ?etime)
   (bind ?doc (bson-create))
 
   (bson-append-array ?doc "start-timestamp" ?stime)
-  (bson-append-time ?doc "start-time" ?stime)
-  (bson-append ?doc "team" ?team)
+  (bson-append-time  ?doc "start-time" ?stime)
+  (bson-append-array ?doc "teams" ?teams)
 
   (if (time-nonzero ?etime) then
     (bson-append-time ?doc "end-time" ?etime)
   )
 
   (bind ?points-arr (bson-array-start ?doc "points"))
-  (bind ?phase-points-doc (bson-create))
+  (bind ?phase-points-doc-cyan (bson-create))
+  (bind ?phase-points-doc-magenta (bson-create))
 
-  (bind ?points 0)
+  (bind ?points-cyan 0)
+  (bind ?points-magenta 0)
   (foreach ?phase (deftemplate-slot-allowed-values points phase)
-    (bind ?phase-points 0)
+    (bind ?phase-points-cyan 0)
+    (bind ?phase-points-magenta 0)
     (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
       (bind ?point-doc (bson-create))
       (bson-append ?point-doc "game-time" ?p:game-time)
+      (bson-append ?point-doc "team"   ?p:team)
       (bson-append ?point-doc "points" ?p:points)
       (bson-append ?point-doc "reason" ?p:reason)
-      (bind ?phase-points (+ ?phase-points ?p:points))
+      (if (eq ?p:team CYAN)
+        then (bind ?phase-points-cyan (+ ?phase-points-cyan ?p:points))
+        else (bind ?phase-points-magenta (+ ?phase-points-magenta ?p:points))
+      )
       (bson-array-append ?points-arr ?point-doc)
       (bson-destroy ?point-doc)
     )
-    (bson-append ?phase-points-doc ?phase ?phase-points)
-    (bind ?points (+ ?points ?phase-points))
+    (bson-append ?phase-points-doc-cyan ?phase ?phase-points-cyan)
+    (bson-append ?phase-points-doc-magenta ?phase ?phase-points-magenta)
+    (bind ?points-cyan (+ ?points-cyan ?phase-points-cyan))
+    (bind ?points-magenta (+ ?points-magenta ?phase-points-magenta))
   )
   (bson-array-finish ?points-arr)
-  (bson-append ?doc "phase-points" ?phase-points-doc)
-  (bson-append ?doc "total-points" ?points)
-
-  (bson-destroy ?phase-points-doc)
+  (bson-append ?doc "phase-points-cyan" ?phase-points-doc-cyan)
+  (bson-append ?doc "phase-points-magenta" ?phase-points-doc-magenta)
+  (bson-append-array ?doc "total-points" (create$ ?points-cyan ?points-magenta))
+  (bson-destroy ?phase-points-doc-cyan)
+  (bson-destroy ?phase-points-doc-magenta)
 
   ;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 
@@ -59,28 +69,31 @@
 
 (defrule mongodb-game-report-begin
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (team ?team&~"") (prev-phase PRE_GAME) (start-time $?stime) (end-time $?etime))
+  (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (prev-phase PRE_GAME) (start-time $?stime) (end-time $?etime))
   (not (mongodb-game-report begin $?stime))
   =>
-  (mongodb-write-game-report ?team ?stime ?etime)
+  (mongodb-write-game-report ?teams ?stime ?etime)
   (assert (mongodb-game-report begin ?stime))
 )
 
 (defrule mongodb-game-report-end
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (team ?team&~"") (phase POST_GAME) (start-time $?stime) (end-time $?etime))
+  (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (phase POST_GAME) (start-time $?stime) (end-time $?etime))
   (not (mongodb-game-report end $?stime))
   =>
-  (mongodb-write-game-report ?team ?stime ?etime)
+  (mongodb-write-game-report ?teams ?stime ?etime)
   (assert (mongodb-game-report end ?stime))
 )
 
 (defrule mongodb-game-report-finalize
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (team ?team&~"") (start-time $?stime) (end-time $?etime))
+  (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (start-time $?stime) (end-time $?etime))
   (finalize)
   =>
-  (mongodb-write-game-report ?team ?stime ?etime)
+  (mongodb-write-game-report ?teams ?stime ?etime)
 )
 
 (defrule mongodb-net-client-connected

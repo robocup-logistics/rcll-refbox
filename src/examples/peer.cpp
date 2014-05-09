@@ -49,9 +49,10 @@ class ExamplePeer
     MessageRegister & message_register = peer_->message_register();
     message_register.add_message_type<llsf_msgs::GameState>();
 
-    peer_->signal_error().connect(
-      boost::bind(&ExamplePeer::peer_error,
-		this, boost::asio::placeholders::error));
+    peer_->signal_recv_error().connect(
+      boost::bind(&ExamplePeer::peer_recv_error, this, _1, _2));
+    peer_->signal_send_error().connect(
+      boost::bind(&ExamplePeer::peer_send_error, this, _1));
     peer_->signal_received().connect(
       boost::bind(&ExamplePeer::peer_msg, this, _1, _2, _3, _4));
   }
@@ -63,9 +64,17 @@ class ExamplePeer
   }
 
  private:
-  void peer_error(const boost::system::error_code &error)
+  void peer_recv_error(boost::asio::ip::udp::endpoint &endpoint,
+		       std::string msg)
   {
-    printf("Peer error: %s\n", error.message().c_str());
+    printf("Receive error from %s:%u: %s\n",
+	   endpoint.address().to_string().c_str(),
+	   endpoint.port(), msg.c_str());
+  }
+
+  void peer_send_error(std::string msg)
+  {
+    printf("Send error: %s\n", msg.c_str());
   }
 
   void peer_msg(boost::asio::ip::udp::endpoint &endpoint,
@@ -74,8 +83,9 @@ class ExamplePeer
   {
     std::shared_ptr<llsf_msgs::GameState> g;
     if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
-      printf("GameState received from %s: %u points\n",
-	     endpoint.address().to_string().c_str(), g->points());
+      printf("GameState received from %s: %u/%u points\n",
+	     endpoint.address().to_string().c_str(),
+	     g->points_cyan(), g->points_magenta());
     }
   }
 

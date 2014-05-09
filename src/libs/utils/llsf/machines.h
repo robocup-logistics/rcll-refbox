@@ -1,9 +1,9 @@
 
 /***************************************************************************
- *  colors.cpp - LLSF RefBox shell
+ *  machines.h - LLSF machine names to numbers
  *
- *  Created: Wed Mar 06 14:25:31 2013
- *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *  Created: Mon Mar 24 12:00:26 2014
+ *  Copyright  2013-2014  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -34,36 +34,36 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "colors.h"
-#include <curses.h>
 
-namespace llsfrb_shell {
+#ifndef __UTILS_LLSF_MACHINES_H_
+#define __UTILS_LLSF_MACHINES_H_
+
+#include <string>
+#include <core/exception.h>
+
+namespace llsf_utils {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-void
-init_colors()
-{
-  short default_fore, default_back;
-  pair_content(0, &default_fore, &default_back);
-  //chtype default_back = getbkgd(stdscr);
+typedef enum {
+  ASSIGNMENT_2013,
+  ASSIGNMENT_2014
+} MachineAssignment;
 
-  init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
-  init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW, default_back);
-  init_pair(COLOR_BLACK_ON_BACK, default_fore, default_back);
-  init_pair(COLOR_WHITE_ON_BACK, COLOR_WHITE, default_back);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_GREEN_ON_BACK, COLOR_GREEN, default_back);
-  init_pair(COLOR_BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_WHITE_ON_YELLOW, COLOR_WHITE, COLOR_YELLOW);
-  init_pair(COLOR_WHITE_ON_GREEN, COLOR_WHITE, COLOR_GREEN);
-  init_pair(COLOR_CYAN_ON_BACK, COLOR_CYAN, default_back);
-  init_pair(COLOR_MAGENTA_ON_BACK, COLOR_MAGENTA, default_back);
-  init_pair(COLOR_WHITE_ON_CYAN, COLOR_WHITE, COLOR_CYAN);
-  init_pair(COLOR_WHITE_ON_MAGENTA, COLOR_WHITE, COLOR_MAGENTA);
+typedef enum {
+  TEAM_CYAN,
+  TEAM_MAGENTA
+} TeamAssignment;
 
-}
+extern unsigned int
+to_machine(std::string &machine_name, MachineAssignment machine_assignment);
 
-} // end of namespace llsfrb_shell
+extern const char *
+to_string(unsigned int machine, MachineAssignment machine_assignment);
+
+
+} // end of namespace llsfrb
+
+
+#endif

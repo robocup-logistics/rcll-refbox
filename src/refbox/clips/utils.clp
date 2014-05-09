@@ -27,6 +27,10 @@
   (return ?list)
 )
 
+(deffunction pick-random$ (?list)
+  (return (nth$ (random 1 (length$ ?list)) ?list)) 
+)
+
 (deffunction is-even-int (?num)
   (return (eq (mod ?num 2) 0))
 )
@@ -47,4 +51,8 @@
 
   (return (and (<= (abs (- (nth$ 1 ?pose) (nth$ 1 ?box-center))) ?box-half-x)
 	       (<= (abs (- (nth$ 2 ?pose) (nth$ 2 ?box-center))) ?box-half-y)))
+)
+
+(deffunction string-gt (?s1 ?s2)
+  (return (> (str-compare ?s1 ?s2) 0))
 )

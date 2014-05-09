@@ -60,7 +60,8 @@ using namespace fawkes;
 static bool quit = false;
 static boost::asio::deadline_timer *timer_ = NULL;
 std::string name_;
-std::string team_;
+Team team_;
+std::string team_name_;
 unsigned long seq_ = 0;
 ProtobufBroadcastPeer *peer_ = NULL;
 
@@ -111,14 +112,14 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     int sec  = gs->game_time().sec() - hour * 3600 - min * 60;
 
 #if __WORDSIZE == 64
-    printf("GameState received:  %02i:%02i:%02i.%02ld  %s %s  %u points\n",
+    printf("GameState received:  %02i:%02i:%02i.%02ld  %s %s  %u:%u points\n",
 #else
-    printf("GameState received:  %02i:%02i:%02i.%02lld  %s %s  %u points\n",
+    printf("GameState received:  %02i:%02i:%02i.%02lld  %s %s  %u:%u points\n",
 #endif
 	   hour, min, sec, gs->game_time().nsec() / 1000000,
 	   llsf_msgs::GameState::Phase_Name(gs->phase()).c_str(),
 	   llsf_msgs::GameState::State_Name(gs->state()).c_str(),
-	   gs->points());
+	   gs->points_cyan(), gs->points_magenta());
   }
 
   std::shared_ptr<OrderInfo> oi;
@@ -171,8 +172,9 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     for (int i = 0; i < mi->machines_size(); ++i) {
       const Machine &m = mi->machines(i);
       const Pose2D &p = m.pose();
-      printf("  %-3s|%2s @ (%f, %f, %f)\n",
+      printf("  %-3s|%2s|%s @ (%f, %f, %f)\n",
 	     m.name().c_str(), m.type().substr(0, 2).c_str(),
+	     Team_Name(m.team_color()).substr(0, 2).c_str(),
 	     p.x(), p.y(), p.ori());
     }
   }
@@ -243,7 +245,8 @@ handle_timer(const boost::system::error_code& error)
 
     signal->set_number(1);
     signal->set_peer_name(name_);
-    signal->set_team_name(team_);
+    signal->set_team_name(team_name_);
+    signal->set_team_color(team_);
     signal->set_seq(++seq_);
     peer_->send(signal);
 
@@ -258,7 +261,7 @@ handle_timer(const boost::system::error_code& error)
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "");
+  ArgumentParser argp(argc, argv, "T:");
 
   if (argp.num_items() != 2) {
     printf("Usage: %s <name> <team>\n", argv[0]);
@@ -266,7 +269,19 @@ main(int argc, char **argv)
   }
 
   name_ = argp.items()[0];
-  team_ = argp.items()[1];
+  team_name_ = argp.items()[1];
+
+  team_ = CYAN;
+  if (argp.has_arg("T")) {
+    std::string team_str = argp.arg("T");
+    if (team_str == "cyan") {
+      team_ = CYAN;
+    } else if (team_str == "magenta") {
+      team_ = MAGENTA;
+    } else {
+      printf("Unknonw team value, using cyan\n");
+    }
+  }
 
   llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
   config->load("config.yaml");

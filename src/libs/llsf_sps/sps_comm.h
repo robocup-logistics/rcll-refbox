@@ -63,12 +63,6 @@ class SPSComm
     SIGNAL_BLINK	//< Light is blinking.
   } SignalState;
 
-  /** Machine type. */
-  typedef enum {
-    M_BEGIN = 0, M1 = 0, M2 = 1, M3 = 2, M4 = 3, M5 = 4, M6 = 5, M7 = 6, M8 = 7,
-    M9 = 8, M10 = 9, D1 = 10, D2 = 11, D3 = 12, TST = 13, R1 = 14, R2 = 15, M_END = 16
-  } Machine;
-
   /** Light type. */
   typedef enum {
     LIGHT_BEGIN = 0,	//< Iterator start.
@@ -83,29 +77,30 @@ class SPSComm
   };
 
   SPSComm(const char *host, unsigned short port);
+  SPSComm(std::vector<std::string> hosts, unsigned short port);
   ~SPSComm();
 
   void try_reconnect();
 
   void reset_lights();
   void test_lights();
-  void set_light(Machine m, Light light, SignalState state);
-  void set_light(std::string &m, std::string  &light, std::string &state);
+  void set_light(unsigned int m, std::string &light, std::string &state);
+  void set_light(unsigned int m, Light light, SignalState state);
 
   void reset_rfids();
-  bool read_rfid(Machine m, uint32_t &id);
+  bool read_rfid(unsigned int m, uint32_t &id);
   std::vector<uint32_t> read_rfids();
-  void write_rfid(Machine m, uint32_t id);
+  void write_rfid(unsigned int m, uint32_t id);
 
-  std::string &  index_to_name(uint32_t index);
-  Machine      to_machine(std::string &machine);
   Light        to_light(std::string &light);
   SignalState  to_signal_state(std::string &signal_state);
 
  private:
-  modbus_t *mb_;
-  std::vector<std::string> index_to_name_;
-  std::map<std::string, Machine>     name_to_machine_;
+  void construct_mappings();
+  unsigned int plc_index(unsigned int &m);
+
+ private:
+  std::vector<modbus_t *>            mbs_;
   std::map<std::string, Light>       name_to_light_;
   std::map<std::string, SignalState> name_to_signal_state_;
 };

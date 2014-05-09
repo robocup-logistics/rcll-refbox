@@ -58,11 +58,6 @@ llsfrb:
   game:
     teams: [Carologistics]
 
-  sync:
-    enable: false
-    master-host: localhost
-    master-port: 4444
-
   shell:
     refbox-host: localhost
     refbox-port: 4444

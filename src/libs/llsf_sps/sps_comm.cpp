@@ -82,55 +82,57 @@ namespace llsf_sps {
 
 
 /** Constructor.
+ * @param hosts SPS addresses to connect to. Note that we connect to each address
+ * on the same port!
+ * @param port TCP port to communicate to, Modbus uses 502 by default
+ */
+SPSComm::SPSComm(std::vector<std::string> hosts, unsigned short port)
+{
+  for (auto host : hosts) {
+    modbus_t *mb = modbus_new_tcp(host.c_str(), port);
+    if (modbus_connect(mb) == -1) {
+      for (auto mb : mbs_) {
+	modbus_close(mb);
+	modbus_free(mb);
+      }
+      mbs_.clear();
+
+      modbus_free(mb);
+      mb = NULL;
+      throw fawkes::Exception("Failed to connect to SPS: %s",
+			      modbus_strerror(errno));
+    }
+
+    mbs_.push_back(mb);
+  }
+
+  construct_mappings();
+}
+
+
+/** Constructor.
  * @param host host of SPS Modbus host
  * @param port TCP port to communicate to, Modbus uses 502 by default
  */
 SPSComm::SPSComm(const char *host, unsigned short port)
 {
-  mb_ = modbus_new_tcp(host, port);
-  if (modbus_connect(mb_) == -1) {
-    modbus_free(mb_);
-    mb_ = NULL;
+  modbus_t *mb = modbus_new_tcp(host, port);
+  if (modbus_connect(mb) == -1) {
+    modbus_free(mb);
+    mb = NULL;
     throw fawkes::Exception("Failed to connect to SPS: %s",
 			    modbus_strerror(errno));
   }
 
-  index_to_name_.resize(SPS_NUM_MACHINES + 1);
-  index_to_name_[M1]   = "M1";
-  index_to_name_[M2]   = "M2";
-  index_to_name_[M3]   = "M3";
-  index_to_name_[M4]   = "M4";
-  index_to_name_[M5]   = "M5";
-  index_to_name_[M6]   = "M6";
-  index_to_name_[M7]   = "M7";
-  index_to_name_[M8]   = "M8";
-  index_to_name_[M9]   = "M9";
-  index_to_name_[M10]  = "M10";
-  index_to_name_[D1]   = "D1";
-  index_to_name_[D2]   = "D2";
-  index_to_name_[D3]   = "D3";
-  index_to_name_[TST]  = "TST";
-  index_to_name_[R1]   = "R1";
-  index_to_name_[R2]   = "R2";
-  index_to_name_[SPS_NUM_MACHINES]   = "UNKNOWN";
+  mbs_.push_back(mb);
 
-  name_to_machine_["M1"]   = M1;
-  name_to_machine_["M2"]   = M2;
-  name_to_machine_["M3"]   = M3;
-  name_to_machine_["M4"]   = M4;
-  name_to_machine_["M5"]   = M5;
-  name_to_machine_["M6"]   = M6;
-  name_to_machine_["M7"]   = M7;
-  name_to_machine_["M8"]   = M8;
-  name_to_machine_["M9"]   = M9;
-  name_to_machine_["M10"]  = M10;
-  name_to_machine_["D1"]   = D1;
-  name_to_machine_["D2"]   = D2;
-  name_to_machine_["D3"]   = D3;
-  name_to_machine_["TST"]  = TST;
-  name_to_machine_["R1"]   = R1;
-  name_to_machine_["R2"]   = R2;
+  construct_mappings();
+}
 
+
+void
+SPSComm::construct_mappings()
+{
   name_to_light_["RED"]    = LIGHT_RED;
   name_to_light_["YELLOW"] = LIGHT_YELLOW;
   name_to_light_["GREEN"]  = LIGHT_GREEN;
@@ -140,23 +142,26 @@ SPSComm::SPSComm(const char *host, unsigned short port)
   name_to_signal_state_["BLINK"]  = SIGNAL_BLINK;
 }
 
-
 /** Destructor. */
 SPSComm::~SPSComm()
 {
-  if (mb_) {
-    modbus_close(mb_);
-    modbus_free(mb_);
+  for (auto mb : mbs_) {
+    if (mb) {
+      modbus_close(mb);
+      modbus_free(mb);
+    }
   }
 }
 
 void
 SPSComm::try_reconnect()
 {
-  modbus_close(mb_);
-  if (modbus_connect(mb_) == -1) {
-    throw fawkes::Exception("Failed to re-connect to SPS: %s",
-			    modbus_strerror(errno));
+  for (auto mb : mbs_) {
+    modbus_close(mb);
+    if (modbus_connect(mb) == -1) {
+      throw fawkes::Exception("Failed to re-connect to SPS: %s",
+			      modbus_strerror(errno));
+    }
   }
 }
 
@@ -179,18 +184,20 @@ SPSComm::test_lights()
   // yes, we could use modbus_write_registers to write it all at once,
   // but that would not test the typical code path
 
+  const unsigned num_machines = mbs_.size() * SPS_NUM_MACHINES;
+
   // Set all to blink
-  for (int m = M_BEGIN; m < M_END; ++m) {
+  for (unsigned int m = 0; m < num_machines; ++m) {
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light((Machine)m, (Light)l, SIGNAL_BLINK);
+      set_light(m, (Light)l, SIGNAL_BLINK);
     }
   }
   usleep(2000000);
 
   // Set all ON
-  for (int m = M_BEGIN; m < M_END; ++m) {
+  for (unsigned int m = 0; m < num_machines; ++m) {
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light((Machine)m, (Light)l, SIGNAL_ON);
+      set_light(m, (Light)l, SIGNAL_ON);
     }
   }
   usleep(500000);
@@ -198,26 +205,28 @@ SPSComm::test_lights()
   // Turn on one color at a time
   for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
     reset_lights();
-    for (int m = M_BEGIN; m < M_END; ++m) {
-      set_light((Machine)m, (Light)l, SIGNAL_ON);
+    for (unsigned int m = 0; m < num_machines; ++m) {
+      set_light(m, (Light)l, SIGNAL_ON);
     }
     usleep(200000);
   }
 
   // Turn all OFF
-  for (int m = M_BEGIN; m < M_END; ++m) {
+  for (unsigned int m = 0; m < num_machines; ++m) {
     for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light((Machine)m, (Light)l, SIGNAL_OFF);
+      set_light(m, (Light)l, SIGNAL_OFF);
     }
   }
   usleep(1000000);
 
   // Turn them on one after another
-  for (int m = M_BEGIN; m < M_END; ++m) {
-    for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light((Machine)m, (Light)l, SIGNAL_ON);
+  for (unsigned int m = 0; m < SPS_NUM_MACHINES; ++m) {
+    for (unsigned int s = 0; s < mbs_.size(); ++s) {
+      for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
+        set_light(s * SPS_NUM_MACHINES + m, (Light)l, SIGNAL_ON);
+      }
     }
-    usleep(80000);
+    usleep(50000);
   }
 }
 
@@ -226,15 +235,17 @@ SPSComm::test_lights()
 void
 SPSComm::reset_lights()
 {
-  uint16_t *values = (uint16_t *)calloc(SPS_OUT_REG_PER_SIGNAL * SPS_NUM_MACHINES,
+  for (auto mb : mbs_) {
+    uint16_t *values = (uint16_t *)calloc(SPS_OUT_REG_PER_SIGNAL * SPS_NUM_MACHINES,
 					  sizeof(uint16_t));
-  if (modbus_write_registers(mb_, SPS_OUT_REG_START_SIGNAL,
-			     SPS_OUT_REG_PER_SIGNAL * SPS_NUM_MACHINES, values) == -1)
-  {
+    if (modbus_write_registers(mb, SPS_OUT_REG_START_SIGNAL,
+			       SPS_OUT_REG_PER_SIGNAL * SPS_NUM_MACHINES, values) == -1)
+    {
+      free(values);
+      throw fawkes::Exception("Failed to reset register: %s", modbus_strerror(errno));
+    }
     free(values);
-    throw fawkes::Exception("Failed to reset register: %s", modbus_strerror(errno));
   }
-  free(values);
 }
 
 /** Set a light of a machine to given state.
@@ -243,15 +254,18 @@ SPSComm::reset_lights()
  * @param state desired signal state of the light
  */
 void
-SPSComm::set_light(Machine m, Light light, SignalState state)
+SPSComm::set_light(unsigned int m, Light light, SignalState state)
 {
   if (light < LIGHT_RED || light > LIGHT_GREEN) {
     throw fawkes::OutOfBoundsException("Signal register offset out of bounds",
 				       light, LIGHT_RED, LIGHT_GREEN);
   }
 
-  if (m < M1 || m > R2) {
-    throw fawkes::OutOfBoundsException("Machine index out of bounds", m, M1, R2);
+  // modifies m to match the plc_idx!
+  unsigned int plc_idx = plc_index(m);
+
+  if (m > SPS_NUM_MACHINES) {
+    throw fawkes::OutOfBoundsException("Machine index out of bounds", m, 0, SPS_NUM_MACHINES);
   }
   /*
   if (hz < 0 || hz > 255) {
@@ -268,7 +282,7 @@ SPSComm::set_light(Machine m, Light light, SignalState state)
 
   uint16_t value = (state_value << 8); // | (hz & 0x000000ff);
 
-  if (modbus_write_register(mb_,
+  if (modbus_write_register(mbs_[plc_idx],
 			    SPS_OUT_REG_START_SIGNAL + m * SPS_OUT_REG_PER_SIGNAL + light,
 			    value) == -1)
   {
@@ -277,14 +291,14 @@ SPSComm::set_light(Machine m, Light light, SignalState state)
 }
 
 /** Set a light of a machine to given state.
- * @param m name of machine of which to set the light
- * @param light name of light color to set
- * @param state name of desired signal state of the light
+ * @param m machine of which to set the light
+ * @param light light color to set
+ * @param state desired signal state of the light
  */
 void
-SPSComm::set_light(std::string &m, std::string &light, std::string &state)
+SPSComm::set_light(unsigned int m, std::string &light, std::string &state)
 {
-  set_light(to_machine(m), to_light(light), to_signal_state(state));
+  set_light(m, to_light(light), to_signal_state(state));
 }
 
 
@@ -295,11 +309,16 @@ SPSComm::set_light(std::string &m, std::string &light, std::string &state)
  * is no puck under the reader or the communication was interrupted.
  */
 bool
-SPSComm::read_rfid(Machine m, uint32_t &id)
+SPSComm::read_rfid(unsigned int m, uint32_t &id)
 {
+  // modifies m to match the plc_idx!
+  unsigned int plc_idx = plc_index(m);
+
   const int addr = SPS_IN_REG_START_RFID + m * SPS_IN_REG_PER_RFID;
   uint16_t regs[3];
-  if (modbus_read_registers(mb_, addr, SPS_IN_REG_PER_RFID, regs) != SPS_IN_REG_PER_RFID) {
+  if (modbus_read_registers(mbs_[plc_idx], addr,
+			    SPS_IN_REG_PER_RFID, regs) != SPS_IN_REG_PER_RFID)
+  {
     throw fawkes::Exception("Failed to read RFID registers: %s", modbus_strerror(errno));
   }
 
@@ -319,19 +338,23 @@ SPSComm::read_rfid(Machine m, uint32_t &id)
 std::vector<uint32_t>
 SPSComm::read_rfids()
 {
-  const int addr = SPS_IN_REG_START_RFID;
-  uint16_t regs[SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID];
-  if (modbus_read_registers(mb_, addr, SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID, regs)
-      != SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID)
-  {
-    throw fawkes::Exception("Failed to read RFID registers: %s", modbus_strerror(errno));
-  }
+  std::vector<uint32_t> rv(mbs_.size() * SPS_NUM_MACHINES, 0xFFFFFFFF);
 
-  std::vector<uint32_t> rv(SPS_NUM_MACHINES, 0xFFFFFFFF);
-  for (unsigned int i = 0; i < SPS_NUM_MACHINES; ++i) {
-    if (regs[i * SPS_IN_REG_PER_RFID] & SPS_RFID_HAS_PUCK) {
-      // libmodbus has already swapped the bytes of the registers
-      rv[i] = regs[i * SPS_IN_REG_PER_RFID + 1] << 16 | regs[i * SPS_IN_REG_PER_RFID + 2];
+  for (unsigned int m = 0; m < mbs_.size(); ++m) {
+    const int addr = SPS_IN_REG_START_RFID;
+    uint16_t regs[SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID];
+    if (modbus_read_registers(mbs_[m], addr, SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID, regs)
+	!= SPS_NUM_MACHINES * SPS_IN_REG_PER_RFID)
+    {
+      throw fawkes::Exception("Failed to read RFID registers: %s", modbus_strerror(errno));
+    }
+
+    for (unsigned int i = 0; i < SPS_NUM_MACHINES; ++i) {
+      if (regs[i * SPS_IN_REG_PER_RFID] & SPS_RFID_HAS_PUCK) {
+	// libmodbus has already swapped the bytes of the registers
+	rv[m * SPS_NUM_MACHINES + i] =
+	  regs[i * SPS_IN_REG_PER_RFID + 1] << 16 | regs[i * SPS_IN_REG_PER_RFID + 2];
+      }
     }
   }
 
@@ -348,11 +371,14 @@ SPSComm::reset_rfids()
 {
   uint16_t *values = (uint16_t *)calloc(SPS_OUT_REG_PER_RFID * SPS_NUM_MACHINES,
 					sizeof(uint16_t));
-  if (modbus_write_registers(mb_, SPS_OUT_REG_START_RFID,
-			     SPS_OUT_REG_PER_RFID * SPS_NUM_MACHINES, values) == -1)
-  {
-    free(values);
-    throw fawkes::Exception("Failed to reset RFID registers: %s", modbus_strerror(errno));
+  for (unsigned int m = 0; m < mbs_.size(); ++m) {
+    if (modbus_write_registers(mbs_[m], SPS_OUT_REG_START_RFID,
+			       SPS_OUT_REG_PER_RFID * SPS_NUM_MACHINES, values) == -1)
+    {
+      free(values);
+      throw fawkes::Exception("Failed to reset RFID registers on PLC %u: %s",
+			      m, modbus_strerror(errno));
+    }
   }
   free(values);
 }
@@ -363,12 +389,15 @@ SPSComm::reset_rfids()
  * @param id ID to set on the puck
  */
 void
-SPSComm::write_rfid(Machine m, uint32_t id)
+SPSComm::write_rfid(unsigned int m, uint32_t id)
 {
   //uint32_t old_id;
   //if (! read_rfid(m, old_id)) {
   //  throw fawkes::Exception("No puck under RFID sensor\n");
   //}
+
+  // modifies m to match the plc_idx!
+  unsigned int plc_idx = plc_index(m);
 
   const int out_addr = SPS_OUT_REG_START_RFID + m * SPS_OUT_REG_PER_RFID;
   uint16_t out_regs[3];
@@ -376,7 +405,7 @@ SPSComm::write_rfid(Machine m, uint32_t id)
   // libmodbus will swap the bytes of the register
   out_regs[1] = (id >> 16) & 0xFFFF;
   out_regs[2] = id & 0xFFFF;
-  if (modbus_write_registers(mb_, out_addr, SPS_OUT_REG_PER_RFID, out_regs)
+  if (modbus_write_registers(mbs_[plc_idx], out_addr, SPS_OUT_REG_PER_RFID, out_regs)
       != SPS_OUT_REG_PER_RFID)
   {
     throw fawkes::Exception("Failed to write RFID registers: %s", modbus_strerror(errno));
@@ -387,7 +416,7 @@ SPSComm::write_rfid(Machine m, uint32_t id)
   const int in_addr = SPS_IN_REG_START_RFID + m * SPS_IN_REG_PER_RFID;
   uint16_t in_regs[3];
   do {
-    if (modbus_read_registers(mb_, in_addr, SPS_IN_REG_PER_RFID, in_regs)
+    if (modbus_read_registers(mbs_[plc_idx], in_addr, SPS_IN_REG_PER_RFID, in_regs)
 	!= SPS_IN_REG_PER_RFID)
     {
       throw fawkes::Exception("Failed to read RFID registers: %s", modbus_strerror(errno));
@@ -399,43 +428,13 @@ SPSComm::write_rfid(Machine m, uint32_t id)
   out_regs[0] = SPS_RFID_RESET_WRITE;
   out_regs[1] = 0;
   out_regs[2] = 0;
-  if (modbus_write_registers(mb_, out_addr, SPS_OUT_REG_PER_RFID, out_regs)
+  if (modbus_write_registers(mbs_[plc_idx], out_addr, SPS_OUT_REG_PER_RFID, out_regs)
       != SPS_OUT_REG_PER_RFID)
   {
     throw fawkes::Exception("Failed to write RFID registers: %s", modbus_strerror(errno));
   }
 }
 
-
-/** Convert machine index to name.
- * @param index machine index
- * @return name of machine
- */ 
-std::string &
-SPSComm::index_to_name(uint32_t index)
-{
-  if (index < SPS_NUM_MACHINES) {
-    return index_to_name_[index];
-  } else {
-    return index_to_name_[SPS_NUM_MACHINES];
-  }
-}
-
-
-/** Convert string to Machine enum.
- * @param machine name of machine
- * @return corresponding Machine value
- */
-SPSComm::Machine
-SPSComm::to_machine(std::string &machine)
-{
-  std::map<std::string, Machine>::iterator m;
-  if ((m = name_to_machine_.find(machine)) != name_to_machine_.end()) {
-    return m->second;
-  } else {
-    throw fawkes::Exception("Unknown machine name '%s' requested", machine.c_str());
-  }
-}
 
 /** Convert string to Light enum.
  * @param light name of light
@@ -467,6 +466,19 @@ SPSComm::to_signal_state(std::string &signal_state)
   }
 }
 
+unsigned int
+SPSComm::plc_index(unsigned int &m)
+{
+  unsigned int plc_idx = m / 16;
+  if (plc_idx >= mbs_.size()) {
+    throw fawkes::OutOfBoundsException("Machine index out of bounds",
+				       plc_idx, 0, mbs_.size());    
+  }
+
+  m -= plc_idx * SPS_NUM_MACHINES;
+
+  return plc_idx;
+}
 
 
 } // end of namespace llsfrb

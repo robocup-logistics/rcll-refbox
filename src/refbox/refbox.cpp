@@ -38,6 +38,7 @@
 #include "clips_logger.h"
 
 #include <core/threading/mutex.h>
+#include <core/version.h>
 #include <config/yaml.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
@@ -48,6 +49,7 @@
 #include <logging/console.h>
 
 #include <boost/bind.hpp>
+#include <boost/format.hpp>
 #if BOOST_ASIO_VERSION < 100601
 #  include <csignal>
 #endif
@@ -64,6 +66,7 @@
 using namespace llsf_sps;
 using namespace protobuf_comm;
 using namespace protobuf_clips;
+using namespace llsf_utils;
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -129,6 +132,23 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   } catch (fawkes::Exception &e) {} // ignored, use default
   logger_ = mlogger;
 
+
+  cfg_machine_assignment_ = ASSIGNMENT_2014;
+  try {
+    std::string m_ass_str = config_->get_string("/llsfrb/game/machine-assignment");
+    if (m_ass_str == "2013") {
+      cfg_machine_assignment_ = ASSIGNMENT_2013;
+    } else if (m_ass_str == "2014") {
+      cfg_machine_assignment_ = ASSIGNMENT_2014;
+    } else {
+      logger_->log_warn("RefBox", "Invalid machine assignment '%s', using 2014",
+			m_ass_str.c_str());
+      cfg_machine_assignment_ = ASSIGNMENT_2014;
+    }
+  } catch (fawkes::Exception &e) {} // ignored, use default
+  logger_->log_info("RefBox", "Using %s machine assignment",
+		    (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
+
   try {
     sps_ = NULL;
     if (config_->get_bool("/llsfrb/sps/enable")) {
@@ -138,8 +158,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	test_lights = config_->get_bool("/llsfrb/sps/test-lights");
       } catch (fawkes::Exception &e) {} // ignore, use default
 
-      sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
-			 config_->get_uint("/llsfrb/sps/port"));
+      if (config_->exists("/llsfrb/sps/hosts") && cfg_machine_assignment_ == ASSIGNMENT_2014) {
+	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
+			   config_->get_uint("/llsfrb/sps/port"));
+      } else {
+	sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
+			   config_->get_uint("/llsfrb/sps/port"));
+      }
 
       sps_->reset_lights();
       sps_->reset_rfids();
@@ -336,6 +361,18 @@ LLSFRefBox::setup_clips()
 
   init_clips_logger(clips_->cobj(), logger_, clips_logger_);
 
+  std::string defglobal_ver =
+    boost::str(boost::format("(defglobal\n"
+			     "  ?*VERSION-MAJOR* = %u\n"
+			     "  ?*VERSION-MINOR* = %u\n"
+			     "  ?*VERSION-MICRO* = %u\n"
+			     ")")
+	       % FAWKES_VERSION_MAJOR
+	       % FAWKES_VERSION_MINOR
+	       % FAWKES_VERSION_MICRO);
+
+  clips_->build(defglobal_ver);
+
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
@@ -446,7 +483,8 @@ LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::st
 {
   if (! sps_)  return;
   try {
-    sps_->set_light(machine, light, state);
+    unsigned int m = to_machine(machine, cfg_machine_assignment_);
+    sps_->set_light(m, light, state);
   } catch (fawkes::Exception &e) {
     logger_->log_warn("RefBox", "Failed to set signal: %s", e.what());
   }
@@ -889,13 +927,13 @@ LLSFRefBox::sps_read_rfids()
   try {
     std::vector<uint32_t> puck_ids = sps_->read_rfids();
     for (unsigned int i = 0; i < puck_ids.size(); ++i) {
-      std::string & machine_name = sps_->index_to_name(i);
+      const char *machine_name = to_string(i, cfg_machine_assignment_);
       if (puck_ids[i] == SPSComm::NO_PUCK) {
         clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
-			      machine_name.c_str());
+			      machine_name);
       } else {
         clips_->assert_fact_f("(rfid-input (machine %s) (has-puck TRUE) (id %u))",
-			      machine_name.c_str(), puck_ids[i]);
+			      machine_name, puck_ids[i]);
       }
     }
   } catch (fawkes::Exception &e) {

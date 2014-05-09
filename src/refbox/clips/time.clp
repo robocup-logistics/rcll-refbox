@@ -60,6 +60,10 @@
   )
 )
 
+(deffunction time-in-range (?time $?range)
+  (return (and (>= ?time (nth$ 1 ?range)) (<= ?time (nth$ 2 ?range))))
+)
+
 ; Check if two time ranges overlap each other.
 ; The parameters are two time ranges start and end times respectively.
 ; The units do not matter as long as they are the same for all values.
@@ -70,6 +74,40 @@
 
 (deffunction time-nonzero (?t)
   (return (or (<> (nth$ 1 ?t) 0) (<> (nth$ 2 ?t) 0)))
+)
+
+(deffunction time-range-overlap-length (?t1-start ?t1-end ?t2-start ?t2-end)
+  (if (and (>= ?t1-start ?t2-start) (<= ?t1-start ?t2-end))
+   then ; start time of t1 is within t2
+    (if (<= ?t1-end ?t2-end)
+     then ; even end time is, so length of t1 is overlap
+      (return (- ?t1-end ?t1-start))
+     else ; t1 end is beyond t2 end, use that as boundary
+      (return (- ?t2-end ?t1-start))
+    )
+   else
+    (if (and (>= ?t1-end ?t2-start) (<= ?t1-end ?t2-end))
+     then ; t1 end is within t2, t1 start cannot, otherwise
+          ;case above would have been used
+      (return (- ?t1-end ?t2-start))
+     else
+      (if (and (<= ?t1-start ?t2-start) (>= ?t1-end ?t2-end))
+       then ; t1 includes t2
+         (return (- ?t2-end ?t2-start))
+       else
+        (if (and (<= ?t2-start ?t1-start) (>= ?t2-end ?t1-end))
+         then ; t2 includes t1
+          (return (- ?t1-end ?t1-start))
+        )
+      )
+    )
+  )
+  (return 0.0)
+)
+
+(deffunction time-range-overlap-ratio (?t1-start ?t1-end ?t2-start ?t2-end)
+  (return (/ (time-range-overlap-length ?t1-start ?t1-end ?t2-start ?t2-end)
+	     (- ?t1-end ?t1-start)))
 )
 
 ; --- RULES - general housekeeping

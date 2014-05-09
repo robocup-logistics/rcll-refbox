@@ -121,7 +121,7 @@ LLSFRefBoxShellOrder::refresh()
     if (game_time_ >= delivery_period_begin_ && game_time_ <= delivery_period_end_) {
       attron(A_BOLD);
     }
-    printw(0, 3, "%2u/%02u %s %02u:%02u-%02u:%02u %s",
+    printw(0, 3, "%u/%u %s %02u:%02u-%02u:%02u %s",
 	   quantity_delivered_, quantity_requested_,
 	   llsf_msgs::Order::ProductType_Name(product_).c_str(),
 	   begin_min, begin_sec, end_min, end_sec,

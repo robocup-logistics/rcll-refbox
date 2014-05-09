@@ -37,6 +37,8 @@
 #ifndef __LLSF_REFBOX_SHELL_SHELL_H_
 #define __LLSF_REFBOX_SHELL_SHELL_H_
 
+#include "team.h"
+
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
 #include <google/protobuf/message.h>
@@ -111,6 +113,7 @@ class LLSFRefBoxShell
 
   void set_game_state(std::string state);
   void set_game_phase(std::string phase);
+  void set_game_team_color(std::string team_color);
   void set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id);
   void set_loaded_with(const std::string &machine_name, unsigned int puck_id);
   void send_remove_puck(std::string &machine_name, unsigned int puck_id);
@@ -155,8 +158,10 @@ class LLSFRefBoxShell
 
   std::string   s_cancel_state_;
   std::string   s_cancel_phase_;
+  std::string   s_cancel_team_;
   NCursesMenu  *m_state_;
   NCursesMenu  *m_phase_;
+  NCursesMenu  *m_team_;
 
   std::vector<LLSFRefBoxShellRobot *> robots_;
   std::map<std::string, LLSFRefBoxShellMachine *> machines_;
@@ -170,6 +175,7 @@ class LLSFRefBoxShell
   boost::asio::deadline_timer  blink_timer_;
   boost::asio::deadline_timer  attmsg_timer_;
   bool                         attmsg_toggle_;
+  bool                         attmsg_team_specific_;
   std::mutex                   attmsg_mutex_;
   std::string                  attmsg_string_;
   bool                         attmsg_has_endtime_;
@@ -183,6 +189,8 @@ class LLSFRefBoxShell
   unsigned int cfg_refbox_port_;
 
   bool beep_warning_shown_;
+
+  Team team_;
 };
 
 
