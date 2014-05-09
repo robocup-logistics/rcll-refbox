@@ -17,6 +17,57 @@
   (return ?vi)
 )
 
+(deffunction net-init-peer (?cfg-prefix ?group)
+  (bind ?peer-id 0)
+
+  (do-for-fact ((?csp confval) (?crp confval) (?ch confval))
+	       (and (eq ?csp:type UINT) (eq ?csp:path (str-cat ?cfg-prefix "send-port"))
+		    (eq ?crp:type UINT) (eq ?crp:path (str-cat ?cfg-prefix "recv-port"))
+		    (eq ?ch:type STRING) (eq ?ch:path (str-cat ?cfg-prefix "host")))
+    (printout t "Creating local communication peer for group " ?group
+	      " (send port " ?csp:value "  recv port " ?crp:value ")" crlf)
+    (bind ?peer-id (pb-peer-create-local ?ch:value ?csp:value ?crp:value))
+  )
+  (if (eq ?peer-id 0)
+   then
+    (do-for-fact ((?cp confval) (?ch confval))
+	       (and (eq ?cp:type UINT) (eq ?cp:path (str-cat ?cfg-prefix "port"))
+		    (eq ?ch:type STRING) (eq ?ch:path (str-cat ?cfg-prefix "host")))
+      (printout t "Creating communication peer for group " ?group " (port " ?cp:value ")" crlf)
+      (bind ?peer-id (pb-peer-create ?ch:value ?cp:value))
+    )
+  )
+
+  (if (neq ?peer-id 0)
+   then
+    (assert (network-peer (group ?group) (id ?peer-id) (network-prefix "")))
+   else
+    (printout warn "No network configuration found for " ?group " at " ?cfg-prefix crlf)
+  )
+)
+
+(deffunction net-set-crypto (?team-color ?crypto-key)
+  (do-for-fact ((?peer network-peer)) (eq ?peer:group ?team-color)
+    (if (debug 3) then (printout t "Setting key " ?crypto-key " for " ?team-color crlf))
+    (pb-peer-setup-crypto ?peer:id ?crypto-key "aes-128-cbc")
+  )
+)
+
+(defrule net-init
+  (init)
+  (config-loaded)
+  =>
+  (net-init-peer "/llsfrb/comm/public-peer/" PUBLIC)
+  (net-init-peer "/llsfrb/comm/cyan-peer/" CYAN)
+  (net-init-peer "/llsfrb/comm/magenta-peer/" MAGENTA)
+)
+
+; (defrule net-print-msg-info
+;   (protobuf-msg (type ?t))
+;   =>
+;   (printout t "Message of type " ?t " received" crlf)
+; )
+
 (defrule net-read-known-teams
   (declare (salience -1000))
   (init)
@@ -66,6 +117,7 @@
 (defrule net-send-beacon
   (time $?now)
   ?f <- (signal (type beacon) (time $?t&:(timeout ?now ?t ?*BEACON-PERIOD*)) (seq ?seq))
+  (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (if (debug 3) then (printout t "Sending beacon" crlf))
@@ -78,7 +130,7 @@
   (pb-set-field ?beacon "number" 0)
   (pb-set-field ?beacon "team_name" "LLSF")
   (pb-set-field ?beacon "peer_name" "RefBox")
-  (pb-broadcast ?beacon)
+  (pb-broadcast ?peer-id-public ?beacon)
   (pb-destroy ?beacon)
 )
 
@@ -228,7 +280,7 @@
 
 (defrule net-recv-SetGamePhase
   ?sf <- (gamestate (phase ?phase))
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p))
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   (modify ?sf (phase (sym-cat (pb-field-value ?p "phase"))) (prev-phase ?phase))
@@ -287,12 +339,13 @@
   ?gs <- (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase)
 		    (game-time ?game-time) (teams $?teams))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
+  (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (if (debug 3) then (printout t "Sending GameState" crlf))
   (bind ?gamestate (net-create-GameState ?gs))
 
-  (pb-broadcast ?gamestate)
+  (pb-broadcast ?peer-id-public ?gamestate)
 
   ; For stream clients set refbox mode
   (pb-set-field ?gamestate "refbox_mode" ?refbox-mode)
@@ -368,10 +421,11 @@
   ?f <- (signal (type bc-robot-info)
 		(time $?t&:(timeout ?now ?t ?*BC-ROBOTINFO-PERIOD*)) (seq ?seq))
   (gamestate (game-time ?gtime))
+  (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?ri (net-create-RobotInfo ?gtime FALSE))
-  (pb-broadcast ?ri)
+  (pb-broadcast ?peer-id-public ?ri)
   (pb-destroy ?ri)
 )
 
@@ -500,15 +554,17 @@
 		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-MACHINE-INFO-BURST-COUNT*)
 					       then ?*BC-MACHINE-INFO-PERIOD*
 					       else ?*BC-MACHINE-INFO-BURST-PERIOD*))))
+  (network-peer (group CYAN) (id ?peer-id-cyan))
+  (network-peer (group MAGENTA) (id ?peer-id-magenta))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
   (bind ?s (net-create-broadcast-MachineInfo CYAN))
-  (pb-broadcast ?s)
+  (pb-broadcast ?peer-id-cyan ?s)
   (pb-destroy ?s)
 
   (bind ?s (net-create-broadcast-MachineInfo MAGENTA))
-  (pb-broadcast ?s)
+  (pb-broadcast ?peer-id-magenta ?s)
   (pb-destroy ?s)
 )
 
@@ -594,21 +650,22 @@
 		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-ORDERINFO-BURST-COUNT*)
 					       then ?*BC-ORDERINFO-PERIOD*
 					       else ?*BC-ORDERINFO-BURST-PERIOD*))))
+  (network-peer (group CYAN) (id ?peer-id-cyan))
+  (network-peer (group MAGENTA) (id ?peer-id-magenta))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
   (bind ?oi (net-create-OrderInfo))
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?oi))
-  (pb-broadcast ?oi)
   (pb-destroy ?oi)
 
   (bind ?oi (net-create-OrderInfo CYAN))
-  (pb-broadcast ?oi)
+  (pb-broadcast ?peer-id-cyan ?oi)
   (pb-destroy ?oi)
 
   (bind ?oi (net-create-OrderInfo MAGENTA))
-  (pb-broadcast ?oi)
+  (pb-broadcast ?peer-id-magenta ?oi)
   (pb-destroy ?oi)
 )
 
@@ -618,9 +675,10 @@
   ?sf <- (signal (type version-info) (seq ?seq)
 		 (count ?count&:(< ?count ?*BC-VERSIONINFO-COUNT*))
 		 (time $?t&:(timeout ?now ?t ?*BC-VERSIONINFO-PERIOD*)))
+  (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
   (bind ?vi (net-create-VersionInfo))
-  (pb-broadcast ?vi)
+  (pb-broadcast ?peer-id-public ?vi)
   (pb-destroy ?vi)
 )

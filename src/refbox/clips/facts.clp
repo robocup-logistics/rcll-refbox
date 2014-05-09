@@ -102,6 +102,12 @@
   (slot is-slave (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
+(deftemplate network-peer
+  (slot group (type SYMBOL) (allowed-values PUBLIC CYAN MAGENTA))
+  (slot id (type INTEGER))
+  (slot network-prefix (type STRING))
+)
+
 (deftemplate attention-message
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA) (default nil))
   (slot text (type STRING))
