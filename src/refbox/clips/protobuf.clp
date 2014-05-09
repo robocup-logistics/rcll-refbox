@@ -19,6 +19,15 @@
   (slot ptr (type EXTERNAL-ADDRESS))
 )
 
+(deftemplate protobuf-receive-failed
+  (slot comp-id (type INTEGER))
+  (slot msg-type (type INTEGER))
+  (slot rcvd-via (type SYMBOL) (allowed-values STREAM BROADCAST))
+  (multislot rcvd-from (cardinality 2 2))
+  (slot client-id (type INTEGER))
+  (slot message (type STRING))
+)
+
 (deftemplate protobuf-server-receive-failed
   (slot comp-id (type INTEGER))
   (slot msg-type (type INTEGER))
@@ -36,9 +45,18 @@
   (declare (salience -4000))
   ?f <- (protobuf-server-receive-failed (comp-id ?cid) (msg-type ?mt)
 					(rcvd-from ?host ?port) (message ?msg))
+  ?f <- (protobuf-receive-failed (comp-id ?cid) (msg-type ?mt)
+				 (rcvd-from ?host ?port) (message ?msg))
   =>
   (retract ?f)
   (printout t "Protobuf rcv fail for " ?cid ":" ?mt " from " ?host ":" ?port ": " ?msg crlf)
+)
+
+(defrule protobuf-cleanup-message
+  (declare (salience -4000))
+  ?pf <- (protobuf-msg)
+  =>
+  (retract ?pf)
 )
 
 ; (defrule protobuf-client-connected
