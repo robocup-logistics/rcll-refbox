@@ -226,9 +226,14 @@
 		    (state RUNNING)
 		    (game-time ?game-time) (cont-time ?cont-time)
 		    (last-time $?last-time&:(neq ?last-time ?now)))
+  ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
+		   (real-time-factor ?rtf) (last-recv-time $?lrt))
+  (or (sim-time (enabled false))
+      (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
   =>
   (bind ?points-cyan (game-calc-points CYAN))
   (bind ?points-magenta (game-calc-points MAGENTA))
+  (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
   (bind ?timediff (time-diff-sec ?now ?last-time))
   (modify ?gf (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
 	  (last-time ?now) (points ?points-cyan ?points-magenta))
@@ -239,8 +244,13 @@
   (time $?now)
   (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP&~WHACK_A_MOLE_CHALLENGE&~NAVIGATION_CHALLENGE))
       (gamestate (state ~RUNNING)))
+  ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
+		   (real-time-factor ?rtf) (last-recv-time $?lrt))
   ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
+  (or (sim-time (enabled false))
+      (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
   =>
+  (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
   (modify ?gf (last-time ?now))
 )
 

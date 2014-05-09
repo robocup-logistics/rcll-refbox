@@ -44,6 +44,8 @@ llsfrb:
     server-port: !tcp-port 4444
     peer-host: !ipv4 172.26.255.255
     peer-port: !udp-port 4444
+    #ports and host for using the refbox in a simulation:
+    #peer-host: !ipv4 127.0.0.1
     #peer-send-port: !udp-port 4444
     #peer-recv-port: !udp-port 4445
     
@@ -61,3 +63,10 @@ llsfrb:
   shell:
     refbox-host: localhost
     refbox-port: 4444
+
+  simulation:
+    #synchronize refbox time with the time of a simulation 
+    time-sync:
+      enable: false
+      #estimate time by using the last given simulation time speed (helps reducing the amount of messages to send)
+      estimate-time: true
