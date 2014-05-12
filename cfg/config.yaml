@@ -45,22 +45,22 @@ llsfrb:
     server-port: !tcp-port 4444
     
     public-peer:
-      #port: !tcp-port 4444
       host: !ipv4 137.226.233.255
-      send-port: !udp-port 4444
-      recv-port: !udp-port 4445
+      port: !udp-port 4444
+      #send-port: !udp-port 4444
+      #recv-port: !udp-port 4445
 
     cyan-peer:
-      #port: !tcp-port 4444
       host: !ipv4 137.226.233.255
-      send-port: !udp-port 4441
-      recv-port: !udp-port 4446
+      port: !udp-port 4441
+      #send-port: !udp-port 4441
+      #recv-port: !udp-port 4446
 
     magenta-peer:
-      #port: !tcp-port 4444
       host: !ipv4 137.226.233.255
-      send-port: !udp-port 4442
-      recv-port: !udp-port 4447
+      port: !udp-port 4442
+      #send-port: !udp-port 4442
+      #recv-port: !udp-port 4447
 
   mongodb:
     enable: true
