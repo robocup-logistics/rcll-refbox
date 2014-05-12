@@ -10,8 +10,9 @@
 \usepackage{url}
 \usepackage{array}
 \usepackage{footmisc}
+\usepackage[bitheight=6ex]{bytefield}
 
-\usetikzlibrary{calc,through,backgrounds,shadows,decorations.pathreplacing}
+\usetikzlibrary{arrows,calc,through,backgrounds,shadows,decorations.pathreplacing}
 \usetikzlibrary{positioning,decorations.text}
 \newcommand{\refsec}[1]{Section~\ref{#1}}
 \newcommand{\reffig}[1]{Figure~\ref{#1}}
@@ -295,18 +296,42 @@ code must then be compiled into a library or your application.
 \begin{minipage}{\linewidth}
   \begin{minipage}[t]{.64\linewidth}
     \vspace{0pt}
-Once protobuf messages are serialized, they contain no information
-about the contained type or the length of the message. Therefore, to
-transmit them over the network a framing protocol is required. This
-adds a little frame around each message indicating its type and size
-to allow for transmitting arbitrary messages over the same
-connection. This is provided by the framing protocol.
+
+    Once protobuf messages are serialized, they contain no information
+    about the contained type or the length of the message. To use
+    configurable encryption modes we need to indicate the used
+    cipher. Therefore, to transmit them over the network a framing
+    protocol is required. Our protocol consists of two parts, a
+    protocol frame and a message header depicted on the right as a C
+    struct. We will describe the headers and how messages are formed
+    in more detail below, here is short overview.
+
+    The first a structure carries protocol information like version,
+    encryption cipher, and payload size. The second is the message
+    header that indicates the protobuf message component and type type
+    to allow for transmitting arbitrary messages over the same
+    connection. Each message that is sent over the network is
+    prepended by such headers.  After reading the frame header, the
+    receiver must read as many bytes as indicated by
+    \texttt{payload\_size} plus an additional IV header size if
+    encryption is used and the cipher requires an IV (see below).
+% As of
+%    this writing, the \texttt{header\_version} will be set to 2. The
+%    cipher will be either 0 (no encryption, used for stream, public
+%    peer, and unencrypted team communication) or 2 (AES encryption
+%    with 128 bits in cipher-block-chaining mode)
   \end{minipage}
   \hspace{.01\linewidth}
   \begin{minipage}[t]{.34\linewidth}
     \vspace{0pt}
 \lstinputlisting[showlines,style=really-small-cpp,
-firstline=59, lastline=66,
+firstline=74, lastline=87,
+framexleftmargin=4pt, xleftmargin=4pt,numbers=none,
+morekeywords={\$?ms},emph={merge,m-prio}]
+{../../src/libs/protobuf_comm/frame_header.h}
+
+\lstinputlisting[showlines,style=really-small-cpp,
+firstline=99, lastline=104,
 framexleftmargin=4pt, xleftmargin=4pt,numbers=none,
 morekeywords={\$?ms},emph={merge,m-prio}]
 {../../src/libs/protobuf_comm/frame_header.h}
@@ -315,34 +340,182 @@ morekeywords={\$?ms},emph={merge,m-prio}]
 
 \smallskip
 
-The structure shown to the right describes the frame header. Each
-message that is sent over the network is prepended such a header. Each
-header consists of three values. The component ID can be used to
-dispatch messages to a particular component. In our case, all messages
-have a component ID of 2000 for the refbox. The message type denotes
-the contained protobuf message and determines how the message is
-deserialized. The payload size specifies the amount of data to read
-for the next message for deserialization.
-
 The message must be 4-byte-aligned, i.e. the size of the frame header
 message structure sums up to exactly eight bytes when sent over the
-network. All contained numbers must be encoded in network byte order
-(big endian, most significant bit first). The numbers are encoded as
-16 (\texttt{uint16\_t}) or 32 bit (\texttt{uint32\_t}) unsigned
-integers respectively.
+network, the message header will be exactly four bytes. All contained
+numbers must be encoded in network byte order (big endian, most
+significant bit first). The numbers are encoded as 8
+(\texttt{uint8\_t}), 16 (\texttt{uint16\_t}) or 32 bit
+(\texttt{uint32\_t}) unsigned integers respectively.
 
 When sending a message over the network, first the protobuf message is
-serialized (to determine the payload size). Then the frame header is
-prepared with the appropriate component ID, message type, and the
-payload size as just determined. Then the frame header is sent
-immediately followed by the serialized message.
+serialized (to determine the payload size). Then the frame and message
+headers are prepared with the appropriate component ID, message type,
+and the payload size as just determined. Then the frame header is
+sent, possibly followed by an encryption IV, again followed by the
+message header and the the serialized message.
 
-Note that for UDP packets, the data must be serialized into a common
-buffer. Otherwise the operating systems network stack could split the
-transmission into two UDP messages, one containing the frame header
-and the other the message. This is invalid and cannot be decoded on
-the other end (UDP does not provide for receiving in the correct order
-and packet correlation).
+Note that for UDP packets, the data must be \emph{serialized into a
+  single common buffer}. Otherwise the operating systems network stack
+could split the transmission into multiple UDP messages. This is
+invalid and cannot be decoded on the other end (UDP does not provide
+for receiving in the correct order and packet correlation).
+
+We will now describe the frame and message headers in detail and then
+give examples for encrypted and unencrypted messages.
+
+\subsubsection{Frame Header}
+\paragraph{protocol version}
+  The version of the protocol used. Currently this must be set to 2.
+\paragraph{cipher}
+  The cipher suite used. The acceptable values are listed in the
+  following table.\\
+  \smallskip\\
+  \hspace*{4em}\begin{tabular}{l|l}
+    \textbf{Value} & \textbf{Encryption mode}\\\hline
+    0x00 & No encryption\\
+    0x01 & AES 128 ECB\\
+    0x02 & AES 128 CBC (requires 16 byte IV)\\
+    0x03 & AES 256 ECB\\
+    0x04 & AES 256 CBC (requires 16 byte IV)\\
+  \end{tabular}
+\paragraph{reserved}
+  These bits are currently unused and must be set to zero.
+\paragraph{payload size} Size in bytes of the following payload. This does
+  include the message header and the serialized protobuf message. It
+  does \emph{not} include an encryption IV header (if required by
+  cipher). The payload size \emph{must} be encoded in network byte
+  order (big-endian).
+
+\subsubsection{Message Header}
+\paragraph{component ID}
+General ID, general addressee of message. For refbox message must be
+set to 2000 (as encoded in the protobuf messages' COMP\_ID field of
+the CompType enum. If you use the refbox framing protocol for your own
+messages, choose a component ID different from the refbox ID. The
+component ID \emph{must} be encoded in network byte order
+(big-endian).
+\paragraph{message type}
+Numeric message ID of the specific message serialized in the
+payload. Must be the ID encoded in the MSG\_TYPE field of the CompType
+enum. The message type is specific to the component ID. Different
+component IDs can have message of the same message type which are
+unrelated. The message type \emph{must} be encoded in network byte
+order (big-endian).
+
+\subsubsection{Unencrypted Message}
+\begin{figure}[htbp]
+  \centering
+  \hspace{5.3em}
+  \begin{bytefield}{32}
+    \bitheader{0,7-8,15-16,23-24,31} \\
+
+    \begin{rightwordgroup}{frame \\ header}
+      % We have to do the \parbox explicitly in the next line because
+      % \hyperlink typesets its argument in horizontal mode.
+      \bitbox{8}{\hyperlink{protocol-version}{protocol\\version = 2}} &
+      \bitbox{8}{\hyperlink{cipher}{cipher = 0}} &
+      \bitbox{8}{\hyperlink{reserved-2}{\vphantom{p}reserved = 0}} &
+      \bitbox{8}{\hyperlink{reserved-3}{\vphantom{p}reserved = 0}} \\
+
+      \wordbox{1}{\hyperlink{payload-size}{payload size}}
+    \end{rightwordgroup} \\
+
+    \begin{rightwordgroup}{message \\ header}
+      \bitbox{16}{\hyperlink{component-id}{component ID}} &
+      \bitbox{16}{\hyperlink{msg-type}{message type}}
+    \end{rightwordgroup} \\
+
+  \begin{rightwordgroup}{serialized \\ protobuf \\ message}
+    \wordbox[lrt]{1}{%
+      \parbox{0.6\width}{\centering (Protocol buffer message
+        identified by component ID and message type)}} \\
+    \skippedwords \\
+    \wordbox[lrb]{1}{} 
+  \end{rightwordgroup}
+
+  \end{bytefield}
+  \caption{Packet layout diagram for unencrypted message}
+  \label{fig:unencrypted-packet}
+\end{figure}
+In \reffig{fig:unencrypted-packet} you see the byte layout for an
+unencrypted data packet. Each row represents 4 byte of data. The
+protocol buffer message is simply the buffer that is created by
+serializing the message at hand. The component ID and message type
+must be set as specified by the CompType enum in the message
+definition, e.g. 2000 and 1 for a beacon signal message.
+
+\subsubsection{Encrypted Message}
+\begin{figure}[htbp]
+  \centering
+  \begin{bytefield}{32}
+    \bitheader{0,7-8,15-16,23-24,31} \\
+
+    \begin{rightwordgroup}{frame \\ header}
+      \bitbox{8}{\hyperlink{protocol-version}{protocol\\version = 2}} &
+      \bitbox{8}{\hyperlink{cipher}{cipher $> 0$\\\tiny 0x02 for AES-128-CBC}} &
+      \bitbox{8}{\hyperlink{reserved-2}{\vphantom{p}reserved = 0}} &
+      \bitbox{8}{\hyperlink{reserved-3}{\vphantom{p}reserved = 0}} \\
+      
+      \wordbox{1}{\hyperlink{payload-size}{payload size}}
+    \end{rightwordgroup} \\
+
+    \begin{rightwordgroup}{Crypto \\ IV}
+      \wordbox{4}{\hyperlink{crypto-IV}{Initialization
+          Vector\\(16 bytes for AES-128-CBC)}}
+   \end{rightwordgroup} \\
+
+    \begin{leftwordgroup}{encrypted\\part}
+    \begin{rightwordgroup}{message \\ header}
+      \bitbox{16}{\hyperlink{component-id}{component ID}} &
+      \bitbox{16}{\hyperlink{msg-type}{message type}}
+    \end{rightwordgroup} \\
+
+    \begin{rightwordgroup}{serialized \\ protobuf \\ message}
+      \wordbox[lrt]{1}{%
+        \parbox{0.6\width}{\centering (Protocol buffer message
+          identified by component ID and message type)}} \\
+      \skippedwords \\
+      \wordbox[lrb]{1}{} 
+    \end{rightwordgroup}
+    \end{leftwordgroup}
+ 
+  \end{bytefield}
+  \caption{Packet layout diagram for encrypted message}
+  \label{fig:encrypted-packet}
+\end{figure}
+In \reffig{fig:encrypted-packet} you see the byte layout for an
+encrypted data packet. It is similar to the unencrypted packet with
+two key differences. First, the initialization vector is placed
+between the frame and message headers. And second, the message header
+and protobuf payload are encrypted.
+
+\subsubsection{Encryption Modes}
+The encryption currently implemented is intended to serve as a basic
+protection layer in particular to prevent accidental transmission of
+messages of the wrong team. For example, we do not insist on a
+time stamp within the encrypted part of the messages which would aid
+against replay attacks. This is done to avoid the need for time
+synchronization between the robots and the refbox. This might be added
+at a later point in time.
+
+The framing protocol supports per-message encryption based on a
+symmetric block cipher. For now, the supported encryption modes are
+based on the AES\footnote{Advanced Encryption Standard,
+  cf. \url{http://en.wikipedia.org/wiki/Advanced_Encryption_Standard}}
+with either 128 or 256 bit key length in either electronic code book
+(ECB) or cipher block chaining (CBC) mode. For the tournament, the
+referee box will be configured to use the AES-128-CBC mode. This means
+that there will be a 16 byte initialization vector (IV) which is used
+to generate different encrypted messages for the same input (as long
+as different IVs are provided).
+
+The protobuf\_comm library handles this transparently for you. All you
+need to do is to setup encryption on the team channel broadcast peer
+(see below). Should you choose to create your own implementation,
+please still take protobuf\_comm's BufferEncryptor and BufferDecryptor
+classes for reference. The IV must be different for each transmitted
+message.
 
 \subsection{Communication Modes}
 The refbox uses two communication modes. A TCP-connection-based
@@ -365,6 +538,15 @@ in such a way that always the frame header is read first, and only
 afterwards the payload is read depending on the size given in the
 header.
 
+Broadcast-based communication is further split up into three
+communication groups: public, team cyan, and team magenta. Generally,
+teams should only send on their private team channel and listen to
+both, the team and the public channel. The refbox will send its beacon
+signal and the game state on the public channel, as it is the same for
+both teams. Other messages like order information or exploration info
+is sent per team. The exact assignment is specified in the message
+descriptions.
+
 For broadcast-based communication, make sure to build a complete
 message buffer including the frame header and the serialized message,
 and then send it in one go to avoid fragmentation. When reading,
@@ -372,14 +554,87 @@ create a sufficiently large buffer to read the full package at
 once. Then read the frame header from the buffer and deserialize the
 message.
 
+\subsubsection{Communication Groups}
+\begin{figure}
+  \vspace{-3mm}
+  \centering
+    
+  \tikzstyle{NW}=[outer sep=0,anchor=north west,minimum height=0.8cm]
+  \tikzstyle{R}=[minimum width=3.2cm,minimum height=1cm,draw=black!50,fill=blue!20,text width=3cm]
+  \tikzstyle{G}=[outer sep=0,anchor=south west, minimum width=4.8cm,
+  minimum height=0.8cm, fill=green!20]
+
+
+  \begin{tikzpicture}[thick]
+
+    \node (refbox)  [anchor=center,minimum width=2cm, minimum height=3cm,draw=black] at (0,0) {Referee Box};
+    \node (shell)   [draw=black,minimum width=2cm, minimum height=1cm] at (-4,0) {Shell};
+    \node (cyan)    [minimum width=2cm, minimum height=1cm,anchor=west] at (4.8, .5) {Team Cyan};
+    \node (magenta) [minimum width=2cm, minimum height=1cm,anchor=west] at (4.8,-.5) {Team Magenta};
+
+    \draw [>=*,->] (refbox.east |- 0,1) -- +(3,0) coordinate (cyan-end)
+    node[above,pos=0.5,text width=2.5cm]{\scriptsize Encrypted Team\\[-.4em]
+      Channel -- Cyan} ;
+    
+    \draw [>=*,->] (refbox.east |- 0,0) -- +(3,0)
+    node[above,pos=0.5,text width=2.5cm]{\scriptsize Plaintext Public\\[-.4em]
+      Channel};
+
+    \draw [>=*,->] (refbox.east |- 0,-1) -- +(3,0) coordinate (magenta-end)
+    node[above,pos=0.5,text width=2.5cm]{\scriptsize Encrypted Team\\[-.4em]
+      Channel -- Magenta};
+
+    \draw [decorate,decoration={brace,aspect=0.5,amplitude=2mm},thick] ($ (cyan-end) + (0.1,0.2) $) -- +(0,-1.4);
+    \draw [decorate,decoration={brace,aspect=0.5,amplitude=2mm,mirror},thick] ($ (magenta-end) + (0.4,-.2) $) -- +(0,1.4);
+
+    \draw [>=*,->] (refbox.west) -- +(-1,0) coordinate (shell-end);
+    \draw [>=(,->,shorten >=2pt] (shell.east) -- +(1,0);
+    \node [above of=shell-end,above=-8mm] {\scriptsize Stream};
+
+  \end{tikzpicture}
+
+  \caption{Communication channels and groups of the referee box}
+  \label{fig:comm-groups}  
+\vspace{-3mm}
+\end{figure}
+The refbox differentiates a total of four communication groups. These
+are visualized in \reffig{fig:comm-groups}. Each team needs to open
+two and only two broadcast peer communication channels during the
+game.
+
+\paragraph{stream}
 The refbox accepts stream client connections on TCP port 4444. During
 the tournament, connections will most likely only be allowed from the
 local or selected hosts. Neither a robot nor any other team's device
-may use the stream protocol to communicate with the
-refbox. Peer-to-peer broadcast communication is down on UDP port
-4444. The refbox will communicate on an assigned broadcast address
-determined at the tournament. Make sure that all of this information
-is easily configurable on your system.
+may use the stream protocol to communicate with the refbox.
+
+\paragraph{public}
+The public broadcast channel is established on UDP port 4444. Teams
+may only listen to this channel, but never send.
+
+\paragraph{team channels}
+There are two team channels on UDP ports 4441 (cyan) and 4442
+(magenta). Each channel will be encrypted with a team-specific
+encryption key that is created and provided to the teams at the
+beginning of the tournament (and might be re-configured later should
+the need arise). It is used for the private communication between the
+teams and the referee box.
+
+\subsubsection{Encryption Setup}
+Encryption on the team channels should be configured only if the
+refbox announced the respective team name for on of the two
+colors. Teams may never send messages on a private team channel if it
+is configured for a team different than their own.
+
+The recommended flow for setting up encryption is like this:
+\begin{itemize}
+\item Listen to public channel for GameState messages
+\item If the own team name is received as the cyan or magenta team
+  name in the GameState message, setup encryption on the respective
+  channel
+\item Send messages on the team channel, never send messages on a
+  channel of another team
+\end{itemize}
 
 \subsection{Example using protobuf\_comm}
 The protobuf\_comm library provides an implementation of network
@@ -422,10 +677,11 @@ main thread.
 
 \begin{figure}
   \lstinputlisting[name=peer,showlines,style=really-small-cpp,
-    firstline=37, lastline=94, numbers=left, stepnumber=5,
+    firstline=37, lastline=114, numbers=left, stepnumber=5,
     numberfirstline=true,numberblanklines=true,
     framexleftmargin=16pt, xleftmargin=4pt]
     {../../src/examples/peer.cpp}
+\vspace{-3mm}
 \caption{Example program for a protobuf\_comm peer}
 \label{fig:example-peer}
 \end{figure}
@@ -446,7 +702,8 @@ you should integrate the code with your own main loop rather than
 copying the stub from the example.
 
 In the ExamplePeer class's constructor the peer is created (line
-11). In lines 13--14 the MessageRegister of the peer is retrieved, and
+13--14) which also creates a new MessageRegister that will be used.
+. In lines 13--14 the MessageRegister of the peer is retrieved, and
 a single message type is registered. Note that no component ID or
 message type are provided. They are retrieved from the CompType enum
 field within the message specification (cf.~\refsec{sec:messages}). In
@@ -515,20 +772,20 @@ to confuse older peers expecting the old message type.
 
 In the following, we give the protobuf specifications and description
 of all message types currently used for the LLSF refbox
-communication. The ``Via'' field describes what communication method
-is used to transmit the message, it can be either Peer-to-Peer (P2P),
-Client-Server (C-S), or both. Many messages are sent at certain
-periods. These are given in seconds time in between two sent messages,
-or event if it is sent on particular events. Some broadcast messages
-feature a burst mode to send a number of packets of the same content
-in short succession to increase the chance of reaching the other
-peers. The ``Sent by'' and ``Sent to'' fields indicate the sender and
-receiver of a message. A controller is the refbox GUI or shell to
-communicate to, not a team's device. All proto files are in the
-\texttt{src/msgs} directory of the refbox source code. Feel free to
-copy them to your own source code, but in this case make sure to watch
-for updates to the messages and integrate those
-changes\footnote{Register at
+communication. The ``Via'' field describes what communication channel
+is used to transmit the message, it can be either public broadcast
+(P), team-private broadcast (T), or stream (S), or a combination
+thereof. Many messages are sent at certain periods. These are given in
+seconds time in between two sent messages, or event if it is sent on
+particular events. Some broadcast messages feature a burst mode to
+send a number of packets of the same content in short succession to
+increase the chance of reaching the other peers. The ``Sent by'' and
+``Sent to'' fields indicate the sender and receiver of a message. A
+controller is the refbox GUI or shell to communicate to, not a team's
+device. All proto files are in the \texttt{src/msgs} directory of the
+refbox source code. Feel free to copy them to your own source code,
+but in this case make sure to watch for updates to the messages and
+integrate those changes\footnote{Register at
   \url{https://lists.kbsg.rwth-aachen.de/listinfo/llsf-refbox-commits}
   to the llsf-refbox-commits mailing list to be notified of any pushes
   to the refbox repository.}. The intention is to keep changes at a
@@ -556,7 +813,7 @@ situations may be necessary, e.g. to fix problems.
       File:&\multicolumn{3}{p{.95\linewidth}}{%
         \texttt{#1}
       }\\[3pt]
-      Via:&#2&Period:&#3\\
+      Groups:&#2&Period:&#3\\
       Sent by:&#4&Sent to:&#5\\[3pt]
       \multicolumn{4}{p{.95\linewidth}}{%
         #6
@@ -566,7 +823,7 @@ situations may be necessary, e.g. to fix problems.
 \end{minipage}
 }
 
-\msgspec{AttentionMessage.proto}{Client-Server}{events}{refbox}{controller}%
+\msgspec{AttentionMessage.proto}{S}{events}{refbox}{controller}%
 {%
   An AttentionMessage is sent when a particular event requires human
   attention, e.g. if a late order puck must be placed or if
@@ -575,7 +832,7 @@ situations may be necessary, e.g. to fix problems.
   team (or indicate to which team it belongs to).
 }
 
-\msgspec{BeaconSignal.proto}{Peer-to-Peer}{1\,sec}{robots \& refbox}{any}%
+\msgspec{BeaconSignal.proto}{P, T}{1\,sec}{robots \& refbox}{any}%
 {%
   The BeaconSignal is periodically sent to detect robots and the
   refbox on the network. If a robot is initially detected the time
@@ -586,6 +843,11 @@ situations may be necessary, e.g. to fix problems.
   fields to ``LLSF'' and ``RefBox'' respectively. The robots
   \emph{must} set the team color appropriately, only the refbox itself
   is allowed to not set it.
+
+  \smallskip
+
+  The referee box announces its presence on the public channel. The
+  robots must use the team-private channel.
 
   \smallskip
 
@@ -602,7 +864,7 @@ situations may be necessary, e.g. to fix problems.
   visitors.
 }
 
-\msgspec{VersionInfo.proto}{P2P \& C-S}{event}{refbox}{any}%
+\msgspec{VersionInfo.proto}{S, P}{event}{refbox}{any}%
 {%
   The VersionInfo message is sent to each newly connected stream
   client as the first message. Additionally, whenever a new peer is
@@ -642,7 +904,7 @@ situations may be necessary, e.g. to fix problems.
   either CYAN or MAGENTA (primary field side one or two respectively).
 }
 
-\msgspec{ExplorationInfo.proto}{Peer-to-Peer}{1\,sec}{refbox}{robots}%
+\msgspec{ExplorationInfo.proto}{P}{1\,sec}{refbox}{robots}%
 {%
   This ExplorationInfo message is periodically sent during the
   exploration phase. It announces the mapping from type names to light
@@ -666,7 +928,7 @@ situations may be necessary, e.g. to fix problems.
   allow the robot to catch up without jeopardizing the game.
 }
 
-\msgspec{GameInfo.proto}{Client-Server}{start}{refbox}{controller}%
+\msgspec{GameInfo.proto}{S}{start}{refbox}{controller}%
 {%
   Additional information about the game. This is sent on initial
   connection by the refbox to controllers. At the moment it contains a
@@ -674,7 +936,7 @@ situations may be necessary, e.g. to fix problems.
   team.
 }
 
-\msgspec{GameState.proto}{P2P \& C-S}{1\,sec}{refbox}{all}%
+\msgspec{GameState.proto}{S, P}{1\,sec}{refbox}{all}%
 {%
   The GameState message is periodically sent via peer-to-peer to all
   robots as well as by client-server communication to connected
@@ -699,7 +961,7 @@ situations may be necessary, e.g. to fix problems.
   will be detected by the refbox and considered a fraud attempt.
 }
 
-\msgspec{MachineInfo.proto}{P2P \& C-S}{$0.25$\,sec}{refbox}{all}%
+\msgspec{MachineInfo.proto}{S, T}{$0.25$\,sec}{refbox}{all}%
 {%
   The MachineInfo message is sent periodically to controllers and
   robots (in production phase only) by the refbox. The message to
@@ -714,9 +976,10 @@ situations may be necessary, e.g. to fix problems.
 
   The message broadcasted to \emph{robots} only includes name, type,
   input puck types, output puck type, and pose (as defined by the
-  rulebook). It is sent only during the production phase. At the
-  beginning of the phase, the message is sent at a $0.5$\,sec period
-  for 15\,sec. Afterwards the message is sent every 2\,sec.
+  rulebook). It is sent only during the production phase over the
+  team-private channel. At the beginning of the phase, the message is
+  sent at a $0.5$\,sec period for 15\,sec. Afterwards the message is
+  sent every 2\,sec.
  
   \medskip
   Both, the MachineInfo and Machine message types feature a team
@@ -737,7 +1000,7 @@ situations may be necessary, e.g. to fix problems.
   cheating.
 }
 
-\msgspec{MachineCommands.proto}{Client-Server}{event}{controller}{refbox}%
+\msgspec{MachineCommands.proto}{S}{event}{controller}{refbox}%
 {%
   This protobuf file contains messages for specific instructions to
   the refbox, e.g. placing or loading a puck in the machine, or
@@ -746,7 +1009,7 @@ situations may be necessary, e.g. to fix problems.
   actual PLC).
 }
 
-\msgspec{MachineReport.proto}{Peer-to-Peer}{$2$\,sec}{robots}{refbox}%
+\msgspec{MachineReport.proto}{T}{$2$\,sec}{robots}{refbox}%
 {%
   During the exploration phase robots announce recognized machines
   with the MachineReport message stating name and types. In each
@@ -775,7 +1038,7 @@ situations may be necessary, e.g. to fix problems.
 
 }
 
-\msgspec{OrderInfo.proto}{P2P \& C-S}{$5$\,sec}{refbox}{any}%
+\msgspec{OrderInfo.proto}{S, T}{$5$\,sec}{refbox}{any}%
 {%
   During the production phase the refbox periodically sends the
   current orders to all robots and controllers. Note that the list of
@@ -792,10 +1055,9 @@ situations may be necessary, e.g. to fix problems.
   OrderInfo, the behavior differs between stream and broadcast
   messages. For stream messages, it is left out an a common OrderInfo
   message comprising \emph{all} orders of both teams is sent. For
-  broadcasting, two messages are sent, one for each team. In these
-  OrderInfo messages the team color will be set and only orders
-  matching this color will be included.
-
+  broadcasting, one messages per team-private channel is sent, one for
+  each team. In these OrderInfo messages the team color will be set
+  and only orders matching this color will be included.
 
   \medskip
 
@@ -805,7 +1067,7 @@ situations may be necessary, e.g. to fix problems.
   period of $5$ seconds.
 }
 
-\msgspec{PuckInfo.proto}{Client-Server}{$1$\,sec}{refbox}{controllers}%
+\msgspec{PuckInfo.proto}{S}{$1$\,sec}{refbox}{controllers}%
 {%
   The PuckInfo message is sent periodically by the refbox to connected
   controllers. It contains state information about all pucks know to
@@ -818,7 +1080,7 @@ situations may be necessary, e.g. to fix problems.
   be used in the future with a camera-based tracking system.
 }
 
-\msgspec{RobotInfo.proto}{Client-Server}{$1$\,sec}{refbox}{controllers}%
+\msgspec{RobotInfo.proto}{S, P}{$1$\,sec}{refbox}{controllers}%
 {%
   The RobotInfo message is sent periodically by the refbox to
   connected controllers. It contains information about all robots
@@ -834,7 +1096,7 @@ situations may be necessary, e.g. to fix problems.
   controller for visualization.
 }
 
-\msgspec{RobotCommands.proto}{Client-Server}{event}{controllers}{refbox}%
+\msgspec{RobotCommands.proto}{S}{event}{controllers}{refbox}%
 {%
   Commands related to robots that controllers can send to the
   refbox. Currently the only message allows to set the maintenance
