@@ -39,46 +39,36 @@
 
 using namespace protobuf_comm;
 
+#define TEAM_NAME      "Carologistics"
+#define CRYPTO_KEY     "randomkey"
+#define CRYPTO_CIPHER  "aes-128-cbc"
+
 class ExamplePeer
 {
  public:
   ExamplePeer(std::string host, unsigned short port)
+    : host_(host), mr_(new MessageRegister()), peer_team_(NULL)
   {
-    peer_ = new ProtobufBroadcastPeer(host, port);
-
-    MessageRegister & message_register = peer_->message_register();
-    message_register.add_message_type<llsf_msgs::GameState>();
-
-    peer_->signal_recv_error().connect(
-      boost::bind(&ExamplePeer::peer_recv_error, this, _1, _2));
-    peer_->signal_send_error().connect(
-      boost::bind(&ExamplePeer::peer_send_error, this, _1));
-    peer_->signal_received().connect(
-      boost::bind(&ExamplePeer::peer_msg, this, _1, _2, _3, _4));
+    mr_->add_message_type<llsf_msgs::GameState>();
+    peer_public_ = setup_peer(port, /* encrypted? */ false);
   }
 
-
-  ~ExamplePeer()
-  {
-    delete peer_;
+  ~ExamplePeer() {
+    delete peer_team_;
+    delete peer_public_;
   }
 
  private:
-  void peer_recv_error(boost::asio::ip::udp::endpoint &endpoint,
-		       std::string msg)
-  {
-    printf("Receive error from %s:%u: %s\n",
-	   endpoint.address().to_string().c_str(),
+  void peer_recv_error(boost::asio::ip::udp::endpoint &endpoint, std::string msg) {
+    printf("Receive error from %s:%u: %s\n", endpoint.address().to_string().c_str(),
 	   endpoint.port(), msg.c_str());
   }
 
-  void peer_send_error(std::string msg)
-  {
+  void peer_send_error(std::string msg) {
     printf("Send error: %s\n", msg.c_str());
   }
 
-  void peer_msg(boost::asio::ip::udp::endpoint &endpoint,
-		uint16_t comp_id, uint16_t msg_type,
+  void peer_msg(boost::asio::ip::udp::endpoint &endpoint, uint16_t comp_id, uint16_t msg_type,
 		std::shared_ptr<google::protobuf::Message> msg)
   {
     std::shared_ptr<llsf_msgs::GameState> g;
@@ -86,18 +76,39 @@ class ExamplePeer
       printf("GameState received from %s: %u/%u points\n",
 	     endpoint.address().to_string().c_str(),
 	     g->points_cyan(), g->points_magenta());
+
+      if (! peer_team_) {
+	if (g->team_cyan()    == TEAM_NAME)  peer_team_ = setup_peer(4441, true);
+	if (g->team_magenta() == TEAM_NAME)  peer_team_ = setup_peer(4442, true);
+      } else {
+	if (g->team_cyan() != TEAM_NAME && g->team_magenta() != TEAM_NAME) {
+	  delete peer_team_; peer_team_ = NULL;
+	}
+      }
     }
   }
 
+  ProtobufBroadcastPeer * setup_peer(unsigned short int port, bool crypto) {
+    ProtobufBroadcastPeer *peer = crypto
+      ? new ProtobufBroadcastPeer(host_, port, mr_, CRYPTO_KEY, CRYPTO_CIPHER)
+      : new ProtobufBroadcastPeer(host_, port, mr_);
+    peer->signal_recv_error().connect(
+      boost::bind(&ExamplePeer::peer_recv_error, this, _1, _2));
+    peer->signal_send_error().connect(
+      boost::bind(&ExamplePeer::peer_send_error, this, _1));
+    peer->signal_received().connect(
+      boost::bind(&ExamplePeer::peer_msg, this, _1, _2, _3, _4));
+    return peer;
+  }
+
  private:
-  ProtobufBroadcastPeer *peer_;
+  std::string            host_;
+  MessageRegister       *mr_;
+  ProtobufBroadcastPeer *peer_public_;
+  ProtobufBroadcastPeer *peer_team_;
 };
 
-
-int main(int argc, char **argv)
-{
-  ExamplePeer peer("192.168.0.255", 4444);
-  while (true) {
-    usleep(100000);
-  }
+int main(int argc, char **argv) {
+  ExamplePeer peer("137.226.233.255", 4444);
+  while (true) usleep(100000);
 }
