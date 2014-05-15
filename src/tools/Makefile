@@ -38,12 +38,19 @@ OBJS_llsf_fake_robot = llsf-fake-robot.o
 LIBS_llsf_signal_ctrl = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_sps
 OBJS_llsf_signal_ctrl = llsf-signal-ctrl.o
 
+LIBS_llsf_xbee = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsfxbee
+OBJS_llsf_xbee = llsf-xbee.o
+
 LIBS_llsf_report_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_llsf_report_machine = llsf-report-machine.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
-  OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) 
-  BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot $(BINDIR)/llsf-report-machine
+  OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) \
+	      $(OBJS_llsf_xbee)
+  BINS_all += $(BINDIR)/llsf-show-peers \
+	      $(BINDIR)/llsf-fake-robot \
+	      $(BINDIR)/llsf-report-machine \
+	      $(BINDIR)/llsf-xbee
 
   CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) \
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
@@ -59,6 +66,9 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS_llsf_report_machine += $(LDFLAGS_PROTOBUF) \
 	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
+  CFLAGS_llsf_xbee  += $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS_llsf_xbee += $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
 else
