@@ -697,6 +697,7 @@ XBeeNode::XBeeNode()
   parent_network_address = 0;
   profile_id = 0;
   manufacturer_id = 0;
+  device_type = UNKNOWN_DEVICE;
 }
 
 XBeeNode::XBeeNode(const uint8_t *nd_response, uint16_t response_length)

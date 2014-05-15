@@ -86,7 +86,8 @@ class XBeeNode {
   typedef enum {
     COORDINATOR = 0,
     ROUTER = 1,
-    END_DEVICE = 2
+    END_DEVICE = 2,
+    UNKNOWN_DEVICE = 3
   } DeviceType;
 
   XBeeNode();
