@@ -57,6 +57,9 @@ typedef enum {
 } TeamAssignment;
 
 extern unsigned int
+num_machines(MachineAssignment machine_assignment);
+
+extern unsigned int
 to_machine(std::string &machine_name, MachineAssignment machine_assignment);
 
 extern const char *

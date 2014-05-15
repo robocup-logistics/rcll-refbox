@@ -42,6 +42,16 @@ namespace llsf_utils {
 #endif
 
 unsigned int
+num_machines(MachineAssignment machine_assignment)
+{
+  if (machine_assignment == ASSIGNMENT_2014) {
+    return 32;
+  } else {
+    return 16;
+  }
+}
+
+unsigned int
 to_machine(std::string &machine_name, MachineAssignment machine_assignment)
 {
   switch (machine_assignment) {
