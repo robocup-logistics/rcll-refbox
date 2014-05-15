@@ -18,8 +18,8 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
-LIBS_libllsf_sps = stdc++ m llsfrbcore
-OBJS_libllsf_sps = sps_comm.o
+LIBS_libllsf_sps = stdc++ m llsfrbcore llsfrbutils llsfxbee
+OBJS_libllsf_sps = machine_comm.o sps_comm.o factory.o
 HDRS_libllsf_sps = sps_comm.h
 
 OBJS_all = $(OBJS_libllsf_sps)

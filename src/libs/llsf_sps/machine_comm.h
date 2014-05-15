@@ -1,9 +1,9 @@
 
 /***************************************************************************
- *  sps_comm.h - LLSF RefBox SPS Communication
+ *  machine_comm.h - LLSF RefBox Machine Communication
  *
- *  Created: Tue Jan 22 11:00:53 2013
- *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *  Created: Sat Apr 19 17:22:48 2014
+ *  Copyright  2013-2014  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -34,15 +34,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __LLSF_REFBOX_SPS_COMM_H_
-#define __LLSF_REFBOX_SPS_COMM_H_
-
-#include <llsf_sps/machine_comm.h>
-#include <utils/llsf/machines.h>
-
-extern "C" {
-  typedef struct _modbus modbus_t;
-}
+#ifndef __LLSF_REFBOX_MACHINE_COMM_H_
+#define __LLSF_REFBOX_MACHINE_COMM_H_
 
 #include <string>
 #include <stdint.h>
@@ -54,33 +47,59 @@ namespace llsf_sps {
 }
 #endif
 
-#define SPS_NUM_MACHINES 16
-
-class SPSComm : public MachineCommunication
+class MachineCommunication
 {
  public:
-  SPSComm(const char *host, unsigned short port,
-	  llsf_utils::MachineAssignment assn = llsf_utils::ASSIGNMENT_2014);
-  SPSComm(std::vector<std::string> hosts, unsigned short port,
-	  llsf_utils::MachineAssignment assn = llsf_utils::ASSIGNMENT_2014);
-  virtual ~SPSComm();
+  /** Light signal state. */
+  typedef enum {
+    SIGNAL_OFF = 0,	//< Light is turned off
+    SIGNAL_ON,		//< Light is turned on
+    SIGNAL_BLINK	//< Light is blinking.
+  } SignalState;
 
-  void try_reconnect();
+  /** Light type. */
+  typedef enum {
+    LIGHT_BEGIN = 0,	//< Iterator start.
+    LIGHT_RED = 0,	//< Red light.
+    LIGHT_YELLOW = 1,	//< Yellow light.
+    LIGHT_GREEN = 2,	//< Green light.
+    LIGHT_END		// Iterator end.
+  } Light;
 
-  void reset_lights();
-  void set_light(unsigned int m, Light light, SignalState state);
+  enum {
+    NO_PUCK = 0xFFFFFFFF
+  };
 
-  void reset_rfids();
-  bool read_rfid(unsigned int m, uint32_t &id);
-  std::map<std::string, uint32_t> read_rfids();
-  void write_rfid(unsigned int m, uint32_t id);
+  virtual ~MachineCommunication();
+
+  virtual void try_reconnect() = 0;
+
+  virtual void reset_lights() = 0;
+  void test_lights();
+
+  void set_light(unsigned int m, std::string &light, std::string &state);
+  virtual void set_light(unsigned int m, Light light, SignalState state) = 0;
+
+  virtual void reset_rfids() = 0;
+  virtual bool read_rfid(unsigned int m, uint32_t &id) = 0;
+  virtual std::map<std::string, uint32_t> read_rfids() = 0;
+  virtual void write_rfid(unsigned int m, uint32_t id) = 0;
+
+  Light        to_light(std::string &light);
+  SignalState  to_signal_state(std::string &signal_state);
+
+ protected:
+  MachineCommunication(unsigned int num_machines);
 
  private:
-  unsigned int plc_index(unsigned int &m);
+  void construct_mappings();
+
+ protected:
+  const unsigned int                 num_machines_;
 
  private:
-  llsf_utils::MachineAssignment  assignment_;
-  std::vector<modbus_t *>        mbs_;
+  std::map<std::string, Light>       name_to_light_;
+  std::map<std::string, SignalState> name_to_signal_state_;
 };
 
 } // end of namespace llsfrb

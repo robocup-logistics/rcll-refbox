@@ -1,9 +1,9 @@
 
 /***************************************************************************
- *  sps_comm.h - LLSF RefBox SPS Communication
+ *  factory.h - LLSF RefBox Machine Communication Factory
  *
- *  Created: Tue Jan 22 11:00:53 2013
- *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *  Created: Mon Apr 21 12:21:32 2014
+ *  Copyright  2013-2014  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -34,53 +34,30 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __LLSF_REFBOX_SPS_COMM_H_
-#define __LLSF_REFBOX_SPS_COMM_H_
+#ifndef __LLSF_REFBOX_LLSF_SPS_FACTORY_H_
+#define __LLSF_REFBOX_LLSF_SPS_FACTORY_H_
 
 #include <llsf_sps/machine_comm.h>
-#include <utils/llsf/machines.h>
 
-extern "C" {
-  typedef struct _modbus modbus_t;
+namespace llsfrb {
+  class Configuration;
+  class Logger;
 }
-
-#include <string>
-#include <stdint.h>
-#include <vector>
-#include <map>
 
 namespace llsf_sps {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-#define SPS_NUM_MACHINES 16
-
-class SPSComm : public MachineCommunication
+class MachineCommunicationFactory
 {
  public:
-  SPSComm(const char *host, unsigned short port,
-	  llsf_utils::MachineAssignment assn = llsf_utils::ASSIGNMENT_2014);
-  SPSComm(std::vector<std::string> hosts, unsigned short port,
-	  llsf_utils::MachineAssignment assn = llsf_utils::ASSIGNMENT_2014);
-  virtual ~SPSComm();
-
-  void try_reconnect();
-
-  void reset_lights();
-  void set_light(unsigned int m, Light light, SignalState state);
-
-  void reset_rfids();
-  bool read_rfid(unsigned int m, uint32_t &id);
-  std::map<std::string, uint32_t> read_rfids();
-  void write_rfid(unsigned int m, uint32_t id);
+  static MachineCommunication *  create(llsfrb::Configuration *config, bool discover,
+					llsfrb::Logger *logger = 0);
 
  private:
-  unsigned int plc_index(unsigned int &m);
+  MachineCommunicationFactory();
 
- private:
-  llsf_utils::MachineAssignment  assignment_;
-  std::vector<modbus_t *>        mbs_;
 };
 
 } // end of namespace llsfrb

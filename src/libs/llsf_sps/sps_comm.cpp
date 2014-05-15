@@ -86,8 +86,11 @@ namespace llsf_sps {
  * on the same port!
  * @param port TCP port to communicate to, Modbus uses 502 by default
  */
-SPSComm::SPSComm(std::vector<std::string> hosts, unsigned short port)
+SPSComm::SPSComm(std::vector<std::string> hosts, unsigned short port,
+		 llsf_utils::MachineAssignment assn)
+: MachineCommunication(hosts.size() * SPS_NUM_MACHINES)
 {
+  assignment_ = assn;
   for (auto host : hosts) {
     modbus_t *mb = modbus_new_tcp(host.c_str(), port);
     if (modbus_connect(mb) == -1) {
@@ -105,8 +108,6 @@ SPSComm::SPSComm(std::vector<std::string> hosts, unsigned short port)
 
     mbs_.push_back(mb);
   }
-
-  construct_mappings();
 }
 
 
@@ -114,8 +115,11 @@ SPSComm::SPSComm(std::vector<std::string> hosts, unsigned short port)
  * @param host host of SPS Modbus host
  * @param port TCP port to communicate to, Modbus uses 502 by default
  */
-SPSComm::SPSComm(const char *host, unsigned short port)
+SPSComm::SPSComm(const char *host, unsigned short port,
+		 llsf_utils::MachineAssignment assn)
+: MachineCommunication(SPS_NUM_MACHINES)
 {
+  assignment_ = assn;
   modbus_t *mb = modbus_new_tcp(host, port);
   if (modbus_connect(mb) == -1) {
     modbus_free(mb);
@@ -125,22 +129,8 @@ SPSComm::SPSComm(const char *host, unsigned short port)
   }
 
   mbs_.push_back(mb);
-
-  construct_mappings();
 }
 
-
-void
-SPSComm::construct_mappings()
-{
-  name_to_light_["RED"]    = LIGHT_RED;
-  name_to_light_["YELLOW"] = LIGHT_YELLOW;
-  name_to_light_["GREEN"]  = LIGHT_GREEN;
-
-  name_to_signal_state_["OFF"]    = SIGNAL_OFF;
-  name_to_signal_state_["ON"]     = SIGNAL_ON;
-  name_to_signal_state_["BLINK"]  = SIGNAL_BLINK;
-}
 
 /** Destructor. */
 SPSComm::~SPSComm()
@@ -162,71 +152,6 @@ SPSComm::try_reconnect()
       throw fawkes::Exception("Failed to re-connect to SPS: %s",
 			      modbus_strerror(errno));
     }
-  }
-}
-
-
-/** Light testing sequence
- * Goes through the following sequence:
- * <ul>
- *  <li>Blink all lights of all machines for 2 seconds</li>
- *  <li>Set all lights of all machines for 5 seconds</li>
- *  <li>Turn on each color of all machines fo 250ms each</li>
- *  <li>Turn on all lights of all machines for two seconds</li>
- *  <li>Turn of all lights of one machine after the other,
- *      each 150ms one machine is turned off.</li>
- * </ul>
- * The operation is blocking until the full sequence has completed.
- */
-void
-SPSComm::test_lights()
-{
-  // yes, we could use modbus_write_registers to write it all at once,
-  // but that would not test the typical code path
-
-  const unsigned num_machines = mbs_.size() * SPS_NUM_MACHINES;
-
-  // Set all to blink
-  for (unsigned int m = 0; m < num_machines; ++m) {
-    for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light(m, (Light)l, SIGNAL_BLINK);
-    }
-  }
-  usleep(2000000);
-
-  // Set all ON
-  for (unsigned int m = 0; m < num_machines; ++m) {
-    for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light(m, (Light)l, SIGNAL_ON);
-    }
-  }
-  usleep(500000);
-
-  // Turn on one color at a time
-  for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-    reset_lights();
-    for (unsigned int m = 0; m < num_machines; ++m) {
-      set_light(m, (Light)l, SIGNAL_ON);
-    }
-    usleep(200000);
-  }
-
-  // Turn all OFF
-  for (unsigned int m = 0; m < num_machines; ++m) {
-    for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-      set_light(m, (Light)l, SIGNAL_OFF);
-    }
-  }
-  usleep(1000000);
-
-  // Turn them on one after another
-  for (unsigned int m = 0; m < SPS_NUM_MACHINES; ++m) {
-    for (unsigned int s = 0; s < mbs_.size(); ++s) {
-      for (int l = LIGHT_BEGIN; l < LIGHT_END; ++l) {
-        set_light(s * SPS_NUM_MACHINES + m, (Light)l, SIGNAL_ON);
-      }
-    }
-    usleep(50000);
   }
 }
 
@@ -290,17 +215,6 @@ SPSComm::set_light(unsigned int m, Light light, SignalState state)
   }
 }
 
-/** Set a light of a machine to given state.
- * @param m machine of which to set the light
- * @param light light color to set
- * @param state desired signal state of the light
- */
-void
-SPSComm::set_light(unsigned int m, std::string &light, std::string &state)
-{
-  set_light(m, to_light(light), to_signal_state(state));
-}
-
 
 /** Read puck ID via RFID.
  * @param m machine of which to read the puck
@@ -335,10 +249,10 @@ SPSComm::read_rfid(unsigned int m, uint32_t &id)
  * @return vector of IDs read from all of the RFID machines. If an
  * idea is 0xFFFFFFFF then no puck was placed below the sensor.
  */
-std::vector<uint32_t>
+std::map<std::string, uint32_t>
 SPSComm::read_rfids()
 {
-  std::vector<uint32_t> rv(mbs_.size() * SPS_NUM_MACHINES, 0xFFFFFFFF);
+  std::map<std::string, uint32_t> rv;
 
   for (unsigned int m = 0; m < mbs_.size(); ++m) {
     const int addr = SPS_IN_REG_START_RFID;
@@ -350,10 +264,13 @@ SPSComm::read_rfids()
     }
 
     for (unsigned int i = 0; i < SPS_NUM_MACHINES; ++i) {
+      // libmodbus has already swapped the bytes of the registers
+      const char *machine_name = to_string(m * SPS_NUM_MACHINES + i, assignment_);
       if (regs[i * SPS_IN_REG_PER_RFID] & SPS_RFID_HAS_PUCK) {
-	// libmodbus has already swapped the bytes of the registers
-	rv[m * SPS_NUM_MACHINES + i] =
+	rv[machine_name] =
 	  regs[i * SPS_IN_REG_PER_RFID + 1] << 16 | regs[i * SPS_IN_REG_PER_RFID + 2];
+      } else {
+	rv[machine_name] = NO_PUCK;
       }
     }
   }
@@ -432,37 +349,6 @@ SPSComm::write_rfid(unsigned int m, uint32_t id)
       != SPS_OUT_REG_PER_RFID)
   {
     throw fawkes::Exception("Failed to write RFID registers: %s", modbus_strerror(errno));
-  }
-}
-
-
-/** Convert string to Light enum.
- * @param light name of light
- * @return corresponding Light value
- */
-SPSComm::Light
-SPSComm::to_light(std::string &light)
-{
-  std::map<std::string, Light>::iterator l;
-  if ((l = name_to_light_.find(light)) != name_to_light_.end()) {
-    return l->second;
-  } else {
-    throw fawkes::Exception("Unknown light name '%s' requested", light.c_str());
-  }
-}
-
-/** Convert string to signal state enum.
- * @param signal_state name of signal state
- * @return corresponding SignalState value
- */
-SPSComm::SignalState
-SPSComm::to_signal_state(std::string &signal_state)
-{
-  std::map<std::string, SignalState>::iterator s;
-  if ((s = name_to_signal_state_.find(signal_state)) != name_to_signal_state_.end()) {
-    return s->second;
-  } else {
-    throw fawkes::Exception("Unknown signal state '%s' requested", signal_state.c_str());
   }
 }
 
