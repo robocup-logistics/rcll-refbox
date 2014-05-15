@@ -42,7 +42,7 @@
 #include <config/yaml.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
-#include <llsf_sps/sps_comm.h>
+#include <llsf_sps/factory.h>
 #include <logging/multi.h>
 #include <logging/file.h>
 #include <logging/network.h>
@@ -158,13 +158,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	test_lights = config_->get_bool("/llsfrb/sps/test-lights");
       } catch (fawkes::Exception &e) {} // ignore, use default
 
-      if (config_->exists("/llsfrb/sps/hosts") && cfg_machine_assignment_ == ASSIGNMENT_2014) {
-	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
-			   config_->get_uint("/llsfrb/sps/port"));
-      } else {
-	sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
-			   config_->get_uint("/llsfrb/sps/port"));
-      }
+      sps_ = MachineCommunicationFactory::create(config_, logger_);
 
       sps_->reset_lights();
       sps_->reset_rfids();
@@ -919,15 +913,14 @@ LLSFRefBox::sps_read_rfids()
 
 
   try {
-    std::vector<uint32_t> puck_ids = sps_->read_rfids();
-    for (unsigned int i = 0; i < puck_ids.size(); ++i) {
-      const char *machine_name = to_string(i, cfg_machine_assignment_);
-      if (puck_ids[i] == SPSComm::NO_PUCK) {
+    std::map<std::string, uint32_t> puck_ids = sps_->read_rfids();
+    for (auto p : puck_ids) {
+      if (p.second == MachineCommunication::NO_PUCK) {
         clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
-			      machine_name);
+			      p.first.c_str());
       } else {
         clips_->assert_fact_f("(rfid-input (machine %s) (has-puck TRUE) (id %u))",
-			      machine_name, puck_ids[i]);
+			      p.first.c_str(), p.second);
       }
     }
   } catch (fawkes::Exception &e) {

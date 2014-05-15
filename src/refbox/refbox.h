@@ -56,7 +56,7 @@ namespace protobuf_clips {
 }
 
 namespace llsf_sps {
-  class SPSComm;
+  class MachineCommunication;
 }
 
 #ifdef HAVE_AVAHI
@@ -160,7 +160,7 @@ class LLSFRefBox
   Logger        *logger_;
   MultiLogger   *clips_logger_;
   Logger::LogLevel log_level_;
-  llsf_sps::SPSComm *sps_;
+  llsf_sps::MachineCommunication *sps_;
   protobuf_clips::ClipsProtobufCommunicator *pb_comm_;
 
   CLIPS::Environment                       *clips_;
