@@ -444,6 +444,40 @@ XBee::find_node(std::string node_name, uint64_t &hw_addr, uint16_t &net_addr)
   }
 }
 
+bool
+XBee::find_node(std::string node_name, XBeeNode &node)
+{
+  uint64_t hw_addr = 0;
+  uint16_t net_addr = 0;
+  if (find_node(node_name, hw_addr, net_addr)) {
+    node.identifier = node_name;
+    node.hw_address = hw_addr;
+    node.network_address = net_addr;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+bool
+XBee::find_node(std::string node_name)
+{
+  XBeeNode node;
+  if (find_node(node_name, node)) {
+    if (nodes_.find(node.hw_address) == nodes_.end()) {
+      nodes_[node.hw_address] = node;
+    } else {
+      nodes_[node.hw_address].identifier = node_name;
+      nodes_[node.hw_address].hw_address = node.hw_address;
+      nodes_[node.hw_address].network_address = node.network_address;
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 uint16_t
 XBee::get_uint16(const char *command)
 {

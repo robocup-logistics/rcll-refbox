@@ -164,6 +164,8 @@ class XBee {
 
   void     discover();
   bool     find_node(std::string node_name, uint64_t &hw_addr, uint16_t &net_addr);
+  bool     find_node(std::string node_name, XBeeNode &node);
+  bool     find_node(std::string node_name);
   uint16_t get_pan_id();
   uint16_t get_network_address();
   uint64_t get_hardware_address();
