@@ -47,6 +47,9 @@
 
 #define XBEE_PACKET_AT_RESPONSE_COMMAND_INDEX 1
 
+#define XBEE_RX_OPTION_ACKNOWLEDGED 0x01
+#define XBEE_RX_OPTION_BROADCAST    0x02
+
 
 namespace llsf_xbee {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -673,5 +676,58 @@ XBeeNode::XBeeNode(const uint8_t *nd_response, uint16_t response_length)
   manufacturer_id =
     (nd_response[14 + ni_length + 8] << 8) + nd_response[14 + ni_length + 9];
 }
+
+
+XBeeRxData::XBeeRxData(std::shared_ptr<XBeePacket> &packet)
+{
+  if (packet->payload_length() < 11) {
+    throw std::runtime_error("RxData packet too short");
+  }
+
+  const uint8_t *payload = packet->payload();
+
+  // 0-7: hw addr
+  // 8,9: net addr
+  // 10:  options
+  // 11-N: data
+
+  hw_addr_ =
+    ((uint64_t)payload[0]  << 56) + ((uint64_t)payload[1] << 48) +
+    ((uint64_t)payload[2]  << 40) + ((uint64_t)payload[3] << 32) +
+    ((uint64_t)payload[4] << 24) + ((uint64_t)payload[5] << 16) +
+    ((uint64_t)payload[6] << 8)  +  payload[7];
+
+  net_addr_ = (payload[8] << 8) + payload[9];
+
+  was_acknowledged_ = payload[10] & XBEE_RX_OPTION_ACKNOWLEDGED;
+  was_broadcast_ = payload[10] & XBEE_RX_OPTION_BROADCAST;
+
+  payload_length_ = packet->payload_length() - 11;
+  if (payload_length_ > 0) {
+    payload_ = new uint8_t[payload_length_];
+    memcpy(payload_, &payload[11], payload_length_);
+  } else {
+    payload_ = 0;
+  }
+}
+
+XBeeRxData::~XBeeRxData()
+{
+  delete payload_;
+}
+
+
+void
+XBeeRxData::print() const
+{
+  printf("HW %08lx %08lx  Net %04x  Data ",
+	 hw_addr_ >> 32, hw_addr_ & 0xffffffff, net_addr_);
+
+  for (unsigned int i = 0; i <= payload_length_; ++i) {
+    printf("%02x", payload_[i]);
+  }
+  printf("\n");
+}
+
 
 } // end of namespace llsfrb

@@ -122,6 +122,41 @@ class XBeePacket {
   uint16_t  data_length;
 };
 
+
+class XBeeRxData {
+  friend class XBee;
+ public:
+  ~XBeeRxData();
+
+  uint16_t length() const
+  { return payload_length_; }
+  uint64_t sender_hw_addr() const
+  { return hw_addr_; }
+  uint16_t sender_net_addr() const
+  { return net_addr_; }
+
+  const uint8_t *  payload() const
+  { return payload_; }
+
+  bool     was_broadcast() const
+  { return was_broadcast_; }
+  bool     was_acknowledged() const
+  { return was_acknowledged_; }
+
+  void print() const;
+
+ private:
+  XBeeRxData(std::shared_ptr<XBeePacket> &packet);
+
+ private:
+  uint8_t  *payload_;
+  uint16_t  payload_length_;
+  uint64_t  hw_addr_;
+  uint16_t  net_addr_;
+  bool      was_broadcast_;
+  bool      was_acknowledged_;
+};
+
 class XBee {
  public:
   XBee(const std::string &device, unsigned int baud_rate = 9600);
