@@ -172,6 +172,10 @@ void
 XBee::handle_recv_payload(const boost::system::error_code& error)
 {
   if (! error) {
+    // inbound lock to guarantee reception of responses
+    inbound_mutex_.lock();
+    inbound_mutex_.unlock();
+
     uint32_t checksum = in_header_.api_id;
     // this loop already includes the checksum because header.length
     // would include the API ID (which we already take as start value
@@ -182,27 +186,26 @@ XBee::handle_recv_payload(const boost::system::error_code& error)
     if ((checksum & 0xff) != 0xff) {
       printf("Checksum fail\n");
     } else {
-      std::unique_lock<std::mutex> lock(inbound_mutex_);
-      inbound_packet_.reset(new XBeePacket(in_header_, in_payload_));
-
+      std::shared_ptr<XBeePacket> packet(new XBeePacket(in_header_, in_payload_));
       if (debug_) {
 	printf("Received: ");
-	inbound_packet_->print();
+	packet->print();
       }
 
-      if (inbound_packet_->api_id() == XBEE_API_ID_AT_COMMAND_RESPONSE) {
+      if (packet->api_id() == XBEE_API_ID_AT_COMMAND_RESPONSE) {
 	// if this is a discover result, add a note for it
-	const uint8_t *payload = inbound_packet_->payload();
+	const uint8_t *payload = packet->payload();
 	if (payload[XBEE_PACKET_AT_RESPONSE_COMMAND_INDEX    ] == 'N' &&
 	    payload[XBEE_PACKET_AT_RESPONSE_COMMAND_INDEX + 1] == 'D')
 	{
-	  XBeeNode node(payload, inbound_packet_->payload_length());
+	  XBeeNode node(payload, packet->payload_length());
 	  nodes_[node.hw_address] = node;
 	}
+      } else if (packet->api_id() == XBEE_API_ID_ZIGBEE_RECEIVE_PACKET) {
+	std::shared_ptr<XBeeRxData> rx_data(new XBeeRxData(packet));
+	sig_rcvd_rx_data_(rx_data);
       }
-      inbound_waitcond_.notify_all();
-      lock.unlock();
-      std::this_thread::yield();
+      sig_rcvd_packet_(packet);
     }
   } else {
     printf("Failed to receive payload\n");
@@ -236,14 +239,11 @@ XBee::at_command(const char *command, uint8_t *value, uint8_t value_size, bool w
   }
 
   std::unique_lock<std::mutex> lock(inbound_mutex_);
-  inbound_packet_.reset();
 
   send_packet(XBEE_API_ID_AT_COMMAND, payload, payload_size);
 
   if (wait) {
-    wait_response(payload[0], lock);
-
-    return inbound_packet_;
+    return wait_response(payload[0], lock);
   } else {
     return std::shared_ptr<XBeePacket>();
   }
@@ -299,11 +299,33 @@ XBee::send(uint64_t hw_addr, uint16_t net_addr, uint8_t *payload, uint8_t payloa
 }
 
 void
+XBee::wait_response_handler(const boost::signals2::connection &conn,
+			    std::shared_ptr<XBeePacket> in_packet,
+			    uint8_t frame_id,
+			    std::shared_ptr<XBeePacket> &packet,
+			    std::condition_variable &waitcond,
+			    std::mutex &mutex)
+{
+  if (in_packet->frame_id() == frame_id) {
+    conn.disconnect();
+    std::unique_lock<std::mutex> lock(mutex);
+    packet = in_packet;
+    waitcond.notify_all();
+  }
+}
+
+std::shared_ptr<XBeePacket>
 XBee::wait_response(uint8_t frame_id, std::unique_lock<std::mutex> &lock)
 {
-  while (inbound_packet_ == NULL || inbound_packet_->frame_id() != frame_id) {
-    inbound_waitcond_.wait(lock);
-  }
+  std::condition_variable condvar;
+  std::shared_ptr<XBeePacket> packet;
+
+  boost::signals2::signal<void (std::shared_ptr<XBeePacket>)>::extended_slot_type
+    ext_sig(&XBee::wait_response_handler, this, _1, _2, frame_id, boost::ref(packet),
+	    boost::ref(condvar), boost::ref(*lock.mutex()));
+  sig_rcvd_packet_.connect_extended(0, ext_sig);
+  condvar.wait(lock);
+  return packet;
 }
 
 void

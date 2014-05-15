@@ -178,6 +178,18 @@ class XBee {
 
   void set_debug(bool debug);
 
+  /** Signal that is invoked when a message has been received.
+   * @return signal
+   */
+  boost::signals2::signal<void (std::shared_ptr<XBeePacket>)> &
+    signal_rcvd_packet() { return sig_rcvd_packet_; }
+
+  /** Signal that is invoked when a message has been received.
+   * @return signal
+   */
+  boost::signals2::signal<void (std::shared_ptr<XBeeRxData>)> &
+    signal_rcvd_rx_data() { return sig_rcvd_rx_data_; }
+
  private:
   void start_recv(bool have_start = false);
   void start_recv_payload();
@@ -192,9 +204,17 @@ class XBee {
     return frame_id_;
   }
   void send_packet(uint8_t api_id, uint8_t *payload, uint16_t payload_size);
-  void wait_response(uint8_t frame_id, std::unique_lock<std::mutex> &lock);
   uint16_t get_uint16(const char *command);
   uint32_t get_uint32(const char *command);
+
+  std::shared_ptr<XBeePacket>
+    wait_response(uint8_t frame_id, std::unique_lock<std::mutex> &lock);
+  void wait_response_handler(const boost::signals2::connection &conn,
+			     std::shared_ptr<XBeePacket> in_packet,
+			     uint8_t frame_id,
+			     std::shared_ptr<XBeePacket> &packet,
+			     std::condition_variable &waitcond,
+			     std::mutex &mutex);
 
  private:
   bool debug_;
@@ -204,6 +224,9 @@ class XBee {
 
   std::thread asio_thread_;
 
+  boost::signals2::signal<void (std::shared_ptr<XBeePacket>)>  sig_rcvd_packet_;
+  boost::signals2::signal<void (std::shared_ptr<XBeeRxData>)>  sig_rcvd_rx_data_;
+
   XBeePacketHeader in_header_;
   uint8_t *in_payload_;
 
@@ -212,8 +235,6 @@ class XBee {
   bool                     outbound_active_;
 
   std::mutex                  inbound_mutex_;
-  std::condition_variable     inbound_waitcond_;
-  std::shared_ptr<XBeePacket> inbound_packet_;
 
   uint8_t  frame_id_;
 

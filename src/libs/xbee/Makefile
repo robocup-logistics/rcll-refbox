@@ -34,7 +34,7 @@ REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 ifneq ($(GCC_TOO_OLD),1)
-  ifeq ($(HAVE_CPP11)$(HAVE_BOOST_LIBS),11)
+  ifeq ($(HAVE_CPP11)$(HAVE_BOOST_LIBS)$(HAVE_BOOST_LIBS),111)
     CFLAGS  += $(CFLAGS_CPP11) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
     LDFLAGS += $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
