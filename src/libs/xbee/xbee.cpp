@@ -409,7 +409,9 @@ XBee::send_packet(uint8_t api_id, uint8_t *payload, uint16_t payload_size)
 void
 XBee::discover()
 {
+  uint16_t nt = get_uint16("NT");
   at_command("ND", /* wait */ false);
+  usleep(nt * 100000);
 }
 
 
