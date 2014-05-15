@@ -92,6 +92,8 @@ MachineCommunicationFactory::create(llsfrb::Configuration *config, bool discover
       return new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
 			 config->get_uint("/llsfrb/sps/port"));
     }
+  } else if (mtype == "ArduinoXBee") {
+    return new ArduinoXBeeComm(config->get_string("/llsfrb/sps/device").c_str(), discover);
   } else {
     throw fawkes::Exception("Unknown machine communication type");
   }

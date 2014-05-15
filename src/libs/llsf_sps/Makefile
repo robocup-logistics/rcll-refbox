@@ -19,7 +19,7 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
 LIBS_libllsf_sps = stdc++ m llsfrbcore llsfrbutils llsfxbee
-OBJS_libllsf_sps = machine_comm.o sps_comm.o factory.o
+OBJS_libllsf_sps = machine_comm.o sps_comm.o factory.o arduino_comm.o
 HDRS_libllsf_sps = sps_comm.h
 
 OBJS_all = $(OBJS_libllsf_sps)
@@ -30,10 +30,15 @@ ifeq ($(CC),gcc)
   endif
 endif
 
+REQ_BOOST_LIBS = thread asio system signals2
+HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
+
 ifneq ($(GCC_TOO_OLD),1)
   ifeq ($(HAVE_CPP11)$(HAVE_LIBMODBUS),11)
-    CFLAGS  += $(CFLAGS_LIBMODBUS) $(CFLAGS_CPP11)
-    LDFLAGS += $(LDFLAGS_LIBMODBUS)
+    CFLAGS  += $(CFLAGS_LIBMODBUS) $(CFLAGS_CPP11) \
+	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+    LDFLAGS += $(LDFLAGS_LIBMODBUS) \
+	       $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
     LIBS_all  = $(LIBDIR)/libllsf_sps.so
   else
@@ -43,6 +48,9 @@ ifneq ($(GCC_TOO_OLD),1)
     ifneq ($(HAVE_CPP11),1)
       WARN_TARGETS += warning_cpp11
     endif
+    ifneq ($(HAVE_BOOST_LIBS),1)
+      WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
+    endif
   endif
 else
       WARN_TARGETS += warning_old_gcc
@@ -50,13 +58,15 @@ endif
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
-.PHONY: $(WARN_TARGETS)
+.PHONY: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
 warning_libmodbus:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF SPS library$(TNORMAL) (libmodbus not found)"
 warning_cpp11:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF SPS library$(TNORMAL) (compiler has no C++11 support)"
 warning_old_gcc:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF SPS library$(TNORMAL) (GCC too old, have $(GCC_VERSION), required 4.6)"
+$(WARN_TARGETS_BOOST): warning_boost_%:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF XBee library$(TNORMAL) (Boost library $* not found)"
 endif
 
 include $(BUILDSYSDIR)/base.mk
