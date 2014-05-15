@@ -37,7 +37,7 @@
 #include <config/yaml.h>
 
 #include <utils/system/argparser.h>
-#include <llsf_sps/sps_comm.h>
+#include <llsf_sps/factory.h>
 #include <utils/llsf/machines.h>
 
 #include <unistd.h>
@@ -76,22 +76,15 @@ main(int argc, char **argv)
   config->load("config.yaml");
 
   //printf("Connecting to SPS...\n");  
-  SPSComm *sps_;
-  if (config->exists("/llsfrb/sps/hosts") && machine_assignment == ASSIGNMENT_2014) {
-    sps_ = new SPSComm(config->get_strings("/llsfrb/sps/hosts"),
-		       config->get_uint("/llsfrb/sps/port"));
-  } else {
-    sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
-		       config->get_uint("/llsfrb/sps/port"));
-  }
+  MachineCommunication *sps_ = MachineCommunicationFactory::create(&*config, false);
 
   //sps_->reset_lights();
   sps_->reset_rfids();
 
   unsigned int         machine  = 0;
-  SPSComm::SignalState red_s    = SPSComm::SIGNAL_OFF;
-  SPSComm::SignalState green_s  = SPSComm::SIGNAL_OFF;
-  SPSComm::SignalState yellow_s = SPSComm::SIGNAL_OFF;
+  MachineCommunication::SignalState red_s    = MachineCommunication::SIGNAL_OFF;
+  MachineCommunication::SignalState green_s  = MachineCommunication::SIGNAL_OFF;
+  MachineCommunication::SignalState yellow_s = MachineCommunication::SIGNAL_OFF;
 
   if (argp.has_arg("Y")) {
     std::string year = argp.arg("Y");
@@ -132,9 +125,9 @@ main(int argc, char **argv)
 
 
   //sps_->test_lights();
-  sps_->set_light(machine, SPSComm::LIGHT_RED, red_s);
-  sps_->set_light(machine, SPSComm::LIGHT_YELLOW, yellow_s);
-  sps_->set_light(machine, SPSComm::LIGHT_GREEN, green_s);
+  sps_->set_light(machine, MachineCommunication::LIGHT_RED, red_s);
+  sps_->set_light(machine, MachineCommunication::LIGHT_YELLOW, yellow_s);
+  sps_->set_light(machine, MachineCommunication::LIGHT_GREEN, green_s);
 
   usleep(500000);
 

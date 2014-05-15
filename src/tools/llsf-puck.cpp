@@ -37,7 +37,7 @@
 #include <config/yaml.h>
 
 #include <utils/system/argparser.h>
-#include <llsf_sps/sps_comm.h> 
+#include <llsf_sps/factory.h>
 #include <boost/asio.hpp>
 #include <utils/llsf/machines.h>
 
@@ -58,7 +58,7 @@ boost::asio::deadline_timer  *timer_;
 #if BOOST_ASIO_VERSION >= 100601
 boost::asio::signal_set      *signal_set_;
 #endif
-SPSComm                      *sps_;
+MachineCommunication         *sps_;
 unsigned int                  machine_;
 uint32_t                      new_puck_id_;
 OpMode                        op_mode_;
@@ -78,7 +78,7 @@ handle_timer(const boost::system::error_code& error)
     uint32_t old_id = 0;
     if (sps_->read_rfid(machine_, old_id)) {
       if (op_mode_ == READ) {
-	printf("Puck ID: %u\n", old_id);
+	printf("Puck ID: %u (%x)\n", old_id, old_id);
       } else {
 	printf("Writing new ID %u to puck (old was %u)...\n",
 	       new_puck_id_, old_id);
@@ -125,19 +125,12 @@ main(int argc, char **argv)
   config->load("config.yaml");
 
   printf("Connecting to SPS...\n");
-  if (config->exists("/llsfrb/sps/hosts") && machine_assignment == ASSIGNMENT_2014) {
-    sps_ = new SPSComm(config->get_strings("/llsfrb/sps/hosts"),
-		       config->get_uint("/llsfrb/sps/port"));
-  } else {
-    sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
-		       config->get_uint("/llsfrb/sps/port"));
-  }
+  sps_ = MachineCommunicationFactory::create(&*config, false);
 
   sps_->reset_lights();
   sps_->reset_rfids();
 
   machine_ = 0;
-
 
   if (argp.has_arg("Y")) {
     std::string year = argp.arg("Y");
