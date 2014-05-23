@@ -59,6 +59,7 @@ class ProtobufBroadcastPeer
  public:
   enum { max_packet_length = 1024 };
 
+  ProtobufBroadcastPeer(const std::string address, unsigned short port, const std::string senderip);
   ProtobufBroadcastPeer(const std::string address, unsigned short port);
   ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
 			unsigned short recv_on_port);

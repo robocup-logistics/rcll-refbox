@@ -67,6 +67,14 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned
   own_message_register_ = true;
 }
 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port, const std::string senderip)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::address::from_string(senderip), port))
+{
+  ctor(address, port);
+  message_register_ = new MessageRegister();
+  own_message_register_ = true;
+}
 
 /** Testing constructor.
  * This constructor listens and sends to different ports. It can be used to

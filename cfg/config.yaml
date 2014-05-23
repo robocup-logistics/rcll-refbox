@@ -48,7 +48,14 @@ llsfrb:
     #peer-host: !ipv4 127.0.0.1
     #peer-send-port: !udp-port 4444
     #peer-recv-port: !udp-port 4445
-    
+    robotino1: !ipv4 172.26.12.201
+    robotino2: !ipv4 172.26.12.202
+    robotino3: !ipv4 172.26.12.203
+    view2-send:  /home/robotino/llsf-refbox/view2/view2send.txt
+    view2-recv1: /home/robotino/llsf-refbox/view2/view2recv-1.txt
+    view2-recv2: /home/robotino/llsf-refbox/view2/view2recv-2.txt
+    view2-recv3: /home/robotino/llsf-refbox/view2/view2recv-3.txt
+
   mongodb:
     enable: true
     hostport: localhost

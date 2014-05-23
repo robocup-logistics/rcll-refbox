@@ -35,6 +35,9 @@ OBJS_llsf_puck = llsf-puck.o
 LIBS_llsf_fake_robot = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_llsf_fake_robot = llsf-fake-robot.o
 
+LIBS_llsf_view2 = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+OBJS_llsf_view2 = llsf-view2.o
+
 LIBS_llsf_signal_ctrl = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_sps
 OBJS_llsf_signal_ctrl = llsf-signal-ctrl.o
 
@@ -42,8 +45,8 @@ LIBS_llsf_report_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_proto
 OBJS_llsf_report_machine = llsf-report-machine.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
-  OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) 
-  BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot $(BINDIR)/llsf-report-machine
+  OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) $(OBJS_llsf_view2)
+  BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot $(BINDIR)/llsf-report-machine $(BINDIR)/llsf-view2
 
   CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) \
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
@@ -54,6 +57,11 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS_llsf_fake_robot += $(LDFLAGS_PROTOBUF) \
 	     		     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
+  CFLAGS_llsf_view2       += $(CFLAGS_PROTOBUF) \
+                             $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS_llsf_view2      += $(LDFLAGS_PROTOBUF) \
+                             $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   CFLAGS_llsf_report_machine  += $(CFLAGS_PROTOBUF) \
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
