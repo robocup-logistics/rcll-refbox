@@ -106,7 +106,7 @@ btrview2recv recvData[3];
 int m_type[11];
 unsigned int gameHour, gameMin, gameSec;
 
-char output_filename[255];
+std::string output_filename;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -216,7 +216,7 @@ void outputInfo(){
   FILE *fp;
   int i;
 
-  if((fp = fopen(output_filename, "w")) == NULL) {
+  if((fp = fopen(output_filename.c_str(), "w")) == NULL) {
     printf("write error\n");
     return;
   }
@@ -484,7 +484,9 @@ main(int argc, char **argv)
     exit(1);
   }
 
-  sprintf(output_filename, "%s-var.sh", argv[0]);
+  // sprintf(output_filename, "%s-var.sh", argv[0]);
+  output_filename = argv[0];
+  output_filename += "-var.sh";
 
   for(int i = 0; i < 3; i++) name_[i] = argp.items()[i];
   team_name_ = argp.items()[3];
