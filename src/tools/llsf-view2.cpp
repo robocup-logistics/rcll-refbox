@@ -96,12 +96,10 @@ std::string view2_phase;
 std::string view2_points;
 
 std::string machine_name_;
-std::string machine_name_10;
-std::string machine_name_00;
 std::string machine_type_;
 
-btrview2send sendData;
-btrview2recv recvData[3];
+llsfview2send sendData;
+llsfview2recv recvData[3];
 
 int m_type[11];
 unsigned int gameHour, gameMin, gameSec;
@@ -157,7 +155,7 @@ void init_message()
   view2_state = "none"; view2_phase = "none"; view2_points = "0";
 }
 
-void btrInitOutputData()
+void llsfInitOutputData()
 {
   sendData.phase = 0;
   sendData.state = 0;
@@ -166,7 +164,7 @@ void btrInitOutputData()
   for(int i = 0; i < 10; i++) sendData.mType[i] = 0;
 }
 
-void btrOutputView2(btrview2send sendData)
+void llsfOutputView2(llsfview2send sendData)
 {
   static int seqnumber;
 
@@ -183,7 +181,7 @@ void btrOutputView2(btrview2send sendData)
   }
 }
 
-void btrInitInputFile(btrview2recv &recvData)
+void llsfInitInputFile(llsfview2recv &recvData)
 {
   FILE *fp;
   recvData.machineNumber = 0;
@@ -198,7 +196,7 @@ void btrInitInputFile(btrview2recv &recvData)
   }
 }
 
-void btrInputView2(btrview2recv &recvData)
+void llsfInputView2(llsfview2recv &recvData)
 {
   FILE *fp;
   if ((fp = fopen(recvData.filename.c_str(), "r")) != NULL) {
@@ -273,8 +271,8 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     view2_state = llsf_msgs::GameState::State_Name(gs->state());
     if (sendData.phase != gs->phase()) {
         init_message();
-        btrInitOutputData();
-        for(int i = 0; i < 3; i++) btrInitInputFile(recvData[i]);
+        llsfInitOutputData();
+        for(int i = 0; i < 3; i++) llsfInitInputFile(recvData[i]);
     }
     char point[] = "0000:0000";
     sprintf(point, "%u:%u", gs->points_cyan(), gs->points_magenta());
@@ -348,17 +346,14 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     for (int i = 0; i < mi->machines_size(); ++i) {
       const Machine &m = mi->machines(i);
       const Pose2D &p = m.pose();
-      printf("  %-3s|%2s @ (%f, %f, %f)\n",
+      printf("  %-3s|%2s|%s @ (%f, %f, %f)\n",
              m.name().c_str(), m.type().substr(0, 2).c_str(),
+             Team_Name(m.team_color()).substr(0, 2).c_str(),
              p.x(), p.y(), p.ori());
       switch (m.name()[0]) {
         case 'M': // Machine
           {
-            int maskNo = m.name().c_str()[1] - '1';
-            int mType = m.type().c_str()[1] - '1';
-            if (m.name()[2] == '0') maskNo += 9;
-            if (m.type().c_str()[2] == '0') mType += 9;
-            sendData.mType[maskNo] = mType;
+            sendData.mType[std::atoi(m.name().substr(1, 2).c_str())] = std::atoi(m.type().substr(1, 2).c_str());
           }
           break;
         case 'D': // Delivery Area
@@ -425,7 +420,7 @@ static int playerNo = 0;
                                            (1000000000/since_epoch.ticks_per_second())));
 
     playerNo = (playerNo + 1 ) % 3;
-    btrInputView2(recvData[playerNo]);
+    llsfInputView2(recvData[playerNo]);
 
     if (seq_[playerNo] < recvData[playerNo].seq) {
       seq_[playerNo] = recvData[playerNo].seq;
@@ -448,16 +443,14 @@ static int playerNo = 0;
     }
 
     if (m_type[recvData[playerNo].machineNumber] != recvData[playerNo].machineType && recvData[playerNo].machineType > 0 && recvData[playerNo].machineNumber > 0) {
-      if (recvData[playerNo].machineNumber != 10) {
-        machine_name_= machine_name_00;
-        machine_name_[1] = '0' + recvData[playerNo].machineNumber;
-      } else {
-        machine_name_= machine_name_10;
-      }
-      machine_type_[1] = '0' + recvData[playerNo].machineType;
+      machine_name_ = "M";
+      machine_name_ += std::to_string(recvData[playerNo].machineNumber);
+      machine_type_ = "T";
+      machine_type_ += std::to_string(recvData[playerNo].machineType);
 
       printf("Announcing machine type (%s %s)\n", machine_name_.c_str(), machine_type_.c_str());
       llsf_msgs::MachineReport report;
+      report.set_team_color(team_);
       llsf_msgs::MachineReportEntry *entry = report.add_machines();
       entry->set_name(machine_name_);
       entry->set_type(machine_type_);
@@ -469,7 +462,7 @@ static int playerNo = 0;
 
   }
 
-  btrOutputView2(sendData);
+  llsfOutputView2(sendData);
   outputInfo();
 }
 
@@ -517,7 +510,7 @@ main(int argc, char **argv)
   } else {
     for(int i = 0; i < 4; i++) {
       std::string robotino = "/llsfrb/comm/robotino0";
-      robotino[21] = '0' + i;
+      robotino += std::to_string(i);
       if (i == 0) {robotino = "//llsfrb/comm/peer-host";}
       peer_[i] = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
                                            config->get_uint("/llsfrb/comm/peer-port"),
@@ -542,18 +535,16 @@ sendData.filename = config->get_string("/llsfrb/comm/view2-send");
   message_register.add_message_type<RobotInfo>();
 
   // sendData.filename = config->get_string("/llsfrb/comm/view2-send");
-  // btrInitOutputData();
+  // llsfInitOutputData();
 
   recvData[0].filename  = config->get_string("/llsfrb/comm/view2-recv1");
   recvData[1].filename  = config->get_string("/llsfrb/comm/view2-recv2");
   recvData[2].filename  = config->get_string("/llsfrb/comm/view2-recv3");
 
-  for(int i = 0; i < 3; i++) btrInitInputFile(recvData[i]);
+  for(int i = 0; i < 3; i++) llsfInitInputFile(recvData[i]);
 
   for(int i = 0; i < 10; i++) m_type[i] = 0;
-  machine_name_ = "M0"; // argp.items()[0];
-  machine_name_10 = "M10";
-  machine_name_00 = "M0";
+  machine_name_ = "M00";
   machine_type_ = "T0";
 
   peer_[0]->signal_received().connect(handle_message);

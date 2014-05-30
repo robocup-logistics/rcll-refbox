@@ -1,5 +1,5 @@
 /***************************************************************************
- *  btr-view2.h - output the communication data from ProtoBuf.
+ *  llsf-view2.h - output the communication data from ProtoBuf.
  *
  *  Created: Mon June 17 14:20:00 2013
  *  Copyright  2013  Wataru UEMURA [friede.elec.ryukoku.ac.jp]
@@ -20,7 +20,7 @@ typedef struct
   int quantity_delivered[3];	// order info at Production Phase
   int lspec_state[5][3];	// LightColor information at Exploration phase	
   int mType[10];		// Machine Type at Production Phase
-} btrview2send;
+} llsfview2send;
 
 typedef struct
 {
@@ -31,7 +31,7 @@ typedef struct
   double y;
   double ori;
   unsigned long seq;
-} btrview2recv;
+} llsfview2recv;
 
 
 #endif
