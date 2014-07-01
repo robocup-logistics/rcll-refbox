@@ -196,10 +196,10 @@
 
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
-  ?*M-WEST*   = (* (/ 3.0 2.0) (pi))
-  ?*M-NORTH*  = 0
-  ?*M-EAST*   = (/ (pi) 2.0)
-  ?*M-SOUTH*  = (pi)
+  ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg
+  ?*M-NORTH*  = 0                      ;   0 deg
+  ?*M-WEST*   = (/ (pi) 2.0)           ;  90 deg
+  ?*M-SOUTH*  = (pi)                   ; 180 deg
 )
 
 (deffacts startup
@@ -221,7 +221,7 @@
   ; Positions are the example ones from the rulebook and
   ; will most likely be different during the tournament
   (machine (name M1)  (team CYAN) (mtype T1)      (pose 0.56 1.68 ?*M-EAST*))
-  (machine (name M2)  (team CYAN) (mtype T1)      (pose 0.56 1.68 ?*M-WEST*))
+  (machine (name M2)  (team CYAN) (mtype T1)      (pose 0.56 2.80 ?*M-WEST*))
   (machine (name M3)  (team CYAN) (mtype T2)      (pose 1.68 1.68 ?*M-NORTH*))
   (machine (name M4)  (team CYAN) (mtype T2)      (pose 1.68 2.80 ?*M-SOUTH*))
   (machine (name M5)  (team CYAN) (mtype T3)      (pose 1.68 3.92 ?*M-SOUTH*))
@@ -238,7 +238,7 @@
   (machine (name R1)  (team CYAN) (mtype RECYCLE) (pose 0.56 5.04 ?*M-NORTH*))
 
   (machine (name M13) (team MAGENTA) (mtype T1)      (pose -0.56 1.68 ?*M-EAST*))
-  (machine (name M14) (team MAGENTA) (mtype T1)      (pose -0.56 1.68 ?*M-WEST*))
+  (machine (name M14) (team MAGENTA) (mtype T1)      (pose -0.56 2.80 ?*M-WEST*))
   (machine (name M15) (team MAGENTA) (mtype T2)      (pose -1.68 1.68 ?*M-SOUTH*))
   (machine (name M16) (team MAGENTA) (mtype T2)      (pose -1.68 2.80 ?*M-NORTH*))
   (machine (name M17) (team MAGENTA) (mtype T3)      (pose -1.68 3.92 ?*M-NORTH*))
