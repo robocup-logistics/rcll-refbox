@@ -61,7 +61,7 @@ class ProtobufStreamClient
  public:
   ProtobufStreamClient();
   ProtobufStreamClient(std::vector<std::string> &proto_path);
-  ProtobufStreamClient(MessageRegister *mr);
+  ProtobufStreamClient(MessageRegister *mr, frame_header_version_t header_version = PB_FRAME_V2);
   ~ProtobufStreamClient();
 
   /** Get the client's message register.
@@ -115,7 +115,6 @@ class ProtobufStreamClient
  private: // methods
   void disconnect_nosig();
   void run_asio();
-  void io_service_run();
   void handle_resolve(const boost::system::error_code& err,
 		      boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
   void handle_connect(const boost::system::error_code& err);
@@ -131,6 +130,7 @@ class ProtobufStreamClient
   boost::asio::io_service         io_service_;
   boost::asio::ip::tcp::resolver  resolver_;
   boost::asio::ip::tcp::socket    socket_;
+  boost::asio::io_service::work   io_service_work_;
 
   boost::signals2::signal<void (uint16_t, uint16_t,
 				std::shared_ptr<google::protobuf::Message>)>  sig_rcvd_;
@@ -144,12 +144,15 @@ class ProtobufStreamClient
   std::mutex               outbound_mutex_;
   bool                     outbound_active_;
 
-  frame_header_t in_frame_header_;
-  size_t         in_data_size_;
-  void *         in_data_;
+  void   *in_frame_header_;
+  size_t  in_frame_header_size_;
+  size_t  in_data_size_;
+  void *  in_data_;
 
   MessageRegister *message_register_;
   bool             own_message_register_;
+
+  frame_header_version_t frame_header_version_;
 };
 
 } // end namespace protobuf_comm

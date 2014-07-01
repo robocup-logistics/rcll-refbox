@@ -218,15 +218,20 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     pb_comm_->server()->signal_receive_failed()
       .connect(boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
 
-    pb_comm_->peer()->signal_received()
-      .connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
+    const std::map<long int, protobuf_comm::ProtobufBroadcastPeer *> &peers =
+      pb_comm_->peers();
+    for (auto p : peers) {
+      p.second->signal_received()
+	.connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
+    }
 
     pb_comm_->signal_server_sent()
       .connect(boost::bind(&LLSFRefBox::handle_server_sent_msg, this, _1, _2));
     pb_comm_->signal_client_sent()
       .connect(boost::bind(&LLSFRefBox::handle_client_sent_msg, this, _1, _2, _3));
     pb_comm_->signal_peer_sent()
-      .connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _1));
+      .connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _2));
+
   }
 #endif
 
@@ -323,17 +328,6 @@ LLSFRefBox::setup_protobuf_comm()
 	errstr += std::string(", ") + e->first + " (" + e->second + ")";
       }
       logger_->log_warn("RefBox", "Failed to load some message types: %s", errstr.c_str());
-    }
-
-    if (config_->exists("/llsfrb/comm/peer-send-port") &&
-	config_->exists("/llsfrb/comm/peer-recv-port") )
-    {
-      pb_comm_->enable_peer(config_->get_string("/llsfrb/comm/peer-host"),
-			    config_->get_uint("/llsfrb/comm/peer-send-port"),
-			    config_->get_uint("/llsfrb/comm/peer-recv-port"));
-    } else {
-      pb_comm_->enable_peer(config_->get_string("/llsfrb/comm/peer-host"),
-			    config_->get_uint("/llsfrb/comm/peer-port"));
     }
 
   } catch (std::runtime_error &e) {

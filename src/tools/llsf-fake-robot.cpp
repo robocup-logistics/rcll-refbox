@@ -60,10 +60,14 @@ using namespace fawkes;
 static bool quit = false;
 static boost::asio::deadline_timer *timer_ = NULL;
 std::string name_;
-Team team_;
+Team team_color_;
 std::string team_name_;
 unsigned long seq_ = 0;
-ProtobufBroadcastPeer *peer_ = NULL;
+ProtobufBroadcastPeer *peer_public_ = NULL;
+ProtobufBroadcastPeer *peer_team_ = NULL;
+bool crypto_setup_ = false;
+
+llsfrb::Configuration *config_;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -112,14 +116,39 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     int sec  = gs->game_time().sec() - hour * 3600 - min * 60;
 
 #if __WORDSIZE == 64
-    printf("GameState received:  %02i:%02i:%02i.%02ld  %s %s  %u:%u points\n",
+    printf("GameState received:  %02i:%02i:%02i.%02ld  %s %s  %u:%u points, %s vs. %s\n",
 #else
-    printf("GameState received:  %02i:%02i:%02i.%02lld  %s %s  %u:%u points\n",
+    printf("GameState received:  %02i:%02i:%02i.%02lld  %s %s  %u:%u points, %s vs. %s\n",
 #endif
 	   hour, min, sec, gs->game_time().nsec() / 1000000,
 	   llsf_msgs::GameState::Phase_Name(gs->phase()).c_str(),
 	   llsf_msgs::GameState::State_Name(gs->state()).c_str(),
-	   gs->points_cyan(), gs->points_magenta());
+	   gs->points_cyan(), gs->points_magenta(),
+	   gs->team_cyan().c_str(), gs->team_magenta().c_str());
+
+    if (team_name_ == gs->team_cyan() || team_name_ == gs->team_magenta()) {
+      if (team_name_ == gs->team_cyan() && team_color_ != CYAN) {
+	printf("WARNING: sending as magenta, but our team is announced as cyan by refbox!\n");
+      } else if (team_name_ == gs->team_magenta() && team_color_ != MAGENTA) {
+	printf("WARNING: sending as cyan, but our team is announced as magenta by refbox!\n");
+      }
+      if (! crypto_setup_) {
+	crypto_setup_ = true;
+
+	std::string crypto_key = "", cipher = "aes-128-cbc";
+	try {
+	  crypto_key = config_->get_string(("/llsfrb/game/crypto-keys/" + team_name_).c_str());
+	  printf("Set crypto key to %s (cipher %s)\n", crypto_key.c_str(), cipher.c_str());
+	  peer_team_->setup_crypto(crypto_key, cipher);
+	} catch (Exception &e) {
+	  printf("No encryption key configured for team, not enabling crypto");
+	}
+      }
+    } else if (crypto_setup_) {
+      printf("Our team is not set, training game? Disabling crypto.\n");
+      crypto_setup_ = false;
+      peer_team_->setup_crypto("", "");
+    }
   }
 
   std::shared_ptr<OrderInfo> oi;
@@ -246,9 +275,9 @@ handle_timer(const boost::system::error_code& error)
     signal->set_number(1);
     signal->set_peer_name(name_);
     signal->set_team_name(team_name_);
-    signal->set_team_color(team_);
+    signal->set_team_color(team_color_);
     signal->set_seq(++seq_);
-    peer_->send(signal);
+    peer_team_->send(signal);
 
     timer_->expires_at(timer_->expires_at()
 		      + boost::posix_time::milliseconds(2000));
@@ -271,35 +300,33 @@ main(int argc, char **argv)
   name_ = argp.items()[0];
   team_name_ = argp.items()[1];
 
-  team_ = CYAN;
+  team_color_ = CYAN;
   if (argp.has_arg("T")) {
     std::string team_str = argp.arg("T");
     if (team_str == "cyan") {
-      team_ = CYAN;
+      team_color_ = CYAN;
     } else if (team_str == "magenta") {
-      team_ = MAGENTA;
+      team_color_ = MAGENTA;
     } else {
-      printf("Unknonw team value, using cyan\n");
+      printf("Unknown team value, using cyan\n");
     }
   }
 
-  llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
-  config->load("config.yaml");
+  config_ = new llsfrb::YamlConfiguration(CONFDIR);
+  config_->load("config.yaml");
 
-  if (config->exists("/llsfrb/comm/peer-send-port") &&
-      config->exists("/llsfrb/comm/peer-recv-port") )
+  if (config_->exists("/llsfrb/comm/public-peer/send-port") &&
+      config_->exists("/llsfrb/comm/public-peer/recv-port") )
   {
-    peer_ = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-				      config->get_uint("/llsfrb/comm/peer-recv-port"),
-				      config->get_uint("/llsfrb/comm/peer-send-port"));
+    peer_public_ = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/public-peer/host"),
+					     config_->get_uint("/llsfrb/comm/public-peer/recv-port"),
+					     config_->get_uint("/llsfrb/comm/public-peer/send-port"));
   } else {
-    peer_ = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-				      config->get_uint("/llsfrb/comm/peer-port"));
+    peer_public_ = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/public-peer/host"),
+					     config_->get_uint("/llsfrb/comm/public-peer/port"));
   }
 
-  boost::asio::io_service io_service;
-
-  MessageRegister & message_register = peer_->message_register();
+  MessageRegister & message_register = peer_public_->message_register();
   message_register.add_message_type<BeaconSignal>();
   message_register.add_message_type<OrderInfo>();
   message_register.add_message_type<GameState>();
@@ -309,9 +336,43 @@ main(int argc, char **argv)
   message_register.add_message_type<MachineReportInfo>();
   message_register.add_message_type<RobotInfo>();
 
-  peer_->signal_received().connect(handle_message);
-  peer_->signal_recv_error().connect(handle_recv_error);
-  peer_->signal_send_error().connect(handle_send_error);
+  std::string cfg_prefix =
+    std::string("/llsfrb/comm/") +
+    ((team_color_ == CYAN) ? "cyan" : "magenta") + "-peer/";
+
+  /*
+  // better to this dynamically be reacting to the public GameState
+  // this way you can also play unencrypted training games
+  std::string crypto_key = "", cipher = "aes-128-cbc";
+  try {
+    crypto_key = config_->get_string(("/llsfrb/game/crypto-keys/" + team_name_).c_str());
+  } catch (Exception &e) {
+    printf("No encryption key configured for team, not enabling crypto");
+  }
+  */
+
+  if (config_->exists((cfg_prefix + "send-port").c_str()) &&
+      config_->exists((cfg_prefix + "recv-port").c_str()) )
+  {
+    peer_team_ = new ProtobufBroadcastPeer(config_->get_string((cfg_prefix + "host").c_str()),
+					   config_->get_uint((cfg_prefix + "recv-port").c_str()),
+					   config_->get_uint((cfg_prefix + "send-port").c_str()),
+					   &message_register /*, crypto_key, cipher*/);
+  } else {
+    peer_team_ = new ProtobufBroadcastPeer(config_->get_string((cfg_prefix + "host").c_str()),
+					   config_->get_uint((cfg_prefix + "port").c_str()),
+					   &message_register/*, crypto_key, cipher*/);
+  }
+
+  boost::asio::io_service io_service;
+
+  peer_public_->signal_received().connect(handle_message);
+  peer_public_->signal_recv_error().connect(handle_recv_error);
+  peer_public_->signal_send_error().connect(handle_send_error);
+
+  peer_team_->signal_received().connect(handle_message);
+  peer_team_->signal_recv_error().connect(handle_recv_error);
+  peer_team_->signal_send_error().connect(handle_send_error);
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
@@ -331,8 +392,9 @@ main(int argc, char **argv)
   } while (! quit);
 
   delete timer_;
-  delete peer_;
-  delete config;
+  delete peer_team_;
+  delete peer_public_;
+  delete config_;
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();

@@ -130,6 +130,7 @@
   (gamestate (phase EXPLORATION))
   ?sf <- (signal (type exploration-info)
 		 (time $?t&:(timeout ?now ?t ?*BC-EXPLORATION-INFO-PERIOD*)) (seq ?seq))
+  (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)))
   (bind ?ei (pb-create "llsf_msgs.ExplorationInfo"))
@@ -174,7 +175,7 @@
     (pb-add-list ?ei "machines" ?em)
   )
 
-  (pb-broadcast ?ei)
+  (pb-broadcast ?peer-id-public ?ei)
   (pb-destroy ?ei)
 )
 
@@ -183,6 +184,8 @@
   (gamestate (phase EXPLORATION))
   ?sf <- (signal (type machine-report-info)
 		 (time $?t&:(timeout ?now ?t ?*BC-MACHINE-REPORT-INFO-PERIOD*)) (seq ?seq))
+  (network-peer (group CYAN) (id ?peer-id-cyan))
+  (network-peer (group MAGENTA) (id ?peer-id-magenta))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)))
 
@@ -194,7 +197,7 @@
     (pb-add-list ?s "reported_machines" ?report:name)
   )
 
-  (pb-broadcast ?s)
+  (pb-broadcast ?peer-id-cyan ?s)
   (pb-destroy ?s)
 
   ; MAGENTA
@@ -205,6 +208,6 @@
     (pb-add-list ?s "reported_machines" ?report:name)
   )
 
-  (pb-broadcast ?s)
+  (pb-broadcast ?peer-id-magenta ?s)
   (pb-destroy ?s)
 )
