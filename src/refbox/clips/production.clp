@@ -276,14 +276,16 @@
   ?mf <- (machine (name ?m) (mtype DELIVER) (state PROCESSING) (prev-state ?prev-state)
 		  (team ?team) (puck-id ?id) (productions ?p)
 		  (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gtime ?pstart ?pt)))
-  ?pf <- (puck (id ?id) (state ?ps&~FINISHED) (team ?team))
+  ?pf <- (puck (id ?id) (state ?ps&~FINISHED) (team ?team)
+	       (state-change-game-time ?production-time))
   =>
   (printout t "Delivered " ?ps " @ " ?m ": " ?id " (" ?ps " -> FINISHED)" crlf)
   (modify ?mf (state ?prev-state) (productions (+ ?p 1)) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   (assert (attention-message (team ?team)
 			     (text (str-cat "Remove puck " ?id " from field @ " ?m))))
   (modify ?pf (state FINISHED))
-  (assert (product-delivered (game-time ?gtime) (product ?ps) (delivery-gate ?m) (team ?team)))
+  (assert (product-delivered(game-time ?gtime) (product ?ps) (delivery-gate ?m)
+			    (team ?team) (production-time ?production-time)))
 )
 
 (defrule deliver-down-machine
