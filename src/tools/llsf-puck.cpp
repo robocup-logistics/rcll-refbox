@@ -55,17 +55,21 @@ typedef enum {
 } OpMode;
 
 boost::asio::deadline_timer  *timer_;
+#if BOOST_ASIO_VERSION >= 100601
 boost::asio::signal_set      *signal_set_;
+#endif
 SPSComm                      *sps_;
 unsigned int                  machine_;
 uint32_t                      new_puck_id_;
 OpMode                        op_mode_;
 
+#if BOOST_ASIO_VERSION >= 100601
 void
 signal_handler(const boost::system::error_code& error, int signum)
 {
   timer_->cancel();
 }
+#endif
 
 void
 handle_timer(const boost::system::error_code& error)
@@ -81,7 +85,9 @@ handle_timer(const boost::system::error_code& error)
 	sps_->write_rfid(machine_, new_puck_id_);
 	printf("Completed writing puck\n");
       }
+#if BOOST_ASIO_VERSION >= 100601
       signal_set_->cancel();
+#endif
     } else {
       timer_->expires_at(timer_->expires_at()
 			 + boost::posix_time::milliseconds(TIMER_INTERVAL));

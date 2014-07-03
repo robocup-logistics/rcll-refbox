@@ -41,13 +41,9 @@ llsfrb:
 
   comm:
     protobuf-dirs: ["@BASEDIR@/src/msgs"]
+
     server-port: !tcp-port 4444
-    peer-host: !ipv4 172.26.255.255
-    peer-port: !udp-port 4444
-    #ports and host for using the refbox in a simulation:
-    #peer-host: !ipv4 127.0.0.1
-    #peer-send-port: !udp-port 4444
-    #peer-recv-port: !udp-port 4445
+
     robotino1: !ipv4 172.26.12.201
     robotino2: !ipv4 172.26.12.202
     robotino3: !ipv4 172.26.12.203
@@ -55,6 +51,24 @@ llsfrb:
     view2-recv1: /home/robotino/llsf-refbox/view2/view2recv-1.txt
     view2-recv2: /home/robotino/llsf-refbox/view2/view2recv-2.txt
     view2-recv3: /home/robotino/llsf-refbox/view2/view2recv-3.txt
+    
+    public-peer:
+      host: !ipv4 137.226.233.255
+      port: !udp-port 4444
+      #send-port: !udp-port 4444
+      #recv-port: !udp-port 4445
+
+    cyan-peer:
+      host: !ipv4 137.226.233.255
+      port: !udp-port 4441
+      #send-port: !udp-port 4441
+      #recv-port: !udp-port 4446
+
+    magenta-peer:
+      host: !ipv4 137.226.233.255
+      port: !udp-port 4442
+      #send-port: !udp-port 4442
+      #recv-port: !udp-port 4447
 
   mongodb:
     enable: true
@@ -66,6 +80,8 @@ llsfrb:
 
   game:
     teams: [Carologistics]
+    crypto-keys:
+      Carologistics: randomkey
 
   shell:
     refbox-host: localhost

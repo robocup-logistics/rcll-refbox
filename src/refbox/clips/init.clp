@@ -41,6 +41,7 @@
   (foreach ?p ?*CONFIG_PREFIXES*
     (load-config ?p)
   )
+  (assert (config-loaded))
 )
 
 (defrule load-refbox
