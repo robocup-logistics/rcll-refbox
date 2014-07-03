@@ -34,13 +34,22 @@ REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 ifneq ($(GCC_TOO_OLD),1)
-  ifeq ($(HAVE_CPP11)$(HAVE_LIBMODBUS),11)
+  ifeq ($(HAVE_CPP11)$(HAVE_LIBMODBUS)$(HAVE_BOOST_LIBS),111)
     CFLAGS  += $(CFLAGS_LIBMODBUS) $(CFLAGS_CPP11) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
     LDFLAGS += $(LDFLAGS_LIBMODBUS) \
 	       $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
     LIBS_all  = $(LIBDIR)/libllsf_sps.so
+
+    ifeq ($(HAVE_PROTOBUF),1)
+      CFLAGS  += $(CFLAGS_PROTOBUF)
+      LDFLAGS += $(LDFLAGS_PROTOBUF)
+      OBJS_libllsf_sps += protosrv_comm.o
+      LIBS_libllsf_sps += llsf_protobuf_comm llsf_msgs
+    else
+      WARN_TARGETS += warning_protobuf
+    endif
   else
     ifneq ($(HAVE_LIBMODBUS),1)
       WARN_TARGETS += warning_libmodbus

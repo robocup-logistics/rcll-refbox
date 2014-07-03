@@ -37,6 +37,9 @@
 #include <llsf_sps/factory.h>
 #include <llsf_sps/sps_comm.h>
 #include <llsf_sps/arduino_comm.h>
+#ifdef HAVE_PROTOBUF
+#  include <llsf_sps/protosrv_comm.h>
+#endif
 #include <config/config.h>
 #include <logging/logger.h>
 #include <utils/llsf/machines.h>
@@ -94,6 +97,13 @@ MachineCommunicationFactory::create(llsfrb::Configuration *config, bool discover
     }
   } else if (mtype == "ArduinoXBee") {
     return new ArduinoXBeeComm(config->get_string("/llsfrb/sps/device").c_str(), discover);
+  } else if (mtype == "ProtobufServer") {
+#ifdef HAVE_PROTOBUF
+    return new ProtobufServerComm(config->get_uint("/llsfrb/sps/protobuf_server/port"),
+				  config->get_uint("/llsfrb/sps/protobuf_server/wait"));
+#else
+    throw fawkes::Exception("Protobuf server unavailable at compile time");
+#endif
   } else {
     throw fawkes::Exception("Unknown machine communication type");
   }
