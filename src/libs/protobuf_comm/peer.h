@@ -68,8 +68,23 @@ class ProtobufBroadcastPeer
   ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
 			unsigned short recv_on_port, std::vector<std::string> &proto_path);
   ProtobufBroadcastPeer(const std::string address, unsigned short port, MessageRegister *mr);
+  ProtobufBroadcastPeer(const std::string address, unsigned short port, const std::string senderIP, MessageRegister *mr); // for multiple robotinos
   ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
-			unsigned short recv_on_port, MessageRegister *mr);
+			unsigned short recv_on_port, MessageRegister *mr,
+			frame_header_version_t header_version = PB_FRAME_V2);
+  ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
+                        unsigned short recv_on_port, const std::string senderIP, MessageRegister *mr,
+                        frame_header_version_t header_version = PB_FRAME_V2); // for multiple robotinos
+  ProtobufBroadcastPeer(const std::string address, unsigned short port,
+			const std::string crypto_key, const std::string cipher = "aes-128-ecb");
+  ProtobufBroadcastPeer(const std::string address, unsigned short port, MessageRegister *mr,
+			const std::string crypto_key, const std::string cipher = "aes-128-ecb");
+  ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
+			unsigned short recv_on_port,
+			const std::string crypto_key, const std::string cipher = "aes-128-ecb");
+  ProtobufBroadcastPeer(const std::string address, unsigned short send_to_port,
+			unsigned short recv_on_port, MessageRegister *mr,
+			const std::string crypto_key, const std::string cipher = "aes-128-ecb");
   ~ProtobufBroadcastPeer();
 
   void set_filter_self(bool filter);

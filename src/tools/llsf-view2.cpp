@@ -75,7 +75,12 @@ std::string name_[4];
 Team team_;
 std::string team_name_;
 unsigned long seq_[3] = {0, 0, 0};
-ProtobufBroadcastPeer *peer_[4] = {NULL, NULL, NULL, NULL};
+// ProtobufBroadcastPeer *peer_[4] = {NULL, NULL, NULL, NULL};
+ProtobufBroadcastPeer *peer_public_ = NULL;
+ProtobufBroadcastPeer *peer_team_[4] = {NULL, NULL, NULL, NULL};
+bool crypto_setup_ = false;
+
+llsfrb::Configuration *config_;
 
 std::string view2_time;
 std::string view2_message;
@@ -280,6 +285,30 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     // sendData[0] = (gs->phase() << 5) + ((gs->state()) << 3);
     sendData.phase = gs->phase();
     sendData.state = gs->state();
+
+    if (team_name_ == gs->team_cyan() || team_name_ == gs->team_magenta()) {
+      if (team_name_ == gs->team_cyan() && team_color_ != CYAN) {
+	printf("WARNING: sending as magenta, but our team is announced as cyan by refbox!\n");
+      } else if (team_name_ == gs->team_magenta() && team_color_ != MAGENTA) {
+	printf("WARNING: sending as cyan, but our team is announced as magenta by refbox!\n");
+      }
+      if (! crypto_setup_) {
+	crypto_setup_ = true;
+
+	std::string crypto_key = "", cipher = "aes-128-cbc";
+	try {
+	  crypto_key = config_->get_string(("/llsfrb/game/crypto-keys/" + team_name_).c_str());
+	  printf("Set crypto key to %s (cipher %s)\n", crypto_key.c_str(), cipher.c_str());
+	  for(int i = 0; i < 4; i++) peer_team_[i]->setup_crypto(crypto_key, cipher);
+	} catch (Exception &e) {
+	  printf("No encryption key configured for team, not enabling crypto");
+	}
+      }
+    } else if (crypto_setup_) {
+      printf("Our team is not set, training game? Disabling crypto.\n");
+      crypto_setup_ = false;
+      for(int i = 0; i < 4; i++) peer_team_[i]->setup_crypto("", "");
+    }
   }
   
   std::shared_ptr<OrderInfo> oi;
@@ -439,7 +468,7 @@ static int playerNo = 0;
       signal->set_team_color(team_);
 
       signal->set_seq(seq_[playerNo]);
-      peer_[playerNo + 1]->send(signal);
+      peer_public_->send(signal);
     }
 
     if (m_type[recvData[playerNo].machineNumber] != recvData[playerNo].machineType && recvData[playerNo].machineType > 0 && recvData[playerNo].machineNumber > 0) {
@@ -454,7 +483,7 @@ static int playerNo = 0;
       llsf_msgs::MachineReportEntry *entry = report.add_machines();
       entry->set_name(machine_name_);
       entry->set_type(machine_type_);
-      peer_[0]->send(report);
+      peer_public_->send(report);
     }
     timer_->expires_at(timer_->expires_at()
                       + boost::posix_time::milliseconds(500));
@@ -502,28 +531,19 @@ main(int argc, char **argv)
   if (config->exists("/llsfrb/comm/peer-send-port") &&
       config->exists("/llsfrb/comm/peer-recv-port") )
   {
-    for(int i = 0; i < 4; i++){
-      peer_[i] = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-                                           config->get_uint("/llsfrb/comm/peer-recv-port"),
-                                           config->get_uint("/llsfrb/comm/peer-send-port"));
-    }
+      peer_public_ = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/public-peer/host"),
+                                           config_->get_uint("/llsfrb/comm/public-peer/recv-port"),
+                                           config_->get_uint("/llsfrb/comm/public-peer/send-port"));
   } else {
-    for(int i = 0; i < 4; i++) {
-      std::string robotino = "/llsfrb/comm/robotino0";
-      robotino += std::to_string(i);
-      if (i == 0) {robotino = "//llsfrb/comm/peer-host";}
-      peer_[i] = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-                                           config->get_uint("/llsfrb/comm/peer-port"),
-                                           config->get_string(robotino.c_str()));
-    }
+    peer_public_ = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/public-peer/host"),
+                                           config_->get_uint("/llsfrb/comm/public-peer/port"));
   }
 
-
-sendData.filename = config->get_string("/llsfrb/comm/view2-send");
+  sendData.filename = config_->get_string("/llsfrb/comm/view2-send");
 
   boost::asio::io_service io_service;
 
-  MessageRegister & message_register = peer_[0]->message_register();
+  MessageRegister & message_register = peer_public_->message_register();
   message_register.add_message_type<BeaconSignal>();
   message_register.add_message_type<OrderInfo>();
   message_register.add_message_type<GameState>();
@@ -537,9 +557,36 @@ sendData.filename = config->get_string("/llsfrb/comm/view2-send");
   // sendData.filename = config->get_string("/llsfrb/comm/view2-send");
   // llsfInitOutputData();
 
-  recvData[0].filename  = config->get_string("/llsfrb/comm/view2-recv1");
-  recvData[1].filename  = config->get_string("/llsfrb/comm/view2-recv2");
-  recvData[2].filename  = config->get_string("/llsfrb/comm/view2-recv3");
+  std::string cfg_prefix =
+    std::string("/llsfrb/comm/") +
+    ((team_color_ == CYAN) ? "cyan" : "magenta") + "-peer/";
+
+  if (config_->exists((cfg_prefix + "send-port").c_str()) &&
+      config_->exists((cfg_prefix + "recv-port").c_str()) )
+  {
+    for(int i = 1; i < 4; i++) {
+      std::string robotino = "/llsfrb/comm/robotino";
+      robotino += std::to_string(i);
+      peer_team_[i] = new ProtobufBroadcastPeer(config_->get_string((cfg_prefix + "host").c_str()),
+					   config_->get_uint((cfg_prefix + "recv-port").c_str()),
+					   config_->get_uint((cfg_prefix + "send-port").c_str()),
+					   config_->get_string(robotino.c_str()),
+					   &message_register /*, crypto_key, cipher*/);
+    }
+  } else {
+    for(int i = 1; i < 4; i++) {
+      std::string robotino = "/llsfrb/comm/robotino";
+      robotino += std::to_string(i);
+      peer_team_[i] = new ProtobufBroadcastPeer(config_->get_string((cfg_prefix + "host").c_str()),
+					   config_->get_uint((cfg_prefix + "port").c_str()),
+					   config_->get_string(robotino.c_str()),
+					   &message_register/*, crypto_key, cipher*/);
+    }
+  }
+
+  recvData[0].filename  = config_->get_string("/llsfrb/comm/view2-recv1");
+  recvData[1].filename  = config_->get_string("/llsfrb/comm/view2-recv2");
+  recvData[2].filename  = config_->get_string("/llsfrb/comm/view2-recv3");
 
   for(int i = 0; i < 3; i++) llsfInitInputFile(recvData[i]);
 
@@ -547,14 +594,15 @@ sendData.filename = config->get_string("/llsfrb/comm/view2-send");
   machine_name_ = "M00";
   machine_type_ = "T0";
 
-  peer_[0]->signal_received().connect(handle_message);
-  peer_[0]->signal_recv_error().connect(handle_recv_error);
-  for(int i = 0; i < 4; i++) {
-    // peer_[i]->signal_received().connect(handle_message);
-    // peer_[i]->signal_recv_error().connect(handle_recv_error);
-    peer_[i]->signal_send_error().connect(handle_send_error);
-  }
+  peer_public_->signal_received().connect(handle_message);
+  peer_public_->signal_recv_error().connect(handle_recv_error);
+  peer_public_->signal_send_error().connect(handle_send_error);
 
+  for(int i = 1; i < 4; i++) {
+    peer_team_[i]->signal_received().connect(handle_message);
+    peer_team_[i]->signal_recv_error().connect(handle_recv_error);
+    peer_team_[i]->signal_send_error().connect(handle_send_error);
+  }
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
@@ -574,11 +622,9 @@ sendData.filename = config->get_string("/llsfrb/comm/view2-send");
   } while (! quit);
 
   delete timer_;
-  delete peer_[0];
-  delete peer_[1];
-  delete peer_[2];
-  delete peer_[3];
-  delete config;
+  for(int i = 0; i < 4; i++) delete peer_team_[i];
+  delete peer_public_;
+  delete config_;
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();

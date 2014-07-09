@@ -144,6 +144,85 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned
   ctor(address, port);
 }
 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port,
+                                             const std::string senderIP, MessageRegister *mr)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::address::from_string(senderIP), port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, port);
+}
+
+/** Constructor with encryption.
+ * @param address IPv4 broadcast address to send to
+ * @param send_to_port IPv4 UDP port to send data to
+ * @param recv_on_port IPv4 UDP port to receive data on
+ * @param crypto_key encryption key for messages
+ * @param cipher cipher to use for encryption
+ */ 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
+					     unsigned short send_to_port, unsigned short recv_on_port,
+					     const std::string crypto_key, const std::string cipher)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port))
+{
+  ctor(address, send_to_port, crypto_key, cipher);
+  message_register_ = new MessageRegister();
+  own_message_register_ = true;
+}
+
+/** Constructor with encryption.
+ * @param address IPv4 broadcast address to send to
+ * @param send_to_port IPv4 UDP port to send data to
+ * @param recv_on_port IPv4 UDP port to receive data on
+ * @param mr message register to query for message types
+ * @param crypto_key encryption key for messages
+ * @param cipher cipher to use for encryption
+ */ 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
+					     unsigned short send_to_port, unsigned short recv_on_port,
+					     MessageRegister *mr,
+					     const std::string crypto_key, const std::string cipher)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, send_to_port, crypto_key, cipher);
+}
+
+/** Constructor with encryption.
+ * @param address IPv4 broadcast address to send to
+ * @param port IPv4 UDP port to listen on and to send to
+ * @param crypto_key encryption key for messages
+ * @param cipher cipher to use for encryption
+ */ 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port,
+					     const std::string crypto_key, const std::string cipher)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port))
+{
+  ctor(address, port, crypto_key, cipher);
+  message_register_ = new MessageRegister();
+  own_message_register_ = true;
+}
+
+/** Constructor with encryption.
+ * @param address IPv4 broadcast address to send to
+ * @param port IPv4 UDP port to listen on and to send to
+ * @param mr message register to query for message types
+ * @param crypto_key encryption key for messages
+ * @param cipher cipher to use for encryption
+ */ 
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port,
+					     MessageRegister *mr,
+					     const std::string crypto_key, const std::string cipher)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, port, crypto_key, cipher);
+}
+
 
 /** Testing constructor.
  * This constructor listens and sends to different ports. It can be used to
@@ -162,6 +241,19 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
     message_register_(mr), own_message_register_(false)
 {
   ctor(address, send_to_port);
+}
+
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
+                                             unsigned short send_to_port,
+                                             unsigned short recv_on_port,
+					     const std::string senderIP,
+                                             MessageRegister *mr,
+                                             frame_header_version_t header_version)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::address::from_string(senderIP), recv_on_port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, send_to_port, "", "", header_version);
 }
 
 
