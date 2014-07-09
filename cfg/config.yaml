@@ -45,28 +45,28 @@ llsfrb:
     server-port: !tcp-port 4444
 
     robotino0: !ipv4 NULL
-    robotino1: !ipv4 10.42.0.85
-    robotino2: !ipv4 172.26.12.202
-    robotino3: !ipv4 172.26.12.203
+    robotino1: !ipv4 192.168.12.201
+    robotino2: !ipv4 192.168.12.202
+    robotino3: !ipv4 192.168.12.203
     view2-send:  /home/robotino/llsf-refbox/view2/view2send.txt
     view2-recv1: /home/robotino/llsf-refbox/view2/view2recv-1.txt
     view2-recv2: /home/robotino/llsf-refbox/view2/view2recv-2.txt
     view2-recv3: /home/robotino/llsf-refbox/view2/view2recv-3.txt
     
     public-peer:
-      host: !ipv4 137.226.233.255
+      host: !ipv4 192.168.255.255
       port: !udp-port 4444
       #send-port: !udp-port 4444
       #recv-port: !udp-port 4445
 
     cyan-peer:
-      host: !ipv4 137.226.233.255
+      host: !ipv4 192.168.255.255
       port: !udp-port 4441
       #send-port: !udp-port 4441
       #recv-port: !udp-port 4446
 
     magenta-peer:
-      host: !ipv4 137.226.233.255
+      host: !ipv4 192.168.255.255
       port: !udp-port 4442
       #send-port: !udp-port 4442
       #recv-port: !udp-port 4447

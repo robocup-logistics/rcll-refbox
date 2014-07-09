@@ -67,15 +67,6 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned
   own_message_register_ = true;
 }
 
-ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port, const std::string senderip, unsigned short flag)
-  : io_service_(), resolver_(io_service_),
-    socket_(io_service_, ip::udp::endpoint(ip::address::from_string(senderip), port))
-{
-  ctor(address, port);
-  message_register_ = new MessageRegister();
-  own_message_register_ = true;
-}
-
 /** Testing constructor.
  * This constructor listens and sends to different ports. It can be used to
  * send and receive on the same host or even from within the same process.
@@ -142,6 +133,15 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned
 					     MessageRegister *mr)
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, port);
+}
+
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address, unsigned short port,
+                                             const std::string senderIP, MessageRegister *mr)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::address::from_string(senderIP), port)),
     message_register_(mr), own_message_register_(false)
 {
   ctor(address, port);
@@ -235,6 +235,19 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
 					     frame_header_version_t header_version)
   : io_service_(), resolver_(io_service_),
     socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), recv_on_port)),
+    message_register_(mr), own_message_register_(false)
+{
+  ctor(address, send_to_port, "", "", header_version);
+}
+
+ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
+                                             unsigned short send_to_port,
+                                             unsigned short recv_on_port,
+					     const std::string senderIP,
+                                             MessageRegister *mr,
+                                             frame_header_version_t header_version)
+  : io_service_(), resolver_(io_service_),
+    socket_(io_service_, ip::udp::endpoint(ip::address::from_string(senderIP), recv_on_port)),
     message_register_(mr), own_message_register_(false)
 {
   ctor(address, send_to_port, "", "", header_version);
