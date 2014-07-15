@@ -158,6 +158,7 @@ void init_message()
   }
   view2_robots = "none";
   view2_state = "none"; view2_phase = "none"; view2_points = "0";
+  for(int i =0; i < 24; i++) m_color[i] = -1;
 }
 
 void llsfInitOutputData()
@@ -166,7 +167,10 @@ void llsfInitOutputData()
   sendData.state = 0;
   for(int i = 0; i < 3; i++) {sendData.quantity_requested[i] = 0; sendData.quantity_delivered[i] = 0;};
   for(int i = 0; i < 5; i++) for(int j = 0; j < 3; j++) sendData.lspec_state[i][j] = 0;
-  for(int i = 0; i < 10; i++) sendData.mType[i] = 0;
+  for(int i = 0; i < 24; i++) {
+    sendData.mType[i] = 0;
+    sendData.mColor[i] = -1;
+  }
 }
 
 void llsfOutputView2(llsfview2send sendData)
@@ -179,7 +183,8 @@ void llsfOutputView2(llsfview2send sendData)
     for(int i = 0; i <  3; i++) fprintf(fp, "%d\t", sendData.quantity_requested[i]);
     for(int i = 0; i <  3; i++) fprintf(fp, "%d\t", sendData.quantity_delivered[i]);
     for(int i = 0; i <  5; i++) for(int j = 0; j < 3; j++) fprintf(fp, "%d\t", sendData.lspec_state[i][j]);
-    for(int i = 0; i < 10; i++) fprintf(fp, "%d\t", sendData.mType[i]);
+    for(int i = 0; i < 24; i++) fprintf(fp, "%d\t", sendData.mType[i]);
+    for(int i = 0; i < 24; i++) fprintf(fp, "%d\t", sendData.mColor[i]);
 
     fprintf(fp, "%d", ++seqnumber);
     fclose(fp);
@@ -367,6 +372,8 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       const ExplorationMachine &em = ei->machines(i);
       printf("  Machine %s at (%f, %f, %f)\n", em.name().c_str(),
              em.pose().x(), em.pose().y(), em.pose().ori());
+      m_color[std::atoi(em.name().substr(1, 2).c_str()]) = em.team_color();
+      sendData.mColor[std::atoi(em.name().substr(1, 2).c_str()]) = em.team_color();
     }
   }
 
