@@ -106,7 +106,8 @@ std::string machine_type_;
 llsfview2send sendData;
 llsfview2recv recvData[3];
 
-int m_type[11];
+int m_type[24];
+int m_color[24];
 unsigned int gameHour, gameMin, gameSec;
 
 std::string output_filename;
@@ -371,8 +372,8 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       const ExplorationMachine &em = ei->machines(i);
       printf("  Machine %s at (%f, %f, %f)\n", em.name().c_str(),
              em.pose().x(), em.pose().y(), em.pose().ori());
-      m_color[std::atoi(em.name().substr(1, 2).c_str()]) = em.team_color();
-      sendData.mColor[std::atoi(em.name().substr(1, 2).c_str()]) = em.team_color();
+      m_color[std::atoi(em.name().substr(1, 2).c_str())] = em.team_color();
+      sendData.mColor[std::atoi(em.name().substr(1, 2).c_str())] = em.team_color();
     }
   }
 
@@ -597,7 +598,7 @@ main(int argc, char **argv)
 
   for(int i = 0; i < 3; i++) llsfInitInputFile(recvData[i]);
 
-  for(int i = 0; i < 10; i++) m_type[i] = 0;
+  for(int i = 0; i < 24; i++) m_type[i] = 0;
   machine_name_ = "M00";
   machine_type_ = "T0";
 
