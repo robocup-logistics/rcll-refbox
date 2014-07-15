@@ -83,7 +83,7 @@ llsfrb:
   view2:
     team: BabyTigers-R
     playerno: 0
-    robotino0: !ipv4 NULL
+    robotino0: !ipv4 172.16.92.1:8090
     robotino1: !ipv4 172.26.12.201
     robotino2: !ipv4 172.26.12.202
     robotino3: !ipv4 172.26.12.203
