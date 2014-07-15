@@ -44,10 +44,10 @@ llsfrb:
 
     server-port: !tcp-port 4444
 
-    robotino0: !ipv4 NULL
-    robotino1: !ipv4 192.168.12.201
-    robotino2: !ipv4 192.168.12.202
-    robotino3: !ipv4 192.168.12.203
+    robotino0: !ipv4 172.16.92.1:8090
+    robotino1: !ipv4 10.42.0.85
+    robotino2: !ipv4 10.42.0.91
+    robotino3: !ipv4 10.42.0.30
     view2-send:  /home/robotino/llsf-refbox/view2/view2send.txt
     view2-recv1: /home/robotino/llsf-refbox/view2/view2recv-1.txt
     view2-recv2: /home/robotino/llsf-refbox/view2/view2recv-2.txt

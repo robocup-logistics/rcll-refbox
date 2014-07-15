@@ -18,8 +18,9 @@ typedef struct
   int state;
   int quantity_requested[3];	// order infor at Produciton Phase
   int quantity_delivered[3];	// order info at Production Phase
-  int lspec_state[5][3];	// LightColor information at Exploration phase	
-  int mType[10];		// Machine Type at Production Phase
+  int lspec_state[5][3];	// LightColor information at Exploration Phase	
+  int mType[24];		// Machine Type at Production Phase
+  int mColor[24];		// Machine TeamColor at Exploration Phase
 } llsfview2send;
 
 typedef struct
