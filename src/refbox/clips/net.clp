@@ -1,4 +1,3 @@
-
 ;---------------------------------------------------------------------------
 ;  net.clp - LLSF RefBox CLIPS network handling
 ;
@@ -56,6 +55,9 @@
 (defrule net-init
   (init)
   (config-loaded)
+  (not (network-peer (group PUBLIC)))
+  (not (network-peer (group CYAN)))
+  (not (network-peer (group MAGENTA)))
   =>
   (net-init-peer "/llsfrb/comm/public-peer/" PUBLIC)
   (net-init-peer "/llsfrb/comm/cyan-peer/" CYAN)
