@@ -1244,13 +1244,15 @@ LLSFRefBoxShell::run()
   // State menu
   const google::protobuf::EnumDescriptor *state_enum_desc =
     llsf_msgs::GameState_State_descriptor();
-  const int num_state_values = state_enum_desc->value_count();
+  const int num_state_values = state_enum_desc->value_count() - 1;
   NCursesMenuItem **state_items = new NCursesMenuItem*[2 + num_state_values];
+  int item_i = 0;
   for (int i = 0; i < state_enum_desc->value_count(); ++i) {
+    if (state_enum_desc->value(i)->name() == "INIT")  continue;
     SignalItem *item = new SignalItem(state_enum_desc->value(i)->name());
     item->signal().connect(boost::bind(&LLSFRefBoxShell::set_game_state, this,
 				       state_enum_desc->value(i)->name()));
-    state_items[i] = item;
+    state_items[item_i++] = item;
   }
   s_cancel_state_ = "** CANCEL **";
   state_items[num_state_values]   = new SignalItem(s_cancel_state_);
