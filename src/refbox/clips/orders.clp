@@ -50,6 +50,11 @@
 	   (delivery-gate ?odg2&?dg|ANY) (quantity-delivered ?q-del-2)
 	   (points ?op2&:(> ?op2 ?order-points))
 	   (quantity-requested ?q-req-2&:(< ?q-del-2 ?q-req-2)))
+    ; open, in-time, goods remaining and starts sooner
+    (order (id ?oid2&:(<> ?oid ?oid2)) (active TRUE) (product ?p) (team ?t)
+	   (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2))&:(< (nth$ 1 ?dp2) (nth$ 1 ?dp)))
+	   (delivery-gate ?odg2&?dg|ANY) (quantity-delivered ?q-del-2)
+	   (quantity-requested ?q-req-2&:(< ?q-del-2 ?q-req-2)))
     ; give more points than supernumerous points, is active, is in-time, and that has
     ; goods requested while the chosen order has not
     (order (id ?oid2&:(<> ?oid ?oid2)) (active TRUE) (product ?p) (team ?t)
