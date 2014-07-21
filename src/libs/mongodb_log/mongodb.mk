@@ -15,12 +15,21 @@
 
 include $(BUILDSYSDIR)/boost.mk
 
+ifneq ($(PKGCONFIG),)
+  HAVE_LIBSSL := $(if $(shell $(PKGCONFIG) --exists 'openssl'; echo $${?/1/}),1,0)
+endif
+ifeq ($(HAVE_LIBSSL),1)
+  CFLAGS_LIBSSL  += -DHAVE_LIBSSL $(shell $(PKGCONFIG) --cflags 'openssl')
+  LDFLAGS_LIBSSL += $(shell $(PKGCONFIG) --libs 'openssl')
+endif
+
 ifneq ($(wildcard /usr/include/mongo/client/dbclient.h /usr/local/include/mongo/client/dbclient.h),)
-  ifeq ($(call boost-have-libs,thread system filesystem),1)
+  ifeq ($(call boost-have-libs,thread system filesystem)$(HAVE_LIBSSL),11)
     HAVE_MONGODB = 1
-    CFLAGS_MONGODB  = -DHAVE_MONGODB
-    LDFLAGS_MONGODB = -lmongoclient -lm -lpthread \
-		      $(call boost-libs-ldflags,thread system filesystem)
+    CFLAGS_MONGODB  = -DHAVE_MONGODB $(CFLAGS_LIBSSL)
+    LDFLAGS_MONGODB = -lm -lpthread \
+		      $(call boost-libs-ldflags,thread system filesystem) \
+		      $(LDFLAGS_LIBSSL)
   endif
 endif
 
