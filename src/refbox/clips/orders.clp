@@ -97,7 +97,8 @@
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (product-delivered (game-time ?game-time) (team ?t) (product ?p) (delivery-gate ?dg))
   ; the actual order we are delivering
-  (not (order (active TRUE) (product ?p)))
+  (not (order (active TRUE) (product ?p)
+	      (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))))
   =>
   (retract ?pf)
   (bind ?addp ?*DELIVER-WITH-NO-ACTIVE-ORDER*)
