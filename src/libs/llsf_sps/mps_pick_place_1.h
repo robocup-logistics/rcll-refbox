@@ -1,5 +1,5 @@
 /*!
-* \file MPSPickPlace1.h
+* \file mps_pick_place_1.h
 * \brief Definition of communication between Refbox and Pick&Place 1
 * \author David Masternak
 * \version 1.0

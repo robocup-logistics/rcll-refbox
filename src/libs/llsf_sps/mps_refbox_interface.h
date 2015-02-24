@@ -1,5 +1,5 @@
 /*!
-* \file MPSRefboxInterface.h
+* \file mps_refbox_interface.h
 * \brief Definition of communication between Refbox and Modbus server
 * \author David Masternak
 * \version 1.0

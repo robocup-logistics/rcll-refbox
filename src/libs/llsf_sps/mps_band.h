@@ -1,5 +1,5 @@
 /*!
-* \file MPSBand.h
+* \file mps_band.h
 * \brief Definitions for communication between Refbox and Band
 * \author David Masternak
 * \version 1.0

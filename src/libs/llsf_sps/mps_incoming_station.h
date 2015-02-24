@@ -1,5 +1,5 @@
 /*!
-* \file MPSDeliver.h
+* \file mps_deliver.h
 * \brief Definitions for Deliver communication
 * \author David Masternak
 * \version 1.0
