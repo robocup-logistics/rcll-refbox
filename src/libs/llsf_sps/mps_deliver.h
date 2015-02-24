@@ -8,14 +8,13 @@
 #ifndef MPSDELIVER_H
 #define MPSDELIVER_H
 
-#include <IMPSDeliver.h>
-#include <MPSRefboxInterface.h>
+#include <mps_refbox_interface.h>
 
 /*!
 * \class MPSDeliver
 * \brief Communication between Refbox and Delivery Station
 */
-class MPSDeliver : public IMPSDeliver {
+class MPSDeliver {
  public:
   /*!
    * \fn MPSDeliver(MPSRefboxInterface* cli, int addr)

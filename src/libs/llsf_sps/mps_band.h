@@ -8,8 +8,7 @@
 #ifndef MPSBAND_H
 #define MPSBAND_H
 
-#include <IMPSBand.h>
-#include <MPSRefboxInterface.h>
+#include <mps_refbox_interface.h>
 
 #include <modbus/modbus.h>
 
@@ -17,7 +16,7 @@
 * \class MPSBand
 * \brief Communication between Refbox and MPS. What kind of MPS we want use.
 */
-class MPSBand : public IMPSBand {
+class MPSBand {
  public:
   /*!
    * \fn MPSBand(MPSRefboxInterface* cli, int addr)

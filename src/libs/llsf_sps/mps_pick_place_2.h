@@ -8,14 +8,13 @@
 #ifndef MPSPICKPLACE2_H
 #define MPSPICKPLACE2_H
 
-#include <IMPSPickPlace2.h>
-#include <MPSRefboxInterface.h>
+#include <mps_refbox_interface.h>
 
 /*!
 * \class MPSPickPlace2
 * \brief This class handels the communication to a Pick&Place 2
 */
-class MPSPickPlace2 : public IMPSPickPlace2 {
+class MPSPickPlace2 {
  public:
   /*!
    * \fn MPSPickPlace2(MPSRefboxInterface* cli, int addr)

@@ -2,7 +2,7 @@
 #define MPSLIST_H
 
 #include <vector>
-#include <MPSInfo.h>
+#include <mps_info.h>
 
 class MPSList {
  private:

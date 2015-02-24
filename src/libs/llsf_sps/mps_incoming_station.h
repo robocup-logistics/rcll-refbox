@@ -8,14 +8,13 @@
 #ifndef MPSINCOMINGSTATION_H
 #define MPSINCOMINGSTATION_H
 
-#include <IMPSIncomingStation.h>
-#include <MPSRefboxInterface.h>
+#include <mps_refbox_interface.h>
 
 /*!
 * \class MPSIncomingStation
 * \brief Communication between Refbox and Incoming Station
 */
-class MPSIncomingStation : public IMPSIncomingStation {
+class MPSIncomingStation {
  public:
   /*!
    * \fn MPSIncomingStation(MPSRefboxInterface* cli, int addr)

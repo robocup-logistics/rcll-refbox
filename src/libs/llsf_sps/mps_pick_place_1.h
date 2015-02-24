@@ -8,15 +8,14 @@
 #ifndef MPSPICKPLACE1_H
 #define MPSPICKPLACE1_H
 
-#include <IMPSPickPlace1.h>
-#include <MPSRefboxInterface.h>
+#include <mps_refbox_interface.h>
 #include <modbus/modbus.h>
 
 /*!
 * \class MPSPickPlace1
 * \brief This class handels the communication to a Pick&Place 1
 */
-class MPSPickPlace1 : public IMPSPickPlace1 {
+class MPSPickPlace1 {
  public:
   /*!
    * \fn MPSPickPlace1(MPSRefboxInterface* cli, int addr)

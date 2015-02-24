@@ -1,5 +1,5 @@
 /*!
-* \file MPS.h
+* \file mps_info.h
 * \brief Data from a MPS
 * \author David Masternak
 * \version 1.0
@@ -8,7 +8,7 @@
 #ifndef MPSINFO_H
 #define MPSINFO_H
 
-#include <MPS.h>
+#include <mps.h>
 
 /*!
 * \class MPS
