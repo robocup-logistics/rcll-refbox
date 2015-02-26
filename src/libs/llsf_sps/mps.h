@@ -8,7 +8,12 @@
 #ifndef MPS_H
 #define MPS_H
 
+#include <queue>
+
 class MPS {
+ private:
+  priority_queue<int> messageQueue;
+
  public:
   virtual ~MPS() = 0;
 
