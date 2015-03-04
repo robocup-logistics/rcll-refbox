@@ -24,9 +24,9 @@ MPSDeliver::MPSDeliver(MPSRefboxInterface* cli, int addr) {
  * \param lane on which lane have to be deliver
  */
 void MPSDeliver::sendDeliver(int lane) {
-  uint16_t send[4] = {2, 4, 8, 16};
+  uint16_t send[2] = {2, lane};
   
-  int rc = modbus_write_registers(this->ctx, this->addr, 4, send);
+  int rc = modbus_write_registers(this->ctx, this->addr, 2, send);
   
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;
@@ -49,6 +49,10 @@ bool MPSDeliver::isDelivered(bool ready) {
   }
 }
 
+/*!
+ * \fn receiveData()
+ * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
+ */
 void MPSDeliver::receiveData() {
   uint16_t reci[2] = {0};
   
@@ -63,5 +67,26 @@ void MPSDeliver::receiveData() {
   default:
     std::cout << "Unknown message" << std::endl;
     break;
+  }
+}
+
+/*!
+ * \fn sendData()
+ * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
+ */
+void MPSDeliver::sendData() {
+  if(!messageQueue.empty() && !this->lock) {
+    MPSMessage *msg;
+    msg = messageQueue.pop();
+  }
+  else {
+    return;
+  }
+  uint16_t send[2] = {2, lane};
+  
+  int rc = modbus_write_registers(this->ctx, this->addr, 2, send);
+  
+  if(rc == -1) {
+    std::cout << "ERROR while sending data" << std::endl;
   }
 }

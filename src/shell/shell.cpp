@@ -1159,7 +1159,7 @@ LLSFRefBoxShell::run()
   navbar_->standend();
   navbar_->attron(A_BOLD);
   navbar_->addstr(0, 33, "ADD PUCK");
-
+  
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
   navbar_->addstr(0, 43, "F7");
   navbar_->standend();

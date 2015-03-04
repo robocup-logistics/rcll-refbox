@@ -10,12 +10,13 @@
 
 #include <mps_refbox_interface.h>
 #include <modbus/modbus.h>
+#include <mps.h>
 
 /*!
 * \class MPSPickPlace1
 * \brief This class handels the communication to a Pick&Place 1
 */
-class MPSPickPlace1 {
+class MPSPickPlace1 : public MPS{
  public:
   /*!
    * \fn MPSPickPlace1(MPSRefboxInterface* cli, int addr)
@@ -47,7 +48,17 @@ class MPSPickPlace1 {
    */
   bool isReady(bool ready);
 
+  /*!
+   * \fn receiveData()
+   * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
+   */
   void receiveData();
+
+  /*!
+   * \fn sendData()
+   * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
+   */
+  void sendData();
 
  private:
   modbus_t* ctx; // connection to server

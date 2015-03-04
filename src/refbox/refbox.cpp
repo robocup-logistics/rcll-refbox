@@ -160,7 +160,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
       if (config_->exists("/llsfrb/sps/hosts") && cfg_machine_assignment_ == ASSIGNMENT_2014) {
 	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
-			   config_->get_uint("/llsfrb/sps/port"));
+			   config_->get_uint("/llsfrb/sps/port"),
+			   config_->get_string("/llsfrb/sps/machine-type"));
       } else {
 	sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
 			   config_->get_uint("/llsfrb/sps/port"));

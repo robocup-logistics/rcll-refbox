@@ -54,6 +54,10 @@ bool MPSPickPlace2::isEmpty(int lane, bool empty) {
 }
 
 
+/*!
+ * \fn receiveData()
+ * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
+ */
 void MPSPickPlace2::receiveData() {
  // 3 isEmpty, 4 isReady
   uint16_t reci[3] = {0};
@@ -73,4 +77,12 @@ void MPSPickPlace2::receiveData() {
     std::cout << "Unkown message" << std::endl;
     break;
   }
+}
+
+/*!
+ * \fn sendData()
+ * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
+ */
+void MPSPickPlace2::sendData() {
+
 }

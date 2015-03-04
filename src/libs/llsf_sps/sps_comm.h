@@ -77,7 +77,7 @@ class SPSComm
   };
 
   SPSComm(const char *host, unsigned short port);
-  SPSComm(std::vector<std::string> hosts, unsigned short port);
+  SPSComm(std::vector<std::string> hosts, unsigned short port, std::string machine_type);
   ~SPSComm();
 
   void try_reconnect();

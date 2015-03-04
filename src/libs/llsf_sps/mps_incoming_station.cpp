@@ -78,6 +78,10 @@ bool MPSIncomingStation::isEmpty(bool empty, int color) {
 }
 
 
+/*!
+ * \fn receiveData()
+ * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
+ */
 void MPSIncomingStation::receiveData() {
   uint16_t reci[3] = {0};
   
@@ -98,4 +102,12 @@ void MPSIncomingStation::receiveData() {
     std::cout << "Unknown message" << std::endl;
     break;
   }
+}
+
+/*!
+ * \fn sendData()
+ * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
+ */
+void MPSIncomingStation::sendData() {
+
 }

@@ -1,5 +1,5 @@
 /*!
-* \file MPSDeliver.h
+* \file mps_delivery.h
 * \brief Definitions for Deliver communication
 * \author David Masternak
 * \version 1.0
@@ -9,6 +9,7 @@
 #define MPSDELIVER_H
 
 #include <mps_refbox_interface.h>
+#include <mps.h>
 
 /*!
 * \class MPSDeliver
@@ -39,7 +40,17 @@ class MPSDeliver {
    */
   bool isDelivered(bool ready);
 
+  /*!
+   * \fn receiveData()
+   * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
+   */
   void receiveData();
+
+  /*!
+   * \fn sendData()
+   * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
+   */
+  void sendData();
 
  private:
   modbus_t* ctx; // connection to server
