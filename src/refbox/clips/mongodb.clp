@@ -60,6 +60,41 @@
   (bson-destroy ?phase-points-doc-cyan)
   (bson-destroy ?phase-points-doc-magenta)
 
+  (bind ?m-arr (bson-array-start ?doc "machines"))
+  (do-for-all-facts ((?m machine)) TRUE
+     (bind ?m-doc (bson-create))
+     (bson-append ?m-doc "name" ?m:name)
+     (bson-append ?m-doc "team" ?m:team)
+     (bson-append ?m-doc "type" ?m:mtype)
+     (bson-append-array ?m-doc "pose" ?m:pose)
+     (bson-append ?m-doc "productions" ?m:productions)
+     (do-for-fact ((?mspec machine-spec)) (eq ?m:mtype ?mspec:mtype)
+       (bson-append ?m-doc "proc-time" ?mspec:proc-time)
+       (bson-append-array ?m-doc "inputs" ?mspec:inputs)
+       (bson-append ?m-doc "output" ?mspec:output)
+     )
+     (bson-array-append ?m-arr ?m-doc)
+  )
+  (bson-array-finish ?m-arr)
+
+  (bind ?o-arr (bson-array-start ?doc "orders"))
+  (do-for-all-facts ((?o order)) TRUE
+     (printout t "Adding order " ?o:id crlf)
+     (bind ?o-doc (bson-create))
+     (bson-append ?o-doc "id" ?o:id)
+     (bson-append ?o-doc "team" ?o:team)
+     (bson-append ?o-doc "product" ?o:product)
+     (bson-append ?o-doc "quantity-requested" ?o:quantity-requested)
+     (bson-append ?o-doc "quantity-delivered" ?o:quantity-delivered)
+     (bson-append-array ?o-doc "delivery-period" ?o:delivery-period)
+     (bson-append ?o-doc "delivery-gate" ?o:delivery-gate)
+     (bson-append ?o-doc "activate-at" ?o:activate-at)
+     (bson-append ?o-doc "points" ?o:points)
+     (bson-append ?o-doc "points-supernumerous" ?o:points-supernumerous)
+     (bson-array-append ?o-arr ?o-doc)
+  )
+  (bson-array-finish ?o-arr)
+
   ;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 
   (mongodb-upsert "llsfrb.game_report" ?doc
