@@ -381,8 +381,11 @@
     (retract ?input)
   )
   (bind ?machine (sym-cat (pb-field-value ?p "machine_name")))
-  (printout t "Placing puck " ?id " under machine " ?machine crlf)
-  (assert (rfid-input (machine ?machine) (has-puck TRUE) (id ?id)))
+  (if (not (any-factp ((?m machine)) (and (eq ?m:name ?machine) (eq ?m:puck-id ?id))))
+   then
+    (printout t "Placing puck " ?id " under machine " ?machine crlf)
+    (assert (rfid-input (machine ?machine) (has-puck TRUE) (id ?id)))
+  )
 )
 
 (defrule prod-net-recv-PlacePuckUnderMachine-not-running
