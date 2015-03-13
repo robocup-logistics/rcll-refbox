@@ -218,13 +218,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     pb_comm_->server()->signal_receive_failed()
       .connect(boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
 
-    const std::map<long int, protobuf_comm::ProtobufBroadcastPeer *> &peers =
-      pb_comm_->peers();
-    for (auto p : peers) {
-      p.second->signal_received()
-	.connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
-    }
-
     pb_comm_->signal_server_sent()
       .connect(boost::bind(&LLSFRefBox::handle_server_sent_msg, this, _1, _2));
     pb_comm_->signal_client_sent()
@@ -236,6 +229,19 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 #endif
 
   start_clips();
+
+#ifdef HAVE_MONGODB
+  // we can do this only after CLIPS was started as it initiates the private peers
+  if (cfg_mongodb_enabled_) {
+    const std::map<long int, protobuf_comm::ProtobufBroadcastPeer *> &peers =
+      pb_comm_->peers();
+    for (auto p : peers) {
+      p.second->signal_received()
+	.connect(boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
+    }
+  }
+#endif
+
 
 #ifdef HAVE_AVAHI
   unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
