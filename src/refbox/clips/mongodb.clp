@@ -7,12 +7,23 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(deftemplate mongodb-wrote-gamereport (multislot implied))
+(deftemplate mongodb-last-game-report
+  (multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
+)
+
+(defrule mongodb-init
+  (init)
+  =>
+  (assert (mongodb-last-game-report))
+)
 
 (defrule mongodb-reset
   (reset-game)
+  ?f1 <- (mongodb-wrote-game-report $?)
+  ?f2 <- (mongodb-last-game-report)
   =>
-  (delayed-do-for-all-facts ((?r mongodb-wrote-gamereport)) TRUE (retract ?r))
+  (retract ?f1)
+  (modify ?f2 (points 0 0))
 )
 
 (deffunction mongodb-write-game-report (?teams ?stime ?etime)
@@ -79,7 +90,6 @@
 
   (bind ?o-arr (bson-array-start ?doc "orders"))
   (do-for-all-facts ((?o order)) TRUE
-     (printout t "Adding order " ?o:id crlf)
      (bind ?o-doc (bson-create))
      (bson-append ?o-doc "id" ?o:id)
      (bson-append ?o-doc "team" ?o:team)
@@ -105,11 +115,13 @@
 (defrule mongodb-game-report-begin
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
-	     (prev-phase PRE_GAME) (start-time $?stime) (end-time $?etime))
-  (not (mongodb-game-report begin $?stime))
+	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
+  (not (mongodb-wrote-game-report begin $?stime))
+  ?f <- (mongodb-last-game-report)
   =>
   (mongodb-write-game-report ?teams ?stime ?etime)
-  (assert (mongodb-game-report begin ?stime))
+  (assert (mongodb-wrote-game-report begin ?stime))
+  (modify ?f (points 0 0))
 )
 
 (defrule mongodb-game-report-end
@@ -119,7 +131,19 @@
   (not (mongodb-game-report end $?stime))
   =>
   (mongodb-write-game-report ?teams ?stime ?etime)
-  (assert (mongodb-game-report end ?stime))
+  (assert (mongodb-wrote-game-report end ?stime))
+)
+
+(defrule mongodb-game-report-update
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?gr <- (mongodb-last-game-report (points $?gr-points))
+  (gamestate (state RUNNING)
+	     (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (start-time $?stime) (end-time $?etime)
+	     (points $?points&:(neq ?points ?gr-points)))
+  =>
+  (mongodb-write-game-report ?teams ?stime ?etime)
+  (modify ?gr (points ?points))
 )
 
 (defrule mongodb-game-report-finalize
