@@ -1,0 +1,3 @@
+class MPSPickPlace2ProduceRingMessage {
+
+};

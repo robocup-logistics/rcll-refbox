@@ -8,7 +8,7 @@
 #ifndef MPSBAND_H
 #define MPSBAND_H
 
-#include <mps_refbox_interface.h>
+//#include <mps_refbox_interface.h>
 
 #include <modbus/modbus.h>
 
@@ -24,7 +24,7 @@ class MPSBand {
    * \param cli reference of Refbox Interface
    * \param addr address of destination MPS
    */
-  MPSBand(MPSRefboxInterface *cli, int addr);
+  //MPSBand(MPSRefboxInterface *cli, int addr);
 
   /*!
    * \fn run()
@@ -40,6 +40,14 @@ class MPSBand {
    */
   bool isReady(bool ready);
 
+  /*!
+   * \fn isInput()
+   * \brief receive isInput command
+   * \param ready received data
+   * \return true if workpiece is available and false if not
+   */
+  bool isInput(bool input);
+  
   void receiveData();
 
  private:

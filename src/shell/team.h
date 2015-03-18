@@ -37,6 +37,8 @@
 #ifndef __LLSF_REFBOX_SHELL_TEAM_H_
 #define __LLSF_REFBOX_SHELL_TEAM_H_
 
+#include <config/yaml.h>
+
 #include <msgs/Team.pb.h>
 
 namespace llsfrb_shell {
@@ -49,17 +51,35 @@ typedef enum {
   MAGENTA = 1
 } Team;
 
-/* #define TEAM_NUM 2 */
-/* #define TEAM_NUM_MACHINES 16 */
-
 #define TEAM_NUM 2
-#define TEAM_NUM_MACHINES 6
+#define TEAM_NUM_MACHINES 16
+
+#define TEAM_NUM_MPS 2
+#define TEAM_NUM_MACHINES_MPS 6
 
 static const char * TEAM_MACHINES[TEAM_NUM][TEAM_NUM_MACHINES] __attribute((__used__)) =
 { /* CYAN */    { "M1", "M2", "M3", "M4", "M5", "M6",
                   "M7", "M8", "M9", "M10", "M11", "M12", "D1", "D2", "D3", "R1" },
   /* MAGENTA */ { "M13", "M14", "M15", "M16", "M17", "M18", "M19",
                   "M20", "M21", "M22", "M23", "M24", "D4", "D5", "D6", "R2"}};
+
+static const char * TEAM_MACHINES_MPS[TEAM_NUM_MPS][TEAM_NUM_MACHINES_MPS] __attribute((__used__)) =
+{ /* CYAN */    { "IS1", "PP1_1", "PP1_2", "PP2_1", "PP2_2", "DE1"},
+  /* MAGENTA */ { "IS2", "PP1_2", "PP1_4", "PP2_3", "PP2_4", "DE2"}};
+
+inline void readMachines(llsfrb::Configuration* config) {
+  config->load("station.yaml");
+
+  std::string str = config->get_string("/machines/m1/type");
+  char *cstr = new char[str.length() + 1];
+  strcpy(cstr, str.c_str());
+
+  TEAM_MACHINES_MPS[0][0] = config->get_string("/machines/m1/type").c_str();
+
+  delete [] cstr;
+
+  config->load("config.yaml");
+}
 
 inline bool
 operator==(const llsf_msgs::Team &t1, const Team &t2)

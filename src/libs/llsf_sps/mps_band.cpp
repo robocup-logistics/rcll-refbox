@@ -15,10 +15,10 @@
  * \param cli reference of Refbox Interface
  * \param addr address of destination MPS
  */
-MPSBand::MPSBand(MPSRefboxInterface *cli, int addr) {
+/*MPSBand::MPSBand(MPSRefboxInterface *cli, int addr) {
   this->ctx = cli->getTcpConnection();
   this->addr = addr;
-}
+  }*/
 
 /*!
  * \fn run()
@@ -42,6 +42,16 @@ void MPSBand::runBand() {
  */
 bool MPSBand::isReady(bool ready) {
   return ready;
+}
+
+/*!
+ * \fn isInput()
+ * \brief receive isInput command
+ * \param ready received data
+ * \return true if workpiece is available and false if not
+ */
+bool MPSBand::isInput(bool input) {
+  return input;
 }
 
 void MPSBand::receiveData() {
