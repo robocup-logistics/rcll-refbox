@@ -15,7 +15,7 @@
 * \class MPSPickPlace2
 * \brief This class handels the communication to a Pick&Place 2
 */
-class MPSPickPlace2 : public MPS{
+class MPSPickPlace2 {
  public:
   /*!
    * \fn MPSPickPlace2(MPSRefboxInterface* cli, int addr)
@@ -23,7 +23,7 @@ class MPSPickPlace2 : public MPS{
    * \param cli reference to refbox client
    * \param addr address of destination MPS
    */
-  MPSPickPlace2(MPSRefboxInterface* cli, int addr);
+  MPSPickPlace2(char* ip, int port);
   
   /*!
    * \fn produceRing(int workpiece)
@@ -49,21 +49,10 @@ class MPSPickPlace2 : public MPS{
    */
   bool isEmpty(int lane, bool empty);
 
-  /*!
-   * \fn receiveData()
-   * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
-   */
-  void receiveData();
-
-  /*!
-   * \fn sendData()
-   * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
-   */
-  void sendData();
-
  private:
-  modbus_t* ctx; // connection to server
-  int addr; // address of destination MPS
+  modbus_t* mb; // connection to server
+  char* ip;     // ip of mps
+  int port;     // port of modbuscommunication
 };
 
 #endif // MPSPICKPLACE2_H

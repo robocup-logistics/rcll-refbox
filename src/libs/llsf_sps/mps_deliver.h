@@ -8,8 +8,7 @@
 #ifndef MPSDELIVER_H
 #define MPSDELIVER_H
 
-#include <mps_refbox_interface.h>
-#include <mps.h>
+#include <mps_deliver_message.h>
 
 /*!
 * \class MPSDeliver
@@ -23,7 +22,7 @@ class MPSDeliver {
    * \param cli reference of Refbox Interface
    * \param port port for modbus communication
    */
-  MPSDeliver(MPSRefboxInterface* cli, int addr);
+  MPSDeliver(char* ip, int port);
   
   /*!
    * \fn sendDeliver(int lane)
@@ -40,22 +39,10 @@ class MPSDeliver {
    */
   bool isDelivered(bool ready);
 
-  /*!
-   * \fn receiveData()
-   * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
-   */
-  void receiveData();
-
-  /*!
-   * \fn sendData()
-   * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
-   */
-  void sendData();
-
  private:
-  modbus_t* ctx; // connection to server
-  int addr; // address of destination MPS
-
+  modbus_t* mb; // connection to mps
+  char* ip;      // ip of mps
+  int port;      // port of communication
 };
 
 #endif // MPSDELIVER_H

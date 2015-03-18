@@ -45,37 +45,6 @@ MPSRefboxInterface::MPSRefboxInterface(char* masterip, int port, int addr) {
   
   this->hostList = MPSList::getInstance();
 
-  // for(;;) {
-  //   int i;
-
-  //   tab_rq_registers[0] = (uint8_t) 5;
-
-  //   /* SINGLE REGISTER */
-  //   std::cout << "Write Data" << std::endl;
-  //   rc = modbus_write_register(ctx, 5, tab_rq_registers[0]);
-	
-  //   if (rc != 1) {
-  //     std::cout << "ERROR while writing data to address " << 5 << std::endl;
-  //   } 
-  //   else {
-  //     std::cout << "Read Data" << std::endl;
-  //     rc = modbus_read_registers(ctx, 6, 1, tab_rp_registers);
-  //     if (rc != 1) {
-  // 	std::cout << "ERROR while reading data from address " << 6 << std::endl;
-  //     } 
-  //     else {
-  // 	if (tab_rq_registers[0] != tab_rp_registers[0]) {
-  // 	  std::cout << "ERROR while reading data form address " << 5 << ". Input register and output register are not equal" << std::endl;
-  // 	  std::cout << "Erwarte: " << tab_rq_registers[0] << std::endl;
-  // 	  std::cout << "Received: " << tab_rp_registers[0] << std::endl;
-  // 	}
-  // 	else {
-  // 	  std::cout << "Received data: " << tab_rp_registers[0] << std::endl; 
-  // 	}
-  //     }
-  //   }
-  // }
-
   uint16_t send[2] = {(uint16_t)9, (uint16_t)addr};
   rc = modbus_write_registers(ctx, 1, 2, send);
 }

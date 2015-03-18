@@ -14,9 +14,17 @@
 * \param addr The address of destination MPS
 */
 
-MPSPickPlace2::MPSPickPlace2(MPSRefboxInterface* cli, int addr) {
-  this->ctx = cli->getTcpConnection();
-  this->addr = addr;
+MPSPickPlace2::MPSPickPlace2(char* ip, int port) {
+  this->ip = ip;
+  this->port = port;
+
+  this->mb = modbus_new_tcp(this->ip, this->port);
+
+  if(modbus_connect(this->mb) == -1) {
+    std::cout << "Error while connecting" << std::endl;
+    modbus_free(this->mb);
+    return -1;
+  }
 }
 
 /*!
@@ -51,38 +59,4 @@ bool MPSPickPlace2::ringReady(bool ready) {
 */
 bool MPSPickPlace2::isEmpty(int lane, bool empty) {
   return empty;
-}
-
-
-/*!
- * \fn receiveData()
- * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
- */
-void MPSPickPlace2::receiveData() {
- // 3 isEmpty, 4 isReady
-  uint16_t reci[3] = {0};
-  
-  int rc = modbus_read_registers(this->ctx, this->addr, 3, reci);
-
-  int command = (int)reci[0];
-
-  switch(command) {
-  case 3:
-    this->isEmpty((bool)reci[1], (int)reci[2]);
-    break;
-  case 4:
-    this->ringReady((bool)reci[1]);
-    break;
-  default:
-    std::cout << "Unkown message" << std::endl;
-    break;
-  }
-}
-
-/*!
- * \fn sendData()
- * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
- */
-void MPSPickPlace2::sendData() {
-
 }

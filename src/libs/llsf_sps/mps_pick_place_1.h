@@ -24,7 +24,7 @@ class MPSPickPlace1 : public MPS{
    * \param cli reference to refbox client
    * \param addr address of destination MPS
    */
-  MPSPickPlace1(MPSRefboxInterface* cli, int addr);
+  MPSPickPlace1(char* ip, int addr);
   
   /*!
    * \fn produceEnd()
@@ -48,21 +48,10 @@ class MPSPickPlace1 : public MPS{
    */
   bool isReady(bool ready);
 
-  /*!
-   * \fn receiveData()
-   * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
-   */
-  void receiveData();
-
-  /*!
-   * \fn sendData()
-   * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
-   */
-  void sendData();
-
  private:
-  modbus_t* ctx; // connection to server
-  int addr; // address of destination MPS
+  modbus_t* mb; // connection to mps
+  char* ip;
+  int port; // port for modbuscommunication
 };
 
 #endif // MPSPICKPLACE1_H

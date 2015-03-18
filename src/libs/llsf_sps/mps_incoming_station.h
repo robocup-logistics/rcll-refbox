@@ -8,8 +8,7 @@
 #ifndef MPSINCOMINGSTATION_H
 #define MPSINCOMINGSTATION_H
 
-#include <mps_refbox_interface.h>
-#include <mps.h>
+
 
 /*!
 * \class MPSIncomingStation
@@ -23,7 +22,7 @@ class MPSIncomingStation : public MPS {
    * \param cli reference of Refbox Interface
    * \param port port for modbus communication
    */
-  MPSIncomingStation(MPSRefboxInterface* cli, int addr);
+  MPSIncomingStation(char* ip, int port);
  
   /*!
    * \fn ~MPSIncomingStation()
@@ -56,21 +55,10 @@ class MPSIncomingStation : public MPS {
    */
   bool isEmpty(bool empty, int color);
 
-  /*!
-   * \fn receiveData()
-   * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
-   */
-  void receiveData();
-
-  /*!
-   * \fn sendData()
-   * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
-   */
-   void sendData();
-
  private:
-  modbus_t* ctx;
-  int addr;
+  modbus_t* mb;
+  char* ip;
+  int port;
 };
 
 #endif // MPSINCOMINGSTATION_H

@@ -5,7 +5,8 @@
 * \version 1.0
 */
 
-#include<mps_deliver.h>
+#include <mps_deliver.h>
+#include <modbus/modbus.h>
 
 /*!
  * \fn MPSDeliver(MPSRefboxInterface* cli, int addr)
@@ -13,9 +14,17 @@
  * \param cli reference of Refbox Interface
  * \param port port for modbus communication
  */
-MPSDeliver::MPSDeliver(MPSRefboxInterface* cli, int addr) {
-  this->ctx = cli->getTcpConnection();
-  this->addr = addr;
+MPSDeliver::MPSDeliver(char* ip, int port) {
+  this->ip = ip;
+  this->port = port;
+
+  this->mb = modbus_new_tcp(this->ip, this->port);
+
+  if(modbus_connect(this->mb) == -1) {
+    std::cout << "Error while connecting" << std::endl;
+    modbus_free(mb);
+    return -1;
+  }
 }
 
 /*!
@@ -46,47 +55,5 @@ bool MPSDeliver::isDelivered(bool ready) {
   else {
     std::cout << "false" << std::endl;
     return false;
-  }
-}
-
-/*!
- * \fn receiveData()
- * \brief receive data from MPS and capsulate this data into the MPSMessage datastruct.
- */
-void MPSDeliver::receiveData() {
-  uint16_t reci[2] = {0};
-  
-  int rc = modbus_read_registers(this->ctx, this->addr, 2, reci);
-
-  int command = (int)reci[0];
-
-  switch(command) {
-  case 3:
-    this->isDelivered((bool)reci[1]);
-    break;
-  default:
-    std::cout << "Unknown message" << std::endl;
-    break;
-  }
-}
-
-/*!
- * \fn sendData()
- * \brief write data from MPS and encapsulate this data into the modbus protocol datastruct.
- */
-void MPSDeliver::sendData() {
-  if(!messageQueue.empty() && !this->lock) {
-    MPSMessage *msg;
-    msg = messageQueue.pop();
-  }
-  else {
-    return;
-  }
-  uint16_t send[2] = {2, lane};
-  
-  int rc = modbus_write_registers(this->ctx, this->addr, 2, send);
-  
-  if(rc == -1) {
-    std::cout << "ERROR while sending data" << std::endl;
   }
 }
