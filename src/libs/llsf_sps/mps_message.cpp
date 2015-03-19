@@ -5,7 +5,7 @@
 * \version 1.0
 */
 
-#include <mps_message.h>
+#include "mps_message.h"
   
 /*!
  * \fn MPSMessage(int from, int to, int prio, int[] msg)

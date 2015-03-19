@@ -8,7 +8,7 @@
 #ifndef MPSINFO_H
 #define MPSINFO_H
 
-#include <mps.h>
+#include "mps.h"
 
 /*!
 * \class MPS
@@ -16,7 +16,7 @@
 */
 class MPSInfo {
  private:
-  char *ip; // ip of a MPS
+  const char *ip; // ip of a MPS
   int socket; // socket/file descriptor of a MPS
   int address; // address of MPS
   MPS* machine; // Reference to machine
@@ -69,7 +69,7 @@ class MPSInfo {
    * \brief getter for address
    * \return ip of MPS
    */
-  char* getIp();
+  const char* getIp();
 
   /*!
    * \fn getSocket()

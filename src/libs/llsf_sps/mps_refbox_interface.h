@@ -8,12 +8,10 @@
 #ifndef MPSREFBOXINTERFACE_H
 #define MPSREFBOXINTERFACE_H
 
-#include <iostream>
 #include <modbus/modbus.h>
 #include <vector>
-#include <mps_info.h>
-#include <mps_list.h>
-#include <observer.h>
+#include "mps_info.h"
+#include "mps_list.h"
 
 /*!
 * \class MPSRefboxInterface
@@ -21,33 +19,20 @@
 */
 class MPSRefboxInterface {
  private:
-  uint16_t *tab_rp_registers;
-  uint16_t *tab_rq_registers;
-  modbus_t* ctx;  
   MPSList* hostList;
 
  public:
   /*!
-   * \fn MPSRefboxInterface(char* masterip, int port)
+   * \fn MPSRefboxInterface()
    * \brief Constructor
-   * \param masterip ip of server
-   * \param port which port we use for communication
-   * \param addr address of Refboxinterface. Default 1
    */
-  MPSRefboxInterface(char* masterip, int port, int addr = 1);
+  MPSRefboxInterface();
 
   /*!
    * \fn ~MPSRefboxInterface()
    * \brief Destructor
    */
   ~MPSRefboxInterface();
-
-  /*!
-   * \fn getTcpConnection()
-   * \brief Getter method to get the connection
-   * \return connection
-   */
-  modbus_t* getTcpConnection();
 
   /*!
    * \fn readHostInfo()
@@ -81,13 +66,6 @@ class MPSRefboxInterface {
    * \return connection
    */
   void deleteHost();
-
-  /*!
-   * \fn update()
-   * \brief do something if new data are available
-   * \param socket/file descriptor where the datas are
-   */
-  void update(int desctiptor);
 };
 
 #endif // MPSREFBOXINTERFACE_H

@@ -18,7 +18,7 @@ class MPSMessage {
   int from;  // address of sender
   int to;    // address of receiver
   int prio;  // priority of message
-  int[] msg; // content of message
+  int* msg; // content of message
   
  public:
   /*!

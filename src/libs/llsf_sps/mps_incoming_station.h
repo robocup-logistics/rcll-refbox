@@ -8,7 +8,7 @@
 #ifndef MPSINCOMINGSTATION_H
 #define MPSINCOMINGSTATION_H
 
-
+#include "mps.h"
 
 /*!
 * \class MPSIncomingStation
@@ -17,9 +17,9 @@
 class MPSIncomingStation : public MPS {
  public:
   /*!
-   * \fn MPSIncomingStation(MPSRefboxInterface* cli, int addr)
+   * \fn MPSIncomingStation(char* ip, int port)
    * \brief Constructor
-   * \param cli reference of Refbox Interface
+   * \param ip address of mps
    * \param port port for modbus communication
    */
   MPSIncomingStation(char* ip, int port);
@@ -44,16 +44,13 @@ class MPSIncomingStation : public MPS {
    * \param ready recived data
    * \return true if cap is ready and false if not
    */
-  bool capReady(bool ready);
+  bool capReady();
 
   /*!
    * \fn isEmpty()
    * \brief receive isEmpty command
-   * \param empty received empty command
-   * \param color received empty of which color
-   * \param color for which color we want have this information
    */
-  bool isEmpty(bool empty, int color);
+  bool isEmpty();
 
  private:
   modbus_t* mb;

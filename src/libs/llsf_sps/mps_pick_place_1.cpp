@@ -5,15 +5,15 @@
 * \version 1.0
 */
 
-#include <mps_pick_place_1.h>
+#include "mps_pick_place_1.h"
 
 #include <iostream>
 
 /*!
-* \fn MPSPickPlace1(MPSRefboxInterface *cli, int addr)
+* \fn MPSPickPlace1(MPSRefboxInterface *cli, int port)
 * \brief Constructor
-* \param *cli A reference to refboxinterface
-* \param addr The address of destination MPS
+* \param ip address of mps
+* \param port port of modbus communication
 */
 MPSPickPlace1::MPSPickPlace1(char* ip, int port) {
   this->ip = ip;
@@ -24,53 +24,47 @@ MPSPickPlace1::MPSPickPlace1(char* ip, int port) {
   if(modbus_connect(this->mb) == -1) {
     std::cout << "Error while connecting" << std::endl;
     modbus_free(mb);
-    return -1;
+    //return -1;
   }
 }
 
 /*!
-* \fn produceEnd()
+ * \fn ~MPSPickPlace1()
+ * \brief Destructor
+ */
+MPSPickPlace1::~MPSPickPlace1() {
+  modbus_close(this->mb);
+  modbus_free(this->mb);
+}
+
+/*!
+* \fn produceEnd(int updown)
+* \param updown set workpiece(1) or get workpiece(2)
 * \brief send produce message over Modbus
 */
-void MPSPickPlace1::produceEnd() {
-  int nb = 1;
-
-  // uint16_t *tab_rq_registers = (uint16_t *) malloc(nb * sizeof(uint16_t));
-  // memset(tab_rq_registers, 0, nb * sizeof(uint16_t));
-
-  uint16_t send[1] = {5};
-  uint16_t reci[20] = {0};
-
-  //tab_rq_registers[0] = (uint8_t) 5;
-
-  /* SINGLE REGISTER */
-  std::cout << "Write Data" << std::endl;
-  int rc = modbus_write_register(ctx, addr, send[0]);
+void MPSPickPlace1::produceEnd(int updown) {
+  uint16_t send[1] = {(uint16_t)updown};
+  int rc = modbus_write_registers(this->mb, 1, 1, send);
 	
   if (rc != 1) {
-    std::cout << "ERROR while writing data to address " << 5 << std::endl;
-    rc = modbus_read_registers(ctx, 5, 1, reci);
+    std::cout << "ERROR while writing data to address " << std::endl;
   } 
 }
 
 /*!
 * \fn isEmpty()
 * \brief receive isempty message from MPS
-* \param empty received isEmpty command
 * \return ture, if MPS is empty or false, if MPS is not empty
 */
-bool MPSPickPlace1::isEmpty(bool empty) {
-  uint16_t reci[20] = {0};
-
-  int rc = modbus_read_registers(ctx, this->addr, 1, reci);
+bool MPSPickPlace1::isEmpty() {
+  uint16_t rec[1];
+  int rc = modbus_read_input_registers(this->mb, 2, 1, rec);
 
   if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << this->addr << std::endl;
+    std::cout << "ERROR while reading data from address " << std::endl;
   }
 
-  std::cout << "what up: " << reci[0] << std::endl;
-
-  if(reci[0] == 1) {
+  if(rec[0] == 1) {
     return true;
   }
   
@@ -80,19 +74,18 @@ bool MPSPickPlace1::isEmpty(bool empty) {
 /*!
 * \fn isEmptyReady()
 * \brief receive isready message from MPS
-* \param reveiced isReady command
 * \return true, if MPS is ready and false, if MPS is not ready
 */
-bool MPSPickPlace1::isReady(bool ready) {
-  uint16_t reci[20] = {0};
+bool MPSPickPlace1::isReady() {
+  uint16_t rec[1] = {0};
 
-  int rc = modbus_read_registers(ctx, this->addr, 1, reci);
+  int rc = modbus_read_input_registers(this->mb, 3, 1, rec);
 
   if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << this->addr << std::endl;
+    std::cout << "ERROR while reading data from address " << std::endl;
   }
 
-  if(reci[0] == 1) {
+  if(rec[0] == 1) {
     return true;
   }
 

@@ -1,4 +1,4 @@
-#include <mps_incoming_station_message.h>
+#include "mps_incoming_station_message.h"
 
 MPSIncomingStationGiveCapMessage::MPSIncomingStationGiveCapMessage() {
   this->side = 0;

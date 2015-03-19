@@ -8,21 +8,27 @@
 #ifndef MPSDELIVER_H
 #define MPSDELIVER_H
 
-#include <mps_deliver_message.h>
+#include "mps.h"
 
 /*!
 * \class MPSDeliver
 * \brief Communication between Refbox and Delivery Station
 */
-class MPSDeliver {
+class MPSDeliver : public MPS {
  public:
   /*!
-   * \fn MPSDeliver(MPSRefboxInterface* cli, int addr)
+   * \fn MPSDeliver(char* ip, int port)
    * \brief Constructor
-   * \param cli reference of Refbox Interface
+   * \param ip address of mps
    * \param port port for modbus communication
    */
   MPSDeliver(char* ip, int port);
+
+  /*!
+   * \fn ~MPSDeliver()
+   * \brief Destructor
+   */
+  ~MPSDeliver();
   
   /*!
    * \fn sendDeliver(int lane)
@@ -37,7 +43,7 @@ class MPSDeliver {
    * \param ready received data
    * \return true, if delivery was successful and false if not
    */
-  bool isDelivered(bool ready);
+  bool isDelivered();
 
  private:
   modbus_t* mb; // connection to mps

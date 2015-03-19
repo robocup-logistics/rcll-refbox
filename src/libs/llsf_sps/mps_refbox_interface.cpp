@@ -5,48 +5,22 @@
 * \version 1.0
 */
 
-#include <mps_refbox_interface.h>
-#include <MPSModbusCommunication.h>
+#include "mps_refbox_interface.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-#include <MPSInfo.h>
+#include <iostream>
+
+#include "mps_list.h"
 
 /*!
-* \fn MPSRefboxInterface(char *cli, int port)
+* \fn MPSRefboxInterface()
 * \brief Constructor
-* \param masterip ip of server
-* \param port on which port we want communicate with server
 */
-MPSRefboxInterface::MPSRefboxInterface(char* masterip, int port, int addr) {
-  int rc;
-  int nb;
-    
-  /* TCP */
-  ctx = modbus_new_tcp("127.0.0.1", 1502);
-  //modbus_set_debug(ctx, TRUE);
-
-  if (modbus_connect(ctx) == -1) {
-    std::cout << "ERROR while connecting with master" << std::endl; 
-    modbus_free(ctx);
-    return;
-  }
-
-  /* Allocate and initialize the different memory spaces */
-  nb = 1;
-
-  tab_rq_registers = (uint16_t *) malloc(nb * sizeof(uint16_t));
-  memset(tab_rq_registers, 0, nb * sizeof(uint16_t));
-
-  tab_rp_registers = (uint16_t *) malloc(nb * sizeof(uint16_t));
-  memset(tab_rp_registers, 0, nb * sizeof(uint16_t));
-  
+MPSRefboxInterface::MPSRefboxInterface() {  
   this->hostList = MPSList::getInstance();
-
-  uint16_t send[2] = {(uint16_t)9, (uint16_t)addr};
-  rc = modbus_write_registers(ctx, 1, 2, send);
 }
 
 /*!
@@ -54,21 +28,6 @@ MPSRefboxInterface::MPSRefboxInterface(char* masterip, int port, int addr) {
 * \brief Destructor
 */
 MPSRefboxInterface::~MPSRefboxInterface() {
-    free(tab_rq_registers);
-    free(tab_rp_registers);
-
-    modbus_close(ctx);
-    modbus_free(ctx);
-}
-
-
-/*!
-* \fn getTxpConnection()
-* \brief Getter to get the connection
-* \return the modbus connection
-*/
-modbus_t* MPSRefboxInterface::getTcpConnection() {
-  return this->ctx;
 }
 
 /*!
@@ -114,17 +73,7 @@ void MPSRefboxInterface::deleteHost() {
   std::cout << std::endl;
 }
 
-/*!
- * \fn update()
- * \brief do something if new data are available
- * \param the socket/file descriptor where the datas are
- */
-void MPSRefboxInterface::update(int descriptor) {
-  std::cout << "here the descriptor: " << descriptor << std::endl;
-  //std::cout << hosts.size() << std::endl;
-  for(int i = 0; i < this->hostList->hosts.size(); i++) {
-    if(hostList->hosts.at(i)->getSocket() == descriptor) {
-      hostList->hosts.at(i)->getMachine()->receiveData();
-    }
-  }
+int main(int argc, char** argv) {
+
+  return 0;
 }

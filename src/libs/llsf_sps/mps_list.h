@@ -2,7 +2,7 @@
 #define MPSLIST_H
 
 #include <vector>
-#include <mps_info.h>
+#include "mps_info.h"
 
 class MPSList {
  private:
@@ -12,7 +12,6 @@ class MPSList {
  public:
   std::vector<MPSInfo*> hosts;
   static MPSList* getInstance();
-  MPSInfo* getHostFromSocket(int descriptor);
 }; 
 
 

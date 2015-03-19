@@ -5,15 +5,15 @@
 * \version 1.0
 */
 
-#include <mps_pick_place_2.h>
+#include "mps_pick_place_2.h"
+#include <iostream>
 
 /*!
-* \fn MPSPickPlace1(MPSRefboxInterface *cli, int addr)
+* \fn MPSPickPlace1(char* ip, int port)
 * \brief Constructor
-* \param *cli A reference to refboxinterface
-* \param addr The address of destination MPS
+* \param ip address of mps
+* \param port port of modbus communication
 */
-
 MPSPickPlace2::MPSPickPlace2(char* ip, int port) {
   this->ip = ip;
   this->port = port;
@@ -23,8 +23,16 @@ MPSPickPlace2::MPSPickPlace2(char* ip, int port) {
   if(modbus_connect(this->mb) == -1) {
     std::cout << "Error while connecting" << std::endl;
     modbus_free(this->mb);
-    return -1;
   }
+}
+
+/*!
+ * \fn ~MPSPickPlace2()
+ * \brief Destructor
+ */
+MPSPickPlace2::~MPSPickPlace2() {
+  modbus_close(this->mb);
+  modbus_free(this->mb);
 }
 
 /*!
@@ -33,9 +41,8 @@ MPSPickPlace2::MPSPickPlace2(char* ip, int port) {
 * \param workpiece what kind of workpiece have to be produce
 */
 void MPSPickPlace2::produceRing(int workpiece) {
-  uint16_t send[4] = {2, 4, 8, 16};
-  
-  int rc = modbus_write_registers(this->ctx, this->addr, 4, send);
+  uint16_t send[1] = {(uint16_t)workpiece};
+  int rc = modbus_write_registers(this->mb, 1, 1, send);
   
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;
@@ -45,18 +52,27 @@ void MPSPickPlace2::produceRing(int workpiece) {
 /*!
 * \fn ringReady()
 * \brief receive ringReady command
-* \param ready received ringReady command
 * \return true if ring is ready and false if ring not is ready
 */
-bool MPSPickPlace2::ringReady(bool ready) {
-  return ready;
+bool MPSPickPlace2::ringReady() {
+  uint16_t rec[1];
+  int rc = modbus_read_input_registers(this->mb, 2, 1, rec);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data" << std::endl;    
+  }
 }
 
 /*!
-* \fn isEmptyLine1()
+* \fn isEmptyLine()
 * \brief receive isEmptyLine1 command
 * \return true if line 1 is empty
 */
-bool MPSPickPlace2::isEmpty(int lane, bool empty) {
-  return empty;
+bool MPSPickPlace2::isEmpty() {
+  uint16_t rec[1];
+  int rc = modbus_read_input_registers(this->mb, 3, 1, rec);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data" << std::endl;    
+  }
 }

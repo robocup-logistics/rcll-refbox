@@ -5,8 +5,7 @@
 * \version 1.0
 */
 
-#include <mps_band.h>
-
+#include "mps_band.h"
 #include <iostream>
 
 /*!

@@ -8,22 +8,27 @@
 #ifndef MPSPICKPLACE2_H
 #define MPSPICKPLACE2_H
 
-#include <mps_refbox_interface.h>
-#include <mps.h>
+#include "mps.h"
 
 /*!
 * \class MPSPickPlace2
 * \brief This class handels the communication to a Pick&Place 2
 */
-class MPSPickPlace2 {
+class MPSPickPlace2 : public MPS {
  public:
   /*!
-   * \fn MPSPickPlace2(MPSRefboxInterface* cli, int addr)
+   * \fn MPSPickPlace2(char* ip, int port)
    * \brief Initialize communication
-   * \param cli reference to refbox client
-   * \param addr address of destination MPS
+   * \param ip address of mps
+   * \param port port of modbus communication
    */
   MPSPickPlace2(char* ip, int port);
+
+  /*!
+   * \fn ~MPSPickPlace2()
+   * \brief Destructor
+   */
+  ~MPSPickPlace2();
   
   /*!
    * \fn produceRing(int workpiece)
@@ -35,19 +40,16 @@ class MPSPickPlace2 {
   /*!
    * \fn ringReady()
    * \brief receive ringReady command
-   * \param ready received ringReady command
    * \return true if workpiece is ready and false if not
    */
-  bool ringReady(bool ready);
+  bool ringReady();
 
   /*!
    * \fn isEmpty()
    * \brief receive isEmpty command
-   * \param lane for which lane we received the data
-   * \param empty reveived isEmpty command
    * \return true if lane is empty and false if not
    */
-  bool isEmpty(int lane, bool empty);
+  bool isEmpty();
 
  private:
   modbus_t* mb; // connection to server

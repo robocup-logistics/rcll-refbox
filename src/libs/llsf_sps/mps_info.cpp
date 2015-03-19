@@ -5,7 +5,7 @@
 * \version 1.0
 */
 
-#include <mps_info.h>
+#include "mps_info.h"
 
 /*!
  * \fn MPSInfo()
@@ -72,7 +72,7 @@ void MPSInfo::setMachine(MPS* mps) {
  * \brief getter for address
  * \return ip ip of MPS
  */
-char* MPSInfo::getIp() {
+const char* MPSInfo::getIp() {
   return this->ip;
 }
 
