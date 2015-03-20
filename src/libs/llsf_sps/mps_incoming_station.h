@@ -22,7 +22,7 @@ class MPSIncomingStation : public MPS {
    * \param ip address of mps
    * \param port port for modbus communication
    */
-  MPSIncomingStation(char* ip, int port);
+  MPSIncomingStation(const char* ip, int port);
  
   /*!
    * \fn ~MPSIncomingStation()
@@ -52,9 +52,15 @@ class MPSIncomingStation : public MPS {
    */
   bool isEmpty();
 
+  /*!
+   * \fn processQueue()
+   * \brief processing the queue
+   */
+  void processQueue();
+
  private:
   modbus_t* mb;
-  char* ip;
+  const char* ip;
   int port;
 };
 

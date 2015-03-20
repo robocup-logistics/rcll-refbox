@@ -8,10 +8,10 @@ MPSDeliverSideMessage::MPSDeliverSideMessage(int side) {
   this->side = side;
 }
 
-int MPSDeliverSideMessage::setSide() {
+int MPSDeliverSideMessage::getSide() {
   return this->side;
 }
 
-void MPSDeliverSideMessage::getSide(int side) {
+void MPSDeliverSideMessage::setSide(int side) {
   this->side = side;
 }

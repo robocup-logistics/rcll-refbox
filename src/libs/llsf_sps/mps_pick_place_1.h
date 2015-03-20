@@ -22,7 +22,7 @@ class MPSPickPlace1 : public MPS {
    * \param ip address of mps
    * \param port port of modbus communication
    */
-  MPSPickPlace1(char* ip, int port);
+  MPSPickPlace1(const char* ip, int port);
 
   /*!
    * \fn ~MPSPickPlace1()
@@ -51,9 +51,15 @@ class MPSPickPlace1 : public MPS {
    */
   bool isReady();
 
- private:
+  /*!
+   * \fn processQueue()
+   * \brief processing the queue
+   */
+  void processQueue();
+
+private:
   modbus_t* mb; // connection to mps
-  char* ip;
+  const char* ip;
   int port; // port for modbuscommunication
 };
 

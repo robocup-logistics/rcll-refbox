@@ -1,5 +1,19 @@
 #include "mps.h"
+#include <iostream>
 
-MPS::MPS() {}
+MPS::MPS(const char* ip, int port) {
+  this->ip = ip;
+  this->port = port;
 
-MPS::~MPS() {}
+  this->mb = modbus_new_tcp(this->ip, this->port);
+
+  if(modbus_connect(this->mb) == -1) {
+    std::cout << "Error while connecting with ip: " << ip << std::endl;
+  }
+}
+
+MPS::~MPS() {
+  std::cout << "Destructor called" << std::endl;
+  modbus_close(this->mb);
+  modbus_free(this->mb);
+}

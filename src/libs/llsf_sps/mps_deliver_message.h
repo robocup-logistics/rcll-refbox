@@ -5,6 +5,6 @@ class MPSDeliverSideMessage {
  public:
   MPSDeliverSideMessage();
   MPSDeliverSideMessage(int side);
-  int setSide();
-  void getSide(int side);
+  int getSide();
+  void setSide(int side);
 };

@@ -10,8 +10,8 @@
 
 #include <modbus/modbus.h>
 #include <vector>
-#include "mps_info.h"
-#include "mps_list.h"
+
+#include "mps.h"
 
 /*!
 * \class MPSRefboxInterface
@@ -19,7 +19,7 @@
 */
 class MPSRefboxInterface {
  private:
-  MPSList* hostList;
+  std::vector<MPS*> mpsList;
 
  public:
   /*!
@@ -33,39 +33,6 @@ class MPSRefboxInterface {
    * \brief Destructor
    */
   ~MPSRefboxInterface();
-
-  /*!
-   * \fn readHostInfo()
-   * \brief check for new hosts
-   */
-  void readHostInfo();
-
-  /*!
-   * \fn getHostList()
-   * \brief Getter method to get the host list
-   * \return vector of all registered hosts
-   */
-  std::vector<MPSInfo*> getHostList();
-  
-  /*!
-   * \fn setHostList()
-   * \brief Setter method to set the host list
-   */
-  void setHostList();
-
-  /*!
-   * \fn insertHost(MPSInfo *mps)
-   * \brief Insert a new host into host list
-   * \return connection
-   */
-  void insertHost(MPSInfo *mps);
-  
-  /*!
-   * \fn deleteHost()
-   * \brief Delete a host from the host list
-   * \return connection
-   */
-  void deleteHost();
 };
 
 #endif // MPSREFBOXINTERFACE_H

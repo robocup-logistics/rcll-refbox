@@ -22,13 +22,13 @@ class MPSDeliver : public MPS {
    * \param ip address of mps
    * \param port port for modbus communication
    */
-  MPSDeliver(char* ip, int port);
+  MPSDeliver(const char* ip, int port);
 
   /*!
    * \fn ~MPSDeliver()
    * \brief Destructor
    */
-  ~MPSDeliver();
+  //~MPSDeliver();
   
   /*!
    * \fn sendDeliver(int lane)
@@ -45,9 +45,15 @@ class MPSDeliver : public MPS {
    */
   bool isDelivered();
 
+  /*!
+   * \fn processQueue()
+   * \brief processing the queue
+   */
+  void processQueue();
+  
  private:
   modbus_t* mb; // connection to mps
-  char* ip;      // ip of mps
+  const char* ip;      // ip of mps
   int port;      // port of communication
 };
 

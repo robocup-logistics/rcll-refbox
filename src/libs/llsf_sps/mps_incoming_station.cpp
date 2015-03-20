@@ -6,32 +6,22 @@
 */
 
 #include "mps_incoming_station.h"
+#include "mps_incoming_station_message.h"
 #include <iostream>
 
 /*!
-* \fn MPSIncomingStation(MPSRefboxInterface* cli, int addr)
+* \fn MPSIncomingStation(const char* ip, int port)
+* \param ip ip address of mps
+* \param port port of modbus communication
 * \brief Constructor
 */
-MPSIncomingStation::MPSIncomingStation(char* ip, int port) {
-  this->ip = ip;
-  this->port = port;
-
-  this->mb = modbus_new_tcp(this->ip, this->port);
-
-  if(modbus_connect(this->mb) == -1) {
-    std::cout << "Error while connecting" << std::endl;
-    modbus_free(this->mb);
-  }
-}
+MPSIncomingStation::MPSIncomingStation(const char* ip, int port) : MPS(ip, port){}
 
 /*!
  * \fn ~MPSIncomingStation()
  * \brief Destructor
  */
-MPSIncomingStation::~MPSIncomingStation() {
-  modbus_close(this->mb);
-  modbus_free(this->mb);
-}
+MPSIncomingStation::~MPSIncomingStation() {}
 
 /*!
 * \fn getCap(int color, int side)
@@ -45,7 +35,7 @@ void MPSIncomingStation::getCap(int color, int side) {
   int rc = modbus_write_registers(this->mb, 1, 2, send);
   
   if(rc == -1) {
-    std::cout << "ERROR while sending data" << std::endl;
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
   }
 }
 
@@ -81,4 +71,21 @@ bool MPSIncomingStation::isEmpty() {
   }
   
   return false;
+}
+
+/*!
+ * \fn processQueue()
+ * \brief processing the queue
+ */
+void MPSIncomingStation::processQueue() {
+  if(!this->messages.empty() && !this->lock) {
+    this->lock = true;
+    MPSIncomingStationGiveCapMessage* tmp = (MPSIncomingStationGiveCapMessage*)messages.front();
+    messages.pop();
+
+    this->getCap(tmp->getColor(), tmp->getSide());
+  }
+  else if(this->capReady()) {
+    this->lock = false;
+  }
 }

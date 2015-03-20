@@ -8,33 +8,15 @@
 #include "mps_deliver.h"
 #include <modbus/modbus.h>
 #include <iostream>
+#include "mps_deliver_message.h"
 
 /*!
- * \fn MPSDeliver(char* ip, int port)
+ * \fn MPSDeliver(const char* ip, int port)
  * \brief Constructor
  * \param ip address of mps
  * \param port port for modbus communication
  */
-MPSDeliver::MPSDeliver(char* ip, int port) {
-  this->ip = ip;
-  this->port = port;
-
-  this->mb = modbus_new_tcp(this->ip, this->port);
-
-  if(modbus_connect(this->mb) == -1) {
-    std::cout << "Error while connecting" << std::endl;
-    modbus_free(mb);
-  }
-}
-
-/*!
- * \fn ~MPSDeliver()
- * \brief Destructor
- */
-MPSDeliver::~MPSDeliver() {
-  modbus_close(this->mb);
-  modbus_free(this->mb);
-}
+MPSDeliver::MPSDeliver(const char* ip, int port) : MPS(ip, port) {}
 
 /*!
  * \fn sendDeliver(int lane)
@@ -64,5 +46,21 @@ bool MPSDeliver::isDelivered() {
   }
   else {
     return true;
+  }
+}
+
+/*!
+ * \fn processQueue()
+ * \brief processing the queue
+ */
+void MPSDeliver::processQueue() {
+  if(!this->messages.empty() && !this->lock) {
+    this->lock = true;
+    MPSDeliverSideMessage* tmp = (MPSDeliverSideMessage*)this->messages.front();
+    this->messages.pop();
+    this->sendDeliver(tmp->getSide());
+  }
+  else if(this->isDelivered()) {
+    this->lock = false;
   }
 }

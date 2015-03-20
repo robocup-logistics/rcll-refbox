@@ -6,36 +6,23 @@
 */
 
 #include "mps_pick_place_1.h"
+#include "mps_pick_place_1_message.h"
 
 #include <iostream>
 
 /*!
-* \fn MPSPickPlace1(MPSRefboxInterface *cli, int port)
+* \fn MPSPickPlace1(const char* ip, int port)
 * \brief Constructor
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace1::MPSPickPlace1(char* ip, int port) {
-  this->ip = ip;
-  this->port = port;
-
-  this->mb = modbus_new_tcp(this->ip, this->port);
-
-  if(modbus_connect(this->mb) == -1) {
-    std::cout << "Error while connecting" << std::endl;
-    modbus_free(mb);
-    //return -1;
-  }
-}
+MPSPickPlace1::MPSPickPlace1(const char* ip, int port) : MPS(ip, port){}
 
 /*!
  * \fn ~MPSPickPlace1()
  * \brief Destructor
  */
-MPSPickPlace1::~MPSPickPlace1() {
-  modbus_close(this->mb);
-  modbus_free(this->mb);
-}
+MPSPickPlace1::~MPSPickPlace1() {}
 
 /*!
 * \fn produceEnd(int updown)
@@ -90,4 +77,21 @@ bool MPSPickPlace1::isReady() {
   }
 
   return false;
+}
+
+/*!
+ * \fn processQueue()
+ * \brief processing the queue
+ */
+void MPSPickPlace1::processQueue() {
+  if(!this->messages.empty() && !this->lock) {
+    this->lock = true;
+    MPSPickPlace1ProduceEndMessage* tmp = (MPSPickPlace1ProduceEndMessage*)messages.front();
+    messages.pop();
+
+    this->produceEnd(tmp->getUpdown());
+  }
+  else if(isReady()) {
+    this->lock = false;
+  }
 }

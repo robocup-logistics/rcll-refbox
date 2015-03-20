@@ -6,34 +6,22 @@
 */
 
 #include "mps_pick_place_2.h"
+#include "mps_pick_place_2_message.h"
 #include <iostream>
 
 /*!
-* \fn MPSPickPlace1(char* ip, int port)
+* \fn MPSPickPlace1(const char* ip, int port)
 * \brief Constructor
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace2::MPSPickPlace2(char* ip, int port) {
-  this->ip = ip;
-  this->port = port;
-
-  this->mb = modbus_new_tcp(this->ip, this->port);
-
-  if(modbus_connect(this->mb) == -1) {
-    std::cout << "Error while connecting" << std::endl;
-    modbus_free(this->mb);
-  }
-}
+MPSPickPlace2::MPSPickPlace2(const char* ip, int port) : MPS(ip, port) {}
 
 /*!
  * \fn ~MPSPickPlace2()
  * \brief Destructor
  */
-MPSPickPlace2::~MPSPickPlace2() {
-  modbus_close(this->mb);
-  modbus_free(this->mb);
-}
+MPSPickPlace2::~MPSPickPlace2() {}
 
 /*!
 * \fn produceRing(int workpiece)
@@ -74,5 +62,22 @@ bool MPSPickPlace2::isEmpty() {
 
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;    
+  }
+}
+
+/*!
+ * \fn processQueue()
+ * \brief processing the queue
+ */
+void MPSPickPlace2::processQueue() {
+  if(!this->messages.empty() && !this->lock) {
+    this->lock = true;
+    MPSPickPlace2ProduceRingMessage* tmp = (MPSPickPlace2ProduceRingMessage*)messages.front();
+    messages.pop();
+
+    this->produceRing(tmp->getRing());
+  }
+  else if(this->ringReady()) {
+    this->lock = false;
   }
 }

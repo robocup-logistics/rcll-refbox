@@ -10,6 +10,9 @@
 
 #include <queue>
 #include <modbus/modbus.h>
+#include <vector>
+
+#include "mps_message.h"
 
 /*!
 * \class MPS
@@ -17,14 +20,23 @@
 */
 class MPS {
  private:
+  const char* ip;
+  int port;
+  int status;
+  modbus_t* mb;
+ 
+ protected:
   bool lock; // mps is locked because it process something
-
+  std::queue<MPSMessage*> messages;
+ 
  public:
   /*!
-   * \fn MPS()
+   * \fn MPS(const char* ip, int port)
+   * \param ip ip address of machine
+   * \param port port of modbus communication
    * \brief Constructor
    */
-  MPS();
+  MPS(const char* ip, int port);
 
   /*!
    * \fn ~MPS()

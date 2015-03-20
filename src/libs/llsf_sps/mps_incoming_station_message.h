@@ -1,9 +1,11 @@
-class MPSIncomingStationGiveCapMessage {
+#include "mps_message.h"
+
+class MPSIncomingStationGiveCapMessage : public MPSMessage {
  private:
   int color;
   int side;
 
- pubilc:
+ public:
   MPSIncomingStationGiveCapMessage();
   MPSIncomingStationGiveCapMessage(int color, int side);
   int getSide();

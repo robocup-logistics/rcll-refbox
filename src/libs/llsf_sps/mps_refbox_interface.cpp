@@ -13,67 +13,34 @@
 #include <vector>
 #include <iostream>
 
-#include "mps_list.h"
+#include "mps_incoming_station.h"
+#include "mps_pick_place_1.h"
+#include "mps_pick_place_2.h"
+#include "mps_deliver.h"
 
 /*!
 * \fn MPSRefboxInterface()
 * \brief Constructor
 */
 MPSRefboxInterface::MPSRefboxInterface() {  
-  this->hostList = MPSList::getInstance();
+  // Here we have to read a yaml file to get all mps stations
+  MPSDeliver* de1 = new MPSDeliver("192.168.2.20", 1502);
+  // MPSPickPlace1* pp1 = new MPSPickPlace1("192.168.2.21", 502);
+  // MPSPickPlace2* pp2 = new MPSPickPlace2("192.168.2.22", 502);
+  // MPSIncomingStation* is1 = new MPSIncomingStation("192.168.2.21", 502);
+
+  delete de1;
+  
+  //this->mpsList.push_back(de1);
 }
 
 /*!
 * \fn ~MPSRefboxInterface()
 * \brief Destructor
 */
-MPSRefboxInterface::~MPSRefboxInterface() {
-}
-
-/*!
- * \fn readHostInfo()
- * \brief check for new hosts
- */
-void MPSRefboxInterface::readHostInfo() {
-
-}
-
-/*!
- * \fn getHostList()
- * \brief Getter method to get the host list
- * \return vector of all registered hosts
- */
-std::vector<MPSInfo*> MPSRefboxInterface::getHostList() {
-
-}
-  
-/*!
- * \fn setHostList()
- * \brief Setter method to set the host list
- */
-void MPSRefboxInterface::setHostList() {
-
-}
-
-/*!
- * \fn insertHost(MPS *mps)
- * \brief Insert a new host into host list
- * \return connection
- */
-void MPSRefboxInterface::insertHost(MPSInfo *mps) {
-
-}
-  
-/*!
- * \fn deleteHost()
- * \brief Delete a host from the host list
- * \return connection
- */
-void MPSRefboxInterface::deleteHost() {
-  std::cout << std::endl;
-}
+MPSRefboxInterface::~MPSRefboxInterface() {}
 
 int main(int argc, char** argv) {
-
+  MPSRefboxInterface* ref = new MPSRefboxInterface();
   return 0;
 }
