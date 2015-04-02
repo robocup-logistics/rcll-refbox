@@ -8,6 +8,8 @@
 #ifndef MPS_H
 #define MPS_H
 
+#define MODBUS_TCP_SLAVE 0x04
+
 #include <queue>
 #include <modbus/modbus.h>
 #include <vector>
@@ -19,16 +21,16 @@
 * \brief Abstract definition of a mps
 */
 class MPS {
- private:
-  const char* ip;
-  int port;
-  int status;
-  modbus_t* mb;
+  //private:
  
  protected:
   bool lock; // mps is locked because it process something
   std::queue<MPSMessage*> messages;
- 
+  const char* ip;
+  int port;
+  int status;
+  modbus_t* mb;
+
  public:
   /*!
    * \fn MPS(const char* ip, int port)
@@ -60,6 +62,15 @@ class MPS {
    */
   void setLock(bool lock) {
     this->lock = lock;
+  }
+
+  /*!
+   * \fn setMessage(MPSMessage* message)
+   * \brief setter for lock
+   * \param lock true if mps is locked and false if not
+   */
+  void setMessage(MPSMessage* message) {
+    this->messages.push(message);
   }
 };
 

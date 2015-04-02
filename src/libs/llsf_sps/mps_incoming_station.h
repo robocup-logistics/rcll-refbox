@@ -59,9 +59,7 @@ class MPSIncomingStation : public MPS {
   void processQueue();
 
  private:
-  modbus_t* mb;
-  const char* ip;
-  int port;
+  int lastId;
 };
 
 #endif // MPSINCOMINGSTATION_H

@@ -15,7 +15,9 @@
 * \param port port of modbus communication
 * \brief Constructor
 */
-MPSIncomingStation::MPSIncomingStation(const char* ip, int port) : MPS(ip, port){}
+MPSIncomingStation::MPSIncomingStation(const char* ip, int port) : MPS(ip, port) {
+  this->lastId = 2;
+}
 
 /*!
  * \fn ~MPSIncomingStation()
@@ -30,13 +32,15 @@ MPSIncomingStation::~MPSIncomingStation() {}
 * \param side on which side workpiece have to be delivere
 */
 void MPSIncomingStation::getCap(int color, int side) {
-  uint16_t send[2] = {(uint16_t)color, (uint16_t)side};
-  
-  int rc = modbus_write_registers(this->mb, 1, 2, send);
-  
+  uint16_t send[3] = {(uint16_t)this->lastId, (uint16_t)color, (uint16_t)side};
+  std::cout << send[0] << " " << color << " " << side << std::endl;
+  int rc = modbus_write_registers(mb, 1, 3, send);
+
   if(rc == -1) {
     std::cout << "ERROR while sending data with ip: " << ip << std::endl;
   }
+
+  this->lastId++;
 }
 
 /*!
@@ -47,7 +51,7 @@ void MPSIncomingStation::getCap(int color, int side) {
 bool MPSIncomingStation::capReady() {
   uint16_t rec[1] = {0};
   
-  int rc = modbus_read_input_registers(this->mb, 3, 1, rec);
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rec[0] == 1) {
     return true;
@@ -64,7 +68,7 @@ bool MPSIncomingStation::capReady() {
 bool MPSIncomingStation::isEmpty() {
   uint16_t rec[1] = {0};
   
-  int rc = modbus_read_input_registers(this->mb, 4, 1, rec);
+  int rc = modbus_read_input_registers(mb, 4, 1, rec);
 
   if(rec[0] == 1) {
     return true;

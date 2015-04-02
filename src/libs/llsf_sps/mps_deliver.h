@@ -50,11 +50,6 @@ class MPSDeliver : public MPS {
    * \brief processing the queue
    */
   void processQueue();
-  
- private:
-  modbus_t* mb; // connection to mps
-  const char* ip;      // ip of mps
-  int port;      // port of communication
 };
 
 #endif // MPSDELIVER_H

@@ -25,7 +25,7 @@ MPSDeliver::MPSDeliver(const char* ip, int port) : MPS(ip, port) {}
  */
 void MPSDeliver::sendDeliver(int lane) {
   uint16_t send[1] = {(uint16_t)lane};
-  int rc = modbus_write_registers(this->mb, 1, 1, send);
+  int rc = modbus_write_registers(mb, 1, 1, send);
   
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;
@@ -39,7 +39,7 @@ void MPSDeliver::sendDeliver(int lane) {
  */
 bool MPSDeliver::isDelivered() {
   uint16_t rec[1];
-  int rc = modbus_read_input_registers(this->mb, 2, 1, rec);
+  int rc = modbus_read_input_registers(mb, 2, 1, rec);
 
   if(rec[0] == 0) {
     return false;
@@ -58,6 +58,7 @@ void MPSDeliver::processQueue() {
     this->lock = true;
     MPSDeliverSideMessage* tmp = (MPSDeliverSideMessage*)this->messages.front();
     this->messages.pop();
+    std::cout << tmp->getSide() << std::endl;
     this->sendDeliver(tmp->getSide());
   }
   else if(this->isDelivered()) {

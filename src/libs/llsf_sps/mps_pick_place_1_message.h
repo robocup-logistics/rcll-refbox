@@ -1,4 +1,6 @@
-class MPSPickPlace1ProduceEndMessage {
+#include "mps_message.h"
+
+class MPSPickPlace1ProduceEndMessage : public MPSMessage {
  private:
   int updown;
 

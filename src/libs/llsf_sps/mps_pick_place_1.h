@@ -58,9 +58,9 @@ class MPSPickPlace1 : public MPS {
   void processQueue();
 
 private:
-  modbus_t* mb; // connection to mps
-  const char* ip;
-  int port; // port for modbuscommunication
+  //modbus_t* mb; // connection to mps
+  //const char* ip;
+  //int port; // port for modbuscommunication
 };
 
 #endif // MPSPICKPLACE1_H

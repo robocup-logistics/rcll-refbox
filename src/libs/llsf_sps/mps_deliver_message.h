@@ -1,4 +1,6 @@
-class MPSDeliverSideMessage {
+#include "mps_message.h"
+
+class MPSDeliverSideMessage : public MPSMessage {
  private:
   int side;
 

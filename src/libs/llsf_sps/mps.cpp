@@ -7,6 +7,8 @@ MPS::MPS(const char* ip, int port) {
 
   this->mb = modbus_new_tcp(this->ip, this->port);
 
+  std::cout << this->mb << std::endl;
+  
   if(modbus_connect(this->mb) == -1) {
     std::cout << "Error while connecting with ip: " << ip << std::endl;
   }

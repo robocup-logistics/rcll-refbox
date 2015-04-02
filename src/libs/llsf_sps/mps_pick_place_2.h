@@ -56,11 +56,6 @@ class MPSPickPlace2 : public MPS {
    * \brief processing the queue
    */
   void processQueue();
-
- private:
-  modbus_t* mb; // connection to server
-  const char* ip;     // ip of mps
-  int port;     // port of modbuscommunication
 };
 
 #endif // MPSPICKPLACE2_H

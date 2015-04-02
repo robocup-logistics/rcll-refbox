@@ -16,7 +16,9 @@
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace1::MPSPickPlace1(const char* ip, int port) : MPS(ip, port){}
+MPSPickPlace1::MPSPickPlace1(const char* ip, int port) : MPS(ip, port) {
+  std::cout << this->mb << std::endl;
+}
 
 /*!
  * \fn ~MPSPickPlace1()
@@ -30,9 +32,10 @@ MPSPickPlace1::~MPSPickPlace1() {}
 * \brief send produce message over Modbus
 */
 void MPSPickPlace1::produceEnd(int updown) {
-  uint16_t send[1] = {(uint16_t)updown};
-  int rc = modbus_write_registers(this->mb, 1, 1, send);
-	
+  uint16_t send1[1] = {updown};
+  std::cout << updown << std::endl;
+  int rc = modbus_write_registers(mb, 1, 1, send1);
+  	
   if (rc != 1) {
     std::cout << "ERROR while writing data to address " << std::endl;
   } 
@@ -45,7 +48,7 @@ void MPSPickPlace1::produceEnd(int updown) {
 */
 bool MPSPickPlace1::isEmpty() {
   uint16_t rec[1];
-  int rc = modbus_read_input_registers(this->mb, 2, 1, rec);
+  int rc = modbus_read_input_registers(mb, 2, 1, rec);
 
   if(rc != 1) {
     std::cout << "ERROR while reading data from address " << std::endl;
@@ -66,7 +69,7 @@ bool MPSPickPlace1::isEmpty() {
 bool MPSPickPlace1::isReady() {
   uint16_t rec[1] = {0};
 
-  int rc = modbus_read_input_registers(this->mb, 3, 1, rec);
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
     std::cout << "ERROR while reading data from address " << std::endl;

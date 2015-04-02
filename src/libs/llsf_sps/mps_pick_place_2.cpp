@@ -30,7 +30,7 @@ MPSPickPlace2::~MPSPickPlace2() {}
 */
 void MPSPickPlace2::produceRing(int workpiece) {
   uint16_t send[1] = {(uint16_t)workpiece};
-  int rc = modbus_write_registers(this->mb, 1, 1, send);
+  int rc = modbus_write_registers(mb, 1, 1, send);
   
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;
@@ -44,7 +44,7 @@ void MPSPickPlace2::produceRing(int workpiece) {
 */
 bool MPSPickPlace2::ringReady() {
   uint16_t rec[1];
-  int rc = modbus_read_input_registers(this->mb, 2, 1, rec);
+  int rc = modbus_read_input_registers(mb, 2, 1, rec);
 
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;    
@@ -58,7 +58,7 @@ bool MPSPickPlace2::ringReady() {
 */
 bool MPSPickPlace2::isEmpty() {
   uint16_t rec[1];
-  int rc = modbus_read_input_registers(this->mb, 3, 1, rec);
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;    

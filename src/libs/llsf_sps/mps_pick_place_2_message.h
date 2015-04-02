@@ -1,4 +1,6 @@
-class MPSPickPlace2ProduceRingMessage {
+#include "mps_message.h"
+
+class MPSPickPlace2ProduceRingMessage : public MPSMessage {
  private:
   int ring;
 
