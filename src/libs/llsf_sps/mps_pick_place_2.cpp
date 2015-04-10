@@ -15,7 +15,9 @@
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace2::MPSPickPlace2(const char* ip, int port) : MPS(ip, port) {}
+MPSPickPlace2::MPSPickPlace2(const char* ip, int port) : MPS(ip, port) {
+  type = 3;
+}
 
 /*!
  * \fn ~MPSPickPlace2()

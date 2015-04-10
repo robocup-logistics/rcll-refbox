@@ -17,6 +17,7 @@
 * \param port port of modbus communication
 */
 MPSPickPlace1::MPSPickPlace1(const char* ip, int port) : MPS(ip, port) {
+  type = 2;
   std::cout << this->mb << std::endl;
 }
 

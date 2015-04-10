@@ -19,9 +19,10 @@
 */
 class MPSRefboxInterface {
  private:
-  std::vector<MPS*> mpsList;
 
  public:
+  std::vector<void*> mpsList;
+
   /*!
    * \fn MPSRefboxInterface()
    * \brief Constructor

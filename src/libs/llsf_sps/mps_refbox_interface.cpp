@@ -36,9 +36,9 @@ MPSRefboxInterface::MPSRefboxInterface() {
   //de1->processQueue();
   //delete de1;
 
-  MPSPickPlace1 *pp1 = new MPSPickPlace1("127.0.0.1", 1502);
-  std::cout << "Here we are without segfault" << std::endl;
-  pp1->produceEnd(1);
+  // MPSPickPlace1 *pp1 = new MPSPickPlace1("127.0.0.1", 1502);
+  // std::cout << "Here we are without segfault" << std::endl;
+  // pp1->produceEnd(1);
   //this->mpsList.push_back(de1);
 }
 
@@ -47,8 +47,3 @@ MPSRefboxInterface::MPSRefboxInterface() {
 * \brief Destructor
 */
 MPSRefboxInterface::~MPSRefboxInterface() {}
-
-int main(int argc, char** argv) {
-  MPSRefboxInterface* ref = new MPSRefboxInterface();
-  return 0;
-}

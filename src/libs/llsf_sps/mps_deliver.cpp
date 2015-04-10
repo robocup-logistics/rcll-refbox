@@ -16,7 +16,9 @@
  * \param ip address of mps
  * \param port port for modbus communication
  */
-MPSDeliver::MPSDeliver(const char* ip, int port) : MPS(ip, port) {}
+MPSDeliver::MPSDeliver(const char* ip, int port) : MPS(ip, port) {
+  type = 4;
+}
 
 /*!
  * \fn sendDeliver(int lane)

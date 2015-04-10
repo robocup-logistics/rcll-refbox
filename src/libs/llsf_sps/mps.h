@@ -30,6 +30,7 @@ class MPS {
   int port;
   int status;
   modbus_t* mb;
+  int type;
 
  public:
   /*!
@@ -72,6 +73,14 @@ class MPS {
   void setMessage(MPSMessage* message) {
     this->messages.push(message);
   }
+
+  const char* getIp() {
+    return this->ip;
+  };
+
+  int getType() {
+    return this->type;
+  };
 };
 
 #endif // MPS_H

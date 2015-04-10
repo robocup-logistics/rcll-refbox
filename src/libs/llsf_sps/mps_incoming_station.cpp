@@ -16,6 +16,7 @@
 * \brief Constructor
 */
 MPSIncomingStation::MPSIncomingStation(const char* ip, int port) : MPS(ip, port) {
+  type = 1;
   this->lastId = 2;
 }
 
@@ -34,7 +35,7 @@ MPSIncomingStation::~MPSIncomingStation() {}
 void MPSIncomingStation::getCap(int color, int side) {
   uint16_t send[3] = {(uint16_t)this->lastId, (uint16_t)color, (uint16_t)side};
   std::cout << send[0] << " " << color << " " << side << std::endl;
-  int rc = modbus_write_registers(mb, 1, 3, send);
+  int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
     std::cout << "ERROR while sending data with ip: " << ip << std::endl;
@@ -51,9 +52,10 @@ void MPSIncomingStation::getCap(int color, int side) {
 bool MPSIncomingStation::capReady() {
   uint16_t rec[1] = {0};
   
-  int rc = modbus_read_input_registers(mb, 3, 1, rec);
-
+  int rc = modbus_read_input_registers(mb, 0, 1, rec);
+  std::cout << rec[0] << std::endl;
   if(rec[0] == 1) {
+    std::cout << "here" << std::endl;
     return true;
   }
 
