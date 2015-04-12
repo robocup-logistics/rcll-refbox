@@ -17,6 +17,8 @@ BASEDIR = ../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
 
+SUBDIRS=2014
+
 PROTOBUF_all = llsf_msgs
 
 MSGS_llsf_msgs = $(notdir $(patsubst %.proto,%,$(wildcard $(SRCDIR)/*.proto)))
