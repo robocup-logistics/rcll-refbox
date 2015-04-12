@@ -101,7 +101,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
 
-  cfg_clips_dir_ = std::string(SRCDIR) + "/clips/";
+  cfg_clips_dir_ = std::string(BASEDIR) + "/src/games/llsf2014/";
 
   try {
     cfg_timer_interval_ = config_->get_uint("/llsfrb/clips/timer-interval");
