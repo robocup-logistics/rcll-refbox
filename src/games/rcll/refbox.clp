@@ -13,37 +13,37 @@
 (load* (resolve-file net.clp))
 (load* (resolve-file machines.clp))
 (load* (resolve-file robots.clp))
-(load* (resolve-file orders.clp))
+;(load* (resolve-file orders.clp))
 (load* (resolve-file simulation.clp))
 (load* (resolve-file game.clp))
 (load* (resolve-file setup.clp))
-(load* (resolve-file production.clp))
+;(load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
-(load* (resolve-file challenges.clp))
+;(load* (resolve-file challenges.clp))
 
-(defrule rfid-input-learn-puck
-  (declare (salience ?*PRIORITY_FIRST*))
-  (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-  (machine (name ?m) (pose ?mpose-x ?mpose-y ?mpose-ori) (team ?team))
-  (not (puck (id ?id)))
-  =>
-  (bind ?new-index 1)
-  (do-for-all-facts ((?puck puck)) TRUE
-    (bind ?new-index (max (+ ?puck:index 1) ?new-index))
-  )
-  (printout t "Learned new puck ID " ?id " for team " ?team
-	    " (index " ?new-index ", state S0)" crlf)
-  (assert (puck (index ?new-index) (id ?id) (state S0) (team ?team)))
-)
+; (defrule rfid-input-learn-puck
+;   (declare (salience ?*PRIORITY_FIRST*))
+;   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
+;   (machine (name ?m) (pose ?mpose-x ?mpose-y ?mpose-ori) (team ?team))
+;   (not (puck (id ?id)))
+;   =>
+;   (bind ?new-index 1)
+;   (do-for-all-facts ((?puck puck)) TRUE
+;     (bind ?new-index (max (+ ?puck:index 1) ?new-index))
+;   )
+;   (printout t "Learned new puck ID " ?id " for team " ?team
+; 	    " (index " ?new-index ", state S0)" crlf)
+;   (assert (puck (index ?new-index) (id ?id) (state S0) (team ?team)))
+; )
 
-(defrule rfid-input-cleanup
-  (declare (salience ?*PRIORITY_CLEANUP*))
-  ?f <- (rfid-input (machine ?m) (has-puck ?hp) (id ?id))
-  =>
-  (retract ?f)
-  ;(if (debug 1) then
-  ;  (printout t "Clearing unused RFID input (" ?m ", " ?hp ", " ?id ")" crlf))
-)
+; (defrule rfid-input-cleanup
+;   (declare (salience ?*PRIORITY_CLEANUP*))
+;   ?f <- (rfid-input (machine ?m) (has-puck ?hp) (id ?id))
+;   =>
+;   (retract ?f)
+;   ;(if (debug 1) then
+;   ;  (printout t "Clearing unused RFID input (" ?m ", " ?hp ", " ?id ")" crlf))
+; )
 
 (defrule config-timer-interval
   (confval (path "/llsfrb/clips/timer-interval") (type ?t) (value ?v))
