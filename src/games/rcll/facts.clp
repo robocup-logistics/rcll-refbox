@@ -9,10 +9,9 @@
 
 (deftemplate machine
   (slot name (type SYMBOL)
-	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3 R1
-			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 D4 D5 D6 R2))
+	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
-  (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER RECYCLE))
+  (slot mtype (type SYMBOL) (allowed-values BS DS RS CS))
   (multislot loaded-with (type INTEGER) (default))
   (multislot actual-lights (type SYMBOL)
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
@@ -30,6 +29,10 @@
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot zone (type SYMBOL) (default TBD)
+	(allowed-values TBD Z1 Z2 Z3 Z4 Z5 Z6 Z7 Z8 Z9 Z10 Z11 Z12
+			Z13 Z14 Z15 Z16 Z17 Z18 Z19 Z20 Z21 Z22 Z23 Z24))
+  (slot exploration-light-code (type INTEGER) (default 0))
 )
 
 (deftemplate machine-spec
@@ -218,41 +221,20 @@
   (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
   (setup-light-toggle 0 0)
   (whac-a-mole-light NONE)
-  ; Positions are the example ones from the rulebook and
-  ; will most likely be different during the tournament
-  (machine (name M1)  (team CYAN) (mtype T1)      (pose 0.56 1.68 ?*M-EAST*))
-  (machine (name M2)  (team CYAN) (mtype T1)      (pose 0.56 2.80 ?*M-WEST*))
-  (machine (name M3)  (team CYAN) (mtype T2)      (pose 1.68 1.68 ?*M-NORTH*))
-  (machine (name M4)  (team CYAN) (mtype T2)      (pose 1.68 2.80 ?*M-SOUTH*))
-  (machine (name M5)  (team CYAN) (mtype T3)      (pose 1.68 3.92 ?*M-SOUTH*))
-  (machine (name M6)  (team CYAN) (mtype T3)      (pose 2.80 1.68 ?*M-WEST*))
-  (machine (name M7)  (team CYAN) (mtype T4)      (pose 2.80 3.92 ?*M-EAST*))
-  (machine (name M8)  (team CYAN) (mtype T5)      (pose 2.80 5.04 ?*M-SOUTH*))
-  (machine (name M9)  (team CYAN) (mtype T4)      (pose 3.92 1.68 ?*M-NORTH*))
-  (machine (name M10) (team CYAN) (mtype T5)      (pose 3.92 2.80 ?*M-WEST*))
-  (machine (name M11) (team CYAN) (mtype T3)      (pose 3.92 5.04 ?*M-EAST*))
-  (machine (name M12) (team CYAN) (mtype T4)      (pose 5.04 5.04 ?*M-EAST*))
-  (machine (name D1)  (team CYAN) (mtype DELIVER) (pose 5.34 2.45 ?*M-SOUTH*))
-  (machine (name D2)  (team CYAN) (mtype DELIVER) (pose 5.34 2.80 ?*M-SOUTH*))
-  (machine (name D3)  (team CYAN) (mtype DELIVER) (pose 5.34 3.15 ?*M-SOUTH*))
-  (machine (name R1)  (team CYAN) (mtype RECYCLE) (pose 0.56 5.04 ?*M-NORTH*))
 
-  (machine (name M13) (team MAGENTA) (mtype T1)      (pose -0.56 1.68 ?*M-EAST*))
-  (machine (name M14) (team MAGENTA) (mtype T1)      (pose -0.56 2.80 ?*M-WEST*))
-  (machine (name M15) (team MAGENTA) (mtype T2)      (pose -1.68 1.68 ?*M-SOUTH*))
-  (machine (name M16) (team MAGENTA) (mtype T2)      (pose -1.68 2.80 ?*M-NORTH*))
-  (machine (name M17) (team MAGENTA) (mtype T3)      (pose -1.68 3.92 ?*M-NORTH*))
-  (machine (name M18) (team MAGENTA) (mtype T3)      (pose -2.80 1.68 ?*M-WEST*))
-  (machine (name M19) (team MAGENTA) (mtype T4)      (pose -2.80 3.92 ?*M-EAST*))
-  (machine (name M20) (team MAGENTA) (mtype T5)      (pose -2.80 5.04 ?*M-NORTH*))
-  (machine (name M21) (team MAGENTA) (mtype T4)      (pose -3.92 1.68 ?*M-SOUTH*))
-  (machine (name M22) (team MAGENTA) (mtype T5)      (pose -3.92 2.80 ?*M-WEST*))
-  (machine (name M23) (team MAGENTA) (mtype T3)      (pose -3.92 5.04 ?*M-EAST*))
-  (machine (name M24) (team MAGENTA) (mtype T4)      (pose -5.04 5.04 ?*M-EAST*))
-  (machine (name D4)  (team MAGENTA) (mtype DELIVER) (pose -5.34 2.45 ?*M-NORTH*))
-  (machine (name D5)  (team MAGENTA) (mtype DELIVER) (pose -5.34 2.80 ?*M-NORTH*))
-  (machine (name D6)  (team MAGENTA) (mtype DELIVER) (pose -5.34 3.15 ?*M-NORTH*))
-  (machine (name R2)  (team MAGENTA) (mtype RECYCLE) (pose -0.56 5.04 ?*M-SOUTH*))
+  (machine (name C-BS)  (team CYAN) (mtype BS) (zone Z9))
+  (machine (name C-DS)  (team CYAN) (mtype DS) (zone Z4))
+  (machine (name C-RS1) (team CYAN) (mtype RS))
+  (machine (name C-RS2) (team CYAN) (mtype RS))
+  (machine (name C-CS1) (team CYAN) (mtype CS))
+  (machine (name C-CS2) (team CYAN) (mtype CS))
+
+  (machine (name M-BS)  (team MAGENTA) (mtype BS) (zone Z21))
+  (machine (name M-DS)  (team MAGENTA) (mtype DS) (zone Z16))
+  (machine (name M-RS1) (team MAGENTA) (mtype RS))
+  (machine (name M-RS2) (team MAGENTA) (mtype RS))
+  (machine (name M-CS1) (team MAGENTA) (mtype CS))
+  (machine (name M-CS2) (team MAGENTA) (mtype CS))
 )
 
 (deffacts light-codes

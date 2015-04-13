@@ -20,15 +20,9 @@
   )
 
   ; Set lights
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (bind ?dl (create$))
-    (do-for-fact ((?spec machine-spec) (?lc machine-light-code))
-		 (and (eq ?machine:mtype ?spec:mtype) (= ?spec:light-code ?lc:id))
-      (bind ?dl ?lc:code)
-      ;(printout t "Assigning " ?lc:code " to machine " ?machine:name
-      ;		   " of type " ?machine:mtype crlf)
-    )
-    (modify ?machine (desired-lights ?dl))
+  (delayed-do-for-all-facts ((?machine machine) (?lc machine-light-code))
+    (= ?machine:exploration-light-code ?lc:id)
+    (modify ?machine (desired-lights ?lc:code))
   )
 
   ;(assert (attention-message (text "Entering Exploration Phase")))
@@ -47,11 +41,9 @@
   ?gf <- (gamestate (phase EXPLORATION) (state RUNNING) (prev-state ~RUNNING))
   =>
   (modify ?gf (prev-state RUNNING))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (do-for-fact ((?spec machine-spec) (?lc machine-light-code))
-		 (and (eq ?machine:mtype ?spec:mtype) (= ?spec:light-code ?lc:id))
-      (modify ?machine (desired-lights ?lc:code))
-    )
+  (delayed-do-for-all-facts ((?machine machine) (?lc machine-light-code))
+    (= ?machine:exploration-light-code ?lc:id)
+    (modify ?machine (desired-lights ?lc:code))
   )
 )
 
