@@ -75,6 +75,7 @@ int main(int argc, char** argv) {
       if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 1) {
         std::cout << "1. getCap(color, side)" << std::endl;
         std::cout << "2. capReady" << std::endl;
+        std::cout << "3. setLight(light, state)" << std::endl;
         
         int operation = 0;
         std::cout << "Number: ";
@@ -97,11 +98,24 @@ int main(int argc, char** argv) {
         else if(operation == 2) {
           std::cout << static_cast<MPSIncomingStation*>(ref->mpsList.at(machine))->capReady() << std::endl;
         }
+        // set light command for incoming station
+        else if(operation == 3) {
+          int light = 0;
+          int state = 0;
+          std::cout << "light: ";
+          std::cin >> light;
+          std::cout << std::endl << "state: ";
+          std::cin >> state;
+          std::cout << std::endl;
+
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+        }
       }
       // available operations for machine of type single pick and place
       else if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 2) {
         std::cout << "1. produceEnd(updown)" << std::endl;
         std::cout << "2. isReady" << std::endl;
+        std::cout << "3. setLight(light, state)" << std::endl;
 
         int operation = 0;
         std::cout << "Number: ";
@@ -121,11 +135,24 @@ int main(int argc, char** argv) {
         else if(operation == 2) {
           std::cout << static_cast<MPSPickPlace1*>(ref->mpsList.at(machine))->isReady() << std::endl;
         }
+        // set light for pick and place 1
+        else if(operation == 3) {
+          int light = 0;
+          int state = 0;
+          std::cout << "light: ";
+          std::cin >> light;
+          std::cout << std::endl << "state: ";
+          std::cin >> state;
+          std::cout << std::endl;
+
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+        }
       }
       // available operations for machine of type double pick and place
       else if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 3) {
         std::cout << "1. produceRing(arm)" << std::endl;
         std::cout << "2. ringReady" << std::endl;
+        std::cout << "3. setLight(light, state)" << std::endl;
 
         int operation = 0;
         std::cout << "Number: " << std::endl;
@@ -145,11 +172,24 @@ int main(int argc, char** argv) {
         else if(operation == 2) {
           std::cout << static_cast<MPSPickPlace2*>(ref->mpsList.at(machine))->ringReady() << std::endl;
         }
+        // set light for pick and place 2
+        else if(operation == 3) {
+          int light = 0;
+          int state = 0;
+          std::cout << "light: ";
+          std::cin >> light;
+          std::cout << std::endl << "state: ";
+          std::cin >> state;
+          std::cout << std::endl;
+
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+        }
       }
       // available operations for machine of type delivery station
       else if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 4) {
         std::cout << "1. sendDeliver(lane)" << std::endl;
         std::cout << "2. isDelivered" << std::endl;
+        std::cout << "3. setLight(light, state)" << std::endl;
 
         int operation = 0;
         std::cout << "Number: " << std::endl;
@@ -168,6 +208,18 @@ int main(int argc, char** argv) {
         // workpiece is delivered command / receive command
         else if(operation == 2) {
           std::cout << static_cast<MPSDeliver*>(ref->mpsList.at(machine))->isDelivered() << std::endl;
+        }
+        // set light for delivery station
+        else if(operation == 3) {
+          int light = 0;
+          int state = 0;
+          std::cout << "light: ";
+          std::cin >> light;
+          std::cout << std::endl << "state: ";
+          std::cin >> state;
+          std::cout << std::endl;
+
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
         }
       }
     }
