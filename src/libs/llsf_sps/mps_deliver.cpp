@@ -27,7 +27,7 @@ MPSDeliver::MPSDeliver(const char* ip, int port) : MPS(ip, port) {
  */
 void MPSDeliver::sendDeliver(int lane) {
   uint16_t send[1] = {(uint16_t)lane};
-  int rc = modbus_write_registers(mb, 1, 1, send);
+  int rc = modbus_write_registers(mb, 0, 1, send);
   
   if(rc == -1) {
     std::cout << "ERROR while sending data" << std::endl;
@@ -41,9 +41,9 @@ void MPSDeliver::sendDeliver(int lane) {
  */
 bool MPSDeliver::isDelivered() {
   uint16_t rec[1];
-  int rc = modbus_read_input_registers(mb, 2, 1, rec);
+  int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
-  if(rec[0] == 0) {
+  if(rec[0] != 13) {
     return false;
   }
   else {
@@ -65,5 +65,32 @@ void MPSDeliver::processQueue() {
   }
   else if(this->isDelivered()) {
     this->lock = false;
+  }
+}
+
+/*!
+ * \fn setLight(int light, int state);
+ * \param light what color
+ * \param state on or off
+ */
+void MPSDeliver::setLight(int light, int state) {
+  int rc;
+  uint16_t send[1] = {(uint16_t)state};
+  
+  if(light == 1) {
+    rc = modbus_write_registers(mb, 3, 1, send);    
+  }
+  else if(light == 2) {
+    rc = modbus_write_registers(mb, 4, 1, send);
+  }
+  else if(light == 3) {
+    rc = modbus_write_registers(mb, 5, 1, send);
+  }
+  else {
+    std::cout << "Light not available" << std::endl;
+  }
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
   }
 }

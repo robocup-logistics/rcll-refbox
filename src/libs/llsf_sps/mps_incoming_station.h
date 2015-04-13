@@ -41,7 +41,6 @@ class MPSIncomingStation : public MPS {
   /*!
    * \fn capReady()
    * \brief receive capReady command
-   * \param ready recived data
    * \return true if cap is ready and false if not
    */
   bool capReady();
@@ -52,6 +51,13 @@ class MPSIncomingStation : public MPS {
    */
   bool isEmpty();
 
+  /*!
+   * \fn setLight(int light, int state);
+   * \param light what color
+   * \param state on or off
+   */
+  void setLight(int light, int state);
+  
   /*!
    * \fn processQueue()
    * \brief processing the queue

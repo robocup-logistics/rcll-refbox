@@ -35,7 +35,7 @@ MPSPickPlace1::~MPSPickPlace1() {}
 void MPSPickPlace1::produceEnd(int updown) {
   uint16_t send1[1] = {updown};
   std::cout << updown << std::endl;
-  int rc = modbus_write_registers(mb, 1, 1, send1);
+  int rc = modbus_write_registers(mb, 0, 1, send1);
   	
   if (rc != 1) {
     std::cout << "ERROR while writing data to address " << std::endl;
@@ -49,13 +49,13 @@ void MPSPickPlace1::produceEnd(int updown) {
 */
 bool MPSPickPlace1::isEmpty() {
   uint16_t rec[1];
-  int rc = modbus_read_input_registers(mb, 2, 1, rec);
+  int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc != 1) {
     std::cout << "ERROR while reading data from address " << std::endl;
   }
 
-  if(rec[0] == 1) {
+  if(rec[0] == 13) {
     return true;
   }
   
@@ -97,5 +97,32 @@ void MPSPickPlace1::processQueue() {
   }
   else if(isReady()) {
     this->lock = false;
+  }
+}
+
+/*!
+ * \fn setLight(int light, int state);
+ * \param light what color
+ * \param state on or off
+ */
+void MPSPickPlace1::setLight(int light, int state) {
+  int rc;
+  uint16_t send[1] = {(uint16_t)state};
+  
+  if(light == 1) {
+    rc = modbus_write_registers(mb, 3, 1, send);    
+  }
+  else if(light == 2) {
+    rc = modbus_write_registers(mb, 4, 1, send);
+  }
+  else if(light == 3) {
+    rc = modbus_write_registers(mb, 5, 1, send);
+  }
+  else {
+    std::cout << "Light not available" << std::endl;
+  }
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
   }
 }

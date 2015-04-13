@@ -54,7 +54,7 @@ bool MPSIncomingStation::capReady() {
   
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
   std::cout << rec[0] << std::endl;
-  if(rec[0] == 1) {
+  if(rec[0] == 13) {
     std::cout << "here" << std::endl;
     return true;
   }
@@ -93,5 +93,32 @@ void MPSIncomingStation::processQueue() {
   }
   else if(this->capReady()) {
     this->lock = false;
+  }
+}
+
+/*!
+ * \fn setLight(int light, int state);
+ * \param light what color
+ * \param state on or off
+ */
+void MPSIncomingStation::setLight(int light, int state) {
+  int rc;
+  uint16_t send[1] = {(uint16_t)state};
+  
+  if(light == 1) {
+    rc = modbus_write_registers(mb, 3, 1, send);    
+  }
+  else if(light == 2) {
+    rc = modbus_write_registers(mb, 4, 1, send);
+  }
+  else if(light == 3) {
+    rc = modbus_write_registers(mb, 5, 1, send);
+  }
+  else {
+    std::cout << "Light not available" << std::endl;
+  }
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
   }
 }
