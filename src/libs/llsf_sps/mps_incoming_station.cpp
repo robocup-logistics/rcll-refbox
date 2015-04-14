@@ -67,16 +67,12 @@ bool MPSIncomingStation::capReady() {
 * \brief receive isEmpty command
 * \return true if empty and false if not
 */
-bool MPSIncomingStation::isEmpty() {
+int MPSIncomingStation::isEmpty() {
   uint16_t rec[1] = {0};
   
-  int rc = modbus_read_input_registers(mb, 4, 1, rec);
-
-  if(rec[0] == 1) {
-    return true;
-  }
+  int rc = modbus_read_input_registers(mb, 1, 1, rec);
   
-  return false;
+  return rec[0];
 }
 
 /*!

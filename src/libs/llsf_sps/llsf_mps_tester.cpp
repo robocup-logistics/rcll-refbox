@@ -1,4 +1,6 @@
 #include <iostream>
+#include <bitset>
+
 #include "mps.h"
 #include "mps_refbox_interface.h"
 #include "mps_deliver.h"
@@ -76,6 +78,7 @@ int main(int argc, char** argv) {
         std::cout << "1. getCap(color, side)" << std::endl;
         std::cout << "2. capReady" << std::endl;
         std::cout << "3. setLight(light, state)" << std::endl;
+        std::cout << "4. isEmpty" << std::endl;
         
         int operation = 0;
         std::cout << "Number: ";
@@ -109,6 +112,19 @@ int main(int argc, char** argv) {
           std::cout << std::endl;
 
           static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+        }
+        else if(operation == 4) {
+          int empty = static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->isEmpty();
+          std::bitset<3> empty_bit(empty);
+          if(empty_bit[0] == 1) {
+            std::cout << "Output 1 is Empty" << std::endl;
+          }
+          if(empty_bit[1] == 1) {
+            std::cout << "Output 2 is Empty" << std::endl;
+          }
+          if(empty_bit[2] == 1) {
+            std::cout << "Output 3 is Empty" << std::endl;
+          }
         }
       }
       // available operations for machine of type single pick and place

@@ -48,8 +48,9 @@ class MPSIncomingStation : public MPS {
   /*!
    * \fn isEmpty()
    * \brief receive isEmpty command
+   * \return value of empty lanes
    */
-  bool isEmpty();
+  int isEmpty();
 
   /*!
    * \fn setLight(int light, int state);
