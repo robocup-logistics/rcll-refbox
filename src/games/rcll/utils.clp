@@ -56,3 +56,18 @@
 (deffunction string-gt (?s1 ?s2)
   (return (> (str-compare ?s1 ?s2) 0))
 )
+
+
+(deffunction gen-random-string (?l)
+  (bind ?rv "")
+  (bind ?random-set (create$ 33 35 36 45 46 58 61 64 95))
+  (loop-for-count (?c 48  57) (bind ?random-set (append$ ?random-set ?c)))
+  (loop-for-count (?c 65  90) (bind ?random-set (append$ ?random-set ?c)))
+  (loop-for-count (?c 97 122) (bind ?random-set (append$ ?random-set ?c)))
+
+  (loop-for-count (?c 1 ?l)
+    (bind ?rv (str-cat ?rv (format nil "%c" (pick-random$ ?random-set))))
+  )
+  (return ?rv)
+)
+
