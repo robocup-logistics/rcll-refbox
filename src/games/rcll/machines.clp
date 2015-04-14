@@ -69,12 +69,16 @@
 
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (loaded-with) (productions 0) (state IDLE)
+    (modify ?machine (loaded-with 0) (productions 0) (state IDLE)
 	             (proc-start 0.0) (puck-id 0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
 
   ; randomly assigned machines to zones
   (bind ?zones-cyan (randomize$ ?*MACHINE-ZONES-CYAN*))
+  ; Remove all zones for which a machine has already been assigned
+  (do-for-all-facts ((?m machine)) (neq ?m:zone TBD)
+    (bind ?zones-cyan (delete-member$ ?zones-cyan ?m:zone))
+  )
   (delayed-do-for-all-facts ((?m-cyan machine))
     (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:zone TBD))
 
@@ -124,8 +128,10 @@
 	(create$ (str-cat "RS" (random 1 2)) (str-cat "CS" (random 1 2))))
   (foreach ?ms ?machines-to-swap
     (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-      (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (str-cat "C-" ?ms))
-	   (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (str-cat "M-" ?ms)))
+      (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
+	   (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
+
+      (printout t "Swapping " ?m-cyan:name " with " ?m-magenta:name crlf)
 
       (bind ?z-cyan ?m-cyan:zone)
       (bind ?z-magenta ?m-magenta:zone)

@@ -443,49 +443,37 @@
   (pb-destroy ?ri)
 )
 
-(deffunction net-create-Machine (?mf ?add-type-info)
+(deffunction net-create-Machine (?mf ?add-restricted-info)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (bind ?mtype (fact-slot-value ?mf mtype))
+    (bind ?zone (fact-slot-value ?mf zone))
+
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
+    (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
-    (if (or ?add-type-info (member$ ?mtype ?*MACHINE-UNRESTRICTED-TYPES*))
+    (if (neq ?zone TBD) then
+      (pb-set-field ?m "zone"  (fact-slot-value ?mf zone))
+    )
+    (if ?add-restricted-info
      then
-      (pb-set-field ?m "type" ?mtype)
+      (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
+        then (pb-set-field ?m "state" (fact-slot-value ?mf state))
+        else (pb-set-field ?m "state" "")
+      )
+      (pb-set-field ?m "loaded_with" (fact-slot-value ?mf loaded-with))
 
-      (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype (fact-slot-value ?mf mtype))
-        (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
-        (pb-set-field ?m "output" (str-cat ?mspec:output))
+      (foreach ?l (fact-slot-value ?mf actual-lights)
+        (bind ?ls (pb-create "llsf_msgs.LightSpec"))
+	(bind ?dashidx (str-index "-" ?l))
+	(bind ?color (sub-string 1 (- ?dashidx 1) ?l))
+	(bind ?state (sub-string (+ ?dashidx 1) (str-length ?l) ?l))
+	(pb-set-field ?ls "color" ?color)
+	(pb-set-field ?ls "state" ?state)
+	(pb-add-list ?m "lights" ?ls)
       )
-      (foreach ?puck-id (fact-slot-value ?mf loaded-with)
-        (bind ?p (pb-create "llsf_msgs.Puck"))
-	(do-for-fact ((?puck puck)) (eq ?puck:id ?puck-id)
-          (pb-set-field ?p "id" ?puck:id)
-	  (pb-set-field ?p "state" ?puck:state)
-        )
-        (pb-add-list ?m "loaded_with" ?p)
-      )
-     else
-      (pb-set-field ?m "type" "?")
     )
 
-    (foreach ?l (fact-slot-value ?mf actual-lights)
-      (bind ?ls (pb-create "llsf_msgs.LightSpec"))
-      (bind ?dashidx (str-index "-" ?l))
-      (bind ?color (sub-string 1 (- ?dashidx 1) ?l))
-      (bind ?state (sub-string (+ ?dashidx 1) (str-length ?l) ?l))
-      (pb-set-field ?ls "color" ?color)
-      (pb-set-field ?ls "state" ?state)
-      (pb-add-list ?m "lights" ?ls)
-    )
-    (if (<> (fact-slot-value ?mf puck-id) 0) then
-      (bind ?p (pb-create "llsf_msgs.Puck"))
-      (do-for-fact ((?puck puck)) (= ?puck:id (fact-slot-value ?mf puck-id))
-        (pb-set-field ?p "id" ?puck:id)
-	(pb-set-field ?p "state" ?puck:state)
-      )
-      (pb-set-field ?m "puck_under_rfid" ?p)
-    )
     ; If we have a pose publish it
     (if (non-zero-pose (fact-slot-value ?mf pose)) then
       (bind ?p (pb-field-value ?m "pose"))
@@ -519,7 +507,7 @@
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
 
   (do-for-all-facts ((?machine machine)) TRUE
-    (bind ?m (net-create-Machine ?machine (eq ?phase PRODUCTION)))
+    (bind ?m (net-create-Machine ?machine TRUE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
@@ -534,30 +522,10 @@
   (pb-set-field ?s "team_color" ?team-color)
 
   (do-for-all-facts ((?machine machine)) (eq ?machine:team ?team-color)
-    (bind ?m (pb-create "llsf_msgs.Machine"))
-
-    (pb-set-field ?m "name" ?machine:name)
-    (pb-set-field ?m "type" ?machine:mtype)
-    (pb-set-field ?m "team_color" ?machine:team)
-    (do-for-fact ((?mspec machine-spec)) (eq ?mspec:mtype ?machine:mtype)
-      (foreach ?puck ?mspec:inputs (pb-add-list ?m "inputs" (str-cat ?puck)))
-      (pb-set-field ?m "output" (str-cat ?mspec:output))
-    )
-    (if (eq ?machine:mtype RECYCLE) then (pb-set-field ?m "output" "S0"))
-    ; If we have a pose publish it
-    (if (non-zero-pose ?machine:pose) then
-      (bind ?p (pb-field-value ?m "pose"))
-      (bind ?p-time (pb-field-value ?p "timestamp"))
-      (pb-set-field ?p-time "sec" (nth$ 1 ?machine:pose-time))
-      (pb-set-field ?p-time "nsec" (integer (* (nth$ 2 ?machine:pose-time) 1000)))
-      (pb-set-field ?p "timestamp" ?p-time)
-      (pb-set-field ?p "x" (nth$ 1 ?machine:pose))
-      (pb-set-field ?p "y" (nth$ 2 ?machine:pose))
-      (pb-set-field ?p "ori" (nth$ 3 ?machine:pose))
-      (pb-set-field ?m "pose" ?p)
-    )
+    (bind ?m (net-create-Machine ?machine FALSE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
+
   (return ?s)
 )
 
