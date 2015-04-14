@@ -39,6 +39,7 @@ package llsf_msgs;
 import "MachineInfo.proto";
 import "PuckInfo.proto";
 import "Team.proto";
+import "Zone.proto";
 
 option java_package = "org.robocup_logistics.llsf_msgs";
 option java_outer_classname = "MachineReportProtos";
@@ -50,8 +51,10 @@ message MachineReportEntry {
   }
 
   // Machine name and recognized type
+  // and zone the machine is in
   required string name = 1;
   required string type = 2;
+  required Zone   zone = 3;
 }
 
 // Robots send this to announce recognized
