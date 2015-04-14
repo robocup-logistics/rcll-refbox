@@ -140,6 +140,14 @@
     )
   )
 
+  ; Calculate exploration hashes
+  (delayed-do-for-all-facts ((?m machine)) TRUE
+    (bind ?rs (gen-random-string 8))
+    (printout t "Machine " ?m:name " as exploration string " ?rs crlf)
+    (modify ?m (exploration-type ?rs))
+  )
+  
+
   ; if PLC is disabled do not clear, we generated fake pucks
   (if (not (any-factp ((?c confval))
              (and (eq ?c:path "/llsfrb/sps/enable") (eq ?c:type BOOL) (eq ?c:value false))))

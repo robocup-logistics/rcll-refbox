@@ -33,6 +33,7 @@
 	(allowed-values TBD Z1 Z2 Z3 Z4 Z5 Z6 Z7 Z8 Z9 Z10 Z11 Z12
 			Z13 Z14 Z15 Z16 Z17 Z18 Z19 Z20 Z21 Z22 Z23 Z24))
   (slot exploration-light-code (type INTEGER) (default 0))
+  (slot exploration-type (type STRING))
 )
 
 (deftemplate machine-spec
@@ -180,13 +181,16 @@
 
 (deftemplate exploration-report
   (slot name (type SYMBOL)
-	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12
-			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24))
+	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
-  (slot type (type SYMBOL) (allowed-values WRONG T1 T2 T3 T4 T5))
+  (slot type (type STRING))
+  (slot zone (type SYMBOL)
+	(allowed-values Z1 Z2 Z3 Z4 Z5 Z6 Z7 Z8 Z9 Z10 Z11 Z12
+			Z13 Z14 Z15 Z16 Z17 Z18 Z19 Z20 Z21 Z22 Z23 Z24))
   (slot host (type STRING))
   (slot port (type INTEGER))
   (slot game-time (type FLOAT))
+  (slot correctly-reported (type SYMBOL) (allowed-values TRUE FALSE))
 )
 
 (deftemplate points

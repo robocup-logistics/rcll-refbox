@@ -490,7 +490,7 @@
     ; In exploration phase, indicate whether this was correctly reported
     (do-for-fact ((?gs gamestate)) (eq ?gs:phase EXPLORATION)
       (do-for-fact ((?report exploration-report)) (eq ?report:name (fact-slot-value ?mf name))
-	(pb-set-field ?m "correctly_reported" (neq ?report:type WRONG))
+	(pb-set-field ?m "correctly_reported" ?report:correctly-reported)
       )
     )
 

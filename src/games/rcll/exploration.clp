@@ -56,7 +56,8 @@
   (bind ?team (sym-cat (pb-field-value ?p "team_color")))
   (foreach ?m (pb-field-list ?p "machines")
     (bind ?name (sym-cat (pb-field-value ?m "name")))
-    (bind ?type (sym-cat (pb-field-value ?m "type")))
+    (bind ?type (pb-field-value ?m "type"))
+    (bind ?zone (sym-cat (pb-field-value ?m "zone")))
     (if (member$ ?name (deftemplate-slot-allowed-values exploration-report name))
     then
       (do-for-fact ((?machine machine)) (eq ?machine:name ?name)
@@ -71,8 +72,8 @@
 			    (phase EXPLORATION) (team ?team) (game-time ?game-time)
 			    (reason (str-cat "Report for machine of other team"
 					     ?name "|" ?type))))
-	    (assert (exploration-report (name ?name) (team ?team)(type WRONG)
-					(game-time ?game-time)
+	    (assert (exploration-report (name ?name) (team ?team) (type ?type)
+					(game-time ?game-time) (correctly-reported FALSE)
 					(host ?from-host) (port ?from-port)))
 	  )
 	else
@@ -80,24 +81,27 @@
           (if (not (any-factp ((?report exploration-report))
 			      (and (eq ?report:name ?name) (eq ?report:team ?team))))
 	  then
-            (if (eq ?machine:mtype ?type)
+	    (printout t "Comparing T " ?machine:exploration-type " " ?type "  Z " ?machine:zone " " ?zone crlf)
+            (if (and (eq ?machine:exploration-type ?type) (eq ?machine:zone ?zone))
             then ; correct report
-	      (printout t "Correct report: " ?name " of type " ?type ". "
+	      (printout t "Correct report: " ?name " (type " ?type ") in zone " ?zone ". "
 			"Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
 	      (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
 			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
 			      (reason (str-cat "Correct exploration report for "
 					       ?name "|" ?type))))
-	      (assert (exploration-report (name ?name) (type ?type) (game-time ?game-time)
+	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
+					  (game-time ?game-time) (correctly-reported TRUE)
 					  (team ?team) (host ?from-host) (port ?from-port)))
             else ; wrong report
-	      (printout t "Wrong report: " ?name " of type " ?type ". "
+	      (printout t "Wrong report: " ?name " (type " ?type ") in zone " ?zone ". "
 			"Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
 	      (assert (points (points ?*EXPLORATION-WRONG-REPORT-POINTS*)
 			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
 			      (reason (str-cat "Wrong exploration report for "
 					       ?name "|" ?type))))
-	      (assert (exploration-report (name ?name) (type WRONG) (game-time ?game-time)
+	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
+					  (game-time ?game-time) (correctly-reported FALSE)
 					  (team ?team) (host ?from-host) (port ?from-port)))
 	    )
           )
@@ -127,10 +131,21 @@
   (modify ?sf (time ?now) (seq (+ ?seq 1)))
   (bind ?ei (pb-create "llsf_msgs.ExplorationInfo"))
 
-  (do-for-all-facts ((?mspec machine-spec)) (<> ?mspec:light-code 0)
-    (do-for-fact ((?lc machine-light-code)) (= ?mspec:light-code ?lc:id)
+  (bind ?machines (create$))
+  (do-for-all-facts ((?m machine)) (<> ?m:exploration-light-code 0)
+    (bind ?machines (append$ ?machines ?m))
+  )
+
+  ; Randomize machines, otherwise order in messages would yield info
+  ; on machine to light assignments and tag detection alone would suffice
+  (bind ?machines (randomize$ ?machines))
+
+  (foreach ?m ?machines
+    (do-for-fact ((?lc machine-light-code))
+      (= (fact-slot-value ?m exploration-light-code) ?lc:id)
+
       (bind ?s (pb-create "llsf_msgs.ExplorationSignal"))
-      (pb-set-field ?s "type" ?mspec:mtype)
+      (pb-set-field ?s "type" (fact-slot-value ?m exploration-type))
       ; nested foreach are broken, hence use progn$
       (progn$ (?color (create$ RED YELLOW GREEN))
         (bind ?state OFF)
@@ -149,22 +164,34 @@
     )
   )
 
-  (do-for-all-facts ((?m machine) (?mspec machine-spec))
-    (and (eq ?m:mtype ?mspec:mtype) (<> ?mspec:light-code 0) (non-zero-pose ?m:pose))
+  (bind ?zones-cyan    ?*MACHINE-ZONES-CYAN*)
+  (bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
+  (do-for-all-facts ((?m machine))
+    (and (eq ?m:team CYAN) (or (eq ?m:mtype RS) (eq ?m:mtype CS)))
 
-    (bind ?em (pb-create "llsf_msgs.ExplorationMachine"))
-    (pb-set-field ?em "name" ?m:name)
-    (pb-set-field ?em "team_color" ?m:team)
-    (bind ?p (pb-field-value ?em "pose"))
-    (bind ?p-time (pb-field-value ?p "timestamp"))
-    (pb-set-field ?p-time "sec" (nth$ 1 ?m:pose-time))
-    (pb-set-field ?p-time "nsec" (* (nth$ 2 ?m:pose-time) 1000))
-    (pb-set-field ?p "timestamp" ?p-time)
-    (pb-set-field ?p "x" (nth$ 1 ?m:pose))
-    (pb-set-field ?p "y" (nth$ 2 ?m:pose))
-    (pb-set-field ?p "ori" (nth$ 3 ?m:pose))
-    (pb-set-field ?em "pose" ?p)
-    (pb-add-list ?ei "machines" ?em)
+    (bind ?z-index (member$ ?m:zone ?zones-cyan))
+
+    (if (not ?z-index) then
+      ; machines swapped
+      (bind ?z-index (member$ ?m:zone ?zones-magenta))
+      (bind ?z-cyan    (nth$ ?z-index ?zones-cyan))
+      (bind ?z-magenta (nth$ ?z-index ?zones-magenta))
+      (bind ?zones-cyan    (replace$ ?zones-cyan ?z-index ?z-index ?z-magenta))
+      (bind ?zones-magenta (replace$ ?zones-magenta ?z-index ?z-index ?z-cyan))
+    )
+  )
+
+  (foreach ?z ?zones-cyan
+    (bind ?zm (pb-create "llsf_msgs.ExplorationZone"))
+    (pb-set-field ?zm "zone" ?z)
+    (pb-set-field ?zm "team_color" CYAN)
+    (pb-add-list ?ei "zones" ?zm)
+  )
+  (foreach ?z ?zones-magenta
+    (bind ?zm (pb-create "llsf_msgs.ExplorationZone"))
+    (pb-set-field ?zm "zone" ?z)
+    (pb-set-field ?zm "team_color" MAGENTA)
+    (pb-add-list ?ei "zones" ?zm)
   )
 
   (pb-broadcast ?peer-id-public ?ei)
