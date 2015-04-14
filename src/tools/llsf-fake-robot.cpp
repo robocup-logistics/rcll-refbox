@@ -188,10 +188,10 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       printf("\n");
     }
     printf("  --\n");
-    for (int i = 0; i < ei->machines_size(); ++i) {
-      const ExplorationMachine &em = ei->machines(i);
-      printf("  Machine %s at (%f, %f, %f)\n", em.name().c_str(),
-	     em.pose().x(), em.pose().y(), em.pose().ori());
+    for (int i = 0; i < ei->zones_size(); ++i) {
+      const ExplorationZone &zm = ei->zones(i);
+      printf("  Zone %s of team %s\n",
+	     Zone_Name(zm.zone()).c_str(), Team_Name(zm.team_color()).c_str());
     }
   }
 
