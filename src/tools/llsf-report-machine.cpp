@@ -54,8 +54,14 @@ using namespace fawkes;
 static bool quit = false;
 std::string machine_name_;
 std::string machine_type_;
-Team        team_;
-ProtobufBroadcastPeer *peer_ = NULL;
+llsf_msgs::Zone machine_zone_;
+std::string team_name_;
+Team        team_color_;
+ProtobufBroadcastPeer *peer_public_ = NULL;
+ProtobufBroadcastPeer *peer_team_ = NULL;
+bool crypto_setup_ = false;
+
+llsfrb::Configuration *config_;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -83,23 +89,67 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 	       uint16_t component_id, uint16_t msg_type,
 	       std::shared_ptr<google::protobuf::Message> msg)
 {
+  std::shared_ptr<GameState> gs;
+  if ((gs = std::dynamic_pointer_cast<GameState>(msg))) {
+    int hour = gs->game_time().sec() / 3600;
+    int min  = (gs->game_time().sec() - hour * 3600) / 60;
+    int sec  = gs->game_time().sec() - hour * 3600 - min * 60;
+
+#if __WORDSIZE == 64
+    printf("GameState received:  %02i:%02i:%02i.%02ld  %s %s  %u:%u points, %s vs. %s\n",
+#else
+    printf("GameState received:  %02i:%02i:%02i.%02lld  %s %s  %u:%u points, %s vs. %s\n",
+#endif
+	   hour, min, sec, gs->game_time().nsec() / 1000000,
+	   llsf_msgs::GameState::Phase_Name(gs->phase()).c_str(),
+	   llsf_msgs::GameState::State_Name(gs->state()).c_str(),
+	   gs->points_cyan(), gs->points_magenta(),
+	   gs->team_cyan().c_str(), gs->team_magenta().c_str());
+
+    if (team_name_ == gs->team_cyan() || team_name_ == gs->team_magenta()) {
+      if (team_name_ == gs->team_cyan() && team_color_ != CYAN) {
+	printf("WARNING: sending as magenta, but our team is announced as cyan by refbox!\n");
+      } else if (team_name_ == gs->team_magenta() && team_color_ != MAGENTA) {
+	printf("WARNING: sending as cyan, but our team is announced as magenta by refbox!\n");
+      }
+      if (! crypto_setup_) {
+	crypto_setup_ = true;
+
+	std::string crypto_key = "", cipher = "aes-128-cbc";
+	try {
+	  crypto_key = config_->get_string(("/llsfrb/game/crypto-keys/" + team_name_).c_str());
+	  printf("Set crypto key to %s (cipher %s)\n", crypto_key.c_str(), cipher.c_str());
+	  peer_team_->setup_crypto(crypto_key, cipher);
+	} catch (Exception &e) {
+	  printf("No encryption key configured for team, not enabling crypto");
+	}
+      }
+    } else if (crypto_setup_) {
+      printf("Our team is not set, training game? Disabling crypto.\n");
+      crypto_setup_ = false;
+      peer_team_->setup_crypto("", "");
+    }
+  }
+
+
   std::shared_ptr<BeaconSignal> b;
   if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
     if (b->team_name() == "LLSF" && b->peer_name() == "RefBox") {
       printf("Announcing machine type\n");
       llsf_msgs::MachineReport report;
-      report.set_team_color(team_);
+      report.set_team_color(team_color_);
       llsf_msgs::MachineReportEntry *entry = report.add_machines();
       entry->set_name(machine_name_);
       entry->set_type(machine_type_);
-      peer_->send(report);
+      entry->set_zone(machine_zone_);
+      peer_team_->send(report);
     }
   }
 
   std::shared_ptr<MachineReportInfo> mrinfo;
   if ((mrinfo = std::dynamic_pointer_cast<MachineReportInfo>(msg))) {
-    if (mrinfo->team_color() == team_) {
-      printf("Reported machines (%s):", llsf_msgs::Team_Name(team_).c_str());
+    if (mrinfo->team_color() == team_color_) {
+      printf("Reported machines (%s):", llsf_msgs::Team_Name(team_color_).c_str());
       for (int i = 0; i < mrinfo->reported_machines_size(); ++i) {
 	printf(" %s", mrinfo->reported_machines(i).c_str());
       }
@@ -113,56 +163,83 @@ main(int argc, char **argv)
 {
   ArgumentParser argp(argc, argv, "T:");
 
-  if (argp.num_items() != 2) {
-    printf("Usage: %s [-T team] <machine-name> <machine-type>\n"
+  if (argp.num_items() != 4) {
+    printf("Usage: %s [-T team] <team-name> <machine-name> <machine-type> <machine-zone>\n"
 	   "\n"
 	   "-T team	Select team to send for, CYAN (default) or MAGENTA\n",
 	   argv[0]);
     exit(1);
   }
 
-  machine_name_ = argp.items()[0];
-  machine_type_ = argp.items()[1];
+  team_name_    = argp.items()[0];
+  machine_name_ = argp.items()[1];
+  machine_type_ = argp.items()[2];
 
-  llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
-  config->load("config.yaml");
-
-  if (config->exists("/llsfrb/comm/peer-send-port") &&
-      config->exists("/llsfrb/comm/peer-recv-port") )
-  {
-    peer_ = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-				      config->get_uint("/llsfrb/comm/peer-recv-port"),
-				      config->get_uint("/llsfrb/comm/peer-send-port"));
-  } else {
-    peer_ = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-				      config->get_uint("/llsfrb/comm/peer-port"));
+  if (! llsf_msgs::Zone_Parse(argp.items()[3], &machine_zone_)) {
+    printf("Invalid zone\n");
+    exit(2);
   }
 
-  team_ = CYAN;
+  team_color_ = CYAN;
   if (argp.has_arg("T")) {
     std::string team_str = argp.arg("T");
     if (team_str == "cyan") {
-      team_ = CYAN;
+      team_color_ = CYAN;
     } else if (team_str == "magenta") {
-      team_ = MAGENTA;
+      team_color_ = MAGENTA;
     } else {
       printf("Unknonw team value, using cyan\n");
     }
   }
 
-  boost::asio::io_service io_service;
+  config_ = new llsfrb::YamlConfiguration(CONFDIR);
+  config_->load("config.yaml");
 
-  MessageRegister & message_register = peer_->message_register();
+  if (config_->exists("/llsfrb/comm/public-peer/send-port") &&
+      config_->exists("/llsfrb/comm/public-peer/recv-port") )
+  {
+    peer_public_ = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/public-peer/host"),
+					     config_->get_uint("/llsfrb/comm/public-peer/recv-port"),
+					     config_->get_uint("/llsfrb/comm/public-peer/send-port"));
+  } else {
+    peer_public_ = new ProtobufBroadcastPeer(config_->get_string("/llsfrb/comm/public-peer/host"),
+					     config_->get_uint("/llsfrb/comm/public-peer/port"));
+  }
+
+  MessageRegister & message_register = peer_public_->message_register();
   message_register.add_message_type<BeaconSignal>();
   message_register.add_message_type<GameState>();
   message_register.add_message_type<MachineReport>();
   message_register.add_message_type<MachineReportInfo>();
 
+  std::string cfg_prefix =
+    std::string("/llsfrb/comm/") +
+    ((team_color_ == CYAN) ? "cyan" : "magenta") + "-peer/";
+
+  if (config_->exists((cfg_prefix + "send-port").c_str()) &&
+      config_->exists((cfg_prefix + "recv-port").c_str()) )
+  {
+    peer_team_ = new ProtobufBroadcastPeer(config_->get_string((cfg_prefix + "host").c_str()),
+					   config_->get_uint((cfg_prefix + "recv-port").c_str()),
+					   config_->get_uint((cfg_prefix + "send-port").c_str()),
+					   &message_register /*, crypto_key, cipher*/);
+  } else {
+    peer_team_ = new ProtobufBroadcastPeer(config_->get_string((cfg_prefix + "host").c_str()),
+					   config_->get_uint((cfg_prefix + "port").c_str()),
+					   &message_register/*, crypto_key, cipher*/);
+  }
+
+  boost::asio::io_service io_service;
+
   printf("Waiting for beacon from refbox...\n");
 
-  peer_->signal_received().connect(handle_message);
-  peer_->signal_recv_error().connect(handle_recv_error);
-  peer_->signal_send_error().connect(handle_send_error);
+  peer_public_->signal_received().connect(handle_message);
+  peer_public_->signal_recv_error().connect(handle_recv_error);
+  peer_public_->signal_send_error().connect(handle_send_error);
+
+  peer_team_->signal_received().connect(handle_message);
+  peer_team_->signal_recv_error().connect(handle_recv_error);
+  peer_team_->signal_send_error().connect(handle_send_error);
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
@@ -177,8 +254,9 @@ main(int argc, char **argv)
     io_service.reset();
   } while (! quit);
 
-  delete peer_;
-  delete config;
+  delete peer_public_;
+  delete peer_team_;
+  delete config_;
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();
