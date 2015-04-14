@@ -181,6 +181,7 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent, Team team,
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+    /*
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
     if (m.team_color() != team) continue;
@@ -197,6 +198,7 @@ MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent, Team team,
 			m.name(), m.loaded_with(l).id(), m.loaded_with(l).state());
     }
   }
+    */
 
   std::sort(items_.begin(), items_.end(),
 	    [](const ItemTuple &i1, const ItemTuple &i2) -> bool
@@ -265,6 +267,7 @@ int
 MachineWithPuckMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
 {
   int rv = 0;
+  /*
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
     if (m.team_color() != team) continue;
@@ -273,6 +276,7 @@ MachineWithPuckMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo
     }
     rv += m.loaded_with_size();
   }
+  */
   return rv;
 }
 
@@ -290,6 +294,7 @@ MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  /*
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
     if (m.team_color() != team) continue;
@@ -298,6 +303,7 @@ MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
       items_[ni++] = std::make_tuple(s, m.name(), i);
     }
   }
+  */
   std::sort(items_.begin(), items_.end(),
 	    [](const ItemTuple &i1, const ItemTuple &i2) -> bool
 	    {
@@ -354,6 +360,7 @@ MachineThatCanTakePuckMenu::On_Menu_Init()
   //subWindow().bkgd(parent_->getbkgd());
 
   for (size_t i = 0; i < items_.size(); ++i) {
+    /*
     const llsf_msgs::Machine &m = minfo_->machines(std::get<2>(items_[i]));
     if (m.puck_under_rfid().id() != 0) {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)|A_BOLD);
@@ -364,11 +371,13 @@ MachineThatCanTakePuckMenu::On_Menu_Init()
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
       addstr(i+1, 13, "  ");
     }
+    */
 
+    /*
     int puck_x = 16;
     for (int j = 0; j < m.inputs_size(); ++j) {
-      llsf_msgs::PuckState ps = m.inputs(j);
       bool puck_loaded = false;
+      llsf_msgs::PuckState ps = m.inputs(j);
       for (int k = 0; k < m.loaded_with_size(); ++k) {
 	if (m.loaded_with(k).state() == ps) {
 	  puck_loaded = true;
@@ -386,6 +395,7 @@ MachineThatCanTakePuckMenu::On_Menu_Init()
       attroff(A_BOLD);
       puck_x += 3;
     }
+    */
   }
 
   refresh();
@@ -396,6 +406,7 @@ MachineThatCanTakePuckMenu::det_lines(Team team,
 				      std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
 {
   int rv = 0;
+  /*
   for (int i = 0; i < minfo->machines_size(); ++i) {
     const llsf_msgs::Machine &m = minfo->machines(i);
     if (m.team_color() != team) continue;
@@ -403,6 +414,7 @@ MachineThatCanTakePuckMenu::det_lines(Team team,
       rv += 1;
     }
   }
+  */
   return rv;
 }
 
@@ -484,6 +496,7 @@ PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
   }
 
   // filter out all pucks which are already bound at a machine
+  /*
   rv.remove_if([&minfo,&pinfo](int p)
 	       {
 		 for (int i = 0; i < minfo->machines_size(); ++i) {
@@ -525,6 +538,7 @@ PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
 		 }
 		 return false;
 	       });
+  */
 
   return rv;    
 }

@@ -52,8 +52,8 @@ namespace llsfrb_shell {
 
 LLSFRefBoxShellMachine::LLSFRefBoxShellMachine(std::string name, std::string type,
 					       int begin_y, int begin_x, bool visible)
-  : NCursesPanel(1, 22, begin_y, begin_x),
-    visible_(visible), name_(name), type_(type), puck_under_rfid_(false),
+  : NCursesPanel(1, 24, begin_y, begin_x),
+    visible_(visible), name_(name), type_(type), have_ring_colors_(false), loaded_with_(0),
     has_correctly_reported_field_(false), correctly_reported_(false)
 {
   set_visible(visible_);
@@ -83,11 +83,39 @@ LLSFRefBoxShellMachine::set_type(std::string type)
 }
 
 void
-LLSFRefBoxShellMachine::set_inputs(std::vector<llsf_msgs::PuckState> &inputs)
+LLSFRefBoxShellMachine::set_zone(std::string zone)
 {
-  inputs_ = inputs;
+  zone_ = zone;
 }
 
+
+void
+LLSFRefBoxShellMachine::set_state(std::string state)
+{
+  state_ = state;
+}
+
+
+void
+LLSFRefBoxShellMachine::set_loaded_with(unsigned int loaded_with)
+{
+  loaded_with_ = loaded_with;
+}
+
+
+void
+LLSFRefBoxShellMachine::set_ring_colors(std::array<llsf_msgs::RingColor, 2> ring_colors)
+{
+  have_ring_colors_ = true;
+  ring_colors_ = ring_colors;
+}
+
+
+void
+LLSFRefBoxShellMachine::unset_ring_colors()
+{
+  have_ring_colors_ = false;
+}
 
 void
 LLSFRefBoxShellMachine::set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights)
@@ -102,20 +130,6 @@ LLSFRefBoxShellMachine::set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::Li
       }
     }
   }
-}
-
-void
-LLSFRefBoxShellMachine::set_loaded_with(std::vector<llsf_msgs::PuckState> &loaded_with)
-{
-  loaded_with_ = loaded_with;
-}
-
-
-void
-LLSFRefBoxShellMachine::set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state)
-{
-  puck_under_rfid_ = has_puck;
-  puck_under_rfid_state_ = puck_state;
 }
 
 void
@@ -140,10 +154,11 @@ LLSFRefBoxShellMachine::flip_blink_states()
 void
 LLSFRefBoxShellMachine::reset()
 {
-  type_ = "?";
-  inputs_.clear();
-  loaded_with_.clear();
-  puck_under_rfid_ = false;
+  //type_ = "?";
+  zone_ = "";
+  state_ = "";
+  have_ring_colors_ = false;
+  loaded_with_ = 0;
   has_correctly_reported_field_ = false;
   correctly_reported_ = false;
   lights_.clear();
@@ -160,11 +175,17 @@ LLSFRefBoxShellMachine::refresh()
   erase();
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
 
-  if (type_ == "") {
-    addstr(0, 0, boost::str(boost::format("%-7s") % name_).c_str());
-  } else {
-    addstr(0, 0, boost::str(boost::format("%-3s|%-3s") % name_ % type_.substr(0,2)).c_str());
+  if (name_.find("C-") == 0) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else if (name_.find("M-") == 0) {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
   }
+  attron(' '|A_BOLD);
+  addstr(0, 0, boost::str(boost::format("%-5s") % name_).c_str());
+  attroff(A_BOLD);
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+
+  addstr(0, 5, boost::str(boost::format("|%-2s|%3s") % type_ % zone_).c_str());
 
   if (lights_.find(llsf_msgs::GREEN) != lights_.end() &&
       (lights_[llsf_msgs::GREEN] == llsf_msgs::ON ||
@@ -174,7 +195,7 @@ LLSFRefBoxShellMachine::refresh()
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
-  addstr( 0, 7, " ");
+  addstr( 0, 13, " ");
   if (lights_.find(llsf_msgs::YELLOW) != lights_.end() &&
       (lights_[llsf_msgs::YELLOW] == llsf_msgs::ON ||
        (lights_[llsf_msgs::YELLOW] == llsf_msgs::BLINK && blink_state_[llsf_msgs::YELLOW])))
@@ -183,7 +204,7 @@ LLSFRefBoxShellMachine::refresh()
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
-  addstr( 0, 8, " ");
+  addstr( 0, 14, " ");
   if (lights_.find(llsf_msgs::RED) != lights_.end() &&
       (lights_[llsf_msgs::RED] == llsf_msgs::ON ||
        (lights_[llsf_msgs::RED] == llsf_msgs::BLINK && blink_state_[llsf_msgs::RED])))
@@ -192,35 +213,42 @@ LLSFRefBoxShellMachine::refresh()
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
-  addstr( 0, 9, " ");
+  addstr( 0, 15, " ");
 
-  if (puck_under_rfid_) {
-    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)|A_BOLD);
-    addstr(0, 11, llsf_msgs::PuckState_Name(puck_under_rfid_state_).substr(0,2).c_str());
-    attroff(A_BOLD);
-  } else if (has_correctly_reported_field_) {
+  
+  if (has_correctly_reported_field_) {
     attron(' '|COLOR_PAIR(correctly_reported_ ? COLOR_WHITE_ON_GREEN : COLOR_WHITE_ON_RED)|A_BOLD);
-    addstr(0, 11, correctly_reported_ ? "++" : "--");
+    addstr(0, 17, correctly_reported_ ? "++" : "--");
     attroff(A_BOLD);
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-    addstr(0, 11, "  ");
+    addstr(0, 17, state_.empty() ? "  " : state_.substr(0,2).c_str());
   }
 
-  int puck_x = 14;
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    bool puck_loaded =
-      (std::find(loaded_with_.begin(), loaded_with_.end(), inputs_[i]) != loaded_with_.end());
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+  if (loaded_with_ > 0) {
+    addstr(0, 20, (boost::str(boost::format("%u") % loaded_with_)).c_str());
+  } else {
+    addstr(0, 20, " ");
+  }
 
-    if (puck_loaded) {
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
-    } else {
-      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+  if (have_ring_colors_) {
+    for (size_t i = 0; i < ring_colors_.size(); ++i) {
+      switch (ring_colors_[i]) {
+      case llsf_msgs::RING_BLUE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+      case llsf_msgs::RING_GREEN:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+      case llsf_msgs::RING_ORANGE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+      case llsf_msgs::RING_YELLOW:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+      }
+      addstr(0, 22+i, " ");
     }
-
-    addstr( 0, puck_x, llsf_msgs::PuckState_Name(inputs_[i]).substr(0,2).c_str());
-    attroff(A_BOLD);
-    puck_x += 3;
+  } else if (type_ == "RS") {
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+    addstr(0, 22, "  ");
   }
 
   return NCursesPanel::refresh();

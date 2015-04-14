@@ -41,6 +41,7 @@
 #include <cursesp.h>
 
 #include <msgs/MachineInfo.pb.h>
+#include <msgs/PuckInfo.pb.h>
 
 #include <vector>
 #include <map>
@@ -55,15 +56,17 @@ class LLSFRefBoxShellMachine : public NCursesPanel
 {
  public:
   LLSFRefBoxShellMachine(std::string name, std::string type,
-			 int begin_y, int begin_x, bool visible);
+			 int begin_y, int begin_x, bool visible = true);
   ~LLSFRefBoxShellMachine();
 
   void set_type(std::string type);
+  void set_state(std::string state);
+  void set_zone(std::string zone);
+  void set_loaded_with(unsigned int loaded_with);
+  void set_ring_colors(std::array<llsf_msgs::RingColor, 2> ring_colors);
+  void unset_ring_colors();
   void set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights);
-  void set_inputs(std::vector<llsf_msgs::PuckState> &inputs);
-  void set_loaded_with(std::vector<llsf_msgs::PuckState> &loaded_with);
   void set_correctly_reported(bool has_field, bool correctly_reported = false);
-  void set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state = llsf_msgs::S0);
   void flip_blink_states();
 
   void set_visible(bool visible);
@@ -73,13 +76,14 @@ class LLSFRefBoxShellMachine : public NCursesPanel
   int refresh();
 
  private:
-  bool          visible_;
-  std::string   name_;
-  std::string   type_;
-  std::vector<llsf_msgs::PuckState> inputs_;
-  std::vector<llsf_msgs::PuckState> loaded_with_;
-  bool                              puck_under_rfid_;
-  llsf_msgs::PuckState              puck_under_rfid_state_;
+  bool                  visible_;
+  std::string           name_;
+  std::string           type_;
+  std::string           zone_;
+  std::string           state_;
+  bool                                 have_ring_colors_;
+  std::array<llsf_msgs::RingColor, 2>  ring_colors_;
+  unsigned int          loaded_with_;
   bool                              has_correctly_reported_field_;
   bool                              correctly_reported_;
   std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;

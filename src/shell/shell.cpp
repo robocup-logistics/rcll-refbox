@@ -312,6 +312,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	break;
 
       case KEY_F(5):
+	/*
 	if (last_minfo_ && last_pinfo_) {
 	  try {
 	    MachineThatCanTakePuckMenu mtctpm(panel_, team_, last_minfo_);
@@ -356,6 +357,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}
+	*/
 	break;
 
       case KEY_F(9):
@@ -861,32 +863,32 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       //     mspec.pose().x(), mspec.pose().y(), mspec.pose().ori());
       if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
 	mpanel->second->set_type(mspec.type());
-	std::vector<llsf_msgs::PuckState> inputs(mspec.inputs_size());
-	for (int j = 0; j < mspec.inputs_size(); ++j)  inputs[j] = mspec.inputs(j);
-	mpanel->second->set_inputs(inputs);
-	std::vector<llsf_msgs::PuckState> lw(mspec.loaded_with_size());
-	for (int j = 0; j < mspec.loaded_with_size(); ++j) {
-	  lw[j] = mspec.loaded_with(j).state();
-	}
-	mpanel->second->set_loaded_with(lw);
+	mpanel->second->set_state(mspec.state());
+	mpanel->second->set_zone(mspec.has_zone() ? llsf_msgs::Zone_Name(mspec.zone()) : "");
+
+	mpanel->second->set_loaded_with(mspec.loaded_with());
 	std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights;
 	for (int j = 0; j < mspec.lights_size(); ++j) {
 	  const llsf_msgs::LightSpec &lspec = mspec.lights(j);
 	  lights[lspec.color()] = lspec.state();
 	}
 	mpanel->second->set_lights(lights);
-	if (mspec.has_puck_under_rfid()) {
-	  mpanel->second->set_puck_under_rfid(true, mspec.puck_under_rfid().state());
-	} else {
-	  mpanel->second->set_puck_under_rfid(false);
-	}
 	if (mspec.has_correctly_reported()) {
 	  mpanel->second->set_correctly_reported(true, mspec.correctly_reported());
 	} else {
 	  mpanel->second->set_correctly_reported(false, false);
 	}
 
-	mpanel->second->set_visible(mspec.team_color() == team_);
+	if (mspec.ring_colors_size() == 2) {
+	  std::array<llsf_msgs::RingColor, 2> ring_colors;
+	  for (size_t i = 0; i < ring_colors.size(); ++i) {
+	    ring_colors[i] = mspec.ring_colors(i);
+	  }
+	  mpanel->second->set_ring_colors(ring_colors);
+	} else {
+	  mpanel->second->unset_ring_colors();
+	}
+
 	mpanel->second->refresh();
       }
     }
@@ -943,6 +945,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       const llsf_msgs::Puck &puck = pinfo->pucks(i);
       if (puck.team_color() != team_)  continue;
       bool at_machine = false;
+      /*
       if (last_minfo_) {
 	for (int j = 0; j < last_minfo_->machines_size() && ! at_machine; ++j) {
 	  const llsf_msgs::Machine &m = last_minfo_->machines(j);
@@ -959,6 +962,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 	  }
 	}
       }
+      */
       pucks_[pidx]->update(puck.id(), puck.state(), at_machine);
       pucks_[pidx]->refresh();
       pidx += 1;
@@ -1097,9 +1101,9 @@ LLSFRefBoxShell::run()
   panel_->addch(height-6, panel_->width() - 26, ACS_LTEE);
   panel_->addch(height-6, panel_->width() -  1, ACS_RTEE);
 
-  panel_->hline(17, panel_->width() - 25, 24);
-  panel_->addch(17, panel_->width() - 26, ACS_LTEE);
-  panel_->addch(17, panel_->width() -  1, ACS_RTEE);
+  panel_->hline(13, panel_->width() - 25, 24);
+  panel_->addch(13, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(13, panel_->width() -  1, ACS_RTEE);
 
   panel_->hline(2, 1, panel_->width() - 26);
   panel_->addch(2, 0, ACS_LTEE);
@@ -1119,7 +1123,7 @@ LLSFRefBoxShell::run()
   panel_->addstr(0, panel_->width() - 17, "Machines");
   panel_->addstr(0, (panel_->width() - 26) / 2 - 7, "Attention Message");
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
-  panel_->addstr(17, panel_->width() - 16, "Robots");
+  panel_->addstr(13, panel_->width() - 16, "Robots");
   panel_->addstr(height-5, panel_->width() - 15, "Game");
   panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 2, "Pucks");
   panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 2, "Orders");
@@ -1188,12 +1192,14 @@ LLSFRefBoxShell::run()
   rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
   rb_log_->scrollok(TRUE);
 
-  const int mx = panel_->width() - 24;
-  for (int t = 0; t < TEAM_NUM; ++t) {
-    for (int m = 0; m < TEAM_NUM_MACHINES; ++m) {
-      machines_[TEAM_MACHINES[t][m]] =
-	new LLSFRefBoxShellMachine(TEAM_MACHINES[t][m],  "?",  m+1, mx, (t == team_));
-    }
+  const int mx = panel_->width() - 25;
+  std::vector<std::string> mnames = {"C-BS", "C-DS", "C-RS1", "C-RS2", "C-CS1", "C-CS2",
+				     "M-BS", "M-DS", "M-RS1", "M-RS2", "M-CS1", "M-CS2"};
+  for (size_t m = 0; m < mnames.size(); ++m) {
+    std::string &mname = mnames[m];
+    std::string type = mname.substr(2, 2);
+    machines_[mname] =
+      new LLSFRefBoxShellMachine(mname,  type,  m+1, mx);
   }
   
 
