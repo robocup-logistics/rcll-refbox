@@ -1,7 +1,7 @@
 #include "mps.h"
 #include <iostream>
 
-MPS::MPS(const char* ip, int port) {
+MPS::MPS(char* ip, int port) {
   this->ip = ip;
   this->port = port;
 

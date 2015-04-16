@@ -1213,21 +1213,7 @@ LLSFRefBoxShell::run()
   // }
   machines_[llsfrb_shell::TEAM_MACHINES_MPS[0][0]] =
       new LLSFRefBoxShellMachine(llsfrb_shell::TEAM_MACHINES_MPS[0][0],  "?",  1, mx, (0 == team_));
-  
-
-  //config_->load("config.yaml");
-
-  modbus_t *mb = modbus_new_tcp("149.201.37.191", 502);
-  //uint16_t s[1] = {(uint16_t)4};
-  modbus_write_register(mb, 3, 1);
-  
-  //std::map<llsf_msgs::LightColor, llsf_msgs::LightState> light;
-  //light[llsf_msgs::RED] = llsf_msgs::ON;
-  //machines_[0]->set_lights(light);
-
-
-
-      
+        
   std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
   for (m = machines_.begin(); m != machines_.end(); ++m) {
     m->second->refresh();

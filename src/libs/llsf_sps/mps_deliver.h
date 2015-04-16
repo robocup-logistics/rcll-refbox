@@ -16,13 +16,15 @@
 */
 class MPSDeliver : public MPS {
  public:
+  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED};
+  
   /*!
    * \fn MPSDeliver(char* ip, int port)
    * \brief Constructor
    * \param ip address of mps
    * \param port port for modbus communication
    */
-  MPSDeliver(const char* ip, int port);
+  MPSDeliver(char* ip, int port);
 
   /*!
    * \fn ~MPSDeliver()
@@ -43,20 +45,32 @@ class MPSDeliver : public MPS {
    * \param ready received data
    * \return true, if delivery was successful and false if not
    */
-  bool isDelivered();
+  int isDelivered();
 
   /*!
    * \fn setLight(int light, int state);
    * \param light what color
    * \param state on or off
    */
-  void setLight(int light, int state);
+  void setLight(int light, int state, int blink);
   
+  int isAvailable();
+
+  int isProcessing();
+
   /*!
    * \fn processQueue()
    * \brief processing the queue
    */
-  void processQueue();
+  //void processQueue();
+
+  /*!
+   * \fn clearRegister();
+   * \brief set all registeres to 0
+   */
+  void clearRegister();
+  
+  MachineState getState();
 };
 
 #endif // MPSDELIVER_H

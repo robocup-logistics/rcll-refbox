@@ -44,6 +44,7 @@
 #include <core/threading/mutex_locker.h>
 #include <utils/llsf/machines.h>
 #include <protobuf_comm/server.h>
+#include <llsf_sps/mps_refbox_interface.h>
 
 #include <clipsmm.h>
 #ifdef HAVE_MONGODB
@@ -187,6 +188,8 @@ class LLSFRefBox
   MongoDBLogProtobuf  *mongodb_protobuf_;
   mongo::DBClientBase *mongodb_;
 #endif
+
+  MPSRefboxInterface mpsRefboxInterface;
 };
 
 

@@ -6,7 +6,7 @@
 */
 
 #include "mps_pick_place_1.h"
-#include "mps_pick_place_1_message.h"
+//#include "mps_pick_place_1_message.h"
 
 #include <iostream>
 
@@ -16,9 +16,8 @@
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace1::MPSPickPlace1(const char* ip, int port) : MPS(ip, port) {
+MPSPickPlace1::MPSPickPlace1(char* ip, int port) : MPS(ip, port) {
   type = 2;
-  std::cout << this->mb << std::endl;
 }
 
 /*!
@@ -33,7 +32,7 @@ MPSPickPlace1::~MPSPickPlace1() {}
 * \brief send produce message over Modbus
 */
 void MPSPickPlace1::produceEnd(int updown) {
-  uint16_t send1[1] = {updown};
+  uint16_t send1[1] = {(uint16_t)updown};
   std::cout << updown << std::endl;
   int rc = modbus_write_registers(mb, 0, 1, send1);
   	
@@ -87,17 +86,82 @@ bool MPSPickPlace1::isReady() {
  * \fn processQueue()
  * \brief processing the queue
  */
-void MPSPickPlace1::processQueue() {
-  if(!this->messages.empty() && !this->lock) {
-    this->lock = true;
-    MPSPickPlace1ProduceEndMessage* tmp = (MPSPickPlace1ProduceEndMessage*)messages.front();
-    messages.pop();
+// void MPSPickPlace1::processQueue() {
+//   if(!this->messages.empty() && !this->lock) {
+//     this->lock = true;
+//     MPSPickPlace1ProduceEndMessage* tmp = (MPSPickPlace1ProduceEndMessage*)messages.front();
+//     messages.pop();
 
-    this->produceEnd(tmp->getUpdown());
+//     this->produceEnd(tmp->getUpdown());
+//   }
+//   else if(isReady()) {
+//     this->lock = false;
+//   }
+// }
+
+
+int MPSPickPlace1::isAvailable() {
+  uint16_t rec[1] = {0};
+
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
+
+  if(rc != 1) {
+    std::cout << "ERROR while reading data from address " << std::endl;
   }
-  else if(isReady()) {
-    this->lock = false;
+
+  if(rec[0] == 1) {
+    return 1;
   }
+
+  return 0;
+}
+
+int MPSPickPlace1::isProcessing() {
+  uint16_t rec[1] = {0};
+
+  int rc = modbus_read_input_registers(mb, 4, 1, rec);
+
+  if(rc != 1) {
+    std::cout << "ERROR while reading data from address " << std::endl;
+  }
+
+  if(rec[0] == 1) {
+    return 1;
+  }
+
+  return 0;
+}
+
+int MPSPickPlace1::isDelivered() {
+  uint16_t rec[1] = {0};
+
+  int rc = modbus_read_input_registers(mb, 5, 1, rec);
+
+  if(rc != 1) {
+    std::cout << "ERROR while reading data from address " << std::endl;
+  }
+
+  if(rec[0] == 1) {
+    return 1;
+  }
+
+  return 0;
+}
+
+int MPSPickPlace1::isRetrieved() {
+  uint16_t rec[1] = {0};
+
+  int rc = modbus_read_input_registers(mb, 6, 1, rec);
+
+  if(rc != 1) {
+    std::cout << "ERROR while reading data from address " << std::endl;
+  }
+
+  if(rec[0] == 1) {
+    return 1;
+  }
+
+  return 0;
 }
 
 /*!
@@ -105,18 +169,22 @@ void MPSPickPlace1::processQueue() {
  * \param light what color
  * \param state on or off
  */
-void MPSPickPlace1::setLight(int light, int state) {
+void MPSPickPlace1::setLight(int light, int state, int blink) {
   int rc;
   uint16_t send[1] = {(uint16_t)state};
+  uint16_t sendblink[1] = {(uint16_t)blink};
   
   if(light == 1) {
-    rc = modbus_write_registers(mb, 3, 1, send);    
+    rc = modbus_write_registers(mb, 3, 1, send);
+    rc = modbus_write_registers(mb, 6, 1, sendblink);
   }
   else if(light == 2) {
     rc = modbus_write_registers(mb, 4, 1, send);
+    rc = modbus_write_registers(mb, 7, 1, sendblink);
   }
   else if(light == 3) {
     rc = modbus_write_registers(mb, 5, 1, send);
+    rc = modbus_write_registers(mb, 8, 1, sendblink);
   }
   else {
     std::cout << "Light not available" << std::endl;
@@ -124,5 +192,33 @@ void MPSPickPlace1::setLight(int light, int state) {
 
   if(rc == -1) {
     std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+}
+
+void MPSPickPlace1::clearRegister() {
+  uint16_t send[9] = {0};
+  
+  int rc = modbus_write_registers(mb, 0, 9, send);
+ 
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+}
+
+MPSPickPlace1::MachineState MPSPickPlace1::getState() {
+  if(this->isAvailable() == 1) {
+    return AVAILABLE;
+  }
+  else if(this->isProcessing() == 1) {
+    return PROCESSING;
+  }
+  else if(this->isDelivered() == 1) {
+    return DELIVERED;
+  }
+  else if(this->isRetrieved() == 1) {
+    return RETRIEVED;
+  }
+  else {
+    return IDLE;
   }
 }

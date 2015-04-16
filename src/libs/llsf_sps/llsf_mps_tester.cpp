@@ -34,9 +34,8 @@ int main(int argc, char** argv) {
       std::cin >> mashine;
       std::cout << "IP: ";
       std::cin >> ip;
-      std::cout << std::endl << "Port: ";
+      std::cout << "Port: ";
       std::cin >> port;
-      std::cout << std::endl;
 
       // add machine of type incoming station
       if(mashine == 1) {
@@ -66,7 +65,7 @@ int main(int argc, char** argv) {
     else if(input == 2) {
       std::cout << "List of all Machins: " << std::endl;
       for(int i = 0; i < ref->mpsList.size(); i++) {
-        std::cout << i << ". " << static_cast<MPS*>(ref->mpsList.at(i))->getIp() << std::endl;
+        std::cout << i << ". " << static_cast<MPS*>(ref->mpsList.at(i))->getIp() << " " << static_cast<MPS*>(ref->mpsList.at(i))->getType() << std::endl;
       }
 
       std::cout << "What machine you want use" << std::endl;
@@ -77,13 +76,12 @@ int main(int argc, char** argv) {
       if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 1) {
         std::cout << "1. getCap(color, side)" << std::endl;
         std::cout << "2. capReady" << std::endl;
-        std::cout << "3. setLight(light, state)" << std::endl;
+        std::cout << "3. setLight(light, state, blink)" << std::endl;
         std::cout << "4. isEmpty" << std::endl;
         
         int operation = 0;
         std::cout << "Number: ";
         std::cin >> operation;
-        std::cout << std::endl;
 
         // get cap command / send command
         if(operation == 1) {
@@ -91,9 +89,8 @@ int main(int argc, char** argv) {
           int side = 0;
           std::cout << "color: ";
           std::cin >> color;
-          std::cout << std::endl << "side: ";
+          std::cout << "side: ";
           std::cin >> side;
-          std::cout << std::endl;
         
           static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->getCap(color, side);
         }
@@ -105,13 +102,16 @@ int main(int argc, char** argv) {
         else if(operation == 3) {
           int light = 0;
           int state = 0;
+          int blink = 0;
+          
           std::cout << "light: ";
           std::cin >> light;
-          std::cout << std::endl << "state: ";
+          std::cout << "state: ";
           std::cin >> state;
-          std::cout << std::endl;
+          std::cout << "blink: ";
+          std::cin >> blink;
 
-          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state, blink);
         }
         else if(operation == 4) {
           int empty = static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->isEmpty();
@@ -131,19 +131,17 @@ int main(int argc, char** argv) {
       else if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 2) {
         std::cout << "1. produceEnd(updown)" << std::endl;
         std::cout << "2. isReady" << std::endl;
-        std::cout << "3. setLight(light, state)" << std::endl;
+        std::cout << "3. setLight(light, state, blink)" << std::endl;
 
         int operation = 0;
         std::cout << "Number: ";
         std::cin >> operation;
-        std::cout << std::endl;
 
         // produce end command / send command
         if(operation == 1) {
           int updown = 0;
           std::cout << "up or down: ";
           std::cin >> updown;
-          std::cout << std::endl;
 
           static_cast<MPSPickPlace1*>(ref->mpsList.at(machine))->produceEnd(updown);
         }
@@ -155,32 +153,33 @@ int main(int argc, char** argv) {
         else if(operation == 3) {
           int light = 0;
           int state = 0;
+          int blink = 0;
+          
           std::cout << "light: ";
           std::cin >> light;
-          std::cout << std::endl << "state: ";
+          std::cout << "state: ";
           std::cin >> state;
-          std::cout << std::endl;
+          std::cout << "blink";
+          std::cin >> blink;
 
-          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state, blink);
         }
       }
       // available operations for machine of type double pick and place
       else if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 3) {
         std::cout << "1. produceRing(arm)" << std::endl;
         std::cout << "2. ringReady" << std::endl;
-        std::cout << "3. setLight(light, state)" << std::endl;
+        std::cout << "3. setLight(light, state, blink)" << std::endl;
 
         int operation = 0;
-        std::cout << "Number: " << std::endl;
+        std::cout << "Number: ";
         std::cin >> operation;
-        std::cout << std::endl;
 
         // set a ring on workpiece command / send command
         if(operation == 1) {
           int arm = 0;
           std::cout << "which arm: ";
           std::cin >> arm;
-          std::cout << std::endl;
 
           static_cast<MPSPickPlace2*>(ref->mpsList.at(machine))->produceRing(arm);
         }
@@ -192,32 +191,33 @@ int main(int argc, char** argv) {
         else if(operation == 3) {
           int light = 0;
           int state = 0;
+          int blink = 0;
+          
           std::cout << "light: ";
           std::cin >> light;
-          std::cout << std::endl << "state: ";
+          std::cout << "state: ";
           std::cin >> state;
-          std::cout << std::endl;
+          std::cout << "blink: ";
+          std::cin >> blink;
 
-          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state, blink);
         }
       }
       // available operations for machine of type delivery station
       else if(static_cast<MPS*>(ref->mpsList.at(machine))->getType() == 4) {
         std::cout << "1. sendDeliver(lane)" << std::endl;
         std::cout << "2. isDelivered" << std::endl;
-        std::cout << "3. setLight(light, state)" << std::endl;
+        std::cout << "3. setLight(light, state, blink)" << std::endl;
 
         int operation = 0;
-        std::cout << "Number: " << std::endl;
+        std::cout << "Number: ";
         std::cin >> operation;
-        std::cout << std::endl;
 
         // deliver workpiece command / send command
         if(operation == 1) {
           int lane = 0;
           std::cout << "Which lane: " << std::endl;
           std::cin >> lane;
-          std::cout << std::endl;
 
           static_cast<MPSDeliver*>(ref->mpsList.at(machine))->sendDeliver(lane);
         }
@@ -229,13 +229,16 @@ int main(int argc, char** argv) {
         else if(operation == 3) {
           int light = 0;
           int state = 0;
+          int blink = 0;
+          
           std::cout << "light: ";
           std::cin >> light;
-          std::cout << std::endl << "state: ";
+          std::cout << "state: ";
           std::cin >> state;
-          std::cout << std::endl;
+          std::cout << "blink: ";
+          std::cin >> blink;
 
-          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state);
+          static_cast<MPSIncomingStation*> (ref->mpsList.at(machine))->setLight(light, state, blink);
         }
       }
     }

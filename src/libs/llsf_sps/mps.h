@@ -8,11 +8,12 @@
 #ifndef MPS_H
 #define MPS_H
 
-#define MODBUS_TCP_SLAVE 0x04
+//#define MODBUS_TCP_SLAVE 0x04
 
 #include <queue>
 #include <modbus/modbus.h>
 #include <vector>
+#include <string>
 
 #include "mps_message.h"
 
@@ -26,12 +27,12 @@ class MPS {
  protected:
   bool lock; // mps is locked because it process something
   std::queue<MPSMessage*> messages;
-  const char* ip;
+  char* ip;
   int port;
   int status;
   modbus_t* mb;
   int type;
-
+  
  public:
   /*!
    * \fn MPS(const char* ip, int port)
@@ -39,7 +40,7 @@ class MPS {
    * \param port port of modbus communication
    * \brief Constructor
    */
-  MPS(const char* ip, int port);
+  MPS(char* ip, int port);
 
   /*!
    * \fn ~MPS()
@@ -74,7 +75,7 @@ class MPS {
     this->messages.push(message);
   }
 
-  const char* getIp() {
+  char* getIp() {
     return this->ip;
   };
 

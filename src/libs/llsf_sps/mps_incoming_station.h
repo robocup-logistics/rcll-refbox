@@ -16,13 +16,15 @@
 */
 class MPSIncomingStation : public MPS {
  public:
+  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED};
+  
   /*!
    * \fn MPSIncomingStation(char* ip, int port)
    * \brief Constructor
    * \param ip address of mps
    * \param port port for modbus communication
    */
-  MPSIncomingStation(const char* ip, int port);
+  MPSIncomingStation(char* ip, int port);
  
   /*!
    * \fn ~MPSIncomingStation()
@@ -53,18 +55,51 @@ class MPSIncomingStation : public MPS {
   int isEmpty();
 
   /*!
+   * \fn isAvailable()
+   * \brief receive isAvailable command
+   * \return available
+   */
+  int isAvailable();
+  
+  /*!
+   * \fn isProcessing()
+   * \brief receive isProcessing command
+   * \return processing
+   */
+  int isProcessing();
+
+  /*!
+   * \fn isDelivered()
+   * \brief receive isDelivered command
+   * \return delivered
+   */
+  int isDelivered();
+  
+  /*!
    * \fn setLight(int light, int state);
    * \param light what color
    * \param state on or off
    */
-  void setLight(int light, int state);
+  void setLight(int light, int state, int blink);
+
+  /*!
+   * \fn clearRegister();
+   * \brief set all registeres to 0
+   */
+  void clearRegister();
   
   /*!
    * \fn processQueue()
    * \brief processing the queue
    */
-  void processQueue();
+  //void processQueue();
 
+  /*!
+   * \fn getState()
+   * \brief get the state of the machine
+   * \return machinestate
+   */
+  MachineState getState();
  private:
   int lastId;
 };

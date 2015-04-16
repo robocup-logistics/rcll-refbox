@@ -16,13 +16,15 @@
 */
 class MPSPickPlace2 : public MPS {
  public:
+  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED, RETRIEVED};
+  
   /*!
    * \fn MPSPickPlace2(char* ip, int port)
    * \brief Initialize communication
    * \param ip address of mps
    * \param port port of modbus communication
    */
-  MPSPickPlace2(const char* ip, int port);
+  MPSPickPlace2(char* ip, int port);
 
   /*!
    * \fn ~MPSPickPlace2()
@@ -51,18 +53,34 @@ class MPSPickPlace2 : public MPS {
    */
   bool isEmpty();
 
+  int isAvailable();
+
+  int isProcessing();
+
+  int isDelivered();
+
+  int isRetrieved();
+  
   /*!
    * \fn setLight(int light, int state);
    * \param light what color
    * \param state on or off
    */
-  void setLight(int light, int state);
+  void setLight(int light, int state, int blink);
   
   /*!
    * \fn processQueue()
    * \brief processing the queue
    */
-  void processQueue();
+  //void processQueue();
+
+  /*!
+   * \fn clearRegister();
+   * \brief set all registeres to 0
+   */
+  void clearRegister();
+  
+  MachineState getState();
 };
 
 #endif // MPSPICKPLACE2_H

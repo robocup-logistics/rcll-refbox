@@ -6,7 +6,7 @@
 */
 
 #include "mps_incoming_station.h"
-#include "mps_incoming_station_message.h"
+//#include "mps_incoming_station_message.h"
 #include <iostream>
 
 /*!
@@ -15,7 +15,7 @@
 * \param port port of modbus communication
 * \brief Constructor
 */
-MPSIncomingStation::MPSIncomingStation(const char* ip, int port) : MPS(ip, port) {
+MPSIncomingStation::MPSIncomingStation(char* ip, int port) : MPS(ip, port) {
   type = 1;
   this->lastId = 2;
 }
@@ -53,7 +53,11 @@ bool MPSIncomingStation::capReady() {
   uint16_t rec[1] = {0};
   
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
-  std::cout << rec[0] << std::endl;
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+  
   if(rec[0] == 13) {
     std::cout << "here" << std::endl;
     return true;
@@ -71,44 +75,115 @@ int MPSIncomingStation::isEmpty() {
   uint16_t rec[1] = {0};
   
   int rc = modbus_read_input_registers(mb, 1, 1, rec);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
   
   return rec[0];
 }
 
 /*!
+ * \fn isAvailable()
+ * \brief receive isAvailable command
+ * \return avaialable
+ */
+int MPSIncomingStation::isAvailable() {
+  uint16_t rec[1] = {0};
+  
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+
+  if(rec[0] == 1) {
+    return 1;
+  }
+  
+  return 0;
+}
+
+/*!
+ * \fn isProcessing()
+ * \brief receive isProcessing command
+ * \return processing
+ */
+int MPSIncomingStation::isProcessing() {
+  uint16_t rec[1] = {0};
+  
+  int rc = modbus_read_input_registers(mb, 4, 1, rec);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+
+  if(rec[0] == 1) {
+    return 1;
+  }
+  
+  return 0;
+}
+
+/*!
+ * \fn isDelivered()
+ * \brief receive isDelivered command
+ * \return delivered
+ */
+int MPSIncomingStation::isDelivered() {
+  uint16_t rec[1] = {0};
+  
+  int rc = modbus_read_input_registers(mb, 5, 1, rec);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+
+  if(rec[0] == 1) {
+    return 1;
+  }
+  
+  return 0;
+}
+  
+/*!
  * \fn processQueue()
  * \brief processing the queue
  */
-void MPSIncomingStation::processQueue() {
-  if(!this->messages.empty() && !this->lock) {
-    this->lock = true;
-    MPSIncomingStationGiveCapMessage* tmp = (MPSIncomingStationGiveCapMessage*)messages.front();
-    messages.pop();
+// void MPSIncomingStation::processQueue() {
+//   if(!this->messages.empty() && !this->lock) {
+//     this->lock = true;
+//     MPSIncomingStationGiveCapMessage* tmp = (MPSIncomingStationGiveCapMessage*)messages.front();
+//     messages.pop();
 
-    this->getCap(tmp->getColor(), tmp->getSide());
-  }
-  else if(this->capReady()) {
-    this->lock = false;
-  }
-}
+//     this->getCap(tmp->getColor(), tmp->getSide());
+//   }
+//   else if(this->capReady()) {
+//     this->lock = false;
+//   }
+// }
 
 /*!
  * \fn setLight(int light, int state);
  * \param light what color
  * \param state on or off
  */
-void MPSIncomingStation::setLight(int light, int state) {
+void MPSIncomingStation::setLight(int light, int state, int blink) {
   int rc;
   uint16_t send[1] = {(uint16_t)state};
+  uint16_t sendblink[1] = {(uint16_t)blink};
   
   if(light == 1) {
-    rc = modbus_write_registers(mb, 3, 1, send);    
+    rc = modbus_write_registers(mb, 3, 1, send);
+    rc = modbus_write_registers(mb, 6, 1, sendblink);
   }
   else if(light == 2) {
     rc = modbus_write_registers(mb, 4, 1, send);
+    rc = modbus_write_registers(mb, 7, 1, sendblink);
   }
   else if(light == 3) {
     rc = modbus_write_registers(mb, 5, 1, send);
+    rc = modbus_write_registers(mb, 8, 1, sendblink);
   }
   else {
     std::cout << "Light not available" << std::endl;
@@ -116,5 +191,38 @@ void MPSIncomingStation::setLight(int light, int state) {
 
   if(rc == -1) {
     std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+}
+
+/*!
+ * \fn clearRegister();
+ * \brief set register to 0
+ */
+void MPSIncomingStation::clearRegister() {
+  uint16_t send[9] = {0};
+  
+  int rc = modbus_write_registers(mb, 0, 9, send);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+}
+
+/*!
+ * \fn clearRegister();
+ * \brief set all registeres to 0
+ */
+MPSIncomingStation::MachineState MPSIncomingStation::getState() {
+  if(this->isAvailable() == 1) {
+    return AVAILABLE;
+  }
+  else if(this->isProcessing() == 1) {
+    return PROCESSING;
+  }
+  else if(this->isDelivered() == 1) {
+    return DELIVERED;
+  }
+  else {
+    return IDLE;
   }
 }

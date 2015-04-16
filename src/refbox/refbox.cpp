@@ -47,6 +47,10 @@
 #include <logging/file.h>
 #include <logging/network.h>
 #include <logging/console.h>
+#include <llsf_sps/mps_incoming_station.h>
+#include <llsf_sps/mps_pick_place_1.h>
+#include <llsf_sps/mps_pick_place_2.h>
+#include <llsf_sps/mps_deliver.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -163,8 +167,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 			   config_->get_uint("/llsfrb/sps/port"),
 			   config_->get_string("/llsfrb/sps/machine-type"));
       } else {
-	sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
-			   config_->get_uint("/llsfrb/sps/port"));
+
+        
       }
 
       sps_->reset_lights();
