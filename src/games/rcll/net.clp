@@ -253,6 +253,7 @@
   =>
   (retract ?af)
   (bind ?attmsg (pb-create "llsf_msgs.AttentionMessage"))
+  (printout warn "AM " ?team ": " (str-cat ?text) crlf)
   (pb-set-field ?attmsg "message" (str-cat ?text))
   (if (neq ?team nil) then (pb-set-field ?attmsg "team_color" ?team))
   (if (> ?time-to-show 0) then
@@ -453,7 +454,14 @@
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (neq ?zone TBD) then
-      (pb-set-field ?m "zone"  (fact-slot-value ?mf zone))
+      (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
+    )
+    (if (and (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
+	     (eq ?mtype RS) (> (length$ (fact-slot-value ?mf rs-ring-colors)) 0))
+     then
+     (foreach ?rc (fact-slot-value ?mf rs-ring-colors)
+       (pb-add-list ?m "ring_colors" ?rc)
+     )
     )
     (if ?add-restricted-info
      then
@@ -471,6 +479,10 @@
 	(pb-set-field ?ls "color" ?color)
 	(pb-set-field ?ls "state" ?state)
 	(pb-add-list ?m "lights" ?ls)
+      )
+     else
+      (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION)) then
+	(if (eq  (fact-slot-value ?mf state) PREPARED) then (pb-set-field ?m "prepared" TRUE))
       )
     )
 

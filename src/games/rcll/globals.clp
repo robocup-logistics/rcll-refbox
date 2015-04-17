@@ -43,10 +43,9 @@
   ?*DOWN-NUM-MAX*  =   8
   ?*RECYCLE-DOWN-TIME-MIN* = 20
   ?*RECYCLE-DOWN-TIME-MAX* = 30
+  ?*BROKEN-DOWN-TIME* = 30
   ; Machine processing times; seconds
-  ?*RECYCLE-PROC-TIME* = 2
-  ?*DELIVER-PROC-TIME* = 1
-  ?*INTERMEDIATE-PROC-TIME* = 2
+  ?*PREPARED-BLINK-TIME* = 3
   ; Delivery gate active times
   ?*DELIVERY-GATE-MIN-TIME* =  60
   ?*DELIVERY-GATE-MAX-TIME* = 180

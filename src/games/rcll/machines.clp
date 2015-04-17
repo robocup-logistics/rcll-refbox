@@ -70,7 +70,7 @@
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (loaded-with 0) (productions 0) (state IDLE)
-	             (proc-start 0.0) (puck-id 0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
 
   ; randomly assigned machines to zones

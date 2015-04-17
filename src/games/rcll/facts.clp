@@ -20,12 +20,18 @@
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
 	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
   (slot productions (type INTEGER) (default 0))
-  (slot state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
-  (slot prev-state (type SYMBOL) (allowed-values IDLE PROCESSING WAITING DOWN INVALID))
+  ; Overall refbox machine state
+  (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING PROCESSED READY-AT-OUTPUT WAITING DOWN INVALID))
+  ; Set on processing a state change
+  (slot proc-state (type SYMBOL) (default IDLE))
+  (slot prev-state (type SYMBOL) (default IDLE))
+  ; This is the state indicated by the MPS
+  (slot mps-state (type SYMBOL) (default IDLE))
   (slot proc-time (type INTEGER))
   (slot proc-start (type FLOAT))
   (multislot down-period (type FLOAT) (cardinality 2 2) (default -1.0 -1.0))
-  (slot puck-id (type INTEGER) (default 0))
+  (slot broken-until (type FLOAT))
+  (slot broken-reason (type STRING))
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
@@ -34,6 +40,27 @@
 			Z13 Z14 Z15 Z16 Z17 Z18 Z19 Z20 Z21 Z22 Z23 Z24))
   (slot exploration-light-code (type INTEGER) (default 0))
   (slot exploration-type (type STRING))
+
+  (slot prep-blink-start (type FLOAT))
+
+  ; machine type specific slots
+  (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
+  (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
+
+  (slot ds-gate (type INTEGER))
+
+  (slot rs-ring-color (type SYMBOL)
+	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
+	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+
+  (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
+  (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+)
+
+(deftemplate machine-mps-state
+  (slot name (type SYMBOL))
+  (slot state (type SYMBOL))
 )
 
 (deftemplate machine-spec
