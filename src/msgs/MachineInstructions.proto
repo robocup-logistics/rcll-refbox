@@ -1,8 +1,8 @@
 
 /***************************************************************************
- *  PuckInfo.proto - LLSF Protocol - Puck information
+ *  MachineInstructions.proto - LLSF Protocol - Machine instruction messages
  *
- *  Created: Mon Feb 25 11:36:50 2013
+ *  Created: Thu Apr 16 14:19:07 2015
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
  ****************************************************************************/
 
@@ -36,61 +36,51 @@
 
 package llsf_msgs;
 
-import "Pose2D.proto";
+import "PuckInfo.proto";
 import "Team.proto";
 
 option java_package = "org.robocup_logistics.llsf_msgs";
-option java_outer_classname = "PuckInfoProtos";
+option java_outer_classname = "MachineInstructionProtos";
 
-// Current state of a puck
-enum PuckState {
-  S0 = 0;
-  S1 = 1;
-  S2 = 2;
-  P1 = 4;
-  P2 = 5;
-  P3 = 6;
-  CONSUMED = 7;
-  FINISHED = 8;
+enum MachineSide {
+  INPUT  = 1;
+  OUTPUT = 2;
 }
 
-enum RingColor {
-  RING_BLUE   = 1;
-  RING_GREEN  = 2;
-  RING_ORANGE = 3;
-  RING_YELLOW = 4;
+enum CsOp {
+  RETRIEVE_CAP = 1;
+  MOUNT_CAP    = 2;
 }
 
-enum BaseColor {
-  BASE_RED = 1;
-  BASE_BLACK = 2;
-  BASE_SILVER = 3;
+message PrepareInstructionBS {
+  required MachineSide side  = 1;
+  required BaseColor   color = 2;
 }
 
-message Puck {
+message PrepareInstructionDS {
+  required uint32 gate = 1;
+}
+
+message PrepareInstructionRS {
+  required RingColor ring_color = 1;
+}
+
+message PrepareInstructionCS {
+  required CsOp operation = 1;
+}
+
+message PrepareMachine {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 50;
+    MSG_TYPE = 101;
   }
 
-  // Puck unique ID
-  required uint32    id = 1;
-  // Current state of the puck
-  required PuckState state = 2;
+  required Team   team_color = 1;
+  // Machine name which to instruct
+  required string machine = 2;
 
-  // Optional pose information
-  optional Pose2D    pose = 3;
-
-  // Team the puck belongs to
-  optional Team      team_color = 4;
-}
-
-message PuckInfo {
-  enum CompType {
-    COMP_ID  = 2000;
-    MSG_TYPE = 51;
-  }
-
-  // List of all known pucks
-  repeated Puck pucks = 1;
+  optional PrepareInstructionBS instruction_bs = 4;
+  optional PrepareInstructionDS instruction_ds = 5;
+  optional PrepareInstructionRS instruction_rs = 6;
+  optional PrepareInstructionCS instruction_cs = 7;
 }
