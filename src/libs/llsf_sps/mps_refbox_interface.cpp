@@ -24,26 +24,27 @@
 * \fn MPSRefboxInterface()
 * \brief Constructor
 */
-MPSRefboxInterface::MPSRefboxInterface() {  
-  // Here we have to read a yaml file to get all mps stations
-  //MPSDeliver* de1 = new MPSDeliver("192.168.2.20", 1502);
-  // MPSPickPlace1* pp1 = new MPSPickPlace1("192.168.2.21", 502);
-  // MPSPickPlace2* pp2 = new MPSPickPlace2("192.168.2.22", 502);
-  // MPSIncomingStation* is1 = new MPSIncomingStation("192.168.2.21", 502);
-  //MPSDeliverSideMessage* msg = new MPSDeliverSideMessage(1);
-  //de1->setMessage(msg);
-  
-  //de1->processQueue();
-  //delete de1;
-
-  // MPSPickPlace1 *pp1 = new MPSPickPlace1("127.0.0.1", 1502);
-  // std::cout << "Here we are without segfault" << std::endl;
-  // pp1->produceEnd(1);
-  //this->mpsList.push_back(de1);
+MPSRefboxInterface::MPSRefboxInterface() : Thread("default") {  
+  __mainloop_barrier = new InterruptibleBarrier(13); // 13 Is the count of all MPS stations and the refbox itself
+  __max_thread_time_usec = 30000;
+  __max_thread_time_nanosec = __max_thread_time_usec * 1000;
 }
 
+MPSRefboxInterface::MPSRefboxInterface(const char* name): Thread(name) {
+
+}
 /*!
 * \fn ~MPSRefboxInterface()
 * \brief Destructor
 */
 MPSRefboxInterface::~MPSRefboxInterface() {}
+
+void MPSRefboxInterface::loop() {
+  
+}
+
+void MPSRefboxInterface::once() {}
+
+//void MPSRefboxInterface::set_mainloop_thread(Thread *mainloop_thread) {}
+
+void MPSRefboxInterface::full_start() {}

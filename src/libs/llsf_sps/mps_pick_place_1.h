@@ -10,13 +10,17 @@
 
 #include "mps.h"
 
+#include <core/threading/thread.h>
+
+using namespace fawkes;
+
 /*!
 * \class MPSPickPlace1
 * \brief This class handels the communication to a Pick&Place 1
 */
-class MPSPickPlace1 : public MPS {
+class MPSPickPlace1 : public MPS, public Thread {
  public:
-  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED, RETRIEVED};
+  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVER, DELIVERED, RETRIEVED};
   
   /*!
    * \fn MPSPickPlace1(char* ip, int port)
@@ -39,9 +43,13 @@ class MPSPickPlace1 : public MPS {
    */
   void produceEnd(int updown);
 
+  void deliverProduct();
+
   int isAvailable();
 
   int isProcessing();
+
+  int isDelivering();
 
   int isDelivered();
 

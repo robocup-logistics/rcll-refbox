@@ -45,6 +45,7 @@
 #include <utils/llsf/machines.h>
 #include <protobuf_comm/server.h>
 #include <llsf_sps/mps_refbox_interface.h>
+#include <core/threading/thread_list.h>
 
 #include <clipsmm.h>
 #ifdef HAVE_MONGODB
@@ -109,6 +110,7 @@ class LLSFRefBox
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
+  ThreadList    *mpsThreadList;
 
 #ifdef HAVE_MONGODB
   CLIPS::Value  clips_bson_create();

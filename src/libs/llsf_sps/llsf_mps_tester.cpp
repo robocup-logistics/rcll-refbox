@@ -9,7 +9,7 @@
 #include "mps_incoming_station.h"
 
 int main(int argc, char** argv) {
-  MPSRefboxInterface* ref = new MPSRefboxInterface();
+  MPSRefboxInterface* ref = new MPSRefboxInterface("test");
 
   while(true) {
     std::cout << "Menu: " << std::endl;

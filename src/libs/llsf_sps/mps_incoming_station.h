@@ -10,11 +10,15 @@
 
 #include "mps.h"
 
+#include <core/threading/thread.h>
+
+using namespace fawkes;
+
 /*!
 * \class MPSIncomingStation
 * \brief Communication between Refbox and Incoming Station
 */
-class MPSIncomingStation : public MPS {
+class MPSIncomingStation : public MPS, public Thread {
  public:
   enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED};
   
@@ -54,13 +58,6 @@ class MPSIncomingStation : public MPS {
    */
   int isEmpty();
 
-  /*!
-   * \fn isAvailable()
-   * \brief receive isAvailable command
-   * \return available
-   */
-  int isAvailable();
-  
   /*!
    * \fn isProcessing()
    * \brief receive isProcessing command

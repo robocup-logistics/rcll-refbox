@@ -15,7 +15,7 @@
 * \param port port of modbus communication
 * \brief Constructor
 */
-MPSIncomingStation::MPSIncomingStation(char* ip, int port) : MPS(ip, port) {
+MPSIncomingStation::MPSIncomingStation(char* ip, int port) : MPS(ip, port), Thread("test") {
   type = 1;
   this->lastId = 2;
 }
@@ -81,27 +81,6 @@ int MPSIncomingStation::isEmpty() {
   }
   
   return rec[0];
-}
-
-/*!
- * \fn isAvailable()
- * \brief receive isAvailable command
- * \return avaialable
- */
-int MPSIncomingStation::isAvailable() {
-  uint16_t rec[1] = {0};
-  
-  int rc = modbus_read_input_registers(mb, 3, 1, rec);
-
-  if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-  
-  return 0;
 }
 
 /*!
@@ -213,10 +192,7 @@ void MPSIncomingStation::clearRegister() {
  * \brief set all registeres to 0
  */
 MPSIncomingStation::MachineState MPSIncomingStation::getState() {
-  if(this->isAvailable() == 1) {
-    return AVAILABLE;
-  }
-  else if(this->isProcessing() == 1) {
+  if(this->isProcessing() == 1) {
     return PROCESSING;
   }
   else if(this->isDelivered() == 1) {

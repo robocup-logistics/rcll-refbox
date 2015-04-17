@@ -16,7 +16,7 @@
  * \param ip address of mps
  * \param port port for modbus communication
  */
-MPSDeliver::MPSDeliver(char* ip, int port) : MPS(ip, port) {
+MPSDeliver::MPSDeliver(char* ip, int port) : MPS(ip, port), Thread("test") {
   type = 4;
 }
 

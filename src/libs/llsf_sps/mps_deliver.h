@@ -10,11 +10,15 @@
 
 #include "mps.h"
 
+#include <core/threading/thread.h>
+
+using namespace fawkes;
+
 /*!
 * \class MPSDeliver
 * \brief Communication between Refbox and Delivery Station
 */
-class MPSDeliver : public MPS {
+class MPSDeliver : public MPS, public Thread {
  public:
   enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED};
   

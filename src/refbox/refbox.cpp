@@ -20,7 +20,8 @@
  *   may be used to endorse or promote products derived from this
  *   software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HO  std::vector<Thread*> mpsThreadList;
+LDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
@@ -47,6 +48,7 @@
 #include <logging/file.h>
 #include <logging/network.h>
 #include <logging/console.h>
+#include <llsf_sps/mps_refbox_interface.h>
 #include <llsf_sps/mps_incoming_station.h>
 #include <llsf_sps/mps_pick_place_1.h>
 #include <llsf_sps/mps_pick_place_2.h>
@@ -101,6 +103,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   : clips_mutex_(fawkes::Mutex::RECURSIVE), timer_(io_service_)
 {
   pb_comm_ = NULL;
+  mpsThreadList = new ThreadList("MPSList");
 
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
@@ -166,9 +169,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
 			   config_->get_uint("/llsfrb/sps/port"),
 			   config_->get_string("/llsfrb/sps/machine-type"));
-      } else {
+      }
+      else {
+        //for(int i = 0; i < config_->get_uint("/llsfrb/mps/count"); i++) {
+          // if(config_->get) {
 
-        
+          // }
+        //}
       }
 
       sps_->reset_lights();
@@ -183,6 +190,11 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     sps_ = NULL;
   }
 
+
+  MPSRefboxInterface *mpsInterface = new MPSRefboxInterface("MPSInterface");
+  mpsThreadList->push_front(mpsInterface);
+
+  
   clips_ = new CLIPS::Environment();
   setup_protobuf_comm();
   setup_clips();
