@@ -20,7 +20,7 @@ using namespace fawkes;
 */
 class MPSPickPlace1 : public MPS, public Thread {
  public:
-  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVER, DELIVERED, RETRIEVED};
+  enum MachineState {IDLE, AVAILABLE, PROCESSING, PROCESSED, DELIVER, DELIVERED, RETRIEVED};
   
   /*!
    * \fn MPSPickPlace1(char* ip, int port)
@@ -44,16 +44,6 @@ class MPSPickPlace1 : public MPS, public Thread {
   void produceEnd(int updown);
 
   void deliverProduct();
-
-  int isAvailable();
-
-  int isProcessing();
-
-  int isDelivering();
-
-  int isDelivered();
-
-  int isRetrieved();
   
   /*!
    * \fn isEmpty()

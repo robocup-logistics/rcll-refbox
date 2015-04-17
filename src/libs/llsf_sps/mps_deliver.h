@@ -20,7 +20,7 @@ using namespace fawkes;
 */
 class MPSDeliver : public MPS, public Thread {
  public:
-  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED};
+  enum MachineState {IDLE, AVAILABLE, DELIVER, DELIVERED};
   
   /*!
    * \fn MPSDeliver(char* ip, int port)
@@ -58,10 +58,6 @@ class MPSDeliver : public MPS, public Thread {
    */
   void setLight(int light, int state, int blink);
   
-  int isAvailable();
-
-  int isProcessing();
-
   /*!
    * \fn processQueue()
    * \brief processing the queue

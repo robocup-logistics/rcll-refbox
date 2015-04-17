@@ -20,7 +20,7 @@ using namespace fawkes;
 */
 class MPSIncomingStation : public MPS, public Thread {
  public:
-  enum MachineState {IDLE, AVAILABLE, PROCESSING, DELIVERED};
+  enum MachineState {IDLE, PROCESSING, DELIVERED, RETRIEVED};
   
   /*!
    * \fn MPSIncomingStation(char* ip, int port)
@@ -57,20 +57,6 @@ class MPSIncomingStation : public MPS, public Thread {
    * \return value of empty lanes
    */
   int isEmpty();
-
-  /*!
-   * \fn isProcessing()
-   * \brief receive isProcessing command
-   * \return processing
-   */
-  int isProcessing();
-
-  /*!
-   * \fn isDelivered()
-   * \brief receive isDelivered command
-   * \return delivered
-   */
-  int isDelivered();
   
   /*!
    * \fn setLight(int light, int state);

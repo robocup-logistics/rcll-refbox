@@ -69,6 +69,8 @@ LDERS AND CONTRIBUTORS
 #  include <netcomm/utils/resolver.h>
 #endif
 
+#include <string>
+
 using namespace llsf_sps;
 using namespace protobuf_comm;
 using namespace protobuf_clips;
@@ -171,11 +173,39 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 			   config_->get_string("/llsfrb/sps/machine-type"));
       }
       else {
-        //for(int i = 0; i < config_->get_uint("/llsfrb/mps/count"); i++) {
-          // if(config_->get) {
+        MPSRefboxInterface *mpsInterface = new MPSRefboxInterface("MPSInterface");
+        mpsThreadList->push_front(mpsInterface);
 
-          // }
-        //}
+        unsigned int count = config_->get_uint("/llsfrb/mps/count");
+        for(unsigned int i = 0; i < count; i++) {
+          std::string tmp = "/llsfrb/mps/mps" + std::to_string(i) + "/type";
+          char *tmpstr = new char[tmp.length() + 1];
+          
+          strcpy(tmpstr, tmp.c_str());
+          unsigned int mpstype = config_->get_uint(tmpstr);
+          
+          if(mpstype == 1) {
+            //MPSIncomingStation *is = new MPSIncomingStation("192.168.2.20", 0);
+            //mpsThreadList->push_back(is);
+          }
+          else if(mpstype == 2) {
+            //MPSPickPlace1 *pp1 = new MPSPickPlace1("", 0);
+            //mpsThreadList->push_back(pp1);
+          }
+          else if(mpstype == 3) {
+            //MPSPickPlace2 *pp2 = new MPSPickPlace2("", 0);
+            //mpsThreadList->push_back(pp2);
+          }
+          else if(mpstype == 4) {
+            //MPSDeliver *del = new MPSDeliver("", 0);
+            //mpsThreadList->push_back(del);
+          }
+          else {
+            throw fawkes::Exception("this type wont match");
+          }
+
+          delete[] tmpstr;
+        }
       }
 
       sps_->reset_lights();
@@ -189,11 +219,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     delete sps_;
     sps_ = NULL;
   }
-
-
-  MPSRefboxInterface *mpsInterface = new MPSRefboxInterface("MPSInterface");
-  mpsThreadList->push_front(mpsInterface);
-
   
   clips_ = new CLIPS::Environment();
   setup_protobuf_comm();

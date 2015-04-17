@@ -90,86 +90,6 @@ bool MPSPickPlace2::isEmpty() {
   }
 }
 
-int MPSPickPlace2::isAvailable() {
-  uint16_t rec[1] = {0};
-
-  int rc = modbus_read_input_registers(mb, 3, 1, rec);
-
-  if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-
-  return 0;
-}
-
-int MPSPickPlace2::isProcessing() {
-  uint16_t rec[1] = {0};
-
-  int rc = modbus_read_input_registers(mb, 4, 1, rec);
-
-  if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-
-  return 0;
-}
-
-int MPSPickPlace2::isDelivering() {
-  uint16_t rec[1] = {0};
-
-  int rc = modbus_read_input_registers(mb, 5, 1, rec);
-
-  if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-
-  return 0;
-}
-
-int MPSPickPlace2::isDelivered() {
-  uint16_t rec[1] = {0};
-
-  int rc = modbus_read_input_registers(mb, 6, 1, rec);
-
-  if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-
-  return 0;
-}
-
-int MPSPickPlace2::isRetrieved() {
-  uint16_t rec[1] = {0};
-
-  int rc = modbus_read_input_registers(mb, 7, 1, rec);
-
-  if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-
-  return 0;
-}
-
 /*!
 * \fn processQueue()
   * \brief processing the queue
@@ -219,7 +139,7 @@ void MPSPickPlace2::setLight(int light, int state, int blink) {
 }
 
 void MPSPickPlace2::clearRegister() {
-  uint16_t send[9] = {0};
+  uint16_t send[3] = {0};
   
   int rc = modbus_write_registers(mb, 0, 9, send);
 
@@ -229,16 +149,30 @@ void MPSPickPlace2::clearRegister() {
 }
 
 MPSPickPlace2::MachineState MPSPickPlace2::getState() {
-  if(this->isAvailable() == 1) {
+  uint16_t rec[1] = {0};
+
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
+
+  if(rc != 1) {
+    std::cout << "ERROR while reading data from address " << std::endl;
+  }
+  
+  if(rec[0] == 1) {
     return AVAILABLE;
   }
-  else if(this->isProcessing() == 1) {
+  else if(rec[0] == 2) {
     return PROCESSING;
   }
-  else if(this->isDelivered() == 1) {
+  else if(rec[0] == 3) {
+    return PROCESSED;
+  }
+  else if(rec[0] == 4) {
+    return DELIVER;
+  }
+  else if(rec[0] == 5) {
     return DELIVERED;
   }
-  else if(this->isRetrieved() == 1) {
+  else if(rec[0] == 6) {
     return RETRIEVED;
   }
   else {

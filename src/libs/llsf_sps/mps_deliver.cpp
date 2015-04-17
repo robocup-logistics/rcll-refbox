@@ -34,38 +34,6 @@ void MPSDeliver::sendDeliver(int lane) {
   }
 }
 
-int MPSDeliver::isAvailable() {
-  uint16_t rec[1] = {0};
-
-  int rc = modbus_read_input_registers(mb, 3, 1, rec);
-
-  if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-
-  return 0;
-}
-
-int MPSDeliver::isProcessing() {
-  uint16_t rec[1] = {0};
-
-  int rc = modbus_read_input_registers(mb, 4, 1, rec);
-
-  if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-
-  return 0;
-}
-
 /*!
  * \fn isDelivered()
  * \brief receive isDelivered data
@@ -134,7 +102,7 @@ void MPSDeliver::setLight(int light, int state, int blink) {
 }
 
 void MPSDeliver::clearRegister() {
-  uint16_t send[9] = {0};
+  uint16_t send[3] = {0};
   
   int rc = modbus_write_registers(mb, 0, 9, send);
 
@@ -144,13 +112,21 @@ void MPSDeliver::clearRegister() {
 }
 
 MPSDeliver::MachineState MPSDeliver::getState() {
-  if(this->isAvailable() == 1) {
+  uint16_t rec[1] = {0};
+
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
+
+  if(rc != 1) {
+    std::cout << "ERROR while reading data from address " << std::endl;
+  }
+
+  if(rec[0] == 1) {
     return AVAILABLE;
   }
-  else if(this->isProcessing() == 1) {
-    return PROCESSING;
+  else if(rec[0] == 2) {
+    return DELIVER;
   }
-  else if(this->isDelivered() == 1) {
+  else if(rec[0] == 3) {
     return DELIVERED;
   }
   else {

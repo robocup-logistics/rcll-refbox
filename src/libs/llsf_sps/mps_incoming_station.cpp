@@ -82,48 +82,6 @@ int MPSIncomingStation::isEmpty() {
   
   return rec[0];
 }
-
-/*!
- * \fn isProcessing()
- * \brief receive isProcessing command
- * \return processing
- */
-int MPSIncomingStation::isProcessing() {
-  uint16_t rec[1] = {0};
-  
-  int rc = modbus_read_input_registers(mb, 4, 1, rec);
-
-  if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-  
-  return 0;
-}
-
-/*!
- * \fn isDelivered()
- * \brief receive isDelivered command
- * \return delivered
- */
-int MPSIncomingStation::isDelivered() {
-  uint16_t rec[1] = {0};
-  
-  int rc = modbus_read_input_registers(mb, 5, 1, rec);
-
-  if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
-  }
-
-  if(rec[0] == 1) {
-    return 1;
-  }
-  
-  return 0;
-}
   
 /*!
  * \fn processQueue()
@@ -178,7 +136,7 @@ void MPSIncomingStation::setLight(int light, int state, int blink) {
  * \brief set register to 0
  */
 void MPSIncomingStation::clearRegister() {
-  uint16_t send[9] = {0};
+  uint16_t send[3] = {0};
   
   int rc = modbus_write_registers(mb, 0, 9, send);
 
@@ -192,11 +150,22 @@ void MPSIncomingStation::clearRegister() {
  * \brief set all registeres to 0
  */
 MPSIncomingStation::MachineState MPSIncomingStation::getState() {
-  if(this->isProcessing() == 1) {
+  uint16_t rec[1] = {0};
+  
+  int rc = modbus_read_input_registers(mb, 3, 1, rec);
+
+  if(rc == -1) {
+    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+  }
+
+  if(rec[0] == 1) {
     return PROCESSING;
   }
-  else if(this->isDelivered() == 1) {
+  else if(rec[0] == 2) {
     return DELIVERED;
+  }
+  else if(rec[0] == 3) {
+    return RETRIEVED;
   }
   else {
     return IDLE;
