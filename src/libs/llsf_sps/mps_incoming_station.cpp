@@ -9,6 +9,8 @@
 //#include "mps_incoming_station_message.h"
 #include <iostream>
 
+#include <core/exception.h>
+
 /*!
 * \fn MPSIncomingStation(const char* ip, int port)
 * \param ip ip address of mps
@@ -38,7 +40,7 @@ void MPSIncomingStation::getCap(int color, int side) {
   int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot write getCap to machine");
   }
 
   this->lastId++;
@@ -55,11 +57,10 @@ bool MPSIncomingStation::capReady() {
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot read from machine");
   }
   
   if(rec[0] == 13) {
-    std::cout << "here" << std::endl;
     return true;
   }
 
@@ -77,7 +78,7 @@ int MPSIncomingStation::isEmpty() {
   int rc = modbus_read_input_registers(mb, 1, 1, rec);
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot read from machine");
   }
   
   return rec[0];
@@ -123,7 +124,7 @@ void MPSIncomingStation::setLight(int light, int state, int blink) {
     rc = modbus_write_registers(mb, 8, 1, sendblink);
   }
   else {
-    std::cout << "Light not available" << std::endl;
+    throw fawkes::Exception("Cannot write light state to machine");
   }
 
   if(rc == -1) {
@@ -141,7 +142,7 @@ void MPSIncomingStation::clearRegister() {
   int rc = modbus_write_registers(mb, 0, 9, send);
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot clear registers on machine");
   }
 }
 
@@ -155,7 +156,7 @@ MPSIncomingStation::MachineState MPSIncomingStation::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot read machine state from machine");
   }
 
   if(rec[0] == 1) {

@@ -8,6 +8,7 @@
 #include "mps_deliver.h"
 #include <modbus/modbus.h>
 #include <iostream>
+#include <core/exception.h>
 //#include "mps_deliver_message.h"
 
 /*!
@@ -30,7 +31,7 @@ void MPSDeliver::sendDeliver(int lane) {
   int rc = modbus_write_registers(mb, 0, 1, send);
   
   if(rc == -1) {
-    std::cout << "ERROR while sending data" << std::endl;
+    throw fawkes::Exception("Cannot write sendDeliver to machine");
   }
 }
 
@@ -44,7 +45,7 @@ int MPSDeliver::isDelivered() {
   int rc = modbus_read_input_registers(mb, 5, 1, rec);
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot read from machine");
   }
   
   if(rec[0] == 1) {
@@ -93,11 +94,11 @@ void MPSDeliver::setLight(int light, int state, int blink) {
     rc = modbus_write_registers(mb, 8, 1, sendblink);
   }
   else {
-    std::cout << "Light not available" << std::endl;
+    throw fawkes::Exception("Light state not available");
   }
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot write light state to machine");
   }
 }
 
@@ -107,7 +108,7 @@ void MPSDeliver::clearRegister() {
   int rc = modbus_write_registers(mb, 0, 9, send);
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot clear registers on machine");
   }
 }
 
@@ -117,7 +118,7 @@ MPSDeliver::MachineState MPSDeliver::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
+    throw fawkes::Exception("Cannot read machine state from machine");
   }
 
   if(rec[0] == 1) {

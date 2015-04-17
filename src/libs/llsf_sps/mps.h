@@ -47,6 +47,8 @@ class MPS {
    * \brief Destructor
    */
   ~MPS();
+
+  void reconnect();
   
   /*!
    * \fn isLocked()

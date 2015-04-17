@@ -19,3 +19,10 @@ MPS::~MPS() {
   modbus_close(this->mb);
   modbus_free(this->mb);
 }
+
+void MPS::reconnect() {
+  modbus_close(mb);
+  if (modbus_connect(mb) == -1) {
+    std::cout << "Error while reconnect" << std::endl;
+  }
+}

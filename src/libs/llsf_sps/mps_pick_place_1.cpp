@@ -10,6 +10,8 @@
 
 #include <iostream>
 
+#include <core/exception.h>
+
 /*!
 * \fn MPSPickPlace1(const char* ip, int port)
 * \brief Constructor
@@ -37,7 +39,7 @@ void MPSPickPlace1::produceEnd(int updown) {
   int rc = modbus_write_registers(mb, 0, 1, send1);
   	
   if (rc != 1) {
-    std::cout << "ERROR while writing data to address " << std::endl;
+    throw fawkes::Exception("Cannot write produceEnd to machine");
   } 
 }
 
@@ -46,7 +48,7 @@ void MPSPickPlace1::deliverProduct() {
   int rc = modbus_write_registers(mb, 1, 1, send1);
   	
   if (rc != 1) {
-    std::cout << "ERROR while writing data to address " << std::endl;
+    throw fawkes::Exception("Cannot write deliverProduct to machine");
   }
 }
 
@@ -60,7 +62,7 @@ bool MPSPickPlace1::isEmpty() {
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
+    throw fawkes::Exception("Cannot read from machine");
   }
 
   if(rec[0] == 13) {
@@ -81,7 +83,7 @@ bool MPSPickPlace1::isReady() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
+    throw fawkes::Exception("Cannot read from machine");
   }
 
   if(rec[0] == 1) {
@@ -132,11 +134,11 @@ void MPSPickPlace1::setLight(int light, int state, int blink) {
     rc = modbus_write_registers(mb, 8, 1, sendblink);
   }
   else {
-    std::cout << "Light not available" << std::endl;
+    throw fawkes::Exception("Lightstate not available");
   }
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot write lightstate to machine");
   }
 }
 
@@ -146,7 +148,7 @@ void MPSPickPlace1::clearRegister() {
   int rc = modbus_write_registers(mb, 0, 9, send);
  
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    throw fawkes::Exception("Cannot clear registers on machine");
   }
 }
 
@@ -156,7 +158,7 @@ MPSPickPlace1::MachineState MPSPickPlace1::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    std::cout << "ERROR while reading data from address " << std::endl;
+    throw fawkes::Exception("Cannot read machine state from machine");
   }
   
   if(rec[0] == 1) {
