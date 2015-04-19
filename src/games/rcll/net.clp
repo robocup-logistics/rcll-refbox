@@ -88,7 +88,7 @@
   ; reset certain signals to trigger immediate re-sending
   (delayed-do-for-all-facts ((?signal signal))
     (member$ ?signal:type
-	     (create$ gamestate robot-info machine-info machine-info-bc puck-info order-info))
+	     (create$ gamestate robot-info machine-info machine-info-bc order-info))
     (modify ?signal (time 0 0))
   )
 
@@ -560,41 +560,6 @@
   (bind ?s (net-create-broadcast-MachineInfo MAGENTA))
   (pb-broadcast ?peer-id-magenta ?s)
   (pb-destroy ?s)
-)
-
-
-(defrule net-send-PuckInfo
-  (time $?now)
-  ?f <- (signal (type puck-info) (time $?t&:(timeout ?now ?t ?*PUCKINFO-PERIOD*)) (seq ?seq))
-  =>
-  (modify ?f (time ?now) (seq (+ ?seq 1)))
-  (bind ?pi (pb-create "llsf_msgs.PuckInfo"))
-
-  (do-for-all-facts
-    ((?puck puck)) TRUE
-
-    (bind ?p (pb-create "llsf_msgs.Puck"))
-    (pb-set-field ?p "id" ?puck:id)
-    (pb-set-field ?p "state" (str-cat ?puck:state))
-    ; If we have a pose publish it
-    (if (non-zero-pose ?puck:pose) then
-      (bind ?ps (pb-field-value ?p "pose"))
-      (bind ?ps-time (pb-field-value ?ps "timestamp"))
-      (pb-set-field ?ps-time "sec" (nth$ 1 ?puck:pose-time))
-      (pb-set-field ?ps-time "nsec" (integer (* (nth$ 2 ?puck:pose-time) 1000)))
-      (pb-set-field ?ps "timestamp" ?ps-time)
-      (pb-set-field ?ps "x" (nth$ 1 ?puck:pose))
-      (pb-set-field ?ps "y" (nth$ 2 ?puck:pose))
-      (pb-set-field ?ps "ori" 0.0)
-      (pb-set-field ?p "pose" ?ps)
-    )
-    (if (neq ?puck:team nil) then (pb-set-field ?p "team_color" ?puck:team))
-    (pb-add-list ?pi "pucks" ?p) ; destroys ?p
-  )
-
-  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
-    (pb-send ?client:id ?pi))
-  (pb-destroy ?pi)
 )
 
 

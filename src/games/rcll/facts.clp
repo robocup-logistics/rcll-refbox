@@ -82,17 +82,6 @@
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK))
 )
 
-(deftemplate puck
-  (slot index (type INTEGER))
-  (slot id (type INTEGER))
-  (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA) (default nil))
-  (slot state (type SYMBOL) (allowed-values S0 S1 S2 P1 P2 P3 CONSUMED FINISHED) (default S0))
-  (slot state-change-game-time (type FLOAT))
-   ; x y theta (meters and rad)
-  (multislot pose (type FLOAT) (cardinality 2 2) (default 0.0 0.0))
-  (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
-)
-
 (deftemplate robot
   (slot number (type INTEGER))
   (slot state (type SYMBOL) (allowed-values ACTIVE MAINTENANCE DISQUALIFIED) (default ACTIVE))
@@ -118,14 +107,6 @@
   (multislot time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
   (slot seq (type INTEGER) (default 1))
   (slot count (type INTEGER) (default 1))
-)
-
-(deftemplate rfid-input
-  (slot machine (type SYMBOL)
-	(allowed-values M1 M2 M3 M4 M5 M6 M7 M8 M9 M10 M11 M12 D1 D2 D3 R1
-			M13 M14 M15 M16 M17 M18 M19 M20 M21 M22 M23 M24 D4 D5 D6 R2))
-  (slot has-puck (type SYMBOL))
-  (slot id (type INTEGER))
 )
 
 (deftemplate network-client
@@ -253,7 +234,6 @@
   (signal (type bc-robot-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info-bc) (time (create$ 0 0)) (seq 1))
-  (signal (type puck-info) (time (create$ 0 0)) (seq 1))
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))

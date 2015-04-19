@@ -21,30 +21,6 @@
 (load* (resolve-file exploration.clp))
 ;(load* (resolve-file challenges.clp))
 
-; (defrule rfid-input-learn-puck
-;   (declare (salience ?*PRIORITY_FIRST*))
-;   (rfid-input (machine ?m) (has-puck TRUE) (id ?id&~0))
-;   (machine (name ?m) (pose ?mpose-x ?mpose-y ?mpose-ori) (team ?team))
-;   (not (puck (id ?id)))
-;   =>
-;   (bind ?new-index 1)
-;   (do-for-all-facts ((?puck puck)) TRUE
-;     (bind ?new-index (max (+ ?puck:index 1) ?new-index))
-;   )
-;   (printout t "Learned new puck ID " ?id " for team " ?team
-; 	    " (index " ?new-index ", state S0)" crlf)
-;   (assert (puck (index ?new-index) (id ?id) (state S0) (team ?team)))
-; )
-
-; (defrule rfid-input-cleanup
-;   (declare (salience ?*PRIORITY_CLEANUP*))
-;   ?f <- (rfid-input (machine ?m) (has-puck ?hp) (id ?id))
-;   =>
-;   (retract ?f)
-;   ;(if (debug 1) then
-;   ;  (printout t "Clearing unused RFID input (" ?m ", " ?hp ", " ?id ")" crlf))
-; )
-
 (defrule config-timer-interval
   (confval (path "/llsfrb/clips/timer-interval") (type ?t) (value ?v))
   =>
@@ -114,16 +90,6 @@
   =>
   (game-print-points)
   (printout t "===  Shutting down  ===" crlf)
-)
-
-; Sort pucks by ID, such that do-for-all-facts on the puck deftemplate
-; iterates in a nice order, e.g. for net-send-PuckInfo
-(defrule sort-pucks
-  (declare (salience ?*PRIORITY_HIGH*))
-  ?oa <- (puck (id ?id-a))
-  ?ob <- (puck (id ?id-b&:(> ?id-a ?id-b)&:(< (fact-index ?oa) (fact-index ?ob))))
-  =>
-  (modify ?oa)
 )
 
 (defrule init-game
