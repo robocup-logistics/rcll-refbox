@@ -22,13 +22,13 @@
   (foreach ?color (create$ RED YELLOW GREEN)
     (if (member$ (sym-cat ?color "-ON") ?dl)
     then 
-      (sps-set-signal (str-cat ?m) ?color "ON")
+      (mps-set-light (str-cat ?m) (str-cat ?color) "ON")
     else
       (if (member$ (sym-cat ?color "-BLINK") ?dl)
       then
-        (sps-set-signal (str-cat ?m) ?color "BLINK")
+        (mps-set-light (str-cat ?m) (str-cat ?color) "BLINK")
       else
-        (sps-set-signal (str-cat ?m) ?color "OFF")
+        (mps-set-light (str-cat ?m) (str-cat ?color) "OFF")
       )
     )
   )
@@ -69,6 +69,7 @@
 
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
+    (mps-reset ?machine:name)
     (modify ?machine (loaded-with 0) (productions 0) (state IDLE)
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
@@ -166,16 +167,6 @@
   (assert (machines-printed))
   (bind ?t (if (eq ?teams (create$ "" "")) then t else debug))
 
-  (bind ?pp-mach-assignment (create$))
-  (do-for-all-facts ((?machine machine) (?mspec machine-spec))
-    (eq ?machine:mtype ?mspec:mtype)
-
-    (bind ?pp-mach-assignment
-	  (append$ ?pp-mach-assignment
-		   (sym-cat ?machine:name "/" ?machine:mtype "/" ?machine:team)))
-  )
-  (printout ?t "Machines: " ?pp-mach-assignment crlf)
-
   (do-for-all-facts ((?m machine)) TRUE
     (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?m:exploration-light-code)
       (printout ?t "Light code " ?light-code:code " for machine " ?m:name crlf)
@@ -194,10 +185,6 @@
 	      (time-sec-format (nth$ 1 ?period:period)) " to "
 	      (time-sec-format (nth$ 2 ?period:period)) " ("
 	      (- (nth$ 2 ?period:period) (nth$ 1 ?period:period)) " sec)" crlf)
-  )
-
-  (do-for-all-facts ((?mspec machine-spec)) TRUE
-    (printout ?t "Proc time for " ?mspec:mtype " will be " ?mspec:proc-time " sec" crlf)
   )
 
 )

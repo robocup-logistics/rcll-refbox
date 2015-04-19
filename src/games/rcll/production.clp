@@ -178,6 +178,7 @@
   =>
   (printout t "Machine " ?n " switching to IDLE state" crlf)
   (modify ?m (proc-state IDLE) (desired-lights GREEN-ON))
+  (mps-reset (str-cat ?n))
 )
 
 (defrule prod-proc-state-prepared-bs
@@ -220,6 +221,7 @@
   (printout t "Machine " ?n " dispensing " ?color " base on " ?side crlf)
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
   ; TODO: (mps-instruct DISPENSE-BASE ?side ?color)
+  (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
 )
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
@@ -251,7 +253,7 @@
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
   (modify ?m (state IDLE) (proc-state PROCESSED))
-  ; TODO: (mps-instruct PROCESSED)
+  (mps-deliver (str-cat ?n))
 )
 
 (defrule prod-proc-state-processed-rs
@@ -263,7 +265,7 @@
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
   (modify ?m (proc-state PROCESSED) (loaded-with (max 0 (- ?lw ?req-bases))))
-  ; TODO: (mps-instruct PROCESSED)
+  (mps-deliver (str-cat ?n))
 )
 
 (defrule prod-proc-state-processed
@@ -272,7 +274,7 @@
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
   (modify ?m (proc-state PROCESSED))
-  ; TODO: (mps-instruct PROCESSED)
+  (mps-deliver (str-cat ?n))
 )
 
 (defrule prod-proc-state-ready-at-output
