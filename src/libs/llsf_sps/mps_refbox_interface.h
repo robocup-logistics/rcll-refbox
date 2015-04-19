@@ -8,11 +8,6 @@
 #ifndef MPSREFBOXINTERFACE_H
 #define MPSREFBOXINTERFACE_H
 
-#include <modbus/modbus.h>
-#include <vector>
-
-#include <core/threading/thread.h>
-#include <core/threading/interruptible_barrier.h>
 #include <core/threading/thread_list.h>
 
 #include "mps.h"
@@ -23,16 +18,13 @@ using namespace fawkes;
 * \class MPSRefboxInterface
 * \brief This class handels the communication between refbox and server
 */
-class MPSRefboxInterface : public Thread {
+class MPSRefboxInterface {
  private:
   unsigned int          __max_thread_time_usec;
   unsigned int          __max_thread_time_sec;
   ThreadList           *mpsThreadList;
-  bool                 firstTime;
   
  public:
-  std::vector<void*> mpsList;
-  
   /*!
    * \fn MPSRefboxInterface()
    * \brief Constructor
@@ -54,6 +46,9 @@ class MPSRefboxInterface : public Thread {
    */
   void insertMachine(Thread *t);
 
-  void loop();
+  void process();
+
+  std::map<std::string, std::string> get_states();
+
 };
 #endif // MPSREFBOXINTERFACE_H

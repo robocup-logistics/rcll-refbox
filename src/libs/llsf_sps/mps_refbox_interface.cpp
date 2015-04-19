@@ -24,20 +24,18 @@
 * \fn MPSRefboxInterface()
 * \brief Constructor
 */
-MPSRefboxInterface::MPSRefboxInterface() : Thread("default") {  
+MPSRefboxInterface::MPSRefboxInterface()
+{  
   __max_thread_time_usec = 30000; // thread timeout in usecs
   __max_thread_time_sec  = 1;     // thread timeout in nanosecs
   mpsThreadList = new ThreadList("MPSList");
-  mpsThreadList->push_back(this);
-  firstTime = true;
 }
 
-MPSRefboxInterface::MPSRefboxInterface(const char* name): Thread(name) {
+MPSRefboxInterface::MPSRefboxInterface(const char* name)
+{
   __max_thread_time_usec = 30000; // thread timeout in usecs
   __max_thread_time_sec  = 1;     // thread timeout in nanosecs
   mpsThreadList = new ThreadList("MPSList");
-  mpsThreadList->push_back(this);
-  firstTime = true;
 }
 
 /*!
@@ -46,7 +44,8 @@ MPSRefboxInterface::MPSRefboxInterface(const char* name): Thread(name) {
 */
 MPSRefboxInterface::~MPSRefboxInterface() {}
 
-void MPSRefboxInterface::loop() {
+void
+MPSRefboxInterface::process() {
   std::list<std::string> recovered_threads;
   mpsThreadList->try_recover(recovered_threads);
 
@@ -64,7 +63,7 @@ void MPSRefboxInterface::loop() {
       }
     }
   } catch(fawkes::Exception e) {
-    
+    e.print_trace();
   }
 }
 
