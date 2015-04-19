@@ -26,6 +26,7 @@
   (slot proc-state (type SYMBOL) (default IDLE))
   (slot prev-state (type SYMBOL) (default IDLE))
   ; This is the state indicated by the MPS
+  (slot mps-state-deferred (type SYMBOL) (default NONE))
   (slot mps-state (type SYMBOL) (default IDLE))
   (slot proc-time (type INTEGER))
   (slot proc-start (type FLOAT))

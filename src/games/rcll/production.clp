@@ -34,7 +34,7 @@
 )
 
 (defrule prod-machine-down
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (mtype ?mtype)
 		  (state ?state&~DOWN) (proc-start ?proc-start)
@@ -52,17 +52,16 @@
 )
 
 (defrule prod-machine-up
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state&~DOWN)
+		  (mps-state-deferred ?mps-state)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
   =>
   (printout t "Machine " ?name " is up again" crlf)
-  (switch ?prev-state
-    (case PROCESSING then (modify ?mf (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)))
-    (case WAITING    then (modify ?mf (state WAITING)    (desired-lights YELLOW-ON)))
-    (case INVALID    then (modify ?mf (state INVALID)    (desired-lights YELLOW-BLINK)))
-    (case IDLE       then (modify ?mf (state IDLE)       (desired-lights GREEN-ON)))
+  (if (eq ?mps-state NONE)
+   then (modify ?mf (state ?prev-state))
+   else (modify ?mf (state ?prev-state) (mps-state ?mps-state) (mps-state-deferred NONE))
   )
 )
 
@@ -181,12 +180,17 @@
 
 (defrule prod-proc-mps-state-change
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?ms <- (machine-mps-state (name ?n) (state ?mps-state))
-  ?m <- (machine (name ?n) (mps-state ?old-state&~?mps-state))
+  ?ms <- (machine-mps-state (name ?n) (state ?mps-state) (num-bases ?num-bases))
+  ?m <- (machine (name ?n) (state ?state))
+  (or (machine (name ?n) (mps-state ~?mps-state))
+      (machine (name ?n) (loaded-with ~?num-bases)))
   =>
-  (printout t "Machine " ?n " MPS state change to " ?mps-state crlf)
+  (printout t "Machine " ?n " MPS state " ?mps-state " (loaded: " ?num-bases ")" crlf)
   (retract ?ms)
-  (modify ?m (mps-state ?mps-state))
+  (if (eq ?state DOWN)
+   then (modify ?m (mps-state-deferred ?mps-state) (loaded-with ?num-bases))
+   else (modify ?m (mps-state ?mps-state) (loaded-with ?num-bases))
+  )
 )
 
 (defrule prod-proc-mps-state-nochange
@@ -240,6 +244,7 @@
 )
 
 (defrule prod-proc-state-processing-bs
+  "BS must be instructed to dispense base for processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING)
