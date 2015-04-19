@@ -24,26 +24,24 @@ llsfrb:
     test-lights: true
 
   mps:
+    enable: true
     # type: 1(incoming station), 2(singel p&p), 3(double p&p), 4(delivery station)
-    count: 3 # how many machines are available
-    mps1:
-      enable: false
-      host: !ipv4 192.168.2.20
-      port: !tcp-port 502
-      type: 1
-      test-lights: true
-    mps2:
-      enable: false
-      host: !ipv4 192.168.2.23
-      port: !tcp-port 502
-      type: 4
-      test-lights: true
-    mps3:
-      enable: false
-      host: !ipv4 192.168.2.24
-      port: !tcp-port 502
-      type: 2
-      test-lights: true
+    stations:
+      C-BS:
+        active: true
+        type: BS
+        host: !ipv4 192.168.2.20
+        port: !tcp-port 502
+      C-CS:
+        active: false
+        host: !ipv4 192.168.2.23
+        port: !tcp-port 502
+        type: CS
+      C-DS:
+        active: false
+        host: !ipv4 192.168.2.24
+        port: !tcp-port 502
+        type: DS
 
   clips:
     # Timer interval, in milliseconds
@@ -57,7 +55,7 @@ llsfrb:
     unwatch-rules: [retract-time,
                     game-update-gametime-points, game-update-last-time,
                     net-send-beacon, net-send-GameState, net-send-OrderInfo,
-                    net-send-MachineInfo, net-send-PuckInfo, net-send-RobotInfo,
+                    net-send-MachineInfo, net-send-RobotInfo,
                     exploration-send-MachineReportInfo, net-broadcast-MachineInfo,
                     net-send-VersionInfo]
 
