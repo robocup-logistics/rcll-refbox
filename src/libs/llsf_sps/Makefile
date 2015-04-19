@@ -19,8 +19,8 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
 LIBS_libllsf_sps = stdc++ m llsfrbcore
-OBJS_libllsf_sps = sps_comm.o
-HDRS_libllsf_sps = sps_comm.h
+OBJS_libllsf_sps = sps_comm.o mps.o mps_incoming_station.o mps_pick_place_1.o mps_pick_place_2.o mps_deliver.o mps_refbox_interface.o
+HDRS_libllsf_sps = sps_comm.h mps.h mps_incoming_station.h mps_pick_place_1.h mps_pick_place_2.h mps_deliver.h mps_refbox_interface.h
 
 OBJS_all = $(OBJS_libllsf_sps)
 

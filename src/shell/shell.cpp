@@ -66,6 +66,9 @@
 
 #include <cstring>
 #include <unistd.h>
+#include <modbus/modbus.h>
+
+//#include <libs/llsf_sps/mps_band.h>
 
 // defined in miliseconds
 #define TIMER_INTERVAL 500
@@ -1133,7 +1136,7 @@ LLSFRefBoxShell::run()
   navbar_->standend();
   navbar_->attron(A_BOLD);
   navbar_->addstr(0, 33, "ADD PUCK");
-
+  
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
   navbar_->addstr(0, 43, "F7");
   navbar_->standend();
@@ -1171,7 +1174,6 @@ LLSFRefBoxShell::run()
     machines_[mname] =
       new LLSFRefBoxShellMachine(mname,  type,  m+1, mx);
   }
-  
 
   std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
   for (m = machines_.begin(); m != machines_.end(); ++m) {

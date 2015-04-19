@@ -23,6 +23,28 @@ llsfrb:
     port: !tcp-port 502
     test-lights: true
 
+  mps:
+    # type: 1(incoming station), 2(singel p&p), 3(double p&p), 4(delivery station)
+    count: 3 # how many machines are available
+    mps1:
+      enable: false
+      host: !ipv4 192.168.2.20
+      port: !tcp-port 502
+      type: 1
+      test-lights: true
+    mps2:
+      enable: false
+      host: !ipv4 192.168.2.23
+      port: !tcp-port 502
+      type: 4
+      test-lights: true
+    mps3:
+      enable: false
+      host: !ipv4 192.168.2.24
+      port: !tcp-port 502
+      type: 2
+      test-lights: true
+
   clips:
     # Timer interval, in milliseconds
     timer-interval: 40

@@ -47,6 +47,11 @@
 #include <logging/file.h>
 #include <logging/network.h>
 #include <logging/console.h>
+#include <llsf_sps/mps_refbox_interface.h>
+#include <llsf_sps/mps_incoming_station.h>
+#include <llsf_sps/mps_pick_place_1.h>
+#include <llsf_sps/mps_pick_place_2.h>
+#include <llsf_sps/mps_deliver.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -62,6 +67,8 @@
 #  include <netcomm/dns-sd/avahi_thread.h>
 #  include <netcomm/utils/resolver.h>
 #endif
+
+#include <string>
 
 using namespace llsf_sps;
 using namespace protobuf_comm;
@@ -98,6 +105,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 {
   pb_comm_ = NULL;
 
+  mps_ = new MPSRefboxInterface("MPSInterface");
+  
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
 
@@ -160,10 +169,45 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
       if (config_->exists("/llsfrb/sps/hosts") && cfg_machine_assignment_ == ASSIGNMENT_2014) {
 	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
-			   config_->get_uint("/llsfrb/sps/port"));
-      } else {
-	sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
-			   config_->get_uint("/llsfrb/sps/port"));
+			   config_->get_uint("/llsfrb/sps/port"),
+			   config_->get_string("/llsfrb/sps/machine-type"));
+      }
+      else {
+        unsigned int count = config_->get_uint("/llsfrb/mps/count");
+        for(unsigned int i = 0; i < count; ++i) {
+          // read maschine type from configfile
+          std::string cpath = "/llsfrb/mps/mps" + std::to_string(i) + "/type";
+          unsigned int mpstype = config_->get_uint(cpath.c_str());
+
+          // read ip from configfile
+          cpath = "/llsfrb/mps/mps" + std::to_string(i) + "/host";
+
+          // convert ip to char*
+          std::string mpsip = config_->get_string(cpath.c_str());
+
+          cpath = "/llsfrb/mps/mps" + std::to_string(i) + "/port";
+          unsigned int port = config_->get_uint(cpath.c_str());
+          
+          if(mpstype == 1) {
+            MPSIncomingStation *is = new MPSIncomingStation(mpsip.c_str(), port);
+            mps_->insertMachine(is);
+          }
+          else if(mpstype == 2) {
+            MPSPickPlace1 *pp1 = new MPSPickPlace1(mpsip.c_str(), port);
+            mps_->insertMachine(pp1);
+          }
+          else if(mpstype == 3) {
+            MPSPickPlace2 *pp2 = new MPSPickPlace2(mpsip.c_str(), port);
+            mps_->insertMachine(pp2);
+          }
+          else if(mpstype == 4) {
+            MPSDeliver *del = new MPSDeliver(mpsip.c_str(), port);
+            mps_->insertMachine(del);
+          }
+          else {
+            throw fawkes::Exception("this type wont match");
+          }
+        }
       }
 
       sps_->reset_lights();
@@ -177,7 +221,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     delete sps_;
     sps_ = NULL;
   }
-
+  
   clips_ = new CLIPS::Environment();
   setup_protobuf_comm();
   setup_clips();
@@ -973,11 +1017,18 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     timer_last_ = now;
     */
 
-    sps_read_rfids();
+    //sps_read_rfids();
+    mps_->process();
 
     {
       //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
       fawkes::MutexLocker lock(&clips_mutex_);
+
+      std::map<std::string, std::string> machine_states = mps_->get_states();
+      for (const auto &ms : machine_states) {
+	clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
+			      ms.first.c_str(), ms.second.c_str(), 0);
+      }
 
       clips_->assert_fact("(time (now))");
       clips_->refresh_agenda();
