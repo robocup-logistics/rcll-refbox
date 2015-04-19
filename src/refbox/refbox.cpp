@@ -105,8 +105,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   : clips_mutex_(fawkes::Mutex::RECURSIVE), timer_(io_service_)
 {
   pb_comm_ = NULL;
-  mpsThreadList = new ThreadList("MPSList");
 
+  mpsRefboxInterface = new MPSRefboxInterface("MPSInterface");
+  
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
 
@@ -173,32 +174,44 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 			   config_->get_string("/llsfrb/sps/machine-type"));
       }
       else {
-        MPSRefboxInterface *mpsInterface = new MPSRefboxInterface("MPSInterface");
-        mpsThreadList->push_front(mpsInterface);
-
         unsigned int count = config_->get_uint("/llsfrb/mps/count");
         for(unsigned int i = 0; i < count; i++) {
+          // read maschine type from configfile
           std::string tmp = "/llsfrb/mps/mps" + std::to_string(i) + "/type";
-          char *tmpstr = new char[tmp.length() + 1];
-          
+          char *tmpstr = new char[tmp.length() + 1];      
           strcpy(tmpstr, tmp.c_str());
           unsigned int mpstype = config_->get_uint(tmpstr);
+
+          // read ip from configfile
+          tmp = "/llsfrb/mps/mps" + std::to_string(i) + "/host";
+          tmpstr = new char[tmp.length() + 1];      
+          strcpy(tmpstr, tmp.c_str());
+
+          // convert ip to char*
+          std::string mpsiptmp = config_->get_string(tmpstr);
+          char *mpsip = new char[mpsiptmp.length() + 1];
+          strcpy(mpsip, mpsiptmp.c_str());
+
+          tmp = "/llsfrb/mps/mps" + std::to_string(i) + "/port";
+          tmpstr = new char[tmp.length() + 1];      
+          strcpy(tmpstr, tmp.c_str());
+          unsigned int port = config_->get_uint(tmpstr);
           
           if(mpstype == 1) {
-            //MPSIncomingStation *is = new MPSIncomingStation("192.168.2.20", 0);
-            //mpsThreadList->push_back(is);
+            MPSIncomingStation *is = new MPSIncomingStation(mpsip, port);
+            mpsRefboxInterface->insertMachine(is);
           }
           else if(mpstype == 2) {
-            //MPSPickPlace1 *pp1 = new MPSPickPlace1("", 0);
-            //mpsThreadList->push_back(pp1);
+            MPSPickPlace1 *pp1 = new MPSPickPlace1(mpsip, port);
+            mpsRefboxInterface->insertMachine(pp1);
           }
           else if(mpstype == 3) {
-            //MPSPickPlace2 *pp2 = new MPSPickPlace2("", 0);
-            //mpsThreadList->push_back(pp2);
+            MPSPickPlace2 *pp2 = new MPSPickPlace2(mpsip, port);
+            mpsRefboxInterface->insertMachine(pp2);
           }
           else if(mpstype == 4) {
-            //MPSDeliver *del = new MPSDeliver("", 0);
-            //mpsThreadList->push_back(del);
+            MPSDeliver *del = new MPSDeliver(mpsip, port);
+            mpsRefboxInterface->insertMachine(del);
           }
           else {
             throw fawkes::Exception("this type wont match");

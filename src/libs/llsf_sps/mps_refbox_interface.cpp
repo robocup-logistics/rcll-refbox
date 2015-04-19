@@ -25,14 +25,21 @@
 * \brief Constructor
 */
 MPSRefboxInterface::MPSRefboxInterface() : Thread("default") {  
-  __mainloop_barrier = new InterruptibleBarrier(13); // 13 Is the count of all MPS stations and the refbox itself
-  __max_thread_time_usec = 30000;
-  __max_thread_time_nanosec = __max_thread_time_usec * 1000;
+  __max_thread_time_usec = 30000; // thread timeout in usecs
+  __max_thread_time_sec  = 1;     // thread timeout in nanosecs
+  mpsThreadList = new ThreadList("MPSList");
+  mpsThreadList->push_back(this);
+  firstTime = true;
 }
 
 MPSRefboxInterface::MPSRefboxInterface(const char* name): Thread(name) {
-
+  __max_thread_time_usec = 30000; // thread timeout in usecs
+  __max_thread_time_sec  = 1;     // thread timeout in nanosecs
+  mpsThreadList = new ThreadList("MPSList");
+  mpsThreadList->push_back(this);
+  firstTime = true;
 }
+
 /*!
 * \fn ~MPSRefboxInterface()
 * \brief Destructor
@@ -40,11 +47,18 @@ MPSRefboxInterface::MPSRefboxInterface(const char* name): Thread(name) {
 MPSRefboxInterface::~MPSRefboxInterface() {}
 
 void MPSRefboxInterface::loop() {
-  
+  std::list<std::string> recovered_threads;
+  mpsThreadList->try_recover(recovered_threads);
+
+  try {
+    std::list<std::string> bad_threads;
+    mpsThreadList->wakeup_and_wait(__max_thread_time_sec, __max_thread_time_usec, bad_threads);
+  } catch(fawkes::Exception e) {
+    
+  }
 }
 
-void MPSRefboxInterface::once() {}
+void MPSRefboxInterface::insertMachine(Thread* t) {
+  mpsThreadList->push_back(t);
+}
 
-//void MPSRefboxInterface::set_mainloop_thread(Thread *mainloop_thread) {}
-
-void MPSRefboxInterface::full_start() {}

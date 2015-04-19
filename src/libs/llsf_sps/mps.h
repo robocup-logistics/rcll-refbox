@@ -23,7 +23,10 @@
 */
 class MPS {
   //private:
- 
+ public:
+  enum ConnectionState {CONNECTED, DISCONNECTED, NOTSENDRECEIVED};
+  
+  
  protected:
   bool lock; // mps is locked because it process something
   std::queue<MPSMessage*> messages;
@@ -32,8 +35,10 @@ class MPS {
   int status;
   modbus_t* mb;
   int type;
+  ConnectionState state;
   
  public:
+  
   /*!
    * \fn MPS(const char* ip, int port)
    * \param ip ip address of machine

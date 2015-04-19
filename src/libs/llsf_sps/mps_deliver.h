@@ -21,6 +21,7 @@ using namespace fawkes;
 class MPSDeliver : public MPS, public Thread {
  public:
   enum MachineState {IDLE, AVAILABLE, DELIVER, DELIVERED};
+  MachineState machineState;
   
   /*!
    * \fn MPSDeliver(char* ip, int port)
@@ -29,6 +30,8 @@ class MPSDeliver : public MPS, public Thread {
    * \param port port for modbus communication
    */
   MPSDeliver(char* ip, int port);
+
+  MPSDeliver(char* ip, int port, const char* name);
 
   /*!
    * \fn ~MPSDeliver()
@@ -71,6 +74,8 @@ class MPSDeliver : public MPS, public Thread {
   void clearRegister();
   
   MachineState getState();
+
+  void loop();
 };
 
 #endif // MPSDELIVER_H

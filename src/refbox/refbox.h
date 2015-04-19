@@ -110,7 +110,6 @@ class LLSFRefBox
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
-  ThreadList    *mpsThreadList;
 
 #ifdef HAVE_MONGODB
   CLIPS::Value  clips_bson_create();
@@ -191,7 +190,7 @@ class LLSFRefBox
   mongo::DBClientBase *mongodb_;
 #endif
 
-  MPSRefboxInterface mpsRefboxInterface;
+  MPSRefboxInterface *mpsRefboxInterface;
 };
 
 

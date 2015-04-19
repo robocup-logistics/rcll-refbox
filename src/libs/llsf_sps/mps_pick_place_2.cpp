@@ -17,7 +17,11 @@
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace2::MPSPickPlace2(char* ip, int port) : MPS(ip, port), Thread("test") {
+MPSPickPlace2::MPSPickPlace2(char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
+  type = 3;
+}
+
+MPSPickPlace2::MPSPickPlace2(char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
   type = 3;
 }
 
@@ -37,7 +41,7 @@ void MPSPickPlace2::produceRing(int workpiece) {
   int rc = modbus_write_registers(mb, 0, 1, send);
   
   if(rc == -1) {
-    throw fawkes::Exception("Cannot write produceRing to machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
@@ -46,7 +50,7 @@ void MPSPickPlace2::deliverProduct() {
   int rc = modbus_write_registers(mb, 1, 1, send);
   
   if(rc == -1) {
-    throw fawkes::Exception("Cannot write deliverProduct to machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
@@ -60,7 +64,7 @@ bool MPSPickPlace2::ringReady() {
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot read from machine");
+    state = NOTSENDRECEIVED;
   }
 
   if(rec[0] == 13) {
@@ -81,7 +85,7 @@ bool MPSPickPlace2::isEmpty() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot read from machine");
+    state = NOTSENDRECEIVED;
   }
 
   if(rec[0] == 1) {
@@ -136,17 +140,17 @@ void MPSPickPlace2::setLight(int light, int state, int blink) {
   }
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot write light state to machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
 void MPSPickPlace2::clearRegister() {
   uint16_t send[3] = {0};
   
-  int rc = modbus_write_registers(mb, 0, 9, send);
+  int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot clear registers on machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
@@ -156,28 +160,38 @@ MPSPickPlace2::MachineState MPSPickPlace2::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    throw fawkes::Exception("Cannot read machine state from machine");
+    state = NOTSENDRECEIVED;
   }
   
   if(rec[0] == 1) {
+    machineState = AVAILABLE;
     return AVAILABLE;
   }
   else if(rec[0] == 2) {
+    machineState = PROCESSING;
     return PROCESSING;
   }
   else if(rec[0] == 3) {
+    machineState = PROCESSED;
     return PROCESSED;
   }
   else if(rec[0] == 4) {
+    machineState = DELIVER;
     return DELIVER;
   }
   else if(rec[0] == 5) {
+    machineState = DELIVERED;
     return DELIVERED;
   }
   else if(rec[0] == 6) {
+    machineState = RETRIEVED;
     return RETRIEVED;
   }
   else {
     return IDLE;
   }
+}
+
+void MPSPickPlace2::loop() {
+  getState();
 }

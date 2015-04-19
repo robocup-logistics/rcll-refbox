@@ -7,15 +7,16 @@ MPS::MPS(char* ip, int port) {
 
   this->mb = modbus_new_tcp(this->ip, this->port);
 
-  std::cout << this->mb << std::endl;
-  
   if(modbus_connect(this->mb) == -1) {
-    std::cout << "Error while connecting with ip: " << ip << std::endl;
+    state = DISCONNECTED;
+  }
+  else {
+    state = CONNECTED;
   }
 }
 
 MPS::~MPS() {
-  std::cout << "Destructor called" << std::endl;
+  state = DISCONNECTED;
   modbus_close(this->mb);
   modbus_free(this->mb);
 }
@@ -23,6 +24,9 @@ MPS::~MPS() {
 void MPS::reconnect() {
   modbus_close(mb);
   if (modbus_connect(mb) == -1) {
-    std::cout << "Error while reconnect" << std::endl;
+    state = DISCONNECTED;
+  }
+  else {
+    state = CONNECTED;
   }
 }

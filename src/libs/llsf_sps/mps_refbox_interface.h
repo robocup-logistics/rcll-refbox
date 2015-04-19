@@ -13,6 +13,7 @@
 
 #include <core/threading/thread.h>
 #include <core/threading/interruptible_barrier.h>
+#include <core/threading/thread_list.h>
 
 #include "mps.h"
 
@@ -24,15 +25,13 @@ using namespace fawkes;
 */
 class MPSRefboxInterface : public Thread {
  private:
-  InterruptibleBarrier *__mainloop_barrier;
   unsigned int          __max_thread_time_usec;
-  unsigned int          __max_thread_time_nanosec;
-  unsigned int          __desired_time_usec;
-  unsigned int          __desired_time_sec;
+  unsigned int          __max_thread_time_sec;
+  ThreadList           *mpsThreadList;
+  bool                 firstTime;
   
  public:
   std::vector<void*> mpsList;
-  std::vector<Thread*> mpsThreadList;
   
   /*!
    * \fn MPSRefboxInterface()
@@ -48,11 +47,13 @@ class MPSRefboxInterface : public Thread {
    */
   ~MPSRefboxInterface();
 
-  void once();
+  /*!
+   * \fn insertMachine(Thread *t)
+   * \brief insert machine into thread list
+   * \param t Reference to thread that have to be insert into list
+   */
+  void insertMachine(Thread *t);
+
   void loop();
-
-  //void set_mainloop_thread(Thread *mainloop_thread);
-
-  void full_start();
 };
 #endif // MPSREFBOXINTERFACE_H

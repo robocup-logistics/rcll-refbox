@@ -17,7 +17,12 @@
 * \param port port of modbus communication
 * \brief Constructor
 */
-MPSIncomingStation::MPSIncomingStation(char* ip, int port) : MPS(ip, port), Thread("test") {
+MPSIncomingStation::MPSIncomingStation(char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
+  type = 1;
+  this->lastId = 2;
+}
+
+MPSIncomingStation::MPSIncomingStation(char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
   type = 1;
   this->lastId = 2;
 }
@@ -40,7 +45,7 @@ void MPSIncomingStation::getCap(int color, int side) {
   int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot write getCap to machine");
+    state = NOTSENDRECEIVED;
   }
 
   this->lastId++;
@@ -57,7 +62,7 @@ bool MPSIncomingStation::capReady() {
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot read from machine");
+    state = NOTSENDRECEIVED;
   }
   
   if(rec[0] == 13) {
@@ -78,7 +83,7 @@ int MPSIncomingStation::isEmpty() {
   int rc = modbus_read_input_registers(mb, 1, 1, rec);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot read from machine");
+    state = NOTSENDRECEIVED;
   }
   
   return rec[0];
@@ -128,7 +133,7 @@ void MPSIncomingStation::setLight(int light, int state, int blink) {
   }
 
   if(rc == -1) {
-    std::cout << "ERROR while sending data with ip: " << ip << std::endl;
+    state = NOTSENDRECEIVED;
   }
 }
 
@@ -139,10 +144,10 @@ void MPSIncomingStation::setLight(int light, int state, int blink) {
 void MPSIncomingStation::clearRegister() {
   uint16_t send[3] = {0};
   
-  int rc = modbus_write_registers(mb, 0, 9, send);
+  int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot clear registers on machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
@@ -156,19 +161,26 @@ MPSIncomingStation::MachineState MPSIncomingStation::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot read machine state from machine");
+    state = NOTSENDRECEIVED;
   }
 
   if(rec[0] == 1) {
+    machineState = PROCESSING;
     return PROCESSING;
   }
   else if(rec[0] == 2) {
+    machineState = DELIVERED;
     return DELIVERED;
   }
   else if(rec[0] == 3) {
+    machineState = RETRIEVED;
     return RETRIEVED;
   }
   else {
     return IDLE;
   }
+}
+
+void MPSIncomingStation::loop() {
+  getState();
 }

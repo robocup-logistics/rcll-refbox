@@ -21,6 +21,7 @@ using namespace fawkes;
 class MPSPickPlace1 : public MPS, public Thread {
  public:
   enum MachineState {IDLE, AVAILABLE, PROCESSING, PROCESSED, DELIVER, DELIVERED, RETRIEVED};
+  MachineState machineState;
   
   /*!
    * \fn MPSPickPlace1(char* ip, int port)
@@ -30,6 +31,8 @@ class MPSPickPlace1 : public MPS, public Thread {
    */
   MPSPickPlace1(char* ip, int port);
 
+  MPSPickPlace1(char* ip, int port, const char* name);
+  
   /*!
    * \fn ~MPSPickPlace1()
    * \brief Destructor
@@ -79,6 +82,8 @@ class MPSPickPlace1 : public MPS, public Thread {
   void clearRegister();
   
   MachineState getState();
+
+  void loop();
 private:
   //modbus_t* mb; // connection to mps
   //const char* ip;

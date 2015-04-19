@@ -21,6 +21,7 @@ using namespace fawkes;
 class MPSIncomingStation : public MPS, public Thread {
  public:
   enum MachineState {IDLE, PROCESSING, DELIVERED, RETRIEVED};
+  MachineState machineState;
   
   /*!
    * \fn MPSIncomingStation(char* ip, int port)
@@ -29,7 +30,8 @@ class MPSIncomingStation : public MPS, public Thread {
    * \param port port for modbus communication
    */
   MPSIncomingStation(char* ip, int port);
- 
+
+  MPSIncomingStation(char* ip, int port, const char* name);
   /*!
    * \fn ~MPSIncomingStation()
    * \brief Destructor
@@ -83,6 +85,9 @@ class MPSIncomingStation : public MPS, public Thread {
    * \return machinestate
    */
   MachineState getState();
+
+  void loop();
+  
  private:
   int lastId;
 };

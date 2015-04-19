@@ -17,7 +17,11 @@
  * \param ip address of mps
  * \param port port for modbus communication
  */
-MPSDeliver::MPSDeliver(char* ip, int port) : MPS(ip, port), Thread("test") {
+MPSDeliver::MPSDeliver(char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
+  type = 4;
+}
+
+MPSDeliver::MPSDeliver(char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
   type = 4;
 }
 
@@ -31,7 +35,7 @@ void MPSDeliver::sendDeliver(int lane) {
   int rc = modbus_write_registers(mb, 0, 1, send);
   
   if(rc == -1) {
-    throw fawkes::Exception("Cannot write sendDeliver to machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
@@ -45,7 +49,7 @@ int MPSDeliver::isDelivered() {
   int rc = modbus_read_input_registers(mb, 5, 1, rec);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot read from machine");
+    state = NOTSENDRECEIVED;
   }
   
   if(rec[0] == 1) {
@@ -98,17 +102,17 @@ void MPSDeliver::setLight(int light, int state, int blink) {
   }
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot write light state to machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
 void MPSDeliver::clearRegister() {
   uint16_t send[3] = {0};
   
-  int rc = modbus_write_registers(mb, 0, 9, send);
+  int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    throw fawkes::Exception("Cannot clear registers on machine");
+    state = NOTSENDRECEIVED;
   }
 }
 
@@ -118,19 +122,26 @@ MPSDeliver::MachineState MPSDeliver::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    throw fawkes::Exception("Cannot read machine state from machine");
+    state = NOTSENDRECEIVED;
   }
 
   if(rec[0] == 1) {
+    machineState = AVAILABLE;
     return AVAILABLE;
   }
   else if(rec[0] == 2) {
+    machineState = DELIVER;
     return DELIVER;
   }
   else if(rec[0] == 3) {
+    machineState = DELIVERED;
     return DELIVERED;
   }
   else {
     return IDLE;
   }
+}
+
+void MPSDeliver::loop() {
+  getState();
 }
