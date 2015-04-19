@@ -40,7 +40,6 @@
 #include "machine.h"
 #include "robot.h"
 #include "order.h"
-#include "puck.h"
 #include "menus.h"
 #include "colors.h"
 
@@ -144,10 +143,12 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   }
   orders_.clear();
 
+  /*
   for (size_t i = 0; i < pucks_.size(); ++i) {
     delete pucks_[i];
   }
   pucks_.clear();
+  */
 
   delete rb_log_;
 
@@ -532,9 +533,11 @@ LLSFRefBoxShell::set_game_team_color(std::string team_color)
       orders_[i]->reset();
     }
 
+    /*
     for (size_t i = 0; i < pucks_.size(); ++i) {
       pucks_[i]->reset();
     }
+    */
 
     for (size_t i = 0; i < robots_.size(); ++i) {
       robots_[i]->reset();
@@ -668,9 +671,11 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
       orders_[i]->reset();
     }
 
+    /*
     for (size_t i = 0; i < pucks_.size(); ++i) {
       pucks_[i]->reset();
     }
+    */
 
     for (size_t i = 0; i < robots_.size(); ++i) {
       robots_[i]->reset();
@@ -937,41 +942,6 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
   }
 
-  std::shared_ptr<llsf_msgs::PuckInfo> pinfo;
-  if ((pinfo = std::dynamic_pointer_cast<llsf_msgs::PuckInfo>(msg))) {
-    last_pinfo_ = pinfo;
-    size_t pidx = 0;
-    for (int i = 0; i < pinfo->pucks_size(); ++i) {
-      const llsf_msgs::Puck &puck = pinfo->pucks(i);
-      if (puck.team_color() != team_)  continue;
-      bool at_machine = false;
-      /*
-      if (last_minfo_) {
-	for (int j = 0; j < last_minfo_->machines_size() && ! at_machine; ++j) {
-	  const llsf_msgs::Machine &m = last_minfo_->machines(j);
-	  if (m.team_color() != team_)  continue;
-	  if (m.has_puck_under_rfid() && m.puck_under_rfid().id() == puck.id()) {
-	    at_machine = true;
-	    break;
-	  }
-	  for (int k = 0; k < m.loaded_with_size(); ++k) {
-	    if (m.loaded_with(k).id() == puck.id()) {
-	      at_machine = true;
-	      break;
-	    }
-	  }
-	}
-      }
-      */
-      pucks_[pidx]->update(puck.id(), puck.state(), at_machine);
-      pucks_[pidx]->refresh();
-      pidx += 1;
-      if (pidx >= pucks_.size()) break;
-    }
-    for (size_t i = pidx; i < pucks_.size(); ++i) {
-      pucks_[i]->reset();
-    }
-  }
 
   std::shared_ptr<llsf_log_msgs::LogMessage> lm;
   if ((lm = std::dynamic_pointer_cast<llsf_log_msgs::LogMessage>(msg))) {
@@ -1111,9 +1081,9 @@ LLSFRefBoxShell::run()
 
   int rb_log_lines   = panel_->maxy() - 15;
 
-  panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
-  panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
-  panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
+  //panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
+  //panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
+  //panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
 
   panel_->hline(rb_log_lines + 8, 1, panel_->width() - 26);
   panel_->addch(rb_log_lines + 8, 0, ACS_LTEE);
@@ -1125,7 +1095,7 @@ LLSFRefBoxShell::run()
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(13, panel_->width() - 16, "Robots");
   panel_->addstr(height-5, panel_->width() - 15, "Game");
-  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 2, "Pucks");
+  //panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 2, "Pucks");
   panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 2, "Orders");
   panel_->attroff(A_BOLD);
 
@@ -1208,12 +1178,12 @@ LLSFRefBoxShell::run()
     m->second->refresh();
   }
 
-  const int robots_max_height = (panel_->height() - 26);
+  const int robots_max_height = (panel_->height() - 22);
   const int max_robots = std::max(MIN_NUM_ROBOTS, robots_max_height/2);
 
   robots_.resize(max_robots, NULL);
   for (size_t i = 0; i < robots_.size(); ++i) {
-    robots_[i] = new LLSFRefBoxShellRobot(18 + 2 * i, panel_->width() - 25);
+    robots_[i] = new LLSFRefBoxShellRobot(14 + 2 * i, panel_->width() - 25);
     robots_[i]->refresh();
   }
 
@@ -1224,6 +1194,7 @@ LLSFRefBoxShell::run()
     orders_[i]->refresh();
   }
 
+  /*
   pucks_.resize(24, NULL);
   for (size_t i = 0; i < 4; ++i) {
     for (size_t j = 0; j < 6; ++j) {
@@ -1231,6 +1202,7 @@ LLSFRefBoxShell::run()
       pucks_[i*6+j]->refresh();
     }
   }
+  */
 
   panel_->refresh();
 
