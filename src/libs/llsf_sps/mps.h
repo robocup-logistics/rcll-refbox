@@ -25,7 +25,7 @@ class MPS {
   //private:
  public:
   enum ConnectionState {CONNECTED, DISCONNECTED, NOTSENDRECEIVED};
-  
+  ConnectionState state;
   
  protected:
   bool lock; // mps is locked because it process something
@@ -35,7 +35,6 @@ class MPS {
   int status;
   modbus_t* mb;
   int type;
-  ConnectionState state;
   
  public:
   

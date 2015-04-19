@@ -35,7 +35,7 @@ void MPSDeliver::sendDeliver(int lane) {
   int rc = modbus_write_registers(mb, 0, 1, send);
   
   if(rc == -1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 }
 
@@ -49,7 +49,7 @@ int MPSDeliver::isDelivered() {
   int rc = modbus_read_input_registers(mb, 5, 1, rec);
 
   if(rc == -1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
   
   if(rec[0] == 1) {
@@ -102,7 +102,7 @@ void MPSDeliver::setLight(int light, int state, int blink) {
   }
 
   if(rc == -1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 }
 
@@ -112,7 +112,7 @@ void MPSDeliver::clearRegister() {
   int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 }
 
@@ -122,7 +122,7 @@ MPSDeliver::MachineState MPSDeliver::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 
   if(rec[0] == 1) {

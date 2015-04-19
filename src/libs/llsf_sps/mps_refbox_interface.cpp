@@ -53,6 +53,16 @@ void MPSRefboxInterface::loop() {
   try {
     std::list<std::string> bad_threads;
     mpsThreadList->wakeup_and_wait(__max_thread_time_sec, __max_thread_time_usec, bad_threads);
+
+    for(std::string badthreadname : bad_threads) {
+      for(Thread *t1 : *mpsThreadList) {
+        if(t1->name() == badthreadname) {
+          if(dynamic_cast<MPS*>(t1)->state == dynamic_cast<MPS*>(t1)->DISCONNECTED) {
+            dynamic_cast<MPS*>(t1)->reconnect();
+          }
+        }
+      }
+    }
   } catch(fawkes::Exception e) {
     
   }

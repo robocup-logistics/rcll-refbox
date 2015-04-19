@@ -43,7 +43,7 @@ void MPSPickPlace1::produceEnd(int updown) {
   int rc = modbus_write_registers(mb, 0, 1, send1);
   	
   if (rc != 1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   } 
 }
 
@@ -66,7 +66,7 @@ bool MPSPickPlace1::isEmpty() {
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc != 1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 
   if(rec[0] == 13) {
@@ -87,7 +87,7 @@ bool MPSPickPlace1::isReady() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 
   if(rec[0] == 1) {
@@ -142,7 +142,7 @@ void MPSPickPlace1::setLight(int light, int state, int blink) {
   }
 
   if(rc == -1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 }
 
@@ -162,7 +162,7 @@ MPSPickPlace1::MachineState MPSPickPlace1::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc != 1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
   
   if(rec[0] == 1) {
