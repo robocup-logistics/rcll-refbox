@@ -50,7 +50,7 @@ class MPS {
    * \fn ~MPS()
    * \brief Destructor
    */
-  ~MPS();
+  virtual ~MPS();
 
   void reconnect();
   
@@ -89,7 +89,20 @@ class MPS {
     return this->type;
   };
 
-  std::string machienStateString();
+  virtual std::string machienStateString();
+
+  /*!
+   * \fn setLight(int light, int state);
+   * \param light what color
+   * \param state on or off
+   */
+  virtual void setLight(int light, int state, int blink) = 0;
+
+
+  virtual void clearRegister() = 0;
+
+  virtual void deliverProduct() = 0;
+
 };
 
 #endif // MPS_H

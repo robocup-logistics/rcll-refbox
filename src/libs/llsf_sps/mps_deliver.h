@@ -72,6 +72,8 @@ class MPSDeliver : public MPS, public Thread {
   
   MachineState getState();
 
+  void deliverProduct();
+
   void loop();
 };
 

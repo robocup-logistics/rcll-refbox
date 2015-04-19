@@ -106,6 +106,12 @@ void MPSDeliver::setLight(int light, int state, int blink) {
   }
 }
 
+void
+MPSDeliver::deliverProduct()
+{
+}
+
+
 void MPSDeliver::clearRegister() {
   uint16_t send[3] = {0};
   

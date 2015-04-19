@@ -28,14 +28,14 @@ MPSRefboxInterface::MPSRefboxInterface()
 {  
   __max_thread_time_usec = 30000; // thread timeout in usecs
   __max_thread_time_sec  = 1;     // thread timeout in nanosecs
-  mpsThreadList = new ThreadList("MPSList");
+  mpsThreadList = new ThreadList(true, "MPSList");
 }
 
 MPSRefboxInterface::MPSRefboxInterface(const char* name)
 {
   __max_thread_time_usec = 30000; // thread timeout in usecs
   __max_thread_time_sec  = 1;     // thread timeout in nanosecs
-  mpsThreadList = new ThreadList("MPSList");
+  mpsThreadList = new ThreadList(true, "MPSList");
 }
 
 /*!
@@ -67,7 +67,9 @@ MPSRefboxInterface::process() {
   }
 }
 
-void MPSRefboxInterface::insertMachine(Thread* t) {
+void MPSRefboxInterface::insertMachine(std::string station_name, MPS *mps, Thread *t) {
+  mpses_[station_name] = mps;
+  t->start();
   mpsThreadList->push_back(t);
 }
 

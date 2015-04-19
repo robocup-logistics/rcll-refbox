@@ -151,6 +151,18 @@ void MPSIncomingStation::clearRegister() {
   }
 }
 
+
+void
+MPSIncomingStation::deliverProduct() {
+  uint16_t send1[1] = {(uint16_t) 1};
+  int rc = modbus_write_registers(mb, 3, 1, send1);
+  	
+  if (rc != 1) {
+    machineState = DISCONNECTED;
+  }
+}
+
+
 /*!
  * \fn clearRegister();
  * \brief set all registeres to 0
@@ -164,15 +176,25 @@ MPSIncomingStation::MachineState MPSIncomingStation::getState() {
     machineState = DISCONNECTED;
   }
 
-  if(rec[0] == 1) {
+  printf("Received %u\n", rec[0]);
+
+  if(rec[0] == 2) {
     machineState = PROCESSING;
     return PROCESSING;
   }
-  else if(rec[0] == 2) {
+  else if(rec[0] == 3) {
+    machineState = PROCESSED;
+    return PROCESSED;
+  }
+  else if(rec[0] == 4) {
+    machineState = DELIVER;
+    return DELIVER;
+  }
+  else if(rec[0] == 5) {
     machineState = DELIVERED;
     return DELIVERED;
   }
-  else if(rec[0] == 3) {
+  else if(rec[0] == 6) {
     machineState = RETRIEVED;
     return RETRIEVED;
   }
@@ -182,5 +204,5 @@ MPSIncomingStation::MachineState MPSIncomingStation::getState() {
 }
 
 void MPSIncomingStation::loop() {
-  getState();
+  machineState = getState();
 }

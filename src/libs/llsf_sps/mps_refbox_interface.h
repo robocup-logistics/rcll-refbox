@@ -10,7 +10,12 @@
 
 #include <core/threading/thread_list.h>
 #include <map>
-#include "mps.h"
+
+#include <llsf_sps/mps.h>
+#include <llsf_sps/mps_incoming_station.h>
+#include <llsf_sps/mps_pick_place_1.h>
+#include <llsf_sps/mps_pick_place_2.h>
+#include <llsf_sps/mps_deliver.h>
 
 using namespace fawkes;
 
@@ -23,6 +28,7 @@ class MPSRefboxInterface {
   unsigned int          __max_thread_time_usec;
   unsigned int          __max_thread_time_sec;
   ThreadList           *mpsThreadList;
+  std::map<std::string, MPS *>  mpses_;
   
  public:
   /*!
@@ -44,11 +50,27 @@ class MPSRefboxInterface {
    * \brief insert machine into thread list
    * \param t Reference to thread that have to be insert into list
    */
-  void insertMachine(Thread *t);
+  void insertMachine(std::string station_name, MPS *mps, Thread *t);
 
   void process();
 
   std::map<std::string, std::string> get_states();
+
+  template<class C>
+  C get_station(std::string &name, C &machine)
+  {
+    if (mpses_.find(name) == mpses_.end()) {
+      return NULL;
+    }
+
+    MPS *mps = mpses_[name];
+    C typed_mps = dynamic_cast<C>(mps);
+    if (! typed_mps) {
+      return NULL;
+    }
+    machine = typed_mps;
+    return machine;
+  }
 
 };
 #endif // MPSREFBOXINTERFACE_H
