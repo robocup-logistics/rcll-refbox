@@ -133,6 +133,10 @@ class LLSFRefBox
 #endif
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
+  void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
+  void          clips_mps_set_light(std::string machine, std::string light, std::string state);
+  void          clips_mps_reset(std::string machine);
+  void          clips_mps_deliver(std::string machine);
   void          sps_read_rfids();
 
   void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
