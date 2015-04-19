@@ -17,12 +17,12 @@
 * \param port port of modbus communication
 * \brief Constructor
 */
-MPSIncomingStation::MPSIncomingStation(char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
+MPSIncomingStation::MPSIncomingStation(const char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
   type = 1;
   this->lastId = 2;
 }
 
-MPSIncomingStation::MPSIncomingStation(char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
+MPSIncomingStation::MPSIncomingStation(const char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
   type = 1;
   this->lastId = 2;
 }

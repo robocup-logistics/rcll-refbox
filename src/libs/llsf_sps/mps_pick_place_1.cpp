@@ -18,11 +18,11 @@
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace1::MPSPickPlace1(char* ip, int port) : MPS(ip, port), Thread("test", OPMODE_WAITFORWAKEUP) {
+MPSPickPlace1::MPSPickPlace1(const char* ip, int port) : MPS(ip, port), Thread("test", OPMODE_WAITFORWAKEUP) {
   type = 2;
 }
 
-MPSPickPlace1::MPSPickPlace1(char* ip, int port, const char* name): MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
+MPSPickPlace1::MPSPickPlace1(const char* ip, int port, const char* name): MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
   type = 2;
 }
 

@@ -1,8 +1,9 @@
 #include "mps.h"
+#include <cstring>
 #include <iostream>
 
-MPS::MPS(char* ip, int port) {
-  this->ip = ip;
+MPS::MPS(const char* ip, int port) {
+  this->ip = strdup(ip);
   this->port = port;
 
   this->mb = modbus_new_tcp(this->ip, this->port);
@@ -16,6 +17,7 @@ MPS::MPS(char* ip, int port) {
 }
 
 MPS::~MPS() {
+  free(ip);
   state = DISCONNECTED;
   modbus_close(this->mb);
   modbus_free(this->mb);

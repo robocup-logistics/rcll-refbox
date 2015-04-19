@@ -29,11 +29,11 @@ class MPSPickPlace2 : public MPS, public Thread {
    * \param ip address of mps
    * \param port port of modbus communication
    */
-  MPSPickPlace2(char* ip, int port);
+  MPSPickPlace2(const char* ip, int port);
 
 
   
-  MPSPickPlace2(char* ip, int port, const char* name);
+  MPSPickPlace2(const char* ip, int port, const char* name);
   /*!
    * \fn ~MPSPickPlace2()
    * \brief Destructor

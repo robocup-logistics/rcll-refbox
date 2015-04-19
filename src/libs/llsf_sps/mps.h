@@ -44,7 +44,7 @@ class MPS {
    * \param port port of modbus communication
    * \brief Constructor
    */
-  MPS(char* ip, int port);
+  MPS(const char* ip, int port);
 
   /*!
    * \fn ~MPS()

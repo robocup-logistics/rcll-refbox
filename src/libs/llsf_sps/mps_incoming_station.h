@@ -29,9 +29,9 @@ class MPSIncomingStation : public MPS, public Thread {
    * \param ip address of mps
    * \param port port for modbus communication
    */
-  MPSIncomingStation(char* ip, int port);
+  MPSIncomingStation(const char* ip, int port);
 
-  MPSIncomingStation(char* ip, int port, const char* name);
+  MPSIncomingStation(const char* ip, int port, const char* name);
   /*!
    * \fn ~MPSIncomingStation()
    * \brief Destructor

@@ -29,9 +29,9 @@ class MPSPickPlace1 : public MPS, public Thread {
    * \param ip address of mps
    * \param port port of modbus communication
    */
-  MPSPickPlace1(char* ip, int port);
+  MPSPickPlace1(const char* ip, int port);
 
-  MPSPickPlace1(char* ip, int port, const char* name);
+  MPSPickPlace1(const char* ip, int port, const char* name);
   
   /*!
    * \fn ~MPSPickPlace1()

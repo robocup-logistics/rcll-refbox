@@ -29,9 +29,9 @@ class MPSDeliver : public MPS, public Thread {
    * \param ip address of mps
    * \param port port for modbus communication
    */
-  MPSDeliver(char* ip, int port);
+  MPSDeliver(const char* ip, int port);
 
-  MPSDeliver(char* ip, int port, const char* name);
+  MPSDeliver(const char* ip, int port, const char* name);
 
   /*!
    * \fn ~MPSDeliver()
