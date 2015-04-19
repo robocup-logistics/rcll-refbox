@@ -30,7 +30,7 @@
   (slot proc-time (type INTEGER))
   (slot proc-start (type FLOAT))
   (multislot down-period (type FLOAT) (cardinality 2 2) (default -1.0 -1.0))
-  (slot broken-until (type FLOAT))
+  (slot broken-since (type FLOAT))
   (slot broken-reason (type STRING))
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))

@@ -100,10 +100,8 @@
 		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
 	        (modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color))
                else
-	        (assert (attention-message (team ?team)
-	                  (text (str-cat "Prepare received for " ?mname " without data"))))
-		(modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
-			(prev-state ?m:state))
+		(modify ?m (state BROKEN)(prev-state ?m:state)
+			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
             (case DS then
@@ -114,10 +112,8 @@
 		(printout t "Prepared " ?mname " (gate: " ?gate ")" crlf)
 	        (modify ?m (state PREPARED) (ds-gate ?gate))
                else
-	        (assert (attention-message (team ?team)
-	                  (text (str-cat "Prepare received for " ?mname " without data"))))
-		(modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
-			(prev-state ?m:state))
+		(modify ?m (state BROKEN) (prev-state ?m:state)
+			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
             (case RS then
@@ -130,18 +126,14 @@
 		  (printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
 	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color))
                  else
-		  (assert (attention-message (team ?team)
-	                    (text (str-cat "Prepare received for " ?mname
-					   " for invalid ring color (" ?ring-color ")"))))
-		  (modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
-			  (prev-state ?m:state))
+		  (modify ?m (state BROKEN) (prev-state ?m:state)
+			  (broken-reason (str-cat "Prepare received for " ?mname
+						  " for invalid ring color (" ?ring-color ")")))
                 )
                else
-	        (assert (attention-message (team ?team)
-	                  (text (str-cat "Prepare received for " ?mname " without data"))))
-		(modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
-			(prev-state ?m:state))
-	      )
+		(modify ?m (state BROKEN) (prev-state ?m:state)
+			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+              )
             )
             (case CS then
 	      (if (pb-has-field ?p "instruction_cs")
@@ -156,11 +148,9 @@
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
 	              (modify ?m (state PREPARED) (cs-operation ?cs-op))
                      else
-		      (assert (attention-message (team ?team)
-	                        (text (str-cat "Prepare received for " ?mname
-					   ": cannot retrieve while already holding"))))
-		      (modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
-			      (prev-state ?m:state))
+		      (modify ?m (state BROKEN) (prev-state ?m:state)
+			      (broken-reason (str-cat "Prepare received for " ?mname ": "
+						      "cannot retrieve while already holding")))
                     )
                   )
 		  (case MOUNT_CAP then
@@ -169,19 +159,15 @@
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
 	              (modify ?m (state PREPARED) (cs-operation ?cs-op))
                      else
-		      (assert (attention-message (team ?team)
-	                        (text (str-cat "Prepare received for " ?mname
-					   ": cannot mount without cap"))))
-		      (modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
-			      (prev-state ?m:state))
+		      (modify ?m (state BROKEN) (prev-state ?m:state)
+			      (broken-reason (str-cat "Prepare received for " ?mname
+						      ": cannot mount without cap")))
                     )
 		  )
                 )
                else
-	        (assert (attention-message (team ?team)
-	                  (text (str-cat "Prepare received for " ?mname " without data"))))
-		(modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
-			(prev-state ?m:state))
+		(modify ?m (state BROKEN) (prev-state ?m:state)
+			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
           )
@@ -319,7 +305,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state ?state&~PREPARED&~BROKEN) (mps-state AVAILABLE))
   =>
-  (modify ?m (state BROKEN) (broken-until (+ ?gt ?*BROKEN-DOWN-TIME*))
+  (modify ?m (state BROKEN) (prev-state ?state)
 	  (broken-reason (str-cat "Input to " ?n " while not prepared " ?state)))
 )
 
