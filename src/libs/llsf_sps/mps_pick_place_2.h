@@ -19,6 +19,8 @@ using namespace fawkes;
 * \brief This class handels the communication to a Pick&Place 2
 */
 class MPSPickPlace2 : public MPS, public Thread {
+ private:
+  int countSlide;
  public:
   /*!
    * \fn MPSPickPlace2(char* ip, int port)
@@ -82,6 +84,8 @@ class MPSPickPlace2 : public MPS, public Thread {
   MachineState getState();
 
   void loop();
+
+  int getCountSlide();
 };
 
 #endif // MPSPICKPLACE2_H

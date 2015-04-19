@@ -41,7 +41,7 @@ void MPSPickPlace2::produceRing(int workpiece) {
   int rc = modbus_write_registers(mb, 0, 1, send);
   
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
@@ -50,7 +50,7 @@ void MPSPickPlace2::deliverProduct() {
   int rc = modbus_write_registers(mb, 1, 1, send);
   
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
@@ -64,7 +64,7 @@ bool MPSPickPlace2::ringReady() {
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 
   if(rec[0] == 13) {
@@ -85,7 +85,7 @@ bool MPSPickPlace2::isEmpty() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 
   if(rec[0] == 1) {
@@ -140,7 +140,7 @@ void MPSPickPlace2::setLight(int light, int state, int blink) {
   }
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
@@ -150,18 +150,20 @@ void MPSPickPlace2::clearRegister() {
   int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
 MPSPickPlace2::MachineState MPSPickPlace2::getState() {
-  uint16_t rec[1] = {0};
+  uint16_t rec[2] = {0};
 
-  int rc = modbus_read_input_registers(mb, 3, 1, rec);
+  int rc = modbus_read_input_registers(mb, 3, 2, rec);
 
   if(rc != 1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
+
+  countSlide = (int)rec[1];
   
   if(rec[0] == 1) {
     machineState = AVAILABLE;
@@ -194,4 +196,8 @@ MPSPickPlace2::MachineState MPSPickPlace2::getState() {
 
 void MPSPickPlace2::loop() {
   getState();
+}
+
+int MPSPickPlace2::getCountSlide() {
+  return countSlide;
 }

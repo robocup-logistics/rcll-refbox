@@ -45,7 +45,7 @@ void MPSIncomingStation::getCap(int color, int side) {
   int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 
   this->lastId++;
@@ -62,7 +62,7 @@ bool MPSIncomingStation::capReady() {
   int rc = modbus_read_input_registers(mb, 0, 1, rec);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
   
   if(rec[0] == 13) {
@@ -83,7 +83,7 @@ int MPSIncomingStation::isEmpty() {
   int rc = modbus_read_input_registers(mb, 1, 1, rec);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
   
   return rec[0];
@@ -133,7 +133,7 @@ void MPSIncomingStation::setLight(int light, int state, int blink) {
   }
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
@@ -147,7 +147,7 @@ void MPSIncomingStation::clearRegister() {
   int rc = modbus_write_registers(mb, 0, 3, send);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
@@ -161,7 +161,7 @@ MPSIncomingStation::MachineState MPSIncomingStation::getState() {
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
   if(rc == -1) {
-    state = DISCONNECTED;
+    machineState = DISCONNECTED;
   }
 
   if(rec[0] == 1) {

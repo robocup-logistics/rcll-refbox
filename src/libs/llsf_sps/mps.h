@@ -24,9 +24,7 @@
 class MPS {
   //private:
  public:
-  enum ConnectionState {CONNECTED, DISCONNECTED};
-  enum MachineState {IDLE, AVAILABLE, PROCESSING, PROCESSED, DELIVER, DELIVERED, RETRIEVED};
-  ConnectionState state;
+  enum MachineState {IDLE, AVAILABLE, PROCESSING, PROCESSED, DELIVER, DELIVERED, RETRIEVED, DISCONNECTED};
   MachineState machineState;
   
  protected:
@@ -92,7 +90,6 @@ class MPS {
   };
 
   std::string machienStateString();
-  std::string connectionStateString();
 };
 
 #endif // MPS_H

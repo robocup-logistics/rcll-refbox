@@ -56,7 +56,7 @@ MPSRefboxInterface::process() {
     for(std::string badthreadname : bad_threads) {
       for(Thread *t1 : *mpsThreadList) {
         if(t1->name() == badthreadname) {
-          if(dynamic_cast<MPS*>(t1)->state == dynamic_cast<MPS*>(t1)->DISCONNECTED) {
+          if(dynamic_cast<MPS*>(t1)->machineState == dynamic_cast<MPS*>(t1)->DISCONNECTED) {
             dynamic_cast<MPS*>(t1)->reconnect();
           }
         }

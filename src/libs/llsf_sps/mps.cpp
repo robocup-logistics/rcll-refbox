@@ -9,16 +9,13 @@ MPS::MPS(const char* ip, int port) {
   this->mb = modbus_new_tcp(this->ip, this->port);
 
   if(modbus_connect(this->mb) == -1) {
-    state = DISCONNECTED;
-  }
-  else {
-    state = CONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
 MPS::~MPS() {
   free(ip);
-  state = DISCONNECTED;
+  machineState = DISCONNECTED;
   modbus_close(this->mb);
   modbus_free(this->mb);
 }
@@ -26,10 +23,7 @@ MPS::~MPS() {
 void MPS::reconnect() {
   modbus_close(mb);
   if (modbus_connect(mb) == -1) {
-    state = DISCONNECTED;
-  }
-  else {
-    state = CONNECTED;
+    machineState = DISCONNECTED;
   }
 }
 
@@ -55,17 +49,6 @@ std::string MPS::machienStateString() {
       break;
     case RETRIEVED:
       return "RETRIEVED";
-      break;
-    default:
-      return "ERROR";
-      break;
-  }
-}
-
-std::string MPS::connectionStateString() {
-  switch(state) {
-    case CONNECTED:
-      return "CONNECTED";
       break;
     case DISCONNECTED:
       return "DISCONNECTED";
