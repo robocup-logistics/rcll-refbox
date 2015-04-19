@@ -1011,7 +1011,8 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     timer_last_ = now;
     */
 
-    sps_read_rfids();
+    //sps_read_rfids();
+    mps_->process();
 
     {
       //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
