@@ -41,6 +41,7 @@
   ?*DOWN-TIME-MAX* = 120 ; 120
   ?*DOWN-TYPES*    = (create$ RS CS)
   ?*BROKEN-DOWN-TIME* = 30
+  ?*LOADED-WITH-MAX* = 3
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
   ; Delivery gate active times

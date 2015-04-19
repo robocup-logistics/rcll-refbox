@@ -255,6 +255,18 @@
   ; TODO: (mps-instruct DISPENSE-BASE ?side ?color)
 )
 
+(defrule prod-proc-state-processing-rs-insufficient-bases
+  "Must check sufficient number of bases for RS"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (rs-ring-color ?ring-color) (loaded-with ?lw))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(> ?req-bases ?lw)))
+  =>
+  (modify ?m (state BROKEN) (proc-state PROCESSING)
+	  (broken-reason (str-cat ?n ": insufficient bases (" ?lw " < " ?req-bases ")")))
+)
+
 (defrule prod-proc-state-processing
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PROCESSING) (proc-state ~PROCESSING))
@@ -272,6 +284,18 @@
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
   (modify ?m (state IDLE) (proc-state PROCESSED))
+  ; TODO: (mps-instruct PROCESSED)
+)
+
+(defrule prod-proc-state-processed-rs
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (proc-state ~PROCESSED)
+		 (rs-ring-color ?ring-color) (loaded-with ?lw))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases))
+  =>
+  (printout t "Machine " ?n " finished processing, moving to output" crlf)
+  (modify ?m (proc-state PROCESSED) (loaded-with (max 0 (- ?lw ?req-bases))))
   ; TODO: (mps-instruct PROCESSED)
 )
 
@@ -312,6 +336,15 @@
   =>
   (modify ?m (state BROKEN) (prev-state ?state)
 	  (broken-reason (str-cat "Input to " ?n " while not prepared " ?state)))
+)
+
+
+(defrule prod-machine-loaded-with-too-many
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (state ?state) (loaded-with ?lw&:(> ?lw ?*LOADED-WITH-MAX*)))
+  =>
+  (modify ?m (state BROKEN) (prev-state ?state)
+	  (broken-reason (str-cat ?n ": too many additional bases loaded")))
 )
 
 (defrule prod-machine-input

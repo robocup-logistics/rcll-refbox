@@ -62,6 +62,7 @@
 (deftemplate machine-mps-state
   (slot name (type SYMBOL))
   (slot state (type SYMBOL))
+  (slot num-bases (type INTEGER) (default 0))
 )
 
 (deftemplate machine-spec
@@ -167,6 +168,13 @@
   (slot points-supernumerous (type INTEGER) (default 1))
 )
 
+(deftemplate ring-spec
+  (slot color (type SYMBOL) (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot req-bases (type INTEGER) (default 0))
+)
+
+
+
 (deftemplate delivery-period
   (multislot delivery-gates (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6) (cardinality 2 2))
   (multislot period (type INTEGER) (cardinality 2 2))
@@ -267,6 +275,11 @@
   (machine (name M-RS2) (team MAGENTA) (mtype RS))
   (machine (name M-CS1) (team MAGENTA) (mtype CS))
   (machine (name M-CS2) (team MAGENTA) (mtype CS))
+
+  (ring-spec (color RING_BLUE)  (req-bases 2))
+  (ring-spec (color RING_GREEN) (req-bases 1))
+  (ring-spec (color RING_ORANGE))
+  (ring-spec (color RING_YELLOW))
 )
 
 (deffacts light-codes
