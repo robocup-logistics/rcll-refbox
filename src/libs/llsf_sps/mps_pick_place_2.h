@@ -20,9 +20,6 @@ using namespace fawkes;
 */
 class MPSPickPlace2 : public MPS, public Thread {
  public:
-  enum MachineState {IDLE, AVAILABLE, PROCESSING, PROCESSED, DELIVER, DELIVERED, RETRIEVED};
-  MachineState machineState;
-  
   /*!
    * \fn MPSPickPlace2(char* ip, int port)
    * \brief Initialize communication

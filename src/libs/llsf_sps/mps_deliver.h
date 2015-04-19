@@ -20,9 +20,6 @@ using namespace fawkes;
 */
 class MPSDeliver : public MPS, public Thread {
  public:
-  enum MachineState {IDLE, AVAILABLE, DELIVER, DELIVERED};
-  MachineState machineState;
-  
   /*!
    * \fn MPSDeliver(char* ip, int port)
    * \brief Constructor

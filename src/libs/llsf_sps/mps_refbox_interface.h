@@ -9,7 +9,7 @@
 #define MPSREFBOXINTERFACE_H
 
 #include <core/threading/thread_list.h>
-
+#include <map>
 #include "mps.h"
 
 using namespace fawkes;

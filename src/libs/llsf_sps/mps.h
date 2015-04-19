@@ -24,8 +24,10 @@
 class MPS {
   //private:
  public:
-  enum ConnectionState {CONNECTED, DISCONNECTED, NOTSENDRECEIVED};
+  enum ConnectionState {CONNECTED, DISCONNECTED};
+  enum MachineState {IDLE, AVAILABLE, PROCESSING, PROCESSED, DELIVER, DELIVERED, RETRIEVED};
   ConnectionState state;
+  MachineState machineState;
   
  protected:
   bool lock; // mps is locked because it process something
@@ -88,6 +90,9 @@ class MPS {
   int getType() {
     return this->type;
   };
+
+  std::string machienStateString();
+  std::string connectionStateString();
 };
 
 #endif // MPS_H

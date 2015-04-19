@@ -32,3 +32,46 @@ void MPS::reconnect() {
     state = CONNECTED;
   }
 }
+
+std::string MPS::machienStateString() {
+  switch(machineState) {
+    case IDLE:
+      return "IDLE";
+      break;
+    case AVAILABLE:
+      return "AVAILABLE";
+      break;
+    case PROCESSING:
+      return "PROCESSING";
+      break;
+    case PROCESSED:
+      return "PROCESSED";
+      break;
+    case DELIVER:
+      return "DELIVER";
+      break;
+    case DELIVERED:
+      return "DELIVERED";
+      break;
+    case RETRIEVED:
+      return "RETRIEVED";
+      break;
+    default:
+      return "ERROR";
+      break;
+  }
+}
+
+std::string MPS::connectionStateString() {
+  switch(state) {
+    case CONNECTED:
+      return "CONNECTED";
+      break;
+    case DISCONNECTED:
+      return "DISCONNECTED";
+      break;
+    default:
+      return "ERROR";
+      break;
+  }
+}

@@ -52,7 +52,7 @@ void MPSPickPlace1::deliverProduct() {
   int rc = modbus_write_registers(mb, 1, 1, send1);
   	
   if (rc != 1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 }
 
@@ -152,7 +152,7 @@ void MPSPickPlace1::clearRegister() {
   int rc = modbus_write_registers(mb, 0, 3, send);
  
   if(rc == -1) {
-    state = NOTSENDRECEIVED;
+    state = DISCONNECTED;
   }
 }
 

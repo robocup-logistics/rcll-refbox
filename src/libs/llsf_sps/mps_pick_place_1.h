@@ -19,10 +19,7 @@ using namespace fawkes;
 * \brief This class handels the communication to a Pick&Place 1
 */
 class MPSPickPlace1 : public MPS, public Thread {
- public:
-  enum MachineState {IDLE, AVAILABLE, PROCESSING, PROCESSED, DELIVER, DELIVERED, RETRIEVED};
-  MachineState machineState;
-  
+ public:  
   /*!
    * \fn MPSPickPlace1(char* ip, int port)
    * \brief Initialize communication

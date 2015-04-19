@@ -71,3 +71,12 @@ void MPSRefboxInterface::insertMachine(Thread* t) {
   mpsThreadList->push_back(t);
 }
 
+std::map<std::string, std::string> MPSRefboxInterface::get_states() {
+  std::map<std::string, std::string> threadStates;
+  
+  for(Thread *t : *mpsThreadList) {
+    threadStates[t->name()] = dynamic_cast<MPS*>(t)->machienStateString();
+  }
+
+  return threadStates;
+}
