@@ -14,6 +14,15 @@
   (modify ?mf (desired-lights))
 )
 
+
+(defrule machine-init
+  (init)
+  =>
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
+    (mps-reset ?machine:name)
+  )
+)
+
 (defrule machine-lights "Set machines if desired lights differ from actual lights"
   ?mf <- (machine (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
   =>
