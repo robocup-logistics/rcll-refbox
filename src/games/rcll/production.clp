@@ -176,32 +176,6 @@
   )
 )
 
-; **** MPS state changes
-
-(defrule prod-proc-mps-state-change
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?ms <- (machine-mps-state (name ?n) (state ?mps-state) (num-bases ?num-bases))
-  ?m <- (machine (name ?n) (state ?state))
-  (or (machine (name ?n) (mps-state ~?mps-state))
-      (machine (name ?n) (loaded-with ~?num-bases)))
-  =>
-  (printout t "Machine " ?n " MPS state " ?mps-state " (loaded: " ?num-bases ")" crlf)
-  (retract ?ms)
-  (if (eq ?state DOWN)
-   then (modify ?m (mps-state-deferred ?mps-state) (loaded-with ?num-bases))
-   else (modify ?m (mps-state ?mps-state) (loaded-with ?num-bases))
-  )
-)
-
-(defrule prod-proc-mps-state-nochange
-  "Cleanup machine states if no change occured"
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?ms <- (machine-mps-state (name ?n) (state ?mps-state))
-  ?m <- (machine (name ?n) (mps-state ?mps-state))
-  =>
-  (retract ?ms)
-)
-
 
 ; **** Machine state processing
 
@@ -337,6 +311,32 @@
   (modify ?m (state IDLE) (prev-state BROKEN) (loaded-with 0))
 )
 
+
+; **** MPS state changes
+
+(defrule prod-proc-mps-state-change
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?ms <- (machine-mps-state (name ?n) (state ?mps-state) (num-bases ?num-bases))
+  ?m <- (machine (name ?n) (state ?state))
+  (or (machine (name ?n) (mps-state ~?mps-state))
+      (machine (name ?n) (loaded-with ~?num-bases)))
+  =>
+  (printout t "Machine " ?n " MPS state " ?mps-state " (loaded: " ?num-bases ")" crlf)
+  (retract ?ms)
+  (if (eq ?state DOWN)
+   then (modify ?m (mps-state-deferred ?mps-state) (loaded-with ?num-bases))
+   else (modify ?m (mps-state ?mps-state) (loaded-with ?num-bases))
+  )
+)
+
+(defrule prod-proc-mps-state-nochange
+  "Cleanup machine states if no change occured"
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?ms <- (machine-mps-state (name ?n) (state ?mps-state))
+  ?m <- (machine (name ?n) (mps-state ?mps-state))
+  =>
+  (retract ?ms)
+)
 
 ; **** Mapping MPS to machine state reactions
 
