@@ -1018,6 +1018,12 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
       //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
       fawkes::MutexLocker lock(&clips_mutex_);
 
+      std::map<std::string, std::string> machine_states = mps_->get_states();
+      for (const auto &ms : machine_states) {
+	clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
+			      ms.first.c_str(), ms.second.c_str(), 0);
+      }
+
       clips_->assert_fact("(time (now))");
       clips_->refresh_agenda();
       clips_->run();
