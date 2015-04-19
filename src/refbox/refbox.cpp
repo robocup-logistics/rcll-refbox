@@ -627,9 +627,9 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::s
 
     int side_id = 0;
     if (side == "INPUT") {
-      side_id = 1;
-    } else if (side == "OUTPUT") {
       side_id = 2;
+    } else if (side == "OUTPUT") {
+      side_id = 1;
     } else {
       logger_->log_error("MPS", "Invalid side %s", side.c_str());
       return;
