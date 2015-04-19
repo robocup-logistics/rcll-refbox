@@ -190,7 +190,7 @@ class LLSFRefBox
   mongo::DBClientBase *mongodb_;
 #endif
 
-  MPSRefboxInterface *mpsRefboxInterface;
+  MPSRefboxInterface  *mps_;
 };
 
 

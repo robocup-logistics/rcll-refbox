@@ -20,8 +20,7 @@
  *   may be used to endorse or promote products derived from this
  *   software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HO  std::vector<Thread*> mpsThreadList;
-LDERS AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
@@ -106,7 +105,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 {
   pb_comm_ = NULL;
 
-  mpsRefboxInterface = new MPSRefboxInterface("MPSInterface");
+  mps_ = new MPSRefboxInterface("MPSInterface");
   
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
@@ -175,49 +174,39 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       }
       else {
         unsigned int count = config_->get_uint("/llsfrb/mps/count");
-        for(unsigned int i = 0; i < count; i++) {
+        for(unsigned int i = 0; i < count; ++i) {
           // read maschine type from configfile
-          std::string tmp = "/llsfrb/mps/mps" + std::to_string(i) + "/type";
-          char *tmpstr = new char[tmp.length() + 1];      
-          strcpy(tmpstr, tmp.c_str());
-          unsigned int mpstype = config_->get_uint(tmpstr);
+          std::string cpath = "/llsfrb/mps/mps" + std::to_string(i) + "/type";
+          unsigned int mpstype = config_->get_uint(cpath.c_str());
 
           // read ip from configfile
-          tmp = "/llsfrb/mps/mps" + std::to_string(i) + "/host";
-          tmpstr = new char[tmp.length() + 1];      
-          strcpy(tmpstr, tmp.c_str());
+          cpath = "/llsfrb/mps/mps" + std::to_string(i) + "/host";
 
           // convert ip to char*
-          std::string mpsiptmp = config_->get_string(tmpstr);
-          char *mpsip = new char[mpsiptmp.length() + 1];
-          strcpy(mpsip, mpsiptmp.c_str());
+          std::string mpsip = config_->get_string(cpath.c_str());
 
-          tmp = "/llsfrb/mps/mps" + std::to_string(i) + "/port";
-          tmpstr = new char[tmp.length() + 1];      
-          strcpy(tmpstr, tmp.c_str());
-          unsigned int port = config_->get_uint(tmpstr);
+          cpath = "/llsfrb/mps/mps" + std::to_string(i) + "/port";
+          unsigned int port = config_->get_uint(cpath.c_str());
           
           if(mpstype == 1) {
-            MPSIncomingStation *is = new MPSIncomingStation(mpsip, port);
-            mpsRefboxInterface->insertMachine(is);
+            MPSIncomingStation *is = new MPSIncomingStation(mpsip.c_str(), port);
+            mps_->insertMachine(is);
           }
           else if(mpstype == 2) {
-            MPSPickPlace1 *pp1 = new MPSPickPlace1(mpsip, port);
-            mpsRefboxInterface->insertMachine(pp1);
+            MPSPickPlace1 *pp1 = new MPSPickPlace1(mpsip.c_str(), port);
+            mps_->insertMachine(pp1);
           }
           else if(mpstype == 3) {
-            MPSPickPlace2 *pp2 = new MPSPickPlace2(mpsip, port);
-            mpsRefboxInterface->insertMachine(pp2);
+            MPSPickPlace2 *pp2 = new MPSPickPlace2(mpsip.c_str(), port);
+            mps_->insertMachine(pp2);
           }
           else if(mpstype == 4) {
-            MPSDeliver *del = new MPSDeliver(mpsip, port);
-            mpsRefboxInterface->insertMachine(del);
+            MPSDeliver *del = new MPSDeliver(mpsip.c_str(), port);
+            mps_->insertMachine(del);
           }
           else {
             throw fawkes::Exception("this type wont match");
           }
-
-          delete[] tmpstr;
         }
       }
 
