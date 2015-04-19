@@ -324,7 +324,17 @@
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
-  (modify ?m (proc-state BROKEN) (desired-lights RED-BLINK YELLOW-BLINK))
+  (modify ?m (proc-state BROKEN) (broken-since ?gt)
+	  (desired-lights RED-BLINK YELLOW-BLINK))
+)
+
+(defrule prod-proc-state-broken-recover
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (state BROKEN)
+		 (broken-since ?bs&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
+  =>
+  (printout t "Machine " ?n " recovered" crlf)
+  (modify ?m (state IDLE) (prev-state BROKEN) (loaded-with 0))
 )
 
 
