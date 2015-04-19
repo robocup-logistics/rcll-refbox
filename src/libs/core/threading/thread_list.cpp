@@ -240,11 +240,14 @@ ThreadList::wakeup_unlocked(Barrier *barrier)
  * have finished one loop() iteration.
  * @param timeout_sec timeout in seconds
  * @param timeout_nanosec timeout in nanoseconds
+ * @param bad_threads list of names of threads which did not reach the barrier in time,
+ * Set of an Exception is thrown.
  * @exception NullPointerException thrown, if no internal barrier is maintained. Make sure
  * you use the proper constructor.
  */
 void
-ThreadList::wakeup_and_wait(unsigned int timeout_sec, unsigned int timeout_nanosec)
+ThreadList::wakeup_and_wait(unsigned int timeout_sec, unsigned int timeout_nanosec,
+			    std::list<std::string> &bad_threads)
 {
   if ( ! __wnw_barrier ) {
     throw NullPointerException("ThreadList::wakeup_and_wait() can only be called if "
@@ -261,7 +264,7 @@ ThreadList::wakeup_and_wait(unsigned int timeout_sec, unsigned int timeout_nanos
   if ( ! __wnw_barrier->wait(timeout_sec, timeout_nanosec) ) {
     // timeout, we have a bad thread, flag it
     RefPtr<ThreadList> passed_threads = __wnw_barrier->passed_threads();
-    ThreadList bad_threads;
+    ThreadList bad_thread_list;
     for (iterator i = begin(); i != end(); ++i) {
       bool ok = false;
       for (iterator j = passed_threads->begin(); j != passed_threads->end(); ++j) {
@@ -271,34 +274,51 @@ ThreadList::wakeup_and_wait(unsigned int timeout_sec, unsigned int timeout_nanos
 	}
       }
       if (! ok) {
-	bad_threads.push_back(*i);
+	bad_thread_list.push_back(*i);
 	(*i)->set_flag(Thread::FLAG_BAD);
       }
     }
 
-    __wnw_bad_barriers.push_back(make_pair(__wnw_barrier, bad_threads));
+    __wnw_bad_barriers.push_back(make_pair(__wnw_barrier, bad_thread_list));
 
     __wnw_barrier = NULL;
     update_barrier();
 
     // Formulate exception
     std::string s;
-    if ( bad_threads.size() > 1 ) {
+    if ( bad_thread_list.size() > 1 ) {
       s = "Multiple threads did not finish in time, flagging as bad: ";
-      for (iterator i = bad_threads.begin(); i != bad_threads.end(); ++i) {
+      for (iterator i = bad_thread_list.begin(); i != bad_thread_list.end(); ++i) {
+	bad_threads.push_back((*i)->name());
 	s += std::string((*i)->name()) + " ";
       }
-    } else if (bad_threads.size() == 0) {
+    } else if (bad_thread_list.size() == 0) {
       s = "Timeout happened, but no bad threads recorded.";
     } else {
+      bad_threads.push_back(bad_thread_list.front()->name());
       throw Exception("Thread %s did not finish in time (max %f), flagging as bad",
-		      bad_threads.front()->name(),
+		      bad_thread_list.front()->name(),
 		      (float)timeout_sec + (float)timeout_nanosec / 1000000000.);
     }
     throw Exception("%s", s.c_str());
   }
 }
 
+/** Wakeup threads and wait for them to finish.
+ * This assumes that all threads are in wait-for-wakeup mode. The threads are woken
+ * up with an internally maintained barrier. The method will return when all threads
+ * have finished one loop() iteration.
+ * @param timeout_sec timeout in seconds
+ * @param timeout_nanosec timeout in nanoseconds
+ * @exception NullPointerException thrown, if no internal barrier is maintained. Make sure
+ * you use the proper constructor.
+ */
+void
+ThreadList::wakeup_and_wait(unsigned int timeout_sec, unsigned int timeout_nanosec)
+{
+  std::list<std::string> bad_threads;
+  wakeup_and_wait(timeout_sec, timeout_nanosec, bad_threads);
+}
 
 /** Set if this thread list should maintain a barrier.
  * This operation does an implicit locking of the list.
