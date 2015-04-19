@@ -132,7 +132,7 @@
   (bind ?ei (pb-create "llsf_msgs.ExplorationInfo"))
 
   (bind ?machines (create$))
-  (do-for-all-facts ((?m machine)) (<> ?m:exploration-light-code 0)
+  (do-for-all-facts ((?m machine)) (and (eq ?m:team CYAN) (<> ?m:exploration-light-code 0))
     (bind ?machines (append$ ?machines ?m))
   )
 

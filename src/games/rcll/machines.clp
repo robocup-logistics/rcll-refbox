@@ -141,12 +141,17 @@
   )
 
   ; Calculate exploration hashes
-  (delayed-do-for-all-facts ((?m machine)) TRUE
+  (delayed-do-for-all-facts ((?m-cyan machine) (?m-magenta machine))
+    (and (eq ?m-cyan:team CYAN) (eq ?m-magenta:team MAGENTA)
+	 (eq ?m-magenta:name (machine-magenta-for-cyan ?m-cyan:name)))
+
     (bind ?rs (gen-random-string 8))
-    (printout t "Machine " ?m:name " as exploration string " ?rs crlf)
-    (modify ?m (exploration-type ?rs))
+
+    (printout t "Machines " ?m-cyan:name "/" ?m-magenta:name " exploration string:" ?rs crlf)
+    (modify ?m-cyan (exploration-type ?rs))
+    (modify ?m-magenta (exploration-type ?rs))
   )
-  
+
 
   ; if PLC is disabled do not clear, we generated fake pucks
   (if (not (any-factp ((?c confval))
