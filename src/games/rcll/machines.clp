@@ -96,30 +96,26 @@
 
   ; assign random down times
   (if ?*RANDOMIZE-GAME* then
-    (bind ?num-down-times (random ?*DOWN-NUM-MIN* ?*DOWN-NUM-MAX*))
-    (bind ?candidates
-	  (find-all-facts ((?m machine))
-	    (and (neq ?m:mtype DELIVER) (neq ?m:mtype RECYCLE) (eq ?m:team CYAN))))
-    (bind ?candidates (subseq$ (randomize$ ?candidates) 1 ?num-down-times))
+    (bind ?candidates (create$))
+    (foreach ?t ?*DOWN-TYPES*
+      (bind ?t-candidates (find-all-facts ((?m machine))
+    	      (and (eq ?m:mtype ?t) (eq ?m:team CYAN))))
+
+      (bind ?candidates (append$ ?candidates (first$ (randomize$ ?t-candidates))))
+    )
+
     (foreach ?c ?candidates
       (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
       (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
       (bind ?end-time (+ ?start-time ?duration))
+
+      ; Copy to magenta machine
+      (do-for-fact ((?m-magenta machine))
+        (eq ?m-magenta:name (machine-magenta-for-cyan (fact-slot-value ?c name)))
+        (modify ?m-magenta (down-period ?start-time ?end-time))
+      )
+
       (modify ?c (down-period ?start-time ?end-time))
-    )
-
-    ; assign down-time to recycling machine
-    (bind ?recycling-down-time  (random ?*RECYCLE-DOWN-TIME-MIN* ?*RECYCLE-DOWN-TIME-MAX*))
-    (bind ?recycling-down-start (random 1 (- ?*PRODUCTION-TIME* ?recycling-down-time)))
-    (bind ?recycling-down-end   (+ ?recycling-down-start ?recycling-down-time))
-    (delayed-do-for-all-facts ((?m-rec machine)) (eq ?m-rec:mtype RECYCLE)
-      (modify ?m-rec (down-period ?recycling-down-start ?recycling-down-end))
-    )
-
-    ;(printout t "Assigning processing times to machines" crlf)
-    (delayed-do-for-all-facts ((?mspec machine-spec)) TRUE
-      (bind ?proc-time (random ?mspec:proc-time-min ?mspec:proc-time-max))
-      (modify ?mspec (proc-time ?proc-time))
     )
   )
 

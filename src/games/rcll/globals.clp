@@ -39,10 +39,7 @@
   ; chosen randomly from this range
   ?*DOWN-TIME-MIN* =  30 ;  30
   ?*DOWN-TIME-MAX* = 120 ; 120
-  ?*DOWN-NUM-MIN*  =   6
-  ?*DOWN-NUM-MAX*  =   8
-  ?*RECYCLE-DOWN-TIME-MIN* = 20
-  ?*RECYCLE-DOWN-TIME-MAX* = 30
+  ?*DOWN-TYPES*    = (create$ RS CS)
   ?*BROKEN-DOWN-TIME* = 30
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
