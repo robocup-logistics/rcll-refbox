@@ -935,8 +935,16 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     size_t oidx = 0;
     for (size_t i = 0; i < size; ++i) {
       const llsf_msgs::Order &ospec = ordins->orders(i);
-      orders_[oidx++]->update(ospec.id(), ospec.complexity(), ospec.quantity_requested(),
-			      ospec.quantity_delivered_cyan(), ospec.delivery_period_begin(),
+      std::vector<llsf_msgs::RingColor> ring_colors(ospec.ring_colors_size());
+      for (int j = 0; j < ospec.ring_colors_size(); ++j) {
+	ring_colors[j] = ospec.ring_colors(j);
+      }
+      orders_[oidx++]->update(ospec.id(), ospec.complexity(),
+			      ospec.base_color(), ring_colors, ospec.cap_color(),
+			      ospec.quantity_requested(),
+			      ospec.quantity_delivered_cyan(),
+			      ospec.quantity_delivered_magenta(),
+			      ospec.delivery_period_begin(),
 			      ospec.delivery_period_end(), ospec.delivery_gate());
     }
     for (size_t i = oidx; i < orders_.size(); ++i) {
@@ -1087,9 +1095,9 @@ LLSFRefBoxShell::run()
   //panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
   //panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
 
-  panel_->hline(rb_log_lines + 8, 1, panel_->width() - 26);
-  panel_->addch(rb_log_lines + 8, 0, ACS_LTEE);
-  panel_->addch(rb_log_lines + 8, panel_->width() - 26, ACS_RTEE);
+  panel_->hline(rb_log_lines + 9, 1, panel_->width() - 26);
+  panel_->addch(rb_log_lines + 9, 0, ACS_LTEE);
+  panel_->addch(rb_log_lines + 9, panel_->width() - 26, ACS_PLUS);
 
   panel_->attron(A_BOLD);
   panel_->addstr(0, panel_->width() - 17, "Machines");
@@ -1098,7 +1106,7 @@ LLSFRefBoxShell::run()
   panel_->addstr(13, panel_->width() - 16, "Robots");
   panel_->addstr(height-5, panel_->width() - 15, "Game");
   //panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 2, "Pucks");
-  panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 2, "Orders");
+  panel_->addstr(rb_log_lines + 9, (panel_->width() - 26) / 2 - 2, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
@@ -1188,10 +1196,10 @@ LLSFRefBoxShell::run()
     robots_[i]->refresh();
   }
 
-  orders_.resize(12, NULL);
+  orders_.resize(10, NULL);
   for (size_t i = 0; i < orders_.size(); ++i) {
-    orders_[i] = new LLSFRefBoxShellOrder(rb_log_lines + 9 + i / 2,
-					  (i % 2) ? ((panel_->width() - 22) / 2) : 1);
+    orders_[i] = new LLSFRefBoxShellOrder(rb_log_lines + 10 + i / 2,
+					  (i % 2) ? ((panel_->width() - 24) / 2) : 1);
     orders_[i]->refresh();
   }
 

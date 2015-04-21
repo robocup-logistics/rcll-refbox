@@ -67,6 +67,7 @@ init_colors()
   init_pair(COLOR_WHITE_ON_MAGENTA, COLOR_WHITE, COLOR_MAGENTA);
   init_pair(COLOR_WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
   init_pair(COLOR_WHITE_ON_ORANGE, COLOR_WHITE, COLOR_ORANGE);
+  init_pair(COLOR_WHITE_ON_BLACK, COLOR_WHITE, COLOR_BLACK);
 }
 
 } // end of namespace llsfrb_shell
