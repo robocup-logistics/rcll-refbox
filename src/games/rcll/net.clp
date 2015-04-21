@@ -136,117 +136,49 @@
   (pb-destroy ?beacon)
 )
 
-(defrule net-recv-beacon-known
+(defrule net-recv-beacon
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
-  ?rf <- (robot (host ?from-host) (port ?from-port) (team-color ?team-color))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
-  (bind ?team (pb-field-value ?p "team_name"))
-  (bind ?name (pb-field-value ?p "peer_name"))
   (bind ?time (pb-field-value ?p "time"))
-  (bind ?pose-time (create$ 0 0))
+  (bind ?has-pose FALSE)
   (bind ?pose (create$ 0.0 0.0 0.0))
+  (bind ?pose-time (create$ 0 0))
    
   (if (pb-has-field ?p "pose")
    then
+    (bind ?has-pose TRUE)
     (bind ?p-pose (pb-field-value ?p "pose"))
     (bind ?p-pose-time (pb-field-value ?p-pose "timestamp"))
-    (bind ?p-pose-time-sec (pb-field-value ?p-pose-time "sec"))
-    (bind ?p-pose-time-usec (integer (/ (pb-field-value ?p-pose-time "nsec") 1000)))
     (bind ?p-pose-x (pb-field-value ?p-pose "x"))
     (bind ?p-pose-y (pb-field-value ?p-pose "y"))
     (bind ?p-pose-ori (pb-field-value ?p-pose "ori"))
+    (bind ?p-pose-time-sec (pb-field-value ?p-pose-time "sec"))
+    (bind ?p-pose-time-usec (integer (/ (pb-field-value ?p-pose-time "nsec") 1000)))
     (bind ?pose-time (create$ ?p-pose-time-sec ?p-pose-time-usec))
     (bind ?pose (create$ ?p-pose-x ?p-pose-y ?p-pose-ori))
     (pb-destroy ?p-pose-time)
     (pb-destroy ?p-pose)
   )
-  (if (pb-has-field ?p "team_color")
-   then
-    (bind ?new-team-color (sym-cat (pb-field-value ?p "team_color")))
-    (if (neq ?team-color ?new-team-color) then
-      (printout warn "Robot " ?name " of " ?team
-		" has changed team color from " ?team-color " to " ?new-team-color crlf)
-      (assert (attention-message (text (str-cat "Robot " ?name " of " ?team
-						" has changed team color from("
-						?team-color " to " ?new-team-color))))
-    )
-    (bind ?team-color ?new-team-color)
-  )
-
-  (modify ?rf (last-seen ?rcvd-at) (warning-sent FALSE)
-              (pose ?pose) (pose-time ?pose-time) (team-color ?team-color))
-)
-
-(defrule net-recv-beacon-unknown
-  ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
-		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
-  (not (robot (host ?from-host) (port ?from-port)))
-  ?sf <- (signal (type version-info))
-  =>
-  (retract ?mf) ; message will be destroyed after rule completes
-  (modify ?sf (count 0) (time 0 0))
-  (printout debug "Received initial beacon from " ?from-host ":" ?from-port crlf)
-  (bind ?team (pb-field-value ?p "team_name"))
-  (bind ?team-color nil)
-  (bind ?name (pb-field-value ?p "peer_name"))
-  (bind ?number (pb-field-value ?p "number"))
-  (bind ?timef (pb-field-value ?p "time"))
-  (bind ?time (create$ (pb-field-value ?timef "sec") (integer (/ (pb-field-value ?timef "nsec") 1000))))
-  (bind ?peer-time-diff (abs (time-diff-sec ?rcvd-at ?time)))
-  (if (> ?peer-time-diff ?*PEER-TIME-DIFFERENCE-WARNING*)
-   then
-    (printout warn "Robot " ?name " of " ?team
-	      " has a large time offset (" ?peer-time-diff " sec)" crlf)
-    (assert (attention-message (text (str-cat "Robot " ?name " of " ?team
-					      " has a large time offset ("
-					      ?peer-time-diff " sec)"))))
-  )
-  (do-for-fact ((?other robot)) (eq ?other:host ?from-host)
-    (printout warn "Received two BeaconSignals from host " ?from-host
-	      " (" ?other:team "/" ?other:name "@" ?other:port " vs "
-	      ?team "/" ?from-host "@" ?from-port ")" crlf)
-    (assert (attention-message (text (str-cat "Received two BeaconSignals form host "
-					      ?from-host " (" ?other:team "/" ?other:name
-					      "@" ?other:port " vs " ?team "/" ?from-host
-					      "@" ?from-port ")"))))
-  )
-  (if (= ?number 0)
-   then
-    (printout warn "Robot " ?name "(" ?team ") has jersey number 0 "
-	      "(" ?from-host ":" ?from-port ")" crlf)
-    (assert (attention-message (text (str-cat "Robot " ?name "(" ?team ") has jersey number"
-					      " 0 (" ?from-host ":" ?from-port ")"))))
-  )
-  (do-for-fact ((?other robot))
-    (and (eq ?other:number ?number) (or (neq ?other:host ?from-host) (neq ?other:port ?from-port)))
-    (printout warn "Two robots with the same jersey number " ?number ": " ?from-host
-	      " (" ?other:name "@" ?other:host ":" ?other:port " and "
-	      ?name "@" ?from-host ":" ?from-port ")" crlf)
-    (assert (attention-message (text (str-cat "Duplicate jersey #" ?number
-					      " (" ?other:name "@" ?other:host ":" ?other:port
-					      ", " ?name "@" ?from-host ":" ?from-port ")"))))
-  )
-
-  (if (pb-has-field ?p "team_color")
-   then
+  (if (pb-has-field ?p "team_color") then
     (bind ?team-color (sym-cat (pb-field-value ?p "team_color")))
-   else
-    (assert (attention-message (text (str-cat "Robot " ?name " of " ?team
-					      " does not provide its team color"))))
   )
-  (if (and (eq ?team "LLSF") (eq ?name "RefBox"))
-   then
-    (printout warn "Detected another RefBox at " ?from-host ":" ?from-port crlf)
-    (assert (attention-message (text (str-cat "Detected another RefBox at "
-					      ?from-host ":" ?from-port))))
-  )
-  (assert (robot (team ?team) (team-color ?team-color) (name ?name) (number ?number)
-		 (host ?from-host) (port ?from-port) (last-seen ?rcvd-at)))
-)
 
+  (bind ?time-sec (pb-field-value ?time "sec"))
+  (bind ?time-usec (integer (/ (pb-field-value ?time "nsec") 1000)))
+  (pb-destroy ?time)
+
+  (assert (robot-beacon (seq (pb-field-value ?p "seq")) (time ?time-sec ?time-usec)
+			(rcvd-at ?rcvd-at)
+			(number (pb-field-value ?p "number"))
+			(team-name (pb-field-value ?p "team_name"))
+			(team-color (sym-cat (pb-field-value ?p "team_color")))
+			(peer-name (pb-field-value ?p "peer_name"))
+			(host ?from-host) (port ?from-port)
+			(has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
+)
 
 (defrule send-attmsg
   ?af <- (attention-message (text ?text) (team ?team) (time ?time-to-show))

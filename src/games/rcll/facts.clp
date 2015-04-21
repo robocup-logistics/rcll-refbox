@@ -94,6 +94,7 @@
   (multislot last-seen (type INTEGER) (cardinality 2 2))
   (slot warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
    ; x y theta (meters and rad)
+  (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot vision-pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
@@ -101,6 +102,23 @@
   (slot maintenance-start-time (type FLOAT))
   (slot maintenance-cycles (type INTEGER) (default 0))
   (slot maintenance-warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+)
+
+(deftemplate robot-beacon
+  (multislot rcvd-at (type INTEGER) (cardinality 2 2))
+
+  (slot seq (type INTEGER))
+  (multislot time (type INTEGER) (cardinality 2 2))
+
+  (slot number (type INTEGER))
+  (slot team-name (type STRING))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (slot peer-name (type STRING))
+  (slot host (type STRING))
+  (slot port (type INTEGER))
+  (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
+  (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
 (deftemplate signal

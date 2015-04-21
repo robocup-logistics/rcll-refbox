@@ -115,3 +115,73 @@
     )
   )
 )
+
+
+(defrule robot-beacon-known
+  ?bf <- (robot-beacon (time $?t) (number ?number) (team-name ?team-name)
+		       (team-color ?team-color) (peer-name ?peer-name)
+		       (host ?host) (port ?port)
+		       (has-pose ?has-pose) (pose $?pose) (pose-time $?pose-time))
+  ?rf <- (robot (number ?number) (team ?team-name) (team-color ?r-team-color) (name ?r-name)
+		(host ?r-host) (port ?r-port))
+  =>
+  (retract ?bf)
+
+  (if (neq ?team-color ?r-team-color) then
+    (assert (attention-message (text (str-cat "Robot " ?peer-name " of " ?team-name
+					      " has changed team color from("
+					      ?r-team-color " to " ?team-color))))
+  )
+  (if (neq ?r-name ?peer-name) then
+    (assert (attention-message (text (str-cat "Robot " ?number " of " ?team-name
+					      " has changed name from " ?r-name
+					      " to " ?peer-name))))
+  )
+  (modify ?rf (state ACTIVE) (warning-sent FALSE) (last-seen ?t)
+	  (name ?peer-name) (team-color ?team-color) (host ?host) (port ?port)
+	  (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time))
+)
+
+
+(defrule robot-beacon-unknown
+  ?bf <- (robot-beacon (time $?t) (rcvd-at $?rcvd-at) (number ?number) (team-name ?team-name)
+		       (team-color ?team-color) (peer-name ?peer-name)
+		       (host ?host) (port ?port)
+		       (has-pose ?has-pose) (pose $?pose) (pose-time $?pose-time))
+  (not (robot (number ?number) (team ?team-name)))
+  ?sf <- (signal (type version-info))
+  =>
+  (retract ?bf)
+  (modify ?sf (count 0) (time 0 0))
+
+  (printout debug "Received initial beacon from " ?peer-name " of " ?team-name
+	    "(" ?host ":" ?port ")" crlf)
+
+  (bind ?peer-time-diff (abs (time-diff-sec ?rcvd-at ?t)))
+  (if (> ?peer-time-diff ?*PEER-TIME-DIFFERENCE-WARNING*) then
+    (assert (attention-message (text (str-cat "Robot " ?peer-name " of " ?team-name
+					      " has a large time offset ("
+					      ?peer-time-diff " sec)"))))
+  )
+  (if (= ?number 0) then
+    (assert (attention-message (text (str-cat "Robot " ?peer-name "(" ?team-name
+					      ") has jersey number 0"
+					      " (" ?host ":" ?port ")"))))
+  )
+
+  (if (eq ?team-color nil) then
+    (assert (attention-message (text (str-cat "Robot " ?peer-name "(" ?team-name
+					      ") has does not provide its team color"
+					      " (" ?host ":" ?port ")"))))
+  )
+
+  (if (and (eq ?team-name "LLSF") (eq ?peer-name "RefBox")) then
+    (assert (attention-message (text (str-cat "Detected another RefBox at "
+					      ?host ":" ?port))))
+  )
+
+  (assert (robot (state ACTIVE) (warning-sent FALSE) (last-seen ?t)
+		 (number ?number) (team ?team-name)
+		 (name ?peer-name) (team-color ?team-color) (host ?host) (port ?port)
+		 (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
+)
