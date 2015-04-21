@@ -567,10 +567,18 @@
   (bind ?o (pb-create "llsf_msgs.Order"))
 
   (pb-set-field ?o "id" (fact-slot-value ?order-fact id))
-  (pb-set-field ?o "team_color" (fact-slot-value ?order-fact team))
-  (pb-set-field ?o "product" (fact-slot-value ?order-fact product))
+  (pb-set-field ?o "complexity" (fact-slot-value ?order-fact complexity))
+  (pb-set-field ?o "base_color" (fact-slot-value ?order-fact base-color))
+  (foreach ?rc (fact-slot-value ?order-fact ring-colors)
+    (pb-add-list ?o "ring_colors" ?rc)
+  )
+  (pb-set-field ?o "cap_color" (fact-slot-value ?order-fact cap-color))
+
   (pb-set-field ?o "quantity_requested" (fact-slot-value ?order-fact quantity-requested))
-  (pb-set-field ?o "quantity_delivered" (fact-slot-value ?order-fact quantity-delivered))
+  (pb-set-field ?o "quantity_delivered_cyan"
+		(nth$ 1 (fact-slot-value ?order-fact quantity-delivered)))
+  (pb-set-field ?o "quantity_delivered_magenta"
+		(nth$ 2 (fact-slot-value ?order-fact quantity-delivered)))
   (pb-set-field ?o "delivery_gate" (fact-slot-value ?order-fact delivery-gate))
   (pb-set-field ?o "delivery_period_begin"
 		(nth$ 1 (fact-slot-value ?order-fact delivery-period)))
@@ -580,24 +588,13 @@
   (return ?o)
 )
 
-(deffunction net-create-OrderInfo ($?team-color)
+(deffunction net-create-OrderInfo ()
   (bind ?oi (pb-create "llsf_msgs.OrderInfo"))
 
-  (if (> (length$ ?team-color) 0)
-  then
-    (bind ?team (nth$ 1 ?team-color))
-    (pb-set-field ?oi "team_color" ?team)
-    (do-for-all-facts
-      ((?order order)) (and (eq ?order:active TRUE) (eq ?order:team ?team))
-      (bind ?o (net-create-Order ?order))
-      (pb-add-list ?oi "orders" ?o) ; destroys ?o
-    )
-  else
-    (do-for-all-facts
-      ((?order order)) (eq ?order:active TRUE)
-      (bind ?o (net-create-Order ?order))
-      (pb-add-list ?oi "orders" ?o) ; destroys ?o
-    )
+  (do-for-all-facts
+    ((?order order)) (eq ?order:active TRUE)
+    (bind ?o (net-create-Order ?order))
+    (pb-add-list ?oi "orders" ?o) ; destroys ?o
   )
   (return ?oi)
 )
@@ -609,22 +606,14 @@
 		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-ORDERINFO-BURST-COUNT*)
 					       then ?*BC-ORDERINFO-PERIOD*
 					       else ?*BC-ORDERINFO-BURST-PERIOD*))))
-  (network-peer (group CYAN) (id ?peer-id-cyan))
-  (network-peer (group MAGENTA) (id ?peer-id-magenta))
+  (network-peer (group PUBLIC) (id ?peer-id))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
   (bind ?oi (net-create-OrderInfo))
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?oi))
-  (pb-destroy ?oi)
-
-  (bind ?oi (net-create-OrderInfo CYAN))
-  (pb-broadcast ?peer-id-cyan ?oi)
-  (pb-destroy ?oi)
-
-  (bind ?oi (net-create-OrderInfo MAGENTA))
-  (pb-broadcast ?peer-id-magenta ?oi)
+  (pb-broadcast ?peer-id ?oi)
   (pb-destroy ?oi)
 )
 

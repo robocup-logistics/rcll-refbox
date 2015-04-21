@@ -83,26 +83,22 @@
    then (machine-init-randomize))
 
   ; reset orders, assign random times
-  (bind ?highest-order-id 0)
-  (delayed-do-for-all-facts ((?order order)) (eq ?order:team CYAN)
-    (if (> ?order:id ?highest-order-id) then (bind ?highest-order-id ?order:id))
-    (bind ?deliver-start
-      (random (nth$ 1 ?order:start-range)
-	      (nth$ 2 ?order:start-range)))
-    (bind ?deliver-end
-      (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
-				(nth$ 2 ?order:duration-range))))
-    (bind ?activation-pre-time
-	  (random ?*ORDER-ACTIVATION-PRE-TIME-MIN* ?*ORDER-ACTIVATION-PRE-TIME-MAX*))
-    (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
-    (modify ?order (active FALSE) (activate-at ?activate-at)
-	    (delivery-period ?deliver-start ?deliver-end))
-  )
+  ; (bind ?highest-order-id 0)
+  ; (delayed-do-for-all-facts ((?order order)) (eq ?order:team CYAN)
+  ;   (if (> ?order:id ?highest-order-id) then (bind ?highest-order-id ?order:id))
+  ;   (bind ?deliver-start
+  ;     (random (nth$ 1 ?order:start-range)
+  ; 	      (nth$ 2 ?order:start-range)))
+  ;   (bind ?deliver-end
+  ;     (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
+  ; 				(nth$ 2 ?order:duration-range))))
+  ;   (bind ?activation-pre-time
+  ; 	  (random ?*ORDER-ACTIVATION-PRE-TIME-MIN* ?*ORDER-ACTIVATION-PRE-TIME-MAX*))
+  ;   (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
+  ;   (modify ?order (active FALSE) (activate-at ?activate-at)
+  ; 	    (delivery-period ?deliver-start ?deliver-end))
+  ; )
 
-  ; retract all MAGENTA orders, then copy CYAN orders
-  (delayed-do-for-all-facts ((?order order)) (eq ?order:team MAGENTA)
-    (retract ?order)
-  )
   ; (do-for-all-facts ((?order order)) (eq ?order:team CYAN)
   ;   (bind ?highest-order-id (+ ?highest-order-id 1))
   ;   (assert (order (id ?highest-order-id) (team MAGENTA) (product ?order:product)
@@ -116,78 +112,78 @@
   ; )
 
   ; Make sure all order periods are at least last production time + 30 seconds long
-  (delayed-do-for-all-facts ((?order order) (?mspec machine-spec))
-    (eq ?order:product ?mspec:output)
-    (bind ?min-time (+ ?mspec:proc-time ?*ORDER-MIN-DELIVER-TIME*))
-    (bind ?delivery-time (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
-    (if (< ?delivery-time ?min-time)
-    then
-      (bind ?new-end-time (+ (nth$ 2 ?order:delivery-period) (- ?min-time ?delivery-time)))
-      (modify ?order (delivery-period (nth$ 1 ?order:delivery-period) ?new-end-time))
-    )
-  )
+  ; (delayed-do-for-all-facts ((?order order) (?mspec machine-spec))
+  ;   (eq ?order:product ?mspec:output)
+  ;   (bind ?min-time (+ ?mspec:proc-time ?*ORDER-MIN-DELIVER-TIME*))
+  ;   (bind ?delivery-time (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
+  ;   (if (< ?delivery-time ?min-time)
+  ;   then
+  ;     (bind ?new-end-time (+ (nth$ 2 ?order:delivery-period) (- ?min-time ?delivery-time)))
+  ;     (modify ?order (delivery-period (nth$ 1 ?order:delivery-period) ?new-end-time))
+  ;   )
+  ; )
 
-  ; make sure associated machines are not down during orders
-  (do-for-all-facts ((?order order) (?machine machine) (?spec machine-spec))
-    (and (eq ?order:product ?spec:output) (eq ?machine:mtype ?spec:mtype)
-	 (>= (nth$ 1 ?machine:down-period) 0.0))
+  ; ; make sure associated machines are not down during orders
+  ; (do-for-all-facts ((?order order) (?machine machine) (?spec machine-spec))
+  ;   (and (eq ?order:product ?spec:output) (eq ?machine:mtype ?spec:mtype)
+  ; 	 (>= (nth$ 1 ?machine:down-period) 0.0))
 
-    (bind ?down-start (nth$ 1 ?machine:down-period))
-    (bind ?down-end   (nth$ 2 ?machine:down-period))
+  ;   (bind ?down-start (nth$ 1 ?machine:down-period))
+  ;   (bind ?down-end   (nth$ 2 ?machine:down-period))
 
-    (bind ?order-start (nth$ 1 ?order:delivery-period))
-    (bind ?order-end   (nth$ 2 ?order:delivery-period))
+  ;   (bind ?order-start (nth$ 1 ?order:delivery-period))
+  ;   (bind ?order-end   (nth$ 2 ?order:delivery-period))
 
-    (bind ?order-downtime-overlap-ratio
-	  (time-range-overlap-ratio ?order-start ?order-end ?down-start ?down-end))
+  ;   (bind ?order-downtime-overlap-ratio
+  ; 	  (time-range-overlap-ratio ?order-start ?order-end ?down-start ?down-end))
 
-    (if (> ?order-downtime-overlap-ratio ?*ORDER-MAX-DOWN-RATIO*)
-     then ; final machine is down for at least half of the order time, reduce it
-      (printout t "Order " ?order:id " and down-time " ?machine:name
-		" overlap too large: " ?order-downtime-overlap-ratio crlf)
-      (printout t "M1 downtime: " 
-		  (time-sec-format ?down-start) " to " (time-sec-format ?down-end) crlf)
-      (printout t "Order time:  " 
-		  (time-sec-format ?order-start) " to " (time-sec-format ?order-end) crlf)
-      (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
-       then
-        ; the end of the order time is within the down time, shrink it
-        (bind ?new-down-start (- ?order-end ?*ORDER-DOWN-SHRINK*))
+  ;   (if (> ?order-downtime-overlap-ratio ?*ORDER-MAX-DOWN-RATIO*)
+  ;    then ; final machine is down for at least half of the order time, reduce it
+  ;     (printout t "Order " ?order:id " and down-time " ?machine:name
+  ; 		" overlap too large: " ?order-downtime-overlap-ratio crlf)
+  ;     (printout t "M1 downtime: " 
+  ; 		  (time-sec-format ?down-start) " to " (time-sec-format ?down-end) crlf)
+  ;     (printout t "Order time:  " 
+  ; 		  (time-sec-format ?order-start) " to " (time-sec-format ?order-end) crlf)
+  ;     (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
+  ;      then
+  ;       ; the end of the order time is within the down time, shrink it
+  ;       (bind ?new-down-start (- ?order-end ?*ORDER-DOWN-SHRINK*))
 
-	(printout t "Order down-time conflict (1) for " ?machine:name "|" ?machine:mtype crlf)
-	(printout t "New downtime for " ?machine:name ": "
-		  (time-sec-format ?new-down-start) " to " (time-sec-format ?down-end)
-		  " (was " (time-sec-format ?down-start) " to "
-		  (time-sec-format ?down-end) ")" crlf)
-	(modify ?machine (down-period ?new-down-start ?down-end))
-       else
-        (if (and (>= ?order-start ?down-start) (< ?order-start ?down-end))
-          then
-          ; the start of the order time is within the down time, shrink it
-	  (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
-	  (printout t "Order down-time conflict (2) for " ?machine:name "|" ?machine:mtype crlf)
-	  (printout t "New downtime for " ?machine:name ": "
-		    (time-sec-format ?down-start) " to " (time-sec-format ?new-down-end)
-		    " (was " (time-sec-format ?down-start) " to "
-		    (time-sec-format ?down-end) ")" crlf)
-	  (modify ?machine (down-period ?down-start ?new-down-end))
-         else
-          (if (and (< ?order-start ?down-start) (> ?order-end ?down-end))
-	   then ; down time within order time
-	    (bind ?new-down-start ?order-start)
-	    (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
-	    (printout t "Order down-time conflict (3) for "
-		      ?machine:name "|" ?machine:mtype crlf)
-	    (printout t "New downtime for " ?machine:name ": "
-		      (time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
-		      " (was " (time-sec-format ?down-start) " to "
-		      (time-sec-format ?down-end) ")" crlf)
-	    (modify ?machine (down-period ?new-down-start ?new-down-end))
-	  )
-        )
-      )
-    )
-  )
+  ; 	(printout t "Order down-time conflict (1) for " ?machine:name "|" ?machine:mtype crlf)
+  ; 	(printout t "New downtime for " ?machine:name ": "
+  ; 		  (time-sec-format ?new-down-start) " to " (time-sec-format ?down-end)
+  ; 		  " (was " (time-sec-format ?down-start) " to "
+  ; 		  (time-sec-format ?down-end) ")" crlf)
+  ; 	(modify ?machine (down-period ?new-down-start ?down-end))
+  ;      else
+  ;       (if (and (>= ?order-start ?down-start) (< ?order-start ?down-end))
+  ;         then
+  ;         ; the start of the order time is within the down time, shrink it
+  ; 	  (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
+  ; 	  (printout t "Order down-time conflict (2) for " ?machine:name "|" ?machine:mtype crlf)
+  ; 	  (printout t "New downtime for " ?machine:name ": "
+  ; 		    (time-sec-format ?down-start) " to " (time-sec-format ?new-down-end)
+  ; 		    " (was " (time-sec-format ?down-start) " to "
+  ; 		    (time-sec-format ?down-end) ")" crlf)
+  ; 	  (modify ?machine (down-period ?down-start ?new-down-end))
+  ;        else
+  ;         (if (and (< ?order-start ?down-start) (> ?order-end ?down-end))
+  ; 	   then ; down time within order time
+  ; 	    (bind ?new-down-start ?order-start)
+  ; 	    (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
+  ; 	    (printout t "Order down-time conflict (3) for "
+  ; 		      ?machine:name "|" ?machine:mtype crlf)
+  ; 	    (printout t "New downtime for " ?machine:name ": "
+  ; 		      (time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
+  ; 		      " (was " (time-sec-format ?down-start) " to "
+  ; 		      (time-sec-format ?down-end) ")" crlf)
+  ; 	    (modify ?machine (down-period ?new-down-start ?new-down-end))
+  ; 	  )
+  ;       )
+  ;     )
+  ;   )
+  ; )
 
   ; assign random quantities to non-late orders
   ;(delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
@@ -210,13 +206,13 @@
   )
 
   ; Print orders
-  (do-for-all-facts ((?order order)) TRUE
-    (bind ?duration (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
-    (printout ?t "Order " ?order:id " " (sub-string 1 2 ?order:team)
-	      ": " ?order:product " from " (time-sec-format (nth$ 1 ?order:delivery-period))
-	      " to " (time-sec-format (nth$ 2 ?order:delivery-period))
-	      " (@" (time-sec-format ?order:activate-at) " ~" ?duration "s)" crlf)
-  )
+  ; (do-for-all-facts ((?order order)) TRUE
+  ;   (bind ?duration (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
+  ;   (printout ?t "Order " ?order:id " " (sub-string 1 2 ?order:team)
+  ; 	      ": " ?order:product " from " (time-sec-format (nth$ 1 ?order:delivery-period))
+  ; 	      " to " (time-sec-format (nth$ 2 ?order:delivery-period))
+  ; 	      " (@" (time-sec-format ?order:activate-at) " ~" ?duration "s)" crlf)
+  ; )
 )
 
 (defrule game-update-gametime-points

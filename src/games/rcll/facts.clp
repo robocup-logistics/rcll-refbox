@@ -21,7 +21,8 @@
 	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
   (slot productions (type INTEGER) (default 0))
   ; Overall refbox machine state
-  (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING PROCESSED READY-AT-OUTPUT WAITING DOWN INVALID))
+  (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
+					    PROCESSED READY-AT-OUTPUT WAITING DOWN INVALID))
   ; Set on processing a state change
   (slot proc-state (type SYMBOL) (default IDLE))
   (slot prev-state (type SYMBOL) (default IDLE))
@@ -130,21 +131,30 @@
 
 (deftemplate order
   (slot id (type INTEGER))
-  (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
-  (slot product (type SYMBOL) (allowed-values P1 P2 P3))
+
+  ; Product specification
+  (slot complexity (type SYMBOL) (allowed-values C0 C1 C2 C3))
+  ; the following is auto-generated based on the previously defined complexity
+  (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
+  (multislot ring-colors (type SYMBOL) (cardinality 0 3)
+	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
+
   (slot quantity-requested (type INTEGER) (default 1))
-  (slot quantity-delivered (type INTEGER) (default 0))
+  ; Quantity delivered for both teams in the order C,M
+  (multislot quantity-delivered (type INTEGER) (cardinality 2 2) (default 0 0))
   ; Time window in which the order should start, used for
   ; randomizing delivery-period's first element (start time)
   (multislot start-range (type INTEGER) (cardinality 2 2))
   ; Time the production should take, used for randomizing the second
   ; element of delivery-period (end time)
-  (multislot duration-range (type INTEGER) (cardinality 2 2) (default 30 180))
+  (multislot duration-range (type INTEGER) (cardinality 2 2) (default 60 180))
   ; Time window in which it must be delivered, set during initial randomization
   (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
-  (slot delivery-gate (type SYMBOL) (allowed-values ANY D1 D2 D3) (default ANY))
+  (slot delivery-gate (type INTEGER))
   (slot active (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot activate-at (type INTEGER) (default 0))
+  (multislot activation-range (type INTEGER) (cardinality 2 2) (default 60 120))
   (slot points (type INTEGER) (default 10))
   (slot points-supernumerous (type INTEGER) (default 1))
 )
@@ -163,10 +173,8 @@
  
 (deftemplate product-delivered
   (slot game-time (type FLOAT))
-  (slot production-time (type FLOAT))
+  (slot order (type INTEGER))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
-  (slot product (type SYMBOL) (allowed-values P1 P2 P3))
-  (slot delivery-gate (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6))
 )
 
 (deftemplate gamestate
@@ -294,14 +302,17 @@
 )
 
 (deffacts orders
-  ; CYAN
-  ; 40 points in P3
-  (order (id  1) (team CYAN) (product P3) (quantity-requested 1) (start-range 0 120))
-  (order (id  2) (team CYAN) (product P3) (quantity-requested 1) (start-range 100 300))
-  (order (id  3) (team CYAN) (product P3) (quantity-requested 2) (start-range 300 700))
-  ; 20 points as P1 and P2 each
-  (order (id  4) (team CYAN) (product P1) (quantity-requested 1) (start-range 400 520))
-  (order (id  5) (team CYAN) (product P2) (quantity-requested 1) (start-range 600 720))
-
-  ; MAGENTA orders will be created automatically after parameterizing CYAN orders
+  (order (id  1) (complexity C0) (quantity-requested 1) (start-range 0 120))
+  (order (id  2) (complexity C0) (quantity-requested 1) (start-range 100 300)
+	 (base-color BASE_BLACK) (cap-color CAP_GREY))
+  (order (id  3) (complexity C0) (quantity-requested 2) (start-range 300 700))
+  (order (id  4) (complexity C0) (quantity-requested 1) (start-range 100 300) 
+	 (base-color BASE_SILVER))
+  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 400 520)
+	 (activation-range 120 300) (ring-colors RING_ORANGE))
+  (order (id  6) (complexity C2) (quantity-requested 1) (start-range 600 720)
+	 (activation-range 300 600) (ring-colors RING_BLUE RING_GREEN))
+  (order (id  7) (complexity C3) (quantity-requested 1) (start-range 600 720)
+	 (activation-range 300 600) (ring-colors RING_BLUE RING_ORANGE RING_YELLOW)
+	 (cap-color CAP_GREY))
 )

@@ -13,7 +13,7 @@
 (load* (resolve-file net.clp))
 (load* (resolve-file machines.clp))
 (load* (resolve-file robots.clp))
-;(load* (resolve-file orders.clp))
+(load* (resolve-file orders.clp))
 (load* (resolve-file simulation.clp))
 (load* (resolve-file game.clp))
 (load* (resolve-file setup.clp))

@@ -67,6 +67,11 @@ enum BaseColor {
   BASE_SILVER = 3;
 }
 
+enum CapColor {
+  CAP_BLACK = 1;
+  CAP_GREY  = 2;
+}
+
 message Puck {
   enum CompType {
     COMP_ID  = 2000;
