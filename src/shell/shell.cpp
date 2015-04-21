@@ -935,9 +935,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     size_t oidx = 0;
     for (size_t i = 0; i < size; ++i) {
       const llsf_msgs::Order &ospec = ordins->orders(i);
-      if (ospec.team_color() != team_) continue;
-      orders_[oidx++]->update(ospec.id(), ospec.product(), ospec.quantity_requested(),
-			      ospec.quantity_delivered(), ospec.delivery_period_begin(),
+      orders_[oidx++]->update(ospec.id(), ospec.complexity(), ospec.quantity_requested(),
+			      ospec.quantity_delivered_cyan(), ospec.delivery_period_begin(),
 			      ospec.delivery_period_end(), ospec.delivery_gate());
     }
     for (size_t i = oidx; i < orders_.size(); ++i) {
