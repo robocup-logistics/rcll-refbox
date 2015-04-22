@@ -312,23 +312,30 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	    }
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+	} else {
+	  logf("No robot info received, yet.");
 	}
 	break;
 
       case KEY_F(12):
-	TeamColorSelectMenu tcsm(panel_);
-	tcsm();
-	if (tcsm) {
-	  OrderDeliverMenu odm(panel_, tcsm.get_team_color(),
-			       last_orderinfo_, last_game_state_);
-	  odm();
-	  if (odm) {
-	    send_set_order_delivered(tcsm.get_team_color(), odm.order().id());
+	if (! last_orderinfo_) {
+	  logf("No order info received, yet.");
+	} else if (! last_game_state_) {
+	  logf("No game state received, yet.");
+	} else {
+	  TeamColorSelectMenu tcsm(panel_);
+	  tcsm();
+	  if (tcsm) {
+	    OrderDeliverMenu odm(panel_, tcsm.get_team_color(),
+				 last_orderinfo_, last_game_state_);
+	    odm();
+	    if (odm) {
+	      send_set_order_delivered(tcsm.get_team_color(), odm.order().id());
+	    }
 	  }
+	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}
-	io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	break;
-
       }
     }
     start_keyboard();
