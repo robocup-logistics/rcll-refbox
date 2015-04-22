@@ -26,25 +26,25 @@
   ?f <- (signal (type setup-light-toggle)
 		(time $?t&:(timeout ?now ?t ?*SETUP-LIGHT-PERIOD*)))
   (gamestate (phase SETUP) (state RUNNING))
-  ?sf <- (setup-light-toggle ?m1 ?m2)
+  ?sf <- (setup-light-toggle ?m)
   =>
   (modify ?f (time ?now))
   (retract ?sf)
-  (bind ?next-m1 (+ (mod ?m1 12) 1))
-  (bind ?next-m2 (+ ?next-m1 12))
-  (assert (setup-light-toggle ?next-m1 ?next-m2))
+  (bind ?n (+ (mod (member$ ?m ?*SETUP-LIGHT-MACHINES*) (length$ ?*SETUP-LIGHT-MACHINES*)) 1))
+  (bind ?next-m (nth$ ?n ?*SETUP-LIGHT-MACHINES*))
+  (assert (setup-light-toggle ?next-m))
 
   ; Turn on previous machines again
   (delayed-do-for-all-facts ((?machine machine))
-    (or (eq ?machine:name (sym-cat M ?m1)) (eq ?machine:name (sym-cat M ?m2)))
+    (or (eq ?machine:name (sym-cat C- ?m)) (eq ?machine:name (sym-cat M- ?m)))
 
     (modify ?machine (desired-lights RED-ON YELLOW-ON GREEN-ON))
   )
 
   ; Turn off current machines
   (delayed-do-for-all-facts ((?machine machine))
-    (or (eq ?machine:name (sym-cat M ?next-m1))
-	(eq ?machine:name (sym-cat M ?next-m2)))
+    (or (eq ?machine:name (sym-cat C- ?next-m))
+	(eq ?machine:name (sym-cat M- ?next-m)))
 
     (modify ?machine (desired-lights))
   )
