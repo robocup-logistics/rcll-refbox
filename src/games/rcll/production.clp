@@ -236,6 +236,19 @@
 	  (broken-reason (str-cat ?n ": insufficient bases (" ?lw " < " ?req-bases ")")))
 )
 
+(defrule prod-proc-state-processing-rs
+  "Instruct RS to mount ring"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (rs-ring-color ?ring-color) (loaded-with ?lw))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= ?lw ?req-bases)))
+  =>
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
+  (printout t "Mounting ring " ?n crlf)
+  (mps-rs-mount-ring (str-cat ?n) 1)
+)
+
 (defrule prod-proc-state-processing
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PROCESSING) (proc-state ~PROCESSING))
