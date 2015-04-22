@@ -226,7 +226,7 @@
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
   "Must check sufficient number of bases for RS"
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (rs-ring-color ?ring-color) (loaded-with ?lw))
@@ -247,6 +247,29 @@
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
   (printout t "Mounting ring " ?n crlf)
   (mps-rs-mount-ring (str-cat ?n) 1)
+)
+
+(defrule prod-proc-state-processing-cs-mount-without-retrieve
+  "Process on CS"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (cs-operation MOUNT_CAP) (cs-retrieved FALSE))
+  =>
+  (modify ?m (state BROKEN) (proc-state PROCESSING)
+	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
+)
+
+(defrule prod-proc-state-processing-cs-mount-without-retrieve
+  "Process on CS"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (cs-operation ?cs-op))
+  =>
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
+  (printout t ?cs-op " on machine " ?n crlf)
+  (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
 )
 
 (defrule prod-proc-state-processing
@@ -278,6 +301,18 @@
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
   (modify ?m (proc-state PROCESSED) (loaded-with (max 0 (- ?lw ?req-bases))))
+  (mps-deliver (str-cat ?n))
+)
+
+(defrule prod-proc-state-processed-cs
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state ~PROCESSED)
+		 (cs-operation ?cs-op))
+  =>
+  (printout t "Machine " ?n " finished " ?cs-op crlf)
+  (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
+  (modify ?m (proc-state PROCESSED) (cs-retrieved ?have-cap))
   (mps-deliver (str-cat ?n))
 )
 
