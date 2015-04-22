@@ -145,27 +145,30 @@ void MPSPickPlace2::setLight(int light, int state, int blink) {
 }
 
 void MPSPickPlace2::clearRegister() {
-  uint16_t send[3] = {0};
+  uint16_t send[1] = {7};
   
-  int rc = modbus_write_registers(mb, 0, 3, send);
+  int rc = modbus_write_registers(mb, 0, 1, send);
 
-  if(rc == -1) {
+  if (rc == -1) {
     machineState = DISCONNECTED;
   }
 }
 
-MPSPickPlace2::MachineState MPSPickPlace2::getState() {
+MPSPickPlace2::MachineState
+MPSPickPlace2::getState()
+{
   uint16_t rec[2] = {0};
 
   int rc = modbus_read_input_registers(mb, 3, 2, rec);
 
-  if(rc != 1) {
+  if (rc == -1) {
     machineState = DISCONNECTED;
+    return DISCONNECTED;
   }
 
   countSlide = (int)rec[1];
   
-  if(rec[0] == 1) {
+  if (rec[0] == 1) {
     machineState = AVAILABLE;
     return AVAILABLE;
   }
@@ -190,6 +193,7 @@ MPSPickPlace2::MachineState MPSPickPlace2::getState() {
     return RETRIEVED;
   }
   else {
+    machineState = IDLE;
     return IDLE;
   }
 }
