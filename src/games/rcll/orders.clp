@@ -23,7 +23,7 @@
 )
 
 ; Sort orders by ID, such that do-for-all-facts on the orders deftemplate
-; iterates in a nice order, e.g. for net-send-OrderIntstruction
+; iterates in a nice order, e.g. for net-send-OrderInstruction
 (defrule sort-orders
   (declare (salience ?*PRIORITY_HIGH*))
   ?oa <- (order (id ?id-a))
@@ -38,15 +38,56 @@
 		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
   =>
   (bind ?id (pb-field-value ?p "order_id"))
-  (bind ?team (pb-field-value ?p "team_color"))
+  (bind ?team (sym-cat (pb-field-value ?p "team_color")))
   (if (not (any-factp ((?o order)) (= ?o:id ?id)))
    then
     (printout error "Received SetOrderDelivered for non-existing order " ?id crlf)
    else
     (do-for-fact ((?o order)) (= ?o:id ?id)
-      (assert (product-delivered (game-time ?gt) (order ?id)))
+      (assert (product-delivered (game-time ?gt) (order ?id) (team ?team)))
     )
   )
+)
+
+(defrule order-delivered-in-time
+  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (product-delivered (game-time ?game-time) (order ?id) (team ?team))
+  ; the actual order we are delivering
+  ?of <- (order (id ?id) (active TRUE) (quantity-requested ?q-req)
+		(points ?order-points) (points-supernumerous ?order-points-supernumerous)
+		(quantity-delivered $?q-del) (delivery-gate ?dg)
+		(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
+  =>
+  (retract ?pf)
+  (if (eq ?team CYAN)
+   then (bind ?q-del-idx 1)
+   else (bind ?q-del-idx 2)
+  )
+  (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
+
+  (modify ?of (quantity-delivered ?q-del-new))
+  (if (< (nth$ ?q-del-idx ?q-del) ?q-req)
+   then (bind ?addp ?order-points)
+   else (bind ?addp ?order-points-supernumerous)
+  )
+  (printout t "Delivered item for order " ?id ". Awarding " ?addp " points" crlf)
+  (assert (points (game-time ?game-time) (points ?addp) (team ?team) (phase PRODUCTION)
+                  (reason (str-cat "Delivered item for order " ?id))))
+)
+
+(defrule order-delivered-out-of-time
+  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (product-delivered (game-time ?game-time) (order ?id) (team ?team))
+  ; the actual order we are delivering
+  (not (order (active TRUE) (id ?id)
+	      (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))))
+  =>
+  (retract ?pf)
+  (bind ?addp ?*DELIVER-WITH-NO-ACTIVE-ORDER*)
+  (printout t "Product for order " ?id " delivered. Awarding " ?addp
+	    " points (no active order)" crlf)
+  (assert (points (game-time ?game-time) (points ?addp) (team ?team) (phase PRODUCTION)
+                  (reason (str-cat "Delivered item for order " ?id " (no active order)"))))
 )
 
 ; (defrule order-delivered-in-time
