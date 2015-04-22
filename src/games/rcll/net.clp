@@ -416,6 +416,33 @@
 	(pb-set-field ?ls "state" ?state)
 	(pb-add-list ?m "lights" ?ls)
       )
+
+      (if (not (member$ (fact-slot-value ?mf state) (create$ IDLE BROKEN))) then
+	(switch (fact-slot-value ?mf mtype)
+	  (case BS then
+	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionBS"))
+	    (pb-set-field ?pm "side" (fact-slot-value ?mf bs-side))
+	    (pb-set-field ?pm "color" (fact-slot-value ?mf bs-color))
+            (pb-set-field ?m "instruction_bs" ?pm)
+          )
+	  (case DS then
+	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
+	    (pb-set-field ?pm "gate" (fact-slot-value ?mf ds-gate))
+            (pb-set-field ?m "instruction_ds" ?pm)
+	  )
+	  (case RS then
+	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionRS"))
+	    (pb-set-field ?pm "ring_color" (fact-slot-value ?mf rs-ring-color))
+            (pb-set-field ?m "instruction_rs" ?pm)
+	  )
+	  (case CS then
+	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionCS"))
+	    (pb-set-field ?pm "operation" (fact-slot-value ?mf cs-operation))
+            (pb-set-field ?m "instruction_cs" ?pm)
+	  )
+        )
+      )
+
      else
       (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION)) then
 	(if (eq  (fact-slot-value ?mf state) PREPARED) then (pb-set-field ?m "prepared" TRUE))
