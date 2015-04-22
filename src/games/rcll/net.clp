@@ -275,8 +275,12 @@
   (pb-set-field ?gamestate "phase" (fact-slot-value ?gs phase))
   (pb-set-field ?gamestate "points_cyan"    (nth$ 1 (fact-slot-value ?gs points)))
   (pb-set-field ?gamestate "points_magenta" (nth$ 2 (fact-slot-value ?gs points)))
-  (pb-set-field ?gamestate "team_cyan"    (nth$ 1 (fact-slot-value ?gs teams)))
-  (pb-set-field ?gamestate "team_magenta" (nth$ 2 (fact-slot-value ?gs teams)))
+  (bind ?team_cyan    (nth$ 1 (fact-slot-value ?gs teams)))
+  (bind ?team_magenta (nth$ 2 (fact-slot-value ?gs teams)))
+  (if (neq ?team_cyan "") then
+    (pb-set-field ?gamestate "team_cyan"  ?team_cyan))
+  (if (neq ?team_magenta "") then
+    (pb-set-field ?gamestate "team_magenta"  ?team_magenta))
 
   (return ?gamestate)
 )
