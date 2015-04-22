@@ -127,8 +127,9 @@ MPSDeliver::MachineState MPSDeliver::getState() {
 
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
-  if(rc != 1) {
+  if(rc == -1) {
     machineState = DISCONNECTED;
+    return DISCONNECTED;
   }
 
   if(rec[0] == 1) {
@@ -136,14 +137,15 @@ MPSDeliver::MachineState MPSDeliver::getState() {
     return AVAILABLE;
   }
   else if(rec[0] == 2) {
-    machineState = DELIVER;
-    return DELIVER;
+    machineState = PROCESSING;
+    return PROCESSING;
   }
   else if(rec[0] == 3) {
-    machineState = DELIVERED;
-    return DELIVERED;
+    machineState = PROCESSED;
+    return PROCESSED;
   }
   else {
+    machineState = IDLE;
     return IDLE;
   }
 }

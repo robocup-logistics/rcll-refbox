@@ -8,6 +8,8 @@ MPS::MPS(const char* ip, int port) {
 
   this->mb = modbus_new_tcp(this->ip, this->port);
 
+  machineState = IDLE;
+  
   if(modbus_connect(this->mb) == -1) {
     machineState = DISCONNECTED;
   }
@@ -54,6 +56,7 @@ std::string MPS::machienStateString() {
       return "DISCONNECTED";
       break;
     default:
+      std::cout <<IDLE << ": " << machineState << std::endl;
       return "ERROR";
       break;
   }

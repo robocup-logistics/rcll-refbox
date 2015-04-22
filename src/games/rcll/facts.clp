@@ -282,7 +282,7 @@
   (machine (name M-CS1) (team MAGENTA) (mtype CS))
   (machine (name M-CS2) (team MAGENTA) (mtype CS))
 
-  (ring-spec (color RING_BLUE)  (req-bases 2))
+  (ring-spec (color RING_BLUE))
   (ring-spec (color RING_GREEN) (req-bases 1))
   (ring-spec (color RING_ORANGE))
   (ring-spec (color RING_YELLOW))

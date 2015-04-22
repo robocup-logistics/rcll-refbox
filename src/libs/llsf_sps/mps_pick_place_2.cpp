@@ -145,9 +145,9 @@ void MPSPickPlace2::setLight(int light, int state, int blink) {
 }
 
 void MPSPickPlace2::clearRegister() {
-  uint16_t send[1] = {7};
+  uint16_t send[3] = {0};
   
-  int rc = modbus_write_registers(mb, 0, 1, send);
+  int rc = modbus_write_registers(mb, 0, 3, send);
 
   if (rc == -1) {
     machineState = DISCONNECTED;
@@ -199,7 +199,7 @@ MPSPickPlace2::getState()
 }
 
 void MPSPickPlace2::loop() {
-  getState();
+  machineState = getState();
 }
 
 int MPSPickPlace2::getCountSlide() {

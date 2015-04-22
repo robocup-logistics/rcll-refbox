@@ -199,6 +199,7 @@ MPSIncomingStation::MachineState MPSIncomingStation::getState() {
     return RETRIEVED;
   }
   else {
+    machineState = IDLE;
     return IDLE;
   }
 }
