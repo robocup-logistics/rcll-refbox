@@ -45,6 +45,8 @@ using namespace protobuf_comm;
 using namespace llsf_msgs;
 using namespace fawkes;
 
+boost::asio::io_service io_service_;
+
 static bool quit = false;
 ProtobufStreamClient *client_ = NULL;
 
@@ -56,6 +58,7 @@ signal_handler(const boost::system::error_code& error, int signum)
 {
   if (!error) {
     quit = true;
+    io_service_.stop();
   }
 }
 
@@ -70,12 +73,14 @@ handle_connected()
 
   usleep(200000);
   quit = true;
+  io_service_.stop();
 }
 
 void
 handle_disconnected(const boost::system::error_code &ec)
 {
   quit = true;
+  io_service_.stop();
 }
 
 void
@@ -112,8 +117,6 @@ main(int argc, char **argv)
     exit(-1);
   }
 
-  boost::asio::io_service io_service;
-
   //MessageRegister & message_register = client_->message_register();
 
   client_->signal_received().connect(handle_message);
@@ -123,15 +126,15 @@ main(int argc, char **argv)
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
-  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+  boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
 
   // Start an asynchronous wait for one of the signals to occur.
   signals.async_wait(signal_handler);
 #endif
 
   do {
-    io_service.run();
-    io_service.reset();
+    io_service_.run();
+    io_service_.reset();
   } while (! quit);
 
   delete client_;
