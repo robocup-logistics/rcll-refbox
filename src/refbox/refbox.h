@@ -134,6 +134,7 @@ class LLSFRefBox
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
   void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
+  void          clips_mps_rs_mount_ring(std::string machine, int slide);
   void          clips_mps_set_light(std::string machine, std::string light, std::string state);
   void          clips_mps_reset(std::string machine);
   void          clips_mps_deliver(std::string machine);

@@ -455,6 +455,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
 
   clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
+  clips_->add_function("mps-rs-mount-ring", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
   clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
   clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
   clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
@@ -641,6 +642,23 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::s
     return;
   }
 }
+
+void
+LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
+{
+  logger_->log_info("MPS", "Mount ring on %s: slide %d",
+		    machine.c_str(), slide);
+  if (! mps_)  return;
+  MPSPickPlace2 *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->produceRing(slide);
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
 
 void
 LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::string state)
@@ -1181,8 +1199,8 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
       if (mps_) {
 	std::map<std::string, std::string> machine_states = mps_->get_states();
 	for (const auto &ms : machine_states) {
-	  //printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
-	  //       ms.first.c_str(), ms.second.c_str(), 0);
+	  printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
+	         ms.first.c_str(), ms.second.c_str(), 0);
 	  clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
 				ms.first.c_str(), ms.second.c_str(), 0);
 	}
