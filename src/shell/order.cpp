@@ -132,13 +132,21 @@ LLSFRefBoxShellOrder::refresh()
       attron(A_BOLD);
     }
 
-    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+    if (quantity_delivered_cyan_ > 0) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN));
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+    }
     printw(0, 3, "%u", quantity_delivered_cyan_);
 
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
     addstr(0, 4, "/");
 
-    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+    if (quantity_delivered_magenta_ > 0) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA));
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+    }
     printw(0, 5, "%u", quantity_delivered_magenta_);
 
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
