@@ -456,6 +456,7 @@ LLSFRefBox::setup_clips()
 
   clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
   clips_->add_function("mps-rs-mount-ring", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
+  clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
   clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
   clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
   clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
@@ -653,6 +654,30 @@ LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
   station = mps_->get_station(machine, station);
   if (station) {
     station->produceRing(slide);
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+
+void
+LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
+{
+  logger_->log_info("MPS", "%s on %s",
+		    operation.c_str(), machine.c_str());
+  if (! mps_)  return;
+  MPSPickPlace1 *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    if (operation == "RETRIEVE_CAP") {
+      station->produceEnd(2);
+    } else if (operation == "MOUNT_CAP") {
+      station->produceEnd(1);
+    } else {
+      logger_->log_error("MPS", "Invalid operation '%s' on %s",
+			 operation.c_str(), machine.c_str());
+    }
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
