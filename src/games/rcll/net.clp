@@ -446,8 +446,8 @@
      else
       (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION)) then
 	(if (eq (fact-slot-value ?mf mtype) BS)
-         then (pb-set-field ?m "prepared" (eq (fact-slot-value ?mf state) READY-AT-OUTPUT)))
-         else (pb-set-field ?m "prepared" (eq (fact-slot-value ?mf state) PREPARED))
+         then (pb-set-field ?m "prepared" (eq (fact-slot-value ?mf state) READY-AT-OUTPUT))
+         else (pb-set-field ?m "prepared" (eq (fact-slot-value ?mf state) PREPARED)))
       )
     )
 
