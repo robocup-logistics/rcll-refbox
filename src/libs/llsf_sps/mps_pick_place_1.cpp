@@ -18,12 +18,20 @@
 * \param ip address of mps
 * \param port port of modbus communication
 */
-MPSPickPlace1::MPSPickPlace1(const char* ip, int port) : MPS(ip, port), Thread("test", OPMODE_WAITFORWAKEUP) {
+MPSPickPlace1::MPSPickPlace1(const char* ip, int port)
+  : MPS(ip, port),
+    Thread("test", OPMODE_WAITFORWAKEUP)
+{
   type = 2;
+  machineState = DISCONNECTED;
 }
 
-MPSPickPlace1::MPSPickPlace1(const char* ip, int port, const char* name): MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
+MPSPickPlace1::MPSPickPlace1(const char* ip, int port, const char* name)
+  : MPS(ip, port),
+    Thread(name, OPMODE_WAITFORWAKEUP)
+{
   type = 2;
+  machineState = DISCONNECTED;
 }
 
 /*!
@@ -161,7 +169,7 @@ MPSPickPlace1::MachineState MPSPickPlace1::getState() {
 
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
 
-  if(rc != 1) {
+  if (rc == -1) {
     machineState = DISCONNECTED;
   }
   
@@ -190,6 +198,7 @@ MPSPickPlace1::MachineState MPSPickPlace1::getState() {
     return RETRIEVED;
   }
   else {
+    machineState = IDLE;
     return IDLE;
   }
 }
