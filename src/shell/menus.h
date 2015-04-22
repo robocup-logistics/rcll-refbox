@@ -46,7 +46,7 @@
 #include <boost/asio.hpp>
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/OrderInfo.pb.h>
-#include <msgs/PuckInfo.pb.h>
+#include <msgs/ProductColor.pb.h>
 #include <msgs/GameInfo.pb.h>
 #include <msgs/RobotInfo.pb.h>
 #include <msgs/GameState.pb.h>
@@ -107,31 +107,6 @@ class GenericItemsMenu : public Menu
   NCursesWindow *parent_;
 };
 
-
-class MachineWithPuckMenu : public Menu
-{
- public:
-  MachineWithPuckMenu(NCursesWindow *parent, Team team,
-		      std::shared_ptr<llsf_msgs::MachineInfo> minfo);
-
-  void get_machine_puck(std::string &machine_name, unsigned int &puck_id);
-  operator bool() const { return valid_item_; }
-
- private:
-  virtual void On_Menu_Init();
-  int det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo> &minfo);
-  void puck_selected(std::string machine, unsigned int puck_id);
-
- private:
-  bool valid_item_;
-  std::string s_cancel_;
-  std::string machine_name_;
-  unsigned int puck_id_;
-  typedef std::tuple<std::string, std::string, unsigned int, llsf_msgs::PuckState> ItemTuple;
-  std::vector<ItemTuple> items_;
-};
-
-
 class RobotMaintenanceMenu : public Menu
 {
  public:
@@ -155,62 +130,6 @@ class RobotMaintenanceMenu : public Menu
   typedef std::tuple<std::string, unsigned int, bool> ItemTuple;
   std::vector<ItemTuple> items_;
   llsf_msgs::Team team_;
-};
-
-
-class MachineThatCanTakePuckMenu : public Menu
-{
- public:
-  MachineThatCanTakePuckMenu(NCursesWindow *parent, Team team,
-			     std::shared_ptr<llsf_msgs::MachineInfo> minfo);
-
-
-  const llsf_msgs::Machine &  machine();
-  operator bool() const;
-
- private:
-  virtual void On_Menu_Init();
-  int det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo> &minfo);
-  void machine_selected(int i);
-
- private:
-  std::shared_ptr<llsf_msgs::MachineInfo> minfo_;
-  bool machine_selected_;
-  int machine_idx_;
-  std::string s_cancel_;
-  typedef std::tuple<std::string, std::string, int> ItemTuple;
-  std::vector<ItemTuple> items_;
-};
-
-
-class PuckForMachineMenu : public Menu
-{
- public:
-  PuckForMachineMenu(NCursesWindow *parent, Team team,
-		     std::shared_ptr<llsf_msgs::PuckInfo> pinfo,
-		     std::shared_ptr<llsf_msgs::MachineInfo> minfo,
-		     const llsf_msgs::Machine &machine);
-
-
-  const llsf_msgs::Puck & puck();
-  operator bool() const;
-
- private:
-  void puck_selected(int i);
-  virtual void On_Menu_Init();
-  std::list<int> relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
-				std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-				const llsf_msgs::Machine &machine, Team team);
-  int det_lines(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
-		std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-		const llsf_msgs::Machine &machine, Team team);
-
- private:
-  std::shared_ptr<llsf_msgs::PuckInfo> pinfo_;
-  bool puck_selected_;
-  int puck_idx_;
-  std::string s_cancel_;
-  std::vector<std::tuple<std::string, int>> items_;
 };
 
 

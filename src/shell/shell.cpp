@@ -121,7 +121,6 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   } catch (std::exception &e) {} // ignored
 
   last_minfo_.reset();
-  last_pinfo_.reset();
   last_gameinfo_.reset();
   last_robotinfo_.reset();
 
@@ -145,13 +144,6 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
     delete orders_[i];
   }
   orders_.clear();
-
-  /*
-  for (size_t i = 0; i < pucks_.size(); ++i) {
-    delete pucks_[i];
-  }
-  pucks_.clear();
-  */
 
   delete rb_log_;
 
@@ -310,9 +302,6 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	      RobotMaintenanceMenu rmm(panel_, tcsm.get_team_color(), last_robotinfo_);
 	      rmm();
 	      if (rmm) {
-		//logf("Place %s under RFID of %s",
-		//   llsf_msgs::PuckState_Name(p.state()).c_str(),
-		//   m.name().c_str());
 		unsigned int robot_number;
 		bool maintenance;
 		rmm.get_robot(robot_number, maintenance);
@@ -471,46 +460,6 @@ LLSFRefBoxShell::set_game_phase(std::string phase)
 
 
 void
-LLSFRefBoxShell::set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id)
-{
-  llsf_msgs::PlacePuckUnderMachine msg;
-  msg.set_machine_name(machine_name);
-  msg.set_puck_id(puck_id);
-  try {
-    client->send(msg);
-  } catch (std::runtime_error &e) {
-    logf("Sending puck under RFID failed: %s", e.what());
-  }
-}
-
-void
-LLSFRefBoxShell::set_loaded_with(const std::string &machine_name, unsigned int puck_id)
-{
-  llsf_msgs::LoadPuckInMachine msg;
-  msg.set_machine_name(machine_name);
-  msg.set_puck_id(puck_id);
-  try {
-    client->send(msg);
-  } catch (std::runtime_error &e) {
-    logf("Sending load puck failed: %s", e.what());
-  }
-}
-
-
-void
-LLSFRefBoxShell::send_remove_puck(std::string &machine_name, unsigned int puck_id)
-{
-  llsf_msgs::RemovePuckFromMachine msg;
-  msg.set_machine_name(machine_name);
-  msg.set_puck_id(puck_id);
-  try {
-    client->send(msg);
-  } catch (std::runtime_error &e) {
-    logf("Sending remove puck failed: %s", e.what());
-  }
-}
-
-void
 LLSFRefBoxShell::send_set_team(llsf_msgs::Team team, std::string &team_name)
 {
   llsf_msgs::SetTeamName msg;
@@ -610,12 +559,6 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
     for (size_t i = 0; i < orders_.size(); ++i) {
       orders_[i]->reset();
     }
-
-    /*
-    for (size_t i = 0; i < pucks_.size(); ++i) {
-      pucks_[i]->reset();
-    }
-    */
 
     for (size_t i = 0; i < robots_.size(); ++i) {
       robots_[i]->reset();
@@ -1033,7 +976,6 @@ LLSFRefBoxShell::run()
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(13, panel_->width() - 16, "Robots");
   panel_->addstr(height-5, panel_->width() - 15, "Game");
-  //panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 2, "Pucks");
   panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 2, "Orders");
   panel_->attroff(A_BOLD);
 
@@ -1119,16 +1061,6 @@ LLSFRefBoxShell::run()
 					  (i % 2) ? ((panel_->width() - 24) / 2) : 1);
     orders_[i]->refresh();
   }
-
-  /*
-  pucks_.resize(24, NULL);
-  for (size_t i = 0; i < 4; ++i) {
-    for (size_t j = 0; j < 6; ++j) {
-      pucks_[i*6+j] = new LLSFRefBoxShellPuck(rb_log_lines + 4 + i, 1 + (j * 10));
-      pucks_[i*6+j]->refresh();
-    }
-  }
-  */
 
   panel_->refresh();
 
@@ -1218,7 +1150,6 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::MachineInfo>();
   message_register.add_message_type<llsf_msgs::AttentionMessage>();
   message_register.add_message_type<llsf_msgs::OrderInfo>();
-  message_register.add_message_type<llsf_msgs::PuckInfo>();
   message_register.add_message_type<llsf_log_msgs::LogMessage>();
   message_register.add_message_type<llsf_msgs::VersionInfo>();
   message_register.add_message_type<llsf_msgs::GameInfo>();

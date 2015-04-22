@@ -41,7 +41,7 @@
 #include <cursesp.h>
 
 #include <msgs/MachineInfo.pb.h>
-#include <msgs/PuckInfo.pb.h>
+#include <msgs/ProductColor.pb.h>
 
 #include <vector>
 #include <map>

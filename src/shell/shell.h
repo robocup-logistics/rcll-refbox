@@ -63,7 +63,6 @@ namespace llsfrb {
 
 namespace llsf_msgs {
   class MachineInfo;
-  class PuckInfo;
   class GameInfo;
   class RobotInfo;
   class OrderInfo;
@@ -79,7 +78,6 @@ namespace llsfrb_shell {
 class LLSFRefBoxShellMachine;
 class LLSFRefBoxShellRobot;
 class LLSFRefBoxShellOrder;
-class LLSFRefBoxShellPuck;
 
 class LLSFRefBoxShell
 {
@@ -115,9 +113,6 @@ class LLSFRefBoxShell
 
   void set_game_state(std::string state);
   void set_game_phase(std::string phase);
-  void set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id);
-  void set_loaded_with(const std::string &machine_name, unsigned int puck_id);
-  void send_remove_puck(std::string &machine_name, unsigned int puck_id);
   void send_set_team(llsf_msgs::Team team, std::string &team_name);
   void send_robot_maintenance(llsf_msgs::Team team,
 			      unsigned int robot_number, bool maintenance);
@@ -136,7 +131,6 @@ class LLSFRefBoxShell
 
  private: // members
   std::shared_ptr<llsf_msgs::MachineInfo> last_minfo_;
-  std::shared_ptr<llsf_msgs::PuckInfo> last_pinfo_;
   std::shared_ptr<llsf_msgs::GameInfo> last_gameinfo_;
   std::shared_ptr<llsf_msgs::RobotInfo> last_robotinfo_;
   std::shared_ptr<llsf_msgs::OrderInfo> last_orderinfo_;
@@ -171,7 +165,6 @@ class LLSFRefBoxShell
   std::vector<LLSFRefBoxShellRobot *> robots_;
   std::map<std::string, LLSFRefBoxShellMachine *> machines_;
   std::vector<LLSFRefBoxShellOrder *> orders_;
-  std::vector<LLSFRefBoxShellPuck *> pucks_;
 
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
