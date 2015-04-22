@@ -37,7 +37,7 @@
 package llsf_msgs;
 
 import "Pose2D.proto";
-import "PuckInfo.proto";
+import "ProductColor.proto";
 import "Team.proto";
 import "Zone.proto";
 
