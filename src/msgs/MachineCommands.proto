@@ -59,3 +59,15 @@ message SetMachineState {
   // State to set
   required MachineState state = 2;
 }
+
+
+// Load puck into machine area.
+message MachineAddBase {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 18;
+  }
+
+  // Machine to place puck at
+  required string machine_name = 1;
+}
