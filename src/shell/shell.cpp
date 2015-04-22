@@ -740,33 +740,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       //logf("Adding %s @ (%f, %f, %f)\n", mspec.name().c_str(),
       //     mspec.pose().x(), mspec.pose().y(), mspec.pose().ori());
       if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
-	mpanel->second->set_type(mspec.type());
-	mpanel->second->set_state(mspec.state());
-	mpanel->second->set_zone(mspec.has_zone() ? llsf_msgs::Zone_Name(mspec.zone()) : "");
-
-	mpanel->second->set_loaded_with(mspec.loaded_with());
-	std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights;
-	for (int j = 0; j < mspec.lights_size(); ++j) {
-	  const llsf_msgs::LightSpec &lspec = mspec.lights(j);
-	  lights[lspec.color()] = lspec.state();
-	}
-	mpanel->second->set_lights(lights);
-	if (mspec.has_correctly_reported()) {
-	  mpanel->second->set_correctly_reported(true, mspec.correctly_reported());
-	} else {
-	  mpanel->second->set_correctly_reported(false, false);
-	}
-
-	if (mspec.ring_colors_size() == 2) {
-	  std::array<llsf_msgs::RingColor, 2> ring_colors;
-	  for (size_t i = 0; i < ring_colors.size(); ++i) {
-	    ring_colors[i] = mspec.ring_colors(i);
-	  }
-	  mpanel->second->set_ring_colors(ring_colors);
-	} else {
-	  mpanel->second->unset_ring_colors();
-	}
-
+	mpanel->second->update(mspec);
 	mpanel->second->refresh();
       }
     }

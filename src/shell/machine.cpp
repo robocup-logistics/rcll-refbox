@@ -53,8 +53,7 @@ namespace llsfrb_shell {
 LLSFRefBoxShellMachine::LLSFRefBoxShellMachine(std::string name, std::string type,
 					       int begin_y, int begin_x, bool visible)
   : NCursesPanel(1, 24, begin_y, begin_x),
-    visible_(visible), name_(name), type_(type), have_ring_colors_(false), loaded_with_(0),
-    has_correctly_reported_field_(false), correctly_reported_(false)
+    visible_(visible)
 {
   set_visible(visible_);
 }
@@ -77,49 +76,16 @@ LLSFRefBoxShellMachine::set_visible(bool visible)
 }
 
 void
-LLSFRefBoxShellMachine::set_type(std::string type)
+LLSFRefBoxShellMachine::update(const llsf_msgs::Machine &minfo)
 {
-  type_ = type;
-}
+  minfo_ = std::make_shared<llsf_msgs::Machine>(minfo);
 
-void
-LLSFRefBoxShellMachine::set_zone(std::string zone)
-{
-  zone_ = zone;
-}
+  std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights;
+  for (int j = 0; j < minfo_->lights_size(); ++j) {
+    const llsf_msgs::LightSpec &lspec = minfo_->lights(j);
+    lights[lspec.color()] = lspec.state();
+  }
 
-
-void
-LLSFRefBoxShellMachine::set_state(std::string state)
-{
-  state_ = state;
-}
-
-
-void
-LLSFRefBoxShellMachine::set_loaded_with(unsigned int loaded_with)
-{
-  loaded_with_ = loaded_with;
-}
-
-
-void
-LLSFRefBoxShellMachine::set_ring_colors(std::array<llsf_msgs::RingColor, 2> ring_colors)
-{
-  have_ring_colors_ = true;
-  ring_colors_ = ring_colors;
-}
-
-
-void
-LLSFRefBoxShellMachine::unset_ring_colors()
-{
-  have_ring_colors_ = false;
-}
-
-void
-LLSFRefBoxShellMachine::set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights)
-{
   if (lights_ != lights) {
     lights_ = lights;
     blink_state_.clear();
@@ -130,13 +96,6 @@ LLSFRefBoxShellMachine::set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::Li
       }
     }
   }
-}
-
-void
-LLSFRefBoxShellMachine::set_correctly_reported(bool has_field, bool correctly_reported)
-{
-  has_correctly_reported_field_ = has_field;
-  correctly_reported_ = correctly_reported;
 }
 
 void
@@ -154,13 +113,7 @@ LLSFRefBoxShellMachine::flip_blink_states()
 void
 LLSFRefBoxShellMachine::reset()
 {
-  //type_ = "?";
-  zone_ = "";
-  state_ = "";
-  have_ring_colors_ = false;
-  loaded_with_ = 0;
-  has_correctly_reported_field_ = false;
-  correctly_reported_ = false;
+  minfo_.reset();
   lights_.clear();
   blink_state_.clear();
   refresh();
@@ -175,17 +128,27 @@ LLSFRefBoxShellMachine::refresh()
   erase();
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
 
-  if (name_.find("C-") == 0) {
+  std::string name;
+  std::string type;
+  std::string zone;
+
+  if (minfo_) {
+    name = minfo_->name();
+    type = minfo_->type();
+    zone = minfo_->has_zone() ? llsf_msgs::Zone_Name(minfo_->zone()) : "";
+  }
+
+  if (name.find("C-") == 0) {
     attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
-  } else if (name_.find("M-") == 0) {
+  } else if (name.find("M-") == 0) {
     attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
   }
   attron(' '|A_BOLD);
-  addstr(0, 0, boost::str(boost::format("%-5s") % name_).c_str());
+  addstr(0, 0, boost::str(boost::format("%-5s") % name).c_str());
   attroff(A_BOLD);
   attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
 
-  addstr(0, 5, boost::str(boost::format("|%-2s|%3s") % type_ % zone_).c_str());
+  addstr(0, 5, boost::str(boost::format("|%-2s|%3s") % type % zone).c_str());
 
   if (lights_.find(llsf_msgs::GREEN) != lights_.end() &&
       (lights_[llsf_msgs::GREEN] == llsf_msgs::ON ||
@@ -215,40 +178,99 @@ LLSFRefBoxShellMachine::refresh()
   }
   addstr( 0, 15, " ");
 
-  
-  if (has_correctly_reported_field_) {
-    attron(' '|COLOR_PAIR(correctly_reported_ ? COLOR_WHITE_ON_GREEN : COLOR_WHITE_ON_RED)|A_BOLD);
-    addstr(0, 17, correctly_reported_ ? "++" : "--");
+
+  if (minfo_ && minfo_->has_correctly_reported()) {
+    attron(' '|COLOR_PAIR(minfo_->correctly_reported()
+			  ? COLOR_WHITE_ON_GREEN
+			  : COLOR_WHITE_ON_RED) | A_BOLD);
+    addstr(0, 17, minfo_->correctly_reported() ? "++" : "--");
     attroff(A_BOLD);
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-    addstr(0, 17, state_.empty() ? "  " : state_.substr(0,2).c_str());
+    addstr(0, 17, ! minfo_ || minfo_->state().empty()
+	   ? "  "
+	   : minfo_->state().substr(0,2).c_str());
   }
 
   attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-  if (loaded_with_ > 0) {
-    addstr(0, 20, (boost::str(boost::format("%u") % loaded_with_)).c_str());
+  if (minfo_ && minfo_->loaded_with() > 0) {
+    addstr(0, 20, (boost::str(boost::format("%u") % minfo_->loaded_with())).c_str());
   } else {
     addstr(0, 20, " ");
   }
 
-  if (have_ring_colors_) {
-    for (size_t i = 0; i < ring_colors_.size(); ++i) {
-      switch (ring_colors_[i]) {
-      case llsf_msgs::RING_BLUE:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
-      case llsf_msgs::RING_GREEN:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
-      case llsf_msgs::RING_ORANGE:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
-      case llsf_msgs::RING_YELLOW:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+  if (type == "RS") {
+    if (minfo_ && minfo_->ring_colors_size() > 0) {
+      for (int i = 0; i < minfo_->ring_colors_size(); ++i) {
+	switch (minfo_->ring_colors(i)) {
+	case llsf_msgs::RING_BLUE:
+	  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)|A_BOLD); break;
+	case llsf_msgs::RING_GREEN:
+	  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)|A_BOLD); break;
+	case llsf_msgs::RING_ORANGE:
+	  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)|A_BOLD); break;
+	case llsf_msgs::RING_YELLOW:
+	  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)|A_BOLD); break;
+	}
+	if (minfo_->has_instruction_rs() &&
+	    minfo_->instruction_rs().ring_color() == minfo_->ring_colors(i)) {
+	  addstr(0, 22+i, "*");
+	} else {
+	  addstr(0, 22+i, " ");
+	}
+	attroff(A_BOLD);
       }
-      addstr(0, 22+i, " ");
+
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+      for (int j = minfo_->ring_colors_size(); j <= 2; ++j) {
+	addstr(0, 22+j, " ");
+      }
+
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+      addstr(0, 22, "  ");
     }
-  } else if (type_ == "RS") {
-    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-    addstr(0, 22, "  ");
+  } else if (type == "BS") {
+    if (minfo_ && minfo_->has_instruction_bs()) {
+      switch (minfo_->instruction_bs().color()) {
+      case llsf_msgs::BASE_RED:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));   break;
+      case llsf_msgs::BASE_SILVER:
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+      case llsf_msgs::BASE_BLACK:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+      }
+      addstr(0, 22, " ");
+
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+      switch (minfo_->instruction_bs().side()) {
+      case llsf_msgs::INPUT:  addstr(0, 23, "I"); break;
+      case llsf_msgs::OUTPUT: addstr(0, 23, "O"); break;
+      }
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+      addstr(0, 22, "  ");
+    }
+  } else if (type == "DS") {
+    if (minfo_ && minfo_->has_instruction_ds()) {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+      addstr(0, 22, (boost::str(boost::format("%u")
+				% minfo_->instruction_ds().gate())).c_str());
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+      addstr(0, 22, "  ");
+    }
+  } else if (type == "CS") {
+    if (minfo_ && minfo_->has_instruction_cs()) {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+      switch (minfo_->instruction_cs().operation()) {
+      case llsf_msgs::RETRIEVE_CAP: addstr(0, 22, "RC"); break;
+      case llsf_msgs::MOUNT_CAP:    addstr(0, 22, "MC"); break;
+      }
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+      addstr(0, 22, "  ");
+    }	
   }
 
   return NCursesPanel::refresh();

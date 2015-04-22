@@ -45,6 +45,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -59,16 +60,9 @@ class LLSFRefBoxShellMachine : public NCursesPanel
 			 int begin_y, int begin_x, bool visible = true);
   ~LLSFRefBoxShellMachine();
 
-  void set_type(std::string type);
-  void set_state(std::string state);
-  void set_zone(std::string zone);
-  void set_loaded_with(unsigned int loaded_with);
-  void set_ring_colors(std::array<llsf_msgs::RingColor, 2> ring_colors);
-  void unset_ring_colors();
-  void set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights);
-  void set_correctly_reported(bool has_field, bool correctly_reported = false);
-  void flip_blink_states();
+  void update(const llsf_msgs::Machine &minfo);
 
+  void flip_blink_states();
   void set_visible(bool visible);
 
   void reset();
@@ -77,15 +71,7 @@ class LLSFRefBoxShellMachine : public NCursesPanel
 
  private:
   bool                  visible_;
-  std::string           name_;
-  std::string           type_;
-  std::string           zone_;
-  std::string           state_;
-  bool                                 have_ring_colors_;
-  std::array<llsf_msgs::RingColor, 2>  ring_colors_;
-  unsigned int          loaded_with_;
-  bool                              has_correctly_reported_field_;
-  bool                              correctly_reported_;
+  std::shared_ptr<llsf_msgs::Machine> minfo_;
   std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;
   std::map<llsf_msgs::LightColor, bool> blink_state_;
 };
