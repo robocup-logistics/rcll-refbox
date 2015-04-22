@@ -45,9 +45,11 @@
 #include <boost/signals2.hpp>
 #include <boost/asio.hpp>
 #include <msgs/MachineInfo.pb.h>
+#include <msgs/OrderInfo.pb.h>
 #include <msgs/PuckInfo.pb.h>
 #include <msgs/GameInfo.pb.h>
 #include <msgs/RobotInfo.pb.h>
+#include <msgs/GameState.pb.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -133,7 +135,7 @@ class MachineWithPuckMenu : public Menu
 class RobotMaintenanceMenu : public Menu
 {
  public:
-  RobotMaintenanceMenu(NCursesWindow *parent, Team team,
+  RobotMaintenanceMenu(NCursesWindow *parent, llsf_msgs::Team team,
 		       std::shared_ptr<llsf_msgs::RobotInfo> minfo);
 
   void get_robot(unsigned int &number, bool &maintenance);
@@ -141,7 +143,7 @@ class RobotMaintenanceMenu : public Menu
 
  private:
   virtual void On_Menu_Init();
-  int det_lines(Team team, std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
+  int det_lines(llsf_msgs::Team team, std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
   int det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo);
   void robot_selected(unsigned int number, bool maintenance);
 
@@ -152,6 +154,7 @@ class RobotMaintenanceMenu : public Menu
   std::string s_cancel_;
   typedef std::tuple<std::string, unsigned int, bool> ItemTuple;
   std::vector<ItemTuple> items_;
+  llsf_msgs::Team team_;
 };
 
 
@@ -236,14 +239,17 @@ class MachinePlacingMenu : public Menu
 class TeamSelectMenu : public Menu
 {
  public:
-  TeamSelectMenu(NCursesWindow *parent, std::shared_ptr<llsf_msgs::GameInfo> gameinfo);
+  TeamSelectMenu(NCursesWindow *parent, llsf_msgs::Team team,
+		 std::shared_ptr<llsf_msgs::GameInfo> gameinfo,
+		 std::shared_ptr<llsf_msgs::GameState> gstate);
 
   std::string get_team_name();
   operator bool() const { return valid_item_; }
 
  private:
   virtual void On_Menu_Init();
-  int det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo);
+  int det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo,
+		std::shared_ptr<llsf_msgs::GameState> &gstate);
   void team_selected(std::string team_name);
 
  private:
@@ -251,6 +257,53 @@ class TeamSelectMenu : public Menu
   std::string s_cancel_;
   std::string team_name_;
   std::vector<std::string> items_;
+  llsf_msgs::Team team_;
+};
+
+class TeamColorSelectMenu : public Menu
+{
+ public:
+  TeamColorSelectMenu(NCursesWindow *parent);
+
+  llsf_msgs::Team get_team_color();
+  operator bool() const { return valid_item_; }
+
+ private:
+  virtual void On_Menu_Init();
+  int det_lines();
+  void team_color_selected(llsf_msgs::Team team_color);
+
+ private:
+  bool            valid_item_;
+  std::string     s_cancel_;
+  llsf_msgs::Team team_color_;
+  std::vector<llsf_msgs::Team> items_;
+};
+
+
+class OrderDeliverMenu : public Menu
+{
+ public:
+  OrderDeliverMenu(NCursesWindow *parent, llsf_msgs::Team team,
+		   std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
+		   std::shared_ptr<llsf_msgs::GameState> gstate);
+
+  const llsf_msgs::Order &  order();
+  operator bool() const;
+
+ private:
+  virtual void On_Menu_Init();
+  int det_lines(llsf_msgs::Team team, std::shared_ptr<llsf_msgs::OrderInfo> &oinfo);
+  void order_selected(int i);
+
+ private:
+  std::shared_ptr<llsf_msgs::OrderInfo> oinfo_;
+  llsf_msgs::Team team_;
+  bool order_selected_;
+  int order_idx_;
+  std::string s_cancel_;
+  typedef std::pair<unsigned int, std::string> ItemPair;
+  std::vector<ItemPair> items_;
 };
 
 

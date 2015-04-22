@@ -630,18 +630,26 @@ MachinePlacingMenu::operator bool() const
 
 
 TeamSelectMenu::TeamSelectMenu(NCursesWindow *parent,
-			       std::shared_ptr<llsf_msgs::GameInfo> gameinfo)
-  : Menu(det_lines(gameinfo) + 1 + 2, 20 + 2,
-	 (parent->lines() - (det_lines(gameinfo) + 1))/2,
+			       llsf_msgs::Team team,
+			       std::shared_ptr<llsf_msgs::GameInfo> gameinfo,
+			       std::shared_ptr<llsf_msgs::GameState> gstate)
+  : Menu(det_lines(gameinfo, gstate) + 1 + 2, 20 + 2,
+	 (parent->lines() - (det_lines(gameinfo, gstate) + 1))/2,
 	 (parent->cols() - 20)/2)
 {
+  team_ = team;
+
   valid_item_ = false;
-  int n_items = det_lines(gameinfo);
+  int n_items = det_lines(gameinfo, gstate);
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
   for (int i = 0; i < gameinfo->known_teams_size(); ++i) {
-    items_[ni++] = gameinfo->known_teams(i);
+    if (gstate->team_cyan() != gameinfo->known_teams(i) &&
+	gstate->team_magenta() != gameinfo->known_teams(i))
+    {
+      items_[ni++] = gameinfo->known_teams(i);
+    }
   }
 
   std::sort(items_.begin(), items_.end());
@@ -658,7 +666,6 @@ TeamSelectMenu::TeamSelectMenu(NCursesWindow *parent,
   set_mark("");
   set_format(ni+1, 1);
   InitMenu(mitems, true, true);
-  frame("Team");
 }
 
 void
@@ -678,23 +685,110 @@ void
 TeamSelectMenu::On_Menu_Init()
 {
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+
+  if (team_ == llsf_msgs::CYAN) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+  }
+  box();
+
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK)|A_BOLD);
+  addstr(0, (width() - 6) / 2, " Team ");
+  attroff(A_BOLD);
+
+  refresh();
+}
+
+int
+TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo,
+			  std::shared_ptr<llsf_msgs::GameState> &gstate)
+{
+  int rv = 0;
+  for (int i = 0; i < gameinfo->known_teams_size(); ++i) {
+    if (gstate->team_cyan() != gameinfo->known_teams(i) &&
+	gstate->team_magenta() != gameinfo->known_teams(i))
+    {
+      ++rv;
+    }
+  }
+  return rv;
+}
+
+
+TeamColorSelectMenu::TeamColorSelectMenu(NCursesWindow *parent)
+  : Menu(det_lines() + 1 + 2, 12 + 2,
+	 (parent->lines() - (det_lines() + 1))/2,
+	 (parent->cols() - 12)/2)
+{
+  valid_item_ = false;
+  int n_items = det_lines();
+  items_.resize(n_items);
+  int ni = 0;
+  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+
+  const google::protobuf::EnumDescriptor *team_enum_desc =
+    llsf_msgs::Team_descriptor();
+  for (int i = 0; i < n_items; ++i) {
+    llsf_msgs::Team team;
+    if (llsf_msgs::Team_Parse(team_enum_desc->value(i)->name(), &team)) {
+      items_[ni++] = team;
+    }
+  }
+
+  for (int i = 0; i < ni; ++i) {
+    SignalItem *item = new SignalItem(llsf_msgs::Team_Name(items_[i]));
+    item->signal().connect(boost::bind(&TeamColorSelectMenu::team_color_selected,
+				       this, items_[i]));
+    mitems[i] = item;
+  }
+  s_cancel_ = "** CANCEL **";
+  mitems[ni] = new SignalItem(s_cancel_);
+  mitems[ni+1] = new NCursesMenuItem();
+
+  set_mark("");
+  set_format(ni+1, 1);
+  InitMenu(mitems, true, true);
+  frame("Team Color");
+}
+
+void
+TeamColorSelectMenu::team_color_selected(llsf_msgs::Team team_color)
+{
+  valid_item_ = true;
+  team_color_ = team_color;
+}
+
+llsf_msgs::Team
+TeamColorSelectMenu::get_team_color()
+{
+  return team_color_;
+}
+
+void
+TeamColorSelectMenu::On_Menu_Init()
+{
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
   refresh();
 }
 
 int
-TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo)
+TeamColorSelectMenu::det_lines()
 {
-  return gameinfo->known_teams_size();
+  const google::protobuf::EnumDescriptor *team_enum_desc =
+    llsf_msgs::Team_descriptor();
+  return team_enum_desc->value_count();
 }
 
 
-RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent, Team team,
+RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent, llsf_msgs::Team team,
 					   std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
   : Menu(det_lines(team, rinfo) + 1 + 2, det_cols(rinfo) + 2,
 	 (parent->lines() - (det_lines(team, rinfo) + 1))/2,
 	 (parent->cols() - (det_cols(rinfo) + 2))/2)
 {
+  team_ = team;
   valid_item_ = false;
   int n_items = det_lines(team, rinfo);
   items_.resize(n_items);
@@ -786,11 +880,24 @@ void
 RobotMaintenanceMenu::On_Menu_Init()
 {
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+
+  if (team_ == llsf_msgs::CYAN) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+  }
+  box();
+
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK)|A_BOLD);
+  addstr(0, (width() - 20) / 2, " Robot Maintenance ");
+  attroff(A_BOLD);
+
   refresh();
 }
 
 int
-RobotMaintenanceMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
+RobotMaintenanceMenu::det_lines(llsf_msgs::Team team,
+				std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
 {
   int rv = 0;
   for (int i = 0; i < rinfo->robots_size(); ++i) {
@@ -811,6 +918,160 @@ RobotMaintenanceMenu::det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
   }
 
   return cols;
+}
+
+
+
+OrderDeliverMenu::OrderDeliverMenu
+  (NCursesWindow *parent, llsf_msgs::Team team,
+   std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
+   std::shared_ptr<llsf_msgs::GameState> gstate)
+  : Menu(det_lines(team, oinfo) + 1 + 2, 25 + 2,
+	 (parent->lines() - (det_lines(team, oinfo) + 1))/2,
+	 (parent->cols() - 26)/2),
+    oinfo_(oinfo), team_(team)
+{
+  order_selected_ = false;
+  int n_items = det_lines(team, oinfo);
+  items_.resize(n_items);
+  int ni = 0;
+  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  for (int i = 0; i < oinfo->orders_size(); ++i) {
+    const llsf_msgs::Order &o = oinfo->orders(i);
+
+    bool active = (gstate->game_time().sec() >= o.delivery_period_begin() &&
+		   gstate->game_time().sec() <= o.delivery_period_end());
+
+    std::string s = boost::str(boost::format("%s %2u: %u x %2s")
+			       % (active ? "*" : " ") % o.id() % o.quantity_requested()
+			       % llsf_msgs::Order::Complexity_Name(o.complexity()));
+    items_[ni++] = std::make_pair(i, s);
+  }
+  std::sort(items_.begin(), items_.end());
+
+  for (int i = 0; i < ni; ++i) {
+    SignalItem *item = new SignalItem(items_[i].second);
+    item->signal().connect(boost::bind(&OrderDeliverMenu::order_selected,
+				       this, items_[i].first));
+    mitems[i] = item;
+  }
+  s_cancel_ = "** CANCEL **";
+  mitems[ni] = new SignalItem(s_cancel_);
+  mitems[ni+1] = new NCursesMenuItem();
+
+  set_mark("");
+  set_format(ni+1, 1);
+  InitMenu(mitems, true, true);
+}
+
+void
+OrderDeliverMenu::order_selected(int i)
+{
+  order_selected_ = true;
+  order_idx_ = i;
+}
+
+const llsf_msgs::Order &
+OrderDeliverMenu::order()
+{
+  return oinfo_->orders(order_idx_);
+}
+
+void
+OrderDeliverMenu::On_Menu_Init()
+{
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+
+  if (team_ == llsf_msgs::CYAN) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+  }
+  box();
+
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK)|A_BOLD);
+  addstr(0, (width() - 8) / 2, " Orders ");
+  attroff(A_BOLD);
+
+  for (size_t i = 0; i < items_.size(); ++i) {
+    const llsf_msgs::Order &o = oinfo_->orders(items_[i].first);
+
+    if (team_ == llsf_msgs::CYAN) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+    }
+    printw(i+1, 14, "%u", o.quantity_delivered_cyan());
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    addstr(i+1, 15, "/");
+
+    if (team_ == llsf_msgs::MAGENTA) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA)|A_BOLD);
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+    }
+    printw(i+1, 16, "%u", o.quantity_delivered_magenta());
+
+
+    switch (o.base_color()) {
+    case llsf_msgs::BASE_RED:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));   break;
+    case llsf_msgs::BASE_SILVER:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    case llsf_msgs::BASE_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    }
+    addstr(i+1, 18, " ");
+
+    for (int j = 0; j < o.ring_colors_size(); ++j) {
+      switch (o.ring_colors(j)) {
+      case llsf_msgs::RING_BLUE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+      case llsf_msgs::RING_GREEN:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+      case llsf_msgs::RING_ORANGE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+      case llsf_msgs::RING_YELLOW:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+      }
+      addstr(i+1, 19+j, " ");
+    }
+
+    for (int j = o.ring_colors_size(); j < 4; ++j) {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+      addstr(i+1, 19+j, " ");
+    }
+
+    switch (o.cap_color()) {
+    case llsf_msgs::CAP_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    case llsf_msgs::CAP_GREY:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    }
+    addstr(i+1, 22, " ");
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    printw(i+1, 24, "D%u", o.delivery_gate());
+  }
+
+  refresh();
+}
+
+int
+OrderDeliverMenu::det_lines(llsf_msgs::Team team,
+			    std::shared_ptr<llsf_msgs::OrderInfo> &oinfo)
+{
+  if (oinfo) {
+    return oinfo->orders_size();
+  } else {
+    return 0;
+  }
+}
+
+OrderDeliverMenu::operator bool() const
+{
+  return order_selected_;
 }
 
 } // end of namespace llsfrb
