@@ -398,7 +398,7 @@
 )
 
 
-(defrule prod-pb-set-machine-state
+(defrule prod-pb-recv-SetMachineState
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.SetMachineState") (ptr ?p) (rcvd-via STREAM)
 		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
@@ -406,5 +406,20 @@
   (bind ?mname (sym-cat (pb-field-value ?p "machine_name")))
   (bind ?state (sym-cat (pb-field-value ?p "state")))
   (printout t "Received state " ?state " for machine " ?mname crlf)
-  (assert (machine-mps-state (name ?mname) (state ?state)))
+  (do-for-fact ((?m machine)) (eq ?m:name ?mname)
+    (assert (machine-mps-state (name ?mname) (state ?state) (num-bases ?m:loaded-with)))
+  )
+)
+
+(defrule prod-pb-recv-MachineAddBase
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (protobuf-msg (type "llsf_msgs.MachineAddBase") (ptr ?p) (rcvd-via STREAM)
+		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  =>
+  (bind ?mname (sym-cat (pb-field-value ?p "machine_name")))
+  (printout t "Add base to machine " ?mname crlf)
+  (do-for-fact ((?m machine)) (eq ?m:name ?mname)
+    (assert (machine-mps-state (name ?mname) (state ?m:mps-state)
+			       (num-bases (+ ?m:loaded-with 1))))
+  )
 )
