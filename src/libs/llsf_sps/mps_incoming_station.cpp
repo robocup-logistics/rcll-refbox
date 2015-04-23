@@ -151,6 +151,12 @@ void MPSIncomingStation::clearRegister() {
   if(rc == -1) {
     machineState = DISCONNECTED;
   }
+
+  rc = modbus_write_registers(mb, 9, 1, send);
+
+  if(rc == -1) {
+    machineState = DISCONNECTED;
+  }
 }
 
 
