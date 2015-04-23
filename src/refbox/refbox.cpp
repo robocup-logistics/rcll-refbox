@@ -458,7 +458,7 @@ LLSFRefBox::setup_clips()
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
   clips_->add_function("config-path-exists", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_path_exists)));
-  clips_->add_function("config-get-bool", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_path_exists)));
+  clips_->add_function("config-get-bool", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_bool)));
   clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
 
   if (mps_ && ! simulation) {
@@ -580,7 +580,7 @@ CLIPS::Value
 LLSFRefBox::clips_config_get_bool(std::string path)
 {
   try {
-    bool v = config_->get_value(path.c_str());
+    bool v = config_->get_bool(path.c_str());
     return CLIPS::Value(v ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
   } catch (Exception &e) {
     return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
