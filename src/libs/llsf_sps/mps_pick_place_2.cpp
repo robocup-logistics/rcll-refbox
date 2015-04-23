@@ -19,10 +19,12 @@
 */
 MPSPickPlace2::MPSPickPlace2(const char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
   type = 3;
+  setType();
 }
 
 MPSPickPlace2::MPSPickPlace2(const char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
   type = 3;
+  setType();
 }
 
 /*!

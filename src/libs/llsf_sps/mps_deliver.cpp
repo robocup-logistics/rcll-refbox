@@ -19,10 +19,12 @@
  */
 MPSDeliver::MPSDeliver(const char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
   type = 4;
+  setType();
 }
 
 MPSDeliver::MPSDeliver(const char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
   type = 4;
+  setType();
 }
 
 /*!

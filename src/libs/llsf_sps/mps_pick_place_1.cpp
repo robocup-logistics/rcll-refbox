@@ -24,6 +24,7 @@ MPSPickPlace1::MPSPickPlace1(const char* ip, int port)
 {
   type = 2;
   machineState = DISCONNECTED;
+  setType();
 }
 
 MPSPickPlace1::MPSPickPlace1(const char* ip, int port, const char* name)
@@ -32,6 +33,7 @@ MPSPickPlace1::MPSPickPlace1(const char* ip, int port, const char* name)
 {
   type = 2;
   machineState = DISCONNECTED;
+  setType();
 }
 
 /*!
