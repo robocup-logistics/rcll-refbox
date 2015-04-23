@@ -225,6 +225,18 @@
   (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
 )
 
+(defrule prod-proc-state-processing-ds
+  "BS must be instructed to dispense base for processing"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (ds-gate ?gate))
+  =>
+  (printout t "Machine " ?n " processing to gate " ?gate crlf)
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
+  (mps-ds-process (str-cat ?n) ?gate)
+)
+
 (defrule prod-proc-state-processing-rs-insufficient-bases
   "Must check sufficient number of bases for RS"
   (declare (salience ?*PRIORITY_HIGHER*))
