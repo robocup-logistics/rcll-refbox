@@ -89,6 +89,8 @@ class MPS {
     return this->type;
   };
 
+  void setType();
+  
   virtual std::string machienStateString();
 
   /*!

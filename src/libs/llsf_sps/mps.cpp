@@ -13,6 +13,8 @@ MPS::MPS(const char* ip, int port) {
   if(modbus_connect(this->mb) == -1) {
     machineState = DISCONNECTED;
   }
+
+  setType();
 }
 
 MPS::~MPS() {
@@ -56,8 +58,16 @@ std::string MPS::machienStateString() {
       return "DISCONNECTED";
       break;
     default:
-      std::cout <<IDLE << ": " << machineState << std::endl;
       return "ERROR";
       break;
+  }
+}
+
+void MPS::setType() {
+  uint16_t send[1] = {(uint16_t) type};
+  int rc = modbus_write_registers(mb, 11, 1, send);
+  
+  if(rc == -1) {
+    machineState = DISCONNECTED;
   }
 }
