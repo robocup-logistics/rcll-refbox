@@ -66,15 +66,16 @@
           (if (not (any-factp ((?report exploration-report))
 			      (and (eq ?report:name ?name) (eq ?report:team ?team))))
 	  then
-	    (printout t "Invalid report: " ?name " of type " ?type " from other team. "
-		      "Awarding " ?*EXPLORATION-INVALID-REPORT-POINTS* " points" crlf)
-	    (assert (points (points ?*EXPLORATION-INVALID-REPORT-POINTS*)
-			    (phase EXPLORATION) (team ?team) (game-time ?game-time)
-			    (reason (str-cat "Report for machine of other team"
-					     ?name "|" ?type))))
-	    (assert (exploration-report (name ?name) (team ?team) (type ?type)
-					(game-time ?game-time) (correctly-reported FALSE)
-					(host ?from-host) (port ?from-port)))
+	    (printout t "Invalid report: " ?name " of type " ?type " from other team." crlf)
+            ; "Awarding " ?*EXPLORATION-INVALID-REPORT-POINTS* " points" crlf)
+	    ; (assert (points (points ?*EXPLORATION-INVALID-REPORT-POINTS*)
+	    ; 		    (phase EXPLORATION) (team ?team) (game-time ?game-time)
+	    ; 		    (reason (str-cat "Report for machine of other team"
+	    ; 				     ?name "|" ?type))))
+	    ; (assert (exploration-report (name ?name) (team ?team) (type ?type)
+	    ; 				(game-time ?game-time) (correctly-reported FALSE)
+	    ; 				(host ?from-host) (port ?from-port)))
+	    ; (modify ?machine (desired-lights RED-BLINK YELLOW-BLINK))
 	  )
 	else
           ; If it has not been reported, yet
