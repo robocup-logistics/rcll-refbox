@@ -78,117 +78,44 @@
   =>
   (assert (game-parameterized))
 
+  (bind ?ring-colors (create$))
+  (do-for-all-facts ((?rs ring-spec)) TRUE
+    (bind ?ring-colors (append$ ?ring-colors ?rs:color))
+  )
+  (bind ?ring-colors (randomize$ ?ring-colors))
+
   ; machine assignment if not already done
   (if (not (any-factp ((?mi machines-initialized)) TRUE))
-   then (machine-init-randomize))
+   then (machine-init-randomize ?ring-colors))
 
   ; reset orders, assign random times
-  ; (bind ?highest-order-id 0)
-  ; (delayed-do-for-all-facts ((?order order)) (eq ?order:team CYAN)
-  ;   (if (> ?order:id ?highest-order-id) then (bind ?highest-order-id ?order:id))
-  ;   (bind ?deliver-start
-  ;     (random (nth$ 1 ?order:start-range)
-  ; 	      (nth$ 2 ?order:start-range)))
-  ;   (bind ?deliver-end
-  ;     (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
-  ; 				(nth$ 2 ?order:duration-range))))
-  ;   (bind ?activation-pre-time
-  ; 	  (random ?*ORDER-ACTIVATION-PRE-TIME-MIN* ?*ORDER-ACTIVATION-PRE-TIME-MAX*))
-  ;   (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
-  ;   (modify ?order (active FALSE) (activate-at ?activate-at)
-  ; 	    (delivery-period ?deliver-start ?deliver-end))
-  ; )
+  (delayed-do-for-all-facts ((?order order)) TRUE
+    (bind ?deliver-start
+      (random (nth$ 1 ?order:start-range)
+              (nth$ 2 ?order:start-range)))
+    (bind ?deliver-end
+      (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
+				(nth$ 2 ?order:duration-range))))
+    (bind ?activation-pre-time
+          (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
+    (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
+    (bind ?gate (random 1 3))
+    (modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
+	    (delivery-period ?deliver-start ?deliver-end))
+  )
 
-  ; (do-for-all-facts ((?order order)) (eq ?order:team CYAN)
-  ;   (bind ?highest-order-id (+ ?highest-order-id 1))
-  ;   (assert (order (id ?highest-order-id) (team MAGENTA) (product ?order:product)
-  ; 		   (quantity-requested ?order:quantity-requested)
-  ; 		   (start-range ?order:start-range)
-  ; 		   (duration-range ?order:duration-range)
-  ; 		   (delivery-period ?order:delivery-period)
-  ; 		   (delivery-gate (machine-magenta-for-cyan-gate ?order:delivery-gate))
-  ; 		   (active ?order:active) (activate-at ?order:activate-at)
-  ; 		   (points ?order:points) (points-supernumerous ?order:points-supernumerous)))
-  ; )
-
-  ; Make sure all order periods are at least last production time + 30 seconds long
-  ; (delayed-do-for-all-facts ((?order order) (?mspec machine-spec))
-  ;   (eq ?order:product ?mspec:output)
-  ;   (bind ?min-time (+ ?mspec:proc-time ?*ORDER-MIN-DELIVER-TIME*))
-  ;   (bind ?delivery-time (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
-  ;   (if (< ?delivery-time ?min-time)
-  ;   then
-  ;     (bind ?new-end-time (+ (nth$ 2 ?order:delivery-period) (- ?min-time ?delivery-time)))
-  ;     (modify ?order (delivery-period (nth$ 1 ?order:delivery-period) ?new-end-time))
-  ;   )
-  ; )
-
-  ; ; make sure associated machines are not down during orders
-  ; (do-for-all-facts ((?order order) (?machine machine) (?spec machine-spec))
-  ;   (and (eq ?order:product ?spec:output) (eq ?machine:mtype ?spec:mtype)
-  ; 	 (>= (nth$ 1 ?machine:down-period) 0.0))
-
-  ;   (bind ?down-start (nth$ 1 ?machine:down-period))
-  ;   (bind ?down-end   (nth$ 2 ?machine:down-period))
-
-  ;   (bind ?order-start (nth$ 1 ?order:delivery-period))
-  ;   (bind ?order-end   (nth$ 2 ?order:delivery-period))
-
-  ;   (bind ?order-downtime-overlap-ratio
-  ; 	  (time-range-overlap-ratio ?order-start ?order-end ?down-start ?down-end))
-
-  ;   (if (> ?order-downtime-overlap-ratio ?*ORDER-MAX-DOWN-RATIO*)
-  ;    then ; final machine is down for at least half of the order time, reduce it
-  ;     (printout t "Order " ?order:id " and down-time " ?machine:name
-  ; 		" overlap too large: " ?order-downtime-overlap-ratio crlf)
-  ;     (printout t "M1 downtime: " 
-  ; 		  (time-sec-format ?down-start) " to " (time-sec-format ?down-end) crlf)
-  ;     (printout t "Order time:  " 
-  ; 		  (time-sec-format ?order-start) " to " (time-sec-format ?order-end) crlf)
-  ;     (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
-  ;      then
-  ;       ; the end of the order time is within the down time, shrink it
-  ;       (bind ?new-down-start (- ?order-end ?*ORDER-DOWN-SHRINK*))
-
-  ; 	(printout t "Order down-time conflict (1) for " ?machine:name "|" ?machine:mtype crlf)
-  ; 	(printout t "New downtime for " ?machine:name ": "
-  ; 		  (time-sec-format ?new-down-start) " to " (time-sec-format ?down-end)
-  ; 		  " (was " (time-sec-format ?down-start) " to "
-  ; 		  (time-sec-format ?down-end) ")" crlf)
-  ; 	(modify ?machine (down-period ?new-down-start ?down-end))
-  ;      else
-  ;       (if (and (>= ?order-start ?down-start) (< ?order-start ?down-end))
-  ;         then
-  ;         ; the start of the order time is within the down time, shrink it
-  ; 	  (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
-  ; 	  (printout t "Order down-time conflict (2) for " ?machine:name "|" ?machine:mtype crlf)
-  ; 	  (printout t "New downtime for " ?machine:name ": "
-  ; 		    (time-sec-format ?down-start) " to " (time-sec-format ?new-down-end)
-  ; 		    " (was " (time-sec-format ?down-start) " to "
-  ; 		    (time-sec-format ?down-end) ")" crlf)
-  ; 	  (modify ?machine (down-period ?down-start ?new-down-end))
-  ;        else
-  ;         (if (and (< ?order-start ?down-start) (> ?order-end ?down-end))
-  ; 	   then ; down time within order time
-  ; 	    (bind ?new-down-start ?order-start)
-  ; 	    (bind ?new-down-end (+ ?order-start ?*ORDER-DOWN-SHRINK*))
-  ; 	    (printout t "Order down-time conflict (3) for "
-  ; 		      ?machine:name "|" ?machine:mtype crlf)
-  ; 	    (printout t "New downtime for " ?machine:name ": "
-  ; 		      (time-sec-format ?new-down-start) " to " (time-sec-format ?new-down-end)
-  ; 		      " (was " (time-sec-format ?down-start) " to "
-  ; 		      (time-sec-format ?down-end) ")" crlf)
-  ; 	    (modify ?machine (down-period ?new-down-start ?new-down-end))
-  ; 	  )
-  ;       )
-  ;     )
-  ;   )
-  ; )
-
-  ; assign random quantities to non-late orders
-  ;(delayed-do-for-all-facts ((?order order)) (neq ?order:late-order TRUE)
-  ;  (modify ?order (quantity-requested (random ?*ORDER-QUANTITY-MIN* ?*ORDER-QUANTITY-MAX*)))
-  ;)
+  ; Randomize number of required additional bases
+  (bind ?m-add-bases (randomize$ (create$ 1 3)))
+  (do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 1 ?m-add-bases) ?ring-colors))
+    (modify ?ring (req-bases 2))
+  )
+  (do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 2 ?m-add-bases) ?ring-colors))
+    (modify ?ring (req-bases 1))
+  )
+  (delayed-do-for-all-facts ((?ring ring-spec))
+    (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
+    (modify ?ring (req-bases 0))
+  )
 )
 
 (defrule game-print
@@ -206,13 +133,25 @@
   )
 
   ; Print orders
-  ; (do-for-all-facts ((?order order)) TRUE
-  ;   (bind ?duration (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
-  ;   (printout ?t "Order " ?order:id " " (sub-string 1 2 ?order:team)
-  ; 	      ": " ?order:product " from " (time-sec-format (nth$ 1 ?order:delivery-period))
-  ; 	      " to " (time-sec-format (nth$ 2 ?order:delivery-period))
-  ; 	      " (@" (time-sec-format ?order:activate-at) " ~" ?duration "s)" crlf)
-  ; )
+  (do-for-all-facts ((?order order)) TRUE
+    (bind ?duration (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
+    (printout ?t "Order " ?order:id ": "
+	      ?order:complexity " (" ?order:base-color "|" (implode$ ?order:ring-colors)
+	      "|" ?order:cap-color ") from " (time-sec-format (nth$ 1 ?order:delivery-period))
+	      " to " (time-sec-format (nth$ 2 ?order:delivery-period))
+	      " (@" (time-sec-format ?order:activate-at) " ~" ?duration "s) "
+	      "D" ?order:delivery-gate crlf)
+  )
+
+  ; Print required additional bases
+  (do-for-all-facts ((?ring ring-spec)) TRUE
+    (printout t "Ring color " ?ring:color " requires " ?ring:req-bases " additional bases" crlf)
+  )
+
+  ; Print required additional bases
+  (do-for-all-facts ((?m machine)) (eq ?m:mtype RS)
+    (printout t "RS " ?m:name " as colors " ?m:rs-ring-colors crlf)
+  )
 )
 
 (defrule game-update-gametime-points
