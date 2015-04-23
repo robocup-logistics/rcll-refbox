@@ -53,8 +53,9 @@
   =>
   (printout t "Machine " ?name " is up again" crlf)
   (if (eq ?mps-state NONE)
-   then (modify ?mf (state ?prev-state))
-   else (modify ?mf (state ?prev-state) (mps-state ?mps-state) (mps-state-deferred NONE))
+   then (modify ?mf (state ?prev-state) (proc-state DOWN))
+   else (modify ?mf (state ?prev-state) (proc-state DOWN)
+		(mps-state ?mps-state) (mps-state-deferred NONE))
   )
 )
 
