@@ -17,14 +17,22 @@
  * \param ip address of mps
  * \param port port for modbus communication
  */
-MPSDeliver::MPSDeliver(const char* ip, int port) : MPS(ip, port), Thread("default", OPMODE_WAITFORWAKEUP) {
+MPSDeliver::MPSDeliver(const char* ip, int port)
+  : MPS(ip, port),
+    Thread("default", OPMODE_WAITFORWAKEUP)
+{
   type = 4;
   setType();
+  machineState = DISCONNECTED;
 }
 
-MPSDeliver::MPSDeliver(const char* ip, int port, const char* name) : MPS(ip, port), Thread(name, OPMODE_WAITFORWAKEUP) {
+MPSDeliver::MPSDeliver(const char* ip, int port, const char* name)
+  : MPS(ip, port),
+    Thread(name, OPMODE_WAITFORWAKEUP)
+{
   type = 4;
   setType();
+  machineState = DISCONNECTED;
 }
 
 /*!
@@ -124,7 +132,9 @@ void MPSDeliver::clearRegister() {
   }
 }
 
-MPSDeliver::MachineState MPSDeliver::getState() {
+MPSDeliver::MachineState
+MPSDeliver::getState()
+{
   uint16_t rec[1] = {0};
 
   int rc = modbus_read_input_registers(mb, 3, 1, rec);
