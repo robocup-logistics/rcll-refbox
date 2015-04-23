@@ -19,7 +19,7 @@
   (assert (attention-message (text (str-cat "Order " ?id ": " ?q " x " ?c " from "
 					    (time-sec-format (nth$ 1 ?period)) " to "
 					    (time-sec-format (nth$ 2 ?period))))
-			     (time ?atime)))
+			     (time (max 10 ?atime))))
 )
 
 ; Sort orders by ID, such that do-for-all-facts on the orders deftemplate
