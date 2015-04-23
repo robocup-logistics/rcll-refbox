@@ -71,3 +71,14 @@ void MPS::setType() {
     machineState = DISCONNECTED;
   }
 }
+
+void MPS::resetMachine() {
+  uint16_t send[1] = {(uint16_t) 1};
+  int rc = modbus_write_registers(mb, 11, 1, send);
+
+  std::cout << "Type: " << type << std::endl;
+  
+  if(rc == -1) {
+    machineState = DISCONNECTED;
+  }
+}

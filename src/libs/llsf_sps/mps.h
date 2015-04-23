@@ -90,6 +90,8 @@ class MPS {
   };
 
   void setType();
+
+  void resetMachine();
   
   virtual std::string machienStateString();
 
