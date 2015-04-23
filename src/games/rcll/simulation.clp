@@ -46,3 +46,52 @@
   (bind ?rtf (pb-field-value ?p "real_time_factor"))
   (modify ?st (now ?new-sim-time) (last-recv-time ?now) (real-time-factor ?rtf))
 )
+
+(defrule sim-mps-processed
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (machine (name ?n) (state PROCESSING))
+  =>
+  (assert (machine-mps-state (name ?n) (state PROCESSED)))
+)
+
+(deffunction mps-reset (?name)
+  (printout t "Simulated machine reset" crlf)
+)
+
+(deffunction mps-set-light (?name ?color ?state)
+  (printout t "Simulated light setting for " ?name ": " ?color "/" ?state crlf)
+)
+
+(deffunction mps-bs-dispense (?name ?color ?side)
+  (printout t "Simulated dispense at " ?name " for " ?color " at " ?side crlf)
+  (do-for-fact ((?m machine)) (eq ?m:name ?name)
+    (assert (machine-mps-state (name ?name) (state PROCESSED)))
+  )
+)
+(deffunction mps-ds-process (?name ?gate)
+  (printout t "Simulated delivery at " ?name " on lane " ?gate crlf)
+  (do-for-fact ((?m machine)) (eq ?m:name ?name)
+    (assert (machine-mps-state (name ?name) (state PROCESSED)))
+  )
+)
+
+(deffunction mps-rs-mount-ring (?name ?color)
+  (printout t "Simulated ring mounting " ?name " for " ?color crlf)
+  (do-for-fact ((?m machine)) (eq ?m:name ?name)
+    (assert (machine-mps-state (name ?name) (state PROCESSED)))
+  )
+)
+
+(deffunction mps-cs-process (?name ?cs-op)
+  (printout t "Simulated  " ?cs-op " at " ?name crlf)
+  (do-for-fact ((?m machine)) (eq ?m:name ?name)
+    (assert (machine-mps-state (name ?name) (state PROCESSED)))
+  )
+)
+
+(deffunction mps-deliver (?name)
+  (printout t "Simulated output at " ?name crlf)
+  (do-for-fact ((?m machine)) (eq ?m:name ?name)
+    (assert (machine-mps-state (name ?name) (state DELIVERED)))
+  )
+)
