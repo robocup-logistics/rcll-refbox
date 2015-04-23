@@ -244,6 +244,14 @@
   (slot reason (type STRING))
 )
 
+(deftemplate sim-time
+  (slot enabled (type SYMBOL) (allowed-values false true) (default false))
+  (slot estimate (type SYMBOL) (allowed-values false true) (default false))
+  (multislot now (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot last-recv-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot real-time-factor (type FLOAT) (default 0.0))
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg

@@ -140,6 +140,25 @@
   )
 )
 
+
+;this function returns the time regarding if the simulation-time and the time-estimation is used
+(deffunction get-time (?sim-time-sync-enabled ?sim-time-estimate-enabled ?real-time ?sim-time ?last-recv-time ?real-time-factor)
+  (if (eq ?sim-time-sync-enabled false)
+    then
+    (return ?real-time)
+    else
+    (if (eq ?sim-time-estimate-enabled false)
+      then
+      (return ?sim-time)
+      else
+      ;estimate time passed in the simulation
+      (bind ?interval (time-diff-sec ?real-time ?last-recv-time))
+      (bind ?est-interval (* ?interval ?real-time-factor))
+      (return (time-add ?sim-time (time-from-sec ?est-interval)))
+    )
+  )
+)
+
 ; --- RULES - general housekeeping
 (defrule retract-time
   (declare (salience ?*PRIORITY_TIME_RETRACT*))

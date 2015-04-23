@@ -11,10 +11,11 @@
 ; Set from refbox.cpp according to src/libs/core/version.h
 
 (load* (resolve-file net.clp))
+(if (config-get-bool "/llsfrb/simulation/enable")
+  then (printout t "Enabling simulation" crlf) (load* (resolve-file simulation.clp)))
 (load* (resolve-file machines.clp))
 (load* (resolve-file robots.clp))
 (load* (resolve-file orders.clp))
-(load* (resolve-file simulation.clp))
 (load* (resolve-file game.clp))
 (load* (resolve-file setup.clp))
 (load* (resolve-file production.clp))
@@ -53,6 +54,12 @@
   =>
   (printout t "Enabling MongoDB logging" crlf)
   (load* (resolve-file mongodb.clp))
+)
+(defrule simulation-disabled
+  (init)
+  (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
+  =>
+  (assert (sim-time (enabled false)))
 )
 
 (defrule reset-game
