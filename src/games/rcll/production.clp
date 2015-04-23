@@ -343,7 +343,7 @@
   ?m <- (machine (name ?n) (state READY-AT-OUTPUT) (proc-state ~READY-AT-OUTPUT))
   =>
   (printout t "Machine " ?n " finished processing, ready at output" crlf)
-  (modify ?m (proc-state READY-AT-OUTPUT))
+  (modify ?m (proc-state READY-AT-OUTPUT) (desired-lights YELLOW-ON))
 )
 
 
