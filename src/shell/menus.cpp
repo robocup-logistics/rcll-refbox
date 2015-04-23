@@ -37,6 +37,7 @@
 #include "menus.h"
 #include "colors.h"
 #include <boost/format.hpp>
+#include <google/protobuf/descriptor.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
