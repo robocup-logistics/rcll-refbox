@@ -94,6 +94,7 @@
 	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
 					  (game-time ?game-time) (correctly-reported TRUE)
 					  (team ?team) (host ?from-host) (port ?from-port)))
+	      (modify ?machine (desired-lights GREEN-BLINK))
             else ; wrong report
 	      (printout t "Wrong report: " ?name " (type " ?type ") in zone " ?zone ". "
 			"Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
@@ -104,6 +105,7 @@
 	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
 					  (game-time ?game-time) (correctly-reported FALSE)
 					  (team ?team) (host ?from-host) (port ?from-port)))
+	      (modify ?machine (desired-lights RED-BLINK))
 	    )
           )
         )
