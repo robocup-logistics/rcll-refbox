@@ -110,6 +110,8 @@ class LLSFRefBox
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
+  CLIPS::Value  clips_config_path_exists(std::string path);
+  CLIPS::Value  clips_config_get_bool(std::string path);
 
 #ifdef HAVE_MONGODB
   CLIPS::Value  clips_bson_create();
@@ -136,6 +138,7 @@ class LLSFRefBox
   void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
   void          clips_mps_rs_mount_ring(std::string machine, int slide);
   void          clips_mps_cs_process(std::string machine, std::string operation);
+  void          clips_mps_ds_process(std::string machine, int slide);
   void          clips_mps_set_light(std::string machine, std::string light, std::string state);
   void          clips_mps_reset(std::string machine);
   void          clips_mps_deliver(std::string machine);

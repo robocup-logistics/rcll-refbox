@@ -435,6 +435,11 @@ LLSFRefBox::setup_clips()
 
   clips_logger_ = mlogger;
 
+  bool simulation = false;
+  try {
+    simulation = config_->get_bool("/llsfrb/simulation/enabled");
+  } catch (Exception &e) {} // ignore, use default
+
   init_clips_logger(clips_->cobj(), logger_, clips_logger_);
 
   std::string defglobal_ver =
@@ -452,14 +457,19 @@ LLSFRefBox::setup_clips()
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
+  clips_->add_function("config-path-exists", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_path_exists)));
+  clips_->add_function("config-get-bool", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_path_exists)));
   clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
 
-  clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
-  clips_->add_function("mps-rs-mount-ring", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
-  clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
-  clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
-  clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
-  clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
+  if (mps_ && ! simulation) {
+    clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
+    clips_->add_function("mps-ds-process", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
+    clips_->add_function("mps-rs-mount-ring", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
+    clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
+    clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
+    clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
+    clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
+  }
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
@@ -560,6 +570,23 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
   }
 }
 
+CLIPS::Value
+LLSFRefBox::clips_config_path_exists(std::string path)
+{
+  return CLIPS::Value(config_->exists(path.c_str()) ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+}
+
+CLIPS::Value
+LLSFRefBox::clips_config_get_bool(std::string path)
+{
+  try {
+    bool v = config_->get_value(path.c_str());
+    return CLIPS::Value(v ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+  } catch (Exception &e) {
+    return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+  }
+}
+
 
 void
 LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::string state)
@@ -638,6 +665,23 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::s
     }
 
     station->getCap(color_id, side_id);
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+
+void
+LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
+{
+  logger_->log_info("MPS", "Processing on %s: slide %d",
+		    machine.c_str(), slide);
+  if (! mps_)  return;
+  MPSDeliver *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->sendDeliver(slide);
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
@@ -723,7 +767,7 @@ LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::str
       return;
     }
 
-    printf("Set light %i %i %i\n", color_id, state_id, blink_id);
+    //printf("Set light %i %i %i\n", color_id, state_id, blink_id);
     station->setLight(color_id, state_id, blink_id);
 
   } else {
@@ -1224,8 +1268,8 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
       if (mps_) {
 	std::map<std::string, std::string> machine_states = mps_->get_states();
 	for (const auto &ms : machine_states) {
-	  printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
-	         ms.first.c_str(), ms.second.c_str(), 0);
+	  //printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
+	  //       ms.first.c_str(), ms.second.c_str(), 0);
 	  clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
 				ms.first.c_str(), ms.second.c_str(), 0);
 	}
