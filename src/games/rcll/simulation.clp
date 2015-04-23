@@ -55,20 +55,24 @@
 )
 
 (deffunction mps-reset (?name)
+  (bind ?name (sym-cat ?name))
   (printout t "Simulated machine reset" crlf)
 )
 
 (deffunction mps-set-light (?name ?color ?state)
+  (bind ?name (sym-cat ?name))
   (printout t "Simulated light setting for " ?name ": " ?color "/" ?state crlf)
 )
 
 (deffunction mps-bs-dispense (?name ?color ?side)
+  (bind ?name (sym-cat ?name))
   (printout t "Simulated dispense at " ?name " for " ?color " at " ?side crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?name)
     (assert (machine-mps-state (name ?name) (state PROCESSED)))
   )
 )
 (deffunction mps-ds-process (?name ?gate)
+  (bind ?name (sym-cat ?name))
   (printout t "Simulated delivery at " ?name " on lane " ?gate crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?name)
     (assert (machine-mps-state (name ?name) (state PROCESSED)))
@@ -76,6 +80,7 @@
 )
 
 (deffunction mps-rs-mount-ring (?name ?color)
+  (bind ?name (sym-cat ?name))
   (printout t "Simulated ring mounting " ?name " for " ?color crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?name)
     (assert (machine-mps-state (name ?name) (state PROCESSED)))
@@ -83,6 +88,7 @@
 )
 
 (deffunction mps-cs-process (?name ?cs-op)
+  (bind ?name (sym-cat ?name))
   (printout t "Simulated  " ?cs-op " at " ?name crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?name)
     (assert (machine-mps-state (name ?name) (state PROCESSED)))
@@ -90,6 +96,7 @@
 )
 
 (deffunction mps-deliver (?name)
+  (bind ?name (sym-cat ?name))
   (printout t "Simulated output at " ?name crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?name)
     (assert (machine-mps-state (name ?name) (state DELIVERED)))
