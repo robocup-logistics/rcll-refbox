@@ -417,7 +417,7 @@
 	(pb-add-list ?m "lights" ?ls)
       )
 
-      (if (not (member$ (fact-slot-value ?mf state) (create$ IDLE BROKEN))) then
+      (if (not (member$ (fact-slot-value ?mf state) (create$ IDLE BROKEN DOWN))) then
 	(switch (fact-slot-value ?mf mtype)
 	  (case BS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionBS"))
