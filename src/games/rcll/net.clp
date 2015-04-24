@@ -405,7 +405,8 @@
         then (pb-set-field ?m "state" (fact-slot-value ?mf state))
         else (pb-set-field ?m "state" "")
       )
-      (pb-set-field ?m "loaded_with" (fact-slot-value ?mf loaded-with))
+      (pb-set-field ?m "loaded_with"
+        (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
 
       (foreach ?l (fact-slot-value ?mf actual-lights)
         (bind ?ls (pb-create "llsf_msgs.LightSpec"))

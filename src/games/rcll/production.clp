@@ -242,11 +242,13 @@
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (rs-ring-color ?ring-color) (loaded-with ?lw))
-  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(> ?req-bases ?lw)))
+		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
+  (ring-spec (color ?ring-color)
+	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
   =>
   (modify ?m (state BROKEN) (proc-state PROCESSING)
-	  (broken-reason (str-cat ?n ": insufficient bases (" ?lw " < " ?req-bases ")")))
+	  (broken-reason (str-cat ?n ": insufficient bases ("
+				  (- ?ba ?bu) " < " ?req-bases ")")))
 )
 
 (defrule prod-proc-state-processing-rs
@@ -254,8 +256,8 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (rs-ring-color ?ring-color) (loaded-with ?lw))
-  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= ?lw ?req-bases)))
+		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
   (printout t "Mounting ring " ?n crlf)
@@ -309,11 +311,11 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (proc-state ~PROCESSED)
-		 (rs-ring-color ?ring-color) (loaded-with ?lw))
+		 (rs-ring-color ?ring-color) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
-  (modify ?m (proc-state PROCESSED) (loaded-with (max 0 (- ?lw ?req-bases))))
+  (modify ?m (proc-state PROCESSED) (bases-used (+ ?bu ?req-bases)))
   (mps-deliver (str-cat ?n))
 )
 
@@ -370,11 +372,11 @@
 
 (defrule prod-proc-state-broken-recover
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state BROKEN)
+  ?m <- (machine (name ?n) (state BROKEN) (bases-added ?ba)
 		 (broken-since ?bs&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
   =>
   (printout t "Machine " ?n " recovered" crlf)
-  (modify ?m (state IDLE) (prev-state BROKEN) (loaded-with 0))
+  (modify ?m (state IDLE) (prev-state BROKEN) (bases-used ?ba))
 )
 
 
@@ -385,13 +387,13 @@
   ?ms <- (machine-mps-state (name ?n) (state ?mps-state) (num-bases ?num-bases))
   ?m <- (machine (name ?n) (state ?state))
   (or (machine (name ?n) (mps-state ~?mps-state))
-      (machine (name ?n) (loaded-with ~?num-bases)))
+      (machine (name ?n) (bases-added ~?num-bases)))
   =>
-  (printout t "Machine " ?n " MPS state " ?mps-state " (loaded: " ?num-bases ")" crlf)
+  (printout t "Machine " ?n " MPS state " ?mps-state " (bases added: " ?num-bases ")" crlf)
   (retract ?ms)
   (if (eq ?state DOWN)
-   then (modify ?m (mps-state-deferred ?mps-state) (loaded-with ?num-bases))
-   else (modify ?m (mps-state ?mps-state) (loaded-with ?num-bases))
+   then (modify ?m (mps-state-deferred ?mps-state) (bases-added ?num-bases))
+   else (modify ?m (mps-state ?mps-state) (bases-added ?num-bases))
   )
 )
 
@@ -417,7 +419,8 @@
 
 (defrule prod-machine-loaded-with-too-many
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state) (loaded-with ?lw&:(> ?lw ?*LOADED-WITH-MAX*)))
+  ?m <- (machine (name ?n) (state ?state) (bases-added ?ba)
+		 (bases-used ?bu&:(> (- ?ba ?bu) ?*LOADED-WITH-MAX*)))
   =>
   (modify ?m (state BROKEN) (prev-state ?state)
 	  (broken-reason (str-cat ?n ": too many additional bases loaded")))
@@ -464,7 +467,7 @@
   (bind ?state (sym-cat (pb-field-value ?p "state")))
   (printout t "Received state " ?state " for machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-    (assert (machine-mps-state (name ?mname) (state ?state) (num-bases ?m:loaded-with)))
+    (assert (machine-mps-state (name ?mname) (state ?state) (num-bases ?m:bases-added)))
   )
 )
 
@@ -477,6 +480,6 @@
   (printout t "Add base to machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
     (assert (machine-mps-state (name ?mname) (state ?m:mps-state)
-			       (num-bases (+ ?m:loaded-with 1))))
+			       (num-bases (+ ?m:bases-added 1))))
   )
 )

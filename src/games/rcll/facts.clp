@@ -12,7 +12,6 @@
 	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot mtype (type SYMBOL) (allowed-values BS DS RS CS))
-  (slot loaded-with (type INTEGER) (default 0))
   (multislot actual-lights (type SYMBOL)
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
 	     (default) (cardinality 0 3))
@@ -45,6 +44,8 @@
 
   (slot prep-blink-start (type FLOAT))
   (slot retrieved-at (type FLOAT))
+  (slot bases-added (type INTEGER) (default 0))
+  (slot bases-used (type INTEGER) (default 0))
 
   ; machine type specific slots
   (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))

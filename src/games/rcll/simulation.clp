@@ -49,14 +49,22 @@
 
 (defrule sim-mps-processed
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  (machine (name ?n) (state PROCESSING))
+  (machine (name ?n) (state PROCESSING) (bases-added ?ba))
   =>
-  (assert (machine-mps-state (name ?n) (state PROCESSED)))
+  (assert (machine-mps-state (name ?n) (state PROCESSED) (num-bases ?ba)))
 )
 
 (deffunction mps-reset (?name)
   (bind ?name (sym-cat ?name))
   (printout t "Simulated machine reset" crlf)
+)
+
+(deffunction mps-reset-base-counter (?name)
+  (bind ?mname (sym-cat ?name))
+  (printout t "Reset base counter for " ?name crlf)
+  (do-for-fact ((?m machine)) (eq ?m:name ?mname)
+    (assert (machine-mps-state (name ?mname) (state ?m:state) (num-bases 0)))
+  )
 )
 
 (deffunction mps-set-light (?name ?color ?state)
@@ -83,7 +91,7 @@
   (bind ?name (sym-cat ?name))
   (printout t "Simulated ring mounting " ?name " for " ?color crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?name)
-    (assert (machine-mps-state (name ?name) (state PROCESSED)))
+    (assert (machine-mps-state (name ?name) (state PROCESSED) (num-bases ?m:bases-added)))
   )
 )
 
@@ -99,6 +107,6 @@
   (bind ?name (sym-cat ?name))
   (printout t "Simulated output at " ?name crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?name)
-    (assert (machine-mps-state (name ?name) (state DELIVERED)))
+    (assert (machine-mps-state (name ?name) (state DELIVERED) (num-bases ?m:bases-added)))
   )
 )
