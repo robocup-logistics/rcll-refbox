@@ -392,7 +392,7 @@
     (if (neq ?zone TBD) then
       (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
     )
-    (if (and (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
+    (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
 	     (eq ?mtype RS) (> (length$ (fact-slot-value ?mf rs-ring-colors)) 0))
      then
      (foreach ?rc (fact-slot-value ?mf rs-ring-colors)
