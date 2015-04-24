@@ -207,3 +207,22 @@ void MPSPickPlace2::loop() {
 int MPSPickPlace2::getCountSlide() {
   return countSlide;
 }
+
+void MPSPickPlace2::resetCounterSlide() {
+  uint16_t send[1] = {1};
+
+  int rc = modbus_write_registers(mb, 2, 1, send);
+
+  if (rc == -1) {
+    machineState = DISCONNECTED;
+  }
+
+  send[0] = 0;
+  rc = modbus_write_registers(mb, 2, 1, send);
+
+  if(rc == -1) {
+    machineState = DISCONNECTED;
+  }
+
+  countSlide = 0;
+}

@@ -86,6 +86,8 @@ class MPSPickPlace2 : public MPS, public Thread {
   void loop();
 
   int getCountSlide();
+
+  void resetCounterSlide();
 };
 
 #endif // MPSPICKPLACE2_H
