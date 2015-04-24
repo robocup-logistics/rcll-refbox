@@ -12,6 +12,7 @@
   ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
   (modify ?mf (desired-lights))
+  (mps-reset (str-cat ?m))
 )
 
 
@@ -78,7 +79,6 @@
 
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (mps-reset ?machine:name)
     (modify ?machine (loaded-with 0) (productions 0) (state IDLE)
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
