@@ -398,7 +398,7 @@
 
 (defrule prod-machine-input-not-prepared
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state&~PREPARED&~BROKEN) (mps-state AVAILABLE))
+  ?m <- (machine (name ?n) (state ?state&~PREPARED&~BROKEN&~DOWN) (mps-state AVAILABLE))
   =>
   (modify ?m (state BROKEN) (prev-state ?state)
 	  (broken-reason (str-cat "Input to " ?n " while not prepared " ?state)))
