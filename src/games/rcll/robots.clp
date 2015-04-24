@@ -137,7 +137,7 @@
 					      " has changed name from " ?r-name
 					      " to " ?peer-name))))
   )
-  (modify ?rf (state ACTIVE) (warning-sent FALSE) (last-seen ?t)
+  (modify ?rf (warning-sent FALSE) (last-seen ?t)
 	  (name ?peer-name) (team-color ?team-color) (host ?host) (port ?port)
 	  (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time))
 )
