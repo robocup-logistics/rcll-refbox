@@ -241,7 +241,7 @@
   "Must check sufficient number of bases for RS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING)
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (rs-ring-color ?ring-color) (loaded-with ?lw))
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(> ?req-bases ?lw)))
   =>
