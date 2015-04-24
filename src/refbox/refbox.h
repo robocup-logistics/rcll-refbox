@@ -141,6 +141,7 @@ class LLSFRefBox
   void          clips_mps_ds_process(std::string machine, int slide);
   void          clips_mps_set_light(std::string machine, std::string light, std::string state);
   void          clips_mps_reset(std::string machine);
+  void          clips_mps_reset_base_counter(std::string machine);
   void          clips_mps_deliver(std::string machine);
   void          sps_read_rfids();
 

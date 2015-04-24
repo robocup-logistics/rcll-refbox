@@ -468,6 +468,7 @@ LLSFRefBox::setup_clips()
     clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
     clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
     clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
+    clips_->add_function("mps-reset-base-counter", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
     clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
   }
 
@@ -611,6 +612,22 @@ LLSFRefBox::clips_mps_reset(std::string machine)
   if (station) {
     station->resetMachine();
     station->clearRegister();
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+void
+LLSFRefBox::clips_mps_reset_base_counter(std::string machine)
+{
+  logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
+
+  if (! mps_)  return;
+  MPSPickPlace2 *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->resetCounterSlide();
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
