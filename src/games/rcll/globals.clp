@@ -44,21 +44,10 @@
   ?*LOADED-WITH-MAX* = 3
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
-  ; Delivery gate active times
-  ?*DELIVERY-GATE-MIN-TIME* =  60
-  ?*DELIVERY-GATE-MAX-TIME* = 180
-  ; Grace time for accepted delivery after machine down
-  ?*DELIVERY-GATE-GRACE-TIME* = 3
   ; How long to wait after retrieval to switch to IDLE state
   ?*RETRIEVE-WAIT-IDLE-TIME* = 5
   ; number of products per order
-  ?*ORDER-ACTIVATION-PRE-TIME-MIN* = 10
-  ?*ORDER-ACTIVATION-PRE-TIME-MAX* = 60
-  ?*ORDER-MIN-DELIVER-TIME* = 30
-  ?*ORDER-MAX-DOWN-RATIO* = 0.5
-  ?*ORDER-DOWN-SHRINK* = 20
   ; number of points for specific actions
-  ?*RECYCLE-POINTS* = 5
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 8
   ?*EXPLORATION-WRONG-REPORT-POINTS* = -6
   ?*EXPLORATION-INVALID-REPORT-POINTS* = -6
