@@ -609,6 +609,7 @@ LLSFRefBox::clips_mps_reset(std::string machine)
   MPS *station;
   station = mps_->get_station(machine, station);
   if (station) {
+    station->resetMachine();
     station->clearRegister();
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());

@@ -241,7 +241,7 @@
   "Must check sufficient number of bases for RS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING)
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (rs-ring-color ?ring-color) (loaded-with ?lw))
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(> ?req-bases ?lw)))
   =>
@@ -346,6 +346,16 @@
   (modify ?m (proc-state READY-AT-OUTPUT) (desired-lights YELLOW-ON))
 )
 
+(defrule prod-proc-state-retrieval-timeout
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (state WAIT-IDLE)
+		 (retrieved-at ?r&:(timeout-sec ?gt ?r ?*RETRIEVE-WAIT-IDLE-TIME*)))
+  =>
+  (printout t "retrieval timeout, going to IDLE" crlf)
+  (modify ?m (state IDLE) (proc-state WAIT-IDLE))
+)
+
+
 
 (defrule prod-proc-state-broken
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -398,7 +408,7 @@
 
 (defrule prod-machine-input-not-prepared
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state&~PREPARED&~BROKEN) (mps-state AVAILABLE))
+  ?m <- (machine (name ?n) (state ?state&~PREPARED&~BROKEN&~DOWN) (mps-state AVAILABLE))
   =>
   (modify ?m (state BROKEN) (prev-state ?state)
 	  (broken-reason (str-cat "Input to " ?n " while not prepared " ?state)))
@@ -430,19 +440,18 @@
 
 (defrule prod-machine-ready-at-output
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSED) (mps-state DELIVERED)
+  ?m <- (machine (name ?n) (state PROCESSED|WAIT-IDLE) (mps-state DELIVERED)
 		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
   =>
   (modify ?m (state READY-AT-OUTPUT))
 )
-
 
 (defrule prod-machine-retrieved
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-state RETRIEVED)
 		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
   =>
-  (modify ?m (state IDLE))
+  (modify ?m (state WAIT-IDLE) (retrieved-at ?gt))
 )
 
 

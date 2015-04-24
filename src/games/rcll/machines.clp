@@ -12,6 +12,7 @@
   ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
   (modify ?mf (desired-lights))
+  (mps-reset (str-cat ?m))
 )
 
 
@@ -51,7 +52,7 @@
   (return (sym-cat M- (sub-string 3 (str-length ?m-cyan) ?m-cyan)))
 )
 
-(deffunction machine-init-randomize ()
+(deffunction machine-init-randomize (?ring-colors)
   (if ?*RANDOMIZE-GAME* then
     ; Gather all available light codes
     (bind ?light-codes (create$))
@@ -78,7 +79,6 @@
 
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (mps-reset ?machine:name)
     (modify ?machine (loaded-with 0) (productions 0) (state IDLE)
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
@@ -156,6 +156,20 @@
     (printout t "Machines " ?m-cyan:name "/" ?m-magenta:name " exploration string:" ?rs crlf)
     (modify ?m-cyan (exploration-type ?rs))
     (modify ?m-magenta (exploration-type ?rs))
+  )
+
+  ; Randomize ring colors per machine
+  (do-for-fact ((?m-cyan machine) (?m-magenta machine))
+    (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
+
+    (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+    (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+  )
+  (do-for-fact ((?m-cyan machine) (?m-magenta machine))
+    (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
+
+    (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+    (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
   )
 
   (assert (machines-initialized))

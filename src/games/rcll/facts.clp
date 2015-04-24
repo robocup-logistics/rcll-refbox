@@ -22,7 +22,7 @@
   (slot productions (type INTEGER) (default 0))
   ; Overall refbox machine state
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
-					    PROCESSED READY-AT-OUTPUT WAITING DOWN INVALID))
+					    PROCESSED READY-AT-OUTPUT WAIT-IDLE DOWN))
   ; Set on processing a state change
   (slot proc-state (type SYMBOL) (default IDLE))
   (slot prev-state (type SYMBOL) (default IDLE))
@@ -44,6 +44,7 @@
   (slot exploration-type (type STRING))
 
   (slot prep-blink-start (type FLOAT))
+  (slot retrieved-at (type FLOAT))
 
   ; machine type specific slots
   (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
