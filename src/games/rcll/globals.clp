@@ -49,6 +49,8 @@
   ?*DELIVERY-GATE-MAX-TIME* = 180
   ; Grace time for accepted delivery after machine down
   ?*DELIVERY-GATE-GRACE-TIME* = 3
+  ; How long to wait after retrieval to switch to IDLE state
+  ?*RETRIEVE-WAIT-IDLE-TIME* = 5
   ; number of products per order
   ?*ORDER-ACTIVATION-PRE-TIME-MIN* = 10
   ?*ORDER-ACTIVATION-PRE-TIME-MAX* = 60

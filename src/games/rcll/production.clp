@@ -346,6 +346,16 @@
   (modify ?m (proc-state READY-AT-OUTPUT) (desired-lights YELLOW-ON))
 )
 
+(defrule prod-proc-state-retrieval-timeout
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (state WAIT-IDLE)
+		 (retrieved-at ?r&:(timeout-sec ?gt ?r ?*RETRIEVE-WAIT-IDLE-TIME*)))
+  =>
+  (printout t "retrieval timeout, going to IDLE" crlf)
+  (modify ?m (state IDLE) (proc-state WAIT-IDLE))
+)
+
+
 
 (defrule prod-proc-state-broken
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -430,19 +440,18 @@
 
 (defrule prod-machine-ready-at-output
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSED) (mps-state DELIVERED)
+  ?m <- (machine (name ?n) (state PROCESSED|WAIT-IDLE) (mps-state DELIVERED)
 		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
   =>
   (modify ?m (state READY-AT-OUTPUT))
 )
-
 
 (defrule prod-machine-retrieved
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-state RETRIEVED)
 		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
   =>
-  (modify ?m (state IDLE))
+  (modify ?m (state WAIT-IDLE) (retrieved-at ?gt))
 )
 
 
