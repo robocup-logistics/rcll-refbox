@@ -55,21 +55,21 @@
 )
 
 (deffunction mps-reset (?name)
-  (bind ?name (sym-cat ?name))
-  (printout t "Simulated machine reset" crlf)
+  ;(bind ?name (sym-cat ?name))
+  ;(printout t "Simulated machine reset" crlf)
 )
 
 (deffunction mps-reset-base-counter (?name)
   (bind ?mname (sym-cat ?name))
-  (printout t "Reset base counter for " ?name crlf)
+  ;(printout t "Reset base counter for " ?name crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
     (assert (machine-mps-state (name ?mname) (state ?m:state) (num-bases 0)))
   )
 )
 
 (deffunction mps-set-light (?name ?color ?state)
-  (bind ?name (sym-cat ?name))
-  (printout t "Simulated light setting for " ?name ": " ?color "/" ?state crlf)
+  ;(bind ?name (sym-cat ?name))
+  ;(printout t "Simulated light setting for " ?name ": " ?color "/" ?state crlf)
 )
 
 (deffunction mps-bs-dispense (?name ?color ?side)
