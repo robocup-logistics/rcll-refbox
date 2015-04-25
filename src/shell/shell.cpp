@@ -941,23 +941,23 @@ LLSFRefBoxShell::run()
   panel_->addch(2, 0, ACS_LTEE);
   panel_->addch(2, panel_->width() - 26, ACS_RTEE);
 
-  int rb_log_lines   = panel_->maxy() - 15;
+  int rb_log_lines   = height - 10;
 
   //panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
   //panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
   //panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
 
-  panel_->hline(rb_log_lines + 8, 1, panel_->width() - 26);
-  panel_->addch(rb_log_lines + 8, 0, ACS_LTEE);
-  panel_->addch(rb_log_lines + 8, panel_->width() - 26, ACS_PLUS);
+  panel_->hline(height - 7, 1, panel_->width() - 26);
+  panel_->addch(height - 7, 0, ACS_LTEE);
+  panel_->addch(height - 7, panel_->width() - 26, ACS_PLUS);
 
   panel_->attron(A_BOLD);
   panel_->addstr(0, panel_->width() - 17, "Machines");
   panel_->addstr(0, (panel_->width() - 26) / 2 - 7, "Attention Message");
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
   panel_->addstr(13, panel_->width() - 16, "Robots");
-  panel_->addstr(height-5, panel_->width() - 15, "Game");
-  panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 2, "Orders");
+  panel_->addstr(height-7, panel_->width() - 15, "Game");
+  panel_->addstr(height-7, (panel_->width() - 26) / 2 - 2, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
@@ -1011,6 +1011,9 @@ LLSFRefBoxShell::run()
 
   rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
   rb_log_->scrollok(TRUE);
+  for (unsigned int i = 0; i < 40; ++i) {
+    logf("%u", i);
+  }
 
   const int mx = panel_->width() - 25;
   std::vector<std::string> mnames = {"C-BS", "C-DS", "C-RS1", "C-RS2", "C-CS1", "C-CS2",
@@ -1038,7 +1041,7 @@ LLSFRefBoxShell::run()
 
   orders_.resize(12, NULL);
   for (size_t i = 0; i < orders_.size(); ++i) {
-    orders_[i] = new LLSFRefBoxShellOrder(rb_log_lines + 9 + i / 2,
+    orders_[i] = new LLSFRefBoxShellOrder(height - 6 + i / 2,
 					  (i % 2) ? ((panel_->width() - 24) / 2) : 1);
     orders_[i]->refresh();
   }
