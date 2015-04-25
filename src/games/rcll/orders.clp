@@ -15,11 +15,10 @@
   =>
   (modify ?of (active TRUE))
   (modify ?sf (count 1) (time 0 0))
-  (bind ?atime (- (nth$ 1 ?period) ?at))
   (assert (attention-message (text (str-cat "Order " ?id ": " ?q " x " ?c " from "
 					    (time-sec-format (nth$ 1 ?period)) " to "
 					    (time-sec-format (nth$ 2 ?period))))
-			     (time (max 10 ?atime))))
+			     (time 10)))
 )
 
 ; Sort orders by ID, such that do-for-all-facts on the orders deftemplate
