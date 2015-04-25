@@ -53,9 +53,9 @@
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (product-delivered (game-time ?game-time) (order ?id) (team ?team))
   ; the actual order we are delivering
-  ?of <- (order (id ?id) (active TRUE) (quantity-requested ?q-req)
+  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (ring-colors $?ring-colors)
 		(points ?order-points) (points-supernumerous ?order-points-supernumerous)
-		(quantity-delivered $?q-del) (delivery-gate ?dg)
+		(quantity-requested ?q-req) (quantity-delivered $?q-del) (delivery-gate ?dg)
 		(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
   =>
   (retract ?pf)
@@ -67,27 +67,85 @@
 
   (modify ?of (quantity-delivered ?q-del-new))
   (if (< (nth$ ?q-del-idx ?q-del) ?q-req)
-   then (bind ?addp ?order-points)
-   else (bind ?addp ?order-points-supernumerous)
+   then
+    (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+		    (points ?order-points) 
+		    (reason (str-cat "Delivered item for order " ?id))))
+
+    (foreach ?r ?ring-colors
+      (do-for-fact ((?rs ring-spec)) (eq ?rs:color ?r)
+        (assert (points (game-time ?game-time)
+			(points (* ?rs:req-bases ?*POINTS-PER-ADDITIONAL-BASE*))
+			(team ?team) (phase PRODUCTION)
+			(reason (str-cat "Mounted ring of CC" ?rs:req-bases
+					 " for order " ?id))))
+      )
+    )
+    (bind ?complexity-num (length$ ?ring-colors))
+    (if (> ?complexity-num 0) then
+      (assert (points (game-time ?game-time) (points (* ?complexity-num ?*POINTS-PER-RING*))
+		      (team ?team) (phase PRODUCTION)
+		      (reason (str-cat "Mounted last ring for complexity "
+				       ?complexity " order " ?id))))
+    )
+    
+    (assert (points (game-time ?game-time) (points ?*POINTS-MOUNT-CAP*)
+		    (team ?team) (phase PRODUCTION)
+		    (reason (str-cat "Mounted cap for order " ?id))))
+
+   else
+    (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+		    (points ?order-points-supernumerous) 
+		    (reason (str-cat "Delivered item for order " ?id))))
   )
-  (printout t "Delivered item for order " ?id ". Awarding " ?addp " points" crlf)
-  (assert (points (game-time ?game-time) (points ?addp) (team ?team) (phase PRODUCTION)
-                  (reason (str-cat "Delivered item for order " ?id))))
 )
 
 (defrule order-delivered-out-of-time
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (product-delivered (game-time ?game-time) (order ?id) (team ?team))
   ; the actual order we are delivering
-  (not (order (active TRUE) (id ?id)
-	      (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))))
+  ?of <- (order (active TRUE) (id ?id)
+		(quantity-delivered $?q-del) (quantity-requested ?q-req)
+		(delivery-period $?dp2&:(or (< ?gt (nth$ 1 ?dp2)) (> ?gt (nth$ 2 ?dp2)))))
   =>
   (retract ?pf)
-  (bind ?addp ?*DELIVER-WITH-NO-ACTIVE-ORDER*)
-  (printout t "Product for order " ?id " delivered. Awarding " ?addp
-	    " points (no active order)" crlf)
-  (assert (points (game-time ?game-time) (points ?addp) (team ?team) (phase PRODUCTION)
-                  (reason (str-cat "Delivered item for order " ?id " (no active order)"))))
+
+  (if (eq ?team CYAN)
+   then (bind ?q-del-idx 1)
+   else (bind ?q-del-idx 2)
+  )
+  (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
+  (modify ?of (quantity-delivered ?q-del-new))
+
+  (if (> (nth$ ?q-del-idx ?q-del-new)  ?q-req)
+   then
+    (assert (points (game-time ?game-time) (points ?*POINTS-DELIVER-OUT-OF-TIME*)
+		    (team ?team) (phase PRODUCTION)
+		    (reason (str-cat "Delivered item for order " ?id
+				     " (order already fulfilled)"))))
+   else
+    (if (< ?gt (nth$ 1 ?dp2))
+     then
+      (assert (points (game-time ?game-time) (points ?*POINTS-DELIVER-OUT-OF-TIME*)
+		      (team ?team) (phase PRODUCTION)
+		      (reason (str-cat "Delivered item for order " ?id
+				       " (ahead of time window)"))))
+     else
+      (if (< (- ?gt (nth$ 2 ?dp2)) ?*DELIVER-MAX-LATENESS-TIME*)
+       then
+        ; 20 - floor(T_d - T_e) * 2
+        (bind ?points-per-sec (/ ?*POINTS-DELIVER* ?*DELIVER-MAX-LATENESS-TIME*))
+        (bind ?lateness (- ?*POINTS-DELIVER* (* (floor (- ?gt ?game-time)) ?points-per-sec)))
+      )
+    ) 
+  )
+)
+
+(defrule order-print-points
+  (points (game-time ?gt) (points ?points) (team ?team) (phase ?phase) (reason ?reason))
+  =>
+  (printout t "Awarding " ?points " points to team " ?team ": " ?reason
+	    " (" ?phase " @ " ?gt ")" crlf)
 )
 
 ; (defrule order-delivered-in-time

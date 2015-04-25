@@ -175,7 +175,7 @@
   (slot active (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot activate-at (type INTEGER) (default 0))
   (multislot activation-range (type INTEGER) (cardinality 2 2) (default 60 120))
-  (slot points (type INTEGER) (default 10))
+  (slot points (type INTEGER) (default ?*POINTS-DELIVER*))
   (slot points-supernumerous (type INTEGER) (default 1))
 )
 

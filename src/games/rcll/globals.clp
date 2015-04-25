@@ -46,13 +46,18 @@
   ?*PREPARED-BLINK-TIME* = 3
   ; How long to wait after retrieval to switch to IDLE state
   ?*RETRIEVE-WAIT-IDLE-TIME* = 5
-  ; number of products per order
+
+  ?*POINTS-MOUNT-CAP* = 2
+  ?*POINTS-PER-ADDITIONAL-BASE* = 4
+  ?*POINTS-PER-RING* = 4
+  ?*POINTS-DELIVER-OUT-OF-TIME* = 1
+  ?*POINTS-DELIVER* = 20
+  ?*DELIVER-MAX-LATENESS-TIME* = 10
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-POINTS* = 8
   ?*EXPLORATION-WRONG-REPORT-POINTS* = -6
   ?*EXPLORATION-INVALID-REPORT-POINTS* = -6
   ?*PRODUCTION-WRONG-TEAM-MACHINE-POINTS* = -2
-  ?*DELIVER-WITH-NO-ACTIVE-ORDER* = 1
   ; Setup light effects
   ?*SETUP-LIGHT-PERIOD* = 1.0
   ?*SETUP-LIGHT-PERIOD-1* = 0.5
@@ -76,8 +81,6 @@
   ?*EXPLORATION-TIME*     = 240
   ?*PRODUCTION-TIME*      = 900
   ?*PRODUCTION-OVERTIME*  = 300
-  ; Machine types that may always be announced
-  ?*MACHINE-UNRESTRICTED-TYPES* = (create$ DELIVER RECYCLE)
   ; Machine distribution
   ?*RANDOMIZE-GAME* = TRUE
   ?*MACHINE-DISTRIBUTION* = (create$ T1 T1 T1 T1 T2 T2 T2 T3 T3 T4 T4 T5)
