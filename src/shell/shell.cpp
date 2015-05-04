@@ -1011,9 +1011,6 @@ LLSFRefBoxShell::run()
 
   rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
   rb_log_->scrollok(TRUE);
-  for (unsigned int i = 0; i < 40; ++i) {
-    logf("%u", i);
-  }
 
   const int mx = panel_->width() - 25;
   std::vector<std::string> mnames = {"C-BS", "C-DS", "C-RS1", "C-RS2", "C-CS1", "C-CS2",
