@@ -57,7 +57,7 @@ class MPSRefboxInterface {
   std::map<std::string, std::string> get_states();
 
   template<class C>
-  C get_station(std::string &name, C &machine)
+  C get_station(const std::string &name, C &machine)
   {
     if (mpses_.find(name) == mpses_.end()) {
       return NULL;
