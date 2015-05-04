@@ -1288,8 +1288,15 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
 	for (const auto &ms : machine_states) {
 	  //printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
 	  //       ms.first.c_str(), ms.second.c_str(), 0);
+          std::string type = ms.first.substr(2, 2);
+          unsigned int num_bases = 0;
+          if (type == "RS") {
+            MPSPickPlace2 *station;
+            station = mps_->get_station(ms.first, station);
+            if (station)  num_bases = station->getCountSlide();
+          }
 	  clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
-				ms.first.c_str(), ms.second.c_str(), 0);
+				ms.first.c_str(), ms.second.c_str(), num_bases);
 	}
       }
 
