@@ -64,8 +64,6 @@ std::string MPS::machienStateString() {
 void MPS::setType() {
   uint16_t send[1] = {(uint16_t) type};
   int rc = modbus_write_registers(mb, 10, 1, send);
-
-  std::cout << "Type: " << type << std::endl;
   
   if(rc == -1) {
     machineState = DISCONNECTED;
@@ -74,10 +72,29 @@ void MPS::setType() {
 
 void MPS::resetMachine() {
   uint16_t send[1] = {(uint16_t) 10};
+
   int rc = modbus_write_registers(mb, 0, 1, send);
 
-  std::cout << "Type: " << type << std::endl;
-  
+  if(rc == -1) {
+    machineState = DISCONNECTED;
+  }
+}
+
+/* lights[0] is the green light
+   lights[1] is the yellow light
+   lights[2] is the red light
+
+   Each light can have 3 values.
+   0 = light is off
+   1 = light is on
+   2 = light blinks
+*/
+void
+MPS::setAllLights(int lights[3]) {
+  uint16_t send[3] = {(uint16_t) lights[0], (uint16_t) lights[1], (uint16_t) lights[2]};
+
+  int rc = modbus_write_registers(mb, 3, 3, send);
+
   if(rc == -1) {
     machineState = DISCONNECTED;
   }

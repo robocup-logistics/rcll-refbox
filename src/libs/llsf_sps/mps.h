@@ -102,6 +102,7 @@ class MPS {
    */
   virtual void setLight(int light, int state, int blink) = 0;
 
+  void setAllLights(int lights[3]);
 
   virtual void clearRegister() = 0;
 

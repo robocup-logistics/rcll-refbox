@@ -157,6 +157,8 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 	llsf_msgs::PrepareInstructionBS *prep_bs = prep.mutable_instruction_bs();
 	prep_bs->set_side(bs_side_);
 	prep_bs->set_color(bs_color_);
+	printf("Set BS side %s  color %s\n", llsf_msgs::MachineSide_Name(bs_side_).c_str(),
+	       llsf_msgs::BaseColor_Name(bs_color_).c_str());
       } else if (machine_type_ == "DS") {
 	llsf_msgs::PrepareInstructionDS *prep_ds = prep.mutable_instruction_ds();
 	prep_ds->set_gate(ds_gate_);
