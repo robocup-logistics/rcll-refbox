@@ -122,20 +122,28 @@ bool MPSPickPlace2::isEmpty() {
  */
 void MPSPickPlace2::setLight(int light, int state, int blink) {
   int rc;
-  uint16_t send[1] = {(uint16_t)state};
-  uint16_t sendblink[1] = {(uint16_t)blink};
+  uint16_t send[1] = {0};
+
+  if(state == 1 && blink == 0) {
+    send[0] = 1;
+  }
+  else if(state == 1 && blink == 1) {
+    send[0] = 2;
+  }
+
+  //uint16_t sendblink[1] = {(uint16_t)blink};
   
   if(light == 1) {
     rc = modbus_write_registers(mb, 3, 1, send);
-    rc = modbus_write_registers(mb, 6, 1, sendblink);
+    //rc = modbus_write_registers(mb, 6, 1, sendblink);
   }
   else if(light == 2) {
     rc = modbus_write_registers(mb, 4, 1, send);
-    rc = modbus_write_registers(mb, 7, 1, sendblink);
+    //rc = modbus_write_registers(mb, 7, 1, sendblink);
   }
   else if(light == 3) {
     rc = modbus_write_registers(mb, 5, 1, send);
-    rc = modbus_write_registers(mb, 8, 1, sendblink);
+    //rc = modbus_write_registers(mb, 8, 1, sendblink);
   }
   else {
     throw fawkes::Exception("Cannot set light state");

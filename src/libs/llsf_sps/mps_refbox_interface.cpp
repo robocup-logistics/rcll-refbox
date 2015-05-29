@@ -26,15 +26,15 @@
 */
 MPSRefboxInterface::MPSRefboxInterface()
 {  
-  __max_thread_time_usec = 30000; // thread timeout in usecs
-  __max_thread_time_sec  = 1;     // thread timeout in nanosecs
+  __max_thread_time_usec = 30000; // thread timeout in microsecs
+  __max_thread_time_sec  = 0;     
   mpsThreadList = new ThreadList(true, "MPSList");
 }
 
 MPSRefboxInterface::MPSRefboxInterface(const char* name)
 {
-  __max_thread_time_usec = 30000; // thread timeout in usecs
-  __max_thread_time_sec  = 1;     // thread timeout in nanosecs
+  __max_thread_time_usec = 30000; // thread timeout in microsecs
+  __max_thread_time_sec  = 0;     
   mpsThreadList = new ThreadList(true, "MPSList");
 }
 

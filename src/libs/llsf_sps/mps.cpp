@@ -8,6 +8,12 @@ MPS::MPS(const char* ip, int port) {
 
   this->mb = modbus_new_tcp(this->ip, this->port);
 
+  // set new timeout
+  struct timeval response_timeout;
+  response_timeout.tv_sec = 5;      // timeout in seconds
+  response_timeout.tv_usec = 0;     // timeout in microseconds
+  modbus_set_response_timeout(this->mb, &response_timeout);
+
   machineState = IDLE;
   
   if(modbus_connect(this->mb) == -1) {
@@ -23,8 +29,17 @@ MPS::~MPS() {
 }
 
 void MPS::reconnect() {
-  modbus_close(mb);
-  if (modbus_connect(mb) == -1) {
+  this->mb = modbus_new_tcp(this->ip, this->port);
+
+  // set new timeout
+  struct timeval response_timeout;
+  response_timeout.tv_sec = 5;      // timeout in seconds
+  response_timeout.tv_usec = 0;     // timeout in microseconds
+  modbus_set_response_timeout(this->mb, &response_timeout);
+
+  machineState = IDLE;
+  
+  if(modbus_connect(this->mb) == -1) {
     machineState = DISCONNECTED;
   }
 }
