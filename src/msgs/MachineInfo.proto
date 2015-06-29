@@ -79,8 +79,6 @@ message Machine {
   optional string    state      =  3;
   optional Team      team_color = 10;
 
-  optional bool      prepared   = 15;
-
   // Current state of the lights
   repeated LightSpec lights = 7;
   // Optional pose if known to refbox
@@ -95,14 +93,11 @@ message Machine {
 
   repeated RingColor ring_colors = 14;
 
-
-  // Instruction information
-  // only available to clients, not peers
+  // Instruction information (only clients)
   optional PrepareInstructionBS instruction_bs = 16;
   optional PrepareInstructionDS instruction_ds = 17;
   optional PrepareInstructionRS instruction_rs = 18;
   optional PrepareInstructionCS instruction_cs = 19;
-
 }
 
 message MachineInfo {
@@ -114,7 +109,6 @@ message MachineInfo {
   // List of machines states
   repeated Machine machines   = 1;
 
-  // Team name if all machines belong
-  // only to a single team (broadcast)
+  // Team color (only broadcast)
   optional Team    team_color = 2;
 }
