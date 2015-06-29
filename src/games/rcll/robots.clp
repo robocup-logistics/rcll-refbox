@@ -11,8 +11,11 @@
 ; iterates in a nice order, e.g. for net-send-RobotInfo
 (defrule robots-sort
   (declare (salience ?*PRIORITY_HIGH*))
-  ?oa <- (robot (number ?number-a))
-  ?ob <- (robot (number ?number-b&:(> ?number-a ?number-b)&:(< (fact-index ?oa) (fact-index ?ob))))
+  ?oa <- (robot (number ?number-a) (team-color ?tc-a))
+  (or ?ob <- (robot (team-color ?tc-a)
+		    (number ?number-b&:(> ?number-a ?number-b)&:(< (fact-index ?oa) (fact-index ?ob))))
+      ?oc <- (robot (team-color CYAN&:(eq ?tc-a MAGENTA)&:(< (fact-index ?oa) (fact-index ?oc))))
+  )
   =>
   (modify ?oa)
 )
