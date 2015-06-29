@@ -185,7 +185,7 @@
   =>
   (retract ?af)
   (bind ?attmsg (pb-create "llsf_msgs.AttentionMessage"))
-  (printout warn "AM " ?team ": " (str-cat ?text) crlf)
+  ;(printout warn "AM " ?team ": " (str-cat ?text) crlf)
   (pb-set-field ?attmsg "message" (str-cat ?text))
   (if (neq ?team nil) then (pb-set-field ?attmsg "team_color" ?team))
   (if (> ?time-to-show 0) then
