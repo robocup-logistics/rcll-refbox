@@ -393,11 +393,13 @@
        (pb-add-list ?m "ring_colors" ?rc)
      )
     )
+    (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
+      then (pb-set-field ?m "state" (fact-slot-value ?mf state))
+      else (pb-set-field ?m "state" "")
+    )
+
     (if ?add-restricted-info
      then
-      (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
-        then (pb-set-field ?m "state" (fact-slot-value ?mf state))
-        else (pb-set-field ?m "state" "")
       (if (neq ?zone TBD) then
         (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
       )
@@ -438,13 +440,6 @@
             (pb-set-field ?m "instruction_cs" ?pm)
 	  )
         )
-      )
-
-     else
-      (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION)) then
-	(if (eq (fact-slot-value ?mf mtype) BS)
-         then (pb-set-field ?m "prepared" (eq (fact-slot-value ?mf state) READY-AT-OUTPUT))
-         else (pb-set-field ?m "prepared" (eq (fact-slot-value ?mf state) PREPARED)))
       )
     )
 
