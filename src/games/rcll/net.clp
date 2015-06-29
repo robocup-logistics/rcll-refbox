@@ -298,9 +298,6 @@
 
   (pb-broadcast ?peer-id-public ?gamestate)
 
-  ; For stream clients set refbox mode
-  (pb-set-field ?gamestate "refbox_mode" ?refbox-mode)
-
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?gamestate)
   )
