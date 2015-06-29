@@ -29,7 +29,7 @@
   pdftitle      = {Referee Box for the RoboCup Logistics League},
   pdfauthor     = {Tim Niemueller},
   pdfkeywords   = {Robotics, RoboCup, LLSF, Referee Box},
-  pdfsubject    = {Integration Manual 2014},
+  pdfsubject    = {Integration Manual 2015},
   %pdfpagemode   = {UseOutlines},        % PageWdth, FullScreen, None ...
   hidelinks    = true,          % true colored links, false colored boxes
 %  linkcolor     = black,
@@ -797,7 +797,7 @@ situations may be necessary, e.g. to fix problems.
 \newcommand{\msgspec}[6]{%
 \hspace{-1.1\parindent}
 \begin{minipage}{\linewidth}
-  \begin{minipage}[t]{.48\linewidth}
+  \begin{minipage}[t]{.56\linewidth}
     \vspace{0pt}
     \lstinputlisting[showlines,style=really-small-protobuf,
       firstline=37, escapechar=\%,%    %caption=,belowcaptionskip=2mm,
@@ -806,7 +806,7 @@ situations may be necessary, e.g. to fix problems.
       {../../src/msgs/#1}
   \end{minipage}
   \hspace{.01\linewidth}
-  \begin{minipage}[t]{.51\linewidth}
+  \begin{minipage}[t]{.43\linewidth}
     \vspace{2pt}
     \small
     \begin{tabular}{>{\bfseries}ll>{\bfseries}ll}
@@ -904,22 +904,27 @@ situations may be necessary, e.g. to fix problems.
   either CYAN or MAGENTA (primary field side one or two respectively).
 }
 
+\msgspec{ProductColor.proto}{---}{---}{---}{---}%
+{%
+  These enums describe the various colors used in the communication
+  between refbox and robots. The individual colors are prefixed by
+  their respective element.
+}
+
 \msgspec{ExplorationInfo.proto}{P}{1\,sec}{refbox}{robots}%
 {%
   This ExplorationInfo message is periodically sent during the
-  exploration phase. It announces the mapping from type names to light
-  signals and machine names referenced by field positions to the
-  robots. There will be one entry per machine type in the signals
-  list. The lights list in the ExplorationSignal sub-message will
-  contain one entry per light color, even for signals which are
-  off. The machines field contains one entry per machine to
-  identify. The machines are referenced by a name bound to a specified
-  position. Note that this name to position mapping might be different
-  from the example in the rulebook.
+  exploration phase. It announces the mapping from type strings to
+  light signal patterns and zones which belong to a specific team. The
+  type is an arbitrary random string that must be returned upon
+  recognizing the defined light pattern.
 
-  \smallskip
-  Note the team color per machine. Only machines matching the team's
-  color are to be reported.
+  There will be one entry per machine type string to signal light
+  pattern mapping in the signals list. The lights list in the
+  ExplorationSignal sub-message contain one entry per light color,
+  even for signals which are off. The zones field contains a list
+  mentioning all zones assigned to a specific team. A zone may or may
+  not contain a machine.
 
   \medskip
   If one or more robots are presumably not receiving this message it
@@ -966,20 +971,20 @@ situations may be necessary, e.g. to fix problems.
   The MachineInfo message is sent periodically to controllers and
   robots (in production phase only) by the refbox. The message to
   \emph{controllers} includes static (inputs, output, name, type,
-  pose) and dynamic information (pucks loaded into the machine area or
-  placed under the RFID sensor, light signals, or whether it was
-  correctly reported during the exploration phase) about all machines.
-  The refbox may report only light signals that are on or
-  blinking. Light color that are not mentioned should be considered to
-  be off. It can be used for visually aligning machine representations
-  with the actual position. The message is sent every $0.25$\,sec.
+  pose) and dynamic information (number of additional bases loaded
+  into the machine, light signals, or whether it was correctly
+  reported during the exploration phase) about all machines. It also
+  states the latest prepare instructions received for a machine. The
+  refbox may report only light signals that are on or blinking. Light
+  color that are not mentioned should be considered to be off. It can
+  be used for visually aligning machine representations with the
+  actual position. The message is sent every $0.25$\,sec.
 
-  The message broadcasted to \emph{robots} only includes name, type,
-  input puck types, output puck type, and pose (as defined by the
-  rulebook). It is sent only during the production phase over the
-  team-private channel. At the beginning of the phase, the message is
-  sent at a $0.5$\,sec period for 15\,sec. Afterwards the message is
-  sent every 2\,sec.
+  The message broadcasted to \emph{robots} includes name, type, state,
+  team color, and ring colors (for RS only). It is sent only during
+  the production phase over the team-private channel. At the beginning
+  of the phase, the message is sent at a $0.5$\,sec period for
+  15\,sec. Afterwards the message is sent every 2\,sec.
  
   \medskip
   Both, the MachineInfo and Machine message types feature a team
@@ -996,17 +1001,19 @@ situations may be necessary, e.g. to fix problems.
   During the game the human referee at the refbox should take great
   care to notice any additionally connected controller (announced in
   the log window). No team computer or robot is allowed to connect to
-  the refbox as particularly the machine state information allows for
+  the refbox as particularly the machine information allows for
   cheating.
 }
 
 \msgspec{MachineCommands.proto}{S}{event}{controller}{refbox}%
 {%
   This protobuf file contains messages for specific instructions to
-  the refbox, e.g. placing or loading a puck in the machine, or
-  removing it. The commands can be also be used to write a game
-  simulation that operates against a training refbox (without an
-  actual PLC).
+  the refbox. The SetMachineState message allow to set an MPS machine
+  state and the MachineAddBase simply increments the additional bases
+  counter by one (RS only).
+
+  These commands can be be used to write a game simulation that
+  operates using the refbox.
 }
 
 \msgspec{MachineReport.proto}{T}{$2$\,sec}{robots}{refbox}%
@@ -1015,16 +1022,21 @@ situations may be necessary, e.g. to fix problems.
   with the MachineReport message stating name and types. In each
   message, one or more machines can be reported. We suggest do always
   send all recognized machines to make sure that even in the case of
-  packet losses, all machines are reported to the refbox
-  eventually. The message should be send periodically, for example
-  once every two seconds.
+  packet loss, all machines are reported to the refbox eventually. The
+  message should be send periodically, for example once every two
+  seconds.
+
+  \medskip
+  The report contains the name, zone, and type string for each
+  recognized machine. The type is the type string announced in the
+  ExplorationInfo message inferred from the recognized light signal.
 
   \medskip
 
   Note that for each machine only the first report received is
   accepted and points are awarded according to the rule book and the
-  correctness. It is not possible to correct a once given wrong
-  report. Every subsequent repetition will be silently ignored. Also
+  correctness. It is not possible to correct a wrong report once
+  received. Every subsequent repetition will be silently ignored. Also
   ensure that you send reports only for the appropriate team color or
   your report will be ignored. Sending machine reports for another
   team's machine with the other team's color is an offense.
@@ -1042,58 +1054,52 @@ situations may be necessary, e.g. to fix problems.
 {%
   During the production phase the refbox periodically sends the
   current orders to all robots and controllers. Note that the list of
-  orders in the OrderInfo message can and will change. If late orders
-  get activated, new orders appear in the message. Also note the
-  delivery period of orders. In a message, there will most likely be
-  orders with an active delivery period, while others have already
-  passed or are yet to come.
+  orders in the OrderInfo message can and will change. Initially, the
+  list is most likely empty. Then, when the lead time of an order has
+  been reached, that is the time in advance with respect to the
+  beginning of the delivery time window, the order is announced by
+  adding it to the orders field. In a message can be orders with an
+  active delivery period or which have already pased or are yet to
+  come.
 
   \medskip
-
-  Both, the OrderInfo and Order message types feature a team
-  color. The team color on the latter is \emph{always} set. For the
-  OrderInfo, the behavior differs between stream and broadcast
-  messages. For stream messages, it is left out an a common OrderInfo
-  message comprising \emph{all} orders of both teams is sent. For
-  broadcasting, one messages per team-private channel is sent, one for
-  each team. In these OrderInfo messages the team color will be set
-  and only orders matching this color will be included.
+  Orders are sent over the team-private channel and contain only
+  orders for that team.
 
   \medskip
-
   If a new order is posted, the refbox will go into a short time burst
   mode for a few seconds. During this time, it will send 10 messages
   at a period of $0.5$\,sec. Afterwards it continues with the normal
   period of $5$ seconds.
 }
 
-\msgspec{PuckInfo.proto}{S}{$1$\,sec}{refbox}{controllers}%
-{%
-  The PuckInfo message is sent periodically by the refbox to connected
-  controllers. It contains state information about all pucks know to
-  the refbox. The shell uses this information for the ``Pucks''
-  section. Each puck has a unique ID and a current state.
+% \msgspec{PuckInfo.proto}{S}{$1$\,sec}{refbox}{controllers}%
+% {%
+%   The PuckInfo message is sent periodically by the refbox to connected
+%   controllers. It contains state information about all pucks know to
+%   the refbox. The shell uses this information for the ``Pucks''
+%   section. Each puck has a unique ID and a current state.
 
-  \medskip
+%   \medskip
 
-  The pose information is optional and not currently provided. It may
-  be used in the future with a camera-based tracking system.
-}
+%   The pose information is optional and not currently provided. It may
+%   be used in the future with a camera-based tracking system.
+% }
 
 \msgspec{RobotInfo.proto}{S, P}{$1$\,sec}{refbox}{controllers}%
 {%
   The RobotInfo message is sent periodically by the refbox to
-  connected controllers. It contains information about all robots
-  known to the refbox. It reflects its belief gathered from processing
-  BeaconSignal messages from the robots. It also contains a host name
+  connected controllers and over the public broadcast channel. It
+  contains information about all robots known to the refbox gathered
+  from processing BeaconSignal messages. It also contains a host name
   from where the BeaconSignal was received, for example to diagnose
   problems if a robot is lost.
 
   \medskip
-
   The pose information is optional. For teams which choose to provide
   this information in the BeaconSignal it is forwarded to the
-  controller for visualization.
+  controller for visualization. The information is never sent over the
+  broadcast channel.
 }
 
 \msgspec{RobotCommands.proto}{S}{event}{controllers}{refbox}%
@@ -1142,3 +1148,8 @@ software and join the effort.
 }
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
