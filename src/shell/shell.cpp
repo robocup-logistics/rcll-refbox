@@ -75,7 +75,7 @@
 #define RECONNECT_TIMER_INTERVAL 1000
 #define BLINK_TIMER_INTERVAL 250
 #define ATTMSG_TIMER_INTERVAL 1000
-#define MIN_NUM_ROBOTS 3
+#define MIN_NUM_ROBOTS 6
 
 using namespace protobuf_comm;
 
