@@ -57,13 +57,14 @@ LLSFRefBoxShellRobot::LLSFRefBoxShellRobot(int begin_y, int begin_x)
 
 void
 LLSFRefBoxShellRobot::update(unsigned int number, std::string name,
-			     std::string team, std::string host,
+			     std::string team, llsf_msgs::Team team_color, std::string host,
 			     llsf_msgs::RobotState state, float maintenance_time_remaining,
 			     unsigned int maintenance_cycles)
 {
   number_ = number;
   name_   = name;
   team_   = team;
+  team_color_ = team_color;
   host_   = host;
   state_  = state;
   maintenance_time_remaining_ = maintenance_time_remaining;
@@ -95,13 +96,24 @@ LLSFRefBoxShellRobot::refresh()
     boost::posix_time::time_duration td = now - last_seen_;
     long td_seconds = td.total_seconds();
 
+    std::string number = boost::str(boost::format("%u") % number_);;
     std::string line_1 =
-      boost::str(boost::format("%u %s (%s)") % number_ % name_ % team_).substr(0, width());;
-    for (int i = line_1.length(); i < width(); ++i) {
+      boost::str(boost::format("%s (%s)") % name_ % team_).substr(0, width() - (number.length() + 1));
+    for (int i = line_1.length(); i < width() - ((int)number.length() + 1); ++i) {
       line_1 += " ";
     }
 
     erase();
+
+    if (team_color_ == llsf_msgs::CYAN) {
+      attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+    }
+    attron(A_BOLD);
+    printw(0, 0, "%s", number.c_str());
+    attroff(A_BOLD);
+    standend();
 
     if (td_seconds >= 10) {
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
@@ -111,7 +123,7 @@ LLSFRefBoxShellRobot::refresh()
       attron(' '|COLOR_PAIR(COLOR_DEFAULT));
     }
     attron(A_BOLD);
-    printw(0, 0, "%s", line_1.c_str());
+    printw(0, (number.length() + 1), "%s", line_1.c_str());
     attroff(A_BOLD);
     standend();
 

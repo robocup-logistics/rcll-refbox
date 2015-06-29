@@ -725,8 +725,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 	break;
       }
 
-      robots_[idx]->update(robot.number(), robot.name(), robot.team(), robot.host(),
-			   robot.state(), robot.maintenance_time_remaining(),
+      robots_[idx]->update(robot.number(), robot.name(), robot.team(), robot.team_color(),
+			   robot.host(), robot.state(), robot.maintenance_time_remaining(),
 			   robot.maintenance_cycles());
       boost::posix_time::ptime
 	last_seen(boost::posix_time::from_time_t(robot.last_seen().sec()));
