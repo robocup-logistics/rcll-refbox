@@ -386,9 +386,6 @@
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
-    (if (neq ?zone TBD) then
-      (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
-    )
     (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
 	     (eq ?mtype RS) (> (length$ (fact-slot-value ?mf rs-ring-colors)) 0))
      then
@@ -401,6 +398,8 @@
       (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
         then (pb-set-field ?m "state" (fact-slot-value ?mf state))
         else (pb-set-field ?m "state" "")
+      (if (neq ?zone TBD) then
+        (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
       )
       (pb-set-field ?m "loaded_with"
         (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
