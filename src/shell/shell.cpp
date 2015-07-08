@@ -1101,7 +1101,9 @@ LLSFRefBoxShell::run()
   }
 
   s_cancel_phase_ = "** CANCEL **";
-  size_t num_spaces = (max_length - s_cancel_phase_.size()) / 2;
+  size_t num_spaces =	(max_length > s_cancel_phase_.size())
+		? (max_length - s_cancel_phase_.size()) / 2
+		: 0;
   std::string spaces;
   for (size_t i = 0; i < num_spaces; ++i) spaces += " ";
   s_cancel_phase_ = spaces + s_cancel_phase_;
