@@ -520,6 +520,36 @@
 )
 
 
+(deffunction net-create-RingInfo ()
+  (bind ?s (pb-create "llsf_msgs.RingInfo"))
+
+  (do-for-all-facts ((?ring-spec ring-spec)) TRUE
+    (bind ?rs (pb-create "llsf_msgs.Ring"))
+    (pb-set-field ?rs "ring_color" ?ring-spec:color)
+    (pb-set-field ?rs "raw_material" ?ring-spec:req-bases)
+		(pb-add-list ?s "rings" ?rs)
+  )
+
+  (return ?s)
+)
+
+(defrule net-broadcast-RingInfo
+  (time $?now)
+  (gamestate (phase PRODUCTION))
+  ?sf <- (signal (type ring-info-bc) (seq ?seq) (count ?count)
+								 (time $?t&:(timeout ?now ?t ?*BC-MACHINE-INFO-PERIOD*)))
+  (network-peer (group CYAN) (id ?peer-id-cyan))
+  (network-peer (group MAGENTA) (id ?peer-id-magenta))
+  =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+
+  (bind ?s (net-create-RingInfo))
+  (pb-broadcast ?peer-id-cyan ?s)
+  (pb-broadcast ?peer-id-magenta ?s)
+  (pb-destroy ?s)
+)
+
+
 (deffunction net-create-Order (?order-fact)
   (bind ?o (pb-create "llsf_msgs.Order"))
 
