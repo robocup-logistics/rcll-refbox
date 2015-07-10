@@ -51,6 +51,7 @@
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/MachineReport.pb.h>
 #include <msgs/RobotInfo.pb.h>
+#include <msgs/RingInfo.pb.h>
 
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
@@ -213,9 +214,10 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     for (int i = 0; i < mi->machines_size(); ++i) {
       const Machine &m = mi->machines(i);
       const Pose2D &p = m.pose();
-      printf("  %-3s|%2s|%s @ (%f, %f, %f)\n",
+      printf("  %-3s|%2s|%s (%s) @ (%f, %f, %f)\n",
 	     m.name().c_str(), m.type().substr(0, 2).c_str(),
 	     Team_Name(m.team_color()).substr(0, 2).c_str(),
+						 m.state().c_str(),
 	     p.x(), p.y(), p.ori());
     }
   }
@@ -257,6 +259,18 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 	     last_seen_ago, r.maintenance_cycles(), r.maintenance_time_remaining());
     }
   }
+
+  std::shared_ptr<RingInfo> rgi;
+  if ((rgi = std::dynamic_pointer_cast<RingInfo>(msg))) {
+    printf("RingInfo received:\n");
+    for (int i = 0; i < rgi->rings_size(); ++i) {
+      const Ring &r = rgi->rings(i);
+      printf("  %s %u\n",
+						 RingColor_Name(r.ring_color()).c_str(),
+						 r.raw_material());
+    }
+  }
+
 }
 
 
@@ -347,6 +361,7 @@ main(int argc, char **argv)
   message_register.add_message_type<MachineInfo>();
   message_register.add_message_type<MachineReportInfo>();
   message_register.add_message_type<RobotInfo>();
+  message_register.add_message_type<RingInfo>();
 
   std::string cfg_prefix =
     std::string("/llsfrb/comm/") +
