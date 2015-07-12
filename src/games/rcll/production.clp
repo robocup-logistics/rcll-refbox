@@ -419,7 +419,7 @@
 
 (defrule prod-machine-loaded-with-too-many
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state) (bases-added ?ba)
+  ?m <- (machine (name ?n) (state ?state&~BROKEN) (bases-added ?ba)
 		 (bases-used ?bu&:(> (- ?ba ?bu) ?*LOADED-WITH-MAX*)))
   =>
   (modify ?m (state BROKEN) (prev-state ?state)
