@@ -330,7 +330,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 				 last_orderinfo_, last_game_state_);
 	    odm();
 	    if (odm) {
-	      send_set_order_delivered(tcsm.get_team_color(), odm.order().id());
+	      send_set_order_delivered(tcsm.get_team_color(), odm.order());
 	    }
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
@@ -496,8 +496,10 @@ LLSFRefBoxShell::send_robot_maintenance(llsf_msgs::Team team,
 }
 
 void
-LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, unsigned int order_id)
+LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, const llsf_msgs::Order &order)
 {
+	unsigned int order_id = order.id();
+
   llsf_msgs::SetOrderDelivered od;
   od.set_team_color(team);
   od.set_order_id(order_id);
@@ -507,6 +509,21 @@ LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, unsigned int ord
   } catch (std::runtime_error &e) {
     logf("Sending SetOrderDelivered failed: %s", e.what());
   }
+
+	/*
+	llsf_msgs::SetOrderDeliveredByColor od;
+  od.set_team_color(team);
+  od.set_base_color(order.base_color());
+  for (int i = 0; i < order.ring_colors_size(); ++i) {
+	  od.add_ring_colors(order.ring_colors(i));
+  }
+  od.set_cap_color(order.cap_color());
+  try {
+    client->send(od);
+  } catch (std::runtime_error &e) {
+    logf("Sending SetOrderDeliveredByColor failed: %s", e.what());
+  }
+	*/
 }
 
 void
