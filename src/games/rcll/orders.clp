@@ -7,6 +7,10 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deffunction order-q-del-index (?team)
+  (if (eq ?team CYAN) then (return 1) else (return 2))
+)
+
 (defrule activate-order
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?of <- (order (id ?id) (active FALSE) (activate-at ?at&:(>= ?gt ?at))
@@ -48,6 +52,66 @@
   )
 )
 
+
+(defrule order-recv-SetOrderDeliveredByColor
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (protobuf-msg (type "llsf_msgs.SetOrderDeliveredByColor") (ptr ?p) (rcvd-via STREAM)
+											 (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  =>
+  (bind ?team (sym-cat (pb-field-value ?p "team_color")))
+  (bind ?base-color  (sym-cat (pb-field-value ?p "base_color")))
+  (bind ?ring-colors (pb-field-list ?p "ring_colors"))
+  (bind ?cap-color   (sym-cat (pb-field-value ?p "cap_color")))
+
+  (assert (order-delivered-by-color (team-color ?team) (game-time ?gt)
+																		(base-color ?base-color)
+																		(ring-colors ?ring-colors) (cap-color ?cap-color)))
+)
+
+(defrule order-match-by-color-valid
+	?of <- (order-delivered-by-color (team-color ?team) (game-time ?gt)
+																	 (base-color ?base-color)
+																	 (ring-colors $?ring-colors) (cap-color ?cap-color))
+	(order (id ?id) (active TRUE)
+				 (delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp)))
+				 (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
+	(not (order (id ?id2&~?id) (active TRUE)
+							(delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2))&:(< (nth$ 1 ?dp2) (nth$ 1 ?dp)))))
+	=>
+	(retract ?of)
+	(printout t "Received valid order " ?id crlf)
+	(assert (product-delivered (game-time ?gt) (order ?id) (team ?team)))
+)
+
+(defrule order-match-by-color-valid-late
+	?of <- (order-delivered-by-color (team-color ?team) (game-time ?gt)
+																	 (base-color ?base-color)
+																	 (ring-colors $?ring-colors) (cap-color ?cap-color))
+	(order (id ?id) (active TRUE)
+				 (delivery-period $?dp&:(> ?gt (nth$ 2 ?dp)))
+				 (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
+	(not (order (id ?id2&~?id) (active TRUE)
+							(delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))))
+	=>
+	(retract ?of)
+	(printout t "Received valid late order " ?id crlf)
+	(assert (product-delivered (game-time ?gt) (order ?id) (team ?team)))
+)
+
+(defrule order-match-by-color-invalid
+	?of <- (order-delivered-by-color (team-color ?team) (game-time ?gt)
+																	 (base-color ?base-color)
+																	 (ring-colors $?ring-colors) (cap-color ?cap-color))
+	(not (order (id ?id) (active TRUE)
+							(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp)))
+							(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)))
+	=>
+	(retract ?of)
+	(printout warn "Product delivered which was not requested" crlf)
+)
+
+
+
 (defrule order-delivered-in-time
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (product-delivered (game-time ?game-time) (order ?id) (team ?team))
@@ -58,10 +122,7 @@
 		(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
   =>
   (retract ?pf)
-  (if (eq ?team CYAN)
-   then (bind ?q-del-idx 1)
-   else (bind ?q-del-idx 2)
-  )
+	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
 
   (modify ?of (quantity-delivered ?q-del-new))
@@ -109,10 +170,7 @@
   =>
   (retract ?pf)
 
-  (if (eq ?team CYAN)
-   then (bind ?q-del-idx 1)
-   else (bind ?q-del-idx 2)
-  )
+	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
   (modify ?of (quantity-delivered ?q-del-new))
 

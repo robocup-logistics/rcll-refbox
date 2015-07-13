@@ -197,6 +197,15 @@
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
 )
 
+(deftemplate order-delivered-by-color
+  (slot game-time (type FLOAT))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
+  (multislot ring-colors (type SYMBOL) (cardinality 0 3)
+	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
+)
+
 (deftemplate gamestate
   (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE) (default STANDALONE))
   (slot state (type SYMBOL)
