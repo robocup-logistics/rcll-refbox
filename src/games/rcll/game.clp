@@ -100,8 +100,35 @@
           (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
     (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
     (bind ?gate (random 1 3))
+
+		(bind ?order-ring-colors (create$))
+		(switch ?order:complexity
+			;(case C0 then) ; for C0 we have nothing to do, no ring color
+			(case C1 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors))))
+			(case C2 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
+																											(pick-random$ ?ring-colors))))
+			(case C3 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
+																											(pick-random$ ?ring-colors)
+																											(pick-random$ ?ring-colors))))
+    )
+
+		; Do not randomize base color in 2015
+		;(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
+		(bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
+
+		(switch ?order:complexity
+			;(case C0 then) ; for C0 we have nothing to do, no ring color
+			(case C1 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors))))
+			(case C2 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
+																											(pick-random$ ?ring-colors))))
+			(case C3 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
+																											(pick-random$ ?ring-colors)
+																											(pick-random$ ?ring-colors))))
+    )
+
     (modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
-	    (delivery-period ?deliver-start ?deliver-end))
+	    (delivery-period ?deliver-start ?deliver-end)
+			(ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
   )
 
   ; Randomize number of required additional bases
