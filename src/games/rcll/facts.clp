@@ -68,17 +68,6 @@
   (slot num-bases (type INTEGER) (default 0))
 )
 
-(deftemplate machine-spec
-  (slot mtype (type SYMBOL) (allowed-values T1 T2 T3 T4 T5 DELIVER RECYCLE))
-  (multislot inputs (type SYMBOL) (allowed-symbols S0 S1 S2) (default))
-  (slot output (type SYMBOL) (allowed-symbols NONE S0 S1 S2 P1 P2 P3))
-  (slot proc-time-min (type INTEGER))
-  (slot proc-time-max (type INTEGER))
-  (slot proc-time (type INTEGER))
-  (slot light-code (type INTEGER) (default 0))
-  (slot points (type INTEGER) (default 0))
-)
-
 (deftemplate machine-light-code
   (slot id (type INTEGER))
   (multislot code (type SYMBOL) (default)
@@ -319,24 +308,6 @@
   ;(machine-light-code (id 8) (code GREEN-BLINK))
   ;(machine-light-code (id 9) (code YELLOW-BLINK))
   ;(machine-light-code (id 10) (code RED-BLINK))
-)
-
-(deffacts machine-specs
-  (machine-spec (mtype T1) (inputs S0) (output S1)
-		(light-code 1) (points 0)
-		(proc-time-min 3) (proc-time-max 8) (proc-time 4)) ; 3 8
-  (machine-spec (mtype T2) (inputs S0 S1) (output S2)
-		(light-code 2) (points 4)
-		(proc-time-min 15) (proc-time-max 25)) ; 15 25
-  (machine-spec (mtype T3) (inputs S0 S1 S2) (output P1)
-		(light-code 4) (points 12)
-		(proc-time-min 40) (proc-time-max 60) (proc-time 4)) ; 40 60
-  (machine-spec (mtype T4) (inputs S0 S1 S2) (output P2)
-		(light-code 5) (points 12)
-		(proc-time-min 40) (proc-time-max 60) (proc-time 4)) ; 40 60
-  (machine-spec (mtype T5) (inputs S0) (output P3)
-		(light-code 6) (points 0)
-		(proc-time-min 20) (proc-time-max 40) (proc-time 4)) ; 20 40
 )
 
 (deffacts orders
