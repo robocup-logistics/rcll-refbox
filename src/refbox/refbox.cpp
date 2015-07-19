@@ -927,6 +927,15 @@ LLSFRefBox::setup_clips_mongodb()
   clips_->add_function("mongodb-upsert", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_upsert)));
   clips_->add_function("mongodb-update", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_update)));
   clips_->add_function("mongodb-replace", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_replace)));
+  clips_->add_function("mongodb-query", sigc::slot<CLIPS::Value, std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_query)));
+  clips_->add_function("mongodb-query-sort", sigc::slot<CLIPS::Value, std::string, void *, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_query_sort)));
+  clips_->add_function("mongodb-cursor-destroy", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_destroy)));
+  clips_->add_function("mongodb-cursor-more", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_more)));
+  clips_->add_function("mongodb-cursor-next", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_next)));
+  clips_->add_function("bson-field-names", sigc::slot<CLIPS::Values, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_field_names)));
+  clips_->add_function("bson-get", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_get)));
+  clips_->add_function("bson-get-array", sigc::slot<CLIPS::Values, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_get_array)));
+  clips_->add_function("bson-get-time", sigc::slot<CLIPS::Values, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_get_time)));
 
   clips_->build("(deffacts have-feature-mongodb (have-feature MongoDB))");
 }
@@ -1214,6 +1223,245 @@ LLSFRefBox::clips_mongodb_replace(std::string collection, void *bson, CLIPS::Val
   mongodb_update(collection, b->asTempObj(), query, false);
 }
 
+CLIPS::Value
+LLSFRefBox::clips_mongodb_query_sort(std::string collection, void *bson, void *bson_sort)
+{
+  if (! cfg_mongodb_enabled_) {
+    logger_->log_warn("MongoDB", "Query requested while MongoDB disabled");
+    return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+  }
+
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+  try {
+	  mongo::Query q(b->obj());
+	  if (bson_sort) {
+		  mongo::BSONObjBuilder *bs = static_cast<mongo::BSONObjBuilder *>(bson_sort);
+		  q.sort(bs->obj());
+	  }
+
+	  std::auto_ptr<mongo::DBClientCursor> c = mongodb_->query(collection, q);
+
+	  return CLIPS::Value(new std::auto_ptr<mongo::DBClientCursor>(c),
+	                      CLIPS::TYPE_EXTERNAL_ADDRESS);
+
+  } catch (mongo::DBException &e) {
+    logger_->log_warn("MongoDB", "Query failed: %s", e.what());
+    return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+  }
+}
+
+CLIPS::Value
+LLSFRefBox::clips_mongodb_query(std::string collection, void *bson)
+{
+	return clips_mongodb_query_sort(collection, bson, NULL);
+}
+
+void
+LLSFRefBox::clips_mongodb_cursor_destroy(void *cursor)
+{
+	std::auto_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+
+	if (! c || ! c->get()) {
+		logger_->log_error("MongoDB", "mongodb-cursor-destroy: got invalid cursor");
+		return;
+	}
+
+	delete c;
+}
+
+CLIPS::Value
+LLSFRefBox::clips_mongodb_cursor_more(void *cursor)
+{
+	std::auto_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+
+	if (! c || ! c->get()) {
+		logger_->log_error("MongoDB", "mongodb-cursor-more: got invalid cursor");
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+	return CLIPS::Value((*c)->more() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+}
+
+CLIPS::Value
+LLSFRefBox::clips_mongodb_cursor_next(void *cursor)
+{
+	std::auto_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+
+	if (! c || ! c->get()) {
+		logger_->log_error("MongoDB", "mongodb-cursor-next: got invalid cursor");
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+	return CLIPS::Value(new mongo::BSONObj((*c)->next().getOwned()),
+	                    CLIPS::TYPE_EXTERNAL_ADDRESS);
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_bson_field_names(void *bson)
+{
+	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+
+	if (! o || ! o->isValid()) {
+		logger_->log_error("MongoDB", "mongodb-bson-field-names: invalid object");
+		CLIPS::Values rv;
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	std::set<std::string> field_names;
+	o->getFieldNames(field_names);
+
+	CLIPS::Values rv;
+	for (const std::string &n : field_names) {
+		rv.push_back(CLIPS::Value(n));
+	}
+	return rv;
+}
+
+
+CLIPS::Value
+LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
+{
+	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+
+	if (! o || ! o->isValid()) {
+		logger_->log_error("MongoDB", "mongodb-bson-get: invalid object");
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+	if (! o->hasField(field_name)) {
+		logger_->log_error("MongoDB", "mongodb-bson-get: has no field %s",
+		                   field_name.c_str());
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+	mongo::BSONElement el = o->getField(field_name);
+
+	switch (el.type()) {
+	case mongo::NumberDouble:
+		return CLIPS::Value(el.Double());
+	case mongo::String:
+		return CLIPS::Value(el.String());
+	case mongo::Bool:
+		return CLIPS::Value(el.Bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+	case mongo::NumberInt:
+		return CLIPS::Value(el.Int());
+	case mongo::NumberLong:
+		return CLIPS::Value(el.Long());
+	case mongo::Object:
+		return CLIPS::Value(new mongo::BSONObj(el.Obj()),
+		                    CLIPS::TYPE_EXTERNAL_ADDRESS);
+	default:
+		return CLIPS::Value("INVALID_VALUE_TYPE", CLIPS::TYPE_SYMBOL);
+	}
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
+{
+	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+
+	CLIPS::Values rv;
+
+	if (! o || ! o->isValid()) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-array: invalid object");
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	if (! o->hasField(field_name)) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-array: has no field %s",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	mongo::BSONElement el = o->getField(field_name);
+
+	if (el.type() != mongo::Array) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-array: field %s is not an array",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	std::vector<mongo::BSONElement> elements(el.Array());
+
+	for (const mongo::BSONElement &e : elements) {
+		switch (e.type()) {
+		case mongo::NumberDouble:
+			rv.push_back(CLIPS::Value(e.Double())); break;
+		case mongo::String:
+			rv.push_back(CLIPS::Value(e.String())); break;
+		case mongo::Bool:
+			rv.push_back(CLIPS::Value(e.Bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL));
+			break;
+		case mongo::NumberInt:
+			rv.push_back(CLIPS::Value(e.Int())); break;
+		case mongo::NumberLong:
+			rv.push_back(CLIPS::Value(e.Long())); break;
+		case mongo::Object:
+			rv.push_back(CLIPS::Value(new mongo::BSONObj(e.Obj().getOwned()),
+			                          CLIPS::TYPE_EXTERNAL_ADDRESS));
+			break;
+		default:
+			rv.clear();
+			rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+			return rv;
+		}
+	}
+	return rv;
+	
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_bson_get_time(void *bson, std::string field_name)
+{
+	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+
+	CLIPS::Values rv;
+
+	if (! o || ! o->isValid()) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-time: invalid object");
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	if (! o->hasField(field_name)) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-time: has no field %s",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	mongo::BSONElement el = o->getField(field_name);
+
+	mongo::Date_t d;
+	if (el.type() == mongo::Date) {
+		d = el.Date();
+	} else if (el.type() == mongo::Timestamp) {
+		d = el.timestampTime();
+	} else {
+		logger_->log_error("MongoDB", "mongodb-bson-get-time: field %s is not a time",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	int64_t ts = d.asInt64();
+
+	rv.resize(2);
+	rv[0] = CLIPS::Value((long long int)(ts / 1000));
+	rv[1] = CLIPS::Value((ts - (rv[0].as_integer() * 1000)) * 1000);
+	return rv;
+}
 
 #endif
 

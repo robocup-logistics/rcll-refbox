@@ -131,7 +131,16 @@ class LLSFRefBox
   void          clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query);
   void          clips_mongodb_insert(std::string collection, void *bson);
   void          mongodb_update(std::string &collection, mongo::BSONObj obj,
-			       CLIPS::Value &query, bool upsert);
+                               CLIPS::Value &query, bool upsert);
+  CLIPS::Value  clips_mongodb_query_sort(std::string collection, void *bson, void *bson_sort);
+  CLIPS::Value  clips_mongodb_query(std::string collection, void *bson);
+  CLIPS::Value  clips_mongodb_cursor_more(void *cursor);
+  CLIPS::Value  clips_mongodb_cursor_next(void *cursor);
+  void          clips_mongodb_cursor_destroy(void *cursor);
+  CLIPS::Values clips_bson_field_names(void *bson);
+  CLIPS::Value  clips_bson_get(void *bson, std::string field_name);
+  CLIPS::Values clips_bson_get_array(void *bson, std::string field_name);
+  CLIPS::Values clips_bson_get_time(void *bson, std::string field_name);
 #endif
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
