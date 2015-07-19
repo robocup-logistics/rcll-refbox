@@ -244,6 +244,13 @@
   (slot reason (type STRING))
 )
 
+(deftemplate zone-swap
+	(slot m1-name (type SYMBOL))
+	(slot m1-new-zone (type SYMBOL))
+	(slot m2-name (type SYMBOL))
+	(slot m2-new-zone (type SYMBOL))
+)
+
 (deftemplate sim-time
   (slot enabled (type SYMBOL) (allowed-values false true) (default false))
   (slot estimate (type SYMBOL) (allowed-values false true) (default false))
