@@ -302,7 +302,7 @@
 		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta))
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
-  (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
+  (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED))
 )
 
 (defrule game-enter-overtime
@@ -325,7 +325,7 @@
 (defrule game-goto-post-game
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
-  (modify ?gs (prev-phase POST_GAME))
+  (modify ?gs (prev-phase POST_GAME) (end-time (now)))
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (desired-lights RED-BLINK))
   )
