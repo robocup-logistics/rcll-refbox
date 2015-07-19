@@ -1161,7 +1161,7 @@ LLSFRefBox::clips_mongodb_insert(std::string collection, void *bson)
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
 
   try {
-    mongodb_->insert(collection, b->obj());
+    mongodb_->insert(collection, b->asTempObj());
   } catch (mongo::DBException &e) {
     logger_->log_warn("MongoDB", "Insert failed: %s", e.what());
   }
@@ -1202,6 +1202,10 @@ void
 LLSFRefBox::clips_mongodb_upsert(std::string collection, void *bson, CLIPS::Value query)
 {
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  if (! b) {
+	  logger_->log_warn("MongoDB", "Invalid BSON Obj Builder passed");
+	  return;
+  }
   mongodb_update(collection, b->asTempObj(), query, true);
 }
 
@@ -1209,6 +1213,10 @@ void
 LLSFRefBox::clips_mongodb_update(std::string collection, void *bson, CLIPS::Value query)
 {
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  if (! b) {
+	  logger_->log_warn("MongoDB", "Invalid BSON Obj Builder passed");
+	  return;
+  }
 
   mongo::BSONObjBuilder update_doc;
   update_doc.append("$set", b->asTempObj());
@@ -1220,6 +1228,7 @@ void
 LLSFRefBox::clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query)
 {
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  if (! b) logger_->log_warn("MongoDB", "Invalid BSON Obj Builder passed");
   mongodb_update(collection, b->asTempObj(), query, false);
 }
 
@@ -1234,10 +1243,10 @@ LLSFRefBox::clips_mongodb_query_sort(std::string collection, void *bson, void *b
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
 
   try {
-	  mongo::Query q(b->obj());
+	  mongo::Query q(b->asTempObj());
 	  if (bson_sort) {
 		  mongo::BSONObjBuilder *bs = static_cast<mongo::BSONObjBuilder *>(bson_sort);
-		  q.sort(bs->obj());
+		  q.sort(bs->asTempObj());
 	  }
 
 	  std::auto_ptr<mongo::DBClientCursor> c = mongodb_->query(collection, q);
@@ -1296,17 +1305,18 @@ LLSFRefBox::clips_mongodb_cursor_next(void *cursor)
 		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
 	}
 
-	return CLIPS::Value(new mongo::BSONObj((*c)->next().getOwned()),
-	                    CLIPS::TYPE_EXTERNAL_ADDRESS);
+  mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+  b->appendElements((*c)->next());
+  return CLIPS::Value(b);
 }
 
 
 CLIPS::Values
 LLSFRefBox::clips_bson_field_names(void *bson)
 {
-	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
 
-	if (! o || ! o->isValid()) {
+	if (! b) {
 		logger_->log_error("MongoDB", "mongodb-bson-field-names: invalid object");
 		CLIPS::Values rv;
 		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
@@ -1314,7 +1324,7 @@ LLSFRefBox::clips_bson_field_names(void *bson)
 	}
 
 	std::set<std::string> field_names;
-	o->getFieldNames(field_names);
+	b->asTempObj().getFieldNames(field_names);
 
 	CLIPS::Values rv;
 	for (const std::string &n : field_names) {
@@ -1327,20 +1337,22 @@ LLSFRefBox::clips_bson_field_names(void *bson)
 CLIPS::Value
 LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 {
-	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+	mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
 
-	if (! o || ! o->isValid()) {
+	if (! b) {
 		logger_->log_error("MongoDB", "mongodb-bson-get: invalid object");
 		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
 	}
 
-	if (! o->hasField(field_name)) {
+	mongo::BSONObj o(b->asTempObj());
+
+	if (! o.hasField(field_name)) {
 		logger_->log_error("MongoDB", "mongodb-bson-get: has no field %s",
 		                   field_name.c_str());
 		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
 	}
 
-	mongo::BSONElement el = o->getField(field_name);
+	mongo::BSONElement el = o.getField(field_name);
 
 	switch (el.type()) {
 	case mongo::NumberDouble:
@@ -1354,8 +1366,11 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 	case mongo::NumberLong:
 		return CLIPS::Value(el.Long());
 	case mongo::Object:
-		return CLIPS::Value(new mongo::BSONObj(el.Obj()),
-		                    CLIPS::TYPE_EXTERNAL_ADDRESS);
+		{
+			mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+			b->appendElements(o);
+			return CLIPS::Value(b);
+		}
 	default:
 		return CLIPS::Value("INVALID_VALUE_TYPE", CLIPS::TYPE_SYMBOL);
 	}
@@ -1365,24 +1380,26 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 CLIPS::Values
 LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
 {
-	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+	mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
 
 	CLIPS::Values rv;
 
-	if (! o || ! o->isValid()) {
+	if (! b) {
 		logger_->log_error("MongoDB", "mongodb-bson-get-array: invalid object");
 		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
 		return rv;
 	}
 
-	if (! o->hasField(field_name)) {
+	mongo::BSONObj o(b->asTempObj());
+
+	if (! o.hasField(field_name)) {
 		logger_->log_error("MongoDB", "mongodb-bson-get-array: has no field %s",
 		                   field_name.c_str());
 		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
 		return rv;
 	}
 
-	mongo::BSONElement el = o->getField(field_name);
+	mongo::BSONElement el = o.getField(field_name);
 
 	if (el.type() != mongo::Array) {
 		logger_->log_error("MongoDB", "mongodb-bson-get-array: field %s is not an array",
@@ -1407,8 +1424,11 @@ LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
 		case mongo::NumberLong:
 			rv.push_back(CLIPS::Value(e.Long())); break;
 		case mongo::Object:
-			rv.push_back(CLIPS::Value(new mongo::BSONObj(e.Obj().getOwned()),
-			                          CLIPS::TYPE_EXTERNAL_ADDRESS));
+			{
+				mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+				b->appendElements(e.Obj());
+				rv.push_back(CLIPS::Value(b));
+			}
 			break;
 		default:
 			rv.clear();
@@ -1424,24 +1444,26 @@ LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
 CLIPS::Values
 LLSFRefBox::clips_bson_get_time(void *bson, std::string field_name)
 {
-	mongo::BSONObj *o = static_cast<mongo::BSONObj *>(bson);
+	mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
 
 	CLIPS::Values rv;
 
-	if (! o || ! o->isValid()) {
+	if (! b) {
 		logger_->log_error("MongoDB", "mongodb-bson-get-time: invalid object");
 		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
 		return rv;
 	}
 
-	if (! o->hasField(field_name)) {
+	mongo::BSONObj o(b->asTempObj());
+
+	if (! o.hasField(field_name)) {
 		logger_->log_error("MongoDB", "mongodb-bson-get-time: has no field %s",
 		                   field_name.c_str());
 		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
 		return rv;
 	}
 
-	mongo::BSONElement el = o->getField(field_name);
+	mongo::BSONElement el = o.getField(field_name);
 
 	mongo::Date_t d;
 	if (el.type() == mongo::Date) {
