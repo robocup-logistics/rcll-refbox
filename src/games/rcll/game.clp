@@ -177,7 +177,13 @@
 
   ; Print required additional bases
   (do-for-all-facts ((?m machine)) (eq ?m:mtype RS)
-    (printout t "RS " ?m:name " as colors " ?m:rs-ring-colors crlf)
+    (printout t "RS " ?m:name " has colors " ?m:rs-ring-colors crlf)
+  )
+
+	; Print machine swapping info
+	(do-for-all-facts ((?zs zone-swap)) TRUE
+	  (printout warn "Swap " ?zs:m1-name " to zone " ?zs:m1-new-zone
+							" and " ?zs:m2-name " to zone " ?zs:m2-new-zone crlf)
   )
 )
 

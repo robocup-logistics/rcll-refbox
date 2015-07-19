@@ -147,7 +147,6 @@
 							" randomization steps on loaded config" crlf)
 	  (loop-for-count ?*RANDOMIZE-STEPS-MACHINES*
       ; collect all machines on cyan side
-  	  (printout t "STEP" crlf)
       (bind ?cyan-side-machines (create$))
 			(do-for-all-facts ((?m machine)) TRUE
 				(if
@@ -157,7 +156,6 @@
           (bind ?cyan-side-machines (append$ ?cyan-side-machines ?m:name))
         )
       )
-      (printout t "Machines on Cyan side: " ?cyan-side-machines crlf)
 			; decide on randomization step
       (bind ?rm (pick-random$ ?cyan-side-machines))
       (if (> (random 1 10) ?*RANDOMIZE-INTER-SIDE-SWAP-PROB*)
@@ -243,7 +241,7 @@
 					(and (eq ?m1:name ?m1-name) (eq ?m2:name ?m2-name))
           (modify ?m1 (zone ?m2:zone))
           (modify ?m2 (zone ?m1:zone))
-					(printout t "M1/M2: Swapping " ?m1-name " with " ?m2-name crlf)
+					;(printout t "M1/M2: Swapping " ?m1-name " with " ?m2-name crlf)
 					(assert (zone-swap (m1-name ?m1:name) (m1-new-zone ?m2:zone)
 														 (m2-name ?m2:name) (m2-new-zone ?m1:zone)))
         )
@@ -252,7 +250,7 @@
 					(and (eq ?m3:name ?m3-name) (eq ?m4:name ?m4-name))
           (modify ?m3 (zone ?m4:zone))
           (modify ?m4 (zone ?m3:zone))
-					(printout t "M3/M4: Swapping " ?m3-name " with " ?m4-name crlf)
+					;(printout t "M3/M4: Swapping " ?m3-name " with " ?m4-name crlf)
 					(assert (zone-swap (m1-name ?m3:name) (m1-new-zone ?m4:zone)
 														 (m2-name ?m4:name) (m2-new-zone ?m3:zone)))
         )
@@ -348,10 +346,5 @@
 	      (time-sec-format (nth$ 1 ?period:period)) " to "
 	      (time-sec-format (nth$ 2 ?period:period)) " ("
 	      (- (nth$ 2 ?period:period) (nth$ 1 ?period:period)) " sec)" crlf)
-  )
-
-	(do-for-all-facts ((?zs zone-swap)) TRUE
-	  (printout warn "Swap " ?zs:m1-name " to zone " ?zs:m1-new-zone
-							" and " ?zs:m2-name " to zone " ?zs:m2-new-zone crlf)
   )
 )
