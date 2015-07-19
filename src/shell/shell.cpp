@@ -903,9 +903,9 @@ void
 LLSFRefBoxShell::beep(int frequency, int duration_ms)
 {
   if (access("/sys/module/pcspkr/initstate", R_OK) == -1) {
-    if (! beep_warning_shown_) {
-      log(llsf_log_msgs::LogMessage::LL_WARN, "L", "%s",
-	  "Cannot beep. Kernel module pcspkr seems not to be loaded");
+	  if (! beep_warning_shown_) {
+	    //log(llsf_log_msgs::LogMessage::LL_WARN, "L", "%s",
+	    //  "Cannot beep. Kernel module pcspkr seems not to be loaded");
       beep_warning_shown_ = true;
     }
     return;
