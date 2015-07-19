@@ -191,3 +191,64 @@
   (bson-destroy ?client-update-doc)
   (bson-destroy ?update-query)
 )
+
+
+(deffunction mongodb-store-machine-zones (?time)
+  (bind ?doc (bson-create))
+
+  (bson-append-array ?doc "timestamp" ?time)
+  (bson-append-time  ?doc "time" ?time)
+  (bind ?m-arr (bson-array-start ?doc "machines"))
+	
+	(do-for-all-facts ((?m machine)) TRUE
+    (bind ?m-doc (bson-create))
+		(bson-append ?m-doc "name" ?m:name)
+		(bson-append ?m-doc "zone" ?m:zone)
+		(bson-array-append ?m-arr ?m-doc)
+		(bson-destroy ?m-doc)
+  )
+
+	(bson-array-finish ?m-arr)
+  (mongodb-upsert "llsfrb.machine_zones" ?doc
+  		  (str-cat "{\"timestamp\": [" (nth$ 1 ?time) ", " (nth$ 2 ?time) "]}"))
+  (bson-destroy ?doc)
+
+)
+
+(deffunction mongodb-load-machine-zones ()
+  (bind ?query (bson-create))
+  (bind ?sort (bson-create))
+	(bson-append ?sort "timestamp" -1)
+	(bind ?cursor (mongodb-query-sort "llsfrb.machine_zones" ?query ?sort))
+	(if (mongodb-cursor-more ?cursor)
+   then
+    (bind ?doc (mongodb-cursor-next ?cursor))
+		(bind ?fn (bson-field-names ?doc))
+		(bind ?m-arr (bson-get-array ?doc "machines"))
+		(foreach ?m-p ?m-arr
+			(bind ?m-name (sym-cat (bson-get ?m-p "name")))
+			(bind ?m-zone (sym-cat (bson-get ?m-p "zone")))
+      (printout t "Machine " ?m-name " is in zone " ?m-zone crlf)
+			(do-for-fact ((?m machine)) (eq ?m:name ?m-name)
+        (modify ?m (zone ?m-zone))
+      )
+    )
+  )
+  (mongodb-cursor-destroy ?cursor)
+	(bson-destroy ?query)
+)
+
+(defrule mongodb-store-machine-zones
+	(machines-initialized)
+	=>
+	(printout t "Storing machine zones to database" crlf)
+	(mongodb-store-machine-zones (now))
+)
+
+(defrule mongodb-load-machine-zones
+  (declare (salience ?*PRIORITY_FIRST*))
+  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+  (not (game-parameterized))
+	=>
+	(mongodb-load-machine-zones)
+)
