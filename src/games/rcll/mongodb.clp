@@ -11,6 +11,10 @@
   (multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
+(deffunction mongodb-time-as-ms (?time)
+	(return (+ (* (nth$ 1 ?time) 1000) (div (nth$ 2 ?time) 1000)))
+)
+
 (defrule mongodb-init
   (init)
   =>
@@ -132,11 +136,11 @@
 )
 
 (defrule mongodb-game-report-end
-  (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
-	     (phase POST_GAME) (start-time $?stime) (end-time $?etime))
-  (not (mongodb-game-report end $?stime))
+						 (phase POST_GAME) (start-time $?stime) (end-time $?etime))
+  (not (mongodb-wrote-game-report end $?stime))
   =>
+	(printout t "Writing game report to MongoDB" crlf)
   (mongodb-write-game-report ?teams ?stime ?etime)
   (assert (mongodb-wrote-game-report end ?stime))
 )
