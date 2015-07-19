@@ -160,7 +160,7 @@
       (printout t "Machines on Cyan side: " ?cyan-side-machines crlf)
 			; decide on randomization step
       (bind ?rm (pick-random$ ?cyan-side-machines))
-      (if (> (random 1 10) 0)
+      (if (> (random 1 10) ?*RANDOMIZE-INTER-SIDE-SWAP-PROB*)
        then
         ; swap with another zone on the same side
 			 (bind ?candidates ?*MACHINE-ZONES-CYAN*)
