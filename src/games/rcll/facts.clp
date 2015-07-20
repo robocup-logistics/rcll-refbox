@@ -318,12 +318,13 @@
 )
 
 (deffacts orders
-  (order (id  1) (complexity C0) (quantity-requested 1) (start-range 60 180))
+  (order (id  1) (complexity C0) (quantity-requested 1) (start-range 0 0)
+	       (activation-range 900 900) (duration-range 900 900))
   (order (id  2) (complexity C0) (quantity-requested 1) (start-range 200 400))
   (order (id  3) (complexity C0) (quantity-requested 2) (start-range 300 700))
   (order (id  4) (complexity C0) (quantity-requested 1) (start-range 700 900))
-  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 420 720)
-	       (activation-range 420 720))
+  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 0 0)
+	       (activation-range 900 900) (duration-range 900 900))
   (order (id  6) (complexity C2) (quantity-requested 1) (start-range 600 720)
 	       (activation-range 300 600))
   (order (id  7) (complexity C3) (quantity-requested 1) (start-range 600 720)
