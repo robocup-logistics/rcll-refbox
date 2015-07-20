@@ -72,6 +72,12 @@
   ;(printout t "Simulated light setting for " ?name ": " ?color "/" ?state crlf)
 )
 
+(deffunction mps-set-lights (?name ?state-red ?state-yellow ?state-green)
+  (bind ?name (sym-cat ?name))
+  (printout t "Simulated light setting for " ?name ": red=" ?state-red
+						" yellow=" ?state-yellow "  green=" ?state-green crlf)
+)
+
 (deffunction mps-bs-dispense (?name ?color ?side)
   (bind ?name (sym-cat ?name))
   (printout t "Simulated dispense at " ?name " for " ?color " at " ?side crlf)

@@ -29,19 +29,17 @@
   =>
   ;(printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
   (modify ?mf (actual-lights ?dl))
-  (foreach ?color (create$ RED YELLOW GREEN)
-    (if (member$ (sym-cat ?color "-ON") ?dl)
-    then 
-      (mps-set-light (str-cat ?m) (str-cat ?color) "ON")
-    else
-      (if (member$ (sym-cat ?color "-BLINK") ?dl)
-      then
-        (mps-set-light (str-cat ?m) (str-cat ?color) "BLINK")
-      else
-        (mps-set-light (str-cat ?m) (str-cat ?color) "OFF")
-      )
-    )
-  )
+	(if (member$ RED-ON ?dl) then (bind ?red-state ON)
+	 else if (member$ RED-BLINK ?dl) then (bind ?red-state BLINK)
+	 else (bind ?red-state OFF))
+	(if (member$ YELLOW-ON ?dl) then (bind ?yellow-state ON)
+	 else if (member$ YELLOW-BLINK ?dl) then (bind ?yellow-state BLINK)
+	 else (bind ?yellow-state OFF))
+	(if (member$ GREEN-ON ?dl) then (bind ?green-state ON)
+	 else if (member$ GREEN-BLINK ?dl) then (bind ?green-state BLINK)
+	 else (bind ?green-state OFF))
+
+	(mps-set-lights (str-cat ?m) ?red-state ?yellow-state ?green-state)
 )
 
 (deffunction zone-magenta-for-cyan (?cyan-zone)
