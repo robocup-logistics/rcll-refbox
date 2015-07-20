@@ -256,12 +256,13 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
+		 (rs-ring-color ?ring-color) (rs-ring-colors ?ring-colors)
+                 (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t "Mounting ring " ?n crlf)
-  (mps-rs-mount-ring (str-cat ?n) 1)
+  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) crlf)
+  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
 (defrule prod-proc-state-processing-cs-mount-without-retrieve
