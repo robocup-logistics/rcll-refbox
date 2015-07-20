@@ -394,7 +394,10 @@
      )
     )
     (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
-      then (pb-set-field ?m "state" (fact-slot-value ?mf state))
+      then
+			 (pb-set-field ?m "state" (fact-slot-value ?mf state))
+       (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
+
       else (pb-set-field ?m "state" "")
     )
 
