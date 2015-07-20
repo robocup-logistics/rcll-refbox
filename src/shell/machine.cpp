@@ -186,10 +186,29 @@ LLSFRefBoxShellMachine::refresh()
     addstr(0, 17, minfo_->correctly_reported() ? "++" : "--");
     attroff(A_BOLD);
   } else {
-    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-    addstr(0, 17, ! minfo_ || minfo_->state().empty()
-	   ? "  "
-	   : minfo_->state().substr(0,2).c_str());
+	  if (! minfo_ || minfo_->state().empty()) {
+		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+		  addstr(0, 17, "  ");
+	  } else {
+		  if (minfo_->state() == "BROKEN" || minfo_->state() == "DOWN") {
+			  attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
+			  addstr(0, 17, minfo_->state().substr(0,2).c_str());
+		  } else if (minfo_->state() == "PREPARED") {
+			  attron(' '|COLOR_PAIR(COLOR_GREEN_ON_BACK));
+			  addstr(0, 17, "PP");
+		  } else if (minfo_->state() == "PROCESSING" || minfo_->state() == "PROCESSED") {
+			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN));
+			  addstr(0, 17, "P");
+			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+			  addstr(0, 18, minfo_->state().substr(minfo_->state().length()-1, 1).c_str());
+		  } else if (minfo_->state() == "READY-AT-OUTPUT") {
+			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+			  addstr(0, 17, "RO");
+		  } else {
+			  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+			  addstr(0, 17, minfo_->state().substr(0,2).c_str());
+		  }
+	  }
   }
 
   attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
