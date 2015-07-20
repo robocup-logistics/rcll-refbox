@@ -376,7 +376,7 @@
 		 (broken-since ?bs&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
   =>
   (printout t "Machine " ?n " recovered" crlf)
-  (modify ?m (state IDLE) (prev-state BROKEN) (bases-used ?ba))
+  (modify ?m (state IDLE) (prev-state BROKEN) (bases-used ?ba) (cs-retrieved FALSE))
 )
 
 
