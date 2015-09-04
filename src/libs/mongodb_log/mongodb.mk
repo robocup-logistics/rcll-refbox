@@ -34,6 +34,9 @@ ifneq ($(wildcard /usr/include/mongo/client/dbclient.h /usr/local/include/mongo/
       # we are linking against a shared library, add to link flags
       LDFLAGS_MONGODB += -lmongoclient
     endif
+    ifneq ($(wildcard /usr/include/mongo/version.h /usr/local/include/mongo/version.h),)
+      CFLAGS_MONGODB += -DHAVE_MONGODB_VERSION_H
+    endif
   endif
 endif
 
