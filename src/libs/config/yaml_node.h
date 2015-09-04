@@ -32,6 +32,7 @@
 #include <utils/misc/string_split.h>
 #include <fstream>
 #include <stack>
+#include <iostream>
 #include <cerrno>
 #include <unistd.h>
 #include <algorithm>
