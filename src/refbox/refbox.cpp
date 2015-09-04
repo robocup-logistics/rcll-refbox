@@ -62,6 +62,9 @@
 #  include <mongo/client/dbclient.h>
 #  include <mongodb_log/mongodb_log_logger.h>
 #  include <mongodb_log/mongodb_log_protobuf.h>
+#  ifdef HAVE_MONGODB_VERSION_H
+#    include <mongo/version.h>
+#  endif
 #endif
 #ifdef HAVE_AVAHI
 #  include <netcomm/dns-sd/avahi_thread.h>
@@ -1018,7 +1021,11 @@ LLSFRefBox::clips_bson_parse(std::string document)
   mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
   try {
     b->appendElements(mongo::fromjson(document));
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Parsing JSON doc failed: %s\n%s",
 		       e.what(), document.c_str());
   }
@@ -1071,7 +1078,11 @@ LLSFRefBox::clips_bson_append(void *bson, std::string field_name, CLIPS::Value v
 			field_name.c_str());
       break;
     }
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append array value to field %s: %s",
 		       field_name.c_str(), e.what());
   }
@@ -1116,7 +1127,11 @@ LLSFRefBox::clips_bson_append_array(void *bson,
 	break;
       }
     }
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append array value to field %s: %s",
 		       field_name.c_str(), e.what());
   }
@@ -1170,7 +1185,11 @@ LLSFRefBox::clips_bson_array_append(void *barr, CLIPS::Value value)
       logger_->log_warn("RefBox", "Tried to add unknown type to BSON array");
       break;
     }
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append to array: %s", e.what());
   }
 }
@@ -1193,7 +1212,11 @@ LLSFRefBox::clips_bson_append_time(void *bson, std::string field_name, CLIPS::Va
     struct timeval now = { time[0].as_integer(), time[1].as_integer()};
     mongo::Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
     b->appendDate(field_name, nowd);
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append time value to field %s: %s",
 		       field_name.c_str(), e.what());
   }
@@ -1239,7 +1262,11 @@ LLSFRefBox::mongodb_update(std::string &collection, mongo::BSONObj obj,
     }
 
     mongodb_->update(collection, query_obj, obj, upsert);
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_warn("MongoDB", "Compiling query failed: %s", e.what());
   } catch (mongo::DBException &e) {
     logger_->log_warn("MongoDB", "Insert failed: %s", e.what());
@@ -1514,11 +1541,18 @@ LLSFRefBox::clips_bson_get_time(void *bson, std::string field_name)
 
 	mongo::BSONElement el = o.getField(field_name);
 
-	mongo::Date_t d;
+	int64_t ts = 0;
 	if (el.type() == mongo::Date) {
-		d = el.Date();
+		mongo::Date_t d = el.Date();
+		ts = d.asInt64();
 	} else if (el.type() == mongo::Timestamp) {
-		d = el.timestampTime();
+#ifdef HAVE_MONGODB_VERSION_H
+		mongo::Timestamp_t t = el.Timestamp();
+		ts = t.seconds();
+#else
+		mongo::Date_t d = el.timestampTime();
+		ts = d.asInt64();
+#endif
 	} else {
 		logger_->log_error("MongoDB", "mongodb-bson-get-time: field %s is not a time",
 		                   field_name.c_str());
@@ -1526,7 +1560,6 @@ LLSFRefBox::clips_bson_get_time(void *bson, std::string field_name)
 		return rv;
 	}
 
-	int64_t ts = d.asInt64();
 
 	rv.resize(2);
 	rv[0] = CLIPS::Value((long long int)(ts / 1000));
