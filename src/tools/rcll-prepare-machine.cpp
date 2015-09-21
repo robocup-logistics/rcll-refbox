@@ -143,6 +143,10 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       const Machine &m = mi->machines(i);
       printf("  %s, prepared: %s\n", m.name().c_str(),
 	     m.state() == "PREPARED" ? "YES" : "NO");
+      if (0 == machine_name_.compare(m.name()) && m.state() == "PREPARED") {
+        raise (SIGINT);
+        quit = true;
+      }
     }
   }
 
