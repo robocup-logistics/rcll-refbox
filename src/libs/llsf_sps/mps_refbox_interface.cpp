@@ -49,14 +49,21 @@ MPSRefboxInterface::process() {
   std::list<std::string> recovered_threads;
   mpsThreadList->try_recover(recovered_threads);
 
+  if (recovered_threads.size() > 0) {
+    printf("Recovered threads\n");
+    for (std::list<std::string>::iterator i = recovered_threads.begin(); i != recovered_threads.end(); ++i) {
+      printf("  %s\n", i->c_str());
+    }
+  }
+
   try {
     std::list<std::string> bad_threads;
     mpsThreadList->wakeup_and_wait(__max_thread_time_sec, __max_thread_time_usec, bad_threads);
 
-    for(std::string badthreadname : bad_threads) {
-      for(Thread *t1 : *mpsThreadList) {
-        if(t1->name() == badthreadname) {
-          if(dynamic_cast<MPS*>(t1)->machineState == dynamic_cast<MPS*>(t1)->DISCONNECTED) {
+    for (const std::string &badthreadname : bad_threads) {
+      for (Thread *t1 : *mpsThreadList) {
+	  if (t1->name() == badthreadname) {
+          if (dynamic_cast<MPS*>(t1)->machineState == dynamic_cast<MPS*>(t1)->DISCONNECTED) {
             dynamic_cast<MPS*>(t1)->reconnect();
           }
         }
