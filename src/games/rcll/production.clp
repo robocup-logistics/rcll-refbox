@@ -455,7 +455,7 @@
   ?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-state RETRIEVED)
 		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
   =>
-  (modify ?m (state WAIT-IDLE) (retrieved-at ?gt))
+  (modify ?m (state WAIT-IDLE) (retrieved-at ?gt) (desired-lights YELLOW-BLINK))
 )
 
 
