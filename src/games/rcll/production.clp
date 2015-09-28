@@ -332,14 +332,14 @@
   (mps-deliver (str-cat ?n))
 )
 
-(defrule prod-proc-state-processed
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSED) (proc-state ~PROCESSED))
-  =>
-  (printout t "Machine " ?n " finished processing, moving to output" crlf)
-  (modify ?m (proc-state PROCESSED))
-  (mps-deliver (str-cat ?n))
-)
+;(defrule prod-proc-state-processed
+;  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+;  ?m <- (machine (name ?n) (state PROCESSED) (proc-state ~PROCESSED))
+;  =>
+;  (printout t "Machine " ?n " finished processing, moving to output" crlf)
+;  (modify ?m (proc-state PROCESSED))
+;  (mps-deliver (str-cat ?n))
+;)
 
 (defrule prod-proc-state-ready-at-output
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
