@@ -802,8 +802,8 @@ void
 LLSFRefBox::clips_mps_set_lights(std::string machine, std::string red_state,
                                  std::string yellow_state, std::string green_state)
 {
-  //logger_->log_info("MPS", "Set light %s: %s to %s",
-  //		    machine.c_str(), color.c_str(), state.c_str());
+  //logger_->log_info("MPS", "Set light on %s: red %s yellow %s  green %s",
+  //                  machine.c_str(), red_state.c_str(), yellow_state.c_str(), green_state.c_str());
 
   if (! mps_)  return;
   MPS *station;
@@ -814,11 +814,11 @@ LLSFRefBox::clips_mps_set_lights(std::string machine, std::string red_state,
 	  int lights[3];
 
     if (red_state == "ON") {
-	    lights[2] = 1;
+	    lights[0] = 1;
     } else if (red_state == "BLINK") {
-	    lights[2] = 2;
+	    lights[0] = 2;
     } else {
-	    lights[2] = 0;
+	    lights[0] = 0;
     }
 
     if (yellow_state == "ON") {
@@ -830,11 +830,11 @@ LLSFRefBox::clips_mps_set_lights(std::string machine, std::string red_state,
     }
 
     if (green_state == "ON") {
-	    lights[0] = 1;
+	    lights[2] = 1;
     } else if (green_state == "BLINK") {
-	    lights[0] = 2;
+	    lights[2] = 2;
     } else {
-	    lights[0] = 0;
+	    lights[2] = 0;
     }
 
     //printf("Set light %i %i %i\n", color_id, state_id, blink_id);
