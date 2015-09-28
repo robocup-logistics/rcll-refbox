@@ -10,8 +10,8 @@ MPS::MPS(const char* ip, int port) {
 
   // set new timeout
   struct timeval response_timeout;
-  response_timeout.tv_sec = 5;      // timeout in seconds
-  response_timeout.tv_usec = 0;     // timeout in microseconds
+  response_timeout.tv_sec = 0;      // timeout in seconds
+  response_timeout.tv_usec = 300000;     // timeout in microseconds
   modbus_set_response_timeout(this->mb, &response_timeout);
 
   machineState = IDLE;
