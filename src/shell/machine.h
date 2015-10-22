@@ -41,9 +41,11 @@
 #include <cursesp.h>
 
 #include <msgs/MachineInfo.pb.h>
+#include <msgs/ProductColor.pb.h>
 
 #include <vector>
 #include <map>
+#include <memory>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -55,17 +57,12 @@ class LLSFRefBoxShellMachine : public NCursesPanel
 {
  public:
   LLSFRefBoxShellMachine(std::string name, std::string type,
-			 int begin_y, int begin_x, bool visible);
+			 int begin_y, int begin_x, bool visible = true);
   ~LLSFRefBoxShellMachine();
 
-  void set_type(std::string type);
-  void set_lights(std::map<llsf_msgs::LightColor, llsf_msgs::LightState> &lights);
-  void set_inputs(std::vector<llsf_msgs::PuckState> &inputs);
-  void set_loaded_with(std::vector<llsf_msgs::PuckState> &loaded_with);
-  void set_correctly_reported(bool has_field, bool correctly_reported = false);
-  void set_puck_under_rfid(bool has_puck, llsf_msgs::PuckState puck_state = llsf_msgs::S0);
-  void flip_blink_states();
+  void update(const llsf_msgs::Machine &minfo);
 
+  void flip_blink_states();
   void set_visible(bool visible);
 
   void reset();
@@ -73,15 +70,8 @@ class LLSFRefBoxShellMachine : public NCursesPanel
   int refresh();
 
  private:
-  bool          visible_;
-  std::string   name_;
-  std::string   type_;
-  std::vector<llsf_msgs::PuckState> inputs_;
-  std::vector<llsf_msgs::PuckState> loaded_with_;
-  bool                              puck_under_rfid_;
-  llsf_msgs::PuckState              puck_under_rfid_state_;
-  bool                              has_correctly_reported_field_;
-  bool                              correctly_reported_;
+  bool                  visible_;
+  std::shared_ptr<llsf_msgs::Machine> minfo_;
   std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;
   std::map<llsf_msgs::LightColor, bool> blink_state_;
 };

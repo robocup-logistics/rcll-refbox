@@ -172,7 +172,8 @@
   =>
   (printout t ?mtype " production done @ " ?m ": " ?id " (" ?ps
 	    " -> " ?output ", took " ?pt " sec, awarding " ?machine-points " points)" crlf)
-  (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
+  (modify ?mf (state IDLE) (prev-state PROCESSING)
+	  (loaded-with)  (desired-lights GREEN-ON)
 	  (productions (+ ?p 1)))
   (assert (points (game-time ?gt) (team ?team) (points ?machine-points) (phase PRODUCTION)
 		  (reason (str-cat ?mtype " production done at " ?m))))

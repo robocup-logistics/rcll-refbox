@@ -44,6 +44,8 @@
 #include <core/threading/mutex_locker.h>
 #include <utils/llsf/machines.h>
 #include <protobuf_comm/server.h>
+#include <llsf_sps/mps_refbox_interface.h>
+#include <core/threading/thread_list.h>
 
 #include <clipsmm.h>
 #ifdef HAVE_MONGODB
@@ -108,6 +110,8 @@ class LLSFRefBox
   CLIPS::Values clips_now();
   CLIPS::Values clips_get_clips_dirs();
   void          clips_load_config(std::string cfg_prefix);
+  CLIPS::Value  clips_config_path_exists(std::string path);
+  CLIPS::Value  clips_config_get_bool(std::string path);
 
 #ifdef HAVE_MONGODB
   CLIPS::Value  clips_bson_create();
@@ -127,10 +131,29 @@ class LLSFRefBox
   void          clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query);
   void          clips_mongodb_insert(std::string collection, void *bson);
   void          mongodb_update(std::string &collection, mongo::BSONObj obj,
-			       CLIPS::Value &query, bool upsert);
+                               CLIPS::Value &query, bool upsert);
+  CLIPS::Value  clips_mongodb_query_sort(std::string collection, void *bson, void *bson_sort);
+  CLIPS::Value  clips_mongodb_query(std::string collection, void *bson);
+  CLIPS::Value  clips_mongodb_cursor_more(void *cursor);
+  CLIPS::Value  clips_mongodb_cursor_next(void *cursor);
+  void          clips_mongodb_cursor_destroy(void *cursor);
+  CLIPS::Values clips_bson_field_names(void *bson);
+  CLIPS::Value  clips_bson_get(void *bson, std::string field_name);
+  CLIPS::Values clips_bson_get_array(void *bson, std::string field_name);
+  CLIPS::Values clips_bson_get_time(void *bson, std::string field_name);
 #endif
 
   void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
+  void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
+  void          clips_mps_rs_mount_ring(std::string machine, int slide);
+  void          clips_mps_cs_process(std::string machine, std::string operation);
+  void          clips_mps_ds_process(std::string machine, int slide);
+  void          clips_mps_set_light(std::string machine, std::string light, std::string state);
+  void          clips_mps_set_lights(std::string machine, std::string red_state,
+                                     std::string yellow_state, std::string green_state);
+  void          clips_mps_reset(std::string machine);
+  void          clips_mps_reset_base_counter(std::string machine);
+  void          clips_mps_deliver(std::string machine);
   void          sps_read_rfids();
 
   void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
@@ -187,6 +210,8 @@ class LLSFRefBox
   MongoDBLogProtobuf  *mongodb_protobuf_;
   mongo::DBClientBase *mongodb_;
 #endif
+
+  MPSRefboxInterface  *mps_;
 };
 
 

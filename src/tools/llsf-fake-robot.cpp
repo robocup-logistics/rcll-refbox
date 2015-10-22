@@ -40,6 +40,8 @@
 
 #include <protobuf_comm/peer.h>
 #include <utils/system/argparser.h>
+#include <utils/system/console_colors.h>
+#include <utils/misc/string_split.h>
 
 #include <msgs/BeaconSignal.pb.h>
 #include <msgs/OrderInfo.pb.h>
@@ -49,6 +51,7 @@
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/MachineReport.pb.h>
 #include <msgs/RobotInfo.pb.h>
+#include <msgs/RingInfo.pb.h>
 
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
@@ -161,11 +164,21 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       unsigned int end_min = o.delivery_period_end() / 60;
       unsigned int end_sec = o.delivery_period_end() - end_min * 60;
 
-      printf("  %u: %u/%u of %s from %02u:%02u to %02u:%02u at gate %s\n", o.id(),
-	     o.quantity_delivered(), o.quantity_requested(),
-	     llsf_msgs::Order::ProductType_Name(o.product()).c_str(),
+      std::list<std::string> rings;
+      for (int j = 0; j < o.ring_colors_size(); ++j) {
+	rings.push_back(llsf_msgs::RingColor_Name(o.ring_colors(j)));;
+      }
+
+      printf("  %u (%s): %s%u%s/%s%u%s/%u of %s|%s|%s from %02u:%02u to %02u:%02u at gate %u\n", o.id(),
+	     llsf_msgs::Order::Complexity_Name(o.complexity()).c_str(),
+	     c_cyan, o.quantity_delivered_cyan(), c_normal,
+	     c_purple, o.quantity_delivered_magenta(), c_normal,
+	     o.quantity_requested(),
+	     llsf_msgs::BaseColor_Name(o.base_color()).c_str(),
+	     str_join(rings, "-").c_str(),
+	     llsf_msgs::CapColor_Name(o.cap_color()).c_str(),
 	     begin_min, begin_sec, end_min, end_sec,
-	     llsf_msgs::Order::DeliveryGate_Name(o.delivery_gate()).c_str());
+	     o.delivery_gate());
     }
   }
 
@@ -188,10 +201,10 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       printf("\n");
     }
     printf("  --\n");
-    for (int i = 0; i < ei->machines_size(); ++i) {
-      const ExplorationMachine &em = ei->machines(i);
-      printf("  Machine %s at (%f, %f, %f)\n", em.name().c_str(),
-	     em.pose().x(), em.pose().y(), em.pose().ori());
+    for (int i = 0; i < ei->zones_size(); ++i) {
+      const ExplorationZone &zm = ei->zones(i);
+      printf("  Zone %s of team %s\n",
+	     Zone_Name(zm.zone()).c_str(), Team_Name(zm.team_color()).c_str());
     }
   }
 
@@ -201,9 +214,10 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     for (int i = 0; i < mi->machines_size(); ++i) {
       const Machine &m = mi->machines(i);
       const Pose2D &p = m.pose();
-      printf("  %-3s|%2s|%s @ (%f, %f, %f)\n",
+      printf("  %-3s|%2s|%s (%s) @ (%f, %f, %f)\n",
 	     m.name().c_str(), m.type().substr(0, 2).c_str(),
 	     Team_Name(m.team_color()).substr(0, 2).c_str(),
+						 m.state().c_str(),
 	     p.x(), p.y(), p.ori());
     }
   }
@@ -245,6 +259,18 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 	     last_seen_ago, r.maintenance_cycles(), r.maintenance_time_remaining());
     }
   }
+
+  std::shared_ptr<RingInfo> rgi;
+  if ((rgi = std::dynamic_pointer_cast<RingInfo>(msg))) {
+    printf("RingInfo received:\n");
+    for (int i = 0; i < rgi->rings_size(); ++i) {
+      const Ring &r = rgi->rings(i);
+      printf("  %s %u\n",
+						 RingColor_Name(r.ring_color()).c_str(),
+						 r.raw_material());
+    }
+  }
+
 }
 
 
@@ -335,6 +361,7 @@ main(int argc, char **argv)
   message_register.add_message_type<MachineInfo>();
   message_register.add_message_type<MachineReportInfo>();
   message_register.add_message_type<RobotInfo>();
+  message_register.add_message_type<RingInfo>();
 
   std::string cfg_prefix =
     std::string("/llsfrb/comm/") +

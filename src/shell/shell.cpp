@@ -40,7 +40,6 @@
 #include "machine.h"
 #include "robot.h"
 #include "order.h"
-#include "puck.h"
 #include "menus.h"
 #include "colors.h"
 
@@ -67,13 +66,16 @@
 
 #include <cstring>
 #include <unistd.h>
+#include <modbus/modbus.h>
+
+//#include <libs/llsf_sps/mps_band.h>
 
 // defined in miliseconds
 #define TIMER_INTERVAL 500
 #define RECONNECT_TIMER_INTERVAL 1000
 #define BLINK_TIMER_INTERVAL 250
 #define ATTMSG_TIMER_INTERVAL 1000
-#define MIN_NUM_ROBOTS 3
+#define MIN_NUM_ROBOTS 6
 
 using namespace protobuf_comm;
 
@@ -86,11 +88,11 @@ namespace llsfrb_shell {
 LLSFRefBoxShell::LLSFRefBoxShell()
   : quit_(false), error_(NULL), panel_(nullptr), navbar_(nullptr),
     rb_log_(nullptr), p_orders_(nullptr), p_attmsg_(nullptr), p_state_(nullptr),
-    p_phase_(nullptr), p_time_(nullptr), p_points_(nullptr), p_team_(nullptr),
-    m_state_(nullptr),  m_phase_(nullptr), m_team_(nullptr),
+    p_phase_(nullptr), p_time_(nullptr), p_points_(nullptr), p_team_cyan_(nullptr),
+    p_team_magenta_(nullptr), m_state_(nullptr),  m_phase_(nullptr),
     timer_(io_service_), reconnect_timer_(io_service_), try_reconnect_(true),
     blink_timer_(io_service_), attmsg_timer_(io_service_), attmsg_toggle_(true),
-    attmsg_team_specific_(false), beep_warning_shown_(false), team_(CYAN)
+    attmsg_team_specific_(false), beep_warning_shown_(false)
 {
   stdin_ = new boost::asio::posix::stream_descriptor(io_service_, dup(STDIN_FILENO));
   client = new ProtobufStreamClient();
@@ -119,7 +121,6 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   } catch (std::exception &e) {} // ignored
 
   last_minfo_.reset();
-  last_pinfo_.reset();
   last_gameinfo_.reset();
   last_robotinfo_.reset();
 
@@ -144,22 +145,17 @@ LLSFRefBoxShell::~LLSFRefBoxShell()
   }
   orders_.clear();
 
-  for (size_t i = 0; i < pucks_.size(); ++i) {
-    delete pucks_[i];
-  }
-  pucks_.clear();
-
   delete rb_log_;
 
   delete m_state_;
   delete m_phase_;
-  delete m_team_;
 
   delete p_state_;
   delete p_phase_;
   delete p_time_;
   delete p_points_;
-  delete p_team_;
+  delete p_team_cyan_;
+  delete p_team_magenta_;
   delete p_attmsg_;
 
   delete config_;
@@ -279,80 +275,19 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 
       case KEY_F(4):
 	if (last_gameinfo_) {
-	  try {
-	    TeamSelectMenu m(panel_, last_gameinfo_);
-	    m();
-	    if (m) {
-	      std::string team_name = m.get_team_name();
-	      send_set_team(team_name);	      
-	    }
-	  } catch (NCursesException &e) {
-	    logf("Machine menu failed: %s", e.message);
-	  }
-	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
-	}
-	break;
-
-      case KEY_F(7):
-	if (last_minfo_) {
-	  try {
-	    MachineWithPuckMenu m(panel_, team_, last_minfo_);
-	    m();
-	    if (m) {
-	      std::string machine_name;
-	      unsigned int puck_id;
-	      m.get_machine_puck(machine_name, puck_id);
-	      send_remove_puck(machine_name, puck_id);	      
-	    }
-	  } catch (NCursesException &e) {
-	    logf("Machine menu failed: %s", e.message);
-	  }
-	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
-	}
-	break;
-
-      case KEY_F(5):
-	if (last_minfo_ && last_pinfo_) {
-	  try {
-	    MachineThatCanTakePuckMenu mtctpm(panel_, team_, last_minfo_);
-	    mtctpm();
-	    if (mtctpm) {
-	      //rb_log_->printw("Valid machine selected\n");
-	      PuckForMachineMenu pfmm(panel_, team_,
-				      last_pinfo_, last_minfo_, mtctpm.machine());
-	      pfmm();
-	      if (pfmm) {
-		//rb_log_->printw("Valid puck selected\n");
-		const llsf_msgs::Machine &m = mtctpm.machine();
-		const llsf_msgs::Puck &p = pfmm.puck();
-		bool can_be_placed_under_rfid = ! m.has_puck_under_rfid();
-		bool can_be_loaded_with = (m.inputs_size() - m.loaded_with_size()) > 1;
-		for (int i = 0; i < m.loaded_with_size(); ++i) {
-		  if (p.state() == m.loaded_with(i).state()) {
-		    can_be_loaded_with = false;
-		    break;
-		  }
-		}
-		MachinePlacingMenu mpm(panel_, m.name(),
-				       llsf_msgs::PuckState_Name(p.state()),
-				       can_be_placed_under_rfid, can_be_loaded_with);
-		mpm();
-		if (mpm) {
-		  if (mpm.place_under_rfid()) {
-		    logf("Place %s under RFID of %s",
-			 llsf_msgs::PuckState_Name(p.state()).c_str(),
-			 m.name().c_str());
-		    set_puck_under_rfid(m.name(), p.id());
-		  } else {
-		    logf("Load machine %s with puck %s (%u)", m.name().c_str(),
-			 llsf_msgs::PuckState_Name(p.state()).c_str(), p.id());
-		    set_loaded_with(m.name(), p.id());
-		  }
-		}
+	  TeamColorSelectMenu tcsm(panel_);
+	  tcsm();
+	  if (tcsm) {
+	    try {
+	      TeamSelectMenu m(panel_, tcsm.get_team_color(), last_gameinfo_, last_game_state_);
+	      m();
+	      if (m) {
+		std::string team_name = m.get_team_name();
+		send_set_team(tcsm.get_team_color(), team_name);	      
 	      }
+	    } catch (NCursesException &e) {
+	      logf("Machine menu failed: %s", e.message);
 	    }
-	  } catch (NCursesException &e) {
-	    logf("Machine menu failed: %s", e.message);
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}
@@ -360,30 +295,47 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 
       case KEY_F(9):
 	if (last_robotinfo_) {
-	  try {
-	    RobotMaintenanceMenu rmm(panel_, team_, last_robotinfo_);
-	    rmm();
-	    if (rmm) {
-	      //logf("Place %s under RFID of %s",
-	      //   llsf_msgs::PuckState_Name(p.state()).c_str(),
-	      //   m.name().c_str());
-	      unsigned int robot_number;
-	      bool maintenance;
-	      rmm.get_robot(robot_number, maintenance);
-	      send_robot_maintenance(robot_number, maintenance);
+	  TeamColorSelectMenu tcsm(panel_);
+	  tcsm();
+	  if (tcsm) {
+	    try {
+	      RobotMaintenanceMenu rmm(panel_, tcsm.get_team_color(), last_robotinfo_);
+	      rmm();
+	      if (rmm) {
+		unsigned int robot_number;
+		bool maintenance;
+		rmm.get_robot(robot_number, maintenance);
+		send_robot_maintenance(tcsm.get_team_color(), robot_number, maintenance);
+	      }
+	    } catch (NCursesException &e) {
+	      logf("Machine menu failed: %s", e.message);
 	    }
-	  } catch (NCursesException &e) {
-	    logf("Machine menu failed: %s", e.message);
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+	} else {
+	  logf("No robot info received, yet.");
 	}
 	break;
 
       case KEY_F(12):
-	(*m_team_)();
-	io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+	if (! last_orderinfo_) {
+	  logf("No order info received, yet.");
+	} else if (! last_game_state_) {
+	  logf("No game state received, yet.");
+	} else {
+	  TeamColorSelectMenu tcsm(panel_);
+	  tcsm();
+	  if (tcsm) {
+	    OrderDeliverMenu odm(panel_, tcsm.get_team_color(),
+				 last_orderinfo_, last_game_state_);
+	    odm();
+	    if (odm) {
+	      send_set_order_delivered(tcsm.get_team_color(), odm.order());
+	    }
+	  }
+	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+	}
 	break;
-
       }
     }
     start_keyboard();
@@ -417,7 +369,7 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
 
       if (attmsg_toggle_) {
 	if (attmsg_team_specific_) {
-	  if (team_ == CYAN) {
+	  if (attmsg_team_ == llsf_msgs::CYAN) {
 	    p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
 	    p_attmsg_->attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK)|A_BOLD);
 	  } else {
@@ -431,7 +383,7 @@ LLSFRefBoxShell::handle_attmsg_timer(const boost::system::error_code& error)
       } else {
 	beep(1500, ATTMSG_TIMER_INTERVAL);
 	if (attmsg_team_specific_) {
-	  if (team_ == CYAN) {
+	  if (attmsg_team_ == llsf_msgs::CYAN) {
 	    p_attmsg_->bkgd(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN));
 	    p_attmsg_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
 	  } else {
@@ -515,78 +467,11 @@ LLSFRefBoxShell::set_game_phase(std::string phase)
 
 
 void
-LLSFRefBoxShell::set_game_team_color(std::string team_color)
-{
-  Team new_team = CYAN;
-  if (team_color == "MAGENTA") {
-    new_team = MAGENTA;
-  }
-
-  if (new_team != team_) {
-    team_ = new_team;
-
-    // Reset all data, we need to get them fresh for the other team
-    for (size_t i = 0; i < orders_.size(); ++i) {
-      orders_[i]->reset();
-    }
-
-    for (size_t i = 0; i < pucks_.size(); ++i) {
-      pucks_[i]->reset();
-    }
-
-    for (size_t i = 0; i < robots_.size(); ++i) {
-      robots_[i]->reset();
-    }
-  }
-
-}
-
-void
-LLSFRefBoxShell::set_puck_under_rfid(const std::string &machine_name, unsigned int puck_id)
-{
-  llsf_msgs::PlacePuckUnderMachine msg;
-  msg.set_machine_name(machine_name);
-  msg.set_puck_id(puck_id);
-  try {
-    client->send(msg);
-  } catch (std::runtime_error &e) {
-    logf("Sending puck under RFID failed: %s", e.what());
-  }
-}
-
-void
-LLSFRefBoxShell::set_loaded_with(const std::string &machine_name, unsigned int puck_id)
-{
-  llsf_msgs::LoadPuckInMachine msg;
-  msg.set_machine_name(machine_name);
-  msg.set_puck_id(puck_id);
-  try {
-    client->send(msg);
-  } catch (std::runtime_error &e) {
-    logf("Sending load puck failed: %s", e.what());
-  }
-}
-
-
-void
-LLSFRefBoxShell::send_remove_puck(std::string &machine_name, unsigned int puck_id)
-{
-  llsf_msgs::RemovePuckFromMachine msg;
-  msg.set_machine_name(machine_name);
-  msg.set_puck_id(puck_id);
-  try {
-    client->send(msg);
-  } catch (std::runtime_error &e) {
-    logf("Sending remove puck failed: %s", e.what());
-  }
-}
-
-void
-LLSFRefBoxShell::send_set_team(std::string &team_name)
+LLSFRefBoxShell::send_set_team(llsf_msgs::Team team, std::string &team_name)
 {
   llsf_msgs::SetTeamName msg;
   msg.set_team_name(team_name);
-  msg.set_team_color((team_ == CYAN) ? llsf_msgs::CYAN : llsf_msgs::MAGENTA);
+  msg.set_team_color(team);
   try {
     client->send(msg);
   } catch (std::runtime_error &e) {
@@ -595,11 +480,12 @@ LLSFRefBoxShell::send_set_team(std::string &team_name)
 }
 
 void
-LLSFRefBoxShell::send_robot_maintenance(unsigned int robot_number, bool maintenance)
+LLSFRefBoxShell::send_robot_maintenance(llsf_msgs::Team team,
+					unsigned int robot_number, bool maintenance)
 {
   llsf_msgs::SetRobotMaintenance msg;
   msg.set_robot_number(robot_number);
-  msg.set_team_color((team_ == CYAN) ? llsf_msgs::CYAN : llsf_msgs::MAGENTA);
+  msg.set_team_color(team);
   msg.set_maintenance(maintenance);
   logf("%sabling maintenance of robot %u", maintenance ? "En" : "Dis", robot_number);
   try {
@@ -607,6 +493,37 @@ LLSFRefBoxShell::send_robot_maintenance(unsigned int robot_number, bool maintena
   } catch (std::runtime_error &e) {
     logf("Sending SetRobotMaintenance failed: %s", e.what());
   }
+}
+
+void
+LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, const llsf_msgs::Order &order)
+{
+	unsigned int order_id = order.id();
+
+  llsf_msgs::SetOrderDelivered od;
+  od.set_team_color(team);
+  od.set_order_id(order_id);
+  logf("Sending completed order %u for team %s", order_id, llsf_msgs::Team_Name(team).c_str());
+  try {
+    client->send(od);
+  } catch (std::runtime_error &e) {
+    logf("Sending SetOrderDelivered failed: %s", e.what());
+  }
+
+	/*
+	llsf_msgs::SetOrderDeliveredByColor od;
+  od.set_team_color(team);
+  od.set_base_color(order.base_color());
+  for (int i = 0; i < order.ring_colors_size(); ++i) {
+	  od.add_ring_colors(order.ring_colors(i));
+  }
+  od.set_cap_color(order.cap_color());
+  try {
+    client->send(od);
+  } catch (std::runtime_error &e) {
+    logf("Sending SetOrderDeliveredByColor failed: %s", e.what());
+  }
+	*/
 }
 
 void
@@ -639,7 +556,8 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
   p_phase_->erase();
   p_time_->erase();
   p_points_->erase();
-  p_team_->erase();
+  p_team_cyan_->erase();
+  p_team_magenta_->erase();
   p_state_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   p_state_->addstr("DISCONNECTED");
   p_state_->standend();
@@ -664,10 +582,6 @@ LLSFRefBoxShell::client_disconnected(const boost::system::error_code &error)
 
     for (size_t i = 0; i < orders_.size(); ++i) {
       orders_[i]->reset();
-    }
-
-    for (size_t i = 0; i < pucks_.size(); ++i) {
-      pucks_[i]->reset();
     }
 
     for (size_t i = 0; i < robots_.size(); ++i) {
@@ -703,6 +617,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 {
   std::shared_ptr<llsf_msgs::GameState> g;
   if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
+    last_game_state_ = g;
     s_state_ = llsf_msgs::GameState::State_Name(g->state());
     p_state_->erase();
     if (g->state() == llsf_msgs::GameState::WAIT_START ||
@@ -741,7 +656,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
 
     p_points_->erase();
-    if (team_ == CYAN) {
+    if (g->points_cyan() > g->points_magenta()) {
       p_points_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
     } else {
       p_points_->attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
@@ -753,7 +668,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
     p_points_->standend();
     p_points_->printw(" / ");
-    if (team_ == MAGENTA) {
+    if (g->points_magenta() > g->points_cyan()) {
       p_points_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA)|A_BOLD);
     } else {
       p_points_->attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK)|A_BOLD);
@@ -765,16 +680,22 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
     p_points_->standend();
 
-    p_team_->erase();
+    p_team_cyan_->erase();
+    p_team_magenta_->erase();
     if (g->has_team_cyan()) {
-      p_team_->printw("%s", (team_ == CYAN)
-		      ? g->team_cyan().c_str() : g->team_magenta().c_str());
-    } else {
-      p_team_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
-      p_team_->printw("** TRAINING **");
-      p_team_->standend();
+      p_team_cyan_->printw("%s", g->team_cyan().c_str());
+    }
+    if (g->has_team_magenta()) {
+      p_team_magenta_->printw("%s", g->team_magenta().c_str());
     }
 
+    if (! g->has_team_cyan() && ! g->has_team_magenta() &&
+	g->phase() != llsf_msgs::GameState::PRE_GAME)
+    {
+      p_team_cyan_->attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
+      p_team_cyan_->printw("** TRAINING **");
+      p_team_cyan_->standend();
+    }
     navbar_->standend();
 
     if (g->state() == llsf_msgs::GameState::WAIT_START) {
@@ -799,22 +720,6 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
     */
 
-    // Erase previous team color string
-    panel_->hline(panel_->height() - 1, panel_->width() - 36, 9);
-
-    if (team_ == CYAN) {
-      panel_->standend();
-      panel_->attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK)|A_BOLD);
-      panel_->printw(panel_->height() - 1, panel_->width() - 33,
-		     " CYAN ");
-      panel_->standend();
-    } else {
-      panel_->standend();
-      panel_->attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK)|A_BOLD);
-      panel_->printw(panel_->height() - 1, panel_->width() - 36,
-		     " MAGENTA ");
-      panel_->standend();
-    }
 
   }
 
@@ -829,7 +734,6 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     size_t idx = 0;
     for (int i = 0; i < r->robots_size(); ++i, ++idx) {
       const llsf_msgs::Robot &robot = r->robots(i);
-      if (robot.team_color() != team_)  continue;
 
       if ((size_t)idx >= robots_.size()) {
 	// more robots than we can show
@@ -838,8 +742,8 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
 	break;
       }
 
-      robots_[idx]->update(robot.number(), robot.name(), robot.team(), robot.host(),
-			   robot.state(), robot.maintenance_time_remaining(),
+      robots_[idx]->update(robot.number(), robot.name(), robot.team(), robot.team_color(),
+			   robot.host(), robot.state(), robot.maintenance_time_remaining(),
 			   robot.maintenance_cycles());
       boost::posix_time::ptime
 	last_seen(boost::posix_time::from_time_t(robot.last_seen().sec()));
@@ -860,33 +764,7 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       //logf("Adding %s @ (%f, %f, %f)\n", mspec.name().c_str(),
       //     mspec.pose().x(), mspec.pose().y(), mspec.pose().ori());
       if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
-	mpanel->second->set_type(mspec.type());
-	std::vector<llsf_msgs::PuckState> inputs(mspec.inputs_size());
-	for (int j = 0; j < mspec.inputs_size(); ++j)  inputs[j] = mspec.inputs(j);
-	mpanel->second->set_inputs(inputs);
-	std::vector<llsf_msgs::PuckState> lw(mspec.loaded_with_size());
-	for (int j = 0; j < mspec.loaded_with_size(); ++j) {
-	  lw[j] = mspec.loaded_with(j).state();
-	}
-	mpanel->second->set_loaded_with(lw);
-	std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights;
-	for (int j = 0; j < mspec.lights_size(); ++j) {
-	  const llsf_msgs::LightSpec &lspec = mspec.lights(j);
-	  lights[lspec.color()] = lspec.state();
-	}
-	mpanel->second->set_lights(lights);
-	if (mspec.has_puck_under_rfid()) {
-	  mpanel->second->set_puck_under_rfid(true, mspec.puck_under_rfid().state());
-	} else {
-	  mpanel->second->set_puck_under_rfid(false);
-	}
-	if (mspec.has_correctly_reported()) {
-	  mpanel->second->set_correctly_reported(true, mspec.correctly_reported());
-	} else {
-	  mpanel->second->set_correctly_reported(false, false);
-	}
-
-	mpanel->second->set_visible(mspec.team_color() == team_);
+	mpanel->second->update(mspec);
 	mpanel->second->refresh();
       }
     }
@@ -896,38 +774,46 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
   if ((am = std::dynamic_pointer_cast<llsf_msgs::AttentionMessage>(msg))) {
     std::lock_guard<std::mutex> lock(attmsg_mutex_);
 
-    if (! am->has_team_color() || am->team_color() == team_) {
+    if (attmsg_string_ != "") {
+      attmsg_timer_.cancel();
+    }
+    attmsg_string_ = am->message();
+    attmsg_team_specific_ = am->has_team_color();
+    attmsg_has_endtime_ = am->has_time_to_show();
+    if (attmsg_team_specific_) {
+      attmsg_team_ = am->team_color();
+    }
+    if (attmsg_has_endtime_) {
+      boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
+      attmsg_endtime_ = now + boost::posix_time::seconds(am->time_to_show());
+    }
+    if (attmsg_string_ != "") {
+      log(llsf_log_msgs::LogMessage::LL_ERROR, "A", "%s", attmsg_string_.c_str());
 
-      if (attmsg_string_ != "") {
-	attmsg_timer_.cancel();
-      }
-      attmsg_string_ = am->message();
-      attmsg_team_specific_ = am->has_team_color();
-      attmsg_has_endtime_ = am->has_time_to_show();
-      if (attmsg_has_endtime_) {
-	boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
-	attmsg_endtime_ = now + boost::posix_time::seconds(am->time_to_show());
-      }
-      if (attmsg_string_ != "") {
-	log(llsf_log_msgs::LogMessage::LL_ERROR, "A", "%s", attmsg_string_.c_str());
-
-	attmsg_toggle_ = true;
-	attmsg_timer_.expires_from_now(boost::posix_time::milliseconds(0));
-	attmsg_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_attmsg_timer, this,
-					     boost::asio::placeholders::error));
-      }
+      attmsg_toggle_ = true;
+      attmsg_timer_.expires_from_now(boost::posix_time::milliseconds(0));
+      attmsg_timer_.async_wait(boost::bind(&LLSFRefBoxShell::handle_attmsg_timer, this,
+					   boost::asio::placeholders::error));
     }
   }
 
   std::shared_ptr<llsf_msgs::OrderInfo> ordins;
   if ((ordins = std::dynamic_pointer_cast<llsf_msgs::OrderInfo>(msg))) {
+    last_orderinfo_ = ordins;
     const size_t size = std::min((size_t)ordins->orders_size(), (size_t)orders_.size());
     size_t oidx = 0;
     for (size_t i = 0; i < size; ++i) {
       const llsf_msgs::Order &ospec = ordins->orders(i);
-      if (ospec.team_color() != team_) continue;
-      orders_[oidx++]->update(ospec.id(), ospec.product(), ospec.quantity_requested(),
-			      ospec.quantity_delivered(), ospec.delivery_period_begin(),
+      std::vector<llsf_msgs::RingColor> ring_colors(ospec.ring_colors_size());
+      for (int j = 0; j < ospec.ring_colors_size(); ++j) {
+	ring_colors[j] = ospec.ring_colors(j);
+      }
+      orders_[oidx++]->update(ospec.id(), ospec.complexity(),
+			      ospec.base_color(), ring_colors, ospec.cap_color(),
+			      ospec.quantity_requested(),
+			      ospec.quantity_delivered_cyan(),
+			      ospec.quantity_delivered_magenta(),
+			      ospec.delivery_period_begin(),
 			      ospec.delivery_period_end(), ospec.delivery_gate());
     }
     for (size_t i = oidx; i < orders_.size(); ++i) {
@@ -935,39 +821,6 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
   }
 
-  std::shared_ptr<llsf_msgs::PuckInfo> pinfo;
-  if ((pinfo = std::dynamic_pointer_cast<llsf_msgs::PuckInfo>(msg))) {
-    last_pinfo_ = pinfo;
-    size_t pidx = 0;
-    for (int i = 0; i < pinfo->pucks_size(); ++i) {
-      const llsf_msgs::Puck &puck = pinfo->pucks(i);
-      if (puck.team_color() != team_)  continue;
-      bool at_machine = false;
-      if (last_minfo_) {
-	for (int j = 0; j < last_minfo_->machines_size() && ! at_machine; ++j) {
-	  const llsf_msgs::Machine &m = last_minfo_->machines(j);
-	  if (m.team_color() != team_)  continue;
-	  if (m.has_puck_under_rfid() && m.puck_under_rfid().id() == puck.id()) {
-	    at_machine = true;
-	    break;
-	  }
-	  for (int k = 0; k < m.loaded_with_size(); ++k) {
-	    if (m.loaded_with(k).id() == puck.id()) {
-	      at_machine = true;
-	      break;
-	    }
-	  }
-	}
-      }
-      pucks_[pidx]->update(puck.id(), puck.state(), at_machine);
-      pucks_[pidx]->refresh();
-      pidx += 1;
-      if (pidx >= pucks_.size()) break;
-    }
-    for (size_t i = pidx; i < pucks_.size(); ++i) {
-      pucks_[i]->reset();
-    }
-  }
 
   std::shared_ptr<llsf_log_msgs::LogMessage> lm;
   if ((lm = std::dynamic_pointer_cast<llsf_log_msgs::LogMessage>(msg))) {
@@ -1050,9 +903,9 @@ void
 LLSFRefBoxShell::beep(int frequency, int duration_ms)
 {
   if (access("/sys/module/pcspkr/initstate", R_OK) == -1) {
-    if (! beep_warning_shown_) {
-      log(llsf_log_msgs::LogMessage::LL_WARN, "L", "%s",
-	  "Cannot beep. Kernel module pcspkr seems not to be loaded");
+	  if (! beep_warning_shown_) {
+	    //log(llsf_log_msgs::LogMessage::LL_WARN, "L", "%s",
+	    //  "Cannot beep. Kernel module pcspkr seems not to be loaded");
       beep_warning_shown_ = true;
     }
     return;
@@ -1093,44 +946,44 @@ LLSFRefBoxShell::run()
   panel_->addch(0,                  panel_->width() - 26, ACS_TTEE);
   panel_->addch(height, panel_->width() - 26, ACS_BTEE);
 
-  panel_->hline(height-6, panel_->width() - 25, 24);
-  panel_->addch(height-6, panel_->width() - 26, ACS_LTEE);
-  panel_->addch(height-6, panel_->width() -  1, ACS_RTEE);
+  panel_->hline(height - 7, panel_->width() - 25, 24);
+  panel_->addch(height - 7, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(height - 7, panel_->width() -  1, ACS_RTEE);
 
-  panel_->hline(17, panel_->width() - 25, 24);
-  panel_->addch(17, panel_->width() - 26, ACS_LTEE);
-  panel_->addch(17, panel_->width() -  1, ACS_RTEE);
+  panel_->hline(13, panel_->width() - 25, 24);
+  panel_->addch(13, panel_->width() - 26, ACS_LTEE);
+  panel_->addch(13, panel_->width() -  1, ACS_RTEE);
 
   panel_->hline(2, 1, panel_->width() - 26);
   panel_->addch(2, 0, ACS_LTEE);
   panel_->addch(2, panel_->width() - 26, ACS_RTEE);
 
-  int rb_log_lines   = panel_->maxy() - 15;
+  int rb_log_lines   = height - 10;
 
-  panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
-  panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
-  panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
+  //panel_->hline(rb_log_lines + 3, 1, panel_->width() - 26);
+  //panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
+  //panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
 
-  panel_->hline(rb_log_lines + 8, 1, panel_->width() - 26);
-  panel_->addch(rb_log_lines + 8, 0, ACS_LTEE);
-  panel_->addch(rb_log_lines + 8, panel_->width() - 26, ACS_RTEE);
+  panel_->hline(height - 7, 1, panel_->width() - 26);
+  panel_->addch(height - 7, 0, ACS_LTEE);
+  panel_->addch(height - 7, panel_->width() - 26, ACS_PLUS);
 
   panel_->attron(A_BOLD);
   panel_->addstr(0, panel_->width() - 17, "Machines");
   panel_->addstr(0, (panel_->width() - 26) / 2 - 7, "Attention Message");
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
-  panel_->addstr(17, panel_->width() - 16, "Robots");
-  panel_->addstr(height-5, panel_->width() - 15, "Game");
-  panel_->addstr(rb_log_lines + 3, (panel_->width() - 26) / 2 - 2, "Pucks");
-  panel_->addstr(rb_log_lines + 8, (panel_->width() - 26) / 2 - 2, "Orders");
+  panel_->addstr(13, panel_->width() - 16, "Robots");
+  panel_->addstr(height-7, panel_->width() - 15, "Game");
+  panel_->addstr(height-7, (panel_->width() - 26) / 2 - 2, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
-  panel_->addstr(height-5, panel_->width() - 24, "State:");
-  panel_->addstr(height-4, panel_->width() - 24, "Phase:");
-  panel_->addstr(height-3, panel_->width() - 24, "Time:");
-  panel_->addstr(height-2, panel_->width() - 24, "Points:");
-  panel_->addstr(height-1, panel_->width() - 24, "Team:");
+  panel_->addstr(height-6, panel_->width() - 24, "State:");
+  panel_->addstr(height-5, panel_->width() - 24, "Phase:");
+  panel_->addstr(height-4, panel_->width() - 24, "Time:");
+  panel_->addstr(height-3, panel_->width() - 24, "Points:");
+  panel_->addstr(height-2, panel_->width() - 24, "Cyan:");
+  panel_->addstr(height-1, panel_->width() - 24, "Magenta:");
   panel_->attroff(A_BOLD);
 
   panel_->show();
@@ -1155,28 +1008,16 @@ LLSFRefBoxShell::run()
   navbar_->addstr(0, 24, "TEAM");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 30, "F5");
+  navbar_->addstr(0, 30, "F9");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 33, "ADD PUCK");
+  navbar_->addstr(0, 33, "ROBOT");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 43, "F7");
+  navbar_->addstr(0, 40, "F12");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 46, "REM PUCK");
-
-  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 56, "F9");
-  navbar_->standend();
-  navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 59, "ROBOT");
-
-  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 66, "F12");
-  navbar_->standend();
-  navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 70, "COLOR");
+  navbar_->addstr(0, 44, "DELIVER");
 
   navbar_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   navbar_->addstr(0, navbar_->cols() - 9, "SPC");
@@ -1188,58 +1029,53 @@ LLSFRefBoxShell::run()
   rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
   rb_log_->scrollok(TRUE);
 
-  const int mx = panel_->width() - 24;
-  for (int t = 0; t < TEAM_NUM; ++t) {
-    for (int m = 0; m < TEAM_NUM_MACHINES; ++m) {
-      machines_[TEAM_MACHINES[t][m]] =
-	new LLSFRefBoxShellMachine(TEAM_MACHINES[t][m],  "?",  m+1, mx, (t == team_));
-    }
+  const int mx = panel_->width() - 25;
+  std::vector<std::string> mnames = {"C-BS", "C-DS", "C-RS1", "C-RS2", "C-CS1", "C-CS2",
+				     "M-BS", "M-DS", "M-RS1", "M-RS2", "M-CS1", "M-CS2"};
+  for (size_t m = 0; m < mnames.size(); ++m) {
+    std::string &mname = mnames[m];
+    std::string type = mname.substr(2, 2);
+    machines_[mname] =
+      new LLSFRefBoxShellMachine(mname,  type,  m+1, mx);
   }
-  
 
   std::map<std::string, LLSFRefBoxShellMachine *>::iterator m;
   for (m = machines_.begin(); m != machines_.end(); ++m) {
     m->second->refresh();
   }
 
-  const int robots_max_height = (panel_->height() - 26);
+  const int robots_max_height = (panel_->height() - 22);
   const int max_robots = std::max(MIN_NUM_ROBOTS, robots_max_height/2);
 
   robots_.resize(max_robots, NULL);
   for (size_t i = 0; i < robots_.size(); ++i) {
-    robots_[i] = new LLSFRefBoxShellRobot(18 + 2 * i, panel_->width() - 25);
+    robots_[i] = new LLSFRefBoxShellRobot(14 + 2 * i, panel_->width() - 25);
     robots_[i]->refresh();
   }
 
   orders_.resize(12, NULL);
   for (size_t i = 0; i < orders_.size(); ++i) {
-    orders_[i] = new LLSFRefBoxShellOrder(rb_log_lines + 9 + i / 2,
-					  (i % 2) ? ((panel_->width() - 22) / 2) : 1);
+    orders_[i] = new LLSFRefBoxShellOrder(height - 6 + i / 2,
+					  (i % 2) ? ((panel_->width() - 24) / 2) : 1);
     orders_[i]->refresh();
-  }
-
-  pucks_.resize(24, NULL);
-  for (size_t i = 0; i < 4; ++i) {
-    for (size_t j = 0; j < 6; ++j) {
-      pucks_[i*6+j] = new LLSFRefBoxShellPuck(rb_log_lines + 4 + i, 1 + (j * 10));
-      pucks_[i*6+j]->refresh();
-    }
   }
 
   panel_->refresh();
 
-  p_attmsg_ = new NCursesPanel(1, panel_->width() - 27, 1, 1);
-  p_state_  = new NCursesPanel(1, 15, height-5,  panel_->width() - 16);
-  p_phase_  = new NCursesPanel(1, 15, height-4,  panel_->width() - 16);
-  p_time_   = new NCursesPanel(1, 15, height-3,  panel_->width() - 16);
-  p_points_ = new NCursesPanel(1, 15, height-2,  panel_->width() - 16);
-  p_team_   = new NCursesPanel(1, 15, height-1,  panel_->width() - 16);
+  p_attmsg_       = new NCursesPanel(1, panel_->width() - 27, 1, 1);
+  p_state_        = new NCursesPanel(1, 14, height-6,  panel_->width() - 15);
+  p_phase_        = new NCursesPanel(1, 14, height-5,  panel_->width() - 15);
+  p_time_         = new NCursesPanel(1, 14, height-4,  panel_->width() - 15);
+  p_points_       = new NCursesPanel(1, 14, height-3,  panel_->width() - 15);
+  p_team_cyan_    = new NCursesPanel(1, 14, height-2,  panel_->width() - 15);
+  p_team_magenta_ = new NCursesPanel(1, 14, height-1,  panel_->width() - 15);
 
   p_state_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   p_state_->addstr("DISCONNECTED");
   p_state_->standend();
 
-  p_team_->addstr("");
+  p_team_cyan_->addstr("");
+  p_team_magenta_->addstr("");
 
   // State menu
   const google::protobuf::EnumDescriptor *state_enum_desc =
@@ -1282,7 +1118,9 @@ LLSFRefBoxShell::run()
   }
 
   s_cancel_phase_ = "** CANCEL **";
-  size_t num_spaces = (max_length - s_cancel_phase_.size()) / 2;
+  size_t num_spaces =	(max_length > s_cancel_phase_.size())
+		? (max_length - s_cancel_phase_.size()) / 2
+		: 0;
   std::string spaces;
   for (size_t i = 0; i < num_spaces; ++i) spaces += " ";
   s_cancel_phase_ = spaces + s_cancel_phase_;
@@ -1294,30 +1132,6 @@ LLSFRefBoxShell::run()
     m_phase_ = new GenericItemsMenu(panel_, num_phase_values+1, phase_items);
     m_phase_->frame("Set Phase");
     m_phase_->hide();
-  } catch (NCursesException &e) {
-    logf("%s", e.message);
-  }
-
-  // Team color menu
-  const google::protobuf::EnumDescriptor *team_enum_desc =
-    llsf_msgs::Team_descriptor();
-  const int num_team_values = team_enum_desc->value_count();
-  NCursesMenuItem **team_items = new NCursesMenuItem*[2 + num_team_values];
-  for (int i = 0; i < team_enum_desc->value_count(); ++i) {
-    SignalItem *item = new SignalItem(team_enum_desc->value(i)->name());
-    item->signal().connect(boost::bind(&LLSFRefBoxShell::set_game_team_color, this,
-				       team_enum_desc->value(i)->name()));
-    team_items[i] = item;
-  }
-  s_cancel_team_ = "** CANCEL **";
-  team_items[num_team_values]   = new SignalItem(s_cancel_team_);
-  // termination sentinel element
-  team_items[num_team_values+1] = new NCursesMenuItem();
-
-  try {
-    m_team_ = new GenericItemsMenu(panel_, num_team_values+1, team_items);
-    m_team_->frame("Team Color");
-    m_team_->hide();
   } catch (NCursesException &e) {
     logf("%s", e.message);
   }
@@ -1336,7 +1150,6 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_msgs::MachineInfo>();
   message_register.add_message_type<llsf_msgs::AttentionMessage>();
   message_register.add_message_type<llsf_msgs::OrderInfo>();
-  message_register.add_message_type<llsf_msgs::PuckInfo>();
   message_register.add_message_type<llsf_log_msgs::LogMessage>();
   message_register.add_message_type<llsf_msgs::VersionInfo>();
   message_register.add_message_type<llsf_msgs::GameInfo>();

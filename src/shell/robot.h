@@ -55,7 +55,8 @@ class LLSFRefBoxShellRobot : public NCursesPanel
  public:
   LLSFRefBoxShellRobot(int begin_y, int begin_x);
 
-  void update(unsigned int number, std::string name, std::string team, std::string host,
+  void update(unsigned int number, std::string name, std::string team,
+	      llsf_msgs::Team team_color, std::string host,
 	      llsf_msgs::RobotState state, float maintenance_time_remaining,
 	      unsigned int maintenance_cycles);
   void set_last_seen(boost::posix_time::ptime &last_seen);
@@ -71,6 +72,7 @@ class LLSFRefBoxShellRobot : public NCursesPanel
   std::string   name_;
   std::string   team_;
   std::string   host_;
+  llsf_msgs::Team team_color_;
   llsf_msgs::RobotState state_;
   float maintenance_time_remaining_;
   unsigned int maintenance_cycles_;

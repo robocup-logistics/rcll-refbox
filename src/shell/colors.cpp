@@ -49,6 +49,8 @@ init_colors()
   pair_content(0, &default_fore, &default_back);
   //chtype default_back = getbkgd(stdscr);
 
+  init_color(COLOR_ORANGE, 1000, 500, 0);
+
   init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
   init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW, default_back);
   init_pair(COLOR_BLACK_ON_BACK, default_fore, default_back);
@@ -63,7 +65,9 @@ init_colors()
   init_pair(COLOR_MAGENTA_ON_BACK, COLOR_MAGENTA, default_back);
   init_pair(COLOR_WHITE_ON_CYAN, COLOR_WHITE, COLOR_CYAN);
   init_pair(COLOR_WHITE_ON_MAGENTA, COLOR_WHITE, COLOR_MAGENTA);
-
+  init_pair(COLOR_WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
+  init_pair(COLOR_WHITE_ON_ORANGE, COLOR_WHITE, COLOR_ORANGE);
+  init_pair(COLOR_WHITE_ON_BLACK, COLOR_WHITE, COLOR_BLACK);
 }
 
 } // end of namespace llsfrb_shell

@@ -49,10 +49,11 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellOrder::LLSFRefBoxShellOrder(int begin_y, int begin_x)
-  : NCursesPanel(1, 27, begin_y, begin_x),
-    id_(0), product_(llsf_msgs::Order::P1), quantity_requested_(0),
-    quantity_delivered_(0), delivery_period_begin_(0), delivery_period_end_(0),
-    delivery_gate_(llsf_msgs::Order::ANY), game_time_(0.)
+  : NCursesPanel(1, 29, begin_y, begin_x),
+    id_(0), complexity_(llsf_msgs::Order::C0), quantity_requested_(0),
+    quantity_delivered_cyan_(0), quantity_delivered_magenta_(0),
+    delivery_period_begin_(0), delivery_period_end_(0),
+    delivery_gate_(1), game_time_(0.)
 {
 }
 
@@ -63,17 +64,25 @@ LLSFRefBoxShellOrder::~LLSFRefBoxShellOrder()
 
 
 void
-LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::ProductType product,
+LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::Complexity complexity,
+			     llsf_msgs::BaseColor base_color,
+			     std::vector<llsf_msgs::RingColor> &ring_colors,
+			     llsf_msgs::CapColor  cap_color,
 			     unsigned int quantity_requested,
-			     unsigned int quantity_delivered,
+			     unsigned int quantity_delivered_cyan,
+			     unsigned int quantity_delivered_magenta,
 			     unsigned int delivery_period_begin,
 			     unsigned int delivery_period_end,
-			     llsf_msgs::Order::DeliveryGate delivery_gate)
+			     unsigned int delivery_gate)
 {
   id_ = id;
-  product_ = product;
+  complexity_  = complexity;
+  base_color_  = base_color;
+  ring_colors_ = ring_colors;
+  cap_color_   = cap_color;
   quantity_requested_ = quantity_requested;
-  quantity_delivered_ = quantity_delivered;
+  quantity_delivered_cyan_ = quantity_delivered_cyan;
+  quantity_delivered_magenta_ = quantity_delivered_magenta;
   delivery_period_begin_ = delivery_period_begin;
   delivery_period_end_ = delivery_period_end;
   delivery_gate_ = delivery_gate;
@@ -92,12 +101,13 @@ void
 LLSFRefBoxShellOrder::reset()
 {
   id_ = 0;
-  product_ = llsf_msgs::Order::P1;
+  complexity_ = llsf_msgs::Order::C0;
   quantity_requested_ = 0;
-  quantity_delivered_ = 0;
+  quantity_delivered_cyan_ = 0;
+  quantity_delivered_magenta_ = 0;
   delivery_period_begin_ = 0;
   delivery_period_end_ = 0;
-  delivery_gate_ = llsf_msgs::Order::ANY;
+  delivery_gate_ = 0;
   refresh();
 }
 
@@ -115,17 +125,103 @@ LLSFRefBoxShellOrder::refresh()
     unsigned int end_sec = delivery_period_end_ - end_min * 60;
 
     attron(A_BOLD);
-    printw("%u.", id_);
+    printw(0, id_ >= 10 ? 0 : 1, "%u.", id_);
     attroff(A_BOLD);
 
     if (game_time_ >= delivery_period_begin_ && game_time_ <= delivery_period_end_) {
       attron(A_BOLD);
     }
-    printw(0, 3, "%u/%u %s %02u:%02u-%02u:%02u %s",
-	   quantity_delivered_, quantity_requested_,
-	   llsf_msgs::Order::ProductType_Name(product_).c_str(),
+
+    if (quantity_delivered_cyan_ > 0) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN));
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+    }
+    printw(0, 3, "%u", quantity_delivered_cyan_);
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    addstr(0, 4, "/");
+
+    if (quantity_delivered_magenta_ > 0) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA));
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+    }
+    printw(0, 5, "%u", quantity_delivered_magenta_);
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    printw(0, 6, "/%u", quantity_requested_);
+
+    switch (base_color_) {
+    case llsf_msgs::BASE_RED:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));   break;
+    case llsf_msgs::BASE_SILVER:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    case llsf_msgs::BASE_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    }
+    addstr(0, 9, " ");
+
+    if (ring_colors_.size() >= 1) {
+      switch (ring_colors_[0]) {
+      case llsf_msgs::RING_BLUE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+      case llsf_msgs::RING_GREEN:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+      case llsf_msgs::RING_ORANGE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+      case llsf_msgs::RING_YELLOW:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+      }
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+    }
+    addstr(0, 10, " ");
+
+    if (ring_colors_.size() >= 2) {
+      switch (ring_colors_[1]) {
+      case llsf_msgs::RING_BLUE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+      case llsf_msgs::RING_GREEN:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+      case llsf_msgs::RING_ORANGE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+      case llsf_msgs::RING_YELLOW:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+      }
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+    }
+    addstr(0, 11, " ");
+
+    if (ring_colors_.size() >= 3) {
+      switch (ring_colors_[2]) {
+      case llsf_msgs::RING_BLUE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+      case llsf_msgs::RING_GREEN:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+      case llsf_msgs::RING_ORANGE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+      case llsf_msgs::RING_YELLOW:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+      }
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+    }
+    addstr(0, 12, " ");
+
+    switch (cap_color_) {
+    case llsf_msgs::CAP_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    case llsf_msgs::CAP_GREY:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    }
+    addstr(0, 13, " ");
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    printw(0, 15, "%02u:%02u-%02u:%02u D%u",
 	   begin_min, begin_sec, end_min, end_sec,
-	   llsf_msgs::Order::DeliveryGate_Name(delivery_gate_).c_str());
+	   delivery_gate_);
   }
 
   return NCursesPanel::refresh();

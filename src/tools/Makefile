@@ -41,9 +41,23 @@ OBJS_llsf_signal_ctrl = llsf-signal-ctrl.o
 LIBS_llsf_report_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_llsf_report_machine = llsf-report-machine.o
 
+LIBS_rcll_prepare_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+OBJS_rcll_prepare_machine = rcll-prepare-machine.o
+
+LIBS_rcll_set_machine_state = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+OBJS_rcll_set_machine_state = rcll-set-machine-state.o
+
+LIBS_rcll_machine_add_base = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+OBJS_rcll_machine_add_base = rcll-machine-add-base.o
+
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
-  OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) 
-  BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot $(BINDIR)/llsf-report-machine
+  OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) \
+	      $(OBJS_rcll_prepare_machine) $(OBJS_rcll_set_machine_state) \
+	      $(OBJS_rcll_machine_add_base)
+  BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot \
+	      $(BINDIR)/llsf-report-machine $(BINDIR)/rcll-prepare-machine \
+	      $(BINDIR)/rcll-set-machine-state \
+	      $(BINDIR)/rcll-machine-add-base
 
   CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) \
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
@@ -58,6 +72,21 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   CFLAGS_llsf_report_machine  += $(CFLAGS_PROTOBUF) \
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS_llsf_report_machine += $(LDFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
+  CFLAGS_rcll_prepare_machine  += $(CFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS_rcll_prepare_machine += $(LDFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
+  CFLAGS_rcll_set_machine_state  += $(CFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS_rcll_set_machine_state += $(LDFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
+  CFLAGS_rcll_machine_add_base  += $(CFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS_rcll_machine_add_base += $(LDFLAGS_PROTOBUF) \
 	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1

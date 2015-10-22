@@ -86,7 +86,7 @@ namespace llsf_sps {
  * on the same port!
  * @param port TCP port to communicate to, Modbus uses 502 by default
  */
-SPSComm::SPSComm(std::vector<std::string> hosts, unsigned short port)
+SPSComm::SPSComm(std::vector<std::string> hosts, unsigned short port, std::string machinetype)
 {
   for (auto host : hosts) {
     modbus_t *mb = modbus_new_tcp(host.c_str(), port);

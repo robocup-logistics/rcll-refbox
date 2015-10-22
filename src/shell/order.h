@@ -57,10 +57,14 @@ class LLSFRefBoxShellOrder : public NCursesPanel
   LLSFRefBoxShellOrder(int begin_y, int begin_x);
   ~LLSFRefBoxShellOrder();
 
-  void update(unsigned int id, llsf_msgs::Order::ProductType product,
-	      unsigned int quantity_requested, unsigned int quantity_delivered,
+  void update(unsigned int id, llsf_msgs::Order::Complexity complexity,
+	      llsf_msgs::BaseColor base_color,
+	      std::vector<llsf_msgs::RingColor> &ring_colors,
+	      llsf_msgs::CapColor  cap_color,
+	      unsigned int quantity_requested, unsigned int quantity_delivered_cyan,
+	      unsigned int quantity_delivered_magenta,
 	      unsigned int delivery_period_begin, unsigned int delivery_period_end,
-	      llsf_msgs::Order::DeliveryGate delivery_gate);
+	      unsigned int delivery_gate);
   void set_gametime(unsigned int game_time);
 
   void reset();
@@ -69,12 +73,16 @@ class LLSFRefBoxShellOrder : public NCursesPanel
 
  private:
   unsigned int id_;
-  llsf_msgs::Order::ProductType product_;
+  llsf_msgs::Order::Complexity complexity_;
+  llsf_msgs::BaseColor base_color_;
+  std::vector<llsf_msgs::RingColor> ring_colors_;
+  llsf_msgs::CapColor  cap_color_;
   unsigned int quantity_requested_;
-  unsigned int quantity_delivered_;
+  unsigned int quantity_delivered_cyan_;
+  unsigned int quantity_delivered_magenta_;
   unsigned int delivery_period_begin_;
   unsigned int delivery_period_end_;
-  llsf_msgs::Order::DeliveryGate delivery_gate_;
+  unsigned int delivery_gate_;
 
   unsigned int game_time_;
 };

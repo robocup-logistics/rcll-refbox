@@ -80,6 +80,10 @@ class ThreadList : private LockList<Thread *>
   void wakeup_unlocked(Barrier *barrier);
   void wakeup_and_wait(unsigned int timeout_sec = 0,
 		       unsigned int timeout_nanosec = 0);
+  void wakeup_and_wait(unsigned int timeout_sec,
+		       unsigned int timeout_nanosec,
+		       std::list<std::string> &bad_threads);
+
   void start();
   void stop();
   void cancel();

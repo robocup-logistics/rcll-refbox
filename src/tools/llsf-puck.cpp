@@ -127,7 +127,8 @@ main(int argc, char **argv)
   printf("Connecting to SPS...\n");
   if (config->exists("/llsfrb/sps/hosts") && machine_assignment == ASSIGNMENT_2014) {
     sps_ = new SPSComm(config->get_strings("/llsfrb/sps/hosts"),
-		       config->get_uint("/llsfrb/sps/port"));
+		       config->get_uint("/llsfrb/sps/port"),
+		       config->get_string("/llsfrb/sps/machine-type"));
   } else {
     sps_ = new SPSComm(config->get_string("/llsfrb/sps/host").c_str(),
 		       config->get_uint("/llsfrb/sps/port"));

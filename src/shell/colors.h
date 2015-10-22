@@ -56,6 +56,10 @@ namespace llsfrb_shell {
 #define COLOR_MAGENTA_ON_BACK  11
 #define COLOR_WHITE_ON_CYAN    12
 #define COLOR_WHITE_ON_MAGENTA 13
+#define COLOR_WHITE_ON_BLUE    14
+#define COLOR_ORANGE           20
+#define COLOR_WHITE_ON_ORANGE  21
+#define COLOR_WHITE_ON_BLACK   22
 
 extern void init_colors();
 

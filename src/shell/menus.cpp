@@ -37,6 +37,7 @@
 #include "menus.h"
 #include "colors.h"
 #include <boost/format.hpp>
+#include <google/protobuf/descriptor.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -170,378 +171,6 @@ GenericItemsMenu::max_cols(int n_items, NCursesMenuItem **items)
   return rv;
 }
 
-MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *parent, Team team,
-					 std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : Menu(det_lines(team, minfo) + 1 + 2, 12 + 2,
-	 (parent->lines() - (det_lines(team, minfo) + 1))/2,
-	 (parent->cols() - 12)/2)
-{
-  valid_item_ = false;
-  int n_items = det_lines(team, minfo);
-  items_.resize(n_items);
-  int ni = 0;
-  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
-  for (int i = 0; i < minfo->machines_size(); ++i) {
-    const llsf_msgs::Machine &m = minfo->machines(i);
-    if (m.team_color() != team) continue;
-    if (m.has_puck_under_rfid()) {
-      items_[ni++] =
-	std::make_tuple("* " + m.name() + " " +
-			llsf_msgs::PuckState_Name(m.puck_under_rfid().state()).substr(0,2),
-			m.name(), m.puck_under_rfid().id(), m.puck_under_rfid().state());
-    }
-    for (int l = 0; l < m.loaded_with_size(); ++l) {
-      items_[ni++] =
-	std::make_tuple("  " + m.name() + " " +
-			llsf_msgs::PuckState_Name(m.loaded_with(l).state()).substr(0,2),
-			m.name(), m.loaded_with(l).id(), m.loaded_with(l).state());
-    }
-  }
-
-  std::sort(items_.begin(), items_.end(),
-	    [](const ItemTuple &i1, const ItemTuple &i2) -> bool
-	    {
-	      const std::string &s1 = std::get<1>(i1);
-	      const std::string &s2 = std::get<1>(i2);
-	      std::string f1 = s1.substr(0,1);
-	      std::string f2 = s2.substr(0,1);
-	      bool star1 = (std::get<0>(i1)[0] == '*');
-	      bool star2 = (std::get<0>(i2)[0] == '*');
-	      int n1 = 0, n2 = 0;
-	      try {
-		n1 = std::stoi(s1.substr(1));
-		n2 = std::stoi(s2.substr(1));
-	      } catch (std::invalid_argument &e) {} // ignored
-	      return 
-		((f1 == f2) &&
-		 ((n1 < n2) || ((n1 == n2) && (star1 && ! star2)) ||
-		  (std::get<3>(i1) < std::get<3>(i2)))) ||
-		((f1 == "M") && (f2 != "M")) ||
-		((f1 == "D") && (f2.find_first_of("MD") == std::string::npos)) ||
-		((f1 == "T") && (f2.find_first_of("MDT") == std::string::npos)) ||
-		((f1 == "R") && (f2.find_first_of("MDTR") == std::string::npos));
-	    });
-
-  for (int i = 0; i < ni; ++i) {
-    SignalItem *item = new SignalItem(std::get<0>(items_[i]));
-    item->signal().connect(boost::bind(&MachineWithPuckMenu::puck_selected, this,
-				       std::get<1>(items_[i]), std::get<2>(items_[i])));
-    mitems[i] = item;
-  }
-  s_cancel_ = "** CANCEL **";
-  mitems[ni] = new SignalItem(s_cancel_);
-  mitems[ni+1] = new NCursesMenuItem();
-
-  set_mark("");
-  set_format(ni+1, 1);
-  InitMenu(mitems, true, true);
-  frame("Puck");
-}
-
-void
-MachineWithPuckMenu::puck_selected(std::string machine, unsigned int puck_id)
-{
-  valid_item_ = true;
-  machine_name_ = machine;
-  puck_id_ = puck_id;
-}
-
-void
-MachineWithPuckMenu::get_machine_puck(std::string &machine_name, unsigned int &puck_id)
-{
-  machine_name = machine_name_;
-  puck_id = puck_id_;
-}
-
-void
-MachineWithPuckMenu::On_Menu_Init()
-{
-  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
-  //subWindow().bkgd(parent_->getbkgd());
-  refresh();
-}
-
-int
-MachineWithPuckMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
-{
-  int rv = 0;
-  for (int i = 0; i < minfo->machines_size(); ++i) {
-    const llsf_msgs::Machine &m = minfo->machines(i);
-    if (m.team_color() != team) continue;
-    if (m.has_puck_under_rfid()) {
-      rv += 1;
-    }
-    rv += m.loaded_with_size();
-  }
-  return rv;
-}
-
-
-MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
-  NCursesWindow *parent, Team team,
-  std::shared_ptr<llsf_msgs::MachineInfo> minfo)
-  : Menu(det_lines(team, minfo) + 1 + 2, 24 + 2,
-	 (parent->lines() - (det_lines(team, minfo) + 1))/2,
-	 (parent->cols() - 26)/2),
-    minfo_(minfo)
-{
-  machine_selected_ = false;
-  int n_items = det_lines(team, minfo);
-  items_.resize(n_items);
-  int ni = 0;
-  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
-  for (int i = 0; i < minfo->machines_size(); ++i) {
-    const llsf_msgs::Machine &m = minfo->machines(i);
-    if (m.team_color() != team) continue;
-    if (! m.has_puck_under_rfid() || (m.inputs_size() - m.loaded_with_size() > 0)) {
-      std::string s = boost::str(boost::format("%-3s|%s") % m.name() % m.type());
-      items_[ni++] = std::make_tuple(s, m.name(), i);
-    }
-  }
-  std::sort(items_.begin(), items_.end(),
-	    [](const ItemTuple &i1, const ItemTuple &i2) -> bool
-	    {
-	      const std::string &s1 = std::get<1>(i1);
-	      const std::string &s2 = std::get<1>(i2);
-	      std::string f1 = s1.substr(0,1);
-	      std::string f2 = s2.substr(0,1);
-	      int n1 = 0, n2 = 0;
-	      try {
-		n1 = std::stoi(s1.substr(1));
-		n2 = std::stoi(s2.substr(1));
-	      } catch (std::invalid_argument &e) {} // ignored
-	      return 
-		((f1 == f2) && (n1 < n2)) ||
-		((f1 == "M") && (f2 != "M")) ||
-		((f1 == "D") && (f2.find_first_of("MD") == std::string::npos)) ||
-		((f1 == "T") && (f2.find_first_of("MDT") == std::string::npos)) ||
-		((f1 == "R") && (f2.find_first_of("MDTR") == std::string::npos));
-	    });
-
-  for (int i = 0; i < ni; ++i) {
-    SignalItem *item = new SignalItem(std::get<0>(items_[i]));
-    item->signal().connect(boost::bind(&MachineThatCanTakePuckMenu::machine_selected, this,
-				       std::get<2>(items_[i])));
-    mitems[i] = item;
-  }
-  s_cancel_ = "** CANCEL **";
-  mitems[ni] = new SignalItem(s_cancel_);
-  mitems[ni+1] = new NCursesMenuItem();
-
-  set_mark("");
-  set_format(ni+1, 1);
-  InitMenu(mitems, true, true);
-  frame("Machine");
-}
-
-void
-MachineThatCanTakePuckMenu::machine_selected(int i)
-{
-  machine_selected_ = true;
-  machine_idx_ = i;
-}
-
-const llsf_msgs::Machine &
-MachineThatCanTakePuckMenu::machine()
-{
-  return minfo_->machines(machine_idx_);
-}
-
-void
-MachineThatCanTakePuckMenu::On_Menu_Init()
-{
-  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
-  //subWindow().bkgd(parent_->getbkgd());
-
-  for (size_t i = 0; i < items_.size(); ++i) {
-    const llsf_msgs::Machine &m = minfo_->machines(std::get<2>(items_[i]));
-    if (m.puck_under_rfid().id() != 0) {
-      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)|A_BOLD);
-      addstr(i+1, 13,
-	     llsf_msgs::PuckState_Name(m.puck_under_rfid().state()).substr(0,2).c_str());
-      attroff(A_BOLD);
-    } else {
-      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-      addstr(i+1, 13, "  ");
-    }
-
-    int puck_x = 16;
-    for (int j = 0; j < m.inputs_size(); ++j) {
-      llsf_msgs::PuckState ps = m.inputs(j);
-      bool puck_loaded = false;
-      for (int k = 0; k < m.loaded_with_size(); ++k) {
-	if (m.loaded_with(k).state() == ps) {
-	  puck_loaded = true;
-	  break;
-	}
-      }
-
-      if (puck_loaded) {
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
-      } else {
-	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-      }
-
-      addstr(i+1, puck_x, llsf_msgs::PuckState_Name(ps).substr(0,2).c_str());
-      attroff(A_BOLD);
-      puck_x += 3;
-    }
-  }
-
-  refresh();
-}
-
-int
-MachineThatCanTakePuckMenu::det_lines(Team team,
-				      std::shared_ptr<llsf_msgs::MachineInfo> &minfo)
-{
-  int rv = 0;
-  for (int i = 0; i < minfo->machines_size(); ++i) {
-    const llsf_msgs::Machine &m = minfo->machines(i);
-    if (m.team_color() != team) continue;
-    if (! m.has_puck_under_rfid() || (m.inputs_size() - m.loaded_with_size() > 0)) {
-      rv += 1;
-    }
-  }
-  return rv;
-}
-
-MachineThatCanTakePuckMenu::operator bool() const
-{
-  return machine_selected_;
-}
-
-
-PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *parent, Team team,
-				       std::shared_ptr<llsf_msgs::PuckInfo> pinfo,
-				       std::shared_ptr<llsf_msgs::MachineInfo> minfo,
-				       const llsf_msgs::Machine &machine)
-  : Menu(det_lines(pinfo, minfo, machine, team) + 1 + 2, 14 + 2,
-	 (parent->lines() - (det_lines(pinfo, minfo, machine, team) + 1))/2,
-	 (parent->cols() - 14)/2),
-    pinfo_(pinfo)
-{
-  puck_selected_ = false;
-  std::list<int> rel_pucks = relevant_pucks(pinfo, minfo, machine, team);
-  items_.resize(rel_pucks.size() + 1);
-  int ni = 0;
-  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + rel_pucks.size()];
-  std::list<int>::iterator i;
-  for (i = rel_pucks.begin(); i != rel_pucks.end(); ++i) {
-    const llsf_msgs::Puck &p = pinfo->pucks(*i);
-    items_[ni++] = std::make_tuple(llsf_msgs::PuckState_Name(p.state()).substr(0,2) +
-				   " (" + std::to_string(p.id()) + ")", *i);
-  }
-  //std::sort(items_.begin(), items_.end());
-
-  for (int i = 0; i < ni; ++i) {
-    SignalItem *item = new SignalItem(std::get<0>(items_[i]));
-    item->signal().connect(boost::bind(&PuckForMachineMenu::puck_selected, this,
-				       std::get<1>(items_[i])));
-    mitems[i] = item;
-  }
-  s_cancel_ = "** CANCEL **";
-  mitems[ni] = new SignalItem(s_cancel_);
-  mitems[ni+1] = new NCursesMenuItem();
-
-  set_format(ni+1, 1);
-  set_mark("");
-  InitMenu(mitems, true, true);
-  frame("Puck");
-}
-
-void
-PuckForMachineMenu::puck_selected(int i)
-{
-  puck_selected_ = true;
-  puck_idx_ = i;
-}
-
-const llsf_msgs::Puck &
-PuckForMachineMenu::puck()
-{
-  return pinfo_->pucks(puck_idx_);
-}
-
-void
-PuckForMachineMenu::On_Menu_Init()
-{
-  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
-  //subWindow().bkgd(parent_->getbkgd());
-  refresh();
-}
-
-std::list<int>
-PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
-				   std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-				   const llsf_msgs::Machine &machine, Team team)
-{
-  std::list<int> rv;
-  for (int i = 0; i < pinfo->pucks_size(); ++i) {
-    const llsf_msgs::Puck &p = pinfo->pucks(i);
-    if (p.team_color() != team) continue;
-    rv.push_back(i);
-  }
-
-  // filter out all pucks which are already bound at a machine
-  rv.remove_if([&minfo,&pinfo](int p)
-	       {
-		 for (int i = 0; i < minfo->machines_size(); ++i) {
-		   const llsf_msgs::Machine &m = minfo->machines(i);
-		   if (m.has_puck_under_rfid() && m.puck_under_rfid().id() == pinfo->pucks(p).id()) {
-		     return true;
-		   }
-		   for (int j = 0; j < m.loaded_with_size(); ++j) {
-		     if (m.loaded_with(j).id() == pinfo->pucks(p).id()) {
-		       return true;
-		     }
-		   }
-		 }
-		 return false;
-	       });
-
-  if (machine.inputs_size() > 0) {
-    // filter out all pucks which are not avalid input for the current machine
-    rv.remove_if([&pinfo,&machine](int p)
-		 {
-		   for (int i = 0; i < machine.inputs_size(); ++i) {
-		     if (pinfo->pucks(p).state() == machine.inputs(i)) return false;
-		   }
-		   return true;
-		 });
-  }
-
-  // filter out all pucks in a state already placed at the machine
-  rv.remove_if([&pinfo,&machine](int p)
-	       {
-		 if (machine.has_puck_under_rfid() &&
-		     machine.puck_under_rfid().state() == pinfo->pucks(p).state())
-		 {
-		   return true;
-		 }
-	
-		 for (int i = 0; i < machine.loaded_with_size(); ++i) {
-		   if (pinfo->pucks(p).state() == machine.loaded_with(i).state()) return true;
-		 }
-		 return false;
-	       });
-
-  return rv;    
-}
-
-int
-PuckForMachineMenu::det_lines(std::shared_ptr<llsf_msgs::PuckInfo> &pinfo,
-			      std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-			      const llsf_msgs::Machine &machine, Team team)
-{
-  return relevant_pucks(pinfo, minfo, machine, team).size();
-}
-
-PuckForMachineMenu::operator bool() const
-{
-  return puck_selected_;
-}
-
 
 MachinePlacingMenu::MachinePlacingMenu(NCursesWindow *parent,
 				       std::string machine, std::string puck,
@@ -616,18 +245,26 @@ MachinePlacingMenu::operator bool() const
 
 
 TeamSelectMenu::TeamSelectMenu(NCursesWindow *parent,
-			       std::shared_ptr<llsf_msgs::GameInfo> gameinfo)
-  : Menu(det_lines(gameinfo) + 1 + 2, 20 + 2,
-	 (parent->lines() - (det_lines(gameinfo) + 1))/2,
+			       llsf_msgs::Team team,
+			       std::shared_ptr<llsf_msgs::GameInfo> gameinfo,
+			       std::shared_ptr<llsf_msgs::GameState> gstate)
+  : Menu(det_lines(gameinfo, gstate) + 1 + 2, 20 + 2,
+	 (parent->lines() - (det_lines(gameinfo, gstate) + 1))/2,
 	 (parent->cols() - 20)/2)
 {
+  team_ = team;
+
   valid_item_ = false;
-  int n_items = det_lines(gameinfo);
+  int n_items = det_lines(gameinfo, gstate);
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
   for (int i = 0; i < gameinfo->known_teams_size(); ++i) {
-    items_[ni++] = gameinfo->known_teams(i);
+    if (gstate->team_cyan() != gameinfo->known_teams(i) &&
+	gstate->team_magenta() != gameinfo->known_teams(i))
+    {
+      items_[ni++] = gameinfo->known_teams(i);
+    }
   }
 
   std::sort(items_.begin(), items_.end());
@@ -644,7 +281,6 @@ TeamSelectMenu::TeamSelectMenu(NCursesWindow *parent,
   set_mark("");
   set_format(ni+1, 1);
   InitMenu(mitems, true, true);
-  frame("Team");
 }
 
 void
@@ -664,23 +300,110 @@ void
 TeamSelectMenu::On_Menu_Init()
 {
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+
+  if (team_ == llsf_msgs::CYAN) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+  }
+  box();
+
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK)|A_BOLD);
+  addstr(0, (width() - 6) / 2, " Team ");
+  attroff(A_BOLD);
+
+  refresh();
+}
+
+int
+TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo,
+			  std::shared_ptr<llsf_msgs::GameState> &gstate)
+{
+  int rv = 0;
+  for (int i = 0; i < gameinfo->known_teams_size(); ++i) {
+    if (gstate->team_cyan() != gameinfo->known_teams(i) &&
+	gstate->team_magenta() != gameinfo->known_teams(i))
+    {
+      ++rv;
+    }
+  }
+  return rv;
+}
+
+
+TeamColorSelectMenu::TeamColorSelectMenu(NCursesWindow *parent)
+  : Menu(det_lines() + 1 + 2, 12 + 2,
+	 (parent->lines() - (det_lines() + 1))/2,
+	 (parent->cols() - 12)/2)
+{
+  valid_item_ = false;
+  int n_items = det_lines();
+  items_.resize(n_items);
+  int ni = 0;
+  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+
+  const google::protobuf::EnumDescriptor *team_enum_desc =
+    llsf_msgs::Team_descriptor();
+  for (int i = 0; i < n_items; ++i) {
+    llsf_msgs::Team team;
+    if (llsf_msgs::Team_Parse(team_enum_desc->value(i)->name(), &team)) {
+      items_[ni++] = team;
+    }
+  }
+
+  for (int i = 0; i < ni; ++i) {
+    SignalItem *item = new SignalItem(llsf_msgs::Team_Name(items_[i]));
+    item->signal().connect(boost::bind(&TeamColorSelectMenu::team_color_selected,
+				       this, items_[i]));
+    mitems[i] = item;
+  }
+  s_cancel_ = "** CANCEL **";
+  mitems[ni] = new SignalItem(s_cancel_);
+  mitems[ni+1] = new NCursesMenuItem();
+
+  set_mark("");
+  set_format(ni+1, 1);
+  InitMenu(mitems, true, true);
+  frame("Team Color");
+}
+
+void
+TeamColorSelectMenu::team_color_selected(llsf_msgs::Team team_color)
+{
+  valid_item_ = true;
+  team_color_ = team_color;
+}
+
+llsf_msgs::Team
+TeamColorSelectMenu::get_team_color()
+{
+  return team_color_;
+}
+
+void
+TeamColorSelectMenu::On_Menu_Init()
+{
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
   //subWindow().bkgd(parent_->getbkgd());
   refresh();
 }
 
 int
-TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo)
+TeamColorSelectMenu::det_lines()
 {
-  return gameinfo->known_teams_size();
+  const google::protobuf::EnumDescriptor *team_enum_desc =
+    llsf_msgs::Team_descriptor();
+  return team_enum_desc->value_count();
 }
 
 
-RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent, Team team,
+RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent, llsf_msgs::Team team,
 					   std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
   : Menu(det_lines(team, rinfo) + 1 + 2, det_cols(rinfo) + 2,
 	 (parent->lines() - (det_lines(team, rinfo) + 1))/2,
 	 (parent->cols() - (det_cols(rinfo) + 2))/2)
 {
+  team_ = team;
   valid_item_ = false;
   int n_items = det_lines(team, rinfo);
   items_.resize(n_items);
@@ -772,11 +495,24 @@ void
 RobotMaintenanceMenu::On_Menu_Init()
 {
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+
+  if (team_ == llsf_msgs::CYAN) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+  }
+  box();
+
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK)|A_BOLD);
+  addstr(0, (width() - 20) / 2, " Robot Maintenance ");
+  attroff(A_BOLD);
+
   refresh();
 }
 
 int
-RobotMaintenanceMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
+RobotMaintenanceMenu::det_lines(llsf_msgs::Team team,
+				std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
 {
   int rv = 0;
   for (int i = 0; i < rinfo->robots_size(); ++i) {
@@ -797,6 +533,160 @@ RobotMaintenanceMenu::det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
   }
 
   return cols;
+}
+
+
+
+OrderDeliverMenu::OrderDeliverMenu
+  (NCursesWindow *parent, llsf_msgs::Team team,
+   std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
+   std::shared_ptr<llsf_msgs::GameState> gstate)
+  : Menu(det_lines(team, oinfo) + 1 + 2, 25 + 2,
+	 (parent->lines() - (det_lines(team, oinfo) + 1))/2,
+	 (parent->cols() - 26)/2),
+    oinfo_(oinfo), team_(team)
+{
+  order_selected_ = false;
+  int n_items = det_lines(team, oinfo);
+  items_.resize(n_items);
+  int ni = 0;
+  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  for (int i = 0; i < oinfo->orders_size(); ++i) {
+    const llsf_msgs::Order &o = oinfo->orders(i);
+
+    bool active = (gstate->game_time().sec() >= o.delivery_period_begin() &&
+		   gstate->game_time().sec() <= o.delivery_period_end());
+
+    std::string s = boost::str(boost::format("%s %2u: %u x %2s")
+			       % (active ? "*" : " ") % o.id() % o.quantity_requested()
+			       % llsf_msgs::Order::Complexity_Name(o.complexity()));
+    items_[ni++] = std::make_pair(i, s);
+  }
+  std::sort(items_.begin(), items_.end());
+
+  for (int i = 0; i < ni; ++i) {
+    SignalItem *item = new SignalItem(items_[i].second);
+    item->signal().connect(boost::bind(&OrderDeliverMenu::order_selected,
+				       this, items_[i].first));
+    mitems[i] = item;
+  }
+  s_cancel_ = "** CANCEL **";
+  mitems[ni] = new SignalItem(s_cancel_);
+  mitems[ni+1] = new NCursesMenuItem();
+
+  set_mark("");
+  set_format(ni+1, 1);
+  InitMenu(mitems, true, true);
+}
+
+void
+OrderDeliverMenu::order_selected(int i)
+{
+  order_selected_ = true;
+  order_idx_ = i;
+}
+
+const llsf_msgs::Order &
+OrderDeliverMenu::order()
+{
+  return oinfo_->orders(order_idx_);
+}
+
+void
+OrderDeliverMenu::On_Menu_Init()
+{
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+
+  if (team_ == llsf_msgs::CYAN) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+  }
+  box();
+
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK)|A_BOLD);
+  addstr(0, (width() - 8) / 2, " Orders ");
+  attroff(A_BOLD);
+
+  for (size_t i = 0; i < items_.size(); ++i) {
+    const llsf_msgs::Order &o = oinfo_->orders(items_[i].first);
+
+    if (team_ == llsf_msgs::CYAN) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+    }
+    printw(i+1, 14, "%u", o.quantity_delivered_cyan());
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    addstr(i+1, 15, "/");
+
+    if (team_ == llsf_msgs::MAGENTA) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA)|A_BOLD);
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+    }
+    printw(i+1, 16, "%u", o.quantity_delivered_magenta());
+
+
+    switch (o.base_color()) {
+    case llsf_msgs::BASE_RED:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));   break;
+    case llsf_msgs::BASE_SILVER:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    case llsf_msgs::BASE_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    }
+    addstr(i+1, 18, " ");
+
+    for (int j = 0; j < o.ring_colors_size(); ++j) {
+      switch (o.ring_colors(j)) {
+      case llsf_msgs::RING_BLUE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+      case llsf_msgs::RING_GREEN:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+      case llsf_msgs::RING_ORANGE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+      case llsf_msgs::RING_YELLOW:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+      }
+      addstr(i+1, 19+j, " ");
+    }
+
+    for (int j = o.ring_colors_size(); j < 4; ++j) {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+      addstr(i+1, 19+j, " ");
+    }
+
+    switch (o.cap_color()) {
+    case llsf_msgs::CAP_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    case llsf_msgs::CAP_GREY:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    }
+    addstr(i+1, 22, " ");
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    printw(i+1, 24, "D%u", o.delivery_gate());
+  }
+
+  refresh();
+}
+
+int
+OrderDeliverMenu::det_lines(llsf_msgs::Team team,
+			    std::shared_ptr<llsf_msgs::OrderInfo> &oinfo)
+{
+  if (oinfo) {
+    return oinfo->orders_size();
+  } else {
+    return 0;
+  }
+}
+
+OrderDeliverMenu::operator bool() const
+{
+  return order_selected_;
 }
 
 } // end of namespace llsfrb

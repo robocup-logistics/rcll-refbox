@@ -56,9 +56,9 @@ main(int argc, char **argv)
   int h, w;
   getmaxyx(stdscr, h, w);
 
-  if (h < 31) {
+  if (h < 35) {
     ::endwin();
-    printf("A minimum of 31 lines is required in the terminal\n");
+    printf("A minimum of 35 lines is required in the terminal\n");
     return -1;
   }
 

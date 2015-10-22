@@ -47,6 +47,11 @@
 #include <logging/file.h>
 #include <logging/network.h>
 #include <logging/console.h>
+#include <llsf_sps/mps_refbox_interface.h>
+#include <llsf_sps/mps_incoming_station.h>
+#include <llsf_sps/mps_pick_place_1.h>
+#include <llsf_sps/mps_pick_place_2.h>
+#include <llsf_sps/mps_deliver.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -57,11 +62,16 @@
 #  include <mongo/client/dbclient.h>
 #  include <mongodb_log/mongodb_log_logger.h>
 #  include <mongodb_log/mongodb_log_protobuf.h>
+#  ifdef HAVE_MONGODB_VERSION_H
+#    include <mongo/version.h>
+#  endif
 #endif
 #ifdef HAVE_AVAHI
 #  include <netcomm/dns-sd/avahi_thread.h>
 #  include <netcomm/utils/resolver.h>
 #endif
+
+#include <string>
 
 using namespace llsf_sps;
 using namespace protobuf_comm;
@@ -97,11 +107,11 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   : clips_mutex_(fawkes::Mutex::RECURSIVE), timer_(io_service_)
 {
   pb_comm_ = NULL;
-
+  
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
 
-  cfg_clips_dir_ = std::string(SRCDIR) + "/clips/";
+  cfg_clips_dir_ = std::string(BASEDIR) + "/src/games/rcll/";
 
   try {
     cfg_timer_interval_ = config_->get_uint("/llsfrb/clips/timer-interval");
@@ -160,10 +170,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
       if (config_->exists("/llsfrb/sps/hosts") && cfg_machine_assignment_ == ASSIGNMENT_2014) {
 	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
-			   config_->get_uint("/llsfrb/sps/port"));
-      } else {
-	sps_ = new SPSComm(config_->get_string("/llsfrb/sps/host").c_str(),
-			   config_->get_uint("/llsfrb/sps/port"));
+			   config_->get_uint("/llsfrb/sps/port"),
+			   config_->get_string("/llsfrb/sps/machine-type"));
       }
 
       sps_->reset_lights();
@@ -178,6 +186,77 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     sps_ = NULL;
   }
 
+
+  try {
+    mps_ = NULL;
+    if (config_->get_bool("/llsfrb/mps/enable")) {
+      mps_ = new MPSRefboxInterface("MPSInterface");
+
+      std::string prefix = "/llsfrb/mps/stations/";
+
+      std::set<std::string> mps_configs;
+      std::set<std::string> ignored_mps_configs;
+      
+      std::auto_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
+      while (i->next()) {
+
+	std::string cfg_name = std::string(i->path()).substr(prefix.length());
+	cfg_name = cfg_name.substr(0, cfg_name.find("/"));
+
+	if ( (mps_configs.find(cfg_name) == mps_configs.end()) &&
+	     (ignored_mps_configs.find(cfg_name) == ignored_mps_configs.end()) )
+	{
+
+	  std::string cfg_prefix = prefix + cfg_name + "/";
+
+	  printf("Config: %s  prefix %s\n", cfg_name.c_str(), cfg_prefix.c_str());
+
+	  bool active = true;
+	  try {
+	    active = config_->get_bool((cfg_prefix + "active").c_str());
+	  } catch (Exception &e) {} // ignored, assume enabled
+
+	  if (active) {
+
+ 	    std::string mpstype = config_->get_string((cfg_prefix + "type").c_str());  
+	    std::string mpsip = config_->get_string((cfg_prefix + "host").c_str());
+	    unsigned int port = config_->get_uint((cfg_prefix + "port").c_str());
+
+	    if(mpstype == "BS") {
+	      logger_->log_info("RefBox", "Adding BS %s:%u", mpsip.c_str(), port);
+	      MPSIncomingStation *is = new MPSIncomingStation(mpsip.c_str(), port, cfg_name.c_str());
+	      mps_->insertMachine(cfg_name, is, is);
+	    }
+	    else if(mpstype == "CS") {
+	      logger_->log_info("RefBox", "Adding CS %s:%u", mpsip.c_str(), port, cfg_name.c_str());
+	      MPSPickPlace1 *pp1 = new MPSPickPlace1(mpsip.c_str(), port, cfg_name.c_str());
+	      mps_->insertMachine(cfg_name, pp1, pp1);
+	    }
+	    else if(mpstype == "RS") {
+	      logger_->log_info("RefBox", "Adding RS %s:%u", mpsip.c_str(), port);
+	      MPSPickPlace2 *pp2 = new MPSPickPlace2(mpsip.c_str(), port, cfg_name.c_str());
+	      mps_->insertMachine(cfg_name, pp2, pp2);
+	    }
+	    else if(mpstype == "DS") {
+	      logger_->log_info("RefBox", "Adding DS %s:%u", mpsip.c_str(), port);
+	      MPSDeliver *del = new MPSDeliver(mpsip.c_str(), port, cfg_name.c_str());
+	      mps_->insertMachine(cfg_name, del, del);
+	    }
+	    else {
+	      throw fawkes::Exception("this type wont match");
+	    }
+	    mps_configs.insert(cfg_name);
+	  } else {
+	    ignored_mps_configs.insert(cfg_name);
+	  }
+	}
+      }
+    }
+  } catch (Exception &e) {
+    throw;
+  }
+
+  
   clips_ = new CLIPS::Environment();
   setup_protobuf_comm();
   setup_clips();
@@ -359,6 +438,11 @@ LLSFRefBox::setup_clips()
 
   clips_logger_ = mlogger;
 
+  bool simulation = false;
+  try {
+    simulation = config_->get_bool("/llsfrb/simulation/enabled");
+  } catch (Exception &e) {} // ignore, use default
+
   init_clips_logger(clips_->cobj(), logger_, clips_logger_);
 
   std::string defglobal_ver =
@@ -376,7 +460,21 @@ LLSFRefBox::setup_clips()
   clips_->add_function("get-clips-dirs", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_get_clips_dirs)));
   clips_->add_function("now", sigc::slot<CLIPS::Values>(sigc::mem_fun(*this, &LLSFRefBox::clips_now)));
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
+  clips_->add_function("config-path-exists", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_path_exists)));
+  clips_->add_function("config-get-bool", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_bool)));
   clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
+
+  if (mps_ && ! simulation) {
+    clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
+    clips_->add_function("mps-ds-process", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
+    clips_->add_function("mps-rs-mount-ring", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
+    clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
+    clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
+    clips_->add_function("mps-set-lights", sigc::slot<void, std::string, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
+    clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
+    clips_->add_function("mps-reset-base-counter", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
+    clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
+  }
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
@@ -444,7 +542,7 @@ LLSFRefBox::clips_get_clips_dirs()
 void
 LLSFRefBox::clips_load_config(std::string cfg_prefix)
 {
-  std::auto_ptr<Configuration::ValueIterator> v(config_->search(cfg_prefix.c_str()));
+  std::shared_ptr<Configuration::ValueIterator> v(config_->search(cfg_prefix.c_str()));
   while (v->next()) {
     std::string type = "";
     std::string value = v->get_as_string();
@@ -477,6 +575,23 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
   }
 }
 
+CLIPS::Value
+LLSFRefBox::clips_config_path_exists(std::string path)
+{
+  return CLIPS::Value(config_->exists(path.c_str()) ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+}
+
+CLIPS::Value
+LLSFRefBox::clips_config_get_bool(std::string path)
+{
+  try {
+    bool v = config_->get_bool(path.c_str());
+    return CLIPS::Value(v ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+  } catch (Exception &e) {
+    return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+  }
+}
+
 
 void
 LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::string state)
@@ -490,6 +605,246 @@ LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::st
   }
 }
 
+void
+LLSFRefBox::clips_mps_reset(std::string machine)
+{
+  logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
+
+  if (! mps_)  return;
+  MPS *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->resetMachine();
+    station->clearRegister();
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+void
+LLSFRefBox::clips_mps_reset_base_counter(std::string machine)
+{
+  logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
+
+  if (! mps_)  return;
+  MPSPickPlace2 *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->resetCounterSlide();
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+
+void
+LLSFRefBox::clips_mps_deliver(std::string machine)
+{
+  logger_->log_info("MPS", "Delivering on %s", machine.c_str());
+
+  if (! mps_)  return;
+  MPS *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->deliverProduct();
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+void
+LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::string side)
+{
+  logger_->log_info("MPS", "Dispense %s: %s at %s",
+		    machine.c_str(), color.c_str(), side.c_str());
+  if (! mps_)  return;
+  MPSIncomingStation *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    int color_id = 0;
+    if (color == "BASE_RED") {
+      color_id = 1;
+    } else if (color == "BASE_SILVER") {
+      color_id = 2;
+    } else if (color == "BASE_BLACK") {
+      color_id = 3;
+    } else {
+      logger_->log_error("MPS", "Invalid color %s", color.c_str());
+      return;
+    }
+
+    int side_id = 0;
+    if (side == "INPUT") {
+      side_id = 2;
+    } else if (side == "OUTPUT") {
+      side_id = 1;
+    } else {
+      logger_->log_error("MPS", "Invalid side %s", side.c_str());
+      return;
+    }
+
+    station->getCap(color_id, side_id);
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+
+void
+LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
+{
+  logger_->log_info("MPS", "Processing on %s: slide %d",
+		    machine.c_str(), slide);
+  if (! mps_)  return;
+  MPSDeliver *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->sendDeliver(slide);
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+void
+LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
+{
+  logger_->log_info("MPS", "Mount ring on %s: slide %d",
+		    machine.c_str(), slide);
+  if (! mps_)  return;
+  MPSPickPlace2 *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    station->produceRing(slide);
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+
+void
+LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
+{
+  logger_->log_info("MPS", "%s on %s",
+		    operation.c_str(), machine.c_str());
+  if (! mps_)  return;
+  MPSPickPlace1 *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    if (operation == "RETRIEVE_CAP") {
+      station->produceEnd(2);
+    } else if (operation == "MOUNT_CAP") {
+      station->produceEnd(1);
+    } else {
+      logger_->log_error("MPS", "Invalid operation '%s' on %s",
+			 operation.c_str(), machine.c_str());
+    }
+  } else {
+    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+
+void
+LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::string state)
+{
+  //logger_->log_info("MPS", "Set light %s: %s to %s",
+  //		    machine.c_str(), color.c_str(), state.c_str());
+
+  if (! mps_)  return;
+  MPS *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+    int color_id = 0;
+    if (color == "RED") {
+      color_id = 1;
+    } else if (color == "YELLOW") {
+      color_id = 2;
+    } else if (color == "GREEN") {
+      color_id = 3;
+    } else {
+      logger_->log_error("MPS", "Invalid color %s", color.c_str());
+      return;
+    }
+
+    int state_id = 0;
+    int blink_id = 0;
+    if (state == "ON") {
+      state_id = 1;
+      blink_id = 0;
+    } else if (state == "BLINK") {
+      state_id = 1;
+      blink_id = 1;
+    } else if (state == "OFF") {
+      state_id = 0;
+      blink_id = 0;
+    } else {
+      logger_->log_error("MPS", "Invalid state %s", state.c_str());
+      return;
+    }
+
+    //printf("Set light %i %i %i\n", color_id, state_id, blink_id);
+    station->setLight(color_id, state_id, blink_id);
+
+  } else {
+    //logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
+
+void
+LLSFRefBox::clips_mps_set_lights(std::string machine, std::string red_state,
+                                 std::string yellow_state, std::string green_state)
+{
+  //logger_->log_info("MPS", "Set light on %s: red %s yellow %s  green %s",
+  //                  machine.c_str(), red_state.c_str(), yellow_state.c_str(), green_state.c_str());
+
+  if (! mps_)  return;
+  MPS *station;
+  station = mps_->get_station(machine, station);
+  if (station) {
+
+	  // 0 is off, 1 is on, 2 is blink
+	  int lights[3];
+
+    if (red_state == "ON") {
+	    lights[0] = 1;
+    } else if (red_state == "BLINK") {
+	    lights[0] = 2;
+    } else {
+	    lights[0] = 0;
+    }
+
+    if (yellow_state == "ON") {
+	    lights[1] = 1;
+    } else if (yellow_state == "BLINK") {
+	    lights[1] = 2;
+    } else {
+	    lights[1] = 0;
+    }
+
+    if (green_state == "ON") {
+	    lights[2] = 1;
+    } else if (green_state == "BLINK") {
+	    lights[2] = 2;
+    } else {
+	    lights[2] = 0;
+    }
+
+    //printf("Set light %i %i %i\n", color_id, state_id, blink_id);
+    station->setAllLights(lights);
+
+  } else {
+    //logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+    return;
+  }
+}
 
 #ifdef HAVE_MONGODB
 
@@ -624,6 +979,15 @@ LLSFRefBox::setup_clips_mongodb()
   clips_->add_function("mongodb-upsert", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_upsert)));
   clips_->add_function("mongodb-update", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_update)));
   clips_->add_function("mongodb-replace", sigc::slot<void, std::string, void *, CLIPS::Value>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_replace)));
+  clips_->add_function("mongodb-query", sigc::slot<CLIPS::Value, std::string, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_query)));
+  clips_->add_function("mongodb-query-sort", sigc::slot<CLIPS::Value, std::string, void *, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_query_sort)));
+  clips_->add_function("mongodb-cursor-destroy", sigc::slot<void, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_destroy)));
+  clips_->add_function("mongodb-cursor-more", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_more)));
+  clips_->add_function("mongodb-cursor-next", sigc::slot<CLIPS::Value, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_next)));
+  clips_->add_function("bson-field-names", sigc::slot<CLIPS::Values, void *>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_field_names)));
+  clips_->add_function("bson-get", sigc::slot<CLIPS::Value, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_get)));
+  clips_->add_function("bson-get-array", sigc::slot<CLIPS::Values, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_get_array)));
+  clips_->add_function("bson-get-time", sigc::slot<CLIPS::Values, void *, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_bson_get_time)));
 
   clips_->build("(deffacts have-feature-mongodb (have-feature MongoDB))");
 }
@@ -657,7 +1021,11 @@ LLSFRefBox::clips_bson_parse(std::string document)
   mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
   try {
     b->appendElements(mongo::fromjson(document));
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Parsing JSON doc failed: %s\n%s",
 		       e.what(), document.c_str());
   }
@@ -710,7 +1078,11 @@ LLSFRefBox::clips_bson_append(void *bson, std::string field_name, CLIPS::Value v
 			field_name.c_str());
       break;
     }
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append array value to field %s: %s",
 		       field_name.c_str(), e.what());
   }
@@ -755,7 +1127,11 @@ LLSFRefBox::clips_bson_append_array(void *bson,
 	break;
       }
     }
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append array value to field %s: %s",
 		       field_name.c_str(), e.what());
   }
@@ -809,7 +1185,11 @@ LLSFRefBox::clips_bson_array_append(void *barr, CLIPS::Value value)
       logger_->log_warn("RefBox", "Tried to add unknown type to BSON array");
       break;
     }
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append to array: %s", e.what());
   }
 }
@@ -832,7 +1212,11 @@ LLSFRefBox::clips_bson_append_time(void *bson, std::string field_name, CLIPS::Va
     struct timeval now = { time[0].as_integer(), time[1].as_integer()};
     mongo::Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
     b->appendDate(field_name, nowd);
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_error("MongoDB", "Failed to append time value to field %s: %s",
 		       field_name.c_str(), e.what());
   }
@@ -849,7 +1233,7 @@ LLSFRefBox::clips_mongodb_insert(std::string collection, void *bson)
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
 
   try {
-    mongodb_->insert(collection, b->obj());
+    mongodb_->insert(collection, b->asTempObj());
   } catch (mongo::DBException &e) {
     logger_->log_warn("MongoDB", "Insert failed: %s", e.what());
   }
@@ -878,7 +1262,11 @@ LLSFRefBox::mongodb_update(std::string &collection, mongo::BSONObj obj,
     }
 
     mongodb_->update(collection, query_obj, obj, upsert);
+#ifdef HAVE_MONGODB_VERSION_H
+  } catch (mongo::MsgAssertionException &e) {
+#else
   } catch (bson::assertion &e) {
+#endif
     logger_->log_warn("MongoDB", "Compiling query failed: %s", e.what());
   } catch (mongo::DBException &e) {
     logger_->log_warn("MongoDB", "Insert failed: %s", e.what());
@@ -890,6 +1278,10 @@ void
 LLSFRefBox::clips_mongodb_upsert(std::string collection, void *bson, CLIPS::Value query)
 {
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  if (! b) {
+	  logger_->log_warn("MongoDB", "Invalid BSON Obj Builder passed");
+	  return;
+  }
   mongodb_update(collection, b->asTempObj(), query, true);
 }
 
@@ -897,6 +1289,10 @@ void
 LLSFRefBox::clips_mongodb_update(std::string collection, void *bson, CLIPS::Value query)
 {
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  if (! b) {
+	  logger_->log_warn("MongoDB", "Invalid BSON Obj Builder passed");
+	  return;
+  }
 
   mongo::BSONObjBuilder update_doc;
   update_doc.append("$set", b->asTempObj());
@@ -908,9 +1304,268 @@ void
 LLSFRefBox::clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query)
 {
   mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+  if (! b) logger_->log_warn("MongoDB", "Invalid BSON Obj Builder passed");
   mongodb_update(collection, b->asTempObj(), query, false);
 }
 
+CLIPS::Value
+LLSFRefBox::clips_mongodb_query_sort(std::string collection, void *bson, void *bson_sort)
+{
+  if (! cfg_mongodb_enabled_) {
+    logger_->log_warn("MongoDB", "Query requested while MongoDB disabled");
+    return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+  }
+
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+  try {
+	  mongo::Query q(b->asTempObj());
+	  if (bson_sort) {
+		  mongo::BSONObjBuilder *bs = static_cast<mongo::BSONObjBuilder *>(bson_sort);
+		  q.sort(bs->asTempObj());
+	  }
+
+	  std::auto_ptr<mongo::DBClientCursor> c = mongodb_->query(collection, q);
+
+	  return CLIPS::Value(new std::auto_ptr<mongo::DBClientCursor>(c),
+	                      CLIPS::TYPE_EXTERNAL_ADDRESS);
+
+  } catch (mongo::DBException &e) {
+    logger_->log_warn("MongoDB", "Query failed: %s", e.what());
+    return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+  }
+}
+
+CLIPS::Value
+LLSFRefBox::clips_mongodb_query(std::string collection, void *bson)
+{
+	return clips_mongodb_query_sort(collection, bson, NULL);
+}
+
+void
+LLSFRefBox::clips_mongodb_cursor_destroy(void *cursor)
+{
+	std::auto_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+
+	if (! c || ! c->get()) {
+		logger_->log_error("MongoDB", "mongodb-cursor-destroy: got invalid cursor");
+		return;
+	}
+
+	delete c;
+}
+
+CLIPS::Value
+LLSFRefBox::clips_mongodb_cursor_more(void *cursor)
+{
+	std::auto_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+
+	if (! c || ! c->get()) {
+		logger_->log_error("MongoDB", "mongodb-cursor-more: got invalid cursor");
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+	return CLIPS::Value((*c)->more() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+}
+
+CLIPS::Value
+LLSFRefBox::clips_mongodb_cursor_next(void *cursor)
+{
+	std::auto_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+
+	if (! c || ! c->get()) {
+		logger_->log_error("MongoDB", "mongodb-cursor-next: got invalid cursor");
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+  mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+  b->appendElements((*c)->next());
+  return CLIPS::Value(b);
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_bson_field_names(void *bson)
+{
+  mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+	if (! b) {
+		logger_->log_error("MongoDB", "mongodb-bson-field-names: invalid object");
+		CLIPS::Values rv;
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	std::set<std::string> field_names;
+	b->asTempObj().getFieldNames(field_names);
+
+	CLIPS::Values rv;
+	for (const std::string &n : field_names) {
+		rv.push_back(CLIPS::Value(n));
+	}
+	return rv;
+}
+
+
+CLIPS::Value
+LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
+{
+	mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+	if (! b) {
+		logger_->log_error("MongoDB", "mongodb-bson-get: invalid object");
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+	mongo::BSONObj o(b->asTempObj());
+
+	if (! o.hasField(field_name)) {
+		logger_->log_error("MongoDB", "mongodb-bson-get: has no field %s",
+		                   field_name.c_str());
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+
+	mongo::BSONElement el = o.getField(field_name);
+
+	switch (el.type()) {
+	case mongo::NumberDouble:
+		return CLIPS::Value(el.Double());
+	case mongo::String:
+		return CLIPS::Value(el.String());
+	case mongo::Bool:
+		return CLIPS::Value(el.Bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+	case mongo::NumberInt:
+		return CLIPS::Value(el.Int());
+	case mongo::NumberLong:
+		return CLIPS::Value(el.Long());
+	case mongo::Object:
+		{
+			mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+			b->appendElements(o);
+			return CLIPS::Value(b);
+		}
+	default:
+		return CLIPS::Value("INVALID_VALUE_TYPE", CLIPS::TYPE_SYMBOL);
+	}
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
+{
+	mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+	CLIPS::Values rv;
+
+	if (! b) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-array: invalid object");
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	mongo::BSONObj o(b->asTempObj());
+
+	if (! o.hasField(field_name)) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-array: has no field %s",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	mongo::BSONElement el = o.getField(field_name);
+
+	if (el.type() != mongo::Array) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-array: field %s is not an array",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	std::vector<mongo::BSONElement> elements(el.Array());
+
+	for (const mongo::BSONElement &e : elements) {
+		switch (e.type()) {
+		case mongo::NumberDouble:
+			rv.push_back(CLIPS::Value(e.Double())); break;
+		case mongo::String:
+			rv.push_back(CLIPS::Value(e.String())); break;
+		case mongo::Bool:
+			rv.push_back(CLIPS::Value(e.Bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL));
+			break;
+		case mongo::NumberInt:
+			rv.push_back(CLIPS::Value(e.Int())); break;
+		case mongo::NumberLong:
+			rv.push_back(CLIPS::Value(e.Long())); break;
+		case mongo::Object:
+			{
+				mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
+				b->appendElements(e.Obj());
+				rv.push_back(CLIPS::Value(b));
+			}
+			break;
+		default:
+			rv.clear();
+			rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+			return rv;
+		}
+	}
+	return rv;
+	
+}
+
+
+CLIPS::Values
+LLSFRefBox::clips_bson_get_time(void *bson, std::string field_name)
+{
+	mongo::BSONObjBuilder *b = static_cast<mongo::BSONObjBuilder *>(bson);
+
+	CLIPS::Values rv;
+
+	if (! b) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-time: invalid object");
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	mongo::BSONObj o(b->asTempObj());
+
+	if (! o.hasField(field_name)) {
+		logger_->log_error("MongoDB", "mongodb-bson-get-time: has no field %s",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+	mongo::BSONElement el = o.getField(field_name);
+
+	int64_t ts = 0;
+	if (el.type() == mongo::Date) {
+		mongo::Date_t d = el.Date();
+		ts = d.asInt64();
+	} else if (el.type() == mongo::Timestamp) {
+#ifdef HAVE_MONGODB_VERSION_H
+		mongo::Timestamp_t t = el.Timestamp();
+		ts = t.seconds();
+#else
+		mongo::Date_t d = el.timestampTime();
+		ts = d.asInt64();
+#endif
+	} else {
+		logger_->log_error("MongoDB", "mongodb-bson-get-time: field %s is not a time",
+		                   field_name.c_str());
+		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
+		return rv;
+	}
+
+
+	rv.resize(2);
+	rv[0] = CLIPS::Value((long long int)(ts / 1000));
+	rv[1] = CLIPS::Value((ts - (rv[0].as_integer() * 1000)) * 1000);
+	return rv;
+}
 
 #endif
 
@@ -973,11 +1628,29 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     timer_last_ = now;
     */
 
-    sps_read_rfids();
+    //sps_read_rfids();
+    if (mps_)  mps_->process();
 
     {
       //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
       fawkes::MutexLocker lock(&clips_mutex_);
+
+      if (mps_) {
+	std::map<std::string, std::string> machine_states = mps_->get_states();
+	for (const auto &ms : machine_states) {
+	  //printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
+	  //       ms.first.c_str(), ms.second.c_str(), 0);
+          std::string type = ms.first.substr(2, 2);
+          unsigned int num_bases = 0;
+          if (type == "RS") {
+            MPSPickPlace2 *station;
+            station = mps_->get_station(ms.first, station);
+            if (station)  num_bases = station->getCountSlide();
+          }
+	  clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
+				ms.first.c_str(), ms.second.c_str(), num_bases);
+	}
+      }
 
       clips_->assert_fact("(time (now))");
       clips_->refresh_agenda();

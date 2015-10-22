@@ -23,7 +23,7 @@ include $(BUILDCONFDIR)/llsf_sps/llsf_sps.mk
 include $(BUILDCONFDIR)/mongodb_log/mongodb.mk
 include $(BUILDCONFDIR)/netcomm/netcomm.mk
 
-CFLAGS += $(CFLAGS_CPP11)
+CFLAGS += $(CFLAGS_CPP11) -Wno-deprecated-declarations
 
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
