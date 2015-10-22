@@ -74,6 +74,9 @@ endif
 ifeq ($(HAVE_GTKMM),1)
   CFLAGS_GTKMM     = -DHAVE_GTKMM $(shell $(PKGCONFIG) --cflags '$(PC_GTKMM)')
   LDFLAGS_GTKMM    = $(shell $(PKGCONFIG) --libs '$(PC_GTKMM)')
+  ifeq ($(CC),clang)
+    CFLAGS_GTKMM += -Wno-overloaded-virtual $(if $(HAVE_GTKMM_2),-Wno-mismatched-tags)
+  endif
 else
   PKG_MISSING += $(PKG_GTKMM)
 endif
@@ -102,6 +105,11 @@ endif
 ifeq ($(HAVE_GLIBMM),1)
   CFLAGS_GLIBMM  = $(shell $(PKGCONFIG) --cflags '$(PC_GLIBMM)') -DHAVE_GLIBMM
   LDFLAGS_GLIBMM = $(shell $(PKGCONFIG) --libs '$(PC_GLIBMM)')
+
+  HAVE_GLIBMM_246 = $(if $(shell $(PKGCONFIG) --atleast-version=2.46 'glibmm-2.4'; echo $${?/1/}),1,0)
+  ifeq ($(HAVE_GLIBMM_246),1)
+    CFLAGS_GLIBMM += $(CFLAGS_CPP11)
+  endif
 else
   PKG_MISSING += $(PKG_GLIBMM)
 endif
@@ -115,9 +123,9 @@ endif
 
 ifeq ($(HAVE_GTKMM)$(HAVE_CAIROMM)$(HAVE_GTHREAD),111)
   HAVE_GUI     = 1
-  CFLAGS_GUI  += $(CFLAGS_GTKMM) $(CFLAGS_CAIROMM) \
+  CFLAGS_GUI  += $(CFLAGS_GLIBMM) $(CFLAGS_GTKMM) $(CFLAGS_CAIROMM) \
 		$(CFLAGS_GCONFMM) $(CFLAGS_GTHREAD)
-  LDFLAGS_GUI += $(LDFLAGS_GTKMM) $(LDFLAGS_CAIROMM) \
+  LDFLAGS_GUI += $(LDFLAGS_GLIBMM) $(LDFLAGS_GTKMM) $(LDFLAGS_CAIROMM) \
 		$(LDFLAGS_GCONFMM) $(LDFLAGS_GTHREAD)
 endif
 
