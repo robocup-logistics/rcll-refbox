@@ -38,6 +38,9 @@
 
 #include <termios.h>
 #include <clipsmm.h>
+#ifdef HAVE_MONGODB
+#  include <mongo/client/init.h>
+#endif
 
 using namespace llsfrb;
 
@@ -51,6 +54,9 @@ main(int argc, char **argv)
   tcsetattr(0 , TCSANOW, &term);
 
   CLIPS::init();
+#ifdef HAVE_MONGODB_VERSION_H
+  mongo::client::initialize();
+#endif
   LLSFRefBox llsfrb(argc, argv);
   int rv = llsfrb.run();
 
