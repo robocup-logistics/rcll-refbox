@@ -72,7 +72,11 @@ main(int argc, char **argv)
     exit(0);
   }
 
+#if __cplusplus >= 201103L
+  std::unique_ptr<llsfrb::Configuration> config(new llsfrb::YamlConfiguration(CONFDIR));
+#else
   std::auto_ptr<llsfrb::Configuration> config(new llsfrb::YamlConfiguration(CONFDIR));
+#endif
   config->load("config.yaml");
 
   //printf("Connecting to SPS...\n");  
