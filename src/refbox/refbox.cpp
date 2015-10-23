@@ -197,7 +197,11 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       std::set<std::string> mps_configs;
       std::set<std::string> ignored_mps_configs;
       
+#if __cplusplus >= 201103L
+      std::unique_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
+#else
       std::auto_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
+#endif
       while (i->next()) {
 
 	std::string cfg_name = std::string(i->path()).substr(prefix.length());
@@ -1325,10 +1329,17 @@ LLSFRefBox::clips_mongodb_query_sort(std::string collection, void *bson, void *b
 		  q.sort(bs->asTempObj());
 	  }
 
-	  std::auto_ptr<mongo::DBClientCursor> c = mongodb_->query(collection, q);
+#if __cplusplus >= 201103L
+ 	  std::unique_ptr<mongo::DBClientCursor> c = mongodb_->query(collection, q);
+
+	  return CLIPS::Value(new std::unique_ptr<mongo::DBClientCursor>(std::move(c)),
+	                      CLIPS::TYPE_EXTERNAL_ADDRESS);
+#else
+ 	  std::auto_ptr<mongo::DBClientCursor> c = mongodb_->query(collection, q);
 
 	  return CLIPS::Value(new std::auto_ptr<mongo::DBClientCursor>(c),
 	                      CLIPS::TYPE_EXTERNAL_ADDRESS);
+#endif
 
   } catch (mongo::DBException &e) {
     logger_->log_warn("MongoDB", "Query failed: %s", e.what());
@@ -1345,8 +1356,13 @@ LLSFRefBox::clips_mongodb_query(std::string collection, void *bson)
 void
 LLSFRefBox::clips_mongodb_cursor_destroy(void *cursor)
 {
+#if __cplusplus >= 201103L
+	std::unique_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::unique_ptr<mongo::DBClientCursor> *>(cursor);
+#else
 	std::auto_ptr<mongo::DBClientCursor> *c =
 		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+#endif
 
 	if (! c || ! c->get()) {
 		logger_->log_error("MongoDB", "mongodb-cursor-destroy: got invalid cursor");
@@ -1359,8 +1375,13 @@ LLSFRefBox::clips_mongodb_cursor_destroy(void *cursor)
 CLIPS::Value
 LLSFRefBox::clips_mongodb_cursor_more(void *cursor)
 {
+#if __cplusplus >= 201103L
+	std::unique_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::unique_ptr<mongo::DBClientCursor> *>(cursor);
+#else
 	std::auto_ptr<mongo::DBClientCursor> *c =
 		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+#endif
 
 	if (! c || ! c->get()) {
 		logger_->log_error("MongoDB", "mongodb-cursor-more: got invalid cursor");
@@ -1373,8 +1394,13 @@ LLSFRefBox::clips_mongodb_cursor_more(void *cursor)
 CLIPS::Value
 LLSFRefBox::clips_mongodb_cursor_next(void *cursor)
 {
+#if __cplusplus >= 201103L
+	std::unique_ptr<mongo::DBClientCursor> *c =
+		static_cast<std::unique_ptr<mongo::DBClientCursor> *>(cursor);
+#else
 	std::auto_ptr<mongo::DBClientCursor> *c =
 		static_cast<std::auto_ptr<mongo::DBClientCursor> *>(cursor);
+#endif
 
 	if (! c || ! c->get()) {
 		logger_->log_error("MongoDB", "mongodb-cursor-next: got invalid cursor");
