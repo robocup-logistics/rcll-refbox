@@ -38,7 +38,7 @@
 
 #include <termios.h>
 #include <clipsmm.h>
-#ifdef HAVE_MONGODB
+#ifdef HAVE_MONGODB_VERSION_H
 #  include <mongo/client/init.h>
 #endif
 
