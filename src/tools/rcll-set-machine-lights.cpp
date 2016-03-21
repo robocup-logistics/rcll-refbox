@@ -114,7 +114,7 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 void
 usage(const char *progname)
 {
-  printf("Usage: %s -m <machine-name> -r <on/off/blink> -y <on/off/blink> -g <on/off/blink>\n",
+  printf("Usage: %s [-R host[:port]] -m <machine-name> -r <on/off/blink> -y <on/off/blink> -g <on/off/blink>\n",
 	 progname);
 }
 
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 {
   client_ = new ProtobufStreamClient();
 
-  ArgumentParser argp(argc, argv, "m:r:y:g:");
+  ArgumentParser argp(argc, argv, "m:r:y:g:R:");
 
   if (! (argp.has_arg("m") && argp.has_arg("r") && argp.has_arg("y") && argp.has_arg("g")) ) {
 	  usage(argv[0]);
@@ -161,10 +161,16 @@ main(int argc, char **argv)
   
   //MessageRegister & message_register = client_->message_register();
 
+  char *host = (char *)"localhost";
+  unsigned short int port = 4444;
+  bool free_host = argp.parse_hostport("R", &host, &port);
+  
   client_->signal_received().connect(handle_message);
   client_->signal_connected().connect(handle_connected);
   client_->signal_disconnected().connect(handle_disconnected);
-  client_->async_connect("localhost", 4444);
+  client_->async_connect(host, port);
+
+  if (free_host)  free(host);
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
