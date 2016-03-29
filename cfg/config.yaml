@@ -149,7 +149,9 @@ llsfrb:
 
   simulation:
     enable: true
-    # synchronize refbox time with the time of a simulation 
+    # Enable if your GAZEBO_WORLD_PATH is set ending in llsf-default.world
+    use-default-map: true
+    # synchronize refbox time with the time of a simulation
     time-sync:
       enable: true
       # estimate time by using the last given simulation time speed
