@@ -96,8 +96,8 @@
 
 (deffunction mps-set-lights (?name ?state-red ?state-yellow ?state-green)
   (bind ?name (sym-cat ?name))
-  (printout t "Simulated light setting for " ?name ": red=" ?state-red
-						" yellow=" ?state-yellow "  green=" ?state-green crlf)
+  ;(printout t "Simulated light setting for " ?name ": red=" ?state-red
+	;					" yellow=" ?state-yellow "  green=" ?state-green crlf)
 )
 
 (deffunction mps-bs-dispense (?name ?color ?side)
