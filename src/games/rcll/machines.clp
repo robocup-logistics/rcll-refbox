@@ -141,6 +141,9 @@
 	  )
 
    else
+	 (if (not (any-factp ((?s sim-init-default-map)) TRUE))
+    then
+
 	  (printout t "Performing " ?*RANDOMIZE-STEPS-MACHINES*
 							" randomization steps on loaded config" crlf)
 	  (loop-for-count ?*RANDOMIZE-STEPS-MACHINES*
@@ -255,6 +258,7 @@
       )
     )
 
+   ) ; end else if
   )
 
   ; assign random down times
