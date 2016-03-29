@@ -15,7 +15,7 @@
 ; ---------------------------------------------------------------------------
 
 
-(defrule sim-init
+(defrule sim-init-time
   (not (sim-time-initialized))
   (confval (path "/llsfrb/simulation/time-sync/estimate-time") (type BOOL) (value ?time-estimate-enable))
   (confval (path "/llsfrb/simulation/time-sync/enable") (type BOOL) (value ?time-sync-enable))
@@ -25,6 +25,28 @@
 		    (now (create$ 0 0)))
   )
 )
+
+(defrule sim-init-default-map
+  (not (sim-init-default-map))
+  (confval (path "/llsfrb/simulation/use-default-map") (type BOOL) (value true))
+  =>
+	(printout warn "Using default simulation map, setting machine zones accordingly" crlf)
+  (assert (sim-init-default-map))
+  (do-for-fact ((?m machine)) (eq ?m:name C-BS)  (modify ?m (zone Z9)))
+  (do-for-fact ((?m machine)) (eq ?m:name C-DS)  (modify ?m (zone Z4)))
+  (do-for-fact ((?m machine)) (eq ?m:name C-CS1)  (modify ?m (zone Z24)))
+  (do-for-fact ((?m machine)) (eq ?m:name C-CS2)  (modify ?m (zone Z18)))
+  (do-for-fact ((?m machine)) (eq ?m:name C-RS1)  (modify ?m (zone Z2)))
+  (do-for-fact ((?m machine)) (eq ?m:name C-RS2)  (modify ?m (zone Z11)))
+
+  (do-for-fact ((?m machine)) (eq ?m:name M-BS)  (modify ?m (zone Z21)))
+  (do-for-fact ((?m machine)) (eq ?m:name M-DS)  (modify ?m (zone Z16)))
+  (do-for-fact ((?m machine)) (eq ?m:name M-CS1)  (modify ?m (zone Z12)))
+  (do-for-fact ((?m machine)) (eq ?m:name M-CS2)  (modify ?m (zone Z6)))
+  (do-for-fact ((?m machine)) (eq ?m:name M-RS1)  (modify ?m (zone Z14)))
+  (do-for-fact ((?m machine)) (eq ?m:name M-RS2)  (modify ?m (zone Z23)))
+)
+
 
 (defrule sim-net-recv-SimTimeSync
   ?pf <- (protobuf-msg (type "llsf_msgs.SimTimeSync") (ptr ?p) (rcvd-via STREAM))
