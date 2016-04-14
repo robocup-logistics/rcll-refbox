@@ -256,7 +256,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (rs-ring-color ?ring-color) (rs-ring-colors ?ring-colors)
+		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
                  (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
@@ -287,16 +287,6 @@
   (printout t ?cs-op " on machine " ?n crlf)
   (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
 )
-
-(defrule prod-proc-state-processing
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSING) (proc-state ~PROCESSING))
-  =>
-  (printout t "Machine " ?n " starts processing" crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  ; TODO: (mps-instruct PROCESS)
-)
-
 
 (defrule prod-proc-state-processed-ds
   (declare (salience ?*PRIORITY_HIGH*))
