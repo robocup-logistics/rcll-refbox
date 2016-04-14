@@ -276,7 +276,7 @@
 	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
 )
 
-(defrule prod-proc-state-processing-cs-mount-without-retrieve
+(defrule prod-proc-state-processing-cs-mount
   "Process on CS"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
