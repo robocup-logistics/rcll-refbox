@@ -694,17 +694,18 @@ OrderByColorDeliverMenu::OrderByColorDeliverMenu
   (NCursesWindow *parent, llsf_msgs::Team team,
    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
    std::shared_ptr<llsf_msgs::GameState> gstate)
-  : Menu(det_lines(team, oinfo) + 1 + 2, 25 + 2,
-	 (parent->lines() - (det_lines(team, oinfo) + 1))/2,
-	 (parent->cols() - 26)/2),
+  : Menu(det_lines(team, oinfo) + 2 + 2, 18 + 2,
+	 (parent->lines() - (det_lines(team, oinfo) + 2))/2,
+	 (parent->cols() - 19)/2),
     oinfo_(oinfo), team_(team)
 {
   product_selected_ = false;
   product_idx_ = 0;
+  wants_specific_ = false;
   int n_items = det_lines(team, oinfo);
   items_.resize(n_items);
   int ni = 0;
-  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  NCursesMenuItem **mitems = new NCursesMenuItem*[3 + n_items];
 
   std::list<std::string> orders;
 
@@ -734,12 +735,18 @@ OrderByColorDeliverMenu::OrderByColorDeliverMenu
 	                                     this, i));
 	  mitems[i] = item;
   }
+
+  s_specific_ = "==> Specific";
+  SignalItem *item_spec = new SignalItem(s_specific_);
+  item_spec->signal().connect(boost::bind(&OrderByColorDeliverMenu::set_wants_specific, this));
+  mitems[ni] = item_spec;
+
   s_cancel_ = "** CANCEL **";
-  mitems[ni] = new SignalItem(s_cancel_);
-  mitems[ni+1] = new NCursesMenuItem();
+  mitems[ni+1] = new SignalItem(s_cancel_);
+  mitems[ni+2] = new NCursesMenuItem();
 
   set_mark("");
-  set_format(ni+1, 1);
+  set_format(ni+2, 1);
   InitMenu(mitems, true, true);
 }
 
@@ -748,6 +755,19 @@ OrderByColorDeliverMenu::product_selected(int i)
 {
   product_selected_ = true;
   product_idx_ = i;
+}
+
+void
+OrderByColorDeliverMenu::set_wants_specific()
+{
+	wants_specific_ = true;
+}
+
+
+bool
+OrderByColorDeliverMenu::wants_specific()
+{
+	return wants_specific_;
 }
 
 llsf_msgs::BaseColor

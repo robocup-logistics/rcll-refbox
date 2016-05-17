@@ -332,6 +332,14 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	    if (odm) {
 		    send_set_order_delivered(tcsm.get_team_color(),
 		                             odm.base_color(), odm.ring_colors(), odm.cap_color());
+	    } else if (odm.wants_specific()) {
+		    io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
+		    OrderDeliverMenu odm_spec(panel_, tcsm.get_team_color(),
+		                              last_orderinfo_, last_game_state_);
+		    odm_spec();
+		    if (odm_spec) {
+			    send_set_order_delivered(tcsm.get_team_color(), odm_spec.order());
+		    }
 	    }
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
