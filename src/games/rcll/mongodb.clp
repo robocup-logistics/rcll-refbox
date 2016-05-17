@@ -104,7 +104,7 @@
      (bson-append ?o-doc "complexity" ?o:complexity)
      (bson-append ?o-doc "quantity-requested" ?o:quantity-requested)
      (bson-append ?o-doc "base-color" ?o:base-color)
-     (bson-append-array ?o-doc "ring-colors" ?o:delivery-period)
+     (bson-append-array ?o-doc "ring-colors" ?o:ring-colors)
      (bson-append ?o-doc "cap-color" ?o:cap-color)
      (bson-append-array ?o-doc "quantity-delivered" ?o:quantity-delivered)
      (bson-append-array ?o-doc "delivery-period" ?o:delivery-period)
