@@ -95,7 +95,15 @@
               (nth$ 2 ?order:start-range)))
     (bind ?deliver-end
       (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
-				(nth$ 2 ?order:duration-range))))
+																(nth$ 2 ?order:duration-range))))
+		(if (> ?deliver-end ?*PRODUCTION-TIME*)
+		 then
+		  (printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
+								(- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "
+								"time shift: " (- ?deliver-end ?*PRODUCTION-TIME*) crlf)
+			(bind ?deliver-start (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)))
+			(bind ?deliver-end ?*PRODUCTION-TIME*)
+		)
     (bind ?activation-pre-time
           (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
     (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
