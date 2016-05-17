@@ -183,13 +183,9 @@
  
 (deftemplate product-delivered
   (slot game-time (type FLOAT))
-  (slot order (type INTEGER))
+	(slot order (type INTEGER) (default 0))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
-)
-
-(deftemplate order-delivered-by-color
-  (slot game-time (type FLOAT))
-  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+	(slot delivery-gate (type INTEGER))
   (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
 	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))

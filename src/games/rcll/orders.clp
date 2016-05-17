@@ -11,6 +11,10 @@
   (if (eq ?team CYAN) then (return 1) else (return 2))
 )
 
+(deffunction order-q-del-team (?q-del ?team)
+	(return (nth$ (order-q-del-index ?team) ?q-del))
+)
+
 (defrule activate-order
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?of <- (order (id ?id) (active FALSE) (activate-at ?at&:(>= ?gt ?at))
@@ -63,65 +67,117 @@
   (bind ?ring-colors (pb-field-list ?p "ring_colors"))
   (bind ?cap-color   (sym-cat (pb-field-value ?p "cap_color")))
 
-  (assert (order-delivered-by-color (team-color ?team) (game-time ?gt)
-																		(base-color ?base-color)
-																		(ring-colors ?ring-colors) (cap-color ?cap-color)))
+	(do-for-fact ((?m machine)) (and (eq ?m:mtype DS) (eq ?m:team ?team))
+		;(printout t "Product delivered: " ?gt " " ?team " " ?m:ds-last-gate " "
+		;					?base-color " " ?ring-colors " " ?cap-color crlf)
+    (assert (product-delivered (game-time ?gt) (team ?team) (delivery-gate ?m:ds-last-gate)
+															 (base-color ?base-color) (ring-colors ?ring-colors) (cap-color ?cap-color)))
+	)
 )
 
-(defrule order-match-by-color-valid
-	?of <- (order-delivered-by-color (team-color ?team) (game-time ?gt)
-																	 (base-color ?base-color)
-																	 (ring-colors $?ring-colors) (cap-color ?cap-color))
-	(order (id ?id) (active TRUE)
-				 (delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp)))
-				 (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
-	(not (order (id ?id2&~?id) (active TRUE)
-							(delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2))&:(< (nth$ 1 ?dp2) (nth$ 1 ?dp)))))
-	=>
-	(retract ?of)
-	(printout t "Received valid order " ?id crlf)
-	(assert (product-delivered (game-time ?gt) (order ?id) (team ?team)))
-)
-
-(defrule order-match-by-color-valid-late
-	?of <- (order-delivered-by-color (team-color ?team) (game-time ?gt)
-																	 (base-color ?base-color)
-																	 (ring-colors $?ring-colors) (cap-color ?cap-color))
-	(order (id ?id) (active TRUE)
-				 (delivery-period $?dp&:(> ?gt (nth$ 2 ?dp)))
-				 (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
-	(not (order (id ?id2&~?id) (active TRUE)
-							(delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))))
-	=>
-	(retract ?of)
-	(printout t "Received valid late order " ?id crlf)
-	(assert (product-delivered (game-time ?gt) (order ?id) (team ?team)))
-)
-
-(defrule order-match-by-color-invalid
-	?of <- (order-delivered-by-color (team-color ?team) (game-time ?gt)
-																	 (base-color ?base-color)
-																	 (ring-colors $?ring-colors) (cap-color ?cap-color))
-	(not (order (id ?id) (active TRUE)
-							(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp)))
-							(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)))
-	=>
-	(retract ?of)
-	(printout warn "Product delivered which was not requested" crlf)
-)
-
-
-
-(defrule order-delivered-in-time
+(defrule order-delivered-correct-by-id
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (product-delivered (game-time ?game-time) (order ?id) (team ?team))
+  ?pf <- (product-delivered (game-time ?game-time) (team ?team) (delivery-gate ?gate)
+														(order ?id&~0))
   ; the actual order we are delivering
-  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (ring-colors $?ring-colors)
-		(points ?order-points) (points-supernumerous ?order-points-supernumerous)
-		(quantity-requested ?q-req) (quantity-delivered $?q-del) (delivery-gate ?dg)
-		(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
-  =>
+  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity)
+								(delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
+								(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
+								(points ?order-points) (points-supernumerous ?order-points-supernumerous)
+								(quantity-requested ?q-req) (quantity-delivered $?q-del)
+								(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
+	=>
   (retract ?pf)
+	(bind ?q-del-idx (order-q-del-index ?team))
+  (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
+	
+  (modify ?of (quantity-delivered ?q-del-new))
+  (if (< (nth$ ?q-del-idx ?q-del) ?q-req)
+   then
+    (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+		    (points ?order-points) 
+		    (reason (str-cat "Delivered item for order " ?id))))
+
+    (foreach ?r ?ring-colors
+      (do-for-fact ((?rs ring-spec)) (eq ?rs:color ?r)
+        (assert (points (game-time ?game-time)
+			(points (* ?rs:req-bases ?*POINTS-PER-ADDITIONAL-BASE*))
+			(team ?team) (phase PRODUCTION)
+			(reason (str-cat "Mounted ring of CC" ?rs:req-bases
+					 " for order " ?id))))
+      )
+    )
+    (bind ?complexity-num (length$ ?ring-colors))
+    (if (> ?complexity-num 0) then
+      (assert (points (game-time ?game-time) (points (* ?complexity-num ?*POINTS-PER-RING*))
+		      (team ?team) (phase PRODUCTION)
+		      (reason (str-cat "Mounted last ring for complexity "
+				       ?complexity " order " ?id))))
+    )
+    
+    (assert (points (game-time ?game-time) (points ?*POINTS-MOUNT-CAP*)
+		    (team ?team) (phase PRODUCTION)
+		    (reason (str-cat "Mounted cap for order " ?id))))
+
+   else
+    (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+		    (points ?order-points-supernumerous) 
+		    (reason (str-cat "Delivered item for order " ?id))))
+  )
+)
+
+(defrule order-delivered-by-color-invalid
+  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (product-delivered (game-time ?game-time) (team ?team) (order 0)
+														(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
+	(not (order (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)))
+	=>
+	(retract ?pf)
+	(assert (attention-message (team ?team)
+														 (text (str-cat "Invalid Order delivered: " ?base-color " "
+																						?ring-colors " " ?cap-color))))
+)
+
+(defrule order-delivered-correct-by-color
+  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (product-delivered (game-time ?game-time) (team ?team) (delivery-gate ?gate) (order 0)
+														(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
+  ; the actual order we are delivering
+  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity)
+								(delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
+								(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
+								(points ?order-points) (points-supernumerous ?order-points-supernumerous)
+								(quantity-requested ?q-req)
+								(quantity-delivered $?q-del&:(< (order-q-del-team ?q-del ?team) ?q-req))
+								(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
+
+
+  ; There is no other order, which would score more points
+  (not (and
+    ; in-time, proper gate, open (q-del < q-req)
+		(order (id ?oid2&:(<> ?oid2 ?id)) (active TRUE)
+					 (delivery-gate ?dgate2&:(or (eq ?gate 0) (eq ?gate ?dgate2)))
+					 (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
+					 (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))
+					 (quantity-requested ?q-req-2)
+					 (quantity-delivered $?q-del-2&:(< (order-q-del-team ?q-del-2 ?team) ?q-req-2)))
+
+		(or
+		 (test (> (- ?q-req-2 (order-q-del-team ?q-del-2 ?team)) (- ?q-req (order-q-del-team ?q-del ?team))))
+		 (test (and
+						(= (- ?q-req-2 (order-q-del-team ?q-del-2 ?team)) (- ?q-req (order-q-del-team ?q-del ?team)))
+					  (< (nth$ 2 ?dp2) (nth$ 2 ?dp))))
+		)
+	))
+
+	?sf <- (signal (type order-info))
+
+	=>
+  (retract ?pf)
+
+	; Cause immediate sending of order info
+	(modify ?sf (time (create$ 0 0)) (count 0))
+
 	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
 
@@ -160,42 +216,63 @@
   )
 )
 
-(defrule order-delivered-out-of-time
+(defrule order-delivered-by-color-late
   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (product-delivered (game-time ?game-time) (order ?id) (team ?team))
+  ?pf <- (product-delivered (game-time ?game-time) (team ?team) (delivery-gate ?gate) (order 0)
+														(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
   ; the actual order we are delivering
-  ?of <- (order (active TRUE) (id ?id)
-		(quantity-delivered $?q-del) (quantity-requested ?q-req)
-		(delivery-period $?dp2&:(or (< ?gt (nth$ 1 ?dp2)) (> ?gt (nth$ 2 ?dp2)))))
-  =>
+  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (delivery-gate ?gate)
+								(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
+								(quantity-requested ?q-req)
+								(quantity-delivered $?q-del&:(< (order-q-del-team ?q-del ?team) ?q-req))
+								(delivery-period $?dp&:(> ?gt (nth$ 2 ?dp))))
+
+	?sf <- (signal (type order-info))
+	=>
   (retract ?pf)
+
+	; Cause immediate sending of order info
+	(modify ?sf (time (create$ 0 0)) (count 0))
 
 	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
   (modify ?of (quantity-delivered ?q-del-new))
 
-  (if (> (nth$ ?q-del-idx ?q-del-new)  ?q-req)
+  (if (< (- ?gt (nth$ 2 ?dp)) ?*DELIVER-MAX-LATENESS-TIME*)
    then
-    (assert (points (game-time ?game-time) (points ?*POINTS-DELIVER-OUT-OF-TIME*)
-		    (team ?team) (phase PRODUCTION)
-		    (reason (str-cat "Delivered item for order " ?id
-				     " (order already fulfilled)"))))
+    ; 15 - floor(T_d - T_e) * 1.5 + 5
+	  (bind ?points (+ (- 15 (* (floor (- ?gt ?game-time)) 1.5)) 5))
+		(assert (points (game-time ?game-time) (points ?points)
+										(team ?team) (phase PRODUCTION)
+										(reason (str-cat "Delivered item for order " ?id
+																		" (late delivery grace time)"))))
    else
-    (if (< ?gt (nth$ 1 ?dp2))
-     then
-      (assert (points (game-time ?game-time) (points ?*POINTS-DELIVER-OUT-OF-TIME*)
-		      (team ?team) (phase PRODUCTION)
-		      (reason (str-cat "Delivered item for order " ?id
-				       " (ahead of time window)"))))
-     else
-      (if (< (- ?gt (nth$ 2 ?dp2)) ?*DELIVER-MAX-LATENESS-TIME*)
-       then
-        ; 20 - floor(T_d - T_e) * 2
-        (bind ?points-per-sec (/ ?*POINTS-DELIVER* ?*DELIVER-MAX-LATENESS-TIME*))
-        (bind ?lateness (- ?*POINTS-DELIVER* (* (floor (- ?gt ?game-time)) ?points-per-sec)))
-      )
-    ) 
+	  (assert (points (game-time ?game-time) (points ?*POINTS-DELIVER-TOO-LATE*)
+										(team ?team) (phase PRODUCTION)
+										(reason (str-cat "Delivered item for order " ?id
+																		 " (too late delivery)")))) 
   )
+)
+
+(defrule order-delivered-wrong
+  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (product-delivered (game-time ?game-time) (team ?team) (delivery-gate ?gate) (order 0)
+														(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
+  ; the actual order we are delivering
+  (order (id ?id) (active TRUE) (complexity ?complexity)
+				 (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
+				 (quantity-requested ?q-req))
+	(or (order (id ?id) (delivery-gate ?dgate&~?gate))
+			(order (id ?id) (quantity-delivered $?q-del&:(>= (order-q-del-team ?q-del ?team) ?q-req)))
+			(order (id ?id) (delivery-period $?dp&:(> ?gt (nth$ 2 ?dp)))))
+  =>
+  (retract ?pf)
+	(printout warn "Delivered item for order " ?id " (wrong delivery)" crlf)
+
+	(assert (points (game-time ?game-time) (points ?*POINTS-DELIVER-WRONG*)
+									(team ?team) (phase PRODUCTION)
+									(reason (str-cat "Delivered item for order " ?id
+																	 " (wrong delivery)"))))
 )
 
 (defrule order-print-points
@@ -204,79 +281,3 @@
   (printout t "Awarding " ?points " points to team " ?team ": " ?reason
 	    " (" ?phase " @ " ?gt ")" crlf)
 )
-
-; (defrule order-delivered-in-time
-;   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-;   ?pf <- (product-delivered (game-time ?game-time) (production-time ?prod-time)
-; 			    (team ?t) (product ?p) (delivery-gate ?dg))
-;   ; the actual order we are delivering
-;   ?of <- (order (id ?oid) (active TRUE) (product ?p) (quantity-requested ?q-req) (team ?t)
-; 		(points ?order-points) (points-supernumerous ?order-points-supernumerous)
-; 		(quantity-delivered ?q-del) (delivery-gate ?odg&?dg|ANY)
-; 		(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
-
-;     ; There is no other order, which would score more points
-;   (not (or
-;     ; give more points, is active, is in-time, and still goods requested
-;     (order (id ?oid2&:(<> ?oid ?oid2)) (active TRUE) (product ?p) (team ?t)
-; 	   (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))
-; 	   (delivery-gate ?odg2&?dg|ANY) (quantity-delivered ?q-del-2)
-; 	   (points ?op2&:(> ?op2 ?order-points))
-; 	   (quantity-requested ?q-req-2&:(< ?q-del-2 ?q-req-2)))
-;     ; open, in-time, goods remaining and starts sooner
-;     (order (id ?oid2&:(<> ?oid ?oid2)) (active TRUE) (product ?p) (team ?t)
-; 	   (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2))&:(< (nth$ 1 ?dp2) (nth$ 1 ?dp)))
-; 	   (delivery-gate ?odg2&?dg|ANY) (quantity-delivered ?q-del-2)
-; 	   (quantity-requested ?q-req-2&:(< ?q-del-2 ?q-req-2)))
-;     ; give more points than supernumerous points, is active, is in-time, and that has
-;     ; goods requested while the chosen order has not
-;     (order (id ?oid2&:(<> ?oid ?oid2)) (active TRUE) (product ?p) (team ?t)
-; 	   (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))
-; 	   (delivery-gate ?odg2&?dg|ANY) (quantity-delivered ?q-del-2)
-; 	   (points-supernumerous ?op2&:(> ?order-points ?op2))
-; 	   (quantity-requested ?q-req-2&:(< ?q-del-2 ?q-req-2 )&:(>= ?q-del ?q-req)))
-;     ; give more supernumerous points, is active, is in-time, and that has
-;     ; all products delivered while the chosen order has as well
-;     (order (id ?oid2&:(<> ?oid ?oid2)) (active TRUE) (product ?p) (team ?t)
-; 	   (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))
-; 	   (delivery-gate ?odg2&?dg|ANY) (quantity-delivered ?q-del-2)
-; 	   (points-supernumerous ?op2&:(> ?op2 ?order-points-supernumerous))
-; 	   (quantity-requested ?q-req-2&:(>= ?q-del-2 ?q-req-2 )&:(>= ?q-del ?q-req)))
-;   ))
-;   =>
-;   (retract ?pf)
-;   (modify ?of (quantity-delivered (+ ?q-del 1)))
-;   (if (< ?q-del ?q-req)
-;    then
-;     (bind ?addp ?order-points)
-;     (if (time-in-range ?prod-time ?dp)
-;      then
-;      (printout t "Product " ?p " produced in delivery time slot. Awarding "
-; 	       ?*PRODUCED-IN-DELIVER-TIME-POINTS* " extra points" crlf)
-;      (assert (points (game-time ?game-time) (points ?*PRODUCED-IN-DELIVER-TIME-POINTS*)
-; 		     (team ?t) (phase PRODUCTION)
-; 		     (reason (str-cat "Produced " ?p " in delivery time (order "
-; 				      ?oid " , time " ?prod-time ")"))))
-;     )
-;    else
-;     (bind ?addp ?order-points-supernumerous)
-;   )
-;   (printout t "Product " ?p " delivered at " ?dg ". Awarding " ?addp " points" crlf)
-;   (assert (points (game-time ?game-time) (points ?addp) (team ?t) (phase PRODUCTION)
-;                   (reason (str-cat "Delivered " ?p " to " ?dg))))
-; )
-
-; (defrule order-delivered-out-of-time
-;   ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-;   ?pf <- (product-delivered (game-time ?game-time) (team ?t) (product ?p) (delivery-gate ?dg))
-;   ; the actual order we are delivering
-;   (not (order (active TRUE) (product ?p)
-; 	      (delivery-period $?dp2&:(>= ?gt (nth$ 1 ?dp2))&:(<= ?gt (nth$ 2 ?dp2)))))
-;   =>
-;   (retract ?pf)
-;   (bind ?addp ?*DELIVER-WITH-NO-ACTIVE-ORDER*)
-;   (printout t "Product " ?p " delivered at " ?dg ". Awarding " ?addp
-; 	    " points (no active order)" crlf)
-;   (assert (points (game-time ?game-time) (points ?addp) (team ?t) (phase PRODUCTION)
-;                   (reason (str-cat "Delivered " ?p " to " ?dg " (no active order)"))))
-; )
