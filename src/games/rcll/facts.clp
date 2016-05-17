@@ -52,6 +52,7 @@
   (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
 
   (slot ds-gate (type INTEGER))
+  (slot ds-last-gate (type INTEGER))
 
   (slot rs-ring-color (type SYMBOL)
 	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))

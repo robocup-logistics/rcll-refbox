@@ -233,7 +233,7 @@
 		 (ds-gate ?gate))
   =>
   (printout t "Machine " ?n " processing to gate " ?gate crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-last-gate ?gate))
   (mps-ds-process (str-cat ?n) ?gate)
 )
 
