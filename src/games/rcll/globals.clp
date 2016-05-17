@@ -85,6 +85,7 @@
   ; Machine distribution
   ?*RANDOMIZE-GAME* = TRUE
 	?*RANDOMIZE-STEPS-MACHINES* = 2
+	?*RANDOMIZE-ACTIVATE-ALL-AT-START* = FALSE
 	; Incremental randomization probability for switching the machines across
 	; field halfs. A value from 0 to 10, 0 no change, 10, always change
 	?*RANDOMIZE-INTER-SIDE-SWAP-PROB* = 3

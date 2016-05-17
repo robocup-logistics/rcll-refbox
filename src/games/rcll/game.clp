@@ -107,6 +107,7 @@
     (bind ?activation-pre-time
           (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
     (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
+		(if ?*RANDOMIZE-ACTIVATE-ALL-AT-START* then (bind ?activate-at 0))
     (bind ?gate (random 1 3))
 
 		(bind ?order-ring-colors (create$))
