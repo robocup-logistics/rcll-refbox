@@ -119,6 +119,9 @@ class LLSFRefBoxShell
   void send_robot_maintenance(llsf_msgs::Team team,
 			      unsigned int robot_number, bool maintenance);
   void send_set_order_delivered(llsf_msgs::Team team, const llsf_msgs::Order &order);
+  void send_set_order_delivered(llsf_msgs::Team team, llsf_msgs::BaseColor base_color,
+                                std::vector<llsf_msgs::RingColor> ring_colors,
+                                llsf_msgs::CapColor cap_color);
 
   void log(llsf_log_msgs::LogMessage::LogLevel log_level,
 	   long int ts_sec, long int ts_nsec,
