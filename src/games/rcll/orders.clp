@@ -70,8 +70,11 @@
 	(do-for-fact ((?m machine)) (and (eq ?m:mtype DS) (eq ?m:team ?team))
 		;(printout t "Product delivered: " ?gt " " ?team " " ?m:ds-last-gate " "
 		;					?base-color " " ?ring-colors " " ?cap-color crlf)
-    (assert (product-delivered (game-time ?gt) (team ?team) (delivery-gate ?m:ds-last-gate)
+		(bind ?gate ?m:ds-last-gate)
+		(if (= ?gate 0) then (bind ?gate ?m:ds-gate))
+    (assert (product-delivered (game-time ?gt) (team ?team) (delivery-gate ?gate)
 															 (base-color ?base-color) (ring-colors ?ring-colors) (cap-color ?cap-color)))
+		(modify ?m (ds-last-gate 0))
 	)
 )
 
