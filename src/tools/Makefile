@@ -17,6 +17,7 @@ BASEDIR = ../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
+include $(BUILDSYSDIR)/protobuf_comm.mk
 include $(BUILDSYSDIR)/clips.mk
 include $(BUILDSYSDIR)/boost.mk
 include $(BUILDCONFDIR)/llsf_sps/llsf_sps.mk
@@ -26,31 +27,31 @@ CFLAGS += $(CFLAGS_CPP11)
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_llsf_show_peers = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_llsf_show_peers = stdc++ llsfrbcore llsfrbconfig llsf_msgs
 OBJS_llsf_show_peers = llsf-show-peers.o
 
 LIBS_llsf_puck = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_sps
 OBJS_llsf_puck = llsf-puck.o
 
-LIBS_llsf_fake_robot = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_llsf_fake_robot = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_msgs
 OBJS_llsf_fake_robot = llsf-fake-robot.o
 
 LIBS_llsf_signal_ctrl = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_sps
 OBJS_llsf_signal_ctrl = llsf-signal-ctrl.o
 
-LIBS_llsf_report_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_llsf_report_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_msgs
 OBJS_llsf_report_machine = llsf-report-machine.o
 
-LIBS_rcll_prepare_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_prepare_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_msgs
 OBJS_rcll_prepare_machine = rcll-prepare-machine.o
 
-LIBS_rcll_set_machine_state = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_set_machine_state = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_msgs
 OBJS_rcll_set_machine_state = rcll-set-machine-state.o
 
-LIBS_rcll_machine_add_base = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_machine_add_base = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_msgs
 OBJS_rcll_machine_add_base = rcll-machine-add-base.o
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
+ifeq ($(HAVE_PROTOBUF)$(HAVE_PROTOBUF_COMM)$(HAVE_BOOST_LIBS),111)
   OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) \
 	      $(OBJS_rcll_prepare_machine) $(OBJS_rcll_set_machine_state) \
 	      $(OBJS_rcll_machine_add_base)
@@ -59,34 +60,34 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
 	      $(BINDIR)/rcll-set-machine-state \
 	      $(BINDIR)/rcll-machine-add-base
 
-  CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) \
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_llsf_show_peers += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_llsf_show_peers += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     		     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  CFLAGS_llsf_fake_robot  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_llsf_fake_robot  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) \
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_llsf_fake_robot += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_llsf_fake_robot += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     		     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  CFLAGS_llsf_report_machine  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_llsf_report_machine  += $(CFLAGS_PROTOBUF)  $(CFLAGS_PROTOBUF_COMM)\
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_llsf_report_machine += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_llsf_report_machine += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  CFLAGS_rcll_prepare_machine  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_rcll_prepare_machine  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM)\
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_prepare_machine += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_rcll_prepare_machine += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  CFLAGS_rcll_set_machine_state  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_rcll_set_machine_state  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) \
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_set_machine_state += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_rcll_set_machine_state += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  CFLAGS_rcll_machine_add_base  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_rcll_machine_add_base  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM)\
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_machine_add_base += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_rcll_machine_add_base += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM)\
 	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
