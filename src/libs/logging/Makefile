@@ -16,6 +16,7 @@
 BASEDIR = ../../..
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
+include $(BUILDSYSDIR)/protobuf_comm.mk
 include $(BUILDSYSDIR)/boost.mk
 
 
@@ -25,14 +26,14 @@ HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 PRESUBDIRS = llsf_log_msgs
 CFLAGS += $(CFLAGS_CPP11)
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
+ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS)$(HAVE_PROTOBUF_COMM),111)
 
-  CFLAGS  += $(CFLAGS_PROTOBUF) \
+  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM)\
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  LIBS_libllsfrblogging = stdc++ llsfrbcore llsf_protobuf_comm llsf_log_msgs
+  LIBS_libllsfrblogging = stdc++ llsfrbcore llsf_log_msgs
   OBJS_libllsfrblogging = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp)))))
   HDRS_libllsfrblogging = $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h))
 
@@ -54,6 +55,9 @@ ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
 $(WARN_TARGETS_BOOST): warning_boost_%:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build logging library$(TNORMAL) (Boost library $* not found)"
+
+warning_protobuf_comm:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_clips library$(TNORMAL) (protobuf_comm not found)"
 
 endif
 
