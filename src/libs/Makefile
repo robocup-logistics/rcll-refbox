@@ -17,15 +17,14 @@ BASEDIR = ../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
 
-SUBDIRS = core utils config logging netcomm protobuf_comm protobuf_clips \
+SUBDIRS = core utils config logging netcomm protobuf_clips \
 	  llsf_sps mongodb_log
 
 # Explicit dependencies, this is needed to have make bail out if there is any
 # error. This is also necessary for working parallel build (i.e. for dual core)
 netcomm config mongodb_log: core utils
 utils llsf_sps: core
-logging: core protobuf_comm
-protobuf_clips: protobuf_comm
+logging: core
 mongodb_log: logging
 
 include $(BUILDSYSDIR)/base.mk
