@@ -74,7 +74,12 @@
 		(if (= ?gate 0) then (bind ?gate ?m:ds-gate))
     (assert (product-delivered (game-time ?gt) (team ?team) (delivery-gate ?gate)
 															 (base-color ?base-color) (ring-colors ?ring-colors) (cap-color ?cap-color)))
-		(modify ?m (ds-last-gate 0))
+                (if (= ?m:ds-last-gate 0)
+		  then 
+		  (modify ?m (ds-gate 0))
+		  else
+		  (modify ?m (ds-last-gate 0))
+		)
 	)
 )
 
