@@ -406,8 +406,14 @@
       (if (neq ?zone TBD) then
         (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
       )
-      (pb-set-field ?m "loaded_with"
-        (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
+      (if (eq ?mtype RS) then
+        (pb-set-field ?m "loaded_with"
+          (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
+      )
+      (if (eq ?mtype CS) then
+        (pb-set-field ?m "loaded_with"
+          (if (fact-slot-value ?mf cs-retrieved) then 1 else 0))
+      )
 
       (foreach ?l (fact-slot-value ?mf actual-lights)
         (bind ?ls (pb-create "llsf_msgs.LightSpec"))
