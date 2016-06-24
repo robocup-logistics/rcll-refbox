@@ -47,6 +47,7 @@ enum MachineState {
   PROCESSED = 3;
   DELIVERED = 4;
   RETRIEVED = 5;
+  RESET     = 15;
 }
 
 // Load puck into machine area.
