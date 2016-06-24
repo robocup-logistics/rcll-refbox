@@ -142,8 +142,8 @@
 	=>
 	(retract ?pf)
 	(assert (attention-message (team ?team)
-														 (text (str-cat "Invalid Order delivered: " ?base-color " "
-																						?ring-colors " " ?cap-color))))
+                             (text (str-cat "Invalid Order delivered: " ?base-color " "
+                                            (implode$ ?ring-colors) " " ?cap-color))))
 )
 
 (defrule order-delivered-correct-by-color
