@@ -121,8 +121,7 @@
 																											(pick-random$ ?ring-colors))))
     )
 
-		; Do not randomize base color in 2015
-		;(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
+		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
 		(bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
 
 		(switch ?order:complexity
@@ -136,7 +135,7 @@
     )
 
     (modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
-	    (delivery-period ?deliver-start ?deliver-end)
+	    (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
 			(ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
   )
 
