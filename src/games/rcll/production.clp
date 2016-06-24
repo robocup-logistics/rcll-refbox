@@ -398,6 +398,16 @@
 )
 
 ; **** Mapping MPS to machine state reactions
+(defrule prod-machine-reset
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+
+  ?m <- (machine (name ?n) (state ?state&~IDLE) (mps-state RESET))
+  =>
+  (modify ?m (state IDLE) (prev-state IDLE) (proc-state IDLE) (desired-lights GREEN-ON)
+	  (mps-state IDLE) (mps-state-deferred NONE) (broken-reason "")
+    (ds-gate 0) (ds-last-gate 0) (cs-retrieved FALSE))
+)
+  
 
 (defrule prod-machine-input-not-prepared
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
