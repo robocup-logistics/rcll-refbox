@@ -220,17 +220,20 @@
 )
 
 (deftemplate exploration-report
+	(slot rtype (type SYMBOL) (allowed-values INCOMING RECORD))
   (slot name (type SYMBOL)
 	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot type (type STRING))
   (slot zone (type SYMBOL)
-	(allowed-values Z1 Z2 Z3 Z4 Z5 Z6 Z7 Z8 Z9 Z10 Z11 Z12
+	(allowed-values NOT-REPORTED Z1 Z2 Z3 Z4 Z5 Z6 Z7 Z8 Z9 Z10 Z11 Z12
 			Z13 Z14 Z15 Z16 Z17 Z18 Z19 Z20 Z21 Z22 Z23 Z24))
   (slot host (type STRING))
   (slot port (type INTEGER))
   (slot game-time (type FLOAT))
-  (slot correctly-reported (type SYMBOL) (allowed-values TRUE FALSE))
+  (slot correctly-reported (type SYMBOL) (allowed-values UNKNOWN TRUE FALSE) (default UNKNOWN))
+  (slot zone-state (type SYMBOL) (allowed-values NO_REPORT CORRECT_REPORT WRONG_REPORT) (default NO_REPORT))
+  (slot type-state (type SYMBOL) (allowed-values NO_REPORT CORRECT_REPORT WRONG_REPORT) (default NO_REPORT))
 )
 
 (deftemplate points

@@ -47,7 +47,7 @@
   )
 )
 
-(defrule exploration-handle-report
+(defrule exploration-report-incoming
   ?gf <- (gamestate (phase EXPLORATION) (game-time ?game-time))
   ?mf <- (protobuf-msg (type "llsf_msgs.MachineReport") (ptr ?p)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
@@ -56,64 +56,185 @@
   (bind ?team (sym-cat (pb-field-value ?p "team_color")))
   (foreach ?m (pb-field-list ?p "machines")
     (bind ?name (sym-cat (pb-field-value ?m "name")))
-    (bind ?type (pb-field-value ?m "type"))
-    (bind ?zone (sym-cat (pb-field-value ?m "zone")))
-    (if (member$ ?name (deftemplate-slot-allowed-values exploration-report name))
-    then
-      (do-for-fact ((?machine machine)) (eq ?machine:name ?name)
-        (if (neq (sym-cat ?machine:team) ?team)
-	then
-          (if (not (any-factp ((?report exploration-report))
-			      (and (eq ?report:name ?name) (eq ?report:team ?team))))
-	  then
-	    (printout t "Invalid report: " ?name " of type " ?type " from other team." crlf)
-            ; "Awarding " ?*EXPLORATION-INVALID-REPORT-POINTS* " points" crlf)
-	    ; (assert (points (points ?*EXPLORATION-INVALID-REPORT-POINTS*)
-	    ; 		    (phase EXPLORATION) (team ?team) (game-time ?game-time)
-	    ; 		    (reason (str-cat "Report for machine of other team"
-	    ; 				     ?name "|" ?type))))
-	    ; (assert (exploration-report (name ?name) (team ?team) (type ?type)
-	    ; 				(game-time ?game-time) (correctly-reported FALSE)
-	    ; 				(host ?from-host) (port ?from-port)))
-	    ; (modify ?machine (desired-lights RED-BLINK YELLOW-BLINK))
-	  )
-	else
-          ; If it has not been reported, yet
-          (if (not (any-factp ((?report exploration-report))
-			      (and (eq ?report:name ?name) (eq ?report:team ?team))))
-	  then
-	    (printout t "Comparing T " ?machine:exploration-type " " ?type "  Z " ?machine:zone " " ?zone crlf)
-            (if (and (eq ?machine:exploration-type ?type) (eq ?machine:zone ?zone))
-            then ; correct report
-	      (printout t "Correct report: " ?name " (type " ?type ") in zone " ?zone ". "
-			"Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
-	      (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
-			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
-			      (reason (str-cat "Correct exploration report for "
-					       ?name "|" ?type))))
-	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
-					  (game-time ?game-time) (correctly-reported TRUE)
-					  (team ?team) (host ?from-host) (port ?from-port)))
-	      (modify ?machine (desired-lights GREEN-BLINK))
-            else ; wrong report
-	      (printout t "Wrong report: " ?name " (type " ?type ") in zone " ?zone ". "
-			"Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
-	      (assert (points (points ?*EXPLORATION-WRONG-REPORT-POINTS*)
-			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
-			      (reason (str-cat "Wrong exploration report for "
-					       ?name "|" ?type))))
-	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
-					  (game-time ?game-time) (correctly-reported FALSE)
-					  (team ?team) (host ?from-host) (port ?from-port)))
-	      (modify ?machine (desired-lights RED-BLINK))
-	    )
-          )
-        )
-      )
-    )
+    (bind ?type (if (pb-has-field ?m "type") then (pb-field-value ?m "type") else ""))
+    (bind ?zone (if (pb-has-field ?m "zone") then (sym-cat (pb-field-value ?m "zone")) else NOT-REPORTED))
+		(assert (exploration-report (rtype INCOMING)
+							(name ?name) (type ?type) (zone ?zone)
+							(game-time ?game-time)
+							(team ?team) (host ?from-host) (port ?from-port)))
     (pb-destroy ?m)
-  )
+	)
 )
+
+(defrule exploration-report-incoming-cleanup
+	(declare (salience ?*PRIORITY_CLEANUP*))
+	?ei <- (exploration-report (rtype INCOMING))
+  =>
+  (retract ?ei)
+)
+
+(defrule exploration-report-new
+	(exploration-report (rtype INCOMING) (name ?name) (type ?type) (zone ?zone)
+											(game-time ?game-time)
+											(team ?team) (host ?from-host) (port ?from-port))
+	(not (exploration-report (rtype RECORD) (name ?name)))
+	=>
+	(assert (exploration-report (rtype RECORD)
+															(name ?name) (type "") (zone NOT-REPORTED)
+															(game-time ?game-time)
+															(team ?team) (host ?from-host) (port ?from-port)))
+)
+
+(defrule exploration-report-type-correct
+	(exploration-report (rtype INCOMING) (name ?name) (type ?type&~"")
+											(game-time ?game-time)
+											(team ?team) (host ?from-host) (port ?from-port))
+  ?er <- (exploration-report (rtype RECORD) (name ?name) (type ""))
+	(machine (name ?name) (team ?team) (exploration-type ?type))
+	=>
+  (modify ?er (type ?type) (type-state CORRECT_REPORT))
+	(printout t "Correct partial report: " ?name " (type " ?type "). "
+						"Awarding " ?*EXPLORATION-CORRECT-REPORT-TYPE-POINTS* " points" crlf) 
+	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-TYPE-POINTS*)
+									(phase EXPLORATION) (team ?team) (game-time ?game-time)
+									(reason (str-cat "Correct partial exploration report for "
+																	 ?name ": type = " ?type))))
+)
+
+(defrule exploration-report-type-wrong
+	(exploration-report (rtype INCOMING) (name ?name) (type ?type&~"")
+											(game-time ?game-time)
+											(team ?team) (host ?from-host) (port ?from-port))
+  ?er <- (exploration-report (rtype RECORD) (name ?name) (type ""))
+	(machine (name ?name) (team ?team) (exploration-type ?etype&~?type))
+	=>
+  (modify ?er (type ?type) (type-state WRONG_REPORT))
+	(printout t "Wrong partial report: " ?name " (type " ?type "). "
+						"Awarding " ?*EXPLORATION-WRONG-REPORT-TYPE-POINTS* " points" crlf) 
+	(assert (points (points ?*EXPLORATION-WRONG-REPORT-TYPE-POINTS*)
+									(phase EXPLORATION) (team ?team) (game-time ?game-time)
+									(reason (str-cat "Wrong partial exploration report for "
+																	 ?name ": type = " ?type " (should be " ?etype ")"))))
+)
+
+(defrule exploration-report-zone-correct
+	(exploration-report (rtype INCOMING) (name ?name) (zone ?zone&~NOT-REPORTED)
+											(game-time ?game-time)
+											(team ?team) (host ?from-host) (port ?from-port))
+  ?er <- (exploration-report (rtype RECORD) (name ?name) (zone NOT-REPORTED))
+	(machine (name ?name) (team ?team) (zone ?zone))
+	=>
+  (modify ?er (zone ?zone) (zone-state CORRECT_REPORT))
+	(printout t "Correct partial report: " ?name " (zone " ?zone "). "
+						"Awarding " ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS* " points." crlf) 
+	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS*)
+									(phase EXPLORATION) (team ?team) (game-time ?game-time)
+									(reason (str-cat "Correct partial exploration report for "
+																	 ?name ": zone = " ?zone))))
+)
+
+(defrule exploration-report-zone-wrong
+	(exploration-report (rtype INCOMING) (name ?name) (zone ?zone&~NOT-REPORTED)
+											(game-time ?game-time)
+											(team ?team) (host ?from-host) (port ?from-port))
+  ?er <- (exploration-report (rtype RECORD) (name ?name) (zone NOT-REPORTED))
+	(machine (name ?name) (team ?team) (zone ?mzone&~?zone))
+	=>
+  (modify ?er (zone ?zone) (zone-state WRONG_REPORT))
+	(printout t "Wrong partial report: " ?name " (zone " ?zone "). "
+						"Awarding " ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS* " points" crlf) 
+	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS*)
+									(phase EXPLORATION) (team ?team) (game-time ?game-time)
+									(reason (str-cat "Wrong partial exploration report for "
+																	 ?name ": zone = " ?zone " (should be " ?mzone ")"))))
+)
+
+(defrule exploration-report-complete-correct
+  ?er <- (exploration-report (rtype RECORD) (correctly-reported UNKNOWN)
+														 (name ?name) (type ?type&~"") (zone ?zone&~NOT-REPORTED))
+	(machine (name ?name) (team ?team) (exploration-type ?type) (zone ?zone))
+	=>
+  (modify ?er (correctly-reported TRUE))
+)
+
+(defrule exploration-report-complete-wrong
+  ?er <- (exploration-report (rtype RECORD) (correctly-reported UNKNOWN)
+														 (name ?name) (type ?type&~"") (zone ?zone&~NOT-REPORTED))
+	(or
+	 (machine (name ?name) (team ?team) (exploration-type ~?type))
+	 (machine (name ?name) (team ?team) (zone ~?zone))
+	)
+	=>
+  (modify ?er (correctly-reported FALSE))
+)
+
+; (defrule exploration-handle-report
+;   ?gf <- (gamestate (phase EXPLORATION) (game-time ?game-time))
+;   ?mf <- (protobuf-msg (type "llsf_msgs.MachineReport") (ptr ?p)
+; 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+;   =>
+;   (retract ?mf)
+;   (bind ?team (sym-cat (pb-field-value ?p "team_color")))
+;   (foreach ?m (pb-field-list ?p "machines")
+;     (bind ?name (sym-cat (pb-field-value ?m "name")))
+;     (bind ?type (pb-field-value ?m "type"))
+;     (bind ?zone (sym-cat (pb-field-value ?m "zone")))
+;     (if (member$ ?name (deftemplate-slot-allowed-values exploration-report name))
+;     then
+;       (do-for-fact ((?machine machine)) (eq ?machine:name ?name)
+;         (if (neq (sym-cat ?machine:team) ?team)
+; 				 then
+;           (if (not (any-factp ((?report exploration-report))
+; 			      (and (eq ?report:name ?name) (eq ?report:team ?team))))
+; 					 then
+; 					  (printout t "Invalid report: " ?name " of type " ?type " from other team." crlf)
+;              ; "Awarding " ?*EXPLORATION-INVALID-REPORT-POINTS* " points" crlf)
+; 	           ; (assert (points (points ?*EXPLORATION-INVALID-REPORT-POINTS*)
+; 	           ; 		    (phase EXPLORATION) (team ?team) (game-time ?game-time)
+; 	           ; 		    (reason (str-cat "Report for machine of other team"
+; 	           ; 				     ?name "|" ?type))))
+; 	           ; (assert (exploration-report (name ?name) (team ?team) (type ?type)
+; 	           ; 				(game-time ?game-time) (correctly-reported FALSE)
+; 	           ; 				(host ?from-host) (port ?from-port)))
+; 	           ; (modify ?machine (desired-lights RED-BLINK YELLOW-BLINK))
+; 					  )
+; 	         else
+;             ; If it has not been reported, yet
+;             (if (not (any-factp ((?report exploration-report))
+; 			        (and (eq ?report:name ?name) (eq ?report:team ?team))))
+; 	           then
+; 	             (printout t "Comparing T " ?machine:exploration-type " " ?type "  Z " ?machine:zone " " ?zone crlf)
+;                (if (and (eq ?machine:exploration-type ?type) (eq ?machine:zone ?zone))
+;                 then ; correct report
+; 	               (printout t "Correct report: " ?name " (type " ?type ") in zone " ?zone ". "
+; 			              "Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
+; 	               (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
+; 			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
+; 			      (reason (str-cat "Correct exploration report for "
+; 					       ?name "|" ?type))))
+; 	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
+; 					  (game-time ?game-time) (correctly-reported TRUE)
+; 					  (team ?team) (host ?from-host) (port ?from-port)))
+; 	      (modify ?machine (desired-lights GREEN-BLINK))
+;             else ; wrong report
+; 	      (printout t "Wrong report: " ?name " (type " ?type ") in zone " ?zone ". "
+; 			"Penalizing with " ?*EXPLORATION-WRONG-REPORT-POINTS* " points" crlf)
+; 	      (assert (points (points ?*EXPLORATION-WRONG-REPORT-POINTS*)
+; 			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
+; 			      (reason (str-cat "Wrong exploration report for "
+; 					       ?name "|" ?type))))
+; 	      (assert (exploration-report (name ?name) (type ?type) (zone ?zone)
+; 					  (game-time ?game-time) (correctly-reported FALSE)
+; 					  (team ?team) (host ?from-host) (port ?from-port)))
+; 	      (modify ?machine (desired-lights RED-BLINK))
+; 	    )
+;           )
+;         )
+;       )
+;     )
+;     (pb-destroy ?m)
+;   )
+; )
 
 (defrule exploration-cleanup-report
   (gamestate (phase ~EXPLORATION))
@@ -215,7 +336,7 @@
   (bind ?s (pb-create "llsf_msgs.MachineReportInfo"))
 
   (pb-set-field ?s "team_color" CYAN)
-  (do-for-all-facts ((?report exploration-report)) (eq ?report:team CYAN)
+  (do-for-all-facts ((?report exploration-report)) (and (eq ?report:team CYAN) (eq ?report:rtype RECORD))
     (pb-add-list ?s "reported_machines" ?report:name)
   )
 
@@ -226,7 +347,7 @@
   (bind ?s (pb-create "llsf_msgs.MachineReportInfo"))
 
   (pb-set-field ?s "team_color" MAGENTA)
-  (do-for-all-facts ((?report exploration-report)) (eq ?report:team MAGENTA)
+  (do-for-all-facts ((?report exploration-report)) (and (eq ?report:team MAGENTA) (eq ?report:rtype RECORD))
     (pb-add-list ?s "reported_machines" ?report:name)
   )
 
