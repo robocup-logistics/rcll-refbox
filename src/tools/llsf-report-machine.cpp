@@ -53,7 +53,9 @@ using namespace fawkes;
 
 static bool quit = false;
 std::string machine_name_;
+bool        send_type_ = false;
 std::string machine_type_;
+bool        send_zone_ = false;
 llsf_msgs::Zone machine_zone_;
 std::string team_name_;
 Team        team_color_;
@@ -135,13 +137,15 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
   std::shared_ptr<BeaconSignal> b;
   if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
     if (b->team_name() == "LLSF" && b->peer_name() == "RefBox") {
-      printf("Announcing machine type\n");
+	    printf("Announcing machine: type? %s   Zone: %s\n",
+	           send_type_ ? machine_type_.c_str() : "*NO*",
+	           send_zone_ ? Zone_Name(machine_zone_).c_str() : "*NO*");
       llsf_msgs::MachineReport report;
       report.set_team_color(team_color_);
       llsf_msgs::MachineReportEntry *entry = report.add_machines();
       entry->set_name(machine_name_);
-      entry->set_type(machine_type_);
-      entry->set_zone(machine_zone_);
+      if (send_type_) entry->set_type(machine_type_);
+      if (send_zone_) entry->set_zone(machine_zone_);
       peer_team_->send(report);
     }
   }
@@ -161,24 +165,35 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "T:");
+  ArgumentParser argp(argc, argv, "T:t:z:");
 
-  if (argp.num_items() != 4) {
-    printf("Usage: %s [-T team] <team-name> <machine-name> <machine-type> <machine-zone>\n"
-	   "\n"
-	   "-T team	Select team to send for, CYAN (default) or MAGENTA\n",
-	   argv[0]);
+  if (argp.num_items() != 2 || (! argp.has_arg("t") && ! argp.has_arg("z"))) {
+	  printf("Usage: %s [-T team] [-t <type>] [-z <zone>] <team-name> <machine-name>\n"
+	         "\n"
+	         "-T team	  Select team to send for, CYAN (default) or MAGENTA\n"
+	         "-t type   Exploration type string to send back\n"
+	         "-z zone   Zone to report for machine\n\n"
+	         "You must supply at least one of type and zone, or both.\n",
+	         argv[0]);
     exit(1);
   }
 
   team_name_    = argp.items()[0];
   machine_name_ = argp.items()[1];
-  machine_type_ = argp.items()[2];
 
-  if (! llsf_msgs::Zone_Parse(argp.items()[3], &machine_zone_)) {
-    printf("Invalid zone\n");
-    exit(2);
+  if (argp.has_arg("t")) {
+	  machine_type_ = argp.arg("t");
+	  send_type_ = true;
   }
+  
+  if (argp.has_arg("z")) {
+	  if (! llsf_msgs::Zone_Parse(argp.arg("z"), &machine_zone_)) {
+		  printf("Invalid zone\n");
+		  exit(2);
+	  }
+	  send_zone_ = true;
+  }
+
 
   team_color_ = CYAN;
   if (argp.has_arg("T")) {
