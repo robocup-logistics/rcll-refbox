@@ -96,7 +96,7 @@
     (bind ?deliver-end
       (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
 																(nth$ 2 ?order:duration-range))))
-		(if (> ?deliver-end ?*PRODUCTION-TIME*)
+		(if (and (> ?deliver-end ?*PRODUCTION-TIME*) (not ?order:allow-overtime))
 		 then
 		  (printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
 								(- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "

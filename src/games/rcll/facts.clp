@@ -165,14 +165,13 @@
   (slot active (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot activate-at (type INTEGER) (default 0))
   (multislot activation-range (type INTEGER) (cardinality 2 2) (default 120 240))
+  (slot allow-overtime (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
 (deftemplate ring-spec
   (slot color (type SYMBOL) (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot req-bases (type INTEGER) (default 0))
 )
-
-
 
 (deftemplate delivery-period
   (multislot delivery-gates (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6) (cardinality 2 2))
@@ -321,10 +320,13 @@
   (order (id  2) (complexity C0) (quantity-requested 1) (start-range 200 400))
   (order (id  3) (complexity C0) (quantity-requested 2) (start-range 300 700))
   (order (id  4) (complexity C0) (quantity-requested 1) (start-range 700 900))
-  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 0 0)
-	       (activation-range 900 900) (duration-range 900 900))
+  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 500 700)
+	       (activation-range 300 500) (duration-range 90 150))
   (order (id  6) (complexity C2) (quantity-requested 1) (start-range 600 720)
-	       (activation-range 300 600))
+	       (activation-range 480 780) (duration-range 120 180))
   (order (id  7) (complexity C3) (quantity-requested 1) (start-range 600 720)
-	       (activation-range 300 600))
+	       (activation-range 900 900) (duration-range 120 180))
+  (order (id  8) (complexity C0) (quantity-requested 1) (start-range 900 900)
+         (activation-range 0 0) (duration-range 300 300) (allow-overtime TRUE))
 )
+
