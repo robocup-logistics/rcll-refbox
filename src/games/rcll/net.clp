@@ -263,6 +263,54 @@
     then (delayed-do-for-all-facts ((?r robot)) TRUE (retract ?r)))
 )
 
+(defrule net-recv-Workpiece
+  ?mf <- (protobuf-msg (type "llsf_msgs.Workpiece") (ptr ?p) (rcvd-at $?rcvd-at)
+											 (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
+
+  (bind ?id (pb-field-value ?p "id"))
+	(bind ?at-machine-str (pb-field-value ?p "at_machine"))
+	(bind ?visible (if (pb-has-field ?p "visible") then (pb-field-value ?p "visible") else FALSE))
+
+	(printout t "Got " ?id " at " ?at-machine-str " visible? " ?visible crlf)
+	
+  (assert (workpiece (rtype INCOMING) (id ?id) (at-machine (sym-cat ?at-machine-str))
+										 (visible ?visible)))
+)
+
+(deffunction net-create-WorkpieceInfo ()
+  (bind ?wi (pb-create "llsf_msgs.WorkpieceInfo"))
+
+  (do-for-all-facts
+    ((?wp workpiece)) (eq ?wp:rtype RECORD)
+
+    (bind ?w (pb-create "llsf_msgs.Workpiece"))
+		(pb-set-field ?w "id" ?wp:id)
+		(pb-set-field ?w "at_machine" (str-cat ?wp:at-machine))
+		(pb-set-field ?w "team" (str-cat ?wp:team))
+		(pb-set-field ?w "visible" ?wp:visible)
+
+    (pb-add-list ?wi "workpieces" ?w) ; destroys ?w
+  )
+
+  (return ?wi)
+)
+
+(defrule net-send-WorkpieceInfo
+  (time $?now)
+  ?f <- (signal (type workpiece-info) (time $?t&:(timeout ?now ?t ?*WORKPIECEINFO-PERIOD*)) (seq ?seq))
+  (gamestate (cont-time ?ctime))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?wi (net-create-WorkpieceInfo))
+
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
+    (pb-send ?client:id ?wi))
+  (pb-destroy ?wi)
+)
+
+
 (deffunction net-create-GameState (?gs)
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))
