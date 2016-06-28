@@ -113,26 +113,13 @@
 		(bind ?order-ring-colors (create$))
 		(switch ?order:complexity
 			;(case C0 then) ; for C0 we have nothing to do, no ring color
-			(case C1 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors))))
-			(case C2 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
-																											(pick-random$ ?ring-colors))))
-			(case C3 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
-																											(pick-random$ ?ring-colors)
-																											(pick-random$ ?ring-colors))))
+			(case C1 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 1)))
+			(case C2 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 2)))
+			(case C3 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 3)))
     )
 
 		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
 		(bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
-
-		(switch ?order:complexity
-			;(case C0 then) ; for C0 we have nothing to do, no ring color
-			(case C1 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors))))
-			(case C2 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
-																											(pick-random$ ?ring-colors))))
-			(case C3 then (bind ?order-ring-colors (create$ (pick-random$ ?ring-colors)
-																											(pick-random$ ?ring-colors)
-																											(pick-random$ ?ring-colors))))
-    )
 
     (modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
 	    (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
