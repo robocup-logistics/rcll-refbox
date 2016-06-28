@@ -19,6 +19,7 @@
 (load* (resolve-file orders.clp))
 (load* (resolve-file game.clp))
 (load* (resolve-file setup.clp))
+(load* (resolve-file workpieces.clp))
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
 (load* (resolve-file machine-lights.clp))

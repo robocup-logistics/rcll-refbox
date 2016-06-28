@@ -208,6 +208,15 @@
   (slot allow-overtime (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
+(deftemplate workpiece
+	(slot id (type INTEGER))
+	(slot rtype (type SYMBOL) (allowed-values INCOMING RECORD))
+	(slot at-machine (type SYMBOL)
+				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (slot visible (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+)
+
 (deftemplate ring-spec
   (slot color (type SYMBOL) (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot req-bases (type INTEGER) (default 0))
@@ -342,6 +351,7 @@
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
+  (signal (type workpiece-info) (time (create$ 0 0)) (seq 1))
   (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
   (setup-light-toggle CS2)
   (whac-a-mole-light NONE)
