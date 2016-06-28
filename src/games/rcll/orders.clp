@@ -189,10 +189,6 @@
 
   (modify ?of (quantity-delivered ?q-del-new))
 
-	(assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
-									(points ?*PRODUCTION-POINTS-DELIVERY*) 
-									(reason (str-cat "Delivered item for order " ?id))))
-
 	(foreach ?r ?ring-colors
 		(bind ?points 0)
 		(bind ?cc 0)			 
@@ -222,9 +218,13 @@
 													 ?complexity " order " ?id))))
 	)
     
-	(assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
-									(team ?team) (phase PRODUCTION)
+	(assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+									(points ?*PRODUCTION-POINTS-MOUNT-CAP*)
 									(reason (str-cat "Mounted cap for order " ?id))))
+
+	(assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+									(points ?*PRODUCTION-POINTS-DELIVERY*) 
+									(reason (str-cat "Delivered item for order " ?id))))
 
 )
 
