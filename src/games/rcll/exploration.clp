@@ -152,20 +152,23 @@
 (defrule exploration-report-complete-correct
   ?er <- (exploration-report (rtype RECORD) (correctly-reported UNKNOWN)
 														 (name ?name) (type ?type&~"") (zone ?zone&~NOT-REPORTED))
-	(machine (name ?name) (team ?team) (exploration-type ?type) (zone ?zone))
+	?mf <- (machine (name ?name) (team ?team) (exploration-type ?type) (zone ?zone))
 	=>
   (modify ?er (correctly-reported TRUE))
+	(modify ?mf (desired-lights GREEN-BLINK))
 )
 
 (defrule exploration-report-complete-wrong
   ?er <- (exploration-report (rtype RECORD) (correctly-reported UNKNOWN)
 														 (name ?name) (type ?type&~"") (zone ?zone&~NOT-REPORTED))
+	?mf <- (machine (name ?name))
 	(or
 	 (machine (name ?name) (team ?team) (exploration-type ~?type))
 	 (machine (name ?name) (team ?team) (zone ~?zone))
 	)
 	=>
   (modify ?er (correctly-reported FALSE))
+	(modify ?mf (desired-lights RED-BLINK))
 )
 
 ; (defrule exploration-handle-report
