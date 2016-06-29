@@ -106,6 +106,13 @@
   (return (nth$ (random 1 (length$ ?list)) ?list)) 
 )
 
+(deffunction remove$ (?list ?item)
+	(bind ?idx (member$ ?item ?list))
+	(if ?idx
+			then	(return (delete$ ?list ?idx ?idx))
+			else  (return ?list))
+)
+
 (deffunction is-even-int (?num)
   (return (eq (mod ?num 2) 0))
 )
