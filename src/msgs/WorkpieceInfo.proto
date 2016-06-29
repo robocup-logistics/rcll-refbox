@@ -77,3 +77,15 @@ message WorkpieceInfo {
   // List of all known pucks
   repeated Workpiece workpieces = 1;
 }
+
+message WorkpieceAddRing {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 57;
+  }
+	
+  // Puck unique ID
+  required uint32    id = 1;
+
+	required RingColor ring_color = 2;
+}
