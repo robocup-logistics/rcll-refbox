@@ -68,10 +68,13 @@
     (bind ?ring-colors (append$ ?ring-colors ?rs:color))
   )
   (bind ?ring-colors (randomize$ ?ring-colors))
+	(bind ?c1-first-ring (subseq$ ?ring-colors 1 1))
+	(bind ?c2-first-ring (subseq$ ?ring-colors 2 2))
+	(bind ?c3-first-ring (subseq$ ?ring-colors 3 3))
 
   ; machine assignment if not already done
   (if (not (any-factp ((?mi machines-initialized)) TRUE))
-   then (machine-init-randomize ?ring-colors))
+			then (machine-init-randomize ?ring-colors))
 
   ; reset orders, assign random times
   (delayed-do-for-all-facts ((?order order)) TRUE
@@ -95,12 +98,14 @@
 		(if ?*RANDOMIZE-ACTIVATE-ALL-AT-START* then (bind ?activate-at 0))
     (bind ?gate (random 1 3))
 
+		; check workpiece-assign-order rule in workpieces.clp for specific
+		; assumptions for the 2016 game and order to workpiece assignment!
 		(bind ?order-ring-colors (create$))
 		(switch ?order:complexity
 			;(case C0 then) ; for C0 we have nothing to do, no ring color
-			(case C1 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 1)))
-			(case C2 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 2)))
-			(case C3 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 3)))
+			(case C1 then (bind ?order-ring-colors (create$ ?c1-first-ring)))
+			(case C2 then (bind ?order-ring-colors (create$ ?c2-first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?c2-first-ring)) 1 1))))
+			(case C3 then (bind ?order-ring-colors (create$ ?c3-first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?c3-first-ring)) 1 2))))
     )
 
 		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))

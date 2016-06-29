@@ -302,8 +302,14 @@
 		(pb-set-field ?w "team" (str-cat ?wp:team))
 		(pb-set-field ?w "visible" ?wp:visible)
 
-    (pb-add-list ?wi "workpieces" ?w) ; destroys ?w
-  )
+		(if (neq ?wp:base-color nil) then
+			(pb-set-field ?w "base_color" (str-cat ?wp:base-color)))
+		(foreach ?rc ?wp:ring-colors (pb-add-list ?w "ring_colors" (str-cat ?rc)))
+		(if (neq ?wp:cap-color nil) then
+			(pb-set-field ?w "cap_color" (str-cat ?wp:cap-color)))
+
+		(pb-add-list ?wi "workpieces" ?w) ; destroys ?w
+  )	
 
   (return ?wi)
 )

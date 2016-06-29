@@ -210,9 +210,14 @@
 
 (deftemplate workpiece
 	(slot id (type INTEGER))
+	(slot order (type INTEGER))
 	(slot rtype (type SYMBOL) (allowed-values INCOMING RECORD))
 	(slot at-machine (type SYMBOL)
 				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK BASE_CLEAR))
+  (multislot ring-colors (type SYMBOL) (cardinality 0 3)
+						 (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
   (slot visible (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
@@ -413,6 +418,9 @@
   ;(machine-light-code (id 10) (code RED-BLINK))
 )
 
+; check workpiece-assign-order rule in workpieces.clp for specific
+; assumptions for the 2016 game and order to workpiece assignment!
+; Especially: single C1, C2, and C3 orders!
 (deffacts orders
   ; standing order
   (order (id  1) (complexity C0) (quantity-requested 1) (start-range 0 0)
