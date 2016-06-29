@@ -62,13 +62,14 @@ ProtobufStreamClient *client_ = NULL;
 
 enum {
 	SEND_WORKPIECE,
+	ADD_RING,
 	LIST_WORKPIECES
 } opmode_;
 
 std::string  machine_name_;
 unsigned int workpiece_id_;
 bool         workpiece_visible_;
-
+llsf_msgs::RingColor workpiece_ring_;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -86,8 +87,18 @@ handle_connected()
 		llsf_msgs::Workpiece wp;
 		wp.set_id(workpiece_id_);
 		wp.set_at_machine(machine_name_);
-		printf("Setting vis %s\n", workpiece_visible_ ? "YES" : "NO");
 		wp.set_visible(workpiece_visible_);
+		client_->send(wp);
+
+		usleep(200000);
+		quit = true;
+		io_service_.stop();
+	}
+	else if (opmode_ == ADD_RING) {
+		printf("Adding ring to workpiece\n");
+		llsf_msgs::WorkpieceAddRing wp;
+		wp.set_id(workpiece_id_);
+		wp.set_ring_color(workpiece_ring_);
 		client_->send(wp);
 
 		usleep(200000);
@@ -114,9 +125,17 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 			} else {
 				for (int i = 0; i < wi->workpieces_size(); ++i) {
 					const llsf_msgs::Workpiece &w = wi->workpieces(i);
-					printf("WP %3i %8s %8s  (%s)\n",
+					std::string rings;
+					for (int j = 0; j < w.ring_colors_size(); ++j) {
+						if (j > 0) rings += " ";
+						rings += llsf_msgs::RingColor_Name(w.ring_colors(j));
+					}
+					printf("WP %3i %8s %8s  %13s  %s|%s|%s\n",
 					       w.id(), w.at_machine().c_str(), llsf_msgs::Team_Name(w.team_color()).c_str(),
-					       w.visible() ? "visible" : "not visible");
+					       w.visible() ? "(visible)" : "(not visible)",
+					       w.has_base_color() ? llsf_msgs::BaseColor_Name(w.base_color()).c_str() : "?",
+					       rings.c_str(),
+					       w.has_cap_color() ? llsf_msgs::CapColor_Name(w.cap_color()).c_str() : "?");
 				}
 			}
 			quit = true;
@@ -130,12 +149,19 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 void
 usage(const char *progname)
 {
-	printf("Usage: %s list | send <ID> <machine> <visible>\n"
-	       "list   List known workpieces and their statuses\n"
-	       "send   Send a workpiece update, arguments are:\n"
-	       "       <ID> numeric ID\n"
-	       "       <machine> Machine at which the workpiece should be reported\n"
-	       "       <visible> true or false depending on intended visibility\n",
+	printf("Usage: %s <CMD>\n"
+	       "CMD is one of:\n"
+	       "list\n"
+	       "  List known workpieces and their statuses\n\n"
+	       "send <ID> <machine> <visible>\n"
+	       "  Send a workpiece update, arguments are:\n"
+	       "  <ID> numeric ID\n"
+	       "  <machine> Machine at which the workpiece should be reported\n"
+	       "  <visible> true or false depending on intended visibility\n\n"
+	       "add-ring <ID> <ring_color>\n"
+	       "  Add a specific ring to a workpiece (debug only)\n"
+	       "  <ID> numeric ID\n"
+	       "  <ring_color> Ring color to claim mounted\n",
 	       progname);
 }
 
@@ -165,6 +191,19 @@ main(int argc, char **argv)
 	  workpiece_id_ = argp.parse_item_int(1);
 	  machine_name_ = argp.items()[2];
 	  workpiece_visible_ = (strcmp(argp.items()[3], "true") == 0);
+  } else if (command == "add-ring") {
+	  if (argp.num_items() != 3) {
+		  printf("Invalid number of arguments for adding a ring.\n");
+		  usage(argv[0]);
+		  exit(1);
+	  }
+	  opmode_ = ADD_RING;
+	  workpiece_id_ = argp.parse_item_int(1);
+	  if (! llsf_msgs::RingColor_Parse(argp.items()[2], &workpiece_ring_)) {
+		  printf("Invalid ring color.\n");
+		  usage(argv[0]);
+		  exit(1);		  
+	  }
   } else {
 	  printf("Unknown command %s\n\n", command.c_str());
 	  usage(argv[0]);
