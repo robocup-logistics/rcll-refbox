@@ -22,7 +22,8 @@
   ; Set lights
   (delayed-do-for-all-facts ((?machine machine) (?lc machine-light-code))
     (= ?machine:exploration-light-code ?lc:id)
-    (modify ?machine (desired-lights ?lc:code))
+
+		(modify ?machine (desired-lights ?lc:code))
   )
 
   ;(assert (attention-message (text "Entering Exploration Phase")))
@@ -43,8 +44,21 @@
   (modify ?gf (prev-state RUNNING))
   (delayed-do-for-all-facts ((?machine machine) (?lc machine-light-code))
     (= ?machine:exploration-light-code ?lc:id)
-    (modify ?machine (desired-lights ?lc:code))
-  )
+
+		(if (any-factp ((?er exploration-report)) (eq ?er:name ?machine:name))
+		 then
+		  (do-for-fact ((?er exploration-report)) (eq ?er:name ?machine:name)
+				(if (eq ?er:correctly-reported UNKNOWN)
+				 then
+					(modify ?machine (desired-lights ?lc:code))
+				 else
+					(modify ?machine (desired-lights (create$ (if ?er:correctly-reported then GREEN-BLINK else RED-BLINK))))
+				)
+			)
+		 else
+		  (modify ?machine (desired-lights ?lc:code))
+		)
+	)
 )
 
 (defrule exploration-report-incoming
