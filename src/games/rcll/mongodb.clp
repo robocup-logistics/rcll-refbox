@@ -110,8 +110,6 @@
      (bson-append-array ?o-doc "delivery-period" ?o:delivery-period)
      (bson-append ?o-doc "delivery-gate" ?o:delivery-gate)
      (bson-append ?o-doc "activate-at" ?o:activate-at)
-     (bson-append ?o-doc "points" ?o:points)
-     (bson-append ?o-doc "points-supernumerous" ?o:points-supernumerous)
      (bson-array-append ?o-arr ?o-doc)
   )
   (bson-array-finish ?o-arr)
