@@ -376,12 +376,19 @@
 (defrule prod-proc-mps-state-change
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?ms <- (machine-mps-state (name ?n) (state ?mps-state) (num-bases ?num-bases))
-  ?m <- (machine (name ?n) (state ?state))
+  ?m <- (machine (name ?n) (state ?state) (team ?team) (bases-added ?bases-added) (bases-used ?bases-used))
   (or (machine (name ?n) (mps-state ~?mps-state))
       (machine (name ?n) (bases-added ~?num-bases)))
   =>
   (printout t "Machine " ?n " MPS state " ?mps-state " (bases added: " ?num-bases ", state " ?state ")" crlf)
   (retract ?ms)
+	(if (and (> ?num-bases ?bases-added)
+					 (<= (- ?num-bases ?bases-used) ?*LOADED-WITH-MAX*))
+	 then
+	  (assert (points (game-time ?gt) (points ?*PRODUCTION-POINTS-ADDITIONAL-BASE*)
+										(team ?team) (phase PRODUCTION)
+										(reason (str-cat "Added additional base to " ?n))))
+	)
   (if (eq ?state DOWN)
    then (modify ?m (mps-state-deferred ?mps-state) (bases-added ?num-bases))
    else (modify ?m (mps-state ?mps-state) (bases-added ?num-bases))
