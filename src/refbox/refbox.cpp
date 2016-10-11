@@ -1470,7 +1470,7 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 	case mongo::Object:
 		{
 			mongo::BSONObjBuilder *b = new mongo::BSONObjBuilder();
-			b->appendElements(o);
+			b->appendElements(el.Obj());
 			return CLIPS::Value(b);
 		}
 	default:
