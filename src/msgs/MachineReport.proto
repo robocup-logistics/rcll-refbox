@@ -36,7 +36,6 @@
 
 package llsf_msgs;
 
-import "MachineInfo.proto";
 import "Team.proto";
 import "Zone.proto";
 
