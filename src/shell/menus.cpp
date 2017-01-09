@@ -716,9 +716,6 @@ OrderByColorDeliverMenu::OrderByColorDeliverMenu
     if (std::find(orders.begin(), orders.end(), os) == orders.end()) {
 	    orders.push_back(os);
 
-	    bool active = (gstate->game_time().sec() >= o.delivery_period_begin() &&
-	                   gstate->game_time().sec() <= o.delivery_period_end());
-
 	    std::string s = boost::str(boost::format("%2s   ")
 	                               % llsf_msgs::Order::Complexity_Name(o.complexity()));
 	    std::vector<llsf_msgs::RingColor> ring_colors(o.ring_colors_size());
