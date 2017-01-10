@@ -346,3 +346,29 @@
 	      (- (nth$ 2 ?period:period) (nth$ 1 ?period:period)) " sec)" crlf)
   )
 )
+
+(defrule machine-pb-recv-SetMachineLights
+  ?pf <- (protobuf-msg (type "llsf_msgs.SetMachineLights") (ptr ?p) (rcvd-via STREAM)
+		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  =>
+  (bind ?mname (sym-cat (pb-field-value ?p "machine_name")))
+	(bind ?lights OFF OFF OFF)
+
+	(foreach ?l (pb-field-list ?p "lights")
+		(bind ?idx 0)
+		(switch (sym-cat (pb-field-value ?l "color"))
+			(case RED then (bind ?idx 1))
+			(case YELLOW then (bind ?idx 2))
+			(case GREEN then (bind ?idx 3))
+		)
+		(bind ?lights (replace$ ?lights ?idx ?idx (sym-cat (pb-field-value ?l "state"))))
+	)
+  (printout t "Received lights " ?lights " for machine " ?mname crlf)
+	(bind ?lights (replace$ ?lights 1 1 (sym-cat RED- (nth$ 1 ?lights))))
+	(bind ?lights (replace$ ?lights 2 2 (sym-cat YELLOW- (nth$ 2 ?lights))))
+	(bind ?lights (replace$ ?lights 3 3 (sym-cat GREEN- (nth$ 3 ?lights))))
+	
+  (do-for-fact ((?m machine)) (eq ?m:name ?mname)
+		(modify ?m (desired-lights ?lights))
+  )
+)

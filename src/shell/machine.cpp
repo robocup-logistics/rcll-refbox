@@ -179,13 +179,46 @@ LLSFRefBoxShellMachine::refresh()
   addstr( 0, 15, " ");
 
 
-  if (minfo_ && minfo_->has_correctly_reported()) {
-    attron(' '|COLOR_PAIR(minfo_->correctly_reported()
-			  ? COLOR_WHITE_ON_GREEN
-			  : COLOR_WHITE_ON_RED) | A_BOLD);
-    addstr(0, 17, minfo_->correctly_reported() ? "++" : "--");
-    attroff(A_BOLD);
-  } else {
+  bool expl = false;
+  if (minfo_ && minfo_->has_exploration_zone_state()) {
+	  expl = true;
+	  switch (minfo_->exploration_zone_state()) {
+	  case llsf_msgs::NO_REPORT:
+		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+		  addstr(0, 17, " ");
+		  break;
+	  case llsf_msgs::CORRECT_REPORT:
+		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN) | A_BOLD);
+		  addstr(0, 17, "+");
+		  attroff(A_BOLD);
+		  break;
+	  case llsf_msgs::WRONG_REPORT:
+		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED) | A_BOLD);
+		  addstr(0, 17, "-");
+		  attroff(A_BOLD);
+		  break;
+	  }
+  }
+  if (minfo_ && minfo_->has_exploration_type_state()) {
+	  expl = true;
+	  switch (minfo_->exploration_type_state()) {
+	  case llsf_msgs::NO_REPORT:
+		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+		  addstr(0, 18, " ");
+		  break;
+	  case llsf_msgs::CORRECT_REPORT:
+		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN) | A_BOLD);
+		  addstr(0, 18, "+");
+		  attroff(A_BOLD);
+		  break;
+	  case llsf_msgs::WRONG_REPORT:
+		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED) | A_BOLD);
+		  addstr(0, 18, "-");
+		  attroff(A_BOLD);
+		  break;
+	  }
+  }
+  if (! expl) {
 	  if (! minfo_ || minfo_->state().empty()) {
 		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
 		  addstr(0, 17, "  ");

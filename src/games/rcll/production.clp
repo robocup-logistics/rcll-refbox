@@ -233,7 +233,7 @@
 		 (ds-gate ?gate))
   =>
   (printout t "Machine " ?n " processing to gate " ?gate crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-gate 0) (ds-last-gate ?gate))
   (mps-ds-process (str-cat ?n) ?gate)
 )
 
@@ -376,12 +376,19 @@
 (defrule prod-proc-mps-state-change
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?ms <- (machine-mps-state (name ?n) (state ?mps-state) (num-bases ?num-bases))
-  ?m <- (machine (name ?n) (state ?state))
+  ?m <- (machine (name ?n) (state ?state) (team ?team) (bases-added ?bases-added) (bases-used ?bases-used))
   (or (machine (name ?n) (mps-state ~?mps-state))
       (machine (name ?n) (bases-added ~?num-bases)))
   =>
   (printout t "Machine " ?n " MPS state " ?mps-state " (bases added: " ?num-bases ", state " ?state ")" crlf)
   (retract ?ms)
+	(if (and (> ?num-bases ?bases-added)
+					 (<= (- ?num-bases ?bases-used) ?*LOADED-WITH-MAX*))
+	 then
+	  (assert (points (game-time ?gt) (points ?*PRODUCTION-POINTS-ADDITIONAL-BASE*)
+										(team ?team) (phase PRODUCTION)
+										(reason (str-cat "Added additional base to " ?n))))
+	)
   (if (eq ?state DOWN)
    then (modify ?m (mps-state-deferred ?mps-state) (bases-added ?num-bases))
    else (modify ?m (mps-state ?mps-state) (bases-added ?num-bases))
@@ -398,6 +405,16 @@
 )
 
 ; **** Mapping MPS to machine state reactions
+(defrule prod-machine-reset
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+
+  ?m <- (machine (name ?n) (state ?state&~IDLE) (mps-state RESET))
+  =>
+  (modify ?m (state IDLE) (prev-state IDLE) (proc-state IDLE) (desired-lights GREEN-ON)
+	  (mps-state IDLE) (mps-state-deferred NONE) (broken-reason "")
+    (ds-gate 0) (ds-last-gate 0) (cs-retrieved FALSE))
+)
+  
 
 (defrule prod-machine-input-not-prepared
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -410,7 +427,7 @@
 
 (defrule prod-machine-loaded-with-too-many
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state&~BROKEN) (bases-added ?ba)
+  ?m <- (machine (name ?n) (state ?state&~BROKEN&~DOWN) (bases-added ?ba)
 		 (bases-used ?bu&:(> (- ?ba ?bu) ?*LOADED-WITH-MAX*)))
   =>
   (modify ?m (state BROKEN) (prev-state ?state)

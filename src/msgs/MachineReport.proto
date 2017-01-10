@@ -34,9 +34,10 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+syntax = "proto2";
+
 package llsf_msgs;
 
-import "MachineInfo.proto";
 import "Team.proto";
 import "Zone.proto";
 
@@ -52,8 +53,8 @@ message MachineReportEntry {
   // Machine name and recognized type
   // and zone the machine is in
   required string name = 1;
-  required string type = 2;
-  required Zone   zone = 3;
+  optional string type = 2;
+  optional Zone   zone = 3;
 }
 
 // Robots send this to announce recognized

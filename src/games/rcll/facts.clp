@@ -52,6 +52,7 @@
   (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
 
   (slot ds-gate (type INTEGER))
+  (slot ds-last-gate (type INTEGER))
 
   (slot rs-ring-color (type SYMBOL)
 	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
@@ -164,16 +165,13 @@
   (slot active (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot activate-at (type INTEGER) (default 0))
   (multislot activation-range (type INTEGER) (cardinality 2 2) (default 120 240))
-  (slot points (type INTEGER) (default ?*POINTS-DELIVER*))
-  (slot points-supernumerous (type INTEGER) (default 1))
+  (slot allow-overtime (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
 (deftemplate ring-spec
   (slot color (type SYMBOL) (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot req-bases (type INTEGER) (default 0))
 )
-
-
 
 (deftemplate delivery-period
   (multislot delivery-gates (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6) (cardinality 2 2))
@@ -182,13 +180,9 @@
  
 (deftemplate product-delivered
   (slot game-time (type FLOAT))
-  (slot order (type INTEGER))
+	(slot order (type INTEGER) (default 0))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
-)
-
-(deftemplate order-delivered-by-color
-  (slot game-time (type FLOAT))
-  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+	(slot delivery-gate (type INTEGER))
   (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
 	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
@@ -223,17 +217,20 @@
 )
 
 (deftemplate exploration-report
+	(slot rtype (type SYMBOL) (allowed-values INCOMING RECORD))
   (slot name (type SYMBOL)
 	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot type (type STRING))
   (slot zone (type SYMBOL)
-	(allowed-values Z1 Z2 Z3 Z4 Z5 Z6 Z7 Z8 Z9 Z10 Z11 Z12
+	(allowed-values NOT-REPORTED Z1 Z2 Z3 Z4 Z5 Z6 Z7 Z8 Z9 Z10 Z11 Z12
 			Z13 Z14 Z15 Z16 Z17 Z18 Z19 Z20 Z21 Z22 Z23 Z24))
   (slot host (type STRING))
   (slot port (type INTEGER))
   (slot game-time (type FLOAT))
-  (slot correctly-reported (type SYMBOL) (allowed-values TRUE FALSE))
+  (slot correctly-reported (type SYMBOL) (allowed-values UNKNOWN TRUE FALSE) (default UNKNOWN))
+  (slot zone-state (type SYMBOL) (allowed-values NO_REPORT CORRECT_REPORT WRONG_REPORT) (default NO_REPORT))
+  (slot type-state (type SYMBOL) (allowed-values NO_REPORT CORRECT_REPORT WRONG_REPORT) (default NO_REPORT))
 )
 
 (deftemplate points
@@ -323,10 +320,13 @@
   (order (id  2) (complexity C0) (quantity-requested 1) (start-range 200 400))
   (order (id  3) (complexity C0) (quantity-requested 2) (start-range 300 700))
   (order (id  4) (complexity C0) (quantity-requested 1) (start-range 700 900))
-  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 0 0)
-	       (activation-range 900 900) (duration-range 900 900))
+  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 500 700)
+	       (activation-range 300 500) (duration-range 90 150))
   (order (id  6) (complexity C2) (quantity-requested 1) (start-range 600 720)
-	       (activation-range 300 600))
+	       (activation-range 480 780) (duration-range 120 180))
   (order (id  7) (complexity C3) (quantity-requested 1) (start-range 600 720)
-	       (activation-range 300 600))
+	       (activation-range 900 900) (duration-range 120 180))
+  (order (id  8) (complexity C0) (quantity-requested 1) (start-range 900 900)
+         (activation-range 0 0) (duration-range 300 300) (allow-overtime TRUE))
 )
+
