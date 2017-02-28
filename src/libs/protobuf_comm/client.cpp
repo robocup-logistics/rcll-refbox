@@ -296,6 +296,16 @@ ProtobufStreamClient::handle_read_message(const boost::system::error_code& error
   }
 }
 
+/** Check whether all outbound messages have been sent.
+ * @return true if outbound sending is still active, false otherwise
+ */
+bool
+ProtobufStreamClient::outbound_done()
+{
+	return ! outbound_active_;
+}
+
+
 void
 ProtobufStreamClient::handle_write(const boost::system::error_code& error,
 				   size_t /*bytes_transferred*/,
