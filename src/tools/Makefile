@@ -53,15 +53,20 @@ OBJS_rcll_machine_add_base = rcll-machine-add-base.o
 LIBS_rcll_set_machine_lights = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_set_machine_lights = rcll-set-machine-lights.o
 
+LIBS_rcll_refbox_instruct = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+OBJS_rcll_refbox_instruct = rcll-refbox-instruct.o
+
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) \
 	      $(OBJS_rcll_prepare_machine) $(OBJS_rcll_set_machine_state) \
-	      $(OBJS_rcll_machine_add_base)
+	      $(OBJS_rcll_machine_add_base) $(OBJS_rcll_set_machine_lights) \
+	      $(OBJS_rcll_refbox_instruct)
   BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot \
 	      $(BINDIR)/llsf-report-machine $(BINDIR)/rcll-prepare-machine \
 	      $(BINDIR)/rcll-set-machine-state \
 	      $(BINDIR)/rcll-set-machine-lights \
-	      $(BINDIR)/rcll-machine-add-base
+	      $(BINDIR)/rcll-machine-add-base \
+	      $(BINDIR)/rcll-refbox-instruct
 
   CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) \
 	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
@@ -96,6 +101,11 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   CFLAGS_rcll_machine_add_base  += $(CFLAGS_PROTOBUF) \
 	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS_rcll_machine_add_base += $(LDFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
+  CFLAGS_rcll_refbox_instruct  += $(CFLAGS_PROTOBUF) \
+	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS_rcll_refbox_instruct += $(LDFLAGS_PROTOBUF) \
 	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
