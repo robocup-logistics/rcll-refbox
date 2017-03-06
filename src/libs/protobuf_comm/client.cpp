@@ -119,7 +119,7 @@ ProtobufStreamClient::~ProtobufStreamClient()
 {
   disconnect_nosig();
   io_service_.stop();
-  asio_thread_.join();
+  if (asio_thread_.joinable()) asio_thread_.join();
   free(in_data_);
   free(in_frame_header_);
   if (own_message_register_) {
@@ -190,12 +190,14 @@ ProtobufStreamClient::handle_connect(const boost::system::error_code &err)
 void
 ProtobufStreamClient::disconnect_nosig()
 {
-  boost::system::error_code err;
-  if (socket_.is_open()) {
-    socket_.shutdown(ip::tcp::socket::shutdown_both, err);
-    socket_.close();
-  }
-  connected_ = false;
+	io_service_.dispatch([this](){
+			boost::system::error_code err;
+			if (this->socket_.is_open()) {
+				this->socket_.shutdown(ip::tcp::socket::shutdown_both, err);
+				this->socket_.close();
+			}
+			this->connected_ = false;
+		});
 }
 
 
@@ -293,6 +295,16 @@ ProtobufStreamClient::handle_read_message(const boost::system::error_code& error
     sig_disconnected_(error);
   }
 }
+
+/** Check whether all outbound messages have been sent.
+ * @return true if outbound sending is still active, false otherwise
+ */
+bool
+ProtobufStreamClient::outbound_done()
+{
+	return ! outbound_active_;
+}
+
 
 void
 ProtobufStreamClient::handle_write(const boost::system::error_code& error,
