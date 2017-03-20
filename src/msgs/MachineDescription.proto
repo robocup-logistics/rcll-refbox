@@ -54,6 +54,11 @@ enum LightState {
   BLINK = 2;
 }
 
+enum MachineSide {
+  INPUT  = 1;
+  OUTPUT = 2;
+}
+
 enum ConveyorDirection {
   FORWARD  = 1;	// from input to output
   BACKWARD = 2;	// from output to input

@@ -4,6 +4,7 @@
  *
  *  Created: Thu Apr 16 14:19:07 2015
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *             2017  Tobias Neumann
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -44,11 +45,6 @@ import "Team.proto";
 
 option java_package = "org.robocup_logistics.llsf_msgs";
 option java_outer_classname = "MachineInstructionProtos";
-
-enum MachineSide {
-  INPUT  = 1;
-  OUTPUT = 2;
-}
 
 message PrepareInstructionBS {
   required MachineSide side  = 1;
