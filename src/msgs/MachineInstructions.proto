@@ -46,6 +46,92 @@ import "Team.proto";
 option java_package = "org.robocup_logistics.llsf_msgs";
 option java_outer_classname = "MachineInstructionProtos";
 
+message SetSignalLight {
+  required LightState red    = 2;
+  required LightState yellow = 3;
+  required LightState green  = 4;
+}
+
+message MoveConveyorBelt {
+  required ConveyorDirection direction   = 2;
+  required SensorOnMPS       stop_sensor = 3;
+}
+
+message BSPushBase {
+  required uint32 slot = 2; // [0-2] where 0 is on the input side, 1 in the middle and 2 on the output side
+}
+
+message SSTask {
+  required SSOp   operation = 2;
+  required SSSlot shelf     = 3;
+}
+
+message RSMountRing {
+  required uint32 feeder = 2; // [0,1] where 0 is the feeder closer to the input side and 1 is the feeder closer to the output side
+}
+
+message CSTask {
+  required CSOp operation = 2;
+}
+
+message DSActivateGate {
+  required uint32 gate = 2; // [0-2] where 0 is the gate closest to the input, 1 is the gate in the middle and 2 is the last gate from the input
+}
+
+enum InstructMachineSet {
+  INSTRUCT_MACHINE_SET_SIGNAL_LIGHT = 1;
+  INSTRUCT_MACHINE_MOVE_CONVEYOR    = 2;
+  INSTRUCT_MACHINE_WAIT_FOR_PICKUP  = 3;
+  INSTRUCT_MACHINE_BS = 4;
+  INSTRUCT_MACHINE_SS = 5;
+  INSTRUCT_MACHINE_RS = 6;
+  INSTRUCT_MACHINE_CS = 7;
+  INSTRUCT_MACHINE_DS = 8;
+}
+
+message InstructMachine {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 102;
+  }
+
+  required uint32 ID = 1;
+  required Team   team_color = 2;
+  // Machine name which to instruct
+  required string machine = 3;
+  // which MPS comand is set and has to be completed
+  required InstructMachineSet set = 4;
+
+  optional SetSignalLight   light_state   = 5;
+  optional MoveConveyorBelt conveyor_belt = 6;
+
+  optional BSPushBase     bs = 11;
+  optional SSTask         ss = 12;
+  optional RSMountRing    rs = 13;
+  optional CSTask         cs = 14;
+  optional DSActivateGate ds = 15;
+}
+
+enum MachineReplySet {
+  MACHINE_REPLY_FINISHED         = 1;
+}
+
+message MachineReply {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 103;
+  }
+
+  required uint32 ID = 1;
+  required Team   team_color = 2;
+  // Machine name which to instruct
+  required string machine = 3;
+  // which MPS comand is set and has to be completed
+  required MachineReplySet set = 4;
+}
+
+
+
 message PrepareInstructionBS {
   required MachineSide side  = 1;
   required BaseColor   color = 2;
