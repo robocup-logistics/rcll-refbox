@@ -3,6 +3,7 @@
 ;
 ;  Created: Thu Feb 14 17:26:27 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -471,7 +472,7 @@
 			 	(and (eq ?report:rtype RECORD) (eq ?report:name (fact-slot-value ?mf name)))
 
 				(pb-set-field ?m "correctly_reported" (if (eq ?report:correctly-reported TRUE) then TRUE else FALSE))
-				(pb-set-field ?m "exploration_type_state" ?report:type-state)
+				(pb-set-field ?m "exploration_rotation_state" ?report:rotation-state)
 				(pb-set-field ?m "exploration_zone_state" ?report:zone-state)
       )
     )

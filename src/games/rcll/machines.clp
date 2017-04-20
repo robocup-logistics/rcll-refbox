@@ -4,6 +4,7 @@
 ;
 ;  Created: Thu Feb 07 19:31:12 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -68,30 +69,6 @@
 )
 
 (deffunction machine-init-randomize (?ring-colors)
-  (if ?*RANDOMIZE-GAME* then
-    ; Gather all available light codes
-    (bind ?light-codes (create$))
-    (do-for-all-facts ((?lc machine-light-code)) TRUE
-      (bind ?light-codes (create$ ?light-codes ?lc:id))
-    )
-    ; Randomize light codes
-    (bind ?light-codes (randomize$ ?light-codes))
-    ; Assign random light codes
-    (delayed-do-for-all-facts ((?m-cyan machine)) (eq ?m-cyan:team CYAN)
-      ;(do-for-fact ((?light-code machine-light-code)) (= ?light-code:id (nth$ 1 ?light-codes))
-      ;  (printout t "Light code " ?light-code:code " for machine " ?m-cyan:name crlf)
-      ;)
-      (modify ?m-cyan (exploration-light-code (nth$ 1 ?light-codes)))
-
-      (do-for-fact ((?m-magenta machine))
-        (eq ?m-magenta:name (machine-magenta-for-cyan ?m-cyan:name))
-	(modify ?m-magenta (exploration-light-code (nth$ 1 ?light-codes)))
-      )
-
-      (bind ?light-codes (delete$ ?light-codes 1 1))
-    )
-  )
-
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
@@ -282,18 +259,6 @@
     )
   )
 
-  ; Calculate exploration hashes
-  (delayed-do-for-all-facts ((?m-cyan machine) (?m-magenta machine))
-    (and (eq ?m-cyan:team CYAN) (eq ?m-magenta:team MAGENTA)
-	 (eq ?m-magenta:name (machine-magenta-for-cyan ?m-cyan:name)))
-
-    (bind ?rs (gen-random-string 8))
-
-    (printout t "Machines " ?m-cyan:name "/" ?m-magenta:name " exploration string:" ?rs crlf)
-    (modify ?m-cyan (exploration-type ?rs))
-    (modify ?m-magenta (exploration-type ?rs))
-  )
-
   ; Randomize ring colors per machine
   (do-for-fact ((?m-cyan machine) (?m-magenta machine))
     (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
@@ -326,11 +291,12 @@
   (assert (machines-printed))
   (bind ?t (if (eq ?teams (create$ "" "")) then t else debug))
 
-  (do-for-all-facts ((?m machine)) TRUE
-    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?m:exploration-light-code)
-      (printout ?t "Light code " ?light-code:code " for machine " ?m:name crlf)
-    )
-  )
+; TODO 2017
+;  (do-for-all-facts ((?m machine)) TRUE
+;    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?m:exploration-light-code)
+;      (printout ?t "Light code " ?light-code:code " for machine " ?m:name crlf)
+;    )
+;  )
 
   (do-for-all-facts ((?m machine)) (> (nth$ 1 ?m:down-period) -1.0)
     (printout ?t ?m:name " down from "

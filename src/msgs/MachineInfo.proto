@@ -4,6 +4,7 @@
  *
  *  Created: Mon Feb 25 11:36:50 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *             2017  Tobias Neumann
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -108,8 +109,8 @@ message Machine {
   optional PrepareInstructionCS instruction_cs = 19;
 
 	// more fine-grained exploration (only clients)
-	optional ExplorationState exploration_type_state = 21;
 	optional ExplorationState exploration_zone_state = 22;
+	optional ExplorationState exploration_rotation_state = 21;
 
 }
 

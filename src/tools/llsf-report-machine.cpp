@@ -4,6 +4,7 @@
  *
  *  Created: Mon Mar 04 14:09:00 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *             2017  Tobias Neumann
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -46,6 +47,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
@@ -53,8 +55,8 @@ using namespace fawkes;
 
 static bool quit = false;
 std::string machine_name_;
-bool        send_type_ = false;
-std::string machine_type_;
+bool        send_rotation_ = false;
+unsigned int machine_rotation_;
 bool        send_zone_ = false;
 llsf_msgs::Zone machine_zone_;
 std::string team_name_;
@@ -137,14 +139,14 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
   std::shared_ptr<BeaconSignal> b;
   if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
     if (b->team_name() == "LLSF" && b->peer_name() == "RefBox") {
-	    printf("Announcing machine: type? %s   Zone: %s\n",
-	           send_type_ ? machine_type_.c_str() : "*NO*",
-	           send_zone_ ? Zone_Name(machine_zone_).c_str() : "*NO*");
+            printf("Announcing machine: Zone: %s   rotation %u\n",
+                   send_zone_ ? Zone_Name(machine_zone_).c_str() : "*NO*",
+                   send_rotation_ ? machine_rotation_ : -1);
       llsf_msgs::MachineReport report;
       report.set_team_color(team_color_);
       llsf_msgs::MachineReportEntry *entry = report.add_machines();
       entry->set_name(machine_name_);
-      if (send_type_) entry->set_type(machine_type_);
+      if (send_rotation_) entry->set_rotation(machine_rotation_);
       if (send_zone_) entry->set_zone(machine_zone_);
       peer_team_->send(report);
     }
@@ -165,14 +167,14 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "T:t:z:");
+  ArgumentParser argp(argc, argv, "T:r:z:");
 
   if (argp.num_items() != 2 || (! argp.has_arg("t") && ! argp.has_arg("z"))) {
 	  printf("Usage: %s [-T team] [-t <type>] [-z <zone>] <team-name> <machine-name>\n"
 	         "\n"
 	         "-T team	  Select team to send for, CYAN (default) or MAGENTA\n"
-	         "-t type   Exploration type string to send back\n"
-	         "-z zone   Zone to report for machine\n\n"
+		 "-r rotation Rotation to report for machine\n"
+		 "-z zone     Zone to report for machine\n\n"
 	         "You must supply at least one of type and zone, or both.\n",
 	         argv[0]);
     exit(1);
@@ -181,9 +183,9 @@ main(int argc, char **argv)
   team_name_    = argp.items()[0];
   machine_name_ = argp.items()[1];
 
-  if (argp.has_arg("t")) {
-	  machine_type_ = argp.arg("t");
-	  send_type_ = true;
+  if (argp.has_arg("r")) {
+          machine_rotation_ = boost::lexical_cast<unsigned int>(argp.arg("r"));
+          send_rotation_ = true;
   }
   
   if (argp.has_arg("z")) {
