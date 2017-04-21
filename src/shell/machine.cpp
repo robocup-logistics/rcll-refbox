@@ -199,9 +199,9 @@ LLSFRefBoxShellMachine::refresh()
 		  break;
 	  }
   }
-  if (minfo_ && minfo_->has_exploration_type_state()) {
+  if (minfo_ && minfo_->has_exploration_rotation_state()) {
 	  expl = true;
-	  switch (minfo_->exploration_type_state()) {
+	  switch (minfo_->exploration_rotation_state()) {
 	  case llsf_msgs::NO_REPORT:
 		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
 		  addstr(0, 18, " ");
