@@ -198,7 +198,7 @@
 	)
 	=>
   (modify ?er (correctly-reported FALSE))
-;	(modify ?mf (desired-lights REiD-BLINK))
+;	(modify ?mf (desired-lights RED-BLINK))
 )
 
 ; (defrule exploration-handle-report
@@ -275,68 +275,6 @@
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   =>
   (retract ?mf)
-)
-
-
-(defrule exploration-send-ExplorationInfo
-  (time $?now)
-  (gamestate (phase EXPLORATION))
-  ?sf <- (signal (type exploration-info)
-		 (time $?t&:(timeout ?now ?t ?*BC-EXPLORATION-INFO-PERIOD*)) (seq ?seq))
-  (network-peer (group PUBLIC) (id ?peer-id-public))
-  =>
-  (modify ?sf (time ?now) (seq (+ ?seq 1)))
-  (bind ?ei (pb-create "llsf_msgs.ExplorationInfo"))
-
-  (bind ?machines (create$))
-  (do-for-all-facts ((?m machine)) (eq ?m:team CYAN)
-    (bind ?machines (append$ ?machines ?m))
-  )
-
-  ; Randomize machines, otherwise order in messages would yield info
-  ; on machine to light assignments and tag detection alone would suffice
-  (bind ?machines (randomize$ ?machines))
-
-;  (foreach ?m ?machines
-;    (do-for-fact ((?lc machine-light-code))
-;
-;      ; (bind ?s (pb-create "llsf_msgs.ExplorationSignal"))
-;      ; TODO
-;    )
-;  )
-
-  (bind ?zones-cyan    ?*MACHINE-ZONES-CYAN*)
-  (bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
-  (do-for-all-facts ((?m machine))
-    (and (eq ?m:team CYAN) (or (eq ?m:mtype RS) (eq ?m:mtype CS)))
-
-    (bind ?z-index (member$ ?m:zone ?zones-cyan))
-
-    (if (not ?z-index) then
-      ; machines swapped
-      (bind ?z-index (member$ ?m:zone ?zones-magenta))
-      (bind ?z-cyan    (nth$ ?z-index ?zones-cyan))
-      (bind ?z-magenta (nth$ ?z-index ?zones-magenta))
-      (bind ?zones-cyan    (replace$ ?zones-cyan ?z-index ?z-index ?z-magenta))
-      (bind ?zones-magenta (replace$ ?zones-magenta ?z-index ?z-index ?z-cyan))
-    )
-  )
-
-  (foreach ?z ?zones-cyan
-    (bind ?zm (pb-create "llsf_msgs.ExplorationZone"))
-    (pb-set-field ?zm "zone" ?z)
-    (pb-set-field ?zm "team_color" CYAN)
-    (pb-add-list ?ei "zones" ?zm)
-  )
-  (foreach ?z ?zones-magenta
-    (bind ?zm (pb-create "llsf_msgs.ExplorationZone"))
-    (pb-set-field ?zm "zone" ?z)
-    (pb-set-field ?zm "team_color" MAGENTA)
-    (pb-add-list ?ei "zones" ?zm)
-  )
-
-  (pb-broadcast ?peer-id-public ?ei)
-  (pb-destroy ?ei)
 )
 
 (defrule exploration-send-MachineReportInfo

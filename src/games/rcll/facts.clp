@@ -57,7 +57,7 @@
       M_Z11 M_Z21 M_Z31 M_Z41
     )
   )
-  (slot rotation (type INTEGER) (default 0))
+  (slot rotation (type INTEGER) (default -1))
 
   (slot prep-blink-start (type FLOAT))
   (slot retrieved-at (type FLOAT))
@@ -310,7 +310,6 @@
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
-  (signal (type exploration-info) (time (create$ 0 0)) (seq 1))
   (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
   (setup-light-toggle CS2)
   (whac-a-mole-light NONE)

@@ -94,6 +94,7 @@ message Machine {
   optional Pose2D    pose = 8;
   // Which zone the machine is in
   optional Zone      zone = 11;
+  optional uint32    rotation = 12;
   // Only set during exploration phase
   // Correctly reported? (zone and type correct)
   optional bool      correctly_reported = 9;
