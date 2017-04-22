@@ -50,7 +50,7 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellRobot::LLSFRefBoxShellRobot(int begin_y, int begin_x)
-  : NCursesPanel(2, 24, begin_y, begin_x)
+  : NCursesPanel(2, 28, begin_y, begin_x)
 {
 }
 

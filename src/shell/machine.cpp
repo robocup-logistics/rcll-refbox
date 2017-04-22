@@ -131,11 +131,25 @@ LLSFRefBoxShellMachine::refresh()
   std::string name;
   std::string type;
   std::string zone;
+  std::string rotation;
 
   if (minfo_) {
     name = minfo_->name();
     type = minfo_->type();
     zone = minfo_->has_zone() ? llsf_msgs::Zone_Name(minfo_->zone()) : "";
+    rotation = "";
+    if (minfo_->has_rotation()) {
+      unsigned int rotation_i = minfo_->rotation();
+      if ( rotation_i == 0   ) rotation = "→";
+      else if ( rotation_i == 45  ) rotation = "↗";
+      else if ( rotation_i == 90  ) rotation = "↑";
+      else if ( rotation_i == 135 ) rotation = "↖";
+      else if ( rotation_i == 180 ) rotation = "←";
+      else if ( rotation_i == 225 ) rotation = "↙";
+      else if ( rotation_i == 270 ) rotation = "↓";
+      else if ( rotation_i == 315 ) rotation = "↘";
+      else rotation = "?";
+    }
   }
 
   if (name.find("C-") == 0) {
@@ -148,7 +162,7 @@ LLSFRefBoxShellMachine::refresh()
   attroff(A_BOLD);
   attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
 
-  addstr(0, 5, boost::str(boost::format("|%-2s|%3s") % type % zone).c_str());
+  addstr(0, 5, boost::str(boost::format("|%-2s|%3s|%1s") % type % zone % rotation).c_str());
 
   if (lights_.find(llsf_msgs::GREEN) != lights_.end() &&
       (lights_[llsf_msgs::GREEN] == llsf_msgs::ON ||
@@ -158,7 +172,7 @@ LLSFRefBoxShellMachine::refresh()
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
-  addstr( 0, 13, " ");
+  addstr( 0, 17, " ");
   if (lights_.find(llsf_msgs::YELLOW) != lights_.end() &&
       (lights_[llsf_msgs::YELLOW] == llsf_msgs::ON ||
        (lights_[llsf_msgs::YELLOW] == llsf_msgs::BLINK && blink_state_[llsf_msgs::YELLOW])))
@@ -167,7 +181,7 @@ LLSFRefBoxShellMachine::refresh()
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
-  addstr( 0, 14, " ");
+  addstr( 0, 18, " ");
   if (lights_.find(llsf_msgs::RED) != lights_.end() &&
       (lights_[llsf_msgs::RED] == llsf_msgs::ON ||
        (lights_[llsf_msgs::RED] == llsf_msgs::BLINK && blink_state_[llsf_msgs::RED])))
@@ -176,7 +190,7 @@ LLSFRefBoxShellMachine::refresh()
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
-  addstr( 0, 15, " ");
+  addstr( 0, 19, " ");
 
 
   bool expl = false;
@@ -185,16 +199,16 @@ LLSFRefBoxShellMachine::refresh()
 	  switch (minfo_->exploration_zone_state()) {
 	  case llsf_msgs::NO_REPORT:
 		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-		  addstr(0, 17, " ");
+		  addstr(0, 21, " ");
 		  break;
 	  case llsf_msgs::CORRECT_REPORT:
 		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN) | A_BOLD);
-		  addstr(0, 17, "+");
+		  addstr(0, 21, "+");
 		  attroff(A_BOLD);
 		  break;
 	  case llsf_msgs::WRONG_REPORT:
 		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED) | A_BOLD);
-		  addstr(0, 17, "-");
+		  addstr(0, 21, "-");
 		  attroff(A_BOLD);
 		  break;
 	  }
@@ -204,16 +218,16 @@ LLSFRefBoxShellMachine::refresh()
 	  switch (minfo_->exploration_rotation_state()) {
 	  case llsf_msgs::NO_REPORT:
 		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-		  addstr(0, 18, " ");
+		  addstr(0, 22, " ");
 		  break;
 	  case llsf_msgs::CORRECT_REPORT:
 		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN) | A_BOLD);
-		  addstr(0, 18, "+");
+		  addstr(0, 22, "+");
 		  attroff(A_BOLD);
 		  break;
 	  case llsf_msgs::WRONG_REPORT:
 		  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED) | A_BOLD);
-		  addstr(0, 18, "-");
+		  addstr(0, 22, "-");
 		  attroff(A_BOLD);
 		  break;
 	  }
@@ -221,34 +235,34 @@ LLSFRefBoxShellMachine::refresh()
   if (! expl) {
 	  if (! minfo_ || minfo_->state().empty()) {
 		  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-		  addstr(0, 17, "  ");
+		  addstr(0, 21, "  ");
 	  } else {
 		  if (minfo_->state() == "BROKEN" || minfo_->state() == "DOWN") {
 			  attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
-			  addstr(0, 17, minfo_->state().substr(0,2).c_str());
+			  addstr(0, 21, minfo_->state().substr(0,2).c_str());
 		  } else if (minfo_->state() == "PREPARED") {
 			  attron(' '|COLOR_PAIR(COLOR_GREEN_ON_BACK));
-			  addstr(0, 17, "PP");
+			  addstr(0, 21, "PP");
 		  } else if (minfo_->state() == "PROCESSING" || minfo_->state() == "PROCESSED") {
 			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN));
-			  addstr(0, 17, "P");
+			  addstr(0, 21, "P");
 			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
-			  addstr(0, 18, minfo_->state().substr(minfo_->state().length()-1, 1).c_str());
+			  addstr(0, 22, minfo_->state().substr(minfo_->state().length()-1, 1).c_str());
 		  } else if (minfo_->state() == "READY-AT-OUTPUT") {
 			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
-			  addstr(0, 17, "RO");
+			  addstr(0, 21, "RO");
 		  } else {
 			  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-			  addstr(0, 17, minfo_->state().substr(0,2).c_str());
+			  addstr(0, 21, minfo_->state().substr(0,2).c_str());
 		  }
 	  }
   }
 
   attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   if (minfo_ && minfo_->loaded_with() > 0) {
-    addstr(0, 20, (boost::str(boost::format("%u") % minfo_->loaded_with())).c_str());
+    addstr(0, 24, (boost::str(boost::format("%u") % minfo_->loaded_with())).c_str());
   } else {
-    addstr(0, 20, " ");
+    addstr(0, 24, " ");
   }
 
   if (type == "RS") {
@@ -266,21 +280,21 @@ LLSFRefBoxShellMachine::refresh()
 	}
 	if (minfo_->has_instruction_rs() &&
 	    minfo_->instruction_rs().ring_color() == minfo_->ring_colors(i)) {
-	  addstr(0, 22+i, "*");
+	  addstr(0, 26+i, "*");
 	} else {
-	  addstr(0, 22+i, " ");
+	  addstr(0, 26+i, " ");
 	}
 	attroff(A_BOLD);
       }
 
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
       for (int j = minfo_->ring_colors_size(); j <= 2; ++j) {
-	addstr(0, 22+j, " ");
+	addstr(0, 26+j, " ");
       }
 
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-      addstr(0, 22, "  ");
+      addstr(0, 26, "  ");
     }
   } else if (type == "BS") {
     if (minfo_ && minfo_->has_instruction_bs()) {
@@ -292,36 +306,36 @@ LLSFRefBoxShellMachine::refresh()
       case llsf_msgs::BASE_BLACK:
 	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
       }
-      addstr(0, 22, " ");
+      addstr(0, 26, " ");
 
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
       switch (minfo_->instruction_bs().side()) {
-      case llsf_msgs::INPUT:  addstr(0, 23, "I"); break;
-      case llsf_msgs::OUTPUT: addstr(0, 23, "O"); break;
+      case llsf_msgs::INPUT:  addstr(0, 27, "I"); break;
+      case llsf_msgs::OUTPUT: addstr(0, 27, "O"); break;
       }
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-      addstr(0, 22, "  ");
+      addstr(0, 26, "  ");
     }
   } else if (type == "DS") {
     if (minfo_ && minfo_->has_instruction_ds()) {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-      addstr(0, 22, (boost::str(boost::format("%u")
+      addstr(0, 26, (boost::str(boost::format("%u")
 				% minfo_->instruction_ds().gate())).c_str());
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-      addstr(0, 22, "  ");
+      addstr(0, 26, "  ");
     }
   } else if (type == "CS") {
     if (minfo_ && minfo_->has_instruction_cs()) {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
       switch (minfo_->instruction_cs().operation()) {
-      case llsf_msgs::RETRIEVE_CAP: addstr(0, 22, "RC"); break;
-      case llsf_msgs::MOUNT_CAP:    addstr(0, 22, "MC"); break;
+      case llsf_msgs::RETRIEVE_CAP: addstr(0, 26, "RC"); break;
+      case llsf_msgs::MOUNT_CAP:    addstr(0, 26, "MC"); break;
       }
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-      addstr(0, 22, "  ");
+      addstr(0, 26, "  ");
     }	
   }
 
