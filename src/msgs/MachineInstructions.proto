@@ -95,8 +95,8 @@ message InstructMachine {
     MSG_TYPE = 102;
   }
 
-  required uint32 ID = 1;
-  required Team   team_color = 2;
+  required uint32 id = 1;
+//  required Team   team_color = 2;
   // Machine name which to instruct
   required string machine = 3;
   // which MPS comand is set and has to be completed
@@ -122,8 +122,8 @@ message MachineReply {
     MSG_TYPE = 103;
   }
 
-  required uint32 ID = 1;
-  required Team   team_color = 2;
+  required uint32 id = 1;
+//  required Team   team_color = 2;
   // Machine name which to instruct
   required string machine = 3;
   // which MPS comand is set and has to be completed

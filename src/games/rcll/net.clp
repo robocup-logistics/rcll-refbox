@@ -648,3 +648,107 @@
   (pb-broadcast ?peer-id-public ?vi)
   (pb-destroy ?vi)
 )
+
+(deffunction net-get-new-id ()
+  (bind ?id-old 0)
+  (delayed-do-for-all-facts ((?id mps-comm-id-last)) TRUE
+    (if (<= ?id-old ?id:id) then (bind ?id-old ?id:id))
+    (retract ?id)
+  )
+  (bind ?id-new (+ ?id-old 1))
+  (assert (mps-comm-id-last (id ?id-new)))
+  (return ?id-new)
+)
+
+(deffunction net-send-mps-change (?id ?name ?gt ?task ?s )
+  ; send msg
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
+    (pb-send ?client:id ?s) 
+  )
+  (pb-destroy ?s) 
+  ; remember ID and task
+  (assert (mps-comm-id (id ?id) (name ?name) (game-time ?gt) (task ?task)))
+)
+
+(defrule net-receive-mps-reply
+  ?pf <- (protobuf-msg (type "llsf_msgs.MachineReply") (ptr ?p) (rcvd-via STREAM)
+          (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  =>
+  (assert (pb-machine-reply (id (pb-field-value ?p "id"))
+            (machine (sym-cat (pb-field-value ?p "machine")))
+          )
+  )
+  (retract ?pf)
+)
+
+(deffunction net-create-instruct-machine-generic (?mf ?id)
+  (bind ?im (pb-create "llsf_msgs.InstructMachine"))
+
+  (pb-set-field ?im "id" ?id)
+  (pb-set-field ?im "machine" (str-cat (fact-slot-value ?mf name)))
+    
+  (return ?im)
+)
+
+(deffunction net-create-mps-set-lights (?mf ?id ?red ?yellow ?green)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.SetSignalLight"))
+    (pb-set-field ?im-pb "red" ?red)
+    (pb-set-field ?im-pb "yellow" ?yellow)
+    (pb-set-field ?im-pb "green" ?green)
+  (pb-set-field ?im "light_state" ?im-pb)
+  
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_SET_SIGNAL_LIGHT)
+  (return ?im)
+)
+
+(deffunction net-create-mps-push-out (?mf ?id ?side)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.MoveConveyorBelt"))
+  (switch ?side
+    (case OUTPUT then
+      (pb-set-field ?im-pb "direction" FORWARD)
+      (pb-set-field ?im-pb "stop_sensor" SENSOR_OUTPUT)
+    )
+    (case INPUT then
+      (pb-set-field ?im-pb "direction" BACKWARD)
+      (pb-set-field ?im-pb "stop_sensor" SENSOR_INPUT)
+    )
+  )
+
+  (pb-set-field ?im "conveyor_belt" ?im-pb)
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_MOVE_CONVEYOR)
+  (return ?im)
+)
+
+(deffunction net-create-mps-wait-for-pickup (?mf ?id ?side)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+; TODO this is inclomplete
+  (bind ?im-pb (pb-create "llsf_msgs.SetSignalLight"))
+    (pb-set-field ?im-pb "red" OFF)
+    (pb-set-field ?im-pb "yellow" BLINK)
+    (pb-set-field ?im-pb "green" OFF)
+  (pb-set-field ?im "light_state" ?im-pb)
+; missing, what sensor I need to check
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_WAIT_FOR_PICKUP)
+  (return ?im)
+)
+
+(deffunction net-create-bs-process (?mf ?id ?color)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.BSPushBase"))
+  (switch ?color
+    (case BASE_RED    then (pb-set-field ?im-pb "slot" ?*BS_SLOT_BASE_RED*))
+    (case BASE_BLACK  then (pb-set-field ?im-pb "slot" ?*BS_SLOT_BASE_BLACK*))
+    (case BASE_SILVER then (pb-set-field ?im-pb "slot" ?*BS_SLOT_BASE_SILVER*))
+  )
+  (pb-set-field ?im "bs" ?im-pb)
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_BS)
+  (return ?im)
+)
+

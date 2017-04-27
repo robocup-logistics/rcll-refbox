@@ -46,7 +46,7 @@
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
   ; How long to wait after retrieval to switch to IDLE state
-  ?*RETRIEVE-WAIT-IDLE-TIME* = 5
+  ?*RETRIEVE-WAIT-IDLE-TIME* = 0
 
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1
@@ -115,4 +115,10 @@
     M_Z13 M_Z23 M_Z33 M_Z43 M_Z53 M_Z63 M_Z73 
     M_Z12 M_Z22 M_Z32 M_Z42 M_Z52 M_Z62 M_Z72 
     M_Z11 M_Z21 M_Z31 M_Z41)
+
+  ; global game configs
+  ?*BS_SLOT_BASE_RED* = 1
+  ?*BS_SLOT_BASE_SILVER* = 2
+  ?*BS_SLOT_BASE_BLACK* = 3
+
 )

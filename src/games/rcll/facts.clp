@@ -26,6 +26,9 @@
   ; Set on processing a state change
   (slot proc-state (type SYMBOL) (default IDLE))
   (slot prev-state (type SYMBOL) (default IDLE))
+  ; The intermediet states of the MPS during processing
+  (slot processing-state (type SYMBOL) (allowed-values NONE WAIT-FOR-PRODUCT PROCESS DRIVE-TO-OUT WAIT-FOR-PICKUP) (default NONE))
+  (slot prev-processing-state (type SYMBOL) (allowed-values NONE WAIT-FOR-PRODUCT PROCESS DRIVE-TO-OUT WAIT-FOR-PICKUP) (default NONE))
   ; This is the state indicated by the MPS
   (slot mps-state-deferred (type SYMBOL) (default NONE))
   (slot mps-state (type SYMBOL) (default IDLE))
@@ -109,6 +112,12 @@
 (deftemplate mirror-orientation
   (slot cyan (type INTEGER))
   (slot magenta (type INTEGER))
+)
+(deftemplate pb-machine-reply
+  (slot id (type INTEGER))
+;  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (slot machine (type SYMBOL) (allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 C-SS M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2 M-SS))
+  ; slot set not needed yet
 )
 
 (deftemplate robot
@@ -309,6 +318,16 @@
   (slot real-time-factor (type FLOAT) (default 0.0))
 )
 
+(deftemplate mps-comm-id-last
+  (slot id (type INTEGER))
+)
+
+(deftemplate mps-comm-id
+  (slot id (type INTEGER))
+  (slot name (type SYMBOL) (allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 C-SS M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2 M-SS))
+  (slot game-time (type FLOAT))
+  (slot task (type SYMBOL) (allowed-values NONE WAIT-FOR-PRODUCT PROCESS DRIVE-TO-OUT WAIT-FOR-PICKUP CHANGE-LIGHT))
+)
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg
@@ -376,6 +395,8 @@
   (machine-ss-filled (name M-SS) (slot 3 0 0))
   (machine-ss-filled (name M-SS) (slot 4 0 0))
   (machine-ss-filled (name M-SS) (slot 5 0 0))
+
+  (mps-comm-id-last (id 1))
 )
 
 (deffacts light-codes

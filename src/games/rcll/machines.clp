@@ -26,10 +26,10 @@
 )
 
 (defrule machine-lights "Set machines if desired lights differ from actual lights"
-  ?mf <- (machine (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
+  (gamestate (game-time ?gt))
+  ?mf <- (machine (name ?n) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
   =>
-  ;(printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
-  (modify ?mf (actual-lights ?dl))
+  ;(printout t ?n " actual lights: " ?al "  desired: " ?dl crlf)
 	(if (member$ RED-ON ?dl) then (bind ?red-state ON)
 	 else (if (member$ RED-BLINK ?dl) then (bind ?red-state BLINK)
 	 else (bind ?red-state OFF)))
@@ -40,7 +40,35 @@
 	 else (if (member$ GREEN-BLINK ?dl) then (bind ?green-state BLINK)
 	 else (bind ?green-state OFF)))
 
-	(mps-set-lights (str-cat ?m) (str-cat ?red-state) (str-cat ?yellow-state) (str-cat ?green-state))
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-set-lights ?mf ?id ?red-state ?yellow-state ?green-state))
+
+  (net-send-mps-change ?id ?n ?gt CHANGE-LIGHT ?s)
+
+  (modify ?mf (actual-lights ?dl))
+)
+
+(defrule machine-lights-finished
+  "light change finished successfully"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task CHANGE-LIGHT))
+  ?m <- (machine (name ?n))
+  =>  
+;  (printout t "Machine " ?n " successfully change the light" crlf)
+  (retract ?id-comm ?pb)
+)
+
+(defrule machine-finished-unknown
+  "I get a msg from a machine with an unknown ID"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  (not (mps-comm-id (id ?id-final)))
+  =>  
+  (printout error "Received finish msg from MPS " ?n " with unknown ID " ?id-final " going to ignore" crlf)
+  (retract ?pb)
 )
 
 (deffunction zone-magenta-for-cyan (?cyan-zone)

@@ -4,6 +4,7 @@
 ;
 ;  Created: Thu Feb 07 19:31:12 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -124,11 +125,9 @@
                  then
                   ; check if slot is filled
                   (if (any-factp ((?ss-slot machine-ss-filled)) (and (eq ?ss-slot:name ?mname)
-                                                                     (and (eq (nth$ 1 ?ss-slot:slot) ?slot-x)
-                                                                          (and (eq (nth$ 2 ?ss-slot:slot) ?slot-y)
-                                                                               (eq (nth$ 3 ?ss-slot:slot) ?slot-z)
-                                                                          )
-                                                                     )
+                                                                     (eq (nth$ 1 ?ss-slot:slot) ?slot-x)
+                                                                     (eq (nth$ 2 ?ss-slot:slot) ?slot-y)
+                                                                     (eq (nth$ 3 ?ss-slot:slot) ?slot-z)
                                                                 )
                       )
                    then
@@ -281,7 +280,7 @@
   (modify ?m (desired-lights GREEN-ON))
 )
 
-(defrule prod-proc-state-processing-bs
+(defrule prod-proc-state-processing-bs-start
   "BS must be instructed to dispense base for processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -289,9 +288,72 @@
 		 (bs-side ?side) (bs-color ?color))
   =>
   (printout t "Machine " ?n " dispensing " ?color " base on " ?side crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  ; TODO: (mps-instruct DISPENSE-BASE ?side ?color)
-  (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
+  (printout t "Machine " ?n " push out " ?color " base " crlf)
+
+  ; send to MPSes what to do
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-bs-process ?m ?id ?color))
+
+  (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
+             (processing-state PROCESS) (prev-processing-state NONE))
+)
+
+(defrule prod-proc-state-processing-picked-up
+  "base picked up from output"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task WAIT-FOR-PICKUP))
+  ?m <- (machine (name ?n) (mtype BS) (state READY-AT-OUTPUT)
+          (processing-state ?task-finished) (bs-side ?side))
+  =>
+  (printout t "Machine " ?n " base piced up at " ?side crlf)
+  ; TODO: Test gt vs ?id-comm time, time diff too big?
+
+  (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PICKUP)
+             (state READY-AT-OUTPUT) (mps-state RETRIEVED))
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-bs-intermedite
+  "steps of the bs production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING)
+          (processing-state ?task-finished) (bs-side ?side))
+  =>
+  (switch ?task-finished
+    (case PROCESS then
+      (printout t "Machine " ?n " move base to " ?side crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-push-out ?m ?id ?side))
+    
+      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+
+      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
+    )
+    (case DRIVE-TO-OUT then
+      (printout t "Machine " ?n " base ready for retreival at " ?side crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-wait-for-pickup ?m ?id ?side))
+    
+      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+
+      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
+                 (state READY-AT-OUTPUT))
+    )
+    (default
+      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
+    )
+  )
+  (retract ?id-comm ?pb)
 )
 
 (defrule prod-proc-state-processing-ds
