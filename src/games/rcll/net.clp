@@ -450,7 +450,7 @@
 
 	    (bind ?psm (pb-create "llsf_msgs.SSTask"))
 	    (pb-set-field ?psm "operation" (fact-slot-value ?mf ss-operation))
-	    (pb-set-field ?psm "shelf" ?pssm)
+	    (pb-set-field ?psm "slot" ?pssm)
 
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
 	    (pb-set-field ?pm "task" ?psm)
@@ -749,6 +749,23 @@
   (pb-set-field ?im "bs" ?im-pb)
 
   (pb-set-field ?im "set" INSTRUCT_MACHINE_BS)
+  (return ?im)
+)
+
+(deffunction net-create-ss-process (?mf ?id ?operation ?x ?y ?z)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-slot (pb-create "llsf_msgs.SSSlot"))
+  (pb-set-field ?im-slot "x" ?x)
+  (pb-set-field ?im-slot "y" ?y)
+  (pb-set-field ?im-slot "z" ?z)
+
+  (bind ?im-st (pb-create "llsf_msgs.SSTask"))
+  (pb-set-field ?im-st "operation" ?operation)
+  (pb-set-field ?im-st "slot" ?im-slot)
+
+  (pb-set-field ?im "ss" ?im-st)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_SS)
   (return ?im)
 )
 

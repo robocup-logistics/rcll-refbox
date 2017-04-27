@@ -116,7 +116,7 @@
 	        (bind ?prepmsg (pb-field-value ?p "instruction_ss"))
 	        (bind ?task (pb-field-value ?prepmsg "task"))
 		(bind ?operation (sym-cat (pb-field-value ?task "operation")))
-		(bind ?slot (pb-field-value ?task "shelf"))
+		(bind ?slot (pb-field-value ?task "slot"))
                 (bind ?slot-x (pb-field-value ?slot "x"))
                 (bind ?slot-y (pb-field-value ?slot "y"))
                 (bind ?slot-z (pb-field-value ?slot "z"))
@@ -254,7 +254,7 @@
   "BS station goes directly to processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype BS) (state PREPARED) (proc-state ~PREPARED))
+  ?m <- (machine (name ?n) (mtype BS|SS) (state PREPARED) (proc-state ~PREPARED))
   =>
   (printout t "Machine " ?n " switching directly to PROCESSING on prepare" crlf)
   (modify ?m (state PROCESSING) (proc-state PREPARED) (desired-lights GREEN-BLINK)
@@ -300,16 +300,47 @@
              (processing-state PROCESS) (prev-processing-state NONE))
 )
 
+(defrule prod-proc-state-processing-ss-start
+  "SS must be instructed to dispense a C0 for processing"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z))
+  =>
+  (switch ?operation
+    (case STORE then
+      (printout t "Machine " ?n " received operation " ?operation ", is not supported in the rcll game" crlf)
+      ;TODO broken
+    )
+    (case RETRIEVE then
+      (printout t "Machine " ?n " " ?operation " product from " ?slot-x " " ?slot-y " " ?slot-z crlf)
+
+      ; send to MPSes what to do
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-ss-process ?m ?id ?operation ?slot-x ?slot-y ?slot-z))
+
+      (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+
+      (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
+                 (processing-state PROCESS) (prev-processing-state NONE))
+    )
+    (default
+      (printout t "Machine " ?n " received unknown operation " ?operation crlf)
+      ;TODO break mps
+    )
+  )
+)
+
 (defrule prod-proc-state-processing-picked-up
   "base picked up from output"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
   ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task WAIT-FOR-PICKUP))
-  ?m <- (machine (name ?n) (mtype BS) (state READY-AT-OUTPUT)
-          (processing-state ?task-finished) (bs-side ?side))
+  ?m <- (machine (name ?n) (state READY-AT-OUTPUT)
+          (processing-state ?task-finished))
   =>
-  (printout t "Machine " ?n " base piced up at " ?side crlf)
+  (printout t "Machine " ?n " base piced up" crlf)
   ; TODO: Test gt vs ?id-comm time, time diff too big?
 
   (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PICKUP)
@@ -343,6 +374,45 @@
 
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-wait-for-pickup ?m ?id ?side))
+    
+      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+
+      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
+                 (state READY-AT-OUTPUT))
+    )
+    (default
+      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
+    )
+  )
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-ss-intermedite
+  "steps of the ss production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?m <- (machine (name ?n) (mtype SS) (state PROCESSING)
+          (processing-state ?task-finished) )
+  =>
+  (switch ?task-finished
+    (case PROCESS then
+      (printout t "Machine " ?n " move base out" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-push-out ?m ?id OUTPUT))
+    
+      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+
+      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
+    )
+    (case DRIVE-TO-OUT then
+      (printout t "Machine " ?n " base ready for retreival" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
     
       (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
 

@@ -47,12 +47,12 @@
   (modify ?st (now ?new-sim-time) (last-recv-time ?now) (real-time-factor ?rtf))
 )
 
-(defrule sim-mps-processed
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  (machine (name ?n) (state PROCESSING) (bases-added ?ba))
-  =>
-  (assert (machine-mps-state (name ?n) (state PROCESSED) (num-bases ?ba)))
-)
+;(defrule sim-mps-processed
+;  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+;  (machine (name ?n) (state PROCESSING) (bases-added ?ba))
+;  =>
+;  (assert (machine-mps-state (name ?n) (state PROCESSED) (num-bases ?ba)))
+;)
 
 (deffunction mps-reset (?name)
   ;(bind ?name (sym-cat ?name))

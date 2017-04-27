@@ -106,57 +106,82 @@ void
 handle_message(uint16_t component_id, uint16_t msg_type,
 	       std::shared_ptr<google::protobuf::Message> msg)
 {
+  bool reply = false;
   unsigned int id = -1;
   std::string machine = "NOT-SET";
   std::shared_ptr<llsf_msgs::InstructMachine> im;
   if ( (im = std::dynamic_pointer_cast<llsf_msgs::InstructMachine>(msg)) ) {
     id = im->id();
     machine = im->machine();
-    if (machine == machine_name_) {
-      if ( im->machine().find("BS") != std::string::npos ) { // check here if it is a BS
-        switch ( im->set() ) {
-          case llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT:
-            printf("Set light to: (ryg): %s, %s, %s\n",
-                   llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
-                   llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
-                   llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
-                  );
-            sleep(1);
-            break;
-          case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR:
-            printf("Move conveyor to %s and stop at %s\n",
-                   llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
-                   llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
-                  );
-            sleep(5);
-            break;
-          case llsf_msgs::INSTRUCT_MACHINE_WAIT_FOR_PICKUP:
-            printf("Wait for pickup at TODO-fix-msg-and-send-sensor grace-time is TODO-add change light to (ryg) %s %s %s in case the product is picked up\n",
-                   llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
-                   llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
-                   llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
-                  );
-            sleep(5);
-            break;
-          case llsf_msgs::INSTRUCT_MACHINE_BS:
-            printf("Pushout from feeder # %u\n",
-                   im->bs().slot()
-                  );
-            sleep(2);
-            break;
-          case llsf_msgs::INSTRUCT_MACHINE_SS:
-//            break;
-          case llsf_msgs::INSTRUCT_MACHINE_RS:
-//            break;
-          case llsf_msgs::INSTRUCT_MACHINE_CS:
-//            break;
-          case llsf_msgs::INSTRUCT_MACHINE_DS:
-//            break;
-          default:
-            printf("Error, unknown \"set\": %u\n", im->set());
-            break;
-        }
+    if (machine == machine_name_) { // if this machine is running here
 
+      reply = true;
+
+      // generic stuff for machines
+      switch ( im->set() ) {
+        case llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT:
+          printf("Set light to: (ryg): %s, %s, %s\n",
+                 llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
+                 llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
+                 llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
+                );
+          sleep(1);
+          break;
+        case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR:
+          printf("Move conveyor to %s and stop at %s\n",
+                 llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
+                 llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
+                );
+          sleep(5);
+          break;
+        case llsf_msgs::INSTRUCT_MACHINE_STOP_CONVEYOR:
+          printf("STOP! conveyor\n");
+          sleep(1);
+          break;
+        case llsf_msgs::INSTRUCT_MACHINE_WAIT_FOR_PICKUP:
+          printf("Wait for pickup at TODO-fix-msg-and-send-sensor grace-time is TODO-add change light to (ryg) %s %s %s in case the product is picked up\n",
+                 llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
+                 llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
+                 llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
+                );
+          sleep(5);
+          break;
+        default:
+          // now do the specifig stuff for the machines
+          if ( im->machine().find("BS") != std::string::npos ) {  // if it is a BS
+            switch ( im->set() ) {
+              case llsf_msgs::INSTRUCT_MACHINE_BS:
+                printf("Pushout from feeder # %u\n",
+                       im->bs().slot()
+                      );
+                sleep(2);
+                break;
+              default:
+                printf("Error, unknown \"set\": %u\n", im->set());
+                reply = false;
+                break;
+            }
+          } else if ( im->machine().find("SS") != std::string::npos ) {
+
+            switch ( im->set() ) {
+              case llsf_msgs::INSTRUCT_MACHINE_SS:
+                printf("%s from slot %u %u %u\n",
+                       llsf_msgs::SSOp_Name( im->ss().operation() ).c_str(),
+                       im->ss().slot().x(),
+                       im->ss().slot().y(),
+                       im->ss().slot().z()
+                      );
+                sleep(15);
+                break;
+              default:
+                printf("Error, unknown \"set\": %u\n", im->set());
+                reply = false;
+                break;
+            }
+          }
+      }
+
+      if ( reply ) {
         llsf_msgs::MachineReply reply;
         reply.set_id( id );
         reply.set_machine( machine );

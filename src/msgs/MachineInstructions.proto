@@ -63,7 +63,7 @@ message BSPushBase {
 
 message SSTask {
   required SSOp   operation = 2;
-  required SSSlot shelf     = 3;
+  required SSSlot slot      = 3;
 }
 
 message RSMountRing {

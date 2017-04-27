@@ -177,7 +177,7 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
         llsf_msgs::SSTask *ss_task = prep_ss->mutable_task();
         ss_task->set_operation( ss_op_ );
         
-        llsf_msgs::SSSlot *ss_slot = ss_task->mutable_shelf();
+        llsf_msgs::SSSlot *ss_slot = ss_task->mutable_slot();
         ss_slot->set_x(ss_slot_x_);
         ss_slot->set_y(ss_slot_y_);
         ss_slot->set_z(ss_slot_z_);
