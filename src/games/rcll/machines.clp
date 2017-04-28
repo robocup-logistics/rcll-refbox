@@ -60,6 +60,23 @@
   (retract ?id-comm ?pb)
 )
 
+(defrule machine-wait-for-product-too-long
+  "a machines was prepared, but the product was not fed into the machine in time"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
+  ?mf <- (machine (name ?n) (state PROCESSING)
+         (processing-state WAIT-FOR-PRODUCT) (waiting-for-product-since ?wait-since&:(timeout-sec ?gt ?wait-since ?*WAIT-FOR-PRODUCT-MAX*)))
+  =>
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-stop-conveyor ?mf ?id))
+
+  (net-send-mps-change ?id ?n ?gt STOP-CONVEYOR ?s)
+
+  (retract ?id-comm)
+  (modify ?mf (state BROKEN) (broken-reason (str-cat "Prepared " ?n " but did not fed product in time")))
+)
+
 (defrule machine-finished-unknown
   "I get a msg from a machine with an unknown ID"
   (declare (salience ?*PRIORITY_HIGH*))

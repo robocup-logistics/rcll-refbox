@@ -178,6 +178,18 @@ handle_message(uint16_t component_id, uint16_t msg_type,
                 reply = false;
                 break;
             }
+          } else if ( im->machine().find("DS") != std::string::npos ) {
+
+            switch ( im->set() ) {
+              case llsf_msgs::INSTRUCT_MACHINE_DS:
+                printf("Set to gate %u\n", im->ds().gate() );
+                sleep(1);
+                break;
+              default:
+                printf("Error, unknown \"set\": %u\n", im->set());
+                reply = false;
+                break;
+            }
           }
       }
 

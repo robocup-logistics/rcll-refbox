@@ -250,7 +250,7 @@
   (mps-reset (str-cat ?n))
 )
 
-(defrule prod-proc-state-prepared-bs
+(defrule prod-proc-state-prepared-bs-and-ss
   "BS station goes directly to processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -266,7 +266,7 @@
   ?m <- (machine (name ?n) (mtype ?t) (state PREPARED) (proc-state ~PREPARED))
   =>
   (printout t "Machine " ?n " of type " ?t " switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+  (modify ?m (state PROCESSING) (proc-state PREPARED) (desired-lights GREEN-BLINK)
 	  (prep-blink-start ?gt))
 )
 
@@ -277,7 +277,7 @@
 		 (prep-blink-start ?bs&:(timeout-sec ?gt ?bs ?*PREPARED-BLINK-TIME*)))
   =>
   (printout t "Machine " ?n " in PREPARED state stopping blinking" crlf)
-  (modify ?m (desired-lights GREEN-ON))
+  (modify ?m (desired-lights GREEN-ON YELLOW-ON))
 )
 
 (defrule prod-proc-state-processing-bs-start
@@ -309,7 +309,7 @@
   =>
   (switch ?operation
     (case STORE then
-      (printout t "Machine " ?n " received operation " ?operation ", is not supported in the rcll game" crlf)
+      (printout t "Machine " ?n " received operation " ?operation ", is not allowed in the game" crlf)
       ;TODO broken
     )
     (case RETRIEVE then
@@ -331,6 +331,25 @@
   )
 )
 
+(defrule prod-proc-state-processing-ds-start
+  "DS ..."
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (ds-gate ?gate))
+  =>
+  (printout t "Machine " ?n " processing to gate " ?gate crlf)
+
+  ; send to MPSes what to do
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-ds-process ?m ?id ?gate))
+
+  (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+
+  (modify ?m (proc-state PROCESSING) (ds-gate 0) (ds-last-gate ?gate)
+             (processing-state PROCESS) (prev-processing-state NONE))
+)
+
 (defrule prod-proc-state-processing-picked-up
   "base picked up from output"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -344,7 +363,7 @@
   ; TODO: Test gt vs ?id-comm time, time diff too big?
 
   (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PICKUP)
-             (state READY-AT-OUTPUT) (mps-state RETRIEVED))
+             (state PROCESSED) (proc-state READY-AT-OUTPUT) (mps-state RETRIEVED))
   (retract ?id-comm ?pb)
 )
 
@@ -362,7 +381,7 @@
       (printout t "Machine " ?n " move base to " ?side crlf)
       ; TODO: Test gt vs ?id-comm time, time diff too big?
       (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-push-out ?m ?id ?side))
+      (bind ?s (net-create-mps-move-conveyor ?m ?id ?side))
     
       (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
 
@@ -387,6 +406,42 @@
   (retract ?id-comm ?pb)
 )
 
+(defrule prod-proc-state-processing-ds-intermedite
+  "steps of the ds production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?m <- (machine (name ?n) (mtype DS) (state PROCESSING)
+          (processing-state ?task-finished) (ds-last-gate ?gate))
+  =>
+  (switch ?task-finished
+    (case PROCESS then
+      (printout t "Machine " ?n " wait for product" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
+    
+      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
+
+      (modify ?m (processing-state WAIT-FOR-PRODUCT) (prev-processing-state ?task-finished)
+                 (waiting-for-product-since ?gt)
+      )
+    )
+    (case WAIT-FOR-PRODUCT then
+      (printout t "Machine " ?n " received product at gate " ?gate crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+
+      (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PRODUCT)
+                 (state PROCESSED))
+    )
+    (default
+      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
+    )
+  )
+  (retract ?id-comm ?pb)
+)
+
 (defrule prod-proc-state-processing-ss-intermedite
   "steps of the ss production cycle after first step"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -401,7 +456,7 @@
       (printout t "Machine " ?n " move base out" crlf)
       ; TODO: Test gt vs ?id-comm time, time diff too big?
       (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-push-out ?m ?id OUTPUT))
+      (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
     
       (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
 
@@ -424,18 +479,6 @@
     )
   )
   (retract ?id-comm ?pb)
-)
-
-(defrule prod-proc-state-processing-ds
-  "BS must be instructed to dispense base for processing"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (ds-gate ?gate))
-  =>
-  (printout t "Machine " ?n " processing to gate " ?gate crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-gate 0) (ds-last-gate ?gate))
-  (mps-ds-process (str-cat ?n) ?gate)
 )
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
@@ -489,14 +532,13 @@
   (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
 )
 
-(defrule prod-proc-state-processed-ds
+(defrule prod-proc-state-processed-bs-ds-ss
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state ~PROCESSED))
+  ?m <- (machine (name ?n) (mtype BS|DS|SS) (state PROCESSED) (proc-state ~PROCESSED))
   =>
-  (printout t "Machine " ?n " finished processing, moving to output" crlf)
+  (printout t "Machine " ?n " finished processing" crlf)
   (modify ?m (state IDLE) (proc-state PROCESSED))
-  (mps-deliver (str-cat ?n))
 )
 
 (defrule prod-proc-state-processed-rs

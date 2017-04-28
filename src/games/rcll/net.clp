@@ -703,7 +703,14 @@
   (return ?im)
 )
 
-(deffunction net-create-mps-push-out (?mf ?id ?side)
+(deffunction net-create-mps-stop-conveyor (?mf ?id)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_STOP_CONVEYOR)
+  (return ?im)
+)
+
+(deffunction net-create-mps-move-conveyor (?mf ?id ?side)
   (bind ?im (net-create-instruct-machine-generic ?mf ?id))
 
   (bind ?im-pb (pb-create "llsf_msgs.MoveConveyorBelt"))
@@ -715,6 +722,10 @@
     (case INPUT then
       (pb-set-field ?im-pb "direction" BACKWARD)
       (pb-set-field ?im-pb "stop_sensor" SENSOR_INPUT)
+    )
+    (case MIDDLE then
+      (pb-set-field ?im-pb "direction" FORWARD)
+      (pb-set-field ?im-pb "stop_sensor" SENSOR_MIDDLE)
     )
   )
 
@@ -766,6 +777,17 @@
 
   (pb-set-field ?im "ss" ?im-st)
   (pb-set-field ?im "set" INSTRUCT_MACHINE_SS)
+  (return ?im)
+)
+
+(deffunction net-create-ds-process (?mf ?id ?gate)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.DSActivateGate"))
+  (pb-set-field ?im-pb "gate" ?gate)
+
+  (pb-set-field ?im "ds" ?im-pb)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_DS)
   (return ?im)
 )
 

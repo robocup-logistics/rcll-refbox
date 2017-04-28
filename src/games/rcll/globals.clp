@@ -43,6 +43,8 @@
   ?*DOWN-TYPES*    = (create$ RS CS)
   ?*BROKEN-DOWN-TIME* = 30
   ?*LOADED-WITH-MAX* = 3
+  ; Time to wait untill a product has to be fed into the machine
+  ?*WAIT-FOR-PRODUCT-MAX* = 35
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
   ; How long to wait after retrieval to switch to IDLE state
