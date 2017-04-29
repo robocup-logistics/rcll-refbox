@@ -190,6 +190,18 @@ handle_message(uint16_t component_id, uint16_t msg_type,
                 reply = false;
                 break;
             }
+          } else if ( im->machine().find("CS") != std::string::npos ) {
+
+            switch ( im->set() ) {
+              case llsf_msgs::INSTRUCT_MACHINE_CS:
+                printf("%s cap\n", llsf_msgs::CSOp_Name( im->cs().operation() ).c_str() );
+                sleep(2);
+                break;
+              default:
+                printf("Error, unknown \"set\": %u\n", im->set());
+                reply = false;
+                break;
+            }
           }
       }
 

@@ -350,6 +350,26 @@
              (processing-state PROCESS) (prev-processing-state NONE))
 )
 
+(defrule prod-proc-state-processing-cs-start
+  "CS ..."
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (cs-operation ?op))
+  =>
+  (printout t ?op " on machine " ?n ", wait for product" crlf)
+
+  ; send to MPSes what to do
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
+
+  (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
+
+  (modify ?m (proc-state PROCESSING) (waiting-for-product-since ?gt)
+             (processing-state WAIT-FOR-PRODUCT) (prev-processing-state NONE)
+             (desired-lights GREEN-ON YELLOW-ON))
+)
+
 (defrule prod-proc-state-processing-picked-up
   "base picked up from output"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -363,7 +383,7 @@
   ; TODO: Test gt vs ?id-comm time, time diff too big?
 
   (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PICKUP)
-             (state PROCESSED) (proc-state READY-AT-OUTPUT) (mps-state RETRIEVED))
+             (state PROCESSED) (proc-state READY-AT-OUTPUT))
   (retract ?id-comm ?pb)
 )
 
@@ -434,6 +454,55 @@
 
       (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PRODUCT)
                  (state PROCESSED))
+    )
+    (default
+      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
+    )
+  )
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-cs-intermedite
+  "steps of the cs production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING)
+          (processing-state ?task-finished) (cs-operation ?op))
+  =>
+  (switch ?task-finished
+    (case WAIT-FOR-PRODUCT then
+      (printout t "Machine " ?n " received product, process" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-cs-process ?m ?id ?op))
+    
+      (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+
+      (modify ?m (processing-state PROCESS) (prev-processing-state ?task-finished))
+    )
+    (case PROCESS then
+      (printout t "Machine " ?n " move base out" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
+    
+      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+
+      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
+    )
+    (case DRIVE-TO-OUT then
+      (printout t "Machine " ?n " base ready for retreival" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
+    
+      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+
+      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
+                 (state READY-AT-OUTPUT))
     )
     (default
       (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
@@ -516,20 +585,9 @@
   ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (cs-operation MOUNT_CAP) (cs-retrieved FALSE))
   =>
+  ; TODO, can this be reached?
   (modify ?m (state BROKEN) (proc-state PROCESSING)
 	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
-)
-
-(defrule prod-proc-state-processing-cs-mount
-  "Process on CS"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (cs-operation ?cs-op))
-  =>
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t ?cs-op " on machine " ?n crlf)
-  (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
 )
 
 (defrule prod-proc-state-processed-bs-ds-ss
@@ -559,20 +617,9 @@
   ?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state ~PROCESSED)
 		 (cs-operation ?cs-op))
   =>
-  (printout t "Machine " ?n " finished " ?cs-op crlf)
   (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
-  (modify ?m (proc-state PROCESSED) (cs-retrieved ?have-cap))
-  (mps-deliver (str-cat ?n))
+  (modify ?m (state IDLE) (proc-state PROCESSED) (cs-retrieved ?have-cap))
 )
-
-;(defrule prod-proc-state-processed
-;  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-;  ?m <- (machine (name ?n) (state PROCESSED) (proc-state ~PROCESSED))
-;  =>
-;  (printout t "Machine " ?n " finished processing, moving to output" crlf)
-;  (modify ?m (proc-state PROCESSED))
-;  (mps-deliver (str-cat ?n))
-;)
 
 (defrule prod-proc-state-ready-at-output
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))

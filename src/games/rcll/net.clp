@@ -791,3 +791,14 @@
   (return ?im)
 )
 
+(deffunction net-create-cs-process (?mf ?id ?op)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.CSTask"))
+  (pb-set-field ?im-pb "operation" ?op)
+
+  (pb-set-field ?im "cs" ?im-pb)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_CS)
+  (return ?im)
+)
+
