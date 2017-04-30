@@ -65,7 +65,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
-  ?mf <- (machine (name ?n) (state PROCESSING)
+  ?mf <- (machine (name ?n) (state PREPARED)
          (processing-state WAIT-FOR-PRODUCT) (waiting-for-product-since ?wait-since&:(timeout-sec ?gt ?wait-since ?*WAIT-FOR-PRODUCT-MAX*)))
   =>
   (bind ?id (net-get-new-id))
