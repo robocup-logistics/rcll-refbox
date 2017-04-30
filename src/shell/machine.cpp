@@ -52,7 +52,7 @@ namespace llsfrb_shell {
 
 LLSFRefBoxShellMachine::LLSFRefBoxShellMachine(std::string name, std::string type,
 					       int begin_y, int begin_x, bool visible)
-  : NCursesPanel(1, 24, begin_y, begin_x),
+  : NCursesPanel(1, 28, begin_y, begin_x),
     visible_(visible)
 {
   set_visible(visible_);
