@@ -346,7 +346,7 @@
 
   (net-send-mps-change ?id ?n ?gt PROCESS ?s)
 
-  (modify ?m (proc-state PROCESSING) (ds-gate 0) (ds-last-gate ?gate)
+  (modify ?m (proc-state PROCESSING) (ds-gate ?gate) (ds-last-gate ?gate)
              (processing-state PROCESS) (prev-processing-state NONE))
 )
 
@@ -358,6 +358,28 @@
 		 (cs-operation ?op))
   =>
   (printout t ?op " on machine " ?n ", wait for product" crlf)
+
+  ; send to MPSes what to do
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
+
+  (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
+
+  (modify ?m (proc-state PROCESSING) (waiting-for-product-since ?gt)
+             (processing-state WAIT-FOR-PRODUCT) (prev-processing-state NONE)
+             (desired-lights GREEN-ON YELLOW-ON))
+)
+
+(defrule prod-proc-state-processing-rs-start
+  "RS ..."
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
+		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
+                 (bases-added ?ba) (bases-used ?bu))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
+  =>
+  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) ", wait for product" crlf)
 
   ; send to MPSes what to do
   (bind ?id (net-get-new-id))
@@ -511,6 +533,55 @@
   (retract ?id-comm ?pb)
 )
 
+(defrule prod-proc-state-processing-rs-intermedite
+  "steps of the rs production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING)
+          (processing-state ?task-finished) (rs-ring-color ?color))
+  =>
+  (switch ?task-finished
+    (case WAIT-FOR-PRODUCT then
+      (printout t "Machine " ?n " received product, process" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-rs-process ?m ?id ?color))
+    
+      (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+
+      (modify ?m (processing-state PROCESS) (prev-processing-state ?task-finished))
+    )
+    (case PROCESS then
+      (printout t "Machine " ?n " move base out" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
+    
+      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+
+      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
+    )
+    (case DRIVE-TO-OUT then
+      (printout t "Machine " ?n " base ready for retreival" crlf)
+      ; TODO: Test gt vs ?id-comm time, time diff too big?
+
+      (bind ?id (net-get-new-id))
+      (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
+    
+      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+
+      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
+                 (state READY-AT-OUTPUT))
+    )
+    (default
+      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
+    )
+  )
+  (retract ?id-comm ?pb)
+)
+
 (defrule prod-proc-state-processing-ss-intermedite
   "steps of the ss production cycle after first step"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -564,20 +635,6 @@
 				  (- ?ba ?bu) " < " ?req-bases ")")))
 )
 
-(defrule prod-proc-state-processing-rs
-  "Instruct RS to mount ring"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
-                 (bases-added ?ba) (bases-used ?bu))
-  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
-  =>
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) crlf)
-  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
-)
-
 (defrule prod-proc-state-processing-cs-mount-without-retrieve
   "Process on CS"
   (declare (salience ?*PRIORITY_HIGHER*))
@@ -606,9 +663,8 @@
 		 (rs-ring-color ?ring-color) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
   =>
-  (printout t "Machine " ?n " finished processing, moving to output" crlf)
-  (modify ?m (proc-state PROCESSED) (bases-used (+ ?bu ?req-bases)))
-  (mps-deliver (str-cat ?n))
+  (printout t "Machine " ?n " finished processing" crlf)
+  (modify ?m (state IDLE) (proc-state PROCESSED) (bases-used (+ ?bu ?req-bases)))
 )
 
 (defrule prod-proc-state-processed-cs

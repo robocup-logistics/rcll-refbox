@@ -802,3 +802,25 @@
   (return ?im)
 )
 
+(deffunction net-create-rs-process (?mf ?id ?color)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.RSMountRing"))
+  (if (eq ?color (nth$ 1 (fact-slot-value ?mf rs-ring-colors)))
+   then
+    (pb-set-field ?im-pb "feeder" 0)
+   else
+    (if (eq ?color (nth$ 2 (fact-slot-value ?mf rs-ring-colors)))
+     then
+      (pb-set-field ?im-pb "feeder" 1)
+     else
+      (printout error "RefBox error, can't instruct correct feeder to mount ring" crlf)
+      (printout error "want to mount " ?color " but availabe is " (fact-slot-value ?mf rs-ring-colors) crlf)
+    )
+  )
+
+  (pb-set-field ?im "rs" ?im-pb)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_RS)
+  (return ?im)
+)
+

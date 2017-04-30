@@ -202,6 +202,18 @@ handle_message(uint16_t component_id, uint16_t msg_type,
                 reply = false;
                 break;
             }
+          } else if ( im->machine().find("RS") != std::string::npos ) {
+
+            switch ( im->set() ) {
+              case llsf_msgs::INSTRUCT_MACHINE_RS:
+                printf("Mount ring from feeder %u\n", im->rs().feeder() );
+                sleep(2);
+                break;
+              default:
+                printf("Error, unknown \"set\": %u\n", im->set());
+                reply = false;
+                break;
+            }
           }
       }
 
