@@ -589,7 +589,28 @@
   (retract ?id-comm ?pb)
 )
 
-(defrule prod-proc-state-processing-ss-intermedite
+(defrule prod-proc-state-processing-ss-processed
+  "steps of the ss production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task PROCESS))
+  ?m <- (machine (name ?n) (mtype SS) (state PROCESSING)
+          (processing-state PROCESS) (ss-slot ?slot-x ?slot-y ?slot-z))
+  ?slot <- (machine-ss-filled (name ?n) (slot ?slot-x ?slot-y ?slot-z))
+  =>
+  (printout t "Machine " ?n " move base out" crlf)
+  ; TODO: Test gt vs ?id-comm time, time diff too big?
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
+    
+  (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+
+  (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state PROCESS))
+  (retract ?id-comm ?pb ?slot)
+)
+
+(defrule prod-proc-state-processing-ss-intermedite-driven-to-out
   "steps of the ss production cycle after first step"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -599,16 +620,6 @@
           (processing-state ?task-finished) )
   =>
   (switch ?task-finished
-    (case PROCESS then
-      (printout t "Machine " ?n " move base out" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
-    
-      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
-
-      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
-    )
     (case DRIVE-TO-OUT then
       (printout t "Machine " ?n " base ready for retreival" crlf)
       ; TODO: Test gt vs ?id-comm time, time diff too big?
