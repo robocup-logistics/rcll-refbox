@@ -108,12 +108,12 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 {
   bool reply = false;
   unsigned int id = -1;
-  std::string machine = "NOT-SET";
+//  std::string machine = "NOT-SET";
   std::shared_ptr<llsf_msgs::InstructMachine> im;
   if ( (im = std::dynamic_pointer_cast<llsf_msgs::InstructMachine>(msg)) ) {
     id = im->id();
-    machine = im->machine();
-    if (machine == machine_name_) { // if this machine is running here
+//    machine = im->machine();
+//    if (machine == machine_name_) { // if this machine is running here
 
       reply = true;
 
@@ -125,14 +125,13 @@ handle_message(uint16_t component_id, uint16_t msg_type,
                  llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
                  llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
                 );
-          sleep(1);
           break;
         case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR:
           printf("Move conveyor to %s and stop at %s\n",
                  llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
                  llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
                 );
-          sleep(5);
+          sleep(2);
           break;
         case llsf_msgs::INSTRUCT_MACHINE_STOP_CONVEYOR:
           printf("STOP! conveyor\n");
@@ -144,7 +143,7 @@ handle_message(uint16_t component_id, uint16_t msg_type,
                  llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
                  llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
                 );
-          sleep(5);
+          sleep(2);
           break;
         default:
           // now do the specifig stuff for the machines
@@ -154,7 +153,7 @@ handle_message(uint16_t component_id, uint16_t msg_type,
                 printf("Pushout from feeder # %u\n",
                        im->bs().slot()
                       );
-                sleep(2);
+                sleep(1);
                 break;
               default:
                 printf("Error, unknown \"set\": %u\n", im->set());
@@ -171,7 +170,7 @@ handle_message(uint16_t component_id, uint16_t msg_type,
                        im->ss().slot().y(),
                        im->ss().slot().z()
                       );
-                sleep(15);
+                sleep(5);
                 break;
               default:
                 printf("Error, unknown \"set\": %u\n", im->set());
@@ -220,11 +219,11 @@ handle_message(uint16_t component_id, uint16_t msg_type,
       if ( reply ) {
         llsf_msgs::MachineReply reply;
         reply.set_id( id );
-        reply.set_machine( machine );
+        reply.set_machine( im->machine() );
         reply.set_set( llsf_msgs::MACHINE_REPLY_FINISHED );
         client_->send(reply);
       }
-    }
+//    }
   }
 }
 
@@ -233,7 +232,8 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 void
 usage(const char *progname)
 {
-  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
+//  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
+  printf("Usage: %s [-R host[:port]]\n",
 	 progname);
 }
 
@@ -243,18 +243,19 @@ main(int argc, char **argv)
 {
   client_ = new ProtobufStreamClient();
 
-  ArgumentParser argp(argc, argv, "m:R");
+//  ArgumentParser argp(argc, argv, "m:R");
+  ArgumentParser argp(argc, argv, "R");
 
-  if ( ! (argp.has_arg("m")) ) {
-    usage(argv[0]);
-    exit(1);
-  }
+//  if ( ! (argp.has_arg("m")) ) {
+//    usage(argv[0]);
+//    exit(1);
+//  }
 
-  if ( ! argp.has_arg("m")) {
-    printf("No machine name given\n");
-    exit(-1);
-  }
-  machine_name_ = argp.arg("m");
+//  if ( ! argp.has_arg("m")) {
+//    printf("No machine name given\n");
+//    exit(-1);
+//  }
+//  machine_name_ = argp.arg("m");
 
   MessageRegister & message_register = client_->message_register();
   message_register.add_message_type<llsf_msgs::InstructMachine>();
