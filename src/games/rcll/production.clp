@@ -261,14 +261,14 @@
 	  (prep-blink-start ?gt))
 )
 
-(defrule prod-proc-state-prepared
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype ?t) (state PREPARED) (proc-state ~PREPARED))
-  =>
-  (printout t "Machine " ?n " of type " ?t " switching to PREPARED state" crlf)
-  (modify ?m (state PROCESSING) (proc-state PREPARED) (desired-lights GREEN-BLINK)
-	  (prep-blink-start ?gt))
-)
+;(defrule prod-proc-state-prepared
+;  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+;  ?m <- (machine (name ?n) (mtype ?t) (state PREPARED) (proc-state ~PREPARED))
+;  =>
+;  (printout t "Machine " ?n " of type " ?t " switching to PREPARED state" crlf)
+;  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+;	  (prep-blink-start ?gt))
+;)
 
 (defrule prod-proc-state-prepared-stop-blinking
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -335,8 +335,8 @@
   "DS ..."
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (ds-gate ?gate))
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED)
+		 (ds-gate ?gate) (processing-state ~PROCESS))
   =>
   (printout t "Machine " ?n " processing to gate " ?gate crlf)
 
@@ -346,7 +346,8 @@
 
   (net-send-mps-change ?id ?n ?gt PROCESS ?s)
 
-  (modify ?m (proc-state PROCESSING) (ds-gate ?gate) (ds-last-gate ?gate)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+             (prep-blink-start ?gt) (ds-last-gate ?gate)
              (processing-state PROCESS) (prev-processing-state NONE))
 )
 
@@ -354,7 +355,7 @@
   "CS ..."
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
+  ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (proc-state ~PREPARED)
 		 (cs-operation ?op))
   =>
   (printout t ?op " on machine " ?n ", wait for product" crlf)
@@ -365,16 +366,17 @@
 
   (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
 
-  (modify ?m (proc-state PROCESSING) (waiting-for-product-since ?gt)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+             (prep-blink-start ?gt) (waiting-for-product-since ?gt)
              (processing-state WAIT-FOR-PRODUCT) (prev-processing-state NONE)
-             (desired-lights GREEN-ON YELLOW-ON))
+  )
 )
 
 (defrule prod-proc-state-processing-rs-start
   "RS ..."
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (proc-state ~PREPARED)
 		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
                  (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
@@ -387,9 +389,10 @@
 
   (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
 
-  (modify ?m (proc-state PROCESSING) (waiting-for-product-since ?gt)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+             (prep-blink-start ?gt) (waiting-for-product-since ?gt)
              (processing-state WAIT-FOR-PRODUCT) (prev-processing-state NONE)
-             (desired-lights GREEN-ON YELLOW-ON))
+  )
 )
 
 (defrule prod-proc-state-processing-picked-up
@@ -454,7 +457,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
   ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype DS) (state PROCESSING)
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED|PROCESSING)
           (processing-state ?task-finished) (ds-last-gate ?gate))
   =>
   (switch ?task-finished
@@ -490,7 +493,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
   ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING)
+  ?m <- (machine (name ?n) (mtype CS) (state PREPARED|PROCESSING)
           (processing-state ?task-finished) (cs-operation ?op))
   =>
   (switch ?task-finished
@@ -502,7 +505,9 @@
     
       (net-send-mps-change ?id ?n ?gt PROCESS ?s)
 
-      (modify ?m (processing-state PROCESS) (prev-processing-state ?task-finished))
+      (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
+                 (processing-state PROCESS) (prev-processing-state ?task-finished)
+      )
     )
     (case PROCESS then
       (printout t "Machine " ?n " move base out" crlf)
@@ -539,7 +544,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
   ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING)
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED|PROCESSING)
           (processing-state ?task-finished) (rs-ring-color ?color))
   =>
   (switch ?task-finished
@@ -551,7 +556,9 @@
     
       (net-send-mps-change ?id ?n ?gt PROCESS ?s)
 
-      (modify ?m (processing-state PROCESS) (prev-processing-state ?task-finished))
+      (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
+                 (processing-state PROCESS) (prev-processing-state ?task-finished)
+      )
     )
     (case PROCESS then
       (printout t "Machine " ?n " move base out" crlf)
