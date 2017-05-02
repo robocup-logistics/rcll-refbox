@@ -188,7 +188,7 @@ main(int argc, char **argv)
                                                   msg_team_cyan, msg_team_magenta,
                                                   msg_phase, msg_state));
   client_->signal_disconnected().connect(handle_disconnected);
-  client_->async_connect("localhost", 4444);
+  client_->async_connect(host_.c_str(), port_);
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
