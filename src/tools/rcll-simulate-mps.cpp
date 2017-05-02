@@ -37,7 +37,9 @@
 
 #define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
-#include <protobuf_comm/client.h>
+#include <config/yaml.h>
+
+#include <protobuf_comm/server.h>
 #include <utils/system/argparser.h>
 
 #include <msgs/MachineInstructions.pb.h>
@@ -50,7 +52,7 @@ using namespace fawkes;
 boost::asio::io_service io_service_;
 
 static bool quit = false;
-ProtobufStreamClient *client_ = NULL;
+ProtobufStreamServer *server_ = NULL;
 
 std::string machine_name_;
 
@@ -64,7 +66,8 @@ signal_handler(const boost::system::error_code& error, int signum)
 }
 
 void
-handle_connected()
+handle_connected(ProtobufStreamServer::ClientID client,
+                 boost::asio::ip::tcp::endpoint &endpoint)
 {
   printf("Connected to RefBox\n");
 //  llsf_msgs::SetMachineLights set_lights;
@@ -96,24 +99,34 @@ handle_connected()
 }
 
 void
-handle_disconnected(const boost::system::error_code &ec)
+handle_disconnected(ProtobufStreamServer::ClientID client,
+                    const boost::system::error_code &error)
 {
-  quit = true;
-  io_service_.stop();
+//  quit = true;
+//  io_service_.stop();
 }
 
 void
-handle_message(uint16_t component_id, uint16_t msg_type,
-	       std::shared_ptr<google::protobuf::Message> msg)
+handle_receive_failed(ProtobufStreamServer::ClientID client,
+                      uint16_t component_id, uint16_t msg_type,
+                      std::string msg)
+{
+  printf("Received failed to %u: comp_id: %u, msg_type: %u\n", client, component_id, msg_type);
+}
+
+void
+handle_message(ProtobufStreamServer::ClientID client,
+               uint16_t component_id, uint16_t msg_type,
+               std::shared_ptr<google::protobuf::Message> msg)
 {
   bool reply = false;
   unsigned int id = -1;
-//  std::string machine = "NOT-SET";
+  std::string machine = "NOT-SET";
   std::shared_ptr<llsf_msgs::InstructMachine> im;
   if ( (im = std::dynamic_pointer_cast<llsf_msgs::InstructMachine>(msg)) ) {
     id = im->id();
-//    machine = im->machine();
-//    if (machine == machine_name_) { // if this machine is running here
+    machine = im->machine();
+    if (machine == machine_name_) { // if this machine is running here
 
       reply = true;
 
@@ -221,9 +234,9 @@ handle_message(uint16_t component_id, uint16_t msg_type,
         reply.set_id( id );
         reply.set_machine( im->machine() );
         reply.set_set( llsf_msgs::MACHINE_REPLY_FINISHED );
-        client_->send(reply);
+        server_->send_to_all(reply);
       }
-//    }
+    }
   }
 }
 
@@ -232,8 +245,8 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 void
 usage(const char *progname)
 {
-//  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
-  printf("Usage: %s [-R host[:port]]\n",
+  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
+//  printf("Usage: %s [-R host[:port]]\n",
 	 progname);
 }
 
@@ -241,35 +254,29 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-  client_ = new ProtobufStreamClient();
+  ArgumentParser argp(argc, argv, "m:R");
+//  ArgumentParser argp(argc, argv, "R");
 
-//  ArgumentParser argp(argc, argv, "m:R");
-  ArgumentParser argp(argc, argv, "R");
+  if ( ! (argp.has_arg("m")) ) {
+    usage(argv[0]);
+    exit(1);
+  }
+  machine_name_ = argp.arg("m");
 
-//  if ( ! (argp.has_arg("m")) ) {
-//    usage(argv[0]);
-//    exit(1);
-//  }
+  llsfrb::YamlConfiguration *config_ = new llsfrb::YamlConfiguration(CONFDIR);
+  config_->load("config.yaml");
+  std::string cfg_prefix = std::string("/llsfrb/mps/stations/");
+//  std::string host = config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
+  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
 
-//  if ( ! argp.has_arg("m")) {
-//    printf("No machine name given\n");
-//    exit(-1);
-//  }
-//  machine_name_ = argp.arg("m");
+  MessageRegister * message_register = new MessageRegister();
+  message_register->add_message_type<llsf_msgs::InstructMachine>();
+  server_ = new ProtobufStreamServer(port, message_register);
 
-  MessageRegister & message_register = client_->message_register();
-  message_register.add_message_type<llsf_msgs::InstructMachine>();
-
-  char *host = (char *)"localhost";
-  unsigned short int port = 4444;
-  bool free_host = argp.parse_hostport("R", &host, &port);
-  
-  client_->signal_received().connect(handle_message);
-  client_->signal_connected().connect(handle_connected);
-  client_->signal_disconnected().connect(handle_disconnected);
-  client_->async_connect(host, port);
-
-  if (free_host)  free(host);
+  server_->signal_connected().connect(handle_connected);
+  server_->signal_disconnected().connect(handle_disconnected);
+  server_->signal_received().connect(handle_message);
+  server_->signal_receive_failed().connect(handle_receive_failed);
 
 #if BOOST_ASIO_VERSION >= 100601
   // Construct a signal set registered for process termination.
@@ -284,7 +291,7 @@ main(int argc, char **argv)
     io_service_.reset();
   } while (! quit);
 
-  delete client_;
+  delete server_;
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();

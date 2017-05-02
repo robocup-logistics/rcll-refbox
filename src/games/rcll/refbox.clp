@@ -11,6 +11,7 @@
 ; LLSF RefBox Version
 ; Set from refbox.cpp according to src/libs/core/version.h
 
+(load* (resolve-file mps.clp))
 (load* (resolve-file net.clp))
 (if (config-get-bool "/llsfrb/simulation/enable")
   then (printout t "Enabling simulation" crlf) (load* (resolve-file simulation.clp)))

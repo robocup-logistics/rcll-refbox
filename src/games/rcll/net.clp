@@ -662,8 +662,8 @@
 
 (deffunction net-send-mps-change (?id ?name ?gt ?task ?s )
   ; send msg
-  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
-    (pb-send ?client:id ?s) 
+  (do-for-all-facts ((?mps mps)) (eq ?mps:name (str-cat ?name))
+    (pb-send ?mps:client-id ?s) 
   )
   (pb-destroy ?s) 
   ; remember ID and task
