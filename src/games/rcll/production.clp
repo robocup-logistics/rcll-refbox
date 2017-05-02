@@ -247,7 +247,8 @@
   =>
   (printout t "Machine " ?n " switching to IDLE state" crlf)
   (modify ?m (proc-state IDLE) (desired-lights GREEN-ON))
-  (mps-reset (str-cat ?n))
+;  (mps-reset (str-cat ?n))
+; TODO 2017
 )
 
 (defrule prod-proc-state-prepared-bs-and-ss

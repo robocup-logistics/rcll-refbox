@@ -13,7 +13,8 @@
   ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
   (modify ?mf (desired-lights))
-  (mps-reset (str-cat ?m))
+;  (mps-reset (str-cat ?m))
+; TODO 2017
 )
 
 
@@ -21,7 +22,8 @@
   (init)
   =>
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (mps-reset ?machine:name)
+;    (mps-reset ?machine:name)
+; TODO 2017
   )
 )
 
@@ -116,7 +118,8 @@
 (deffunction machine-init-randomize (?ring-colors)
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
+;    (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
+; TODO 2017
     (modify ?machine (productions 0) (state IDLE)
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
