@@ -47,12 +47,16 @@ using namespace protobuf_comm;
 using namespace llsf_msgs;
 using namespace fawkes;
 
-boost::asio::io_service io_service_;
+static boost::asio::io_service io_service_;
 boost::asio::deadline_timer reconnect_timer_(io_service_);
 
 static bool quit_ = false;
 static bool wait_refbox_ = false;
+static unsigned int wait_refbox_time_ = 0;
+boost::asio::deadline_timer wait_refbox_timer_(io_service_);
 static bool wait_state_ = false;
+static unsigned int wait_state_time_ = 0;
+boost::asio::deadline_timer wait_state_timer_(io_service_);
 ProtobufStreamClient *client_ = NULL;
 static std::string host_ = "localhost";
 static unsigned short int port_ = 4444;
@@ -61,13 +65,24 @@ llsf_msgs::SetTeamName *msg_team_cyan_ = NULL, *msg_team_magenta_ = NULL;
 llsf_msgs::SetGamePhase *msg_phase_ = NULL;
 llsf_msgs::SetGameState *msg_state_ = NULL;
 
+boost::posix_time::ptime start_time_(boost::posix_time::second_clock::universal_time());
+
+int exitcode_ = 0;
+
+void
+quit(int exitcode = 0, const char *errmsg = NULL)
+{
+	if (errmsg)  fprintf(stderr, "%s\n", errmsg);
+	exitcode_ = exitcode;
+	wait_refbox_timer_.cancel();
+	quit_ = true;
+	io_service_.stop();
+}
+
 void
 signal_handler(const boost::system::error_code& error, int signum)
 {
-  if (!error) {
-    quit_ = true;
-    io_service_.stop();
-  }
+  if (!error)  quit();
 }
 
 void
@@ -79,8 +94,7 @@ handle_disconnected(const boost::system::error_code &ec)
 		                                        host_.c_str(), port_));
 	} else {
 		fprintf(stderr, "Failed to connect: %s\n", ec.message().c_str());
-		quit_ = true;
-		io_service_.stop();
+		quit(1);
 	}
 }
 
@@ -89,35 +103,39 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 	       std::shared_ptr<google::protobuf::Message> msg)
 {
 	std::shared_ptr<VersionInfo> v;
-	if ((v = std::dynamic_pointer_cast<VersionInfo>(msg)) && ! wait_state_) {
-		// connected, send what we came for
-		if (msg_team_cyan_) {
-			printf("Sending cyan team: %s\n", msg_team_cyan_->team_name().c_str());
-			client_->send(*msg_team_cyan_);
+	if ((v = std::dynamic_pointer_cast<VersionInfo>(msg))) {
+		wait_refbox_timer_.cancel();
+
+		if (wait_state_) {
+			if (wait_state_time_ > 0) {
+				wait_refbox_timer_.expires_from_now(boost::posix_time::seconds(wait_state_time_));
+				wait_refbox_timer_.async_wait([](const boost::system::error_code &ec)
+				                              { if (! ec)  quit(2, "Timeout waiting for state"); });
+			}
+		} else {
+			// connected, send what we came for
+			if (msg_team_cyan_) {
+				printf("Sending cyan team: %s\n", msg_team_cyan_->team_name().c_str());
+				client_->send(*msg_team_cyan_);
+			}
+			if (msg_team_magenta_) {
+				printf("Sending magenta team: %s\n", msg_team_magenta_->team_name().c_str());
+				client_->send(*msg_team_magenta_);
+			}
+			if (msg_phase_) {
+				printf("Sending Phase: %s\n", GameState_Phase_Name(msg_phase_->phase()).c_str());
+				client_->send(*msg_phase_);
+			}
+			if (msg_state_) {
+				printf("Sending State: %s\n", GameState_State_Name(msg_state_->state()).c_str());
+				client_->send(*msg_state_);
+			}
+			quit();
 		}
-		if (msg_team_magenta_) {
-			printf("Sending magenta team: %s\n", msg_team_magenta_->team_name().c_str());
-			client_->send(*msg_team_magenta_);
-		}
-		if (msg_phase_) {
-			printf("Sending Phase: %s\n", GameState_Phase_Name(msg_phase_->phase()).c_str());
-			client_->send(*msg_phase_);
-		}
-		if (msg_state_) {
-			printf("Sending State: %s\n", GameState_State_Name(msg_state_->state()).c_str());
-			client_->send(*msg_state_);
-		}
-		
-		quit_ = true;
-		io_service_.stop();
 	}
 
 	std::shared_ptr<GameState> g;
 	if ((g = std::dynamic_pointer_cast<GameState>(msg)) && wait_state_) {
-		printf("Gamestate %s %s %s %s\n",
-		       g->team_cyan().c_str(), g->team_magenta().c_str(),
-		       GameState_Phase_Name(g->phase()).c_str(),
-		       GameState_State_Name(g->state()).c_str());
 		bool matches = true;
 		if (msg_team_cyan_ && msg_team_cyan_->team_name() != g->team_cyan()) {
 			matches = false;
@@ -132,12 +150,11 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 			matches = false;
 		}
 		if (matches) {
-			quit_ = true;
-			io_service_.stop();
+			wait_state_timer_.cancel();
+			quit();
 		}
 	}
 }
-
 
 
 void
@@ -167,8 +184,8 @@ usage(const char *progname)
          " -m <team name>   Set name of Magenta team\n"
          " -r <remote>      Connect to given host\n"
          "                  remote is of the form: host[:port]\n"
-         " -w               Wait for refbox startup\n"
-         " -W               Wait for given phase/state/teams\n"
+         " -w[T]            Wait for refbox startup, optionally wait at most T seconds\n"
+         " -W[T]            Wait for given phase/state/teams, optionally wait at most T seconds\n"
          " -h               Show this help message\n");
 }
 
@@ -176,9 +193,10 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-  client_ = new ProtobufStreamClient();
 
-  ArgumentParser argp(argc, argv, "hwWs:p:c:m:r:");
+	client_ = new ProtobufStreamClient();
+
+  ArgumentParser argp(argc, argv, "hw::W::s:p:c:m:r:");
 
   if (argp.has_arg("h")) {
     usage(argv[0]);
@@ -193,9 +211,18 @@ main(int argc, char **argv)
 
   if ( argp.has_arg("w") ) {
 	  wait_refbox_ = true;
+	  if (argp.arg("w")) {
+		  wait_refbox_time_ = argp.parse_int("w");
+		  wait_refbox_timer_.expires_from_now(boost::posix_time::seconds(wait_refbox_time_));
+		  wait_refbox_timer_.async_wait([](const boost::system::error_code &ec)
+		                                { if (! ec)  quit(3, "Timeout waiting for refbox"); });
+	  }
   }
 
   if ( argp.has_arg("W") ) {
+	  if (argp.arg("W")) {
+		  wait_state_time_ = argp.parse_int("W");
+	  }
 	  wait_state_ = true;
   }
 
@@ -269,4 +296,6 @@ main(int argc, char **argv)
 
   // Delete all global objects allocated by libprotobuf
   google::protobuf::ShutdownProtobufLibrary();
+
+  return exitcode_;
 }
