@@ -41,62 +41,101 @@
 
 #include <msgs/GameState.pb.h>
 #include <msgs/GameInfo.pb.h>
+#include <msgs/VersionInfo.pb.h>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
 using namespace fawkes;
 
 boost::asio::io_service io_service_;
+boost::asio::deadline_timer reconnect_timer_(io_service_);
 
-static bool quit = false;
+static bool quit_ = false;
+static bool wait_refbox_ = false;
+static bool wait_state_ = false;
 ProtobufStreamClient *client_ = NULL;
+static std::string host_ = "localhost";
+static unsigned short int port_ = 4444;
+
+llsf_msgs::SetTeamName *msg_team_cyan_ = NULL, *msg_team_magenta_ = NULL;
+llsf_msgs::SetGamePhase *msg_phase_ = NULL;
+llsf_msgs::SetGameState *msg_state_ = NULL;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
 {
   if (!error) {
-    quit = true;
+    quit_ = true;
     io_service_.stop();
   }
 }
 
 void
-handle_connected(llsf_msgs::SetTeamName *msg_team_cyan,
-                 llsf_msgs::SetTeamName *msg_team_magenta,
-                 llsf_msgs::SetGamePhase *msg_phase,
-                 llsf_msgs::SetGameState *msg_state)
-{
-  if (msg_team_cyan) {
-	  printf("Sending cyan team: %s\n", msg_team_cyan->team_name().c_str());
-	  client_->send(*msg_team_cyan);
-  }
-  if (msg_team_magenta) {
-	  printf("Sending magenta team: %s\n", msg_team_magenta->team_name().c_str());
-	  client_->send(*msg_team_magenta);
-  }
-  if (msg_phase) {
-	  printf("Sending Phase: %s\n", GameState_Phase_Name(msg_phase->phase()).c_str());
-	  client_->send(*msg_phase);
-  }
-  if (msg_state) {
-	  printf("Sending State: %s\n", GameState_State_Name(msg_state->state()).c_str());
-	  client_->send(*msg_state);
-  }
-  quit = true;
-  io_service_.stop();
-}
-
-void
 handle_disconnected(const boost::system::error_code &ec)
 {
-  quit = true;
-  io_service_.stop();
+	if (wait_refbox_) {
+		reconnect_timer_.expires_from_now(boost::posix_time::seconds(1));
+		reconnect_timer_.async_wait(boost::bind(&ProtobufStreamClient::async_connect, client_,
+		                                        host_.c_str(), port_));
+	} else {
+		fprintf(stderr, "Failed to connect: %s\n", ec.message().c_str());
+		quit_ = true;
+		io_service_.stop();
+	}
 }
 
 void
 handle_message(uint16_t component_id, uint16_t msg_type,
 	       std::shared_ptr<google::protobuf::Message> msg)
 {
+	std::shared_ptr<VersionInfo> v;
+	if ((v = std::dynamic_pointer_cast<VersionInfo>(msg)) && ! wait_state_) {
+		// connected, send what we came for
+		if (msg_team_cyan_) {
+			printf("Sending cyan team: %s\n", msg_team_cyan_->team_name().c_str());
+			client_->send(*msg_team_cyan_);
+		}
+		if (msg_team_magenta_) {
+			printf("Sending magenta team: %s\n", msg_team_magenta_->team_name().c_str());
+			client_->send(*msg_team_magenta_);
+		}
+		if (msg_phase_) {
+			printf("Sending Phase: %s\n", GameState_Phase_Name(msg_phase_->phase()).c_str());
+			client_->send(*msg_phase_);
+		}
+		if (msg_state_) {
+			printf("Sending State: %s\n", GameState_State_Name(msg_state_->state()).c_str());
+			client_->send(*msg_state_);
+		}
+		
+		quit_ = true;
+		io_service_.stop();
+	}
+
+	std::shared_ptr<GameState> g;
+	if ((g = std::dynamic_pointer_cast<GameState>(msg)) && wait_state_) {
+		printf("Gamestate %s %s %s %s\n",
+		       g->team_cyan().c_str(), g->team_magenta().c_str(),
+		       GameState_Phase_Name(g->phase()).c_str(),
+		       GameState_State_Name(g->state()).c_str());
+		bool matches = true;
+		if (msg_team_cyan_ && msg_team_cyan_->team_name() != g->team_cyan()) {
+			matches = false;
+		}
+		if (msg_team_magenta_ && msg_team_magenta_->team_name() != g->team_magenta()) {
+			matches = false;
+		}
+		if (msg_phase_ && msg_phase_->phase() != g->phase()) {
+			matches = false;
+		}
+		if (msg_state_ && msg_state_->state() != g->state()) {
+			matches = false;
+		}
+		if (matches) {
+			quit_ = true;
+			io_service_.stop();
+		}
+	}
 }
 
 
@@ -128,6 +167,8 @@ usage(const char *progname)
          " -m <team name>   Set name of Magenta team\n"
          " -r <remote>      Connect to given host\n"
          "                  remote is of the form: host[:port]\n"
+         " -w               Wait for refbox startup\n"
+         " -W               Wait for given phase/state/teams\n"
          " -h               Show this help message\n");
 }
 
@@ -137,18 +178,26 @@ main(int argc, char **argv)
 {
   client_ = new ProtobufStreamClient();
 
-  ArgumentParser argp(argc, argv, "hs:p:c:m:r:");
+  ArgumentParser argp(argc, argv, "hwWs:p:c:m:r:");
 
   if (argp.has_arg("h")) {
     usage(argv[0]);
     exit(1);
   }
 
-  llsf_msgs::SetTeamName *msg_team_cyan = NULL, *msg_team_magenta = NULL;
-  llsf_msgs::SetGamePhase *msg_phase = NULL;
-  llsf_msgs::SetGameState *msg_state = NULL;
-
   // Parse parameters and messages here for early failure
+
+  if ( argp.has_arg("r") ) {
+    argp.parse_hostport("r", host_, port_);
+  }
+
+  if ( argp.has_arg("w") ) {
+	  wait_refbox_ = true;
+  }
+
+  if ( argp.has_arg("W") ) {
+	  wait_state_ = true;
+  }
 
   if (argp.has_arg("p")) {
 	  llsf_msgs::GameState::Phase p;
@@ -157,8 +206,8 @@ main(int argc, char **argv)
 		  usage(argv[0]);
 		  exit(2);
 	  }
-	  msg_phase = new llsf_msgs::SetGamePhase();
-	  msg_phase->set_phase(p);
+	  msg_phase_ = new llsf_msgs::SetGamePhase();
+	  msg_phase_->set_phase(p);
   }
   if (argp.has_arg("s")) {
 	  llsf_msgs::GameState::State s;
@@ -167,26 +216,30 @@ main(int argc, char **argv)
 		  usage(argv[0]);
 		  exit(2);
 	  }
-	  msg_state = new llsf_msgs::SetGameState();
-	  msg_state->set_state(s);
+	  msg_state_ = new llsf_msgs::SetGameState();
+	  msg_state_->set_state(s);
   }
   if (argp.has_arg("c")) {
-	  msg_team_cyan = new llsf_msgs::SetTeamName();
-	  msg_team_cyan->set_team_name(argp.arg("c"));
-	  msg_team_cyan->set_team_color(llsf_msgs::CYAN);
+	  msg_team_cyan_ = new llsf_msgs::SetTeamName();
+	  msg_team_cyan_->set_team_name(argp.arg("c"));
+	  msg_team_cyan_->set_team_color(llsf_msgs::CYAN);
   }
   if (argp.has_arg("m")) {
-	  msg_team_magenta = new llsf_msgs::SetTeamName();
-	  msg_team_magenta->set_team_name(argp.arg("m"));
-	  msg_team_magenta->set_team_color(llsf_msgs::MAGENTA);
+	  msg_team_magenta_ = new llsf_msgs::SetTeamName();
+	  msg_team_magenta_->set_team_name(argp.arg("m"));
+	  msg_team_magenta_->set_team_color(llsf_msgs::MAGENTA);
   }
 
-  //MessageRegister & message_register = client_->message_register();
+  MessageRegister & message_register = client_->message_register();
+  message_register.add_message_type<VersionInfo>();
+  message_register.add_message_type<GameState>();
 
   client_->signal_received().connect(handle_message);
+  /*
   client_->signal_connected().connect(boost::bind(handle_connected,
                                                   msg_team_cyan, msg_team_magenta,
                                                   msg_phase, msg_state));
+  */
   client_->signal_disconnected().connect(handle_disconnected);
   client_->async_connect(host_.c_str(), port_);
 
@@ -203,7 +256,7 @@ main(int argc, char **argv)
   do {
     io_service_.run();
     io_service_.reset();
-  } while (! quit);
+  } while (! quit_);
 
   unsigned int tries = 0;
   while (! client_->outbound_done() && ++tries < 500) {
