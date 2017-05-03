@@ -111,6 +111,47 @@
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
+            (case SS then
+	      (if (pb-has-field ?p "instruction_ss")
+	       then
+	        (bind ?prepmsg (pb-field-value ?p "instruction_ss"))
+	        (bind ?task (pb-field-value ?prepmsg "task"))
+		(bind ?operation (sym-cat (pb-field-value ?task "operation")))
+		(bind ?slot (pb-field-value ?task "shelf"))
+                (bind ?slot-x (pb-field-value ?slot "x"))
+                (bind ?slot-y (pb-field-value ?slot "y"))
+                (bind ?slot-z (pb-field-value ?slot "z"))
+
+                (if (eq ?operation RETRIEVE)
+                 then
+                  ; check if slot is filled
+                  (if (any-factp ((?ss-slot machine-ss-filled)) (and (eq ?ss-slot:name ?mname)
+                                                                     (and (eq (nth$ 1 ?ss-slot:slot) ?slot-x)
+                                                                          (and (eq (nth$ 2 ?ss-slot:slot) ?slot-y)
+                                                                               (eq (nth$ 3 ?ss-slot:slot) ?slot-z)
+                                                                          )
+                                                                     )
+                                                                )
+                      )
+                   then
+                    (printout t "Prepared " ?mname " (RETRIVE: (" ?slot-x ", " ?slot-y ", " ?slot-z ") )" crlf)
+                    (modify ?m (state PREPARED) (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z))
+                   else
+		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with RETRIVE (" ?slot-x ", " ?slot-y ", " ?slot-z ") but this is empty")))
+                  )
+                 else
+                  (if (eq ?operation STORE)
+                   then
+		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with STORE-operation")))
+                   else
+		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation")))
+                  )
+                )
+               else
+		(modify ?m (state BROKEN)(prev-state ?m:state)
+			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+	      )
+            )
             (case RS then
 	      (if (pb-has-field ?p "instruction_rs")
 	       then

@@ -72,6 +72,9 @@
   (slot ds-gate (type INTEGER))
   (slot ds-last-gate (type INTEGER))
 
+  (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
+  (multislot ss-slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
+
   (slot rs-ring-color (type SYMBOL)
 	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
@@ -85,6 +88,11 @@
   (slot name (type SYMBOL))
   (slot state (type SYMBOL))
   (slot num-bases (type INTEGER) (default 0))
+)
+
+(deftemplate machine-ss-filled
+  (slot name (type SYMBOL))
+  (multislot slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
 )
 
 (deftemplate machine-light-code
@@ -356,6 +364,19 @@
   (mirror-orientation (cyan 225) (magenta 315))
   (mirror-orientation (cyan 270) (magenta 270))
   (mirror-orientation (cyan 315) (magenta 225))
+
+  (machine-ss-filled (name C-SS) (slot 0 0 0))
+  (machine-ss-filled (name C-SS) (slot 1 0 0))
+  (machine-ss-filled (name C-SS) (slot 2 0 0))
+  (machine-ss-filled (name C-SS) (slot 3 0 0))
+  (machine-ss-filled (name C-SS) (slot 4 0 0))
+  (machine-ss-filled (name C-SS) (slot 5 0 0))
+  (machine-ss-filled (name M-SS) (slot 0 0 0))
+  (machine-ss-filled (name M-SS) (slot 1 0 0))
+  (machine-ss-filled (name M-SS) (slot 2 0 0))
+  (machine-ss-filled (name M-SS) (slot 3 0 0))
+  (machine-ss-filled (name M-SS) (slot 4 0 0))
+  (machine-ss-filled (name M-SS) (slot 5 0 0))
 )
 
 (deffacts light-codes
