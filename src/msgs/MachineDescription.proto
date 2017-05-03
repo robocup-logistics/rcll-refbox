@@ -54,6 +54,26 @@ enum LightState {
   BLINK = 2;
 }
 
+enum ConveyorDirection {
+  FORWARD  = 1;	// from input to output
+  BACKWARD = 2;	// from output to input
+}
+
+enum SensorOnMPS {
+  SENSOR_INPUT  = 1;
+  SENSOR_OUTPUT = 2;
+  SENSOR_MIDDLE = 3;
+}
+
+enum SSOp {
+  STORE   = 1;
+  RETRIVE = 2;
+}
+
+enum SSField {
+  TODO = 1;
+}
+
 enum CSOp {
   RETRIEVE_CAP = 1;
   MOUNT_CAP    = 2;
