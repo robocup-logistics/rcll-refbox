@@ -54,3 +54,7 @@ enum LightState {
   BLINK = 2;
 }
 
+enum CSOp {
+  RETRIEVE_CAP = 1;
+  MOUNT_CAP    = 2;
+}

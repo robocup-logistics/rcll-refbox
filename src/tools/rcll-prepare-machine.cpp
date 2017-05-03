@@ -59,7 +59,7 @@ llsf_msgs::MachineSide bs_side_;
 llsf_msgs::BaseColor   bs_color_;
 int ds_gate_;
 llsf_msgs::RingColor rs_ring_color_;
-llsf_msgs::CsOp cs_operation_;
+llsf_msgs::CSOp cs_operation_;
 std::string team_name_;
 Team        team_color_;
 ProtobufBroadcastPeer *peer_public_ = NULL;
@@ -226,7 +226,7 @@ main(int argc, char **argv)
       printf("Invalid ring color\n"); exit(-2);
     }
   } else if (machine_type_ == "CS") {
-    if (! llsf_msgs::CsOp_Parse(argp.items()[2], &cs_operation_)) {
+    if (! llsf_msgs::CSOp_Parse(argp.items()[2], &cs_operation_)) {
       printf("Invalid CS operation\n"); exit(-2);
     }
   }
