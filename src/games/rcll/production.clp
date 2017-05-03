@@ -103,7 +103,9 @@
 	        (bind ?prepmsg (pb-field-value ?p "instruction_ds"))
 		(bind ?gate (pb-field-value ?prepmsg "gate"))
 		(printout t "Prepared " ?mname " (gate: " ?gate ")" crlf)
-	        (modify ?m (state PREPARED) (ds-gate ?gate))
+	        (modify ?m (state PREPARED) (ds-gate ?gate)
+                           (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                           ;(wait-for-product-since ?gt))
                else
 		(modify ?m (state BROKEN) (prev-state ?m:state)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
@@ -117,7 +119,9 @@
 		(if (member$ ?ring-color ?m:rs-ring-colors)
 		 then
 		  (printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
-	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color))
+	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color)
+                             (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                             ;(wait-for-product-since ?gt))
                  else
 		  (modify ?m (state BROKEN) (prev-state ?m:state)
 			  (broken-reason (str-cat "Prepare received for " ?mname
@@ -139,7 +143,9 @@
 		    (if (not ?m:cs-retrieved)
 		     then
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-	              (modify ?m (state PREPARED) (cs-operation ?cs-op))
+	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
+                                 (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                                 ;(wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN) (prev-state ?m:state)
 			      (broken-reason (str-cat "Prepare received for " ?mname ": "
@@ -150,7 +156,9 @@
 		    (if ?m:cs-retrieved
 		     then
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-	              (modify ?m (state PREPARED) (cs-operation ?cs-op))
+	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
+                                 (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                                 ;(wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN) (prev-state ?m:state)
 			      (broken-reason (str-cat "Prepare received for " ?mname
@@ -467,6 +475,15 @@
   ?m <- (machine (name ?n) (state PREPARED) (mps-state AVAILABLE))
   =>
   (modify ?m (state PROCESSING) (proc-start ?gt) (mps-state AVAILABLE-HANDLED))
+)
+
+(defrule prod-prepared-but-no-input
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (state PROCESSING)
+        (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
+  =>
+  (modify ?m (state BROKEN) (prev-state PROCESSING)
+             (broken-reason (str-cat "MPS " ?n " prepared, but no product feed in time")))
 )
 
 (defrule prod-machine-proc-done
