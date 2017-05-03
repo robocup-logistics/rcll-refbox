@@ -141,6 +141,10 @@ message PrepareInstructionDS {
   required uint32 gate = 1;
 }
 
+message PrepareInstructionSS {
+  required SSTask task = 1;
+}
+
 message PrepareInstructionRS {
   required RingColor ring_color = 1;
 }
@@ -161,6 +165,7 @@ message PrepareMachine {
 
   optional PrepareInstructionBS instruction_bs = 4;
   optional PrepareInstructionDS instruction_ds = 5;
+  optional PrepareInstructionSS instruction_ss = 8;
   optional PrepareInstructionRS instruction_rs = 6;
   optional PrepareInstructionCS instruction_cs = 7;
 }
