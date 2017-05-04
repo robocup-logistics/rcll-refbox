@@ -509,7 +509,7 @@
 
 (defrule prod-prepared-but-no-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSING)
+  ?m <- (machine (name ?n) (mtype ~BS) (state PROCESSING)
         (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
   =>
   (modify ?m (state BROKEN) (prev-state PROCESSING)
