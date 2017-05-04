@@ -170,6 +170,34 @@
   )
 )
 
+(defrule prod-machine-reset-by-team
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (protobuf-msg (type "llsf_msgs.ResetMachine") (ptr ?p)
+		     (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
+  (network-peer (id ?cid) (group ?group))
+  =>
+  (retract ?pf)
+  (bind ?mname (sym-cat (pb-field-value ?p "machine")))
+  (bind ?team (sym-cat (pb-field-value ?p "team_color")))
+  (if (and (eq ?ct PEER) (neq ?team ?group))
+   then
+    ; message received for a team over the wrong channel, deny
+    (assert (attention-message (team ?group)
+	      (text (str-cat "Invalid reset for team " ?team " of team " ?group))))
+   else
+    (if (not (any-factp ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))))
+     then
+      (assert (attention-message (team ?team)
+		(text (str-cat "Reset received for invalid machine " ?mname))))
+     else
+      (printout t "Received reset for " ?mname crlf)
+      (do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
+	(modify ?m (state BROKEN) (prev-state ?m:state)
+                   (broken-reason (str-cat "Machine " ?mname " resetted by the team " ?team)))
+      )
+    )
+  )
+)
 
 ; **** Machine state processing
 

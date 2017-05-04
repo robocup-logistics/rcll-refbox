@@ -82,3 +82,15 @@ message PrepareMachine {
   optional PrepareInstructionRS instruction_rs = 6;
   optional PrepareInstructionCS instruction_cs = 7;
 }
+
+message ResetMachine {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 104;
+  }
+
+  required Team   team_color = 1;
+  // Machine name which to instruct
+  required string machine = 2;
+}
+
