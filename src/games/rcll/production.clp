@@ -229,15 +229,6 @@
 	  (prep-blink-start ?gt))
 )
 
-(defrule prod-proc-state-prepared
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype ?t) (state PREPARED) (proc-state ~PREPARED))
-  =>
-  (printout t "Machine " ?n " of type " ?t " switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
-	  (prep-blink-start ?gt))
-)
-
 (defrule prod-proc-state-prepared-stop-blinking
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PREPARED|PROCESSING)
@@ -261,6 +252,20 @@
   (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
 )
 
+(defrule prod-proc-state-processing-ds-start
+  "BS must be instructed to dispense base for processing"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED)
+		 (ds-gate ?gate))
+  =>
+  (printout t "Machine " ?n " of type DS switching to PREPARED state" crlf)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+             (prep-blink-start ?gt))
+  (printout t "Machine " ?n " processing to gate " ?gate crlf)
+  (mps-ds-process (str-cat ?n) ?gate)
+)
+
 (defrule prod-proc-state-processing-ds
   "BS must be instructed to dispense base for processing"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -268,9 +273,7 @@
   ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (ds-gate ?gate))
   =>
-  (printout t "Machine " ?n " processing to gate " ?gate crlf)
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-gate 0) (ds-last-gate ?gate))
-  (mps-ds-process (str-cat ?n) ?gate)
 )
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
@@ -287,6 +290,22 @@
 				  (- ?ba ?bu) " < " ?req-bases ")")))
 )
 
+(defrule prod-proc-state-processing-rs-start
+  "Instruct RS to mount ring"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (proc-state ~PREPARED)
+		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
+                 (bases-added ?ba) (bases-used ?bu))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
+  =>
+  (printout t "Machine " ?n " of type RS switching to PREPARED state" crlf)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+             (prep-blink-start ?gt))
+  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) crlf)
+  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
+)
+
 (defrule prod-proc-state-processing-rs
   "Instruct RS to mount ring"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -297,8 +316,6 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) crlf)
-  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
 (defrule prod-proc-state-processing-cs-mount-without-retrieve
@@ -312,6 +329,20 @@
 	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
 )
 
+(defrule prod-proc-state-processing-cs-mount-start
+  "Process on CS"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (proc-state ~PREPARED)
+		 (cs-operation ?cs-op))
+  =>
+  (printout t "Machine " ?n " of type CS switching to PREPARED state" crlf)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+	  (prep-blink-start ?gt))
+  (printout t ?cs-op " on machine " ?n crlf)
+  (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
+)
+
 (defrule prod-proc-state-processing-cs-mount
   "Process on CS"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -320,8 +351,6 @@
 		 (cs-operation ?cs-op))
   =>
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t ?cs-op " on machine " ?n crlf)
-  (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
 )
 
 (defrule prod-proc-state-processed-ds
@@ -472,7 +501,7 @@
 
 (defrule prod-machine-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PREPARED) (mps-state AVAILABLE)
+  ?m <- (machine (name ?n) (state PREPARED); (mps-state AVAILABLE)
         (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-PROCESSING*)))
   =>
   (modify ?m (state PROCESSING) (proc-start ?gt) (mps-state AVAILABLE-HANDLED))
