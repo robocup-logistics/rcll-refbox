@@ -977,21 +977,21 @@ LLSFRefBoxShell::run()
 
   panel_->bkgd(' '|COLOR_PAIR(0));
   panel_->frame();
-  panel_->vline(1,                  panel_->width() - 28, height);
-  panel_->addch(0,                  panel_->width() - 28, ACS_TTEE);
-  panel_->addch(height, panel_->width() - 28, ACS_BTEE);
+  panel_->vline(1,                  panel_->width() - 30, height);
+  panel_->addch(0,                  panel_->width() - 30, ACS_TTEE);
+  panel_->addch(height, panel_->width() - 30, ACS_BTEE);
 
-  panel_->hline(height - 7, panel_->width() - 27, 24);
-  panel_->addch(height - 7, panel_->width() - 28, ACS_LTEE);
+  panel_->hline(height - 7, panel_->width() - 29, 28);
+  panel_->addch(height - 7, panel_->width() - 30, ACS_LTEE);
   panel_->addch(height - 7, panel_->width() -  1, ACS_RTEE);
 
-  panel_->hline(15, panel_->width() - 27, 24);
-  panel_->addch(15, panel_->width() - 28, ACS_LTEE);
+  panel_->hline(15, panel_->width() - 29, 28);
+  panel_->addch(15, panel_->width() - 30, ACS_LTEE);
   panel_->addch(15, panel_->width() -  1, ACS_RTEE);
 
-  panel_->hline(2, 1, panel_->width() - 28);
+  panel_->hline(2, 1, panel_->width() - 30);
   panel_->addch(2, 0, ACS_LTEE);
-  panel_->addch(2, panel_->width() - 28, ACS_RTEE);
+  panel_->addch(2, panel_->width() - 30, ACS_RTEE);
 
   int rb_log_lines   = height - 10;
 
@@ -999,9 +999,9 @@ LLSFRefBoxShell::run()
   //panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
   //panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
 
-  panel_->hline(height - 7, 1, panel_->width() - 28);
+  panel_->hline(height - 7, 1, panel_->width() - 30);
   panel_->addch(height - 7, 0, ACS_LTEE);
-  panel_->addch(height - 7, panel_->width() - 28, ACS_PLUS);
+  panel_->addch(height - 7, panel_->width() - 30, ACS_PLUS);
 
   panel_->attron(A_BOLD);
   panel_->addstr(0, panel_->width() - 17, "Machines");
@@ -1061,7 +1061,7 @@ LLSFRefBoxShell::run()
   navbar_->addstr(0, navbar_->cols() - 5, "STOP");
   navbar_->refresh();
 
-  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
+  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 34, 3, 1);
   rb_log_->scrollok(TRUE);
 
   const int mx = panel_->width() - 29;
@@ -1097,7 +1097,7 @@ LLSFRefBoxShell::run()
 
   panel_->refresh();
 
-  p_attmsg_       = new NCursesPanel(1, panel_->width() - 27, 1, 1);
+  p_attmsg_       = new NCursesPanel(1, panel_->width() - 31, 1, 1);
   p_state_        = new NCursesPanel(1, 14, height-6,  panel_->width() - 19);
   p_phase_        = new NCursesPanel(1, 14, height-5,  panel_->width() - 19);
   p_time_         = new NCursesPanel(1, 14, height-4,  panel_->width() - 19);
