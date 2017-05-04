@@ -472,7 +472,8 @@
 
 (defrule prod-machine-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PREPARED) (mps-state AVAILABLE))
+  ?m <- (machine (name ?n) (state PREPARED) (mps-state AVAILABLE)
+        (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-PROCESSING*)))
   =>
   (modify ?m (state PROCESSING) (proc-start ?gt) (mps-state AVAILABLE-HANDLED))
 )
