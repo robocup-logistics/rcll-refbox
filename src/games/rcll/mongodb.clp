@@ -85,10 +85,10 @@
      (bson-append ?m-doc "type" ?m:mtype)
      (bson-append ?m-doc "zone" ?m:zone)
      (bson-append-array ?m-doc "pose" ?m:pose)
+     (bson-append ?m-doc "orientation" ?m:rotation)
      (bson-append ?m-doc "productions" ?m:productions)
      (bson-append ?m-doc "proc-time" ?m:proc-time)
      (bson-append-array ?m-doc "down-period" ?m:down-period)
-     (bson-append ?m-doc "exploration-type" ?m:exploration-type)
 
      (if (eq ?m:mtype RS) then
        (bson-append-array ?m-doc "rs-ring-colors" ?m:rs-ring-colors)
