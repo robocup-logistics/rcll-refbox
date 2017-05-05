@@ -177,7 +177,7 @@ LLSFRefBoxShellMachine::refresh()
       (lights_[llsf_msgs::YELLOW] == llsf_msgs::ON ||
        (lights_[llsf_msgs::YELLOW] == llsf_msgs::BLINK && blink_state_[llsf_msgs::YELLOW])))
   {
-    attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW));
   } else {
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
   }
@@ -246,10 +246,10 @@ LLSFRefBoxShellMachine::refresh()
 		  } else if (minfo_->state() == "PROCESSING" || minfo_->state() == "PROCESSED") {
 			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN));
 			  addstr(0, 21, "P");
-			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+			  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW));
 			  addstr(0, 22, minfo_->state().substr(minfo_->state().length()-1, 1).c_str());
 		  } else if (minfo_->state() == "READY-AT-OUTPUT") {
-			  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+			  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW));
 			  addstr(0, 21, "RO");
 		  } else {
 			  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
@@ -276,7 +276,7 @@ LLSFRefBoxShellMachine::refresh()
 	case llsf_msgs::RING_ORANGE:
 	  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)|A_BOLD); break;
 	case llsf_msgs::RING_YELLOW:
-	  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)|A_BOLD); break;
+	  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)|A_BOLD); break;
 	}
 	if (minfo_->has_instruction_rs() &&
 	    minfo_->instruction_rs().ring_color() == minfo_->ring_colors(i)) {

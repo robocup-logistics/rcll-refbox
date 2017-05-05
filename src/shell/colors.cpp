@@ -52,14 +52,14 @@ init_colors()
   //init_color(COLOR_ORANGE, 1000, 500, 0);
 
   init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
-  init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW_SYS, default_back);
+  init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW1, default_back);
   init_pair(COLOR_BLACK_ON_BACK, default_fore, default_back);
   init_pair(COLOR_WHITE_ON_BACK, COLOR_WHITE, default_back);
   init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
   init_pair(COLOR_GREEN_ON_BACK, COLOR_GREEN, default_back);
   init_pair(COLOR_BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
   init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_WHITE_ON_YELLOW, COLOR_WHITE, COLOR_YELLOW_SYS);
+  init_pair(COLOR_WHITE_ON_YELLOW, COLOR_WHITE, COLOR_YELLOW1);
   init_pair(COLOR_WHITE_ON_GREEN, COLOR_WHITE, COLOR_GREEN);
   init_pair(COLOR_CYAN_ON_BACK, COLOR_CYAN, default_back);
   init_pair(COLOR_MAGENTA_ON_BACK, COLOR_MAGENTA, default_back);
@@ -68,6 +68,8 @@ init_colors()
   init_pair(COLOR_WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
   init_pair(COLOR_WHITE_ON_ORANGE, COLOR_WHITE, COLOR_ORANGE);
   init_pair(COLOR_WHITE_ON_BLACK, COLOR_WHITE, COLOR_BLACK);
+  init_pair(COLOR_BLACK_ON_YELLOW, COLOR_BLACK, COLOR_YELLOW1);
+
 }
 
 } // end of namespace llsfrb_shell

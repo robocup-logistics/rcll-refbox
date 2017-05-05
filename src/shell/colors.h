@@ -60,8 +60,10 @@ namespace llsfrb_shell {
 #define COLOR_ORANGE           214
 #define COLOR_WHITE_ON_ORANGE  21
 #define COLOR_WHITE_ON_BLACK   22
+#define COLOR_BLACK_ON_YELLOW  23
 
 #define COLOR_YELLOW_SYS       11
+#define COLOR_YELLOW1         220
 
 extern void init_colors();
 

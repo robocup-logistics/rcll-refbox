@@ -171,7 +171,7 @@ LLSFRefBoxShellOrder::refresh()
       case llsf_msgs::RING_ORANGE:
 	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
       case llsf_msgs::RING_YELLOW:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
       }
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
@@ -187,7 +187,7 @@ LLSFRefBoxShellOrder::refresh()
       case llsf_msgs::RING_ORANGE:
 	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
       case llsf_msgs::RING_YELLOW:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
       }
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
@@ -203,7 +203,7 @@ LLSFRefBoxShellOrder::refresh()
       case llsf_msgs::RING_ORANGE:
 	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
       case llsf_msgs::RING_YELLOW:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
       }
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
