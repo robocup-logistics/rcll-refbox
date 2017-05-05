@@ -38,8 +38,6 @@
 #ifndef __MPS_PLACING_CLIPS_H_
 #define __MPS_PLACING_CLIPS_H_
 
-#include "mps_placing.h"
-
 #include <list>
 #include <map>
 #include <memory>
@@ -47,6 +45,8 @@
 #include <clipsmm.h>
 
 #include <core/threading/mutex.h>
+
+class MPSPlacing;
 
 namespace mps_placing_clips {
 #if 0 /* just to make Emacs auto-indent happy */

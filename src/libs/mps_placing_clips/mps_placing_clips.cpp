@@ -35,6 +35,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "mps_placing.h"
+
 #include <mps_placing_clips/mps_placing_clips.h>
 
 #include <core/threading/mutex_locker.h>
