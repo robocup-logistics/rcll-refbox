@@ -62,7 +62,9 @@ MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env,
   : clips_(env), clips_mutex_(env_mutex)
 {
   setup_clips();
-  generation_is_running = false;
+  is_generation_running_ = false;
+  is_field_generated_ = false;
+  generator_ = nullptr;
 }
 
 /** Destructor. */
@@ -98,33 +100,87 @@ MPSPlacingGenerator::setup_clips()
 }
 
 void
+MPSPlacingGenerator::generator_thread()
+{
+  is_field_generated_ = generator_->solve();
+  is_generation_running_ = false;
+}
+
+void
 MPSPlacingGenerator::generate_start()
 {
+  is_generation_running_ = true;
+  is_field_generated_ = false;
 
+  generator_ = std::shared_ptr<MPSPlacing>(new MPSPlacing(7, 8));
+  generator_thread_ = std::shared_ptr<std::thread>(
+        new std::thread( &MPSPlacingGenerator::generator_thread, this )
+        );
 }
 
 void
 MPSPlacingGenerator::generate_abort()
 {
-
+  if ( 0 == pthread_cancel( generator_thread_->native_handle() ) ) {
+    is_generation_running_ = false;
+    is_field_generated_ = false;
+  } else {
+    // TODO throw?
+  }
 }
 
 bool
 MPSPlacingGenerator::generate_running()
 {
-  return false;
+  return is_generation_running_;
 }
 
 bool
 MPSPlacingGenerator::field_layout_generated()
 {
-  return false;
+  return is_field_generated_;
 }
 
 CLIPS::Values
 MPSPlacingGenerator::get_generated_field()
 {
-  return CLIPS::Values(1, CLIPS::Value("INVALID-GENERATION", CLIPS::TYPE_SYMBOL));
+  if ( ! is_field_generated_ ) {
+    return CLIPS::Values(1, CLIPS::Value("INVALID-GENERATION", CLIPS::TYPE_SYMBOL));
+  }
+
+  std::vector<MPSPlacingPlacing> poses;
+  if ( ! generator_->get_solution(poses) ) {  // this should never happen since it is checked in this class
+    return CLIPS::Values(1, CLIPS::Value("INVALID-GENERATION-BUT-WHY", CLIPS::TYPE_SYMBOL));
+  }
+
+  CLIPS::Values machines;
+  machines.reserve( poses.size() * 3 );
+  for (MPSPlacingPlacing pose : poses) {
+    std::string type = "";
+    switch ( pose.type_ ) {
+      case BASE: type = "M-BS";
+        break;
+      case DELIVERY: type = "M-DS";
+        break;
+      case STORAGE: type = "M-SS";
+        break;
+      case CAP1: type = "M-CS1";
+        break;
+      case CAP2: type = "M-CS2";
+        break;
+      case RING1: type = "M-RS1";
+        break;
+      case RING2: type = "M-RS2";
+        break;
+      default: type = "NOT-SET";
+    }
+    machines.push_back( CLIPS::Value(type.c_str(), CLIPS::TYPE_SYMBOL) );
+    std::string zone = "M_Z" + std::to_string(pose.x_) + std::to_string(pose.y_);
+    machines.push_back( CLIPS::Value(zone.c_str(), CLIPS::TYPE_SYMBOL) );
+    machines.push_back( CLIPS::Value(pose.angle_) );
+  }
+
+  return machines;
 }
 
-} // end namespace protobuf_clips
+} // end namespace mps_placing_clips

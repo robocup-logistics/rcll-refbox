@@ -42,6 +42,8 @@
 
 #include <list>
 #include <map>
+#include <memory>
+#include <thread>
 #include <clipsmm.h>
 
 #include <core/threading/mutex.h>
@@ -68,7 +70,12 @@ class MPSPlacingGenerator
   CLIPS::Environment   *clips_;
   fawkes::Mutex        &clips_mutex_;
 
-  bool generation_is_running;
+  void generator_thread();
+
+  std::shared_ptr<std::thread> generator_thread_;
+  std::shared_ptr<MPSPlacing> generator_;
+  bool is_generation_running_;
+  bool is_field_generated_;
 
   fawkes::Mutex map_mutex_;
 

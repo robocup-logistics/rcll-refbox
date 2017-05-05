@@ -28,11 +28,11 @@
 
 #define TIMEOUT_MS 3000
 
-class mps_pose
+class MPSPlacingPlacing
 {
     public:
 
-    mps_pose(int x, int y, int type, int angle)
+    MPSPlacingPlacing(int x, int y, int type, int angle)
     {
         x_ = x;
         y_ = y;
@@ -48,11 +48,11 @@ class mps_pose
 };
 
 
-class mps_placing: public Gecode::IntMinimizeSpace
+class MPSPlacing: public Gecode::IntMinimizeSpace
 {
     public:
 
-    mps_placing(int _width, int _height)
+    MPSPlacing(int _width, int _height)
     {
         height_ = _height;
         width_ = _width;
@@ -461,13 +461,13 @@ class mps_placing: public Gecode::IntMinimizeSpace
 
         options_.stop = stop_;
 
-        search_ = new Gecode::DFS<mps_placing>(this, options_) ;
+        search_ = new Gecode::DFS<MPSPlacing>(this, options_) ;
 
         solution = NULL;
 
     }
 
-    mps_placing(bool share, mps_placing & s) : Gecode::IntMinimizeSpace(share,s)
+    MPSPlacing(bool share, MPSPlacing & s) : Gecode::IntMinimizeSpace(share,s)
     {
         height_ = s.height_;
         width_ = s.width_;
@@ -487,7 +487,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
 
     Gecode::IntMinimizeSpace * copy(bool share)
     {
-        return new mps_placing(share,*this);
+        return new MPSPlacing(share,*this);
     }
 
     Gecode::IntVar cost(void) const
@@ -519,7 +519,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
         return(y*(width_+2)+x);
     }
 
-    bool get_solution(std::vector< mps_pose> & result)
+    bool get_solution(std::vector< MPSPlacingPlacing> & result)
     {
         if (!solution)
         {
@@ -532,7 +532,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
             {
                 if (solution->mps_type_[index(x,y)].val() != EMPTY_ROT)
                 {
-                    result.push_back(mps_pose(x,y,solution->mps_type_[index(x,y)].val(),solution->mps_angle_[index(x,y)].val()));
+                    result.push_back(MPSPlacingPlacing(x,y,solution->mps_type_[index(x,y)].val(),solution->mps_angle_[index(x,y)].val()));
                 }
             }
 
@@ -549,8 +549,8 @@ class mps_placing: public Gecode::IntMinimizeSpace
     Gecode::IntVarArray mps_count_;
     int height_;
     int width_;
-    Gecode::DFS<mps_placing> * search_;
-    mps_placing * solution;
+    Gecode::DFS<MPSPlacing> * search_;
+    MPSPlacing * solution;
     Gecode::Rnd rg_;
     Gecode::Search::Options options_;
     Gecode::Search::TimeStop * stop_;
