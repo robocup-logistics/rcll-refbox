@@ -121,7 +121,7 @@
 
 
 (defrule robot-beacon-known
-  ?bf <- (robot-beacon (time $?t) (number ?number) (team-name ?team-name)
+  ?bf <- (robot-beacon (time $?t) (rcvd-at $?rcvd-at) (number ?number) (team-name ?team-name)
 		       (team-color ?team-color) (peer-name ?peer-name)
 		       (host ?host) (port ?port)
 		       (has-pose ?has-pose) (pose $?pose) (pose-time $?pose-time))
@@ -140,7 +140,7 @@
 					      " has changed name from " ?r-name
 					      " to " ?peer-name))))
   )
-  (modify ?rf (warning-sent FALSE) (last-seen ?t)
+  (modify ?rf (warning-sent FALSE) (last-seen ?rcvd-at)
 	  (name ?peer-name) (team-color ?team-color) (host ?host) (port ?port)
 	  (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time))
 )
@@ -183,7 +183,7 @@
 					      ?host ":" ?port))))
   )
 
-  (assert (robot (state ACTIVE) (warning-sent FALSE) (last-seen ?t)
+  (assert (robot (state ACTIVE) (warning-sent FALSE) (last-seen ?rcvd-at)
 		 (number ?number) (team ?team-name)
 		 (name ?peer-name) (team-color ?team-color) (host ?host) (port ?port)
 		 (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
