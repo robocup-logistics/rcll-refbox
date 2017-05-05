@@ -26,7 +26,7 @@
 #define DELIVERY  7
 #define NUM_MPS   7
 
-#define TIMEOUT_MS 5*10E3
+#define TIMEOUT_MS 3000
 
 class mps_pose
 {
@@ -457,6 +457,10 @@ class mps_placing: public Gecode::IntMinimizeSpace
 
         options_.threads = 4;
 
+        stop_= new Gecode::Search::TimeStop(TIMEOUT_MS);
+
+        options_.stop = stop_;
+
         search_ = new Gecode::DFS<mps_placing>(this, options_) ;
 
         solution = NULL;
@@ -498,7 +502,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
             delete solution;
         }
 
-        Gecode::Search::TimeStop timeout(TIMEOUT_MS);
+        stop_->reset();
 
         solution = search_->next();
 
@@ -549,6 +553,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
     mps_placing * solution;
     Gecode::Rnd rg_;
     Gecode::Search::Options options_;
+    Gecode::Search::TimeStop * stop_;
 
 };
 
