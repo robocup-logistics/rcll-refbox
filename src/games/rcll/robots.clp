@@ -183,7 +183,7 @@
 					      ?host ":" ?port))))
   )
 
-  (assert (robot (state ACTIVE) (warning-sent FALSE) (last-seen ?t)
+  (assert (robot (state ACTIVE) (warning-sent FALSE) (last-seen ?rcvd-at)
 		 (number ?number) (team ?team-name)
 		 (name ?peer-name) (team-color ?team-color) (host ?host) (port ?port)
 		 (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
