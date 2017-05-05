@@ -1,12 +1,12 @@
 #ifndef MPS_PLACING_H
 #define MPS_PLACING_H
 
-#include<gecode/int.hh>
+#include <gecode/int.hh>
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
 #include <vector>
 
-#define EMPTY     0
+#define EMPTY_ROT     0
 #define ANGLE_0   1
 #define ANGLE_45  2
 #define ANGLE_90  3
@@ -16,7 +16,7 @@
 #define ANGLE_270 7
 #define ANGLE_315 8
 
-#define EMPTY     0
+#define EMPTY_ROT     0
 #define BASE	  1
 #define CAP1 	  2
 #define CAP2 	  3
@@ -57,8 +57,8 @@ class mps_placing: public Gecode::IntMinimizeSpace
         height_ = _height;
         width_ = _width;
 
-        mps_type_ = Gecode::IntVarArray(*this, (height_+2) * (width_ +2), EMPTY, NUM_MPS);
-        mps_angle_ = Gecode::IntVarArray(*this, (height_+2) * (width_+2) , EMPTY, ANGLE_315);
+        mps_type_ = Gecode::IntVarArray(*this, (height_+2) * (width_ +2), EMPTY_ROT, NUM_MPS);
+        mps_angle_ = Gecode::IntVarArray(*this, (height_+2) * (width_+2) , EMPTY_ROT, ANGLE_315);
         //zone_blocked_ = Gecode::IntVarArray(*this, (height_+2) * (width_+2) , 0, 1);
 
         rg_ = Gecode::Rnd(time(NULL));
@@ -71,7 +71,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
         }
 
         mps_types_ = Gecode::IntArgs(types);
-        mps_count_ = Gecode::IntVarArray(*this,NUM_MPS+1 , EMPTY,  (height_+2)*(width_+2) );
+        mps_count_ = Gecode::IntVarArray(*this,NUM_MPS+1 , EMPTY_ROT,  (height_+2)*(width_+2) );
 
         mps_resource_.resize(width_+2);
         for(int x=0; x<width_+2;x++)
@@ -92,24 +92,24 @@ class mps_placing: public Gecode::IntMinimizeSpace
         Gecode::rel(*this, mps_count_[STORAGE], Gecode::IRT_EQ, 1);
         Gecode::rel(*this, mps_count_[DELIVERY], Gecode::IRT_EQ, 1);
 
-        // an empty zone has no orientation
+        // an EMPTY_ROT zone has no orientation
         for(int i=0;i<(height_+2)*(width_+2);i++)
         {
-            Gecode::rel(*this, (mps_type_[i]==EMPTY) >> (mps_angle_[i]==EMPTY));
+            Gecode::rel(*this, (mps_type_[i]==EMPTY_ROT) >> (mps_angle_[i]==EMPTY_ROT));
         }
 
         // placed machine must have an orientation and blocks a zone
         for(int i=0;i<(height_+2)*(width_+2);i++)
         {
-            Gecode::rel(*this, (mps_type_[i]!=EMPTY) >> (mps_angle_[i]!=EMPTY));
-            //Gecode::rel(*this, (zone_blocked_[i]==1) >> (mps_type_[i]==EMPTY));
+            Gecode::rel(*this, (mps_type_[i]!=EMPTY_ROT) >> (mps_angle_[i]!=EMPTY_ROT));
+            //Gecode::rel(*this, (zone_blocked_[i]==1) >> (mps_type_[i]==EMPTY_ROT));
         }
 
 
         // mark the border blocked
         for (int x=0; x < width_+2; x++)
         {
-            Gecode::rel(*this, mps_type_[index(x,0)] == EMPTY);
+            Gecode::rel(*this, mps_type_[index(x,0)] == EMPTY_ROT);
             Gecode::rel(*this, mps_resource_[x][0][BASE-1] == 1);
             for(int t=1; t<NUM_MPS; t++)
             {
@@ -119,7 +119,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
         }
         for (int x=0; x < width_+2; x++)
         {
-            Gecode::rel(*this, mps_type_[index(x,height_+1)] == EMPTY);
+            Gecode::rel(*this, mps_type_[index(x,height_+1)] == EMPTY_ROT);
             Gecode::rel(*this, mps_resource_[x][height_+1][BASE-1] == 1);
             for(int t=1; t<NUM_MPS; t++)
             {
@@ -128,7 +128,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
         }
         for (int y=0; y < height_+2; y++)
         {
-            Gecode::rel(*this, mps_type_[index(0,y)] == EMPTY);
+            Gecode::rel(*this, mps_type_[index(0,y)] == EMPTY_ROT);
             Gecode::rel(*this, mps_resource_[0][y][BASE-1] == 1);
             for(int t=1; t<NUM_MPS; t++)
             {
@@ -137,7 +137,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
         }
         for (int y=0; y < height_+2; y++)
         {
-            Gecode::rel(*this, mps_type_[index(width_+1,y)] == EMPTY);
+            Gecode::rel(*this, mps_type_[index(width_+1,y)] == EMPTY_ROT);
             Gecode::rel(*this, mps_resource_[width_+1][y][BASE-1] == 1);
             for(int t=1; t<NUM_MPS; t++)
             {
@@ -244,10 +244,10 @@ class mps_placing: public Gecode::IntMinimizeSpace
         // insert blocking contraints
 
         //block entry zones
-        Gecode::rel(*this, mps_type_[index(width_,1)] == EMPTY);
-        Gecode::rel(*this, mps_type_[index(width_-1,1)] == EMPTY);
-        Gecode::rel(*this, mps_type_[index(width_-2,1)] == EMPTY);
-        Gecode::rel(*this, mps_type_[index(width_-2,2)] == EMPTY);
+        Gecode::rel(*this, mps_type_[index(width_,1)] == EMPTY_ROT);
+        Gecode::rel(*this, mps_type_[index(width_-1,1)] == EMPTY_ROT);
+        Gecode::rel(*this, mps_type_[index(width_-2,1)] == EMPTY_ROT);
+        Gecode::rel(*this, mps_type_[index(width_-2,2)] == EMPTY_ROT);
 
         // insert blocking contraints
         for(int x=1; x<=width_; x++)
@@ -422,23 +422,23 @@ class mps_placing: public Gecode::IntMinimizeSpace
         }
 
         // avoid locks in corners
-        Gecode::rel(*this, (mps_type_[index(2,1)] != EMPTY) >>(mps_type_[index(1,2)] == EMPTY));
-        Gecode::rel(*this, (mps_type_[index(1,2)] != EMPTY) >>(mps_type_[index(2,1)] == EMPTY));
+        Gecode::rel(*this, (mps_type_[index(2,1)] != EMPTY_ROT) >>(mps_type_[index(1,2)] == EMPTY_ROT));
+        Gecode::rel(*this, (mps_type_[index(1,2)] != EMPTY_ROT) >>(mps_type_[index(2,1)] == EMPTY_ROT));
 
-        Gecode::rel(*this, (mps_type_[index(2,height_)] != EMPTY) >>(mps_type_[index(1,height_-1)] == EMPTY));
-        Gecode::rel(*this, (mps_type_[index(1,height_-1)] != EMPTY) >>(mps_type_[index(2,height_)] == EMPTY));
+        Gecode::rel(*this, (mps_type_[index(2,height_)] != EMPTY_ROT) >>(mps_type_[index(1,height_-1)] == EMPTY_ROT));
+        Gecode::rel(*this, (mps_type_[index(1,height_-1)] != EMPTY_ROT) >>(mps_type_[index(2,height_)] == EMPTY_ROT));
 
-        Gecode::rel(*this, (mps_type_[index(width_-1, height_)] != EMPTY) >>(mps_type_[index(width_, height_-1)] == EMPTY));
-        Gecode::rel(*this, (mps_type_[index(width_, height_-1)] != EMPTY) >>(mps_type_[index(width_-1,height_)] == EMPTY));
+        Gecode::rel(*this, (mps_type_[index(width_-1, height_)] != EMPTY_ROT) >>(mps_type_[index(width_, height_-1)] == EMPTY_ROT));
+        Gecode::rel(*this, (mps_type_[index(width_, height_-1)] != EMPTY_ROT) >>(mps_type_[index(width_-1,height_)] == EMPTY_ROT));
 
-        Gecode::rel(*this, (mps_type_[index(width_-1, 2)] != EMPTY) >>(mps_type_[index(width_, 3)] == EMPTY));
-        Gecode::rel(*this, (mps_type_[index(width_, 3)] != EMPTY) >>(mps_type_[index(width_-1,2)] == EMPTY));
+        Gecode::rel(*this, (mps_type_[index(width_-1, 2)] != EMPTY_ROT) >>(mps_type_[index(width_, 3)] == EMPTY_ROT));
+        Gecode::rel(*this, (mps_type_[index(width_, 3)] != EMPTY_ROT) >>(mps_type_[index(width_-1,2)] == EMPTY_ROT));
 
-        Gecode::rel(*this, (mps_type_[index(1, 1)] != EMPTY) >> (mps_angle_[index(1, 1)] == ANGLE_135));
-        Gecode::rel(*this, (mps_type_[index(1, height_)] != EMPTY) >> (mps_angle_[index(1, height_)] == ANGLE_315));
-        Gecode::rel(*this, (mps_type_[index(width_, height_)] != EMPTY) >> (mps_angle_[index(width_, height_)] == ANGLE_135));
-        Gecode::rel(*this, (mps_type_[index(width_,2)] != EMPTY) >> (mps_angle_[index(width_,2)] == ANGLE_45));
-        Gecode::rel(*this, (mps_type_[index(width_-3,1)] != EMPTY) >> (mps_angle_[index(width_-3,1)] == ANGLE_45));
+        Gecode::rel(*this, (mps_type_[index(1, 1)] != EMPTY_ROT) >> (mps_angle_[index(1, 1)] == ANGLE_135));
+        Gecode::rel(*this, (mps_type_[index(1, height_)] != EMPTY_ROT) >> (mps_angle_[index(1, height_)] == ANGLE_315));
+        Gecode::rel(*this, (mps_type_[index(width_, height_)] != EMPTY_ROT) >> (mps_angle_[index(width_, height_)] == ANGLE_135));
+        Gecode::rel(*this, (mps_type_[index(width_,2)] != EMPTY_ROT) >> (mps_angle_[index(width_,2)] == ANGLE_45));
+        Gecode::rel(*this, (mps_type_[index(width_-3,1)] != EMPTY_ROT) >> (mps_angle_[index(width_-3,1)] == ANGLE_45));
 
 
         // restrict zone useage to max 1
@@ -530,7 +530,7 @@ class mps_placing: public Gecode::IntMinimizeSpace
         {
             for(int y=0; y < height_+2;y++)
             {
-                if (solution->mps_type_[index(x,y)].val() != EMPTY)
+                if (solution->mps_type_[index(x,y)].val() != EMPTY_ROT)
                 {
                     result.push_back(mps_pose(x,y,solution->mps_type_[index(x,y)].val(),solution->mps_angle_[index(x,y)].val()));
                 }
