@@ -23,7 +23,7 @@ SUBDIRS = core utils config logging netcomm protobuf_comm protobuf_clips \
 # Explicit dependencies, this is needed to have make bail out if there is any
 # error. This is also necessary for working parallel build (i.e. for dual core)
 netcomm config mongodb_log: core utils
-utils llsf_sps: core
+utils llsf_sps mps_placing_clips: core
 logging: core protobuf_comm
 protobuf_clips: protobuf_comm
 mongodb_log: logging
