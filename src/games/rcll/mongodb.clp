@@ -274,6 +274,7 @@
   (declare (salience ?*PRIORITY_FIRST*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
+  (test (any-factp ((?m machine)) (eq ?m:zone TBD)))
 	=>
 	(mongodb-load-machine-zones)
 )
