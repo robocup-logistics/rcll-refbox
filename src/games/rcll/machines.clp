@@ -100,9 +100,7 @@
 
     ; Mirror machines for other team
     (delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
-      (printout t "for: " ?mm:name crlf)
       (do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
-        (printout t "to: " ?mc:name " change " ?mm:zone " => " (mirror-zone ?mm:zone) " rotation: " ?mm:rotation " => " (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation)  crlf)
         (modify ?mc
           (zone (mirror-zone ?mm:zone))
           (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
@@ -115,15 +113,17 @@
 	    (create$ (str-cat "RS" (random 1 2)) (str-cat "CS" (random 1 2))))
 		(foreach ?ms ?machines-to-swap
       (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-        (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
-						 (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
+          (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
+					  	 (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
 
 				(printout t "Swapping " ?m-cyan:name " with " ?m-magenta:name crlf)
 
 				(bind ?z-cyan ?m-cyan:zone)
+				(bind ?r-cyan ?m-cyan:rotation)
 				(bind ?z-magenta ?m-magenta:zone)
-				(modify ?m-cyan    (zone ?z-magenta))
-				(modify ?m-magenta (zone ?z-cyan))
+				(bind ?r-magenta ?m-magenta:rotation)
+				(modify ?m-cyan    (zone ?z-magenta) (rotation ?r-magenta))
+				(modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
 			)
 	  )
   )
