@@ -42,6 +42,7 @@
 #include <config/yaml.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
+#include <mps_placing_clips/mps_placing_clips.h>
 #include <llsf_sps/sps_comm.h>
 #include <logging/multi.h>
 #include <logging/file.h>
@@ -264,6 +265,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   clips_ = new CLIPS::Environment();
   setup_protobuf_comm();
   setup_clips();
+
+  mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
+        new mps_placing_clips::MPSPlacingGenerator(clips_, clips_mutex_)
+        );
 
   mlogger->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 

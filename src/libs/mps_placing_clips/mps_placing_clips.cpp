@@ -131,16 +131,16 @@ MPSPlacingGenerator::generate_abort()
   }
 }
 
-bool
+CLIPS::Value
 MPSPlacingGenerator::generate_running()
 {
-  return is_generation_running_;
+  return CLIPS::Value(is_generation_running_ ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
 }
 
-bool
+CLIPS::Value
 MPSPlacingGenerator::field_layout_generated()
 {
-  return is_field_generated_;
+  return CLIPS::Value(is_field_generated_ ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
 }
 
 CLIPS::Values
@@ -155,6 +155,7 @@ MPSPlacingGenerator::get_generated_field()
     return CLIPS::Values(1, CLIPS::Value("INVALID-GENERATION-BUT-WHY", CLIPS::TYPE_SYMBOL));
   }
 
+  printf("Field is generated\n");
   CLIPS::Values machines;
   machines.reserve( poses.size() * 3 );
   for (MPSPlacingPlacing pose : poses) {
@@ -179,7 +180,29 @@ MPSPlacingGenerator::get_generated_field()
     machines.push_back( CLIPS::Value(type.c_str(), CLIPS::TYPE_SYMBOL) );
     std::string zone = "M_Z" + std::to_string(pose.x_) + std::to_string(pose.y_);
     machines.push_back( CLIPS::Value(zone.c_str(), CLIPS::TYPE_SYMBOL) );
-    machines.push_back( CLIPS::Value(pose.angle_) );
+
+    int rotation = -2;
+    switch (pose.angle_) {
+      case ANGLE_0: rotation = 0;
+        break;
+      case ANGLE_45: rotation = 45;
+        break;
+      case ANGLE_90: rotation = 90;
+        break;
+      case ANGLE_135: rotation = 135;
+        break;
+      case ANGLE_180: rotation = 180;
+        break;
+      case ANGLE_225: rotation = 225;
+        break;
+      case ANGLE_270: rotation = 270;
+        break;
+      case ANGLE_315: rotation = 315;
+        break;
+      default: rotation = -1;
+    }
+
+    machines.push_back( CLIPS::Value( rotation ) );
   }
 
   return machines;

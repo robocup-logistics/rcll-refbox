@@ -92,6 +92,17 @@
 	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK))
 )
 
+(deftemplate machine-generation
+  (slot state (type SYMBOL) (default NOT-STARTED)
+    (allowed-values NOT-STARTED STARTED FINISHED ABORTED))
+  (slot generation-state-last-checked (type FLOAT))
+)
+
+(deftemplate mirror-orientation
+  (slot cyan (type INTEGER))
+  (slot magenta (type INTEGER))
+)
+
 (deftemplate robot
   (slot number (type INTEGER))
   (slot state (type SYMBOL) (allowed-values ACTIVE MAINTENANCE DISQUALIFIED) (default ACTIVE))
@@ -300,6 +311,7 @@
 
 (deffacts startup
   (gamestate (phase PRE_GAME))
+  (machine-generation (state NOT-STARTED))
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))
@@ -334,6 +346,15 @@
   (ring-spec (color RING_GREEN) (req-bases 1))
   (ring-spec (color RING_ORANGE))
   (ring-spec (color RING_YELLOW))
+
+  (mirror-orientation (cyan 0) (magenta 180))
+  (mirror-orientation (cyan 45) (magenta 135))
+  (mirror-orientation (cyan 90) (magenta 90))
+  (mirror-orientation (cyan 135) (magenta 45))
+  (mirror-orientation (cyan 180) (magenta 0))
+  (mirror-orientation (cyan 225) (magenta 315))
+  (mirror-orientation (cyan 270) (magenta 270))
+  (mirror-orientation (cyan 315) (magenta 225))
 )
 
 (deffacts light-codes

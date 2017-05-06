@@ -61,8 +61,8 @@ class MPSPlacingGenerator
 
   void generate_start();
   void generate_abort();
-  bool generate_running();
-  bool field_layout_generated();
+  CLIPS::Value generate_running();
+  CLIPS::Value field_layout_generated();
   CLIPS::Values get_generated_field();
 
  private:

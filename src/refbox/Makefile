@@ -29,7 +29,7 @@ REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 LIBS_llsf_refbox = stdc++ llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
-		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips llsf_sps
+		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips llsf_sps llsf_mps_placing_clips
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)

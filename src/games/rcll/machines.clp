@@ -79,26 +79,35 @@
 	(if (any-factp ((?m machine)) (eq ?m:zone TBD))
    then
     (printout t "Randomizing from scratch" crlf)
-    ; randomly assigned machines to zones
-		(bind ?zones-cyan ?*MACHINE-ZONES-CYAN*)
-    ; Remove all zones for which a machine has already been assigned
-		(do-for-all-facts ((?m machine)) (neq ?m:zone TBD)
-      (bind ?zones-cyan (delete-member$ ?zones-cyan ?m:zone))
-	  )
-    ; TODO 2017 include generator for positions
-		(delayed-do-for-all-facts ((?m-cyan machine))
-      (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:zone TBD))
-      
-      ; bind zones to machines here 
-      ;(bind ?zone (nth$ 1 ?zones-cyan))
-      ;(printout t "CYAN Machine " ?m-cyan:name " is in zone " ?zone crlf)
-      ;(modify ?m-cyan (zone ?zone))
+    ; reset all zones, since we cannot do partial assinemend anymore
+    (delayed-do-for-all-facts ((?m machine)) TRUE
+      (modify ?m (zone TBD))
+    )
+    ; randomly assigned machines to zones using the external generator
+		(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
+    (bind ?machines (mps-generator-get-generated-field))
+    (delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
+      (if (member$ ?m:name ?machines)
+       then
+        (bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
+        (bind ?rot (nth$ (+ (member$ ?m:name ?machines) 2) ?machines))
+        (printout t ?m:name ": " ?zone " with " ?rot crlf)
+        (modify ?m (zone ?zone) (rotation ?rot))
+       else
+        (printout error ?m:name " not found in generation" crlf)
+      )
+    )
 
-      ;(do-for-fact ((?m-magenta machine))
-      ;  (eq ?m-magenta:name (machine-magenta-for-cyan ?m-cyan:name))
-      ;  (printout t "MAGENTA Machine " ?m-magenta:name " is in zone " (zone-magenta-for-cyan ?zone) crlf)
-      ;  (modify ?m-magenta (zone (zone-magenta-for-cyan ?zone)))
-      ;)
+    ; Mirror machines for other team
+    (delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
+      (printout t "for: " ?mm:name crlf)
+      (do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
+        (printout t "to: " ?mc:name " change " ?mm:zone " => " (mirror-zone ?mm:zone) " rotation: " ?mm:rotation " => " (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation)  crlf)
+        (modify ?mc
+          (zone (mirror-zone ?mm:zone))
+          (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
+        )
+      )
     )
 
     ; Swap machines
