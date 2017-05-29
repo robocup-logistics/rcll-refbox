@@ -22,11 +22,21 @@
   (init)
   (config-loaded)
 ;  (confval (path "/llsfrb/mps/enable") (type BOOL) (value true))
-  (confval (path "/llsfrb/mps/enable") (type BOOL))
+  (confval (path "/llsfrb/mps/stations/C-BS/active") (type BOOL) (value true))
   (confval (path "/llsfrb/mps/stations/C-BS/host") (type STRING) (value ?host))
   (confval (path "/llsfrb/mps/stations/C-BS/port") (type UINT) (value ?port))
   =>
   (assert (mps (name "C-BS") (master-host ?host) (master-port ?port)))
+)
+
+(defrule mps-not-enable-c-bs
+  (declare (salience ?*PRIORITY_FIRST*))
+  (init)
+  (config-loaded)
+;  (confval (path "/llsfrb/mps/enable") (type BOOL) (value true))
+  (confval (path "/llsfrb/mps/stations/C-BS/active") (type BOOL) (value false))
+  =>
+  (printout warn "Do not enable C-BS" crlf)
 )
 
 (defrule mps-finalize

@@ -55,6 +55,8 @@ static bool quit = false;
 ProtobufStreamServer *server_ = NULL;
 
 std::string machine_name_;
+int id_last_light_ = -1;
+int id_last_process_ = -1;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -125,6 +127,23 @@ handle_message(ProtobufStreamServer::ClientID client,
   std::shared_ptr<llsf_msgs::InstructMachine> im;
   if ( (im = std::dynamic_pointer_cast<llsf_msgs::InstructMachine>(msg)) ) {
     id = im->id();
+    // check last ids
+    if (llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT == im->set()) {
+      if (id_last_light_ < (int)id ) {
+        id_last_light_ = id;
+      } else {
+        printf("Received old ID for light, ignore\n");
+        return;
+      }
+    } else {
+      if (id_last_process_ < (int)id ) {
+        id_last_process_ = id;
+      } else {
+        printf("Received old ID for process, ignore\n");
+        return;
+      }
+    }
+    // process the instruction
     machine = im->machine();
     if (machine == machine_name_) { // if this machine is running here
 
@@ -254,6 +273,8 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
+  id_last_light_ = -1;
+  id_last_process_ = -1;
   ArgumentParser argp(argc, argv, "m:R");
 //  ArgumentParser argp(argc, argv, "R");
 

@@ -323,8 +323,9 @@
   (slot id (type INTEGER))
 )
 
-(deftemplate mps-comm-id
+(deftemplate mps-comm-msg
   (slot id (type INTEGER))
+  (slot msg (type EXTERNAL-ADDRESS))
   (slot name (type SYMBOL) (allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 C-SS M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2 M-SS))
   (slot game-time (type FLOAT))
   (slot task (type SYMBOL) (allowed-values NONE WAIT-FOR-PRODUCT PROCESS DRIVE-TO-OUT WAIT-FOR-PICKUP CHANGE-LIGHT STOP-CONVEYOR))
@@ -346,6 +347,7 @@
   (signal (type bc-robot-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info-bc) (time (create$ 0 0)) (seq 1))
+  (signal (type mps-instruct) (time (create$ 0 0)) (seq 1))
   (signal (type ring-info-bc) (time (create$ 0 0)) (seq 1))
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))

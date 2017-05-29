@@ -295,7 +295,7 @@
   (bind ?id (net-get-new-id))
   (bind ?s (net-create-bs-process ?m ?id ?color))
 
-  (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+  (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
              (processing-state PROCESS) (prev-processing-state NONE))
@@ -320,7 +320,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-ss-process ?m ?id ?operation ?slot-x ?slot-y ?slot-z))
 
-      (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+      (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
       (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
                  (processing-state PROCESS) (prev-processing-state NONE))
@@ -345,7 +345,7 @@
   (bind ?id (net-get-new-id))
   (bind ?s (net-create-ds-process ?m ?id ?gate))
 
-  (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+  (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
              (prep-blink-start ?gt) (ds-last-gate ?gate)
@@ -365,7 +365,7 @@
   (bind ?id (net-get-new-id))
   (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
 
-  (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
+  (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
 
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
              (prep-blink-start ?gt) (waiting-for-product-since ?gt)
@@ -388,7 +388,7 @@
   (bind ?id (net-get-new-id))
   (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
 
-  (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
+  (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
 
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
              (prep-blink-start ?gt) (waiting-for-product-since ?gt)
@@ -401,7 +401,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task WAIT-FOR-PICKUP))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task WAIT-FOR-PICKUP))
   ?m <- (machine (name ?n) (state READY-AT-OUTPUT)
           (processing-state ?task-finished))
   =>
@@ -418,7 +418,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
   ?m <- (machine (name ?n) (mtype BS) (state PROCESSING)
           (processing-state ?task-finished) (bs-side ?side))
   =>
@@ -429,7 +429,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-move-conveyor ?m ?id ?side))
     
-      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+      (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
 
       (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
     )
@@ -440,7 +440,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-wait-for-pickup ?m ?id ?side))
     
-      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
 
       (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
                  (state READY-AT-OUTPUT))
@@ -457,7 +457,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
   ?m <- (machine (name ?n) (mtype DS) (state PREPARED|PROCESSING)
           (processing-state ?task-finished) (ds-last-gate ?gate))
   =>
@@ -468,7 +468,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
     
-      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
+      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
 
       (modify ?m (processing-state WAIT-FOR-PRODUCT) (prev-processing-state ?task-finished)
                  (waiting-for-product-since ?gt)
@@ -493,7 +493,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED|PROCESSING)
           (processing-state ?task-finished) (cs-operation ?op))
   =>
@@ -504,7 +504,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-cs-process ?m ?id ?op))
     
-      (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+      (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
       (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
                  (processing-state PROCESS) (prev-processing-state ?task-finished)
@@ -516,7 +516,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
     
-      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+      (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
 
       (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
     )
@@ -527,7 +527,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
     
-      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
 
       (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
                  (state READY-AT-OUTPUT))
@@ -544,7 +544,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED|PROCESSING)
           (processing-state ?task-finished) (rs-ring-color ?color))
   =>
@@ -555,7 +555,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-rs-process ?m ?id ?color))
     
-      (net-send-mps-change ?id ?n ?gt PROCESS ?s)
+      (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
       (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
                  (processing-state PROCESS) (prev-processing-state ?task-finished)
@@ -567,7 +567,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
     
-      (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+      (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
 
       (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
     )
@@ -578,7 +578,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
     
-      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
 
       (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
                  (state READY-AT-OUTPUT))
@@ -595,7 +595,7 @@
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task PROCESS))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PROCESS))
   ?m <- (machine (name ?n) (mtype SS) (state PROCESSING)
           (processing-state PROCESS) (ss-slot ?slot-x ?slot-y ?slot-z))
   ?slot <- (machine-ss-filled (name ?n) (slot ?slot-x ?slot-y ?slot-z))
@@ -605,7 +605,7 @@
   (bind ?id (net-get-new-id))
   (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
     
-  (net-send-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+  (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
 
   (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state PROCESS))
   (retract ?id-comm ?pb ?slot)
@@ -616,7 +616,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task ?task-finished))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
   ?m <- (machine (name ?n) (mtype SS) (state PROCESSING)
           (processing-state ?task-finished) )
   =>
@@ -628,7 +628,7 @@
       (bind ?id (net-get-new-id))
       (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
     
-      (net-send-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
 
       (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
                  (state READY-AT-OUTPUT))

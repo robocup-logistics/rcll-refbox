@@ -660,14 +660,22 @@
   (return ?id-new)
 )
 
-(deffunction net-send-mps-change (?id ?name ?gt ?task ?s )
-  ; send msg
-  (do-for-all-facts ((?mps mps)) (eq ?mps:name (str-cat ?name))
-    (pb-send ?mps:client-id ?s) 
-  )
-  (pb-destroy ?s) 
+(deffunction net-assert-mps-change (?id ?name ?gt ?task ?s )
   ; remember ID and task
-  (assert (mps-comm-id (id ?id) (name ?name) (game-time ?gt) (task ?task)))
+  (assert (mps-comm-msg (id ?id) (name ?name) (msg ?s) (game-time ?gt) (task ?task)))
+  ; TODO: change send to burst mode (but only for one?)
+)
+
+(defrule net-send-mps-change-periodic
+  ; send in a periodic mattern the mps msg
+  (time $?now)
+  ?s <- (signal (type mps-instruct) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?s (time ?now) (seq (+ ?seq 1)))
+  ; send all msg
+  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (eq ?mps-comm:name (sym-cat ?mps:name))
+    (pb-send ?mps:client-id ?mps-comm:msg) 
+  )
 )
 
 (defrule net-receive-mps-reply

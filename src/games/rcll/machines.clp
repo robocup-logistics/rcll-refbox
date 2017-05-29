@@ -45,7 +45,7 @@
   (bind ?id (net-get-new-id))
   (bind ?s (net-create-mps-set-lights ?mf ?id ?red-state ?yellow-state ?green-state))
 
-  (net-send-mps-change ?id ?n ?gt CHANGE-LIGHT ?s)
+  (net-assert-mps-change ?id ?n ?gt CHANGE-LIGHT ?s)
 
   (modify ?mf (actual-lights ?dl))
 )
@@ -55,7 +55,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task CHANGE-LIGHT))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task CHANGE-LIGHT))
   ?m <- (machine (name ?n))
   =>  
 ;  (printout t "Machine " ?n " successfully change the light" crlf)
@@ -66,14 +66,14 @@
   "a machines was prepared, but the product was not fed into the machine in time"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?id-comm <- (mps-comm-id (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
   ?mf <- (machine (name ?n) (state PREPARED)
          (processing-state WAIT-FOR-PRODUCT) (waiting-for-product-since ?wait-since&:(timeout-sec ?gt ?wait-since ?*WAIT-FOR-PRODUCT-MAX*)))
   =>
   (bind ?id (net-get-new-id))
   (bind ?s (net-create-mps-stop-conveyor ?mf ?id))
 
-  (net-send-mps-change ?id ?n ?gt STOP-CONVEYOR ?s)
+  (net-assert-mps-change ?id ?n ?gt STOP-CONVEYOR ?s)
 
   (retract ?id-comm)
   (modify ?mf (state BROKEN) (broken-reason (str-cat "Prepared " ?n " but did not fed product in time")))
@@ -84,7 +84,7 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  (not (mps-comm-id (id ?id-final)))
+  (not (mps-comm-msg (id ?id-final)))
   =>  
   (printout error "Received finish msg from MPS " ?n " with unknown ID " ?id-final " going to ignore" crlf)
   (retract ?pb)
