@@ -329,6 +329,7 @@
   (slot name (type SYMBOL) (allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 C-SS M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2 M-SS))
   (slot game-time (type FLOAT))
   (slot task (type SYMBOL) (allowed-values NONE WAIT-FOR-PRODUCT PROCESS DRIVE-TO-OUT WAIT-FOR-PICKUP CHANGE-LIGHT STOP-CONVEYOR))
+  (slot sended-count (type INTEGER) (default 0))
 )
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal

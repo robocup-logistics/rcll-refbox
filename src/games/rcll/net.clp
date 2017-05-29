@@ -663,7 +663,21 @@
 (deffunction net-assert-mps-change (?id ?name ?gt ?task ?s )
   ; remember ID and task
   (assert (mps-comm-msg (id ?id) (name ?name) (msg ?s) (game-time ?gt) (task ?task)))
-  ; TODO: change send to burst mode (but only for one?)
+)
+
+(defrule net-send-mps-change-periodic-burst
+  ; send in a periodic mattern the mps msg
+  (time $?now)
+  ?s <- (signal (type mps-instruct) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD-BURST*)) (seq ?seq))
+  =>
+  (modify ?s (time ?now) (seq (+ ?seq 1)))
+  ; send all msg
+  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (and (eq ?mps-comm:name (sym-cat ?mps:name))
+                                                                       (> ?*MPS-INSTRUCT-BURST-COUNT* ?mps-comm:sended-count)
+                                                                  )
+    (pb-send ?mps:client-id ?mps-comm:msg)
+    (modify ?mps-comm (sended-count (+ ?mps-comm:sended-count 1)))
+  )
 )
 
 (defrule net-send-mps-change-periodic
@@ -675,7 +689,14 @@
   ; send all msg
   (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (eq ?mps-comm:name (sym-cat ?mps:name))
     (pb-send ?mps:client-id ?mps-comm:msg) 
+    (modify ?mps-comm (sended-count (+ ?mps-comm:sended-count 1)))
   )
+)
+
+(defrule net-mps-change-long-time-warn
+  (mps-comm-msg (sended-count ?count&:(> ?count 20)) (task ?task))
+  =>
+  (assert (attention-message (text (str-cat "wait for MPS <name> to finish " ?task ", sendet " ?count ""))))
 )
 
 (defrule net-receive-mps-reply

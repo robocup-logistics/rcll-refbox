@@ -25,6 +25,8 @@
   ?*BC-RING-INFO-PERIOD* = 2.0
   ?*MPS-RECONNECT-PERIOD* = 2.0
   ?*MPS-INSTRUCT-PERIOD* = 1.0
+  ?*MPS-INSTRUCT-BURST-COUNT* = 10
+  ?*MPS-INSTRUCT-PERIOD-BURST* = 0.1
   ; This value is set by the rule config-timer-interval from config.yaml
   ?*TIMER-INTERVAL* = 0.0
   ; Time (sec) after which to warn about a robot lost
