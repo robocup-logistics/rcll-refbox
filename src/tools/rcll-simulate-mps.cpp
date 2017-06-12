@@ -54,7 +54,7 @@ boost::asio::io_service io_service_;
 static bool quit = false;
 ProtobufStreamServer *server_ = NULL;
 
-std::string machine_name_;
+//std::string machine_name_;
 int id_last_light_ = -1;
 int id_last_process_ = -1;
 
@@ -127,30 +127,43 @@ handle_message(ProtobufStreamServer::ClientID client,
   std::shared_ptr<llsf_msgs::InstructMachine> im;
   if ( (im = std::dynamic_pointer_cast<llsf_msgs::InstructMachine>(msg)) ) {
     id = im->id();
-    // check last ids
-    if (llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT == im->set()) {
-      if (id_last_light_ < (int)id ) {
-        id_last_light_ = id;
-      } else {
-        printf("Received old ID for light, ignore\n");
-        return;
-      }
+    // check for reset
+    if (llsf_msgs::INSTRUCT_MACHINE_RESET == im->set()) {
+      printf("Received reset for machine\n");
+      id_last_process_ = -1;
+      id_last_light_ = -1;
     } else {
-      if (id_last_process_ < (int)id ) {
-        id_last_process_ = id;
+      // check last ids
+      if (llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT == im->set()) {
+        if (id_last_light_ < (int)id ) {
+          id_last_light_ = id;
+        } else {
+          printf("Received old ID for light, ignore\n");
+          printf("ID: %d\tll: %d\n", id, id_last_light_);
+          return;
+        }
       } else {
-        printf("Received old ID for process, ignore\n");
-        return;
+        if (id_last_process_ < (int)id ) {
+          id_last_process_ = id;
+        } else {
+          printf("Received old ID for process, ignore\n");
+          printf("ID: %d\tlp: %d\n", id, id_last_process_);
+          return;
+        }
       }
     }
     // process the instruction
     machine = im->machine();
-    if (machine == machine_name_) { // if this machine is running here
+//    if (machine == machine_name_) { // if this machine is running here
 
       reply = true;
 
       // generic stuff for machines
       switch ( im->set() ) {
+        case llsf_msgs::INSTRUCT_MACHINE_RESET:
+          id_last_process_ = -1;
+          id_last_light_ = -1;
+          break;
         case llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT:
           printf("Set light to: (ryg): %s, %s, %s\n",
                  llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
@@ -163,11 +176,11 @@ handle_message(ProtobufStreamServer::ClientID client,
                  llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
                  llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
                 );
-          sleep(2);
+//          sleep(2);
           break;
         case llsf_msgs::INSTRUCT_MACHINE_STOP_CONVEYOR:
           printf("STOP! conveyor\n");
-          sleep(1);
+//          sleep(1);
           break;
         case llsf_msgs::INSTRUCT_MACHINE_WAIT_FOR_PICKUP:
           printf("Wait for pickup at TODO-fix-msg-and-send-sensor grace-time is TODO-add change light to (ryg) %s %s %s in case the product is picked up\n",
@@ -175,7 +188,7 @@ handle_message(ProtobufStreamServer::ClientID client,
                  llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
                  llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
                 );
-          sleep(2);
+//          sleep(2);
           break;
         default:
           // now do the specifig stuff for the machines
@@ -185,7 +198,7 @@ handle_message(ProtobufStreamServer::ClientID client,
                 printf("Pushout from feeder # %u\n",
                        im->bs().slot()
                       );
-                sleep(1);
+//                sleep(1);
                 break;
               default:
                 printf("Error, unknown \"set\": %u\n", im->set());
@@ -202,7 +215,7 @@ handle_message(ProtobufStreamServer::ClientID client,
                        im->ss().slot().y(),
                        im->ss().slot().z()
                       );
-                sleep(5);
+//                sleep(5);
                 break;
               default:
                 printf("Error, unknown \"set\": %u\n", im->set());
@@ -214,7 +227,7 @@ handle_message(ProtobufStreamServer::ClientID client,
             switch ( im->set() ) {
               case llsf_msgs::INSTRUCT_MACHINE_DS:
                 printf("Set to gate %u\n", im->ds().gate() );
-                sleep(1);
+//                sleep(1);
                 break;
               default:
                 printf("Error, unknown \"set\": %u\n", im->set());
@@ -226,7 +239,7 @@ handle_message(ProtobufStreamServer::ClientID client,
             switch ( im->set() ) {
               case llsf_msgs::INSTRUCT_MACHINE_CS:
                 printf("%s cap\n", llsf_msgs::CSOp_Name( im->cs().operation() ).c_str() );
-                sleep(2);
+//                sleep(2);
                 break;
               default:
                 printf("Error, unknown \"set\": %u\n", im->set());
@@ -238,7 +251,7 @@ handle_message(ProtobufStreamServer::ClientID client,
             switch ( im->set() ) {
               case llsf_msgs::INSTRUCT_MACHINE_RS:
                 printf("Mount ring from feeder %u\n", im->rs().feeder() );
-                sleep(2);
+//                sleep(2);
                 break;
               default:
                 printf("Error, unknown \"set\": %u\n", im->set());
@@ -255,7 +268,7 @@ handle_message(ProtobufStreamServer::ClientID client,
         reply.set_set( llsf_msgs::MACHINE_REPLY_FINISHED );
         server_->send_to_all(reply);
       }
-    }
+//    }
   }
 }
 
@@ -264,8 +277,8 @@ handle_message(ProtobufStreamServer::ClientID client,
 void
 usage(const char *progname)
 {
-  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
-//  printf("Usage: %s [-R host[:port]]\n",
+//  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
+  printf("Usage: %s [-R host[:port]]\n",
 	 progname);
 }
 
@@ -275,20 +288,21 @@ main(int argc, char **argv)
 {
   id_last_light_ = -1;
   id_last_process_ = -1;
-  ArgumentParser argp(argc, argv, "m:R");
-//  ArgumentParser argp(argc, argv, "R");
+//  ArgumentParser argp(argc, argv, "m:R");
+  ArgumentParser argp(argc, argv, "R");
 
-  if ( ! (argp.has_arg("m")) ) {
-    usage(argv[0]);
-    exit(1);
-  }
-  machine_name_ = argp.arg("m");
+//  if ( ! (argp.has_arg("m")) ) {
+//    usage(argv[0]);
+//    exit(1);
+//  }
+//  machine_name_ = argp.arg("m");
 
   llsfrb::YamlConfiguration *config_ = new llsfrb::YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
   std::string cfg_prefix = std::string("/llsfrb/mps/stations/");
 //  std::string host = config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
-  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
+//  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
+  unsigned int port = 502;
 
   MessageRegister * message_register = new MessageRegister();
   message_register->add_message_type<llsf_msgs::InstructMachine>();
