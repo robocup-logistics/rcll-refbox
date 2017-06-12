@@ -252,7 +252,7 @@
 )
 
 (defrule prod-proc-state-prepared-bs-and-ss
-  "BS station goes directly to processing"
+  "BS and SS station goes directly to processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS|SS) (state PREPARED) (proc-state ~PREPARED))

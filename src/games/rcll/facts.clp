@@ -85,6 +85,7 @@
 
   (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
   (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot comm-cfg-checked (type SYMBOL) (allowed-values false true) (default false))
 )
 
 (deftemplate machine-mps-state

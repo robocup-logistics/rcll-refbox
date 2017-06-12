@@ -17,26 +17,30 @@
   (slot state (type SYMBOL) (allowed-values DOWN UP CONNECTING WAIT-RECONNECT) (default DOWN))
 )
 
-(defrule mps-enable-c-bs
+(defrule mps-enable
   (declare (salience ?*PRIORITY_FIRST*))
   (init)
   (config-loaded)
 ;  (confval (path "/llsfrb/mps/enable") (type BOOL) (value true))
-  (confval (path "/llsfrb/mps/stations/C-BS/active") (type BOOL) (value true))
-  (confval (path "/llsfrb/mps/stations/C-BS/host") (type STRING) (value ?host))
-  (confval (path "/llsfrb/mps/stations/C-BS/port") (type UINT) (value ?port))
+  ?mps <- (machine (name ?machine) (comm-cfg-checked false))
+  (confval (path =(str-cat "/llsfrb/mps/stations/" ?machine "/active")) (type BOOL) (value true))
+  (confval (path =(str-cat "/llsfrb/mps/stations/" ?machine "/host")) (type STRING) (value ?host))
+  (confval (path =(str-cat "/llsfrb/mps/stations/" ?machine "/port")) (type UINT) (value ?port))
   =>
-  (assert (mps (name "C-BS") (master-host ?host) (master-port ?port)))
+  (assert (mps (name (str-cat ?machine)) (master-host ?host) (master-port ?port)))
+  (modify ?mps (comm-cfg-checked true))
 )
 
-(defrule mps-not-enable-c-bs
+(defrule mps-not-enable
   (declare (salience ?*PRIORITY_FIRST*))
   (init)
   (config-loaded)
 ;  (confval (path "/llsfrb/mps/enable") (type BOOL) (value true))
-  (confval (path "/llsfrb/mps/stations/C-BS/active") (type BOOL) (value false))
+  ?mps <- (machine (name ?machine) (comm-cfg-checked false))
+  (confval (path ?pa&:(eq ?pa (str-cat "/llsfrb/mps/stations/" ?machine "/active"))) (type BOOL) (value false))
   =>
-  (printout warn "Do not enable C-BS" crlf)
+  (printout warn "Do not enable " ?machine crlf)
+  (modify ?mps (comm-cfg-checked true))
 )
 
 (defrule mps-finalize
