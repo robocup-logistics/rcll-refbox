@@ -732,6 +732,13 @@
   (return ?im)
 )
 
+(deffunction net-create-mps-reset (?mf ?id)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_RESET)
+  (return ?im)
+)
+
 (deffunction net-create-mps-stop-conveyor (?mf ?id)
   (bind ?im (net-create-instruct-machine-generic ?mf ?id))
 

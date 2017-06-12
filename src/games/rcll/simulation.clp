@@ -54,10 +54,10 @@
 ;  (assert (machine-mps-state (name ?n) (state PROCESSED) (num-bases ?ba)))
 ;)
 
-(deffunction mps-reset (?name)
-  ;(bind ?name (sym-cat ?name))
-  ;(printout t "Simulated machine reset" crlf)
-)
+;(deffunction mps-reset (?name)
+;  ;(bind ?name (sym-cat ?name))
+;  ;(printout t "Simulated machine reset" crlf)
+;)
 
 (deffunction mps-reset-base-counter (?name)
   (bind ?mname (sym-cat ?name))

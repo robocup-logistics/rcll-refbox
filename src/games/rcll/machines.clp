@@ -8,22 +8,43 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deffunction mps-reset (?gt ?mf)
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-reset ?mf ?id))
+
+  (net-assert-mps-change ?id (fact-slot-value ?mf name) ?gt RESET ?s) 
+)
+
+(defrule machine-reset-finished
+  "mps reset finished successfully"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task RESET))
+  ?m <- (machine (name ?n))
+  =>  
+;  (printout t "Machine " ?n " successfully change the light" crlf)
+  (retract ?id-comm ?pb)
+)
+
 (defrule m-shutdown "Shutdown machines at the end"
   (finalize)
   ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
   (modify ?mf (desired-lights))
-;  (mps-reset (str-cat ?m))
-; TODO 2017
+  (do-for-fact ((?gs gamestate)) true
+    (mps-reset ?gs:game-time ?mf)
+  )
 )
 
 
 (defrule machine-init
   (init)
   =>
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-;    (mps-reset ?machine:name)
-; TODO 2017
+  (do-for-fact ((?gs gamestate)) true
+    (delayed-do-for-all-facts ((?machine machine)) TRUE
+      (mps-reset ?gs:game-time ?machine)
+    )
   )
 )
 
@@ -86,7 +107,7 @@
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
   (not (mps-comm-msg (id ?id-final)))
   =>  
-  (printout error "Received finish msg from MPS " ?n " with unknown ID " ?id-final " going to ignore" crlf)
+  (printout debug "Received finish msg from MPS " ?n " with unknown ID " ?id-final " silently ignoreing this (probably just old)" crlf)
   (retract ?pb)
 )
 

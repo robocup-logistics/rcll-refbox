@@ -88,6 +88,7 @@ enum InstructMachineSet {
   INSTRUCT_MACHINE_RS = 13;
   INSTRUCT_MACHINE_CS = 14;
   INSTRUCT_MACHINE_DS = 15;
+  INSTRUCT_MACHINE_RESET = 51;
 }
 
 message InstructMachine {
