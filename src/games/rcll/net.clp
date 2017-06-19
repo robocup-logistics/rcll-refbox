@@ -668,11 +668,12 @@
 (defrule net-send-mps-change-periodic-burst
   ; send in a periodic mattern the mps msg
   (time $?now)
-  ?s <- (signal (type mps-instruct) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD-BURST*)) (seq ?seq))
+  ?s <- (signal (type mps-instruct-burst) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD-BURST*)) (seq ?seq))
   =>
   (modify ?s (time ?now) (seq (+ ?seq 1)))
   ; send all msg
-  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (and (eq ?mps-comm:name (sym-cat ?mps:name))
+  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (and (<> ?mps:client-id 0)
+                                                                       (eq ?mps-comm:name (sym-cat ?mps:name))
                                                                        (> ?*MPS-INSTRUCT-BURST-COUNT* ?mps-comm:sended-count)
                                                                   )
     (pb-send ?mps:client-id ?mps-comm:msg)
@@ -687,7 +688,9 @@
   =>
   (modify ?s (time ?now) (seq (+ ?seq 1)))
   ; send all msg
-  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (eq ?mps-comm:name (sym-cat ?mps:name))
+  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (and (<> ?mps:client-id 0)
+                                                                       (eq ?mps-comm:name (sym-cat ?mps:name))
+                                                                  )
     (pb-send ?mps:client-id ?mps-comm:msg) 
     (modify ?mps-comm (sended-count (+ ?mps-comm:sended-count 1)))
   )

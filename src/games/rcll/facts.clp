@@ -350,6 +350,7 @@
   (signal (type machine-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-info-bc) (time (create$ 0 0)) (seq 1))
   (signal (type mps-instruct) (time (create$ 0 0)) (seq 1))
+  (signal (type mps-instruct-burst) (time (create$ 0 0)) (seq 1))
   (signal (type ring-info-bc) (time (create$ 0 0)) (seq 1))
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
