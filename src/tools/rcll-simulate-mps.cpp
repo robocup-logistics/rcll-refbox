@@ -54,9 +54,11 @@ boost::asio::io_service io_service_;
 static bool quit = false;
 ProtobufStreamServer *server_ = NULL;
 
-//std::string machine_name_;
+std::string machine_name_;
 int id_last_light_ = -1;
+int id_last_mps_interupt_ = -1;
 int id_last_process_ = -1;
+std::map<int, std::shared_ptr<llsf_msgs::MachineReply>> finished_ids_;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -72,38 +74,13 @@ handle_connected(ProtobufStreamServer::ClientID client,
                  boost::asio::ip::tcp::endpoint &endpoint)
 {
   printf("Connected to RefBox\n");
-//  llsf_msgs::SetMachineLights set_lights;
-//  set_lights.set_machine_name(machine_name_);
-
-//  llsf_msgs::LightSpec *red = set_lights.add_lights();
-//  red->set_color(llsf_msgs::RED);
-//  red->set_state(light_state_red_);
-  
-//  llsf_msgs::LightSpec *yellow = set_lights.add_lights();
-//  yellow->set_color(llsf_msgs::YELLOW);
-//  yellow->set_state(light_state_yellow_);
-
-//  llsf_msgs::LightSpec *green = set_lights.add_lights();
-//  green->set_color(llsf_msgs::GREEN);
-//  green->set_state(light_state_green_);
-
-//  printf("Message:\n"
-//         "==================================================================\n"
-//         "%s\n"
-//         "==================================================================\n",
-//         set_lights.DebugString().c_str());
-  
-//  client_->send(set_lights);
-
-//  usleep(200000);
-//  quit = true;
-//  io_service_.stop();
 }
 
 void
 handle_disconnected(ProtobufStreamServer::ClientID client,
                     const boost::system::error_code &error)
 {
+  printf("Disconected from RefBox\n");
 //  quit = true;
 //  io_service_.stop();
 }
@@ -116,159 +93,207 @@ handle_receive_failed(ProtobufStreamServer::ClientID client,
   printf("Received failed to %u: comp_id: %u, msg_type: %u\n", client, component_id, msg_type);
 }
 
+bool
+is_new_msg_id(std::shared_ptr<llsf_msgs::InstructMachine> msg)
+{
+  int id = msg->id();
+  switch ( msg->set() ) {
+    case llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT:
+      if ( id > id_last_light_ ) {
+        id_last_light_ = id;
+        return true;
+      } else {
+        return false;
+      }
+      break;
+    case llsf_msgs::INSTRUCT_MACHINE_PULL_MSGS_FROM_MPS:
+      if ( id > id_last_mps_interupt_ ) {
+        id_last_mps_interupt_ = id;
+        return true;
+      } else {
+        return false;
+      }
+      break;
+    default:
+      if ( id > id_last_process_ ) {
+        id_last_process_ = id;
+        return true;
+      } else {
+        return false;
+      }
+  }
+}
+
+void
+reset_machine()
+{
+  id_last_light_        = -1;
+  id_last_mps_interupt_ = -1;
+  id_last_process_      = -1;
+  finished_ids_.clear();
+}
+
+void
+send_reply(std::shared_ptr<llsf_msgs::MachineReply> msg)
+{
+  server_->send_to_all( *msg );
+}
+
+void
+send_reply_and_append(int id)
+{
+  std::shared_ptr<llsf_msgs::MachineReply> reply(new llsf_msgs::MachineReply);
+  reply->set_id( id );
+  reply->set_machine( machine_name_ );
+  reply->set_set( llsf_msgs::MACHINE_REPLY_FINISHED );
+
+  send_reply( reply );
+
+  finished_ids_[id] = reply;
+}
+
+void
+send_reply_and_append(int id, std::list<std::shared_ptr<llsf_msgs::MachineSensorInfo>> sensors)
+{
+  std::shared_ptr<llsf_msgs::MachineReply> reply(new llsf_msgs::MachineReply);
+  reply->set_id( id );
+  reply->set_machine( machine_name_ );
+  reply->set_set( llsf_msgs::MACHINE_REPLY_FINISHED_WITH_PAYLOAD );
+
+  for (std::shared_ptr<llsf_msgs::MachineSensorInfo> sensor : sensors) {
+    llsf_msgs::MachineSensorInfo* new_sensor = reply->add_sensors();
+    *new_sensor = *sensor;
+  }
+
+  send_reply( reply );
+
+  finished_ids_[id] = reply;
+}
+
+
+void
+check_id_for_finised_msgs_and_send_reply(int id)
+{
+  std::map<int, std::shared_ptr<llsf_msgs::MachineReply>>::const_iterator id_pos = finished_ids_.find(id);
+  if ( id_pos != finished_ids_.end() ) {  // id found
+    send_reply( id_pos->second );
+  }
+  // else do nothing, old or not yet finished msg
+}
+
 void
 handle_message(ProtobufStreamServer::ClientID client,
                uint16_t component_id, uint16_t msg_type,
                std::shared_ptr<google::protobuf::Message> msg)
 {
-  bool reply = false;
-  unsigned int id = -1;
-  std::string machine = "NOT-SET";
   std::shared_ptr<llsf_msgs::InstructMachine> im;
   if ( (im = std::dynamic_pointer_cast<llsf_msgs::InstructMachine>(msg)) ) {
-    id = im->id();
-    // check for reset
-    if (llsf_msgs::INSTRUCT_MACHINE_RESET == im->set()) {
-      printf("Received reset for machine\n");
-      id_last_process_ = -1;
-      id_last_light_ = -1;
-    } else {
-      // check last ids
-      if (llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT == im->set()) {
-        if (id_last_light_ < (int)id ) {
-          id_last_light_ = id;
-        } else {
-          printf("Received old ID for light, ignore\n");
-          printf("ID: %d\tll: %d\n", id, id_last_light_);
-          return;
-        }
+    std::string machine = im->machine();
+    if (machine == machine_name_) { // if this machine is running here
+      int id = im->id();
+      // special case for reset
+      if (llsf_msgs::INSTRUCT_MACHINE_RESET == im->set()) {
+        printf("Received reset for machine\n");
+
+        // since this is always generated and send when a reset is received (even with any ID), this also covers the case of a lost reply msg
+        send_reply_and_append(id);
+        reset_machine();  // need to be reset afterwards, to also clear the just appended msg
+
+        return; // we need to stop here!!!, otherwise the ids gets back up again
+      }
+
+      if ( ! is_new_msg_id( im ) ) {
+        check_id_for_finised_msgs_and_send_reply( id );
       } else {
-        if (id_last_process_ < (int)id ) {
-          id_last_process_ = id;
-        } else {
-          printf("Received old ID for process, ignore\n");
-          printf("ID: %d\tlp: %d\n", id, id_last_process_);
-          return;
+        // generic stuff for machines
+        switch ( im->set() ) {
+          case llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT:
+            printf("Set light to: (ryg): %s, %s, %s\n",
+                   llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
+                   llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
+                   llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
+                  );
+            send_reply_and_append(id);
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR:
+            printf("Move conveyor to %s and stop at %s\n",
+                   llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
+                   llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
+                  );
+            send_reply_and_append(id);
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_STOP_CONVEYOR:
+            printf("STOP! conveyor\n");
+            send_reply_and_append(id);
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_WAIT_FOR_PICKUP:
+            printf("Wait for pickup at TODO-fix-msg-and-send-sensor grace-time is TODO-add change light to (ryg) %s %s %s in case the product is picked up\n",
+                   llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
+                   llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
+                   llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
+                  );
+            send_reply_and_append(id);
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_BS:
+            if ( im->machine().find("BS") != std::string::npos ) {  // if it is a BS
+              printf("Pushout from feeder # %u\n", im->bs().slot() );
+              send_reply_and_append(id);
+            } else {
+              printf("Error, unknown \"set\": %u\n", im->set());
+            }
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_SS:
+            if ( im->machine().find("SS") != std::string::npos ) {
+              printf("%s from slot %u %u %u\n",
+                     llsf_msgs::SSOp_Name( im->ss().operation() ).c_str(),
+                     im->ss().slot().x(),
+                     im->ss().slot().y(),
+                     im->ss().slot().z()
+                    );
+              send_reply_and_append(id);
+            } else {
+              printf("Error, unknown \"set\": %u\n", im->set());
+            }
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_DS:
+            if ( im->machine().find("DS") != std::string::npos ) {
+              printf("Set to gate %u\n", im->ds().gate() );
+              send_reply_and_append(id);
+            } else {
+              printf("Error, unknown \"set\": %u\n", im->set());
+            }
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_CS:
+            if ( im->machine().find("CS") != std::string::npos ) {
+              printf("%s cap\n", llsf_msgs::CSOp_Name( im->cs().operation() ).c_str() );
+              send_reply_and_append(id);
+            } else {
+              printf("Error, unknown \"set\": %u\n", im->set());
+            }
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_RS:
+            if ( im->machine().find("RS") != std::string::npos ) {
+              printf("Mount ring from feeder %u\n", im->rs().feeder() );
+              send_reply_and_append(id);
+            } else {
+              printf("Error, unknown \"set\": %u\n", im->set());
+            }
+            break;
+          case llsf_msgs::INSTRUCT_MACHINE_PULL_MSGS_FROM_MPS: {
+            std::list<std::shared_ptr<llsf_msgs::MachineSensorInfo>> sensors;
+            std::shared_ptr<llsf_msgs::MachineSensorInfo> s1(new llsf_msgs::MachineSensorInfo);
+            s1->set_added_bases(1);
+            sensors.push_back(s1);
+
+            send_reply_and_append(id, sensors);
+          }
+            break;
+          default:
+            // this should never be reached
+            printf("ERROR in code!!!, this should has been called before");
         }
       }
     }
-    // process the instruction
-    machine = im->machine();
-//    if (machine == machine_name_) { // if this machine is running here
-
-      reply = true;
-
-      // generic stuff for machines
-      switch ( im->set() ) {
-        case llsf_msgs::INSTRUCT_MACHINE_RESET:
-          id_last_process_ = -1;
-          id_last_light_ = -1;
-          break;
-        case llsf_msgs::INSTRUCT_MACHINE_SET_SIGNAL_LIGHT:
-          printf("Set light to: (ryg): %s, %s, %s\n",
-                 llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
-                 llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
-                 llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
-                );
-          break;
-        case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR:
-          printf("Move conveyor to %s and stop at %s\n",
-                 llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
-                 llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
-                );
-//          sleep(2);
-          break;
-        case llsf_msgs::INSTRUCT_MACHINE_STOP_CONVEYOR:
-          printf("STOP! conveyor\n");
-//          sleep(1);
-          break;
-        case llsf_msgs::INSTRUCT_MACHINE_WAIT_FOR_PICKUP:
-          printf("Wait for pickup at TODO-fix-msg-and-send-sensor grace-time is TODO-add change light to (ryg) %s %s %s in case the product is picked up\n",
-                 llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
-                 llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
-                 llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
-                );
-//          sleep(2);
-          break;
-        default:
-          // now do the specifig stuff for the machines
-          if ( im->machine().find("BS") != std::string::npos ) {  // if it is a BS
-            switch ( im->set() ) {
-              case llsf_msgs::INSTRUCT_MACHINE_BS:
-                printf("Pushout from feeder # %u\n",
-                       im->bs().slot()
-                      );
-//                sleep(1);
-                break;
-              default:
-                printf("Error, unknown \"set\": %u\n", im->set());
-                reply = false;
-                break;
-            }
-          } else if ( im->machine().find("SS") != std::string::npos ) {
-
-            switch ( im->set() ) {
-              case llsf_msgs::INSTRUCT_MACHINE_SS:
-                printf("%s from slot %u %u %u\n",
-                       llsf_msgs::SSOp_Name( im->ss().operation() ).c_str(),
-                       im->ss().slot().x(),
-                       im->ss().slot().y(),
-                       im->ss().slot().z()
-                      );
-//                sleep(5);
-                break;
-              default:
-                printf("Error, unknown \"set\": %u\n", im->set());
-                reply = false;
-                break;
-            }
-          } else if ( im->machine().find("DS") != std::string::npos ) {
-
-            switch ( im->set() ) {
-              case llsf_msgs::INSTRUCT_MACHINE_DS:
-                printf("Set to gate %u\n", im->ds().gate() );
-//                sleep(1);
-                break;
-              default:
-                printf("Error, unknown \"set\": %u\n", im->set());
-                reply = false;
-                break;
-            }
-          } else if ( im->machine().find("CS") != std::string::npos ) {
-
-            switch ( im->set() ) {
-              case llsf_msgs::INSTRUCT_MACHINE_CS:
-                printf("%s cap\n", llsf_msgs::CSOp_Name( im->cs().operation() ).c_str() );
-//                sleep(2);
-                break;
-              default:
-                printf("Error, unknown \"set\": %u\n", im->set());
-                reply = false;
-                break;
-            }
-          } else if ( im->machine().find("RS") != std::string::npos ) {
-
-            switch ( im->set() ) {
-              case llsf_msgs::INSTRUCT_MACHINE_RS:
-                printf("Mount ring from feeder %u\n", im->rs().feeder() );
-//                sleep(2);
-                break;
-              default:
-                printf("Error, unknown \"set\": %u\n", im->set());
-                reply = false;
-                break;
-            }
-          }
-      }
-
-      if ( reply ) {
-        llsf_msgs::MachineReply reply;
-        reply.set_id( id );
-        reply.set_machine( im->machine() );
-        reply.set_set( llsf_msgs::MACHINE_REPLY_FINISHED );
-        server_->send_to_all(reply);
-      }
-//    }
   }
 }
 
@@ -277,8 +302,7 @@ handle_message(ProtobufStreamServer::ClientID client,
 void
 usage(const char *progname)
 {
-//  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
-  printf("Usage: %s [-R host[:port]]\n",
+  printf("Usage: %s [-R host[:port]] -m <machine-name>\n",
 	 progname);
 }
 
@@ -286,23 +310,20 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-  id_last_light_ = -1;
-  id_last_process_ = -1;
-//  ArgumentParser argp(argc, argv, "m:R");
-  ArgumentParser argp(argc, argv, "R");
+  reset_machine();
+  ArgumentParser argp(argc, argv, "m:R");
 
-//  if ( ! (argp.has_arg("m")) ) {
-//    usage(argv[0]);
-//    exit(1);
-//  }
-//  machine_name_ = argp.arg("m");
+  if ( ! (argp.has_arg("m")) ) {
+    usage(argv[0]);
+    exit(1);
+  }
+  machine_name_ = argp.arg("m");
 
   llsfrb::YamlConfiguration *config_ = new llsfrb::YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
   std::string cfg_prefix = std::string("/llsfrb/mps/stations/");
-//  std::string host = config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
-//  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
-  unsigned int port = 502;
+  std::string host = config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
+  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
 
   MessageRegister * message_register = new MessageRegister();
   message_register->add_message_type<llsf_msgs::InstructMachine>();
