@@ -45,6 +45,9 @@
 #include <msgs/MachineInstructions.pb.h>
 #include <msgs/MachineDescription.pb.h>
 
+#include <thread>         // std::thread
+#include <mutex>          // std::mutex
+
 using namespace protobuf_comm;
 using namespace llsf_msgs;
 using namespace fawkes;
@@ -59,6 +62,10 @@ int id_last_light_ = -1;
 int id_last_mps_interupt_ = -1;
 int id_last_process_ = -1;
 std::map<int, std::shared_ptr<llsf_msgs::MachineReply>> finished_ids_;
+
+std::mutex request_pull_mutex_;
+bool request_pull_ = true; // TODO should be false by default, true only for testing
+std::shared_ptr<std::thread> request_pull_thread_;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -91,6 +98,25 @@ handle_receive_failed(ProtobufStreamServer::ClientID client,
                       std::string msg)
 {
   printf("Received failed to %u: comp_id: %u, msg_type: %u\n", client, component_id, msg_type);
+}
+
+void
+request_pull_thread()
+{
+  do {
+    // copy shared variable to local
+    request_pull_mutex_.lock();
+    bool request_pull_local = request_pull_;
+    request_pull_mutex_.unlock();
+    // when I have local data, request refbox for pull
+    if ( request_pull_local ) {
+      printf("send pull request\n");
+      llsf_msgs::MachineRequestPull pull_request;
+      pull_request.set_machine(machine_name_);
+      server_->send_to_all( pull_request );
+    }
+    sleep(1);
+  } while( ! quit );
 }
 
 bool
@@ -279,18 +305,26 @@ handle_message(ProtobufStreamServer::ClientID client,
               printf("Error, unknown \"set\": %u\n", im->set());
             }
             break;
-          case llsf_msgs::INSTRUCT_MACHINE_PULL_MSGS_FROM_MPS: {
-            std::list<std::shared_ptr<llsf_msgs::MachineSensorInfo>> sensors;
-            std::shared_ptr<llsf_msgs::MachineSensorInfo> s1(new llsf_msgs::MachineSensorInfo);
-            s1->set_added_bases(1);
-            sensors.push_back(s1);
+          case llsf_msgs::INSTRUCT_MACHINE_PULL_MSGS_FROM_MPS:
+            {
+              printf("received pull request\nh");
+              // stop sending the pull request
+              request_pull_mutex_.lock();
+//              request_pull_ = false;
+              request_pull_mutex_.unlock();
 
-            send_reply_and_append(id, sensors);
-          }
+              // transfer all data that I gatherd from my sensors into the reply msg
+              std::list<std::shared_ptr<llsf_msgs::MachineSensorInfo>> sensors;
+              std::shared_ptr<llsf_msgs::MachineSensorInfo> s1(new llsf_msgs::MachineSensorInfo);
+              s1->set_added_bases(1);
+              sensors.push_back(s1);
+
+              send_reply_and_append(id, sensors);
+            }
             break;
           default:
             // this should never be reached
-            printf("ERROR in code!!!, this should has been called before");
+            printf("ERROR in code!!!, this should not be reached");
         }
       }
     }
@@ -342,10 +376,14 @@ main(int argc, char **argv)
   signals.async_wait(signal_handler);
 #endif
 
+  request_pull_thread_ = std::shared_ptr<std::thread>(new std::thread(request_pull_thread));
+
   do {
     io_service_.run();
     io_service_.reset();
   } while (! quit);
+
+  request_pull_thread_->join();
 
   delete server_;
 
