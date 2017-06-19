@@ -83,6 +83,29 @@
   (retract ?id-comm ?pb)
 )
 
+(defrule machine-pull-msgs-finised
+  "pull of msgs from mps finished successfully"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n) (sensors $?sensors))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PULL-MSG))
+  ?m <- (machine (name ?n))
+  =>  
+  (foreach ?sensor $?sensors
+    (if (pb-has-field ?sensor "added_bases")
+     then
+      (printout t "Bases: " (fact-slot-value ?m bases-added) " + " (pb-field-value ?sensor "added_bases") crlf)
+      (modify ?m (bases-added (+ (fact-slot-value ?m bases-added) (pb-field-value ?sensor "added_bases"))))
+    )
+    (if (pb-has-field ?sensor "barcode")
+     then
+      (printout t "TODO!!!!!!!!!!! received barcode" ?sensor-index ": " (pb-field-value ?sensor "barcode") crlf)
+    )
+  )
+
+  (retract ?id-comm ?pb)
+)
+
 (defrule machine-wait-for-product-too-long
   "a machines was prepared, but the product was not fed into the machine in time"
   (declare (salience ?*PRIORITY_HIGH*))

@@ -697,7 +697,8 @@
 )
 
 (defrule net-mps-change-long-time-warn
-  (mps-comm-msg (sended-count ?count&:(> ?count 20)) (task ?task))
+  (declare (salience ?*PRIORITY_FIRST*))
+  (mps-comm-msg (sended-count ?count&:(eq ?count 10)) (task ?task))
   =>
   (assert (attention-message (text (str-cat "wait for MPS <name> to finish " ?task ", sendet " ?count ""))))
 )
@@ -708,6 +709,7 @@
   =>
   (assert (pb-machine-reply (id (pb-field-value ?p "id"))
             (machine (sym-cat (pb-field-value ?p "machine")))
+            (sensors (pb-field-list ?p "sensors"))
           )
   )
   (retract ?pf)
@@ -720,6 +722,22 @@
   (pb-set-field ?im "machine" (str-cat (fact-slot-value ?mf name)))
     
   (return ?im)
+)
+
+(defrule net-receive-mps-pull-request
+  (gamestate (game-time ?gt))
+  ?pf <- (protobuf-msg (type "llsf_msgs.MachineRequestPull") (ptr ?p) (rcvd-via STREAM)
+          (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  =>
+  (do-for-fact ((?machine machine)) (eq ?machine:name (sym-cat (pb-field-value ?p "machine")))
+    (bind ?id (net-get-new-id))
+    (bind ?im (net-create-instruct-machine-generic ?machine ?id))
+    (pb-set-field ?im "set" INSTRUCT_MACHINE_PULL_MSGS_FROM_MPS)
+
+    (net-assert-mps-change ?id ?machine:name ?gt PULL-MSG ?im)
+  )
+  
+  (retract ?pf)
 )
 
 (deffunction net-create-mps-set-lights (?mf ?id ?red ?yellow ?green)
