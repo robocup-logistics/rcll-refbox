@@ -64,8 +64,13 @@ int id_last_process_ = -1;
 std::map<int, std::shared_ptr<llsf_msgs::MachineReply>> finished_ids_;
 
 std::mutex request_pull_mutex_;
-bool request_pull_ = true; // TODO should be false by default, true only for testing
+bool request_pull_ = false;
 std::shared_ptr<std::thread> request_pull_thread_;
+
+std::mutex mps_msg_;
+unsigned int bases_added_since_last_poll_ = 0;
+std::list<int> barcodes_read_since_last_poll_;
+std::shared_ptr<std::thread> mps_msg_thread_;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -98,6 +103,46 @@ handle_receive_failed(ProtobufStreamServer::ClientID client,
                       std::string msg)
 {
   printf("Received failed to %u: comp_id: %u, msg_type: %u\n", client, component_id, msg_type);
+}
+
+void
+mps_msg_thread()
+{
+  std::cout << std::endl
+            << std::endl
+            << "You can input '+'s to add bases or write numbers to create a barcode." << std::endl
+            << "The line will be interpred on pressing enter." << std::endl
+            << std::endl;
+  do {
+    std::string input_line = "";
+    std::cin >> input_line;
+    std::string input_barcode = "";
+    unsigned int input_bases = 0;
+    for (char& c : input_line ) {
+      if (c == '+') {
+        input_bases++;
+      }
+      if (c >= '0' && c <= '9') {
+        input_barcode += c;
+      }
+    }
+    std::cout << std::endl
+              << "Base added: " << input_bases << std::endl
+              << "Barcode: " << input_barcode << std::endl;
+
+    mps_msg_.lock();
+    bases_added_since_last_poll_ += input_bases;
+    if ( ! input_barcode.empty() ) {
+      barcodes_read_since_last_poll_.push_back( std::stoi( input_barcode) );
+    }
+    mps_msg_.unlock();
+
+    request_pull_mutex_.lock();
+    request_pull_ = true;
+    request_pull_mutex_.unlock();
+
+    sleep(1);
+  } while ( ! quit );
 }
 
 void
@@ -156,6 +201,8 @@ reset_machine()
   id_last_light_        = -1;
   id_last_mps_interupt_ = -1;
   id_last_process_      = -1;
+  bases_added_since_last_poll_ = 0;
+  barcodes_read_since_last_poll_.clear();
   finished_ids_.clear();
 }
 
@@ -307,17 +354,28 @@ handle_message(ProtobufStreamServer::ClientID client,
             break;
           case llsf_msgs::INSTRUCT_MACHINE_PULL_MSGS_FROM_MPS:
             {
-              printf("received pull request\nh");
               // stop sending the pull request
               request_pull_mutex_.lock();
-//              request_pull_ = false;
+              request_pull_ = false;
               request_pull_mutex_.unlock();
 
               // transfer all data that I gatherd from my sensors into the reply msg
               std::list<std::shared_ptr<llsf_msgs::MachineSensorInfo>> sensors;
-              std::shared_ptr<llsf_msgs::MachineSensorInfo> s1(new llsf_msgs::MachineSensorInfo);
-              s1->set_added_bases(1);
-              sensors.push_back(s1);
+              mps_msg_.lock();
+              if (bases_added_since_last_poll_ != 0) {
+                std::shared_ptr<llsf_msgs::MachineSensorInfo> s_base(new llsf_msgs::MachineSensorInfo);
+                s_base->set_added_bases( bases_added_since_last_poll_ );
+                sensors.push_back(s_base);
+              }
+              for (int barcode : barcodes_read_since_last_poll_) {
+                std::shared_ptr<llsf_msgs::MachineSensorInfo> s_barcode(new llsf_msgs::MachineSensorInfo);
+                s_barcode->set_barcode(barcode);
+                sensors.push_back(s_barcode);
+              }
+
+              bases_added_since_last_poll_ = 0;
+              barcodes_read_since_last_poll_.clear();
+              mps_msg_.unlock();
 
               send_reply_and_append(id, sensors);
             }
@@ -376,6 +434,7 @@ main(int argc, char **argv)
   signals.async_wait(signal_handler);
 #endif
 
+  mps_msg_thread_ = std::shared_ptr<std::thread>(new std::thread(mps_msg_thread));
   request_pull_thread_ = std::shared_ptr<std::thread>(new std::thread(request_pull_thread));
 
   do {
@@ -383,6 +442,7 @@ main(int argc, char **argv)
     io_service_.reset();
   } while (! quit);
 
+//  mps_msg_thread_->join();
   request_pull_thread_->join();
 
   delete server_;
