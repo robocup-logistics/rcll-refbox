@@ -667,6 +667,7 @@
 
 (defrule net-send-mps-change-periodic-burst
   ; send in a periodic mattern the mps msg
+  (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
   (time $?now)
   ?s <- (signal (type mps-instruct-burst) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD-BURST*)) (seq ?seq))
   =>
@@ -683,6 +684,7 @@
 
 (defrule net-send-mps-change-periodic
   ; send in a periodic mattern the mps msg
+  (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
   (time $?now)
   ?s <- (signal (type mps-instruct) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD*)) (seq ?seq))
   =>

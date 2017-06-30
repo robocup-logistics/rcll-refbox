@@ -47,72 +47,40 @@
   (modify ?st (now ?new-sim-time) (last-recv-time ?now) (real-time-factor ?rtf))
 )
 
-;(defrule sim-mps-processed
-;  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-;  (machine (name ?n) (state PROCESSING) (bases-added ?ba))
-;  =>
-;  (assert (machine-mps-state (name ?n) (state PROCESSED) (num-bases ?ba)))
-;)
-
-;(deffunction mps-reset (?name)
-;  ;(bind ?name (sym-cat ?name))
-;  ;(printout t "Simulated machine reset" crlf)
-;)
-
-(deffunction mps-reset-base-counter (?name)
-  (bind ?mname (sym-cat ?name))
-  ;(printout t "Reset base counter for " ?name crlf)
-  (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-    (assert (machine-mps-state (name ?mname) (state ?m:state) (num-bases 0)))
-  )
+(defrule sim-mps-connect
+  (declare (salience ?*PRIORITY_FIRST*))
+  ?sf <- (mps (name ?n) (client-id 0))
+  =>
+  (printout t "sim-connect to mps " ?n " as client 999" crlf)
+  (modify ?sf (client-id 999))
 )
 
-(deffunction mps-set-light (?name ?color ?state)
-  ;(bind ?name (sym-cat ?name))
-  ;(printout t "Simulated light setting for " ?name ": " ?color "/" ?state crlf)
+(defrule sim-mps-reply-small-waiting
+  "instead of sending to the actual machines, simulate the responce here"
+  (declare (salience ?*PRIORITY_FIRST*))
+  (gamestate (game-time ?gt))
+  ?c <- (mps-comm-msg (id ?id) (name ?n) (sended-count 0) (game-time ?sat&:(timeout-sec ?gt ?sat 5)) (task ~RESET&~CHANGE-LIGHT&~WAIT-FOR-PICKUP))
+  =>
+  (assert (pb-machine-reply (id ?id) (machine ?n)))
+  (modify ?c (sended-count 1))
 )
 
-(deffunction mps-set-lights (?name ?state-red ?state-yellow ?state-green)
-  (bind ?name (sym-cat ?name))
-  ;(printout t "Simulated light setting for " ?name ": red=" ?state-red
-	;					" yellow=" ?state-yellow "  green=" ?state-green crlf)
+(defrule sim-mps-reply-direct
+  "instead of sending to the actual machines, simulate the responce here"
+  (declare (salience ?*PRIORITY_FIRST*))
+  ?c <- (mps-comm-msg (id ?id) (name ?n) (sended-count 0) (task RESET|CHANGE-LIGHT))
+  =>
+  (assert (pb-machine-reply (id ?id) (machine ?n)))
+  (modify ?c (sended-count 1))
 )
 
-(deffunction mps-bs-dispense (?name ?color ?side)
-  (bind ?name (sym-cat ?name))
-  (printout t "Simulated dispense at " ?name " for " ?color " at " ?side crlf)
-  (do-for-fact ((?m machine)) (eq ?m:name ?name)
-    (assert (machine-mps-state (name ?name) (state PROCESSED)))
-  )
-)
-(deffunction mps-ds-process (?name ?gate)
-  (bind ?name (sym-cat ?name))
-  (printout t "Simulated delivery at " ?name " on lane " ?gate crlf)
-  (do-for-fact ((?m machine)) (eq ?m:name ?name)
-    (assert (machine-mps-state (name ?name) (state PROCESSED)))
-  )
-)
-
-(deffunction mps-rs-mount-ring (?name ?color)
-  (bind ?name (sym-cat ?name))
-  (printout t "Simulated ring mounting " ?name " for " ?color crlf)
-  (do-for-fact ((?m machine)) (eq ?m:name ?name)
-    (assert (machine-mps-state (name ?name) (state PROCESSED) (num-bases ?m:bases-added)))
-  )
-)
-
-(deffunction mps-cs-process (?name ?cs-op)
-  (bind ?name (sym-cat ?name))
-  (printout t "Simulated  " ?cs-op " at " ?name crlf)
-  (do-for-fact ((?m machine)) (eq ?m:name ?name)
-    (assert (machine-mps-state (name ?name) (state PROCESSED)))
-  )
-)
-
-(deffunction mps-deliver (?name)
-  (bind ?name (sym-cat ?name))
-  (printout t "Simulated output at " ?name crlf)
-  ;(do-for-fact ((?m machine)) (eq ?m:name ?name)
-  ;  (assert (machine-mps-state (name ?name) (state DELIVERED) (num-bases ?m:bases-added)))
-  ;)
+(defrule sim-mps-reply-wait-for-pickup
+  "instead of sending to the actual machines, simulate the responce here, TODO: this should be triggert by gazebo"
+  (declare (salience ?*PRIORITY_FIRST*))
+  (gamestate (game-time ?gt))
+  ?c <- (mps-comm-msg (id ?id) (name ?n) (sended-count 0) (game-time ?sat&:(timeout-sec ?gt ?sat 60)) (task WAIT-FOR-PICKUP))
+  =>
+  (printout t "send pickup" crlf)
+  (assert (pb-machine-reply (id ?id) (machine ?n)))
+  (modify ?c (sended-count 1))
 )
