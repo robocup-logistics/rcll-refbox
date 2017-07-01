@@ -59,7 +59,18 @@
   "instead of sending to the actual machines, simulate the responce here"
   (declare (salience ?*PRIORITY_FIRST*))
   (gamestate (game-time ?gt))
-  ?c <- (mps-comm-msg (id ?id) (name ?n) (sended-count 0) (game-time ?sat&:(timeout-sec ?gt ?sat 5)) (task ~RESET&~CHANGE-LIGHT&~WAIT-FOR-PICKUP))
+  ?c <- (mps-comm-msg (id ?id) (name ?n) (sended-count 0) (game-time ?sat&:(timeout-sec ?gt ?sat 5)) (task ~RESET&~CHANGE-LIGHT&~WAIT-FOR-PICKUP&~WAIT-FOR-PRODUCT))
+  =>
+  (assert (pb-machine-reply (id ?id) (machine ?n)))
+  (modify ?c (sended-count 1))
+)
+
+(defrule sim-mps-reply-wait-for-pickup
+  "instead of sending to the actual machines, simulate the responce here, TODO: this should be triggert by gazebo"
+  (declare (salience ?*PRIORITY_FIRST*))
+  (gamestate (game-time ?gt))
+  ?c <- (mps-comm-msg (id ?id) (name ?n) (sended-count 0) (task WAIT-FOR-PRODUCT))
+  (machine (name ?n) (mps-state AVAILABLE))
   =>
   (assert (pb-machine-reply (id ?id) (machine ?n)))
   (modify ?c (sended-count 1))
