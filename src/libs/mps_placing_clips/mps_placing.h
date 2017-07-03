@@ -240,6 +240,11 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
                 Gecode::rel(*this, (mps_type_[index(width_-3, 1)] == t) >> ((mps_angle_[index(width_-3, 1)] != ANGLE_135) && (mps_angle_[index(width_-3, 1)] != ANGLE_180)  && (mps_angle_[index(width_-3, 1)] != ANGLE_225)));
         }
 
+	//avoid problems on entry wall
+	Gecode::rel(*this, mps_resource_[width_][1][BASE-1] == 1);
+	Gecode::rel(*this, mps_resource_[width_-1][1][BASE-1] == 1);
+	Gecode::rel(*this, mps_resource_[width_-2][1][BASE-1] == 1);
+
 
         // insert blocking contraints
 
@@ -420,6 +425,43 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
             }
 
         }
+
+        // prevent more than 2 machines in a line
+
+        //vertical
+        for(int x=1; x<=width_; x++)
+        {
+            for(int y=1; y<=height_-2; y++)
+            {
+                Gecode::rel(*this, ((mps_type_[index(x,y)] != EMPTY_ROT) && (mps_type_[index(x,y+1)] != EMPTY_ROT)) >> (mps_type_[index(x,y+2)] == EMPTY_ROT));
+            }
+        }
+
+        //horiziontal
+        for(int y=1; y<=height_; y++)
+        {
+            for(int x=1; x<=width_-2; x++)
+            {
+                Gecode::rel(*this, ((mps_type_[index(x,y)] != EMPTY_ROT) && (mps_type_[index(x+1,y)] != EMPTY_ROT)) >> (mps_type_[index(x+2,y)] == EMPTY_ROT));
+            }
+        }
+
+        //diagonal
+        for(int x=1; x<=width_-2; x++)
+        {
+            for(int y=1; y<=height_-2; y++)
+            {
+                Gecode::rel(*this, ((mps_type_[index(x,y)] != EMPTY_ROT) && (mps_type_[index(x+1,y+1)] != EMPTY_ROT)) >> (mps_type_[index(x+2,y+2)] == EMPTY_ROT));
+            }
+        }
+        for(int x=3; x<=width_; x++)
+        {
+            for(int y=1; y<=height_-2; y++)
+            {
+                Gecode::rel(*this, ((mps_type_[index(x,y)] != EMPTY_ROT) && (mps_type_[index(x-1,y+1)] != EMPTY_ROT)) >> (mps_type_[index(x-2,y+2)] == EMPTY_ROT));
+            }
+        }
+
 
         // avoid locks in corners
         Gecode::rel(*this, (mps_type_[index(2,1)] != EMPTY_ROT) >>(mps_type_[index(1,2)] == EMPTY_ROT));
