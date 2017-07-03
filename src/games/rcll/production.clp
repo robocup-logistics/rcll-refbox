@@ -546,7 +546,8 @@
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
   ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED|PROCESSING)
-          (processing-state ?task-finished) (rs-ring-color ?color))
+          (processing-state ?task-finished) (rs-ring-color ?color) (bases-used ?bu))
+  (ring-spec (color ?color) (req-bases ?req-bases))
   =>
   (switch ?task-finished
     (case WAIT-FOR-PRODUCT then
@@ -559,6 +560,7 @@
 
       (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
                  (processing-state PROCESS) (prev-processing-state ?task-finished)
+                 (bases-used (+ ?bu ?req-bases))
       )
     )
     (case PROCESS then
@@ -644,7 +646,7 @@
   "Must check sufficient number of bases for RS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED)
 		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
 	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
@@ -673,17 +675,6 @@
   =>
   (printout t "Machine " ?n " finished processing" crlf)
   (modify ?m (state IDLE) (proc-state PROCESSED))
-)
-
-(defrule prod-proc-state-processed-rs
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (proc-state ~PROCESSED)
-		 (rs-ring-color ?ring-color) (bases-used ?bu))
-  (ring-spec (color ?ring-color) (req-bases ?req-bases))
-  =>
-  (printout t "Machine " ?n " finished processing" crlf)
-  (modify ?m (state IDLE) (proc-state PROCESSED) (bases-used (+ ?bu ?req-bases)))
 )
 
 (defrule prod-proc-state-processed-cs
