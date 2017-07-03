@@ -409,7 +409,7 @@
   ; TODO: Test gt vs ?id-comm time, time diff too big?
 
   (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PICKUP)
-             (state PROCESSED) (proc-state READY-AT-OUTPUT))
+             (state IDLE) (proc-state READY-AT-OUTPUT))
   (retract ?id-comm ?pb)
 )
 
