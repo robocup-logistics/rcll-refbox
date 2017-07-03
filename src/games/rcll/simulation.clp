@@ -65,7 +65,7 @@
   (modify ?c (sended-count 1))
 )
 
-(defrule sim-mps-reply-wait-for-pickup
+(defrule sim-mps-reply-wait-for-product
   "instead of sending to the actual machines, simulate the responce here, TODO: this should be triggert by gazebo"
   (declare (salience ?*PRIORITY_FIRST*))
   (gamestate (game-time ?gt))
