@@ -53,6 +53,9 @@
   ; How long to wait after retrieval to switch to IDLE state
   ?*RETRIEVE-WAIT-IDLE-TIME* = 0
 
+  ; Time for the SS for manual interferance
+  ?*SS-TIME-FOR-EACH-STEP* = 30
+
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1
   ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS* = 1

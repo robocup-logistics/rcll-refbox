@@ -99,6 +99,11 @@
   (multislot slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
 )
 
+(deftemplate machine-ss-manual-step
+  (slot processing-state (type SYMBOL) (allowed-values NONE WAIT-FOR-PRODUCT PROCESS DRIVE-TO-OUT WAIT-FOR-PICKUP) (default NONE))
+  (slot time-since (type FLOAT))
+)
+
 (deftemplate machine-light-code
   (slot id (type INTEGER))
   (multislot code (type SYMBOL) (default)

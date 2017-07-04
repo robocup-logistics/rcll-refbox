@@ -306,7 +306,8 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z))
+		 (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z)
+                 (team ?team))
   =>
   (switch ?operation
     (case STORE then
@@ -316,14 +317,11 @@
     (case RETRIEVE then
       (printout t "Machine " ?n " " ?operation " product from " ?slot-x " " ?slot-y " " ?slot-z crlf)
 
-      ; send to MPSes what to do
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-ss-process ?m ?id ?operation ?slot-x ?slot-y ?slot-z))
-
-      (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
-
       (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
                  (processing-state PROCESS) (prev-processing-state NONE))
+
+      (assert (machine-ss-manual-step (processing-state PROCESS) (time-since ?gt)))
+      (assert (attention-message (team ?team) (text (str-cat "Team " ?team " need to fill SS with C0 from " ?slot-x " " ?slot-y " " ?slot-z))))
     )
     (default
       (printout t "Machine " ?n " received unknown operation " ?operation crlf)
@@ -592,54 +590,33 @@
   (retract ?id-comm ?pb)
 )
 
-(defrule prod-proc-state-processing-ss-processed
-  "steps of the ss production cycle after first step"
-  (declare (salience ?*PRIORITY_HIGHER*))
+(defrule prod-proc-state-processing-ss-read-at-output-after-timeout
+  "after the timeout the replenisher should have put the product onto the machine"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PROCESS))
-  ?m <- (machine (name ?n) (mtype SS) (state PROCESSING)
-          (processing-state PROCESS) (ss-slot ?slot-x ?slot-y ?slot-z))
+  ?m <- (machine (name ?n) (mtype SS) (processing-state ?ps) (ss-slot ?slot-x ?slot-y ?slot-z))
+  ?msm <- (machine-ss-manual-step (processing-state ?ps) (time-since ?ts&:(timeout-sec ?gt ?ts ?*SS-TIME-FOR-EACH-STEP*)))
   ?slot <- (machine-ss-filled (name ?n) (slot ?slot-x ?slot-y ?slot-z))
   =>
-  (printout t "Machine " ?n " move base out" crlf)
-  ; TODO: Test gt vs ?id-comm time, time diff too big?
-  (bind ?id (net-get-new-id))
-  (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
-    
-  (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
-
-  (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state PROCESS))
-  (retract ?id-comm ?pb ?slot)
-)
-
-(defrule prod-proc-state-processing-ss-intermedite-driven-to-out
-  "steps of the ss production cycle after first step"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype SS) (state PROCESSING)
-          (processing-state ?task-finished) )
-  =>
-  (switch ?task-finished
-    (case DRIVE-TO-OUT then
+  (switch ?ps
+    (case PROCESS then
       (printout t "Machine " ?n " base ready for retreival" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
 
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
-    
-      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
-
-      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
+      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state ?ps)
                  (state READY-AT-OUTPUT))
+      (assert (machine-ss-manual-step (processing-state WAIT-FOR-PICKUP) (time-since ?gt)))
+    )
+    (case WAIT-FOR-PICKUP then
+      (printout t "Machine " ?n " base picked up" crlf)
+
+      (modify ?m (processing-state NONE) (prev-processing-state ?ps)
+                 (state IDLE))
+      (retract ?slot)
     )
     (default
-      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
+      (printout error "RefBox error in SS state machine" crlf)
     )
   )
-  (retract ?id-comm ?pb)
+  (retract ?msm)
 )
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
