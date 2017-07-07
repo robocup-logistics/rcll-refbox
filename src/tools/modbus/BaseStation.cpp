@@ -30,10 +30,6 @@ bool BaseStation::isEmpty() {
   return false;
 }
 
-void BaseStation::reset() {
-  sendCommand(machine_type_ | RESET_CMD);
-}
-
 void BaseStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_BS);
 }

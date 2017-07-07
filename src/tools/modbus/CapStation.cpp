@@ -7,10 +7,6 @@ using namespace std;
 CapStation::CapStation() : Machine(CAP_STATION_CMD) { }
 CapStation::~CapStation() {}
 
-void CapStation::reset() {
-  sendCommand(machine_type_ + RESET_CMD);
-}
-
 void CapStation::retrieveCap() {
   sendCommand(CAP_ACTION_CMD + machine_type_, CAP_RETRIEVE);
 }

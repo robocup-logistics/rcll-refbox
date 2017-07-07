@@ -24,6 +24,4 @@ class BaseStation: public Machine {
 
     // Tell the PLC, which machine it is
     virtual void identify();
-    // Send the reset command
-    virtual void reset();
 };

@@ -13,10 +13,6 @@ void DeliveryStation::deliverProduct(int slot) {
   waitForReady();
 }
 
-void DeliveryStation::reset() {
-  sendCommand(machine_type_ | RESET_CMD);
-}
-
 void DeliveryStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_DS);
 }

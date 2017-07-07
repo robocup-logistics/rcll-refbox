@@ -13,10 +13,6 @@ void StorageStation::getProduct(int slot) {
   waitForReady();
 }
 
-void StorageStation::reset() {
-  sendCommand(machine_type_ + RESET_CMD);
-}
-
 void StorageStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_SS);
 }

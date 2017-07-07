@@ -40,7 +40,7 @@ class Machine {
     // abstract methods
     // Reset: send the reset command (which is different for each machine type)
     // Identify: The PLC does not know, which machine it runs. This command tells it the type.
-    virtual void reset() = 0;
+    void reset();
     virtual void identify() = 0;
 
     // when abort_operation_ is set, the current command is aborted.

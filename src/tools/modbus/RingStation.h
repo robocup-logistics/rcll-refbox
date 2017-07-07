@@ -15,7 +15,5 @@ class RingStation: public Machine {
     bool ringReady();
 
     // identify: tell PLC, which machine it is running on
-    // reset:    send the reset command
     virtual void identify();
-    virtual void reset();
 };

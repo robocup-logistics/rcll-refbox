@@ -38,6 +38,10 @@ void Machine::sendCommand(unsigned short command, unsigned short payload1, unsig
   }
 }
 
+void Machine::reset() {
+  sendCommand(machine_type_ | RESET_CMD);
+}
+
 bool Machine::waitForReady(int timeout) {
   struct timespec time_c, time_0, time_d;
   if (timeout >= 0) {

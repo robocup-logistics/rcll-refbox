@@ -19,10 +19,6 @@ bool RingStation::ringReady() {
   return true;
 }
 
-void RingStation::reset() {
-  sendCommand(machine_type_ | RESET_CMD);
-}
-
 void RingStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_RS);
 }

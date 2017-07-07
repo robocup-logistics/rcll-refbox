@@ -16,7 +16,5 @@ class StorageStation: public Machine {
     void getProduct(int slot);
 
     // identify: tell the PLC, which machine it is controlling
-    // reset: send reset command
     virtual void identify();
-    virtual void reset();
 };

@@ -19,6 +19,4 @@ class CapStation: public Machine {
 
     // Tell plc, which machine I am
     virtual void identify();
-    // Send the reset command
-    virtual void reset();
 };

@@ -15,5 +15,4 @@ class DeliveryStation: public Machine {
 
     // Tell PLC, which machine it is
     virtual void identify();
-    virtual void reset();
 };
