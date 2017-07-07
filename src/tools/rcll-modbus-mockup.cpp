@@ -41,6 +41,7 @@
 #include <boost/signals2.hpp>
 
 #include <config/yaml.h>
+#include <msgs/MachineInstructions.pb.h>
 
 #include <utils/system/argparser.h>
 
@@ -92,13 +93,16 @@ input_loop()
       switch (input_line.at(0)) {
         case 'l':
           std::cout << "do light specific stuff" << std::endl;
-          modbus_if_.setLight(LIGHT_YELLOW_CMD, 1);
+          modbus_if_.setLight(LIGHT_YELLOW_CMD, llsf_msgs::LightState::BLINK);
           break;
         case 'c':
           std::cout << "do conveyor specific stuff" << std::endl;
+          modbus_if_.sendCommand(MOVE_BAND_CMD + RING_STATION_CMD, llsf_msgs::SensorOnMPS::SENSOR_OUTPUT, llsf_msgs::ConveyorDirection::FORWARD,
+                                 TIMEOUT_BAND);
           break;
         case 'r':
           std::cout << "rest SPS" << std::endl;
+          modbus_if_.reset();
           break;
       }
     }
