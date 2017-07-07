@@ -133,7 +133,7 @@ Machine::~Machine() {
 
   
 
-void Machine::setLight(unsigned short color, unsigned short state, unsigned short time) {
+void Machine::setLight(unsigned short color, llsf_msgs::LightState state, unsigned short time) {
   switch (color) {
     case LIGHT_RESET_CMD:
     case LIGHT_RED_CMD:
@@ -142,10 +142,26 @@ void Machine::setLight(unsigned short color, unsigned short state, unsigned shor
       break;
     default: throw invalid_argument("Illegal color! See MPSIoMapping.h for choices.");
   }
-  sendCommand( color, state, time);
+  unsigned short int plc_state;
+  switch (state) {
+    case llsf_msgs::ON:
+      plc_state = LIGHT_ON;
+      break;
+    case llsf_msgs::OFF:
+      plc_state = LIGHT_OFF;
+      break;
+    case llsf_msgs::BLINK:
+      plc_state = LIGHT_BLINK;
+      break;
+    default:
+      plc_state = LIGHT_OFF;
+      // TODO error
+  }
+
+  sendCommand( color, plc_state, time);
 }
 
 
 void Machine::resetLight() {
-  setLight(LIGHT_RESET_CMD, 0);
+  setLight(LIGHT_RESET_CMD, llsf_msgs::OFF);
 }

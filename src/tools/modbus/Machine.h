@@ -7,6 +7,7 @@
 #undef OFF
 #undef ON
 #include <mutex>
+#include <msgs/MachineInstructions.pb.h>
 
 class Machine {
   public:
@@ -28,7 +29,7 @@ class Machine {
 
     // Set the light of specified color to specified state
     // color: 1 - 3, state 0 - 2
-    void setLight(unsigned short color, unsigned short state = 1,
+    void setLight(unsigned short color, llsf_msgs::LightState state = llsf_msgs::ON,
         unsigned short time = 0);
     // Sends reset light command
     void resetLight();
