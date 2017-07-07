@@ -4,7 +4,6 @@
 #pragma once
 
 #include "Machine.h"
-#include "protobuf/MachineInstructions.pb.h"
 
 class StorageStation: public Machine {
   public:
@@ -15,9 +14,6 @@ class StorageStation: public Machine {
     // slot is between 1 and 3
     // deprecated
     void getProduct(int slot);
-
-    // Handle protobuf message (from refbox)
-    void handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s);
 
     // identify: tell the PLC, which machine it is controlling
     // reset: send reset command

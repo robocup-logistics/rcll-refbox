@@ -1,6 +1,5 @@
 #include "BaseStation.h"
 #include "MPSIoMapping.h"
-#include "MachineProtoServer.h"
 #include <iostream>
 
 using namespace std;
@@ -37,20 +36,4 @@ void BaseStation::reset() {
 
 void BaseStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_BS);
-}
-
-using namespace llsf_msgs;
-
-#define CASE(type) } else if (dynamic_cast<type *> (&m)) {auto mc = dynamic_cast<type *> (&m);
-
-void BaseStation::handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s) {
-  if (0) {
-  CASE(MoveConveyorBelt)
-    sendCommand(MOVE_BAND_CMD + BASE_STATION_CMD, mc->stop_sensor(), mc->direction(), // CMD, data1, data2
-      TIMEOUT_BAND); // Timeout
-  CASE(BSPushBase)
-    sendCommand(GET_BASE_CMD + BASE_STATION_CMD, mc->slot() + 1);
-  } else {
-    Machine::handleProtobufMsg(m, s);
-  }
 }

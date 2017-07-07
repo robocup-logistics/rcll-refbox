@@ -1,6 +1,5 @@
 #include "DeliveryStation.h"
 #include "MPSIoMapping.h"
-#include "MachineProtoServer.h"
 #include <iostream>
 
 using namespace std;
@@ -20,17 +19,4 @@ void DeliveryStation::reset() {
 
 void DeliveryStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_DS);
-}
-
-using namespace llsf_msgs;
-
-#define CASE(type) } else if (dynamic_cast<type *> (&m)) {auto mc = dynamic_cast<type *> (&m);
-
-void DeliveryStation::handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s) {
-  if (0) {
-  CASE(DSActivateGate)
-    deliverProduct(mc->gate() + 1);
-  } else {
-    Machine::handleProtobufMsg(m, s);
-  }
 }

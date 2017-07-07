@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Machine.h"
-#include "protobuf/MachineInstructions.pb.h"
 
 class BaseStation: public Machine {
   public:
@@ -22,9 +21,6 @@ class BaseStation: public Machine {
     bool isEmpty();
     // deprecated commands end
     // -----------------------------
-
-    // Handle protobuf message (from refbox)
-    void handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s);
 
     // Tell the PLC, which machine it is
     virtual void identify();

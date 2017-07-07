@@ -59,8 +59,14 @@ OBJS_rcll_set_machine_lights = rcll-set-machine-lights.o
 LIBS_rcll_simulate_mps = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_simulate_mps = rcll-simulate-mps.o
 
-LIBS_rcll_modbus_mockup = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
-OBJS_rcll_modbus_mockup = rcll-modbus-mockup.o
+LIBS_rcll_modbus_mockup = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs modbus
+OBJS_rcll_modbus_mockup = rcll-modbus-mockup.o \
+													modbus/Machine.o modbus/timeUtils.o \
+													modbus/BaseStation.o \
+													modbus/StorageStation.o \
+													modbus/DeliveryStation.o \
+													modbus/RingStation.o \
+													modbus/CapStation.o
 
 LIBS_rcll_refbox_instruct = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_refbox_instruct = rcll-refbox-instruct.o

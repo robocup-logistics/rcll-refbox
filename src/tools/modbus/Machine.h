@@ -8,14 +8,6 @@
 #undef ON
 #include <mutex>
 
-namespace google {
-  namespace protobuf {
-    class Message;
-  }
-}
-
-class MachineProtoServer;
-
 class Machine {
   public:
     Machine();
@@ -29,7 +21,7 @@ class Machine {
     //   *) payload2
     //   *) status flag (shall be 1 = BUISY)
     void sendCommand( unsigned short command, unsigned short payload1 = 0,
-        unsigned short payload2 = 0, int timeout = 0, unsigned char status = 1);
+                      unsigned short payload2 = 0, int timeout = 0, unsigned char status = 1);
 
     // Create a modbus connection to machine
     void connectPLC(const std::string& ip, unsigned short port);
@@ -46,10 +38,6 @@ class Machine {
     // Identify: The PLC does not know, which machine it runs. This command tells it the type.
     virtual void reset() = 0;
     virtual void identify() = 0;
-
-    // Handle protobuf message (from refbox)
-    // Child classes can extend the functionality
-    virtual void handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s);
 
     // when abort_operation_ is set, the current command is aborted.
     // lock_ protects just this one boolean

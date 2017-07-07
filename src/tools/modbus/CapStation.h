@@ -17,8 +17,6 @@ class CapStation: public Machine {
 
     virtual ~CapStation();
 
-    // Handle protobuf message (from refbox)
-    void handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s);
     // Tell plc, which machine I am
     virtual void identify();
     // Send the reset command

@@ -1,14 +1,12 @@
 #include "Machine.h"
 #include "MPSIoMapping.h"
-#include "protobuf/MachineInstructions.pb.h"
 #include "timeUtils.h"
 #include "timeoutException.h"
 #include <stdexcept>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include "MachineProtoServer.h"
-//#include <google/protobuf/message.h>
+#include <sstream>
 
 using namespace std;
 
@@ -150,25 +148,4 @@ void Machine::setLight(unsigned short color, unsigned short state, unsigned shor
 
 void Machine::resetLight() {
   setLight(LIGHT_RESET_CMD, 0);
-}
-
-using namespace llsf_msgs;
-
-#define CAST(type) } else if (dynamic_cast<type *> (&m)) {auto mc = dynamic_cast<type *> (&m);
-
-void Machine::handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s) {
-  if (0) {
-  CAST(SetSignalLight)
-    setLight(LIGHT_RED_CMD, mc->red());
-    setLight(LIGHT_YELLOW_CMD, mc->yellow());
-    setLight(LIGHT_GREEN_CMD, mc->green());
-  /*CAST(MPSFinished)
-    cerr << "MPSFinished message is not implemented yet. Ignoring request." << endl;
-  CAST(MPSProductRetrived)
-    cerr << "MPSProductRetrived message is not implemented yet. Ignoring request." << endl;*/
-  } else {
-    ostringstream str;
-    str << "Message " << m.GetTypeName() << " cannot be parsed by this machine!";
-    throw invalid_argument(str.str());
-  }
 }

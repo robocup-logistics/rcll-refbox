@@ -2,7 +2,6 @@
 #pragma once
 
 #include "Machine.h"
-#include "protobuf/MachineInstructions.pb.h"
 
 class RingStation: public Machine {
   public:
@@ -14,9 +13,6 @@ class RingStation: public Machine {
     // Check, if the cap is ready for take away
     // deprecated
     bool ringReady();
-
-    // Handle protobuf message (from refbox)
-    void handleProtobufMsg(google::protobuf::Message& m, MachineProtoServer& s);
 
     // identify: tell PLC, which machine it is running on
     // reset:    send the reset command

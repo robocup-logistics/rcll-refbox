@@ -48,6 +48,9 @@
 #include <mutex>          // std::mutex
 #include <iostream>
 
+#include "modbus/MPSIoMapping.h"
+#include "modbus/RingStation.h"
+
 using namespace fawkes;
 
 boost::asio::io_service io_service_;
@@ -58,6 +61,9 @@ static std::string machine_name_;
 //static int id_last_ = 0;
 
 static std::shared_ptr<std::thread> mps_msg_thread_;
+static RingStation modbus_if_;
+static std::string plc_ip_ = "127.0.0.1";
+static unsigned short int plc_port_ = 5000;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -86,6 +92,7 @@ input_loop()
       switch (input_line.at(0)) {
         case 'l':
           std::cout << "do light specific stuff" << std::endl;
+          modbus_if_.setLight(LIGHT_YELLOW_CMD, 1);
           break;
         case 'c':
           std::cout << "do conveyor specific stuff" << std::endl;
@@ -103,7 +110,7 @@ input_loop()
 void
 usage(const char *progname)
 {
-  printf("Usage: %s -m <machine-name>\n", progname);
+  printf("Usage: %s [-R host[:port]] -m <machine-name>\n", progname);
 }
 
 
@@ -116,8 +123,15 @@ main(int argc, char **argv)
     usage(argv[0]);
     exit(1);
   }
+
   machine_name_ = argp.arg("m");
-  std::cout << machine_name_ << std::endl;
+
+  char* host;
+  unsigned short int port;
+  if ( argp.parse_hostport("R", &host, &port) ) {
+    plc_ip_ = host;
+    plc_port_ = port;
+  }
 
 //  llsfrb::YamlConfiguration *config_ = new llsfrb::YamlConfiguration(CONFDIR);
 //  config_->load("config.yaml");
@@ -132,6 +146,8 @@ main(int argc, char **argv)
   // Start an asynchronous wait for one of the signals to occur.
   signals.async_wait(signal_handler);
 #endif
+
+  modbus_if_.connectPLC(plc_ip_, plc_port_);
 
   mps_msg_thread_ = std::shared_ptr<std::thread>(new std::thread(input_loop));
 
