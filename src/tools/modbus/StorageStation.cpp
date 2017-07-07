@@ -2,7 +2,14 @@
 #include "MPSIoMapping.h"
 #include <iostream>
 
-using namespace std;
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
 
 StorageStation::StorageStation() : Machine(STORAGE_STATION_CMD) { }
 StorageStation::~StorageStation() {}
@@ -15,4 +22,7 @@ void StorageStation::getProduct(int slot) {
 
 void StorageStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_SS);
+}
+
+}
 }

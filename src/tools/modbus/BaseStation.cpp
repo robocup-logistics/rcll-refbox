@@ -2,7 +2,14 @@
 #include "MPSIoMapping.h"
 #include <iostream>
 
-using namespace std;
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
 
 BaseStation::BaseStation() : Machine(BASE_STATION_CMD) { }
 BaseStation::~BaseStation() {}
@@ -20,16 +27,19 @@ void BaseStation::getBase(unsigned short color, unsigned short side) {
 
 // Need information on how to access this
 bool BaseStation::baseReady() {
-  cout << "Not implemented yet!" << endl;
+  std::cout << "Not implemented yet!" << std::endl;
   return true;
 }
 
 // Need information on how to access this
 bool BaseStation::isEmpty() {
-  cout << "Not implemented yet!" << endl;
+  std::cout << "Not implemented yet!" << std::endl;
   return false;
 }
 
 void BaseStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_BS);
+}
+
+}
 }

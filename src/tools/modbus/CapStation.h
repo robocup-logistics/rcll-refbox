@@ -4,6 +4,15 @@
 
 #include "Machine.h"
 
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
+
 class CapStation: public Machine {
   public:
     CapStation();
@@ -20,3 +29,6 @@ class CapStation: public Machine {
     // Tell plc, which machine I am
     virtual void identify();
 };
+
+}
+}

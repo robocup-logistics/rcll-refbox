@@ -5,6 +5,15 @@
 
 #include "Machine.h"
 
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
+
 class StorageStation: public Machine {
   public:
     StorageStation();
@@ -18,3 +27,6 @@ class StorageStation: public Machine {
     // identify: tell the PLC, which machine it is controlling
     virtual void identify();
 };
+
+}
+}

@@ -8,7 +8,14 @@
 #include <string>
 #include <sstream>
 
-using namespace std;
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
 
 Machine::Machine(unsigned short int machine_type) : abort_operation_(false), machine_type_(machine_type), in_registers_(4), out_registers_(4), connection_(nullptr) {
   for (int i = 0; i < 4; ++i) {
@@ -26,13 +33,13 @@ void Machine::sendCommand(unsigned short command, unsigned short payload1, unsig
   out_registers_[3] = status;
   //std::lock_guard<std::mutex> g(lock_);
   if (not waitForReady(timeout))
-    throw runtime_error("Previous command did not end within timeout");
+    throw std::runtime_error("Previous command did not end within timeout");
   pushRegisters();
   if (status & STATUS_BUISY) {
     waitForBuisy();
   }
   if (timeout and (not waitForReady(timeout))) {
-    ostringstream str;
+    std::ostringstream str;
     str << "Timeout during command #" << command << " (Timeout was " << timeout << ")";
     throw timeoutException(str.str());
   }
@@ -50,9 +57,9 @@ bool Machine::waitForReady(int timeout) {
     
   do {
     {
-      lock_guard<mutex> l(lock_);
+      std::lock_guard<std::mutex> l(lock_);
       if (abort_operation_) {
-        cout << "Abort operation" << endl;
+        std::cout << "Abort operation" << std::endl;
         return false;
       }
       updateRegisters();
@@ -122,9 +129,9 @@ void Machine::pushRegisters() {
 void Machine::connectPLC(const std::string& ip, unsigned short port) {
   connection_ = modbus_new_tcp(ip.c_str(), port);
   if (modbus_connect(connection_)) {
-    ostringstream o;
-    o << "Connection to " << ip << " (" << port << ") failed:" << endl << modbus_strerror(errno);
-    throw runtime_error(o.str());
+    std::ostringstream o;
+    o << "Connection to " << ip << " (" << port << ") failed:" << std::endl << modbus_strerror(errno);
+    throw std::runtime_error(o.str());
   }
   updateRegisters();
   identify();
@@ -144,7 +151,7 @@ void Machine::setLight(unsigned short color, llsf_msgs::LightState state, unsign
     case LIGHT_YELLOW_CMD:
     case LIGHT_GREEN_CMD:
       break;
-    default: throw invalid_argument("Illegal color! See MPSIoMapping.h for choices.");
+    default: throw std::invalid_argument("Illegal color! See MPSIoMapping.h for choices.");
   }
   unsigned short int plc_state;
   switch (state) {
@@ -172,4 +179,7 @@ void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::S
 
 void Machine::resetLight() {
   setLight(LIGHT_RESET_CMD, llsf_msgs::OFF);
+}
+
+}
 }

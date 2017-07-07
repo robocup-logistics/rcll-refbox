@@ -4,5 +4,16 @@
 #pragma once
 #include <ctime>
 
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
 void timespec_diff(struct timespec *start, struct timespec *stop,
                    struct timespec *result);
+
+}
+}

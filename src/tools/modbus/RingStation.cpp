@@ -2,7 +2,14 @@
 #include "MPSIoMapping.h"
 #include <iostream>
 
-using namespace std;
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
 
 RingStation::RingStation() : Machine(RING_STATION_CMD) { }
 RingStation::~RingStation() {}
@@ -15,10 +22,13 @@ RingStation::~RingStation() {}
 
 // Need information on how to access this
 bool RingStation::ringReady() {
-  cout << "Not implemented yet!" << endl;
+  std::cout << "Not implemented yet!" << std::endl;
   return true;
 }
 
 void RingStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_RS);
+}
+
+}
 }

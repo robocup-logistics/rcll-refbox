@@ -9,6 +9,15 @@
 #include <mutex>
 #include <msgs/MachineInstructions.pb.h>
 
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
+
 class Machine {
   public:
     Machine(unsigned short int machine_type);
@@ -71,6 +80,6 @@ class Machine {
     // modbus struct
     modbus_t* connection_;
 };
-    
 
-
+}
+}

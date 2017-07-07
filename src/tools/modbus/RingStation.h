@@ -3,6 +3,15 @@
 
 #include "Machine.h"
 
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
+
 class RingStation: public Machine {
   public:
     RingStation();
@@ -17,3 +26,6 @@ class RingStation: public Machine {
     // identify: tell PLC, which machine it is running on
     virtual void identify();
 };
+
+}
+}

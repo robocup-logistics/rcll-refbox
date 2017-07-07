@@ -3,6 +3,15 @@
 
 #include "Machine.h"
 
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
+
 class DeliveryStation: public Machine {
   public:
     DeliveryStation();
@@ -16,3 +25,6 @@ class DeliveryStation: public Machine {
     // Tell PLC, which machine it is
     virtual void identify();
 };
+
+}
+}

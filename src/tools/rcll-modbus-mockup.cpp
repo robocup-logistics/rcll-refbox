@@ -58,7 +58,7 @@ static std::string machine_type_;
 static std::string machine_command_;
 //static int id_last_ = 0;
 
-static std::shared_ptr<Machine> modbus_if_;
+static std::shared_ptr<llsfrb::modbus::Machine> mps_mb_;
 static std::string plc_ip_ = "127.0.0.1";
 static unsigned short int plc_port_ = 5000;
 
@@ -109,22 +109,22 @@ main(int argc, char **argv)
 //  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
 
   if (machine_type_ == "BS") {
-    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<BaseStation>(new BaseStation()));
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::BaseStation>(new llsfrb::modbus::BaseStation()));
   } else if (machine_type_ == "SS") {
-    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<StorageStation>(new StorageStation()));
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::StorageStation>(new llsfrb::modbus::StorageStation()));
   } else if (machine_type_ == "DS") {
-    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<DeliveryStation>(new DeliveryStation()));
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::DeliveryStation>(new llsfrb::modbus::DeliveryStation()));
   } else if (machine_type_ == "RS") {
-    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<RingStation>(new RingStation()));
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::RingStation>(new llsfrb::modbus::RingStation()));
   } else if (machine_type_ == "CS") {
-    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<CapStation>(new CapStation()));
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::CapStation>(new llsfrb::modbus::CapStation()));
   } else {
     std::cout << "Machine of type " << machine_type_ << " is not yet implemented" << std::endl
               << "stop programm" << std::endl;
     return 0;
   }
 
-  modbus_if_->connectPLC(plc_ip_, plc_port_);
+  mps_mb_->connectPLC(plc_ip_, plc_port_);
 
   if (machine_command_ == "light") {
     llsf_msgs::LightState r, y, g;
@@ -142,9 +142,9 @@ main(int argc, char **argv)
     }
     std::cout << "Set light color to: " << llsf_msgs::LightState_Name(r) << " " << llsf_msgs::LightState_Name(y) << " " << llsf_msgs::LightState_Name(g) << std::endl;
 
-    modbus_if_->setLight(LIGHT_RED_CMD, r);
-    modbus_if_->setLight(LIGHT_YELLOW_CMD, y);
-    modbus_if_->setLight(LIGHT_GREEN_CMD, g);
+    mps_mb_->setLight(LIGHT_RED_CMD, r);
+    mps_mb_->setLight(LIGHT_YELLOW_CMD, y);
+    mps_mb_->setLight(LIGHT_GREEN_CMD, g);
   } else if (machine_command_ == "conveyor") {
     llsf_msgs::ConveyorDirection direction;
     llsf_msgs::SensorOnMPS sensor;
@@ -158,11 +158,11 @@ main(int argc, char **argv)
     }
     std::cout << "move conveyor " << llsf_msgs::ConveyorDirection_Name(direction) << " till " << llsf_msgs::SensorOnMPS_Name(sensor)  << std::endl;
 
-    modbus_if_->conveyor_move(direction, sensor);
+    mps_mb_->conveyor_move(direction, sensor);
   } else if (machine_command_ == "reset") {
     std::cout << "resetting " << machine_name_ << std::endl;
 
-    modbus_if_->reset();
+    mps_mb_->reset();
   } else {
     std::cout << "Command unknown or not possible for the given machine " << std::endl
               << "stop programm" << std::endl;

@@ -2,7 +2,14 @@
 #include "MPSIoMapping.h"
 #include <iostream>
 
-using namespace std;
+namespace llsfrb {
+#if 0
+}
+#endif
+namespace modbus {
+#if 0
+}
+#endif
 
 CapStation::CapStation() : Machine(CAP_STATION_CMD) { }
 CapStation::~CapStation() {}
@@ -17,4 +24,7 @@ void CapStation::mountCap() {
 
 void CapStation::identify() {
   sendCommand(SET_TYPE_CMD, TYPE_CS);
+}
+
+}
 }
