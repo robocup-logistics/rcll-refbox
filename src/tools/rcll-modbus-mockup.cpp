@@ -45,7 +45,11 @@
 #include <iostream>
 
 #include "modbus/MPSIoMapping.h"
+#include "modbus/BaseStation.h"
+#include "modbus/StorageStation.h"
+#include "modbus/DeliveryStation.h"
 #include "modbus/RingStation.h"
+#include "modbus/CapStation.h"
 
 using namespace fawkes;
 
@@ -104,8 +108,16 @@ main(int argc, char **argv)
 //  std::string host = config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
 //  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
 
-  if (machine_type_ == "RS") {
+  if (machine_type_ == "BS") {
+    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<BaseStation>(new BaseStation()));
+  } else if (machine_type_ == "SS") {
+    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<StorageStation>(new StorageStation()));
+  } else if (machine_type_ == "DS") {
+    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<DeliveryStation>(new DeliveryStation()));
+  } else if (machine_type_ == "RS") {
     modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<RingStation>(new RingStation()));
+  } else if (machine_type_ == "CS") {
+    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<CapStation>(new CapStation()));
   } else {
     std::cout << "Machine of type " << machine_type_ << " is not yet implemented" << std::endl
               << "stop programm" << std::endl;
