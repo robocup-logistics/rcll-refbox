@@ -37,16 +37,11 @@
 
 #define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
-#include <boost/asio.hpp>
-#include <boost/signals2.hpp>
-
 #include <config/yaml.h>
 #include <msgs/MachineInstructions.pb.h>
 
 #include <utils/system/argparser.h>
 
-#include <thread>         // std::thread
-#include <mutex>          // std::mutex
 #include <iostream>
 
 #include "modbus/MPSIoMapping.h"
@@ -54,81 +49,47 @@
 
 using namespace fawkes;
 
-boost::asio::io_service io_service_;
-
-static bool quit = false;
-
 static std::string machine_name_;
+static std::string machine_type_;
+static std::string machine_command_;
 //static int id_last_ = 0;
 
-static std::shared_ptr<std::thread> mps_msg_thread_;
-static RingStation modbus_if_;
+static std::shared_ptr<Machine> modbus_if_;
 static std::string plc_ip_ = "127.0.0.1";
 static unsigned short int plc_port_ = 5000;
 
 void
-signal_handler(const boost::system::error_code& error, int signum)
-{
-  if (!error) {
-    quit = true;
-    io_service_.stop();
-  }
-}
-
-void
-input_loop()
-{
-  do {
-    std::cout << std::endl
-              << std::endl
-              << "What do you want to send to the SPS? Options:" << std::endl
-              << "Set light, press         l" << std::endl
-              << "Move the conveyor, press c" << std::endl
-              << "Reset SPS, press         r" << std::endl
-              << std::endl;
-
-    std::string input_line = "";
-    std::cin >> input_line;
-    if ( ! input_line.empty() ) {
-      switch (input_line.at(0)) {
-        case 'l':
-          std::cout << "do light specific stuff" << std::endl;
-          modbus_if_.setLight(LIGHT_YELLOW_CMD, llsf_msgs::LightState::BLINK);
-          break;
-        case 'c':
-          std::cout << "do conveyor specific stuff" << std::endl;
-          modbus_if_.sendCommand(MOVE_BAND_CMD + RING_STATION_CMD, llsf_msgs::SensorOnMPS::SENSOR_OUTPUT, llsf_msgs::ConveyorDirection::FORWARD,
-                                 TIMEOUT_BAND);
-          break;
-        case 'r':
-          std::cout << "rest SPS" << std::endl;
-          modbus_if_.reset();
-          break;
-      }
-    }
-
-    sleep(1);
-  } while ( ! quit );
-}
-
-void
 usage(const char *progname)
 {
-  printf("Usage: %s [-R host[:port]] -m <machine-name>\n", progname);
+  printf("Usage: %s <machine-name> <instructions> [-R host[:port]]\n"
+         "\n"
+         "general instructions\n"
+         "light: (in the order red, yellow, green) (OFF|ON|BLINK) (OFF|ON|BLINK) (OFF|ON|BLINK)\n"
+         "conveyor: (FORWARD|BACKWARD) (SENSOR_INPUT|SENSOR_OUTPUT|SENSOR_MIDDLE)\n"
+         "reset\n"
+/*         "instructions are specific for the machine type:\n"
+         "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
+         "DS:  <gate number>\n"
+         "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
+         "RS:  (RING_BLUE|RING_GREEN|RING_ORANGE|RING_YELLOW)\n"
+         "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n"*/,
+         progname);
 }
 
 
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "m:R");
+  ArgumentParser argp(argc, argv, "T:R");
 
-  if ( ! (argp.has_arg("m")) ) {
+  if (argp.num_items() < 2) {
     usage(argv[0]);
     exit(1);
   }
 
-  machine_name_ = argp.arg("m");
+  machine_name_    = argp.items()[0];
+  machine_type_    = machine_name_.substr(2, 2);
+  machine_command_ = argp.items()[1];
 
   char* host;
   unsigned short int port;
@@ -143,20 +104,44 @@ main(int argc, char **argv)
 //  std::string host = config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
 //  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
 
-#if BOOST_ASIO_VERSION >= 100601
-  // Construct a signal set registered for process termination.
-  boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
+  if (machine_type_ == "RS") {
+    modbus_if_ = std::dynamic_pointer_cast<Machine>(std::shared_ptr<RingStation>(new RingStation()));
+  } else {
+    std::cout << "Machine of type " << machine_type_ << " is not yet implemented" << std::endl
+              << "stop programm" << std::endl;
+    return 0;
+  }
 
-  // Start an asynchronous wait for one of the signals to occur.
-  signals.async_wait(signal_handler);
-#endif
+  modbus_if_->connectPLC(plc_ip_, plc_port_);
 
-  modbus_if_.connectPLC(plc_ip_, plc_port_);
+  if (machine_command_ == "light") {
+    llsf_msgs::LightState r, y, g;
+    if (! llsf_msgs::LightState_Parse(argp.items()[2], &r)) {
+      printf("Invalid color for red: %s\n", argp.items()[2]);
+      exit(-2);
+    }
+    if (! llsf_msgs::LightState_Parse(argp.items()[3], &y)) {
+      printf("Invalid color for yellow: %s\n", argp.items()[3]);
+      exit(-2);
+    }
+    if (! llsf_msgs::LightState_Parse(argp.items()[4], &g)) {
+      printf("Invalid color for green: %s\n", argp.items()[4]);
+      exit(-2);
+    }
+    std::cout << "Set light color to: " << llsf_msgs::LightState_Name(r) << " " << llsf_msgs::LightState_Name(y) << " " << llsf_msgs::LightState_Name(g) << std::endl;
+    modbus_if_->setLight(LIGHT_RED_CMD, r);
+    modbus_if_->setLight(LIGHT_YELLOW_CMD, y);
+    modbus_if_->setLight(LIGHT_GREEN_CMD, g);
+  } else if (machine_command_ == "conveyor") {
 
-  mps_msg_thread_ = std::shared_ptr<std::thread>(new std::thread(input_loop));
+  } else if (machine_command_ == "reset") {
+    std::cout << "resetting " << machine_name_ << std::endl;
+    modbus_if_->reset();
+  } else {
+    std::cout << "Command unknown or not possible for the given machine " << std::endl
+              << "stop programm" << std::endl;
+    return 0;
+  }
 
-  do {
-    io_service_.run();
-    io_service_.reset();
-  } while (! quit);
+  return 0;
 }
