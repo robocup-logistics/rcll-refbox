@@ -11,17 +11,17 @@ namespace modbus {
 }
 #endif
 
-DeliveryStation::DeliveryStation() : Machine(DELIVERY_STATION_CMD) { }
+DeliveryStation::DeliveryStation() : Machine(Station::STATION_DELIVERY) { }
 DeliveryStation::~DeliveryStation() {}
 
-void DeliveryStation::deliverProduct(int slot) {
+void DeliveryStation::deliver_product(int slot) {
   //lock_guard<mutex> g(lock_);
-  sendCommand(machine_type_ | DELIVER_CMD, slot);
-  waitForReady();
+  send_command(machine_type_ | Operation::OPERATION_DELIVER, slot);
+  wait_for_ready();
 }
 
 void DeliveryStation::identify() {
-  sendCommand(SET_TYPE_CMD, TYPE_DS);
+  send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
 }
 
 }

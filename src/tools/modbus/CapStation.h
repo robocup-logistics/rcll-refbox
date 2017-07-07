@@ -19,8 +19,8 @@ class CapStation: public Machine {
 
     // -----------------
     // deprecated methods
-    void retrieveCap();
-    void mountCap();
+    void retrieve_cap();
+    void mount_cap();
     // end of deprecated
     // ----------------
 

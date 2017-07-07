@@ -11,19 +11,19 @@ namespace modbus {
 }
 #endif
 
-CapStation::CapStation() : Machine(CAP_STATION_CMD) { }
+CapStation::CapStation() : Machine(Station::STATION_CAP) { }
 CapStation::~CapStation() {}
 
-void CapStation::retrieveCap() {
-  sendCommand(CAP_ACTION_CMD + machine_type_, CAP_RETRIEVE);
+void CapStation::retrieve_cap() {
+  send_command(Operation::OPERATION_CAP_ACTION + machine_type_, Operation::OPERATION_CAP_RETRIEVE);
 }
 
-void CapStation::mountCap() {
-  sendCommand(CAP_ACTION_CMD + machine_type_, CAP_MOUNT);
+void CapStation::mount_cap() {
+  send_command(Operation::OPERATION_CAP_ACTION + machine_type_, Operation::OPERATION_CAP_MOUNT);
 }
 
 void CapStation::identify() {
-  sendCommand(SET_TYPE_CMD, TYPE_CS);
+  send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_CS);
 }
 
 }

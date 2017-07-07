@@ -25,31 +25,31 @@ Machine::Machine(unsigned short int machine_type) : abort_operation_(false), mac
 }
 
 
-void Machine::sendCommand(unsigned short command, unsigned short payload1, unsigned short payload2, int timeout, unsigned char status) {
+void Machine::send_command(unsigned short command, unsigned short payload1, unsigned short payload2, int timeout, unsigned char status) {
   //cout << "Send Command " << command << endl;
   out_registers_[0] = command;
   out_registers_[1] = payload1;
   out_registers_[2] = payload2;
   out_registers_[3] = status;
   //std::lock_guard<std::mutex> g(lock_);
-  if (not waitForReady(timeout))
+  if (not wait_for_ready(timeout))
     throw std::runtime_error("Previous command did not end within timeout");
-  pushRegisters();
-  if (status & STATUS_BUISY) {
-    waitForBuisy();
+  push_registers();
+  if (status & Status::STATUS_BUISY) {
+    wait_for_buisy();
   }
-  if (timeout and (not waitForReady(timeout))) {
+  if (timeout and (not wait_for_ready(timeout))) {
     std::ostringstream str;
     str << "Timeout during command #" << command << " (Timeout was " << timeout << ")";
-    throw timeoutException(str.str());
+    throw timeout_exception(str.str());
   }
 }
 
 void Machine::reset() {
-  sendCommand(machine_type_ | RESET_CMD);
+  send_command(machine_type_ | Command::COMMAND_RESET);
 }
 
-bool Machine::waitForReady(int timeout) {
+bool Machine::wait_for_ready(int timeout) {
   struct timespec time_c, time_0, time_d;
   if (timeout >= 0) {
     clock_gettime(CLOCK_MONOTONIC, &time_0);
@@ -62,11 +62,11 @@ bool Machine::waitForReady(int timeout) {
         std::cout << "Abort operation" << std::endl;
         return false;
       }
-      updateRegisters();
+      update_registers();
     }
-    if (in_registers_.at(3) & STATUS_BUISY) {
-      out_registers_[3] &= ~ STATUS_BUISY;
-      pushRegisters();
+    if (in_registers_.at(3) & Status::STATUS_BUISY) {
+      out_registers_[3] &= ~ Status::STATUS_BUISY;
+      push_registers();
     }
     if (timeout >= 0) {
       clock_gettime(CLOCK_MONOTONIC, &time_c);
@@ -76,36 +76,36 @@ bool Machine::waitForReady(int timeout) {
       }
     }
       
-  } while (! (in_registers_.at(3) & (STATUS_READY | STATUS_ERR)));
-  if (in_registers_.at(3) & STATUS_READY)
+  } while (! (in_registers_.at(3) & (Status::STATUS_READY | Status::STATUS_ERR)));
+  if (in_registers_.at(3) & Status::STATUS_READY)
     return true;
   else
     return false;
 }
 
-void Machine::waitForBuisy() {
+void Machine::wait_for_buisy() {
   struct timespec time_c, time_0, time_d;
   clock_gettime(CLOCK_MONOTONIC, &time_0);
     
   do {
-    updateRegisters();
-    if (in_registers_.at(3) & STATUS_BUISY) {
-      out_registers_[3] &= ~ STATUS_BUISY;
-      pushRegisters();
+    update_registers();
+    if (in_registers_.at(3) & Status::STATUS_BUISY) {
+      out_registers_[3] &= ~ Status::STATUS_BUISY;
+      push_registers();
       break;
     }
     clock_gettime(CLOCK_MONOTONIC, &time_c);
     timespec_diff( &time_0, &time_c, &time_d);
-    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > TIMEOUT_BUISY) {
-      throw timeoutException("Machine did not reset buisy flag within time limit");
+    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUISY) {
+      throw timeout_exception("Machine did not reset buisy flag within time limit");
     }
-  } while (! (in_registers_.at(3) & (STATUS_READY | STATUS_ERR)));
+  } while (! (in_registers_.at(3) & (Status::STATUS_READY | Status::STATUS_ERR)));
 }
 
-bool Machine::waitForFree() {
+bool Machine::wait_for_free() {
   for(;;) {
-    updateRegisters();
-    if (not (in_registers_.at(3) & STATUS_BUISY)) {
+    update_registers();
+    if (not (in_registers_.at(3) & Status::STATUS_BUISY)) {
       return true;
     }
   }
@@ -115,25 +115,25 @@ bool Machine::waitForFree() {
 // TODO: do error handeling here.
 //       eg throw error
 //       and maybe add error to an error list for protobuf messages
-void Machine::updateRegisters() {
+void Machine::update_registers() {
   modbus_read_registers( connection_, 0, 4, (unsigned short*) in_registers_.data());
   // cout << "Read (" << in_registers_[0] << ", " << in_registers_[3] << ")" << endl;
 }
 
 // write out all registers to plc
-void Machine::pushRegisters() {
+void Machine::push_registers() {
   // cout << "Push (" << out_registers_[0] << ", " << out_registers_[3] << ")" << endl;
   modbus_write_registers( connection_, 0, 4, (unsigned short*) out_registers_.data());
 }
 
-void Machine::connectPLC(const std::string& ip, unsigned short port) {
+void Machine::connect_PLC(const std::string& ip, unsigned short port) {
   connection_ = modbus_new_tcp(ip.c_str(), port);
   if (modbus_connect(connection_)) {
     std::ostringstream o;
     o << "Connection to " << ip << " (" << port << ") failed:" << std::endl << modbus_strerror(errno);
     throw std::runtime_error(o.str());
   }
-  updateRegisters();
+  update_registers();
   identify();
 }
 
@@ -144,41 +144,41 @@ Machine::~Machine() {
 
   
 
-void Machine::setLight(unsigned short color, llsf_msgs::LightState state, unsigned short time) {
+void Machine::set_light(unsigned short color, llsf_msgs::LightState state, unsigned short time) {
   switch (color) {
-    case LIGHT_RESET_CMD:
-    case LIGHT_RED_CMD:
-    case LIGHT_YELLOW_CMD:
-    case LIGHT_GREEN_CMD:
+    case LightColor::LIGHT_COLOR_RESET:
+    case LightColor::LIGHT_COLOR_RED:
+    case LightColor::LIGHT_COLOR_YELLOW:
+    case LightColor::LIGHT_COLOR_GREEN:
       break;
     default: throw std::invalid_argument("Illegal color! See MPSIoMapping.h for choices.");
   }
   unsigned short int plc_state;
   switch (state) {
     case llsf_msgs::ON:
-      plc_state = LIGHT_ON;
+      plc_state = LightState::LIGHT_STATE_ON;
       break;
     case llsf_msgs::OFF:
-      plc_state = LIGHT_OFF;
+      plc_state = LightState::LIGHT_STATE_OFF;
       break;
     case llsf_msgs::BLINK:
-      plc_state = LIGHT_BLINK;
+      plc_state = LightState::LIGHT_STATE_BLINK;
       break;
     default:
-      plc_state = LIGHT_OFF;
+      plc_state = LightState::LIGHT_STATE_OFF;
       // TODO error
   }
 
-  sendCommand( color, plc_state, time);
+  send_command( color, plc_state, time);
 }
 
 void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor)
 {
-  sendCommand(MOVE_BAND_CMD + machine_type_, sensor, direction, TIMEOUT_BAND);
+  send_command(Command::COMMAND_MOVE_CONVEYOR + machine_type_, sensor, direction, Timeout::TIMEOUT_BAND);
 }
 
-void Machine::resetLight() {
-  setLight(LIGHT_RESET_CMD, llsf_msgs::OFF);
+void Machine::reset_light() {
+  set_light(LightColor::LIGHT_COLOR_RESET, llsf_msgs::OFF);
 }
 
 }

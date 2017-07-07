@@ -11,34 +11,34 @@ namespace modbus {
 }
 #endif
 
-BaseStation::BaseStation() : Machine(BASE_STATION_CMD) { }
+BaseStation::BaseStation() : Machine(Station::STATION_BASE) { }
 BaseStation::~BaseStation() {}
 
-void BaseStation::getBase(unsigned short color) {
-  getBase( color, DIR_OUT);
+void BaseStation::get_base(unsigned short color) {
+  get_base( color, SensorOnMPS::SENSOR_OUTPUT);
 }
 
-void BaseStation::getBase(unsigned short color, unsigned short side) {
+void BaseStation::get_base(unsigned short color, unsigned short side) {
   //lock_guard<mutex> g(lock_);
-  sendCommand(machine_type_ + GET_BASE_CMD, color);
-  sendCommand(machine_type_ + MOVE_BAND_CMD, side);
-  waitForReady();
+  send_command(machine_type_ + Operation::OPERATION_GET_BASE, color);
+  send_command(machine_type_ + Command::COMMAND_MOVE_CONVEYOR, side);
+  wait_for_ready();
 }
 
 // Need information on how to access this
-bool BaseStation::baseReady() {
+bool BaseStation::base_ready() {
   std::cout << "Not implemented yet!" << std::endl;
   return true;
 }
 
 // Need information on how to access this
-bool BaseStation::isEmpty() {
+bool BaseStation::is_empty() {
   std::cout << "Not implemented yet!" << std::endl;
   return false;
 }
 
 void BaseStation::identify() {
-  sendCommand(SET_TYPE_CMD, TYPE_BS);
+  send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_BS);
 }
 
 }

@@ -20,7 +20,7 @@ class DeliveryStation: public Machine {
     // Send command to deliver a product
     // slot is between 1 and 3
     // Deprecated
-    void deliverProduct(int slot);
+    void deliver_product(int slot);
 
     // Tell PLC, which machine it is
     virtual void identify();

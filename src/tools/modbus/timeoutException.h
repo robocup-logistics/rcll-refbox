@@ -14,9 +14,9 @@ namespace modbus {
 }
 #endif
 
-class timeoutException : public std::runtime_error {
+class timeout_exception : public std::runtime_error {
   public:
-  timeoutException(const std::string& msg) : std::runtime_error(msg) {};
+  timeout_exception(const std::string& msg) : std::runtime_error(msg) {};
 };
 
 }

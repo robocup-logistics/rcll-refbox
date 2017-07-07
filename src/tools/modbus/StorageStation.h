@@ -22,7 +22,7 @@ class StorageStation: public Machine {
     // Send command to deliver a product
     // slot is between 1 and 3
     // deprecated
-    void getProduct(int slot);
+    void get_product(int slot);
 
     // identify: tell the PLC, which machine it is controlling
     virtual void identify();

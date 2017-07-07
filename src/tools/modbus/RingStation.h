@@ -21,7 +21,7 @@ class RingStation: public Machine {
     // void getRing();
     // Check, if the cap is ready for take away
     // deprecated
-    bool ringReady();
+    bool ring_ready();
 
     // identify: tell PLC, which machine it is running on
     virtual void identify();

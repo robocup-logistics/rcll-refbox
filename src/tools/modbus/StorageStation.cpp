@@ -11,17 +11,17 @@ namespace modbus {
 }
 #endif
 
-StorageStation::StorageStation() : Machine(STORAGE_STATION_CMD) { }
+StorageStation::StorageStation() : Machine(Station::STATION_STORAGE) { }
 StorageStation::~StorageStation() {}
 
-void StorageStation::getProduct(int slot) {
+void StorageStation::get_product(int slot) {
   //lock_guard<mutex> g(lock_);
-  sendCommand(machine_type_ + GET_F_PRODUCT_CMD, slot);
-  waitForReady();
+  send_command(machine_type_ + Operation::OPERATION_GET_F_PRODUCT, slot);
+  wait_for_ready();
 }
 
 void StorageStation::identify() {
-  sendCommand(SET_TYPE_CMD, TYPE_SS);
+  send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_SS);
 }
 
 }

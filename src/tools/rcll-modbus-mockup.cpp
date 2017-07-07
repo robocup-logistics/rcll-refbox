@@ -124,7 +124,7 @@ main(int argc, char **argv)
     return 0;
   }
 
-  mps_mb_->connectPLC(plc_ip_, plc_port_);
+  mps_mb_->connect_PLC(plc_ip_, plc_port_);
 
   if (machine_command_ == "light") {
     llsf_msgs::LightState r, y, g;
@@ -142,9 +142,9 @@ main(int argc, char **argv)
     }
     std::cout << "Set light color to: " << llsf_msgs::LightState_Name(r) << " " << llsf_msgs::LightState_Name(y) << " " << llsf_msgs::LightState_Name(g) << std::endl;
 
-    mps_mb_->setLight(LIGHT_RED_CMD, r);
-    mps_mb_->setLight(LIGHT_YELLOW_CMD, y);
-    mps_mb_->setLight(LIGHT_GREEN_CMD, g);
+    mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_RED, r);
+    mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_YELLOW, y);
+    mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_GREEN, g);
   } else if (machine_command_ == "conveyor") {
     llsf_msgs::ConveyorDirection direction;
     llsf_msgs::SensorOnMPS sensor;

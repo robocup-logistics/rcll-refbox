@@ -30,21 +30,21 @@ class Machine {
     //   *) payload1
     //   *) payload2
     //   *) status flag (shall be 1 = BUISY)
-    void sendCommand( unsigned short command, unsigned short payload1 = 0,
+    void send_command( unsigned short command, unsigned short payload1 = 0,
                       unsigned short payload2 = 0, int timeout = 0, unsigned char status = 1);
 
     // Create a modbus connection to machine
-    void connectPLC(const std::string& ip, unsigned short port);
+    void connect_PLC(const std::string& ip, unsigned short port);
 
     // Set the light of specified color to specified state
     // color: 1 - 3, state 0 - 2
-    void setLight(unsigned short color, llsf_msgs::LightState state = llsf_msgs::ON,
+    void set_light(unsigned short color, llsf_msgs::LightState state = llsf_msgs::ON,
         unsigned short time = 0);
 
     void conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor);
 
     // Sends reset light command
-    void resetLight();
+    void reset_light();
 
     // abstract methods
     // Reset: send the reset command (which is different for each machine type)
@@ -58,21 +58,21 @@ class Machine {
     bool abort_operation_;
 
     // Needed to check, if a product was retrieved.
-    bool waitForFree();
+    bool wait_for_free();
 
   protected:
     const unsigned short int machine_type_;
     // wait, until the ready bit is set.
     // That is, when the command is handled completely
     // timeout in ms, 0 -> no timeout
-    bool waitForReady(int timeout = 0);
+    bool wait_for_ready(int timeout = 0);
     // wait, until the buisy flag is set.
     // This is nescessary, because it has to be unset, when it gets set.
-    void waitForBuisy();
+    void wait_for_buisy();
     // Update register values from PLC via modbus
-    void updateRegisters();
+    void update_registers();
     // push registers to PLC via modbus
-    void pushRegisters();
+    void push_registers();
     // Input registers
     std::vector<unsigned short> in_registers_;
     // Output registers
