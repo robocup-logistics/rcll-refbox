@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Machine::Machine(): abort_operation_(false), in_registers_(4), out_registers_(4), connection_(nullptr) {
+Machine::Machine(unsigned short int machine_type) : abort_operation_(false), machine_type_(machine_type), in_registers_(4), out_registers_(4), connection_(nullptr) {
   for (int i = 0; i < 4; ++i) {
     in_registers_.push_back(0);
     out_registers_.push_back(0);
@@ -161,6 +161,10 @@ void Machine::setLight(unsigned short color, llsf_msgs::LightState state, unsign
   sendCommand( color, plc_state, time);
 }
 
+void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor)
+{
+  sendCommand(MOVE_BAND_CMD + machine_type_, sensor, direction, TIMEOUT_BAND);
+}
 
 void Machine::resetLight() {
   setLight(LIGHT_RESET_CMD, llsf_msgs::OFF);

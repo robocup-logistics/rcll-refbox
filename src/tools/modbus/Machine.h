@@ -11,7 +11,7 @@
 
 class Machine {
   public:
-    Machine();
+    Machine(unsigned short int machine_type);
 
     virtual ~Machine();
 
@@ -31,6 +31,9 @@ class Machine {
     // color: 1 - 3, state 0 - 2
     void setLight(unsigned short color, llsf_msgs::LightState state = llsf_msgs::ON,
         unsigned short time = 0);
+
+    void conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor);
+
     // Sends reset light command
     void resetLight();
 
@@ -49,6 +52,7 @@ class Machine {
     bool waitForFree();
 
   protected:
+    const unsigned short int machine_type_;
     // wait, until the ready bit is set.
     // That is, when the command is handled completely
     // timeout in ms, 0 -> no timeout

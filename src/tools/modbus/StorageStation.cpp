@@ -4,17 +4,17 @@
 
 using namespace std;
 
-StorageStation::StorageStation() {}
+StorageStation::StorageStation() : Machine(STORAGE_STATION_CMD) { }
 StorageStation::~StorageStation() {}
 
 void StorageStation::getProduct(int slot) {
   //lock_guard<mutex> g(lock_);
-  sendCommand(STORAGE_STATION_CMD + GET_F_PRODUCT_CMD, slot);
+  sendCommand(machine_type_ + GET_F_PRODUCT_CMD, slot);
   waitForReady();
 }
 
 void StorageStation::reset() {
-  sendCommand(STORAGE_STATION_CMD + RESET_CMD);
+  sendCommand(machine_type_ + RESET_CMD);
 }
 
 void StorageStation::identify() {

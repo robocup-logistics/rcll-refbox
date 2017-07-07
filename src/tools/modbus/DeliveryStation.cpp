@@ -4,17 +4,17 @@
 
 using namespace std;
 
-DeliveryStation::DeliveryStation() {}
+DeliveryStation::DeliveryStation() : Machine(DELIVERY_STATION_CMD) { }
 DeliveryStation::~DeliveryStation() {}
 
 void DeliveryStation::deliverProduct(int slot) {
   //lock_guard<mutex> g(lock_);
-  sendCommand(DELIVERY_STATION_CMD | DELIVER_CMD, slot);
+  sendCommand(machine_type_ | DELIVER_CMD, slot);
   waitForReady();
 }
 
 void DeliveryStation::reset() {
-  sendCommand(DELIVERY_STATION_CMD | RESET_CMD);
+  sendCommand(machine_type_ | RESET_CMD);
 }
 
 void DeliveryStation::identify() {

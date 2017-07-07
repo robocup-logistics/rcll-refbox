@@ -4,7 +4,7 @@
 
 using namespace std;
 
-RingStation::RingStation() {}
+RingStation::RingStation() : Machine(RING_STATION_CMD) { }
 RingStation::~RingStation() {}
 
 /*void RingStation::getRing() {
@@ -20,7 +20,7 @@ bool RingStation::ringReady() {
 }
 
 void RingStation::reset() {
-  sendCommand(RING_STATION_CMD | RESET_CMD);
+  sendCommand(machine_type_ | RESET_CMD);
 }
 
 void RingStation::identify() {

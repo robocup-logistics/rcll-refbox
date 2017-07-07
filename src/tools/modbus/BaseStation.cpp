@@ -4,7 +4,7 @@
 
 using namespace std;
 
-BaseStation::BaseStation() {}
+BaseStation::BaseStation() : Machine(BASE_STATION_CMD) { }
 BaseStation::~BaseStation() {}
 
 void BaseStation::getBase(unsigned short color) {
@@ -13,8 +13,8 @@ void BaseStation::getBase(unsigned short color) {
 
 void BaseStation::getBase(unsigned short color, unsigned short side) {
   //lock_guard<mutex> g(lock_);
-  sendCommand(BASE_STATION_CMD + GET_BASE_CMD, color);
-  sendCommand(BASE_STATION_CMD + MOVE_BAND_CMD, side);
+  sendCommand(machine_type_ + GET_BASE_CMD, color);
+  sendCommand(machine_type_ + MOVE_BAND_CMD, side);
   waitForReady();
 }
 
@@ -31,7 +31,7 @@ bool BaseStation::isEmpty() {
 }
 
 void BaseStation::reset() {
-  sendCommand(BASE_STATION_CMD | RESET_CMD);
+  sendCommand(machine_type_ | RESET_CMD);
 }
 
 void BaseStation::identify() {

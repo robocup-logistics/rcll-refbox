@@ -4,19 +4,19 @@
 
 using namespace std;
 
-CapStation::CapStation() {}
+CapStation::CapStation() : Machine(CAP_STATION_CMD) { }
 CapStation::~CapStation() {}
 
 void CapStation::reset() {
-  sendCommand(CAP_STATION_CMD + RESET_CMD);
+  sendCommand(machine_type_ + RESET_CMD);
 }
 
 void CapStation::retrieveCap() {
-  sendCommand(CAP_ACTION_CMD + CAP_STATION_CMD, CAP_RETRIEVE);
+  sendCommand(CAP_ACTION_CMD + machine_type_, CAP_RETRIEVE);
 }
 
 void CapStation::mountCap() {
-  sendCommand(CAP_ACTION_CMD + CAP_STATION_CMD, CAP_MOUNT);
+  sendCommand(CAP_ACTION_CMD + machine_type_, CAP_MOUNT);
 }
 
 void CapStation::identify() {
