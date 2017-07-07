@@ -129,13 +129,27 @@ main(int argc, char **argv)
       exit(-2);
     }
     std::cout << "Set light color to: " << llsf_msgs::LightState_Name(r) << " " << llsf_msgs::LightState_Name(y) << " " << llsf_msgs::LightState_Name(g) << std::endl;
+
     modbus_if_->setLight(LIGHT_RED_CMD, r);
     modbus_if_->setLight(LIGHT_YELLOW_CMD, y);
     modbus_if_->setLight(LIGHT_GREEN_CMD, g);
   } else if (machine_command_ == "conveyor") {
+    llsf_msgs::ConveyorDirection direction;
+    llsf_msgs::SensorOnMPS sensor;
+    if (! llsf_msgs::ConveyorDirection_Parse(argp.items()[2], &direction)) {
+      printf("Invalid direction: %s\n", argp.items()[2]);
+      exit(-2);
+    }
+    if (! llsf_msgs::SensorOnMPS_Parse(argp.items()[3], &sensor)) {
+      printf("Invalid sensor: %s\n", argp.items()[3]);
+      exit(-2);
+    }
+    std::cout << "move conveyor " << llsf_msgs::ConveyorDirection_Name(direction) << " till " << llsf_msgs::SensorOnMPS_Name(sensor)  << std::endl;
 
+    modbus_if_->conveyor_move(direction, sensor);
   } else if (machine_command_ == "reset") {
     std::cout << "resetting " << machine_name_ << std::endl;
+
     modbus_if_->reset();
   } else {
     std::cout << "Command unknown or not possible for the given machine " << std::endl
