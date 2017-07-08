@@ -1659,29 +1659,9 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     timer_last_ = now;
     */
 
-    //sps_read_rfids();
-    if (mps_)  mps_->process();
-
     {
       //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
       fawkes::MutexLocker lock(&clips_mutex_);
-
-      if (mps_) {
-	std::map<std::string, std::string> machine_states = mps_->get_states();
-	for (const auto &ms : machine_states) {
-	  //printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
-	  //       ms.first.c_str(), ms.second.c_str(), 0);
-          std::string type = ms.first.substr(2, 2);
-          unsigned int num_bases = 0;
-          if (type == "RS") {
-            MPSPickPlace2 *station;
-            station = mps_->get_station(ms.first, station);
-            if (station)  num_bases = station->getCountSlide();
-          }
-	  clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
-				ms.first.c_str(), ms.second.c_str(), num_bases);
-	}
-      }
 
       clips_->assert_fact("(time (now))");
       clips_->refresh_agenda();
