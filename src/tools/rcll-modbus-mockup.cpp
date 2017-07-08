@@ -127,6 +127,10 @@ main(int argc, char **argv)
   mps_mb_->connect_PLC(plc_ip_, plc_port_);
 
   if (machine_command_ == "light") {
+    if (argp.num_items() <= 4) {
+      usage(argv[0]);
+      exit(1);
+    }
     llsf_msgs::LightState r, y, g;
     if (! llsf_msgs::LightState_Parse(argp.items()[2], &r)) {
       printf("Invalid color for red: %s\n", argp.items()[2]);
@@ -146,6 +150,10 @@ main(int argc, char **argv)
     mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_YELLOW, y);
     mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_GREEN, g);
   } else if (machine_command_ == "conveyor") {
+    if (argp.num_items() <= 3) {
+      usage(argv[0]);
+      exit(1);
+    }
     llsf_msgs::ConveyorDirection direction;
     llsf_msgs::SensorOnMPS sensor;
     if (! llsf_msgs::ConveyorDirection_Parse(argp.items()[2], &direction)) {
