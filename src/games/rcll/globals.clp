@@ -27,6 +27,7 @@
   ?*MPS-INSTRUCT-PERIOD* = 1.0
   ?*MPS-INSTRUCT-BURST-COUNT* = 10
   ?*MPS-INSTRUCT-PERIOD-BURST* = 0.2
+  ?*MPS-INSTRUCT-WARN-TIME* = 40
   ; This value is set by the rule config-timer-interval from config.yaml
   ?*TIMER-INTERVAL* = 0.0
   ; Time (sec) after which to warn about a robot lost

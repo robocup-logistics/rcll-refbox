@@ -332,6 +332,7 @@
   (slot game-time (type FLOAT))
   (slot task (type SYMBOL) (allowed-values NONE RESET WAIT-FOR-PRODUCT PROCESS DRIVE-TO-OUT WAIT-FOR-PICKUP CHANGE-LIGHT STOP-CONVEYOR PULL-MSG))
   (slot sended-count (type INTEGER) (default 0))
+  (slot warned (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
 )
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal

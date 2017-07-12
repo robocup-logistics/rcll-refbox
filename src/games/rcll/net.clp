@@ -700,9 +700,14 @@
 
 (defrule net-mps-change-long-time-warn
   (declare (salience ?*PRIORITY_FIRST*))
-  (mps-comm-msg (sended-count ?count&:(eq ?count 10)) (task ?task))
+  (gamestate (game-time ?gt))
+  ?mps-comm <- (mps-comm-msg (sended-count ?count) (task ?task) (name ?n)
+    (game-time ?req-since&:(timeout-sec ?gt ?req-since ?*MPS-INSTRUCT-WARN-TIME*))
+    (warned FALSE)
+  )
   =>
-  (assert (attention-message (text (str-cat "wait for MPS <name> to finish " ?task ", sendet " ?count ""))))
+  (assert (attention-message (text (str-cat "wait for " ?n " to finish " ?task ", for " ?*MPS-INSTRUCT-WARN-TIME* " seconds; sendet " ?count " times"))))
+  (modify ?mps-comm (warned TRUE))
 )
 
 (defrule net-receive-mps-reply
