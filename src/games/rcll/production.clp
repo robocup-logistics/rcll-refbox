@@ -281,7 +281,7 @@
   (modify ?m (desired-lights GREEN-ON YELLOW-ON))
 )
 
-(defrule prod-proc-state-processing-bs-start
+(defrule prod-proc-state-processing-bs-processing
   "BS must be instructed to dispense base for processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -297,7 +297,7 @@
 
   (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
+  (modify ?m (state PROCESSED) (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
              (processing-state PROCESS) (prev-processing-state NONE))
 )
 
@@ -406,190 +406,235 @@
           (processing-state ?task-finished))
   =>
   (printout t "Machine " ?n " base piced up" crlf)
-  ; TODO: Test gt vs ?id-comm time, time diff too big?
 
   (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PICKUP)
              (state IDLE) (proc-state READY-AT-OUTPUT))
   (retract ?id-comm ?pb)
 )
 
-(defrule prod-proc-state-processing-bs-intermedite
+(defrule prod-proc-state-processed-bs-drive-to-out
   "steps of the bs production cycle after first step"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING)
-          (processing-state ?task-finished) (bs-side ?side))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PROCESS))
+  ?m <- (machine (name ?n) (mtype BS) (state PROCESSED)
+          (processing-state PROCESS) (bs-side ?side))
   =>
-  (switch ?task-finished
-    (case PROCESS then
-      (printout t "Machine " ?n " move base to " ?side crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-move-conveyor ?m ?id ?side))
-    
-      (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+  (printout t "Machine " ?n " move base to " ?side crlf)
 
-      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
-    )
-    (case DRIVE-TO-OUT then
-      (printout t "Machine " ?n " base ready for retreival at " ?side crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-move-conveyor ?m ?id ?side))
+  
+  (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
 
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-wait-for-pickup ?m ?id ?side))
-    
-      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
-
-      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
-                 (state READY-AT-OUTPUT))
-    )
-    (default
-      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
-    )
-  )
+  (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state PROCESS))
   (retract ?id-comm ?pb)
 )
 
-(defrule prod-proc-state-processing-ds-intermedite
+(defrule prod-proc-state-processed-bs-wait-for-pickup
+  "steps of the bs production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task DRIVE-TO-OUT))
+  ?m <- (machine (name ?n) (mtype BS) (state PROCESSED)
+          (processing-state DRIVE-TO-OUT) (bs-side ?side))
+  =>
+  (printout t "Machine " ?n " base ready for retreival at " ?side crlf)
+
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-wait-for-pickup ?m ?id ?side))
+  
+  (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+
+  (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state DRIVE-TO-OUT)
+             (state READY-AT-OUTPUT))
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-ds-wait-for-product
   "steps of the ds production cycle after first step"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype DS) (state PREPARED|PROCESSING)
-          (processing-state ?task-finished) (ds-last-gate ?gate))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PROCESS))
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED)
+          (processing-state PROCESS) (ds-last-gate ?gate))
   =>
-  (switch ?task-finished
-    (case PROCESS then
-      (printout t "Machine " ?n " wait for product" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
-    
-      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
+  (printout t "Machine " ?n " wait for product" crlf)
+  
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-move-conveyor ?m ?id MIDDLE))
+  
+  (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PRODUCT ?s)
 
-      (modify ?m (processing-state WAIT-FOR-PRODUCT) (prev-processing-state ?task-finished)
-                 (waiting-for-product-since ?gt)
-      )
-    )
-    (case WAIT-FOR-PRODUCT then
-      (printout t "Machine " ?n " received product at gate " ?gate crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-
-      (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PRODUCT)
-                 (state PROCESSED))
-    )
-    (default
-      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
-    )
+  (modify ?m (processing-state WAIT-FOR-PRODUCT) (prev-processing-state PROCESS)
+             (waiting-for-product-since ?gt)
   )
   (retract ?id-comm ?pb)
 )
 
-(defrule prod-proc-state-processing-cs-intermedite
+(defrule prod-proc-state-processing-ds-finished
+  "steps of the ds production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED)
+          (processing-state WAIT-FOR-PRODUCT) (ds-last-gate ?gate))
+  =>
+  (printout t "Machine " ?n " received product at gate " ?gate crlf)
+
+  (modify ?m (processing-state NONE) (prev-processing-state WAIT-FOR-PRODUCT)
+             (state IDLE) (prev-state PREPARED))
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-cs-process
   "steps of the cs production cycle after first step"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype CS) (state PREPARED|PROCESSING)
-          (processing-state ?task-finished) (cs-operation ?op))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
+  ?m <- (machine (name ?n) (mtype CS) (state PREPARED)
+          (processing-state WAIT-FOR-PRODUCT) (cs-operation ?op))
   =>
-  (switch ?task-finished
-    (case WAIT-FOR-PRODUCT then
-      (printout t "Machine " ?n " received product, process" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-cs-process ?m ?id ?op))
-    
-      (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
+  (printout t "Machine " ?n " received product, process" crlf)
 
-      (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
-                 (processing-state PROCESS) (prev-processing-state ?task-finished)
-      )
-    )
-    (case PROCESS then
-      (printout t "Machine " ?n " move base out" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
-    
-      (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-cs-process ?m ?id ?op))
+  
+  (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
-      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
-    )
-    (case DRIVE-TO-OUT then
-      (printout t "Machine " ?n " base ready for retreival" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
-    
-      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
-
-      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
-                 (state READY-AT-OUTPUT))
-    )
-    (default
-      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
-    )
+  (modify ?m (state PROCESSING) (prev-state PREPARED) (desired-lights GREEN-ON YELLOW-ON)
+             (processing-state PROCESS) (prev-processing-state WAIT-FOR-PRODUCT)
+             (proc-start ?gt)
   )
   (retract ?id-comm ?pb)
 )
 
-(defrule prod-proc-state-processing-rs-intermedite
+(defrule prod-proc-state-processing-cs-process-done
+  "cs, get to processed, when task is done"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PROCESS))
+  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING)
+          (processing-state PROCESS) (cs-operation ?op))
+  =>
+  (printout t "Machine " ?n " processed, wait for simulated prod-time" crlf)
+
+  (modify ?m (state PROCESSED) (prev-state PROCESSING) (prev-processing-state PROCESS))
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-cs-rs-wait-time
+  "when the task is done, for all production machines (CS and RS) is here the place to wait for a simulated production time"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ; TODO add a simulated time check here
+  ?m <- (machine (name ?n) (mtype CS|RS) (state PROCESSED) (prev-state ~PROCESSED))
+  =>
+  (printout t "Machine " ?n " production done, including the simulated time" crlf)
+
+  (modify ?m (state PROCESSED) (prev-state PROCESSED))
+)
+
+(defrule prod-proc-state-processing-cs-rs-drive-to-out
+  "when the simulated production time is over, the base can be moved to the output"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype CS|RS) (state PROCESSED) (prev-state PROCESSED) (processing-state ?ps-last&:(neq ?ps-last DRIVE-TO-OUT)))
+  =>
+  (printout t "Machine " ?n " move base out" crlf)
+
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
+  
+  (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+
+  (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?ps-last))
+)
+
+(defrule prod-proc-state-processing-cs-rs-wait-for-pickup
+  "steps of the cs production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task DRIVE-TO-OUT))
+  ?m <- (machine (name ?n) (mtype CS|RS) (state PROCESSED)
+          (processing-state DRIVE-TO-OUT) (cs-operation ?op))
+  =>
+  (printout t "Machine " ?n " base ready for retreival" crlf)
+  ; TODO: Test gt vs ?id-comm time, time diff too big?
+
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
+  
+  (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
+
+  (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
+             (state READY-AT-OUTPUT) (prev-state PROCESSED))
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-rs-processing
   "steps of the rs production cycle after first step"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
-  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task ?task-finished))
-  ?m <- (machine (name ?n) (mtype RS) (state PREPARED|PROCESSING)
-          (processing-state ?task-finished) (rs-ring-color ?color) (bases-used ?bu))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED)
+          (processing-state WAIT-FOR-PRODUCT) (rs-ring-color ?color) (bases-used ?bu))
   (ring-spec (color ?color) (req-bases ?req-bases))
   =>
-  (switch ?task-finished
-    (case WAIT-FOR-PRODUCT then
-      (printout t "Machine " ?n " received product, process" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-rs-process ?m ?id ?color))
-    
-      (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
+  (printout t "Machine " ?n " received product, process" crlf)
+  ; TODO: Test gt vs ?id-comm time, time diff too big?
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-rs-process ?m ?id ?color))
+  
+  (net-assert-mps-change ?id ?n ?gt PROCESS ?s)
 
-      (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
-                 (processing-state PROCESS) (prev-processing-state ?task-finished)
-                 (bases-used (+ ?bu ?req-bases))
-      )
-    )
-    (case PROCESS then
-      (printout t "Machine " ?n " move base out" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
-    
-      (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
-
-      (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state ?task-finished))
-    )
-    (case DRIVE-TO-OUT then
-      (printout t "Machine " ?n " base ready for retreival" crlf)
-      ; TODO: Test gt vs ?id-comm time, time diff too big?
-
-      (bind ?id (net-get-new-id))
-      (bind ?s (net-create-mps-wait-for-pickup ?m ?id OUTPUT))
-    
-      (net-assert-mps-change ?id ?n ?gt WAIT-FOR-PICKUP ?s)
-
-      (modify ?m (processing-state WAIT-FOR-PICKUP) (prev-processing-state WAIT-FOR-PICKUP)
-                 (state READY-AT-OUTPUT))
-    )
-    (default
-      (printout error "Got mps-comm for machine " ?n " with unknown finished task " ?task-finished crlf)
-    )
+  (modify ?m (state PROCESSING) (prev-state PREPARED) (desired-lights GREEN-ON YELLOW-ON)
+             (processing-state PROCESS) (prev-processing-state WAIT-FOR-PRODUCT)
+             (bases-used (+ ?bu ?req-bases))
   )
   (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-rs-processed
+  "steps of the rs production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PROCESS))
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING)
+          (processing-state PROCESS) (rs-ring-color ?color) (bases-used ?bu))
+  (ring-spec (color ?color) (req-bases ?req-bases))
+  =>
+  (printout t "Machine " ?n " processing done" crlf)
+
+  (modify ?m (state PROCESSED) (prev-state PROCESSING) (prev-processing-state PROCESS))
+  (retract ?id-comm ?pb)
+)
+
+(defrule prod-proc-state-processing-rs-move-base-out
+  "steps of the rs production cycle after first step"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (prev-state PROCESSED)
+          (processing-state PROCESS) (rs-ring-color ?color) (bases-used ?bu))
+  (ring-spec (color ?color) (req-bases ?req-bases))
+  =>
+  (printout t "Machine " ?n " move base out" crlf)
+
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-move-conveyor ?m ?id OUTPUT))
+  
+  (net-assert-mps-change ?id ?n ?gt DRIVE-TO-OUT ?s)
+
+  (modify ?m (processing-state DRIVE-TO-OUT) (prev-processing-state PROCESS))
 )
 
 (defrule prod-proc-state-processing-ss-processed
@@ -668,14 +713,14 @@
 	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
 )
 
-(defrule prod-proc-state-processed-bs-ds-ss
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype BS|DS|SS) (state PROCESSED) (proc-state ~PROCESSED))
-  =>
-  (printout t "Machine " ?n " finished processing" crlf)
-  (modify ?m (state IDLE) (proc-state PROCESSED))
-)
+;(defrule prod-proc-state-processed-bs-ds-ss
+;  (declare (salience ?*PRIORITY_HIGH*))
+;  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+;  ?m <- (machine (name ?n) (mtype BS|DS|SS) (state PROCESSED) (proc-state ~PROCESSED))
+;  =>
+;  (printout t "Machine " ?n " finished processing" crlf)
+;  (modify ?m (state IDLE) (proc-state PROCESSED))
+;)
 
 (defrule prod-proc-state-processed-cs
   (declare (salience ?*PRIORITY_HIGH*))
@@ -684,7 +729,7 @@
 		 (cs-operation ?cs-op))
   =>
   (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
-  (modify ?m (state IDLE) (proc-state PROCESSED) (cs-retrieved ?have-cap))
+  (modify ?m (proc-state PROCESSED) (cs-retrieved ?have-cap))
 )
 
 (defrule prod-proc-state-ready-at-output
