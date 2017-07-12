@@ -32,8 +32,8 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
   out_registers_[2] = payload2;
   out_registers_[3] = status;
   //std::lock_guard<std::mutex> g(lock_);
-  if (not wait_for_ready(timeout))
-    throw std::runtime_error("Previous command did not end within timeout");
+//  if (not wait_for_ready(timeout))
+//    throw std::runtime_error("Previous command did not end within timeout");
   push_registers();
   if (status & Status::STATUS_BUISY) {
     wait_for_buisy();
@@ -144,8 +144,20 @@ Machine::~Machine() {
 
   
 
-void Machine::set_light(unsigned short color, llsf_msgs::LightState state, unsigned short time) {
+void Machine::set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state, unsigned short time) {
+  LightColor m_color;
   switch (color) {
+    case llsf_msgs::LightColor::RED:
+      m_color = LightColor::LIGHT_COLOR_RED;
+      break;
+    case llsf_msgs::LightColor::YELLOW:
+      m_color = LightColor::LIGHT_COLOR_YELLOW;
+      break;
+    case llsf_msgs::LightColor::GREEN:
+      m_color = LightColor::LIGHT_COLOR_GREEN;
+      break;
+  }
+  switch (m_color) {
     case LightColor::LIGHT_COLOR_RESET:
     case LightColor::LIGHT_COLOR_RED:
     case LightColor::LIGHT_COLOR_YELLOW:
@@ -168,8 +180,8 @@ void Machine::set_light(unsigned short color, llsf_msgs::LightState state, unsig
       plc_state = LightState::LIGHT_STATE_OFF;
       // TODO error
   }
-
-  send_command( color, plc_state, time);
+  std::cout << "Send: " << m_color << " " << plc_state << " "  << time << std::endl;
+  send_command( m_color, plc_state, time);
 }
 
 void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor)
@@ -178,7 +190,7 @@ void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::S
 }
 
 void Machine::reset_light() {
-  set_light(LightColor::LIGHT_COLOR_RESET, llsf_msgs::OFF);
+  set_light(llsf_msgs::LightColor::RED, llsf_msgs::OFF);
 }
 
 }

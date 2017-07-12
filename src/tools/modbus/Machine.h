@@ -38,7 +38,7 @@ class Machine {
 
     // Set the light of specified color to specified state
     // color: 1 - 3, state 0 - 2
-    void set_light(unsigned short color, llsf_msgs::LightState state = llsf_msgs::ON,
+    void set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state = llsf_msgs::ON,
         unsigned short time = 0);
 
     void conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor);

@@ -59,6 +59,8 @@ static std::string machine_command_;
 //static int id_last_ = 0;
 
 static std::shared_ptr<llsfrb::modbus::Machine> mps_mb_;
+//static std::string plc_ip_ = "192.168.2.26";
+//static unsigned short int plc_port_ = 502;
 static std::string plc_ip_ = "127.0.0.1";
 static unsigned short int plc_port_ = 5000;
 
@@ -71,12 +73,13 @@ usage(const char *progname)
          "light: (in the order red, yellow, green) (OFF|ON|BLINK) (OFF|ON|BLINK) (OFF|ON|BLINK)\n"
          "conveyor: (FORWARD|BACKWARD) (SENSOR_INPUT|SENSOR_OUTPUT|SENSOR_MIDDLE)\n"
          "reset\n"
-/*         "instructions are specific for the machine type:\n"
-         "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
+         "instructions are specific for the machine type:\n"
+/*         "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
          "DS:  <gate number>\n"
          "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
-         "RS:  (RING_BLUE|RING_GREEN|RING_ORANGE|RING_YELLOW)\n"
-         "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n"*/,
+*/
+         "RS: (number of feeder) (0|1)\n"
+/*         "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n"*/,
          progname);
 }
 
@@ -84,7 +87,7 @@ usage(const char *progname)
 int
 main(int argc, char **argv)
 {
-  ArgumentParser argp(argc, argv, "T:R");
+  ArgumentParser argp(argc, argv, "R:");
 
   if (argp.num_items() < 2) {
     usage(argv[0]);
@@ -127,28 +130,23 @@ main(int argc, char **argv)
   mps_mb_->connect_PLC(plc_ip_, plc_port_);
 
   if (machine_command_ == "light") {
-    if (argp.num_items() <= 4) {
+    if (argp.num_items() <= 3) {
       usage(argv[0]);
       exit(1);
     }
-    llsf_msgs::LightState r, y, g;
-    if (! llsf_msgs::LightState_Parse(argp.items()[2], &r)) {
-      printf("Invalid color for red: %s\n", argp.items()[2]);
+    llsf_msgs::LightColor color;
+    llsf_msgs::LightState state;
+    if (! llsf_msgs::LightColor_Parse(argp.items()[2], &color)) {
+      printf("Invalid color, is: %s\n", argp.items()[2]);
       exit(-2);
     }
-    if (! llsf_msgs::LightState_Parse(argp.items()[3], &y)) {
-      printf("Invalid color for yellow: %s\n", argp.items()[3]);
+    if (! llsf_msgs::LightState_Parse(argp.items()[3], &state)) {
+      printf("Invalid state, is: %s\n", argp.items()[3]);
       exit(-2);
     }
-    if (! llsf_msgs::LightState_Parse(argp.items()[4], &g)) {
-      printf("Invalid color for green: %s\n", argp.items()[4]);
-      exit(-2);
-    }
-    std::cout << "Set light color to: " << llsf_msgs::LightState_Name(r) << " " << llsf_msgs::LightState_Name(y) << " " << llsf_msgs::LightState_Name(g) << std::endl;
+    std::cout << "Set light color " << llsf_msgs::LightColor_Name(color) << " to: " << llsf_msgs::LightState_Name(state) << std::endl;
 
-    mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_RED, r);
-    mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_YELLOW, y);
-    mps_mb_->set_light(llsfrb::modbus::LightColor::LIGHT_COLOR_GREEN, g);
+    mps_mb_->set_light(color, state);
   } else if (machine_command_ == "conveyor") {
     if (argp.num_items() <= 3) {
       usage(argv[0]);
@@ -171,6 +169,16 @@ main(int argc, char **argv)
     std::cout << "resetting " << machine_name_ << std::endl;
 
     mps_mb_->reset();
+  } else if (machine_command_ == "RS") {
+    std::shared_ptr<llsfrb::modbus::RingStation> rs = std::dynamic_pointer_cast<llsfrb::modbus::RingStation>(mps_mb_);
+    if (argp.num_items() <= 2) {
+      usage(argv[0]);
+      exit(1);
+    }
+    unsigned int feeder = std::stoi( argp.items()[2] );
+    std::cout << "RS mount from Feeder # " << feeder << std::endl;
+
+    rs->mount_ring( feeder );
   } else {
     std::cout << "Command unknown or not possible for the given machine " << std::endl
               << "stop programm" << std::endl;

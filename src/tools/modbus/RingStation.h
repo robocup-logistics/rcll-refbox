@@ -23,6 +23,8 @@ class RingStation: public Machine {
     // deprecated
     bool ring_ready();
 
+    void mount_ring(unsigned int feeder);
+
     // identify: tell PLC, which machine it is running on
     virtual void identify();
 };
