@@ -705,6 +705,7 @@
     (game-time ?req-since&:(timeout-sec ?gt ?req-since ?*MPS-INSTRUCT-WARN-TIME*))
     (warned FALSE)
   )
+  (mps (name ?name&:(eq ?name (str-cat ?n))))
   =>
   (assert (attention-message (text (str-cat "wait for " ?n " to finish " ?task ", for " ?*MPS-INSTRUCT-WARN-TIME* " seconds; sendet " ?count " times"))))
   (modify ?mps-comm (warned TRUE))
