@@ -293,6 +293,7 @@ handle_message(ProtobufStreamServer::ClientID client,
                    llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
                    llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
                   );
+            sleep(30);
             send_reply_and_append(id);
             break;
           case llsf_msgs::INSTRUCT_MACHINE_STOP_CONVEYOR:
@@ -305,11 +306,13 @@ handle_message(ProtobufStreamServer::ClientID client,
                    llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
                    llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
                   );
+            sleep(60);
             send_reply_and_append(id);
             break;
           case llsf_msgs::INSTRUCT_MACHINE_BS:
             if ( im->machine().find("BS") != std::string::npos ) {  // if it is a BS
               printf("Pushout from feeder # %u\n", im->bs().slot() );
+              sleep(5);
               send_reply_and_append(id);
             } else {
               printf("Error, unknown \"set\": %u\n", im->set());
@@ -331,6 +334,7 @@ handle_message(ProtobufStreamServer::ClientID client,
           case llsf_msgs::INSTRUCT_MACHINE_DS:
             if ( im->machine().find("DS") != std::string::npos ) {
               printf("Set to gate %u\n", im->ds().gate() );
+              sleep(1);
               send_reply_and_append(id);
             } else {
               printf("Error, unknown \"set\": %u\n", im->set());
@@ -339,6 +343,7 @@ handle_message(ProtobufStreamServer::ClientID client,
           case llsf_msgs::INSTRUCT_MACHINE_CS:
             if ( im->machine().find("CS") != std::string::npos ) {
               printf("%s cap\n", llsf_msgs::CSOp_Name( im->cs().operation() ).c_str() );
+              sleep(15);
               send_reply_and_append(id);
             } else {
               printf("Error, unknown \"set\": %u\n", im->set());
@@ -347,6 +352,7 @@ handle_message(ProtobufStreamServer::ClientID client,
           case llsf_msgs::INSTRUCT_MACHINE_RS:
             if ( im->machine().find("RS") != std::string::npos ) {
               printf("Mount ring from feeder %u\n", im->rs().feeder() );
+              sleep(15);
               send_reply_and_append(id);
             } else {
               printf("Error, unknown \"set\": %u\n", im->set());
