@@ -288,31 +288,37 @@ handle_message(ProtobufStreamServer::ClientID client,
                   );
             send_reply_and_append(id);
             break;
-          case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR:
+          case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR: {
             printf("Move conveyor to %s and stop at %s\n",
                    llsf_msgs::ConveyorDirection_Name( im->conveyor_belt().direction() ).c_str(),
                    llsf_msgs::SensorOnMPS_Name( im->conveyor_belt().stop_sensor() ).c_str()
                   );
-            sleep(30);
+            std::cout << std::endl << std::endl << "Please confirm when base delivered (or if on output, just press enter)" << std::endl;
+            std::cin.get();
+            sleep(2);
             send_reply_and_append(id);
             break;
+          }
           case llsf_msgs::INSTRUCT_MACHINE_STOP_CONVEYOR:
             printf("STOP! conveyor\n");
             send_reply_and_append(id);
             break;
-          case llsf_msgs::INSTRUCT_MACHINE_WAIT_FOR_PICKUP:
+          case llsf_msgs::INSTRUCT_MACHINE_WAIT_FOR_PICKUP: {
             printf("Wait for pickup at TODO-fix-msg-and-send-sensor grace-time is TODO-add change light to (ryg) %s %s %s in case the product is picked up\n",
                    llsf_msgs::LightState_Name( im->light_state().red() ).c_str(),
                    llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
                    llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
                   );
-            sleep(60);
+            std::cout << std::endl << std::endl << "Please confirm, when base picked up" << std::endl;
+            std::cin.get();
+            sleep(2);
             send_reply_and_append(id);
             break;
+          }
           case llsf_msgs::INSTRUCT_MACHINE_BS:
             if ( im->machine().find("BS") != std::string::npos ) {  // if it is a BS
               printf("Pushout from feeder # %u\n", im->bs().slot() );
-              sleep(5);
+              sleep(2);
               send_reply_and_append(id);
             } else {
               printf("Error, unknown \"set\": %u\n", im->set());
@@ -440,7 +446,7 @@ main(int argc, char **argv)
   signals.async_wait(signal_handler);
 #endif
 
-  mps_msg_thread_ = std::shared_ptr<std::thread>(new std::thread(mps_msg_thread));
+//  mps_msg_thread_ = std::shared_ptr<std::thread>(new std::thread(mps_msg_thread));
   request_pull_thread_ = std::shared_ptr<std::thread>(new std::thread(request_pull_thread));
 
   do {
