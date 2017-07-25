@@ -186,7 +186,22 @@ void Machine::set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state
 
 void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor)
 {
-  send_command(Command::COMMAND_MOVE_CONVEYOR + machine_type_, sensor, direction, Timeout::TIMEOUT_BAND);
+  unsigned short sensor_sps = -1;
+  switch (sensor) {
+    case llsf_msgs::SensorOnMPS::SENSOR_INPUT:
+      sensor_sps = 1;
+      break;
+    case llsf_msgs::SensorOnMPS::SENSOR_MIDDLE:
+      sensor_sps = 2;
+      break;
+    case llsf_msgs::SensorOnMPS::SENSOR_OUTPUT:
+      sensor_sps = 3;
+      break;
+    default:
+      std::cout << "Wrong sensor send" << std::endl;
+      break;
+  }
+  send_command(Command::COMMAND_MOVE_CONVEYOR + machine_type_, sensor_sps, direction, Timeout::TIMEOUT_BAND);
 }
 
 void Machine::reset_light() {

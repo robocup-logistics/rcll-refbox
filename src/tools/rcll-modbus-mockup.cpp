@@ -75,11 +75,11 @@ usage(const char *progname)
          "reset\n"
          "instructions are specific for the machine type:\n"
          "BS: (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
-/*         "DS:  <gate number>\n"
-         "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
+         "DS:  (1|2|3)\n"
+/*         "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
 */
          "RS: (number of feeder) (0|1)\n"
-/*         "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n"*/,
+         "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n",
          progname);
 }
 
@@ -193,6 +193,41 @@ main(int argc, char **argv)
     std::cout << "RS mount from Feeder # " << feeder << std::endl;
 
     rs->mount_ring( feeder );
+  } else if (machine_command_ == "CS") {
+    std::shared_ptr<llsfrb::modbus::CapStation> cs = std::dynamic_pointer_cast<llsfrb::modbus::CapStation>(mps_mb_);
+    if (argp.num_items() <= 2) {
+      usage(argv[0]);
+      exit(1);
+    }
+    llsf_msgs::CSOp cs_op;
+    if (! llsf_msgs::CSOp_Parse(argp.items()[2], &cs_op)) {
+      printf("Invalid CS operation: %s\n", argp.items()[2]);
+      exit(-2);
+    }
+
+    std::cout << "CS " << llsf_msgs::CSOp_Name(cs_op) << std::endl;
+
+    switch (cs_op) {
+      case llsf_msgs::CSOp::MOUNT_CAP:
+        cs->mount_cap();
+        break;
+      case llsf_msgs::CSOp::RETRIEVE_CAP:
+        cs->retrieve_cap();
+      default:
+        std::cout << "Wrong CS op" << std::endl;
+        exit(-1);
+        break;
+    }
+  } else if (machine_command_ == "DS") {
+    std::shared_ptr<llsfrb::modbus::DeliveryStation> ds = std::dynamic_pointer_cast<llsfrb::modbus::DeliveryStation>(mps_mb_);
+    if (argp.num_items() <= 2) {
+      usage(argv[0]);
+      exit(1);
+    }
+    unsigned int gate = std::stoi( argp.items()[2] );
+    std::cout << "Deliver to gate " << gate << std::endl;
+
+    ds->deliver_product(gate);
   } else {
     std::cout << "Command unknown or not possible for the given machine " << std::endl
               << "stop programm" << std::endl;
