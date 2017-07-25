@@ -521,16 +521,6 @@
     (ds-gate 0) (ds-last-gate 0) (cs-retrieved FALSE))
 )
   
-
-(defrule prod-machine-input-not-prepared
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state&~PREPARED&~BROKEN&~DOWN&~PROCESSING) (mps-state AVAILABLE))
-  =>
-  (modify ?m (state BROKEN) (prev-state ?state)
-	  (broken-reason (str-cat "Input to " ?n " while not prepared " ?state)))
-)
-
-
 (defrule prod-machine-loaded-with-too-many
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state ?state&~BROKEN&~DOWN) (bases-added ?ba)
@@ -542,15 +532,21 @@
 
 (defrule prod-machine-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PREPARED); (mps-state AVAILABLE)
-        (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-PROCESSING*)))
+  ?m <- (machine (name ?n) (state PREPARED))
+  (or (and (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
+        (machine (name ?n) (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-PROCESSING*)))
+      )
+      (and (confval (path "/llsfrb/simulation/enable") (type BOOL) (value true))
+        (machine (name ?n) (mps-state AVAILABLE))
+      )
+  )
   =>
   (modify ?m (state PROCESSING) (proc-start ?gt) (mps-state AVAILABLE-HANDLED))
 )
 
 (defrule prod-prepared-but-no-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype ~BS) (state PROCESSING)
+  ?m <- (machine (name ?n) (mtype ~BS) (state PREPARED|PROCESSING)
         (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
   =>
   (modify ?m (state BROKEN) (prev-state PROCESSING)
