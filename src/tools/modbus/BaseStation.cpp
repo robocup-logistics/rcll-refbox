@@ -14,14 +14,25 @@ namespace modbus {
 BaseStation::BaseStation() : Machine(Station::STATION_BASE) { }
 BaseStation::~BaseStation() {}
 
-void BaseStation::get_base(unsigned short color) {
-  get_base( color, SensorOnMPS::SENSOR_OUTPUT);
-}
-
-void BaseStation::get_base(unsigned short color, unsigned short side) {
+void BaseStation::get_base(llsf_msgs::BaseColor color) {
   //lock_guard<mutex> g(lock_);
-  send_command(machine_type_ + Operation::OPERATION_GET_BASE, color);
-  send_command(machine_type_ + Command::COMMAND_MOVE_CONVEYOR, side);
+  llsfrb::modbus::BaseColor color_sps;;
+  switch (color) {
+    case llsf_msgs::BASE_RED:
+      color_sps = llsfrb::modbus::BaseColor::BASE_COLOR_RED;
+      break;
+    case llsf_msgs::BASE_BLACK:
+      color_sps = llsfrb::modbus::BaseColor::BASE_COLOR_BLACK;
+      break;
+    case llsf_msgs::BASE_SILVER:
+      color_sps = llsfrb::modbus::BaseColor::BASE_COLOR_SILVER;
+      break;
+    default:
+      std::cout << "Error in RefBox, NOT implemented base color" << std::endl;
+      return;
+  }
+
+  send_command(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
   wait_for_ready();
 }
 

@@ -22,8 +22,7 @@ class BaseStation: public Machine {
     // deprecated commands start
     // Send command to get a cap of given color
     // and on given side
-    void get_base(unsigned short slot, unsigned short side);
-    void get_base(unsigned short slot);
+    void get_base(llsf_msgs::BaseColor slot);
     // Check, if the cap is ready for take away
     bool base_ready();
     // Check, if the last cap was taken -> new order can be processed

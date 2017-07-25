@@ -70,12 +70,12 @@ usage(const char *progname)
   printf("Usage: %s <machine-name> <instructions> [-R host[:port]]\n"
          "\n"
          "general instructions\n"
-         "light: (in the order red, yellow, green) (OFF|ON|BLINK) (OFF|ON|BLINK) (OFF|ON|BLINK)\n"
+         "light: (RED|YELLOW|GREEN) (OFF|ON|BLINK)\n"
          "conveyor: (FORWARD|BACKWARD) (SENSOR_INPUT|SENSOR_OUTPUT|SENSOR_MIDDLE)\n"
          "reset\n"
          "instructions are specific for the machine type:\n"
-/*         "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
-         "DS:  <gate number>\n"
+         "BS: (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
+/*         "DS:  <gate number>\n"
          "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
 */
          "RS: (number of feeder) (0|1)\n"
@@ -169,6 +169,20 @@ main(int argc, char **argv)
     std::cout << "resetting " << machine_name_ << std::endl;
 
     mps_mb_->reset();
+  } else if (machine_command_ == "BS") {
+    std::shared_ptr<llsfrb::modbus::BaseStation> bs = std::dynamic_pointer_cast<llsfrb::modbus::BaseStation>(mps_mb_);
+    if (argp.num_items() <= 2) {
+      usage(argv[0]);
+      exit(1);
+    }
+    llsf_msgs::BaseColor base_color;
+    if (! llsf_msgs::BaseColor_Parse(argp.items()[2], &base_color)) {
+      printf("Invalid dispencer: %s\n", argp.items()[2]);
+      exit(-2);
+    }
+    std::cout << "BS push out base " << llsf_msgs::BaseColor_Name(base_color) << std::endl;
+
+    bs->get_base(base_color);
   } else if (machine_command_ == "RS") {
     std::shared_ptr<llsfrb::modbus::RingStation> rs = std::dynamic_pointer_cast<llsfrb::modbus::RingStation>(mps_mb_);
     if (argp.num_items() <= 2) {

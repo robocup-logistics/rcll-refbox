@@ -47,6 +47,12 @@ enum LightColor {
   LIGHT_COLOR_GREEN = 23,
 };
 
+enum BaseColor {
+  BASE_COLOR_RED= 1,
+  BASE_COLOR_BLACK = 3,
+  BASE_COLOR_SILVER = 2,
+};
+
 enum Command {
   COMMAND_NOTHING = 0,
   COMMAND_SET_TYPE = 10,
