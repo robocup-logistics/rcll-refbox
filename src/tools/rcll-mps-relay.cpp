@@ -48,6 +48,13 @@
 #include <thread>         // std::thread
 #include <mutex>          // std::mutex
 
+#include "modbus/MPSIoMapping.h"
+#include "modbus/BaseStation.h"
+#include "modbus/StorageStation.h"
+#include "modbus/DeliveryStation.h"
+#include "modbus/RingStation.h"
+#include "modbus/CapStation.h"
+
 using namespace protobuf_comm;
 using namespace llsf_msgs;
 using namespace fawkes;
@@ -71,6 +78,11 @@ std::mutex mps_msg_;
 unsigned int bases_added_since_last_poll_ = 0;
 std::list<int> barcodes_read_since_last_poll_;
 std::shared_ptr<std::thread> mps_msg_thread_;
+
+static std::shared_ptr<llsfrb::modbus::Machine> mps_mb_;
+
+static std::string plc_ip_ = "192.168.2.27";
+static unsigned short int plc_port_ = 502;
 
 void
 signal_handler(const boost::system::error_code& error, int signum)
@@ -286,6 +298,9 @@ handle_message(ProtobufStreamServer::ClientID client,
                    llsf_msgs::LightState_Name( im->light_state().yellow() ).c_str(),
                    llsf_msgs::LightState_Name( im->light_state().green() ).c_str()
                   );
+            mps_mb_->set_light(llsf_msgs::LightColor::RED, im->light_state().red());
+            mps_mb_->set_light(llsf_msgs::LightColor::YELLOW, im->light_state().yellow());
+            mps_mb_->set_light(llsf_msgs::LightColor::GREEN, im->light_state().green());
             send_reply_and_append(id);
             break;
           case llsf_msgs::INSTRUCT_MACHINE_MOVE_CONVEYOR:
@@ -411,11 +426,37 @@ main(int argc, char **argv)
   }
   machine_name_ = argp.arg("m");
 
+  if (machine_name_ == "C-BS" || machine_name_ == "M-BS") {
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::BaseStation>(new llsfrb::modbus::BaseStation()));
+  } else if (machine_name_ == "C-SS" || machine_name_ == "M-SS") {
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::StorageStation>(new llsfrb::modbus::StorageStation()));
+  } else if (machine_name_ == "C-DS" || machine_name_ == "M-DS") {
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::DeliveryStation>(new llsfrb::modbus::DeliveryStation()));
+  } else if (machine_name_ == "C-RS" || machine_name_ == "M-RS") {
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::RingStation>(new llsfrb::modbus::RingStation()));
+  } else if (machine_name_ == "C-CS" || machine_name_ == "M-CS" ) {
+    mps_mb_ = std::dynamic_pointer_cast<llsfrb::modbus::Machine>(std::shared_ptr<llsfrb::modbus::CapStation>(new llsfrb::modbus::CapStation()));
+  } else {
+    std::cout << "Machine of type " << machine_name_ << " is not yet implemented" << std::endl
+              << "stop programm" << std::endl;
+    return 0;
+  }
+
+
   llsfrb::YamlConfiguration *config_ = new llsfrb::YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
   std::string cfg_prefix = std::string("/llsfrb/mps/stations/");
-  std::string host = config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
-  unsigned int port = config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
+  std::string host = "127.0.0.1"; // config_->get_string( (cfg_prefix + machine_name_ + "/host").c_str() );
+  unsigned int port = 502; //config_->get_uint( (cfg_prefix + machine_name_ + "/port").c_str() );
+
+  char* ip;
+  unsigned short int p;
+  if ( argp.parse_hostport("R", &ip, &p) ) {
+    plc_ip_ = ip;
+    plc_port_ = p;
+  }
+
+  mps_mb_->connect_PLC(plc_ip_, plc_port_);
 
   MessageRegister * message_register = new MessageRegister();
   message_register->add_message_type<llsf_msgs::InstructMachine>();
