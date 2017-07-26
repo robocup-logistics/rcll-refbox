@@ -59,6 +59,9 @@ OBJS_rcll_set_machine_lights = rcll-set-machine-lights.o
 LIBS_rcll_simulate_mps = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_simulate_mps = rcll-simulate-mps.o
 
+LIBS_rcll_mps_relay = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+OBJS_rcll_mps_relay = rcll-mps-relay.o
+
 LIBS_rcll_modbus_mockup = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs modbus
 OBJS_rcll_modbus_mockup = rcll-modbus-mockup.o \
 													modbus/Machine.o modbus/timeUtils.o \
@@ -104,9 +107,11 @@ endif
 ifeq ($(HAVE_LIBMODBUS),1)
   OBJS_all +=	$(OBJS_llsf_puck) \
               $(OBJS_llsf_signal_ctrl) \
+              $(OBJS_rcll-mps_relay) \
               $(OBJS_rcll_modbus_mockup)
   BINS_all +=	$(BINDIR)/llsf-puck \
               $(BINDIR)/llsf-signal-ctrl \
+              $(BINDIR)/rcll-mps-relay \
               $(BINDIR)/rcll-modbus-mockup
 
   CFLAGS  += $(CFLAGS_LIBMODBUS)
