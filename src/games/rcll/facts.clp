@@ -393,18 +393,24 @@
 )
 
 (deffacts orders
+  ; standing order
   (order (id  1) (complexity C0) (quantity-requested 1) (start-range 0 0)
-	       (activation-range 900 900) (duration-range 900 900))
-  (order (id  2) (complexity C0) (quantity-requested 1) (start-range 200 400))
-  (order (id  3) (complexity C0) (quantity-requested 2) (start-range 300 700))
-  (order (id  4) (complexity C0) (quantity-requested 1) (start-range 700 900))
-  (order (id  5) (complexity C1) (quantity-requested 1) (start-range 500 700)
-	       (activation-range 300 500) (duration-range 90 150))
-  (order (id  6) (complexity C2) (quantity-requested 1) (start-range 600 720)
-	       (activation-range 480 780) (duration-range 120 180))
-  (order (id  7) (complexity C3) (quantity-requested 1) (start-range 600 720)
-	       (activation-range 900 900) (duration-range 120 180))
-  (order (id  8) (complexity C0) (quantity-requested 1) (start-range 900 900)
+	       (activation-range 1020 1020) (duration-range 1020 1020))
+  (order (id  2) (complexity C1) (quantity-requested 1) (start-range 0 0)
+	       (activation-range 1020 1020) (duration-range 1020 1020))
+  ; early orders
+  (order (id  3) (complexity C2) (quantity-requested 1) (start-range 650 850)
+	       (activation-range 500 900) (duration-range 100 200))
+  (order (id  4) (complexity C3) (quantity-requested 1) (start-range 650 850)
+	       (activation-range 1020 1020) (duration-range 150 200))
+  ; normal orders
+  (order (id  5) (complexity C0) (quantity-requested 1) (start-range 200 450))
+  (order (id  6) (complexity C0) (quantity-requested 2) (start-range 350 800))
+  (order (id  7) (complexity C0) (quantity-requested 1) (start-range 800 1020))
+  (order (id  8) (complexity C1) (quantity-requested 1) (start-range 550 800)
+	       (activation-range 350 550) (duration-range 100 200))
+  ; overtime
+  (order (id  9) (complexity C0) (quantity-requested 1) (start-range 1020 1020)
          (activation-range 0 0) (duration-range 300 300) (allow-overtime TRUE))
 )
 
