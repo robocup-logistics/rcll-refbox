@@ -168,7 +168,18 @@
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
 
-	(if (any-factp ((?m machine)) (eq ?m:zone TBD))
+  (bind ?overwrite-generating false)
+  (do-for-fact ((?cv confval)) (and (eq ?cv:path "/llsfrb/game/random-field")
+                                    (eq ?cv:type BOOL)
+                               )
+    (bind ?overwrite-generating ?cv:value)
+  )
+
+  ; if the field is not compleate
+  ; or when the field should be regenerated
+  (if (or (any-factp ((?m machine)) (eq ?m:zone TBD))
+          (eq (str-cat ?overwrite-generating) "true")
+      )
    then
     (printout t "Randomizing from scratch" crlf)
     ; reset all zones, since we cannot do partial assinemend anymore
