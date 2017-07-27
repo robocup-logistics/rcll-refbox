@@ -103,7 +103,11 @@
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
-  (machine-generation (state FINISHED))
+  (or (machine-generation (state FINISHED))
+      (and (not (test (any-factp ((?m machine)) (eq ?m:zone TBD))))
+           (confval (path "/llsfrb/game/random-field") (type BOOL) (value false))
+      )
+  )
   =>
   (assert (game-parameterized))
 
