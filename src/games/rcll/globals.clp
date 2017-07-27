@@ -39,7 +39,7 @@
   ; Minimum and maximum machine down times, actual value will be
   ; chosen randomly from this range
   ?*DOWN-TIME-MIN* =  30 ;  30
-  ?*DOWN-TIME-MAX* = 120 ; 120
+  ?*DOWN-TIME-MAX* = 60 ; 120
   ?*DOWN-TYPES*    = (create$ RS CS)
   ?*BROKEN-DOWN-TIME* = 30
   ?*LOADED-WITH-MAX* = 3
