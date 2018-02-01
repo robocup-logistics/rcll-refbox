@@ -42,6 +42,7 @@
 #include <config/yaml.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
+#include <mps_placing_clips/mps_placing_clips.h>
 #include <llsf_sps/sps_comm.h>
 #include <logging/multi.h>
 #include <logging/file.h>
@@ -265,6 +266,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   setup_protobuf_comm();
   setup_clips();
 
+  mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
+        new mps_placing_clips::MPSPlacingGenerator(clips_, clips_mutex_)
+        );
+
   mlogger->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 
  #ifdef HAVE_MONGODB
@@ -475,7 +480,7 @@ LLSFRefBox::setup_clips()
     clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
     clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
     clips_->add_function("mps-set-lights", sigc::slot<void, std::string, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
-    clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
+//    clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
     clips_->add_function("mps-reset-base-counter", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
     clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
   }
@@ -1654,29 +1659,9 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
     timer_last_ = now;
     */
 
-    //sps_read_rfids();
-    if (mps_)  mps_->process();
-
     {
       //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
       fawkes::MutexLocker lock(&clips_mutex_);
-
-      if (mps_) {
-	std::map<std::string, std::string> machine_states = mps_->get_states();
-	for (const auto &ms : machine_states) {
-	  //printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
-	  //       ms.first.c_str(), ms.second.c_str(), 0);
-          std::string type = ms.first.substr(2, 2);
-          unsigned int num_bases = 0;
-          if (type == "RS") {
-            MPSPickPlace2 *station;
-            station = mps_->get_station(ms.first, station);
-            if (station)  num_bases = station->getCountSlide();
-          }
-	  clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
-				ms.first.c_str(), ms.second.c_str(), num_bases);
-	}
-      }
 
       clips_->assert_fact("(time (now))");
       clips_->refresh_agenda();

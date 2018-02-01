@@ -71,10 +71,43 @@
   (retract ?gf)
 )
 
+(defrule game-mps-solver-start
+  "start the solver"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (game-time ?gt))
+  (not (game-parameterized))
+  ?mg <- (machine-generation (state NOT-STARTED))
+  =>
+  (printout t "starting the solver for the generation of the machine positions" crlf)
+  (mps-generator-start)
+  (modify ?mg (state STARTED) (generation-state-last-checked ?gt))
+)
+
+(defrule game-mps-solver-check
+  "check if the solver is finished"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME) (game-time ?gt))
+  ?mg <- (machine-generation (state STARTED) (generation-state-last-checked ?gs&:(timeout-sec ?gt ?gs ?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE*)))
+  =>
+  (if (and (not (mps-generator-running)) (mps-generator-field-generated))
+   then
+    (printout t "the machine generation is finished" crlf)
+    (modify ?mg (state FINISHED))
+   else
+    (printout warn "waiting for the generation of the machine positions" crlf)
+    (modify ?mg (generation-state-last-checked ?gt))
+  )
+)
+
 (defrule game-parameterize
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
+  (or (machine-generation (state FINISHED))
+      (and (not (test (any-factp ((?m machine)) (eq ?m:zone TBD))))
+           (confval (path "/llsfrb/game/random-field") (type BOOL) (value false))
+      )
+  )
   =>
   (assert (game-parameterized))
 

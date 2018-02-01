@@ -4,6 +4,7 @@
 ;
 ;  Created: Thu Feb 07 19:31:12 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -20,10 +21,8 @@
   )
 
   ; Set lights
-  (delayed-do-for-all-facts ((?machine machine) (?lc machine-light-code))
-    (= ?machine:exploration-light-code ?lc:id)
-
-		(modify ?machine (desired-lights ?lc:code))
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
+		(modify ?machine (desired-lights YELLOW-ON))
   )
 
   ;(assert (attention-message (text "Entering Exploration Phase")))
@@ -42,21 +41,20 @@
   ?gf <- (gamestate (phase EXPLORATION) (state RUNNING) (prev-state ~RUNNING))
   =>
   (modify ?gf (prev-state RUNNING))
-  (delayed-do-for-all-facts ((?machine machine) (?lc machine-light-code))
-    (= ?machine:exploration-light-code ?lc:id)
+  (delayed-do-for-all-facts ((?machine machine)) TRUE
 
 		(if (any-factp ((?er exploration-report)) (eq ?er:name ?machine:name))
 		 then
 		  (do-for-fact ((?er exploration-report)) (eq ?er:name ?machine:name)
 				(if (eq ?er:correctly-reported UNKNOWN)
 				 then
-					(modify ?machine (desired-lights ?lc:code))
+					(modify ?machine (desired-lights YELLOW-ON))
 				 else
 					(modify ?machine (desired-lights (create$ (if ?er:correctly-reported then GREEN-BLINK else RED-BLINK))))
 				)
 			)
 		 else
-		  (modify ?machine (desired-lights ?lc:code))
+		  (modify ?machine (desired-lights YELLOW-ON))
 		)
 	)
 )
@@ -70,10 +68,10 @@
   (bind ?team (sym-cat (pb-field-value ?p "team_color")))
   (foreach ?m (pb-field-list ?p "machines")
     (bind ?name (sym-cat (pb-field-value ?m "name")))
-    (bind ?type (if (pb-has-field ?m "type") then (pb-field-value ?m "type") else ""))
     (bind ?zone (if (pb-has-field ?m "zone") then (sym-cat (pb-field-value ?m "zone")) else NOT-REPORTED))
+    (bind ?rotation (if (pb-has-field ?m "rotation") then (pb-field-value ?m "rotation") else -1))
 		(assert (exploration-report (rtype INCOMING)
-							(name ?name) (type ?type) (zone ?zone)
+							(name ?name) (zone ?zone) (rotation ?rotation)
 							(game-time ?game-time)
 							(team ?team) (host ?from-host) (port ?from-port)))
     (pb-destroy ?m)
@@ -88,47 +86,63 @@
 )
 
 (defrule exploration-report-new
-	(exploration-report (rtype INCOMING) (name ?name) (type ?type) (zone ?zone)
+	(exploration-report (rtype INCOMING) (name ?name) (zone ?zone) (rotation ?rotation)
 											(game-time ?game-time)
 											(team ?team) (host ?from-host) (port ?from-port))
 	(not (exploration-report (rtype RECORD) (name ?name)))
 	=>
 	(assert (exploration-report (rtype RECORD)
-															(name ?name) (type "") (zone NOT-REPORTED)
+															(name ?name) (zone NOT-REPORTED) (rotation -1)
 															(game-time ?game-time)
 															(team ?team) (host ?from-host) (port ?from-port)))
 )
 
-(defrule exploration-report-type-correct
-	(exploration-report (rtype INCOMING) (name ?name) (type ?type&~"")
+(defrule exploration-report-rotation-correct
+  ; only triggers after zone-state is CORRECT_REPORT
+	(exploration-report (rtype INCOMING) (name ?name) (rotation ?rotation&~-1)
 											(game-time ?game-time)
 											(team ?team) (host ?from-host) (port ?from-port))
-  ?er <- (exploration-report (rtype RECORD) (name ?name) (type ""))
-	(machine (name ?name) (team ?team) (exploration-type ?type))
+  ?er <- (exploration-report (rtype RECORD) (name ?name) (zone-state CORRECT_REPORT) (rotation -1))
+	?mf <- (machine (name ?name) (team ?team) (rotation ?rotation))
 	=>
-  (modify ?er (type ?type) (type-state CORRECT_REPORT))
-	(printout t "Correct partial report: " ?name " (type " ?type "). "
-						"Awarding " ?*EXPLORATION-CORRECT-REPORT-TYPE-POINTS* " points" crlf) 
-	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-TYPE-POINTS*)
+  (modify ?er (rotation ?rotation) (rotation-state CORRECT_REPORT))
+	(printout t "Correct partial report: " ?name " (rotation " ?rotation "). "
+						"Awarding " ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* " points" crlf) 
+	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS*)
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Correct partial exploration report for "
-																	 ?name ": type = " ?type))))
+																	 ?name ": rotation = " ?rotation))))
+  (modify ?mf (desired-lights GREEN-BLINK))
 )
 
-(defrule exploration-report-type-wrong
-	(exploration-report (rtype INCOMING) (name ?name) (type ?type&~"")
+(defrule exploration-report-rotation-wrong
+  ; only triggers after zone-state is CORRECT_REPORT
+	(exploration-report (rtype INCOMING) (name ?name) (rotation ?rotation&~-1)
 											(game-time ?game-time)
 											(team ?team) (host ?from-host) (port ?from-port))
-  ?er <- (exploration-report (rtype RECORD) (name ?name) (type ""))
-	(machine (name ?name) (team ?team) (exploration-type ?etype&~?type))
+  ?er <- (exploration-report (rtype RECORD) (name ?name) (zone-state CORRECT_REPORT) (rotation -1))
+	?mf <- (machine (name ?name) (team ?team) (rotation ?erotation&~?rotation))
 	=>
-  (modify ?er (type ?type) (type-state WRONG_REPORT))
-	(printout t "Wrong partial report: " ?name " (type " ?type "). "
-						"Awarding " ?*EXPLORATION-WRONG-REPORT-TYPE-POINTS* " points" crlf) 
-	(assert (points (points ?*EXPLORATION-WRONG-REPORT-TYPE-POINTS*)
+  (modify ?er (rotation ?rotation) (rotation-state WRONG_REPORT))
+	(printout t "Wrong partial report: " ?name " (rotation " ?rotation "). "
+						"Awarding " ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS* " points" crlf) 
+	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS*)
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Wrong partial exploration report for "
-																	 ?name ": type = " ?type " (should be " ?etype ")"))))
+													 ?name ": rotation = " ?rotation " (should be " ?erotation ")"))))
+  (modify ?mf (desired-lights GREEN-ON RED-ON))
+)
+
+(defrule exploration-report-rotation-ignored
+  ; triggers when zone-state is WRONG_REPORT
+	(exploration-report (rtype INCOMING) (name ?name) (rotation ?rotation&~-1)
+											(game-time ?game-time)
+											(team ?team) (host ?from-host) (port ?from-port))
+  ?er <- (exploration-report (rtype RECORD) (name ?name) (zone-state WRONG_REPORT) (rotation -1))
+	(machine (name ?name) (team ?team))
+	=>
+  (modify ?er (rotation ?rotation))
+  (printout t "Ignored partial report: " ?name " (rotation " ?rotation "). since zone is wrong" crlf)
 )
 
 (defrule exploration-report-zone-correct
@@ -136,7 +150,7 @@
 											(game-time ?game-time)
 											(team ?team) (host ?from-host) (port ?from-port))
   ?er <- (exploration-report (rtype RECORD) (name ?name) (zone NOT-REPORTED))
-	(machine (name ?name) (team ?team) (zone ?zone))
+	?mf <- (machine (name ?name) (team ?team) (zone ?zone))
 	=>
   (modify ?er (zone ?zone) (zone-state CORRECT_REPORT))
 	(printout t "Correct partial report: " ?name " (zone " ?zone "). "
@@ -145,6 +159,8 @@
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Correct partial exploration report for "
 																	 ?name ": zone = " ?zone))))
+
+	(modify ?mf (desired-lights GREEN-ON))
 )
 
 (defrule exploration-report-zone-wrong
@@ -152,7 +168,7 @@
 											(game-time ?game-time)
 											(team ?team) (host ?from-host) (port ?from-port))
   ?er <- (exploration-report (rtype RECORD) (name ?name) (zone NOT-REPORTED))
-	(machine (name ?name) (team ?team) (zone ?mzone&~?zone))
+	?mf <- (machine (name ?name) (team ?team) (zone ?mzone&~?zone))
 	=>
   (modify ?er (zone ?zone) (zone-state WRONG_REPORT))
 	(printout t "Wrong partial report: " ?name " (zone " ?zone "). "
@@ -161,28 +177,28 @@
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Wrong partial exploration report for "
 																	 ?name ": zone = " ?zone " (should be " ?mzone ")"))))
+  (modify ?mf (desired-lights RED-BLINK))
 )
 
 (defrule exploration-report-complete-correct
   ?er <- (exploration-report (rtype RECORD) (correctly-reported UNKNOWN)
-														 (name ?name) (type ?type&~"") (zone ?zone&~NOT-REPORTED))
-	?mf <- (machine (name ?name) (team ?team) (exploration-type ?type) (zone ?zone))
+														 (name ?name) (zone ?zone&~NOT-REPORTED) (rotation ?rotation&~-1) )
+	?mf <- (machine (name ?name) (team ?team) (zone ?zone) (rotation ?rotation))
 	=>
   (modify ?er (correctly-reported TRUE))
-	(modify ?mf (desired-lights GREEN-BLINK))
+;	(modify ?mf (desired-lights GREEN-BLINK))
 )
 
-(defrule exploration-report-complete-wrong
+(defrule exploration-report-complete-zone-wrong
   ?er <- (exploration-report (rtype RECORD) (correctly-reported UNKNOWN)
-														 (name ?name) (type ?type&~"") (zone ?zone&~NOT-REPORTED))
+														 (name ?name) (zone ?zone&~NOT-REPORTED))
 	?mf <- (machine (name ?name))
 	(or
-	 (machine (name ?name) (team ?team) (exploration-type ~?type))
 	 (machine (name ?name) (team ?team) (zone ~?zone))
 	)
 	=>
   (modify ?er (correctly-reported FALSE))
-	(modify ?mf (desired-lights RED-BLINK))
+;	(modify ?mf (desired-lights RED-BLINK))
 )
 
 ; (defrule exploration-handle-report
@@ -259,84 +275,6 @@
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
   =>
   (retract ?mf)
-)
-
-
-(defrule exploration-send-ExplorationInfo
-  (time $?now)
-  (gamestate (phase EXPLORATION))
-  ?sf <- (signal (type exploration-info)
-		 (time $?t&:(timeout ?now ?t ?*BC-EXPLORATION-INFO-PERIOD*)) (seq ?seq))
-  (network-peer (group PUBLIC) (id ?peer-id-public))
-  =>
-  (modify ?sf (time ?now) (seq (+ ?seq 1)))
-  (bind ?ei (pb-create "llsf_msgs.ExplorationInfo"))
-
-  (bind ?machines (create$))
-  (do-for-all-facts ((?m machine)) (and (eq ?m:team CYAN) (<> ?m:exploration-light-code 0))
-    (bind ?machines (append$ ?machines ?m))
-  )
-
-  ; Randomize machines, otherwise order in messages would yield info
-  ; on machine to light assignments and tag detection alone would suffice
-  (bind ?machines (randomize$ ?machines))
-
-  (foreach ?m ?machines
-    (do-for-fact ((?lc machine-light-code))
-      (= (fact-slot-value ?m exploration-light-code) ?lc:id)
-
-      (bind ?s (pb-create "llsf_msgs.ExplorationSignal"))
-      (pb-set-field ?s "type" (fact-slot-value ?m exploration-type))
-      ; nested foreach are broken, hence use progn$
-      (progn$ (?color (create$ RED YELLOW GREEN))
-        (bind ?state OFF)
-        (progn$ (?poss-state (create$ OFF ON BLINK))
-          (if (member$ (sym-cat ?color "-" ?poss-state) ?lc:code)
-	    then (bind ?state (str-cat ?poss-state))
-          )
-        )
-        (bind ?s-light (pb-create "llsf_msgs.LightSpec"))
-	(pb-set-field ?s-light "color" ?color)
-	(pb-set-field ?s-light "state" ?state)
-        (pb-add-list ?s "lights" ?s-light)
-      )
-
-      (pb-add-list ?ei "signals" ?s)
-    )
-  )
-
-  (bind ?zones-cyan    ?*MACHINE-ZONES-CYAN*)
-  (bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
-  (do-for-all-facts ((?m machine))
-    (and (eq ?m:team CYAN) (or (eq ?m:mtype RS) (eq ?m:mtype CS)))
-
-    (bind ?z-index (member$ ?m:zone ?zones-cyan))
-
-    (if (not ?z-index) then
-      ; machines swapped
-      (bind ?z-index (member$ ?m:zone ?zones-magenta))
-      (bind ?z-cyan    (nth$ ?z-index ?zones-cyan))
-      (bind ?z-magenta (nth$ ?z-index ?zones-magenta))
-      (bind ?zones-cyan    (replace$ ?zones-cyan ?z-index ?z-index ?z-magenta))
-      (bind ?zones-magenta (replace$ ?zones-magenta ?z-index ?z-index ?z-cyan))
-    )
-  )
-
-  (foreach ?z ?zones-cyan
-    (bind ?zm (pb-create "llsf_msgs.ExplorationZone"))
-    (pb-set-field ?zm "zone" ?z)
-    (pb-set-field ?zm "team_color" CYAN)
-    (pb-add-list ?ei "zones" ?zm)
-  )
-  (foreach ?z ?zones-magenta
-    (bind ?zm (pb-create "llsf_msgs.ExplorationZone"))
-    (pb-set-field ?zm "zone" ?z)
-    (pb-set-field ?zm "team_color" MAGENTA)
-    (pb-add-list ?ei "zones" ?zm)
-  )
-
-  (pb-broadcast ?peer-id-public ?ei)
-  (pb-destroy ?ei)
 )
 
 (defrule exploration-send-MachineReportInfo

@@ -4,12 +4,14 @@
 ;
 ;  Created: Thu Feb 07 19:31:12 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
 ; LLSF RefBox Version
 ; Set from refbox.cpp according to src/libs/core/version.h
 
+(load* (resolve-file mps.clp))
 (load* (resolve-file net.clp))
 (if (config-get-bool "/llsfrb/simulation/enable")
   then (printout t "Enabling simulation" crlf) (load* (resolve-file simulation.clp)))

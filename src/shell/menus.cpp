@@ -648,7 +648,7 @@ OrderDeliverMenu::On_Menu_Init()
       case llsf_msgs::RING_ORANGE:
 	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
       case llsf_msgs::RING_YELLOW:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
       }
       addstr(i+1, 19+j, " ");
     }
@@ -821,7 +821,7 @@ OrderByColorDeliverMenu::On_Menu_Init()
       case llsf_msgs::RING_ORANGE:
 	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
       case llsf_msgs::RING_YELLOW:
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW)); break;
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
       }
       addstr(i+1, 15+j, " ");
     }

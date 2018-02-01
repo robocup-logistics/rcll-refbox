@@ -3,6 +3,7 @@
 ;
 ;  Created: Thu Feb 14 17:26:27 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -382,6 +383,7 @@
 
     (bind ?mtype (fact-slot-value ?mf mtype))
     (bind ?zone (fact-slot-value ?mf zone))
+    (bind ?rotation (fact-slot-value ?mf rotation))
 
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
     (pb-set-field ?m "type" ?mtype)
@@ -395,8 +397,9 @@
     )
     (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
       then
-			 (pb-set-field ?m "state" (fact-slot-value ?mf state))
-       (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
+			  (pb-set-field ?m "state" (fact-slot-value ?mf state))
+        (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
+        (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
 
       else (pb-set-field ?m "state" "")
     )
@@ -406,6 +409,7 @@
       (if (neq ?zone TBD) then
         (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
       )
+      (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
       (if (eq ?mtype RS) then
         (pb-set-field ?m "loaded_with"
           (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
@@ -437,6 +441,20 @@
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
 	    (pb-set-field ?pm "gate" (fact-slot-value ?mf ds-gate))
             (pb-set-field ?m "instruction_ds" ?pm)
+	  )
+	  (case SS then
+	    (bind ?pssm (pb-create "llsf_msgs.SSSlot"))
+	    (pb-set-field ?pssm "x" (nth$ 1 (fact-slot-value ?mf ss-slot)))
+	    (pb-set-field ?pssm "y" (nth$ 2 (fact-slot-value ?mf ss-slot)))
+	    (pb-set-field ?pssm "z" (nth$ 3 (fact-slot-value ?mf ss-slot)))
+
+	    (bind ?psm (pb-create "llsf_msgs.SSTask"))
+	    (pb-set-field ?psm "operation" (fact-slot-value ?mf ss-operation))
+	    (pb-set-field ?psm "slot" ?pssm)
+
+	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
+	    (pb-set-field ?pm "task" ?psm)
+      (pb-set-field ?m "instruction_ss" ?pm)
 	  )
 	  (case RS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionRS"))
@@ -471,7 +489,7 @@
 			 	(and (eq ?report:rtype RECORD) (eq ?report:name (fact-slot-value ?mf name)))
 
 				(pb-set-field ?m "correctly_reported" (if (eq ?report:correctly-reported TRUE) then TRUE else FALSE))
-				(pb-set-field ?m "exploration_type_state" ?report:type-state)
+				(pb-set-field ?m "exploration_rotation_state" ?report:rotation-state)
 				(pb-set-field ?m "exploration_zone_state" ?report:zone-state)
       )
     )
@@ -630,3 +648,244 @@
   (pb-broadcast ?peer-id-public ?vi)
   (pb-destroy ?vi)
 )
+
+(deffunction net-get-new-id ()
+  (bind ?id-old 0)
+  (delayed-do-for-all-facts ((?id mps-comm-id-last)) TRUE
+    (if (<= ?id-old ?id:id) then (bind ?id-old ?id:id))
+    (retract ?id)
+  )
+  (bind ?id-new (+ ?id-old 1))
+  (assert (mps-comm-id-last (id ?id-new)))
+  (return ?id-new)
+)
+
+(deffunction net-assert-mps-change (?id ?name ?gt ?task ?s )
+  ; remember ID and task
+  (assert (mps-comm-msg (id ?id) (name ?name) (msg ?s) (game-time ?gt) (task ?task)))
+)
+
+(defrule net-send-mps-change-periodic-burst
+  ; send in a periodic mattern the mps msg
+  (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
+  (time $?now)
+  ?s <- (signal (type mps-instruct-burst) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD-BURST*)) (seq ?seq))
+  =>
+  (modify ?s (time ?now) (seq (+ ?seq 1)))
+  ; send all msg
+  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (and (<> ?mps:client-id 0)
+                                                                       (eq ?mps-comm:name (sym-cat ?mps:name))
+                                                                       (> ?*MPS-INSTRUCT-BURST-COUNT* ?mps-comm:sended-count)
+                                                                  )
+    (pb-send ?mps:client-id ?mps-comm:msg)
+    (modify ?mps-comm (sended-count (+ ?mps-comm:sended-count 1)))
+  )
+)
+
+(defrule net-send-mps-change-periodic
+  ; send in a periodic mattern the mps msg
+  (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
+  (time $?now)
+  ?s <- (signal (type mps-instruct) (time $?t&:(timeout ?now ?t ?*MPS-INSTRUCT-PERIOD*)) (seq ?seq))
+  =>
+  (modify ?s (time ?now) (seq (+ ?seq 1)))
+  ; send all msg
+  (delayed-do-for-all-facts ((?mps-comm mps-comm-msg) (?mps mps)) (and (<> ?mps:client-id 0)
+                                                                       (eq ?mps-comm:name (sym-cat ?mps:name))
+                                                                  )
+    (pb-send ?mps:client-id ?mps-comm:msg) 
+    (modify ?mps-comm (sended-count (+ ?mps-comm:sended-count 1)))
+  )
+)
+
+(defrule net-mps-change-long-time-warn
+  (declare (salience ?*PRIORITY_FIRST*))
+  (gamestate (game-time ?gt))
+  ?mps-comm <- (mps-comm-msg (sended-count ?count) (task ?task) (name ?n)
+    (game-time ?req-since&:(timeout-sec ?gt ?req-since ?*MPS-INSTRUCT-WARN-TIME*))
+    (warned FALSE)
+  )
+  (mps (name ?name&:(eq ?name (str-cat ?n))))
+  =>
+  (assert (attention-message (text (str-cat "wait for " ?n " to finish " ?task ", for " ?*MPS-INSTRUCT-WARN-TIME* " seconds; sendet " ?count " times"))))
+  (modify ?mps-comm (warned TRUE))
+)
+
+(defrule net-receive-mps-reply
+  ?pf <- (protobuf-msg (type "llsf_msgs.MachineReply") (ptr ?p) (rcvd-via STREAM)
+          (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  =>
+  (assert (pb-machine-reply (id (pb-field-value ?p "id"))
+            (machine (sym-cat (pb-field-value ?p "machine")))
+            (sensors (pb-field-list ?p "sensors"))
+          )
+  )
+  (retract ?pf)
+)
+
+(deffunction net-create-instruct-machine-generic (?mf ?id)
+  (bind ?im (pb-create "llsf_msgs.InstructMachine"))
+
+  (pb-set-field ?im "id" ?id)
+  (pb-set-field ?im "machine" (str-cat (fact-slot-value ?mf name)))
+    
+  (return ?im)
+)
+
+(defrule net-receive-mps-pull-request
+  (gamestate (game-time ?gt))
+  ?pf <- (protobuf-msg (type "llsf_msgs.MachineRequestPull") (ptr ?p) (rcvd-via STREAM)
+          (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  =>
+  (do-for-fact ((?machine machine)) (eq ?machine:name (sym-cat (pb-field-value ?p "machine")))
+    (bind ?id (net-get-new-id))
+    (bind ?im (net-create-instruct-machine-generic ?machine ?id))
+    (pb-set-field ?im "set" INSTRUCT_MACHINE_PULL_MSGS_FROM_MPS)
+
+    (net-assert-mps-change ?id ?machine:name ?gt PULL-MSG ?im)
+  )
+  
+  (retract ?pf)
+)
+
+(deffunction net-create-mps-set-lights (?mf ?id ?red ?yellow ?green)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.SetSignalLight"))
+    (pb-set-field ?im-pb "red" ?red)
+    (pb-set-field ?im-pb "yellow" ?yellow)
+    (pb-set-field ?im-pb "green" ?green)
+  (pb-set-field ?im "light_state" ?im-pb)
+  
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_SET_SIGNAL_LIGHT)
+  (return ?im)
+)
+
+(deffunction net-create-mps-reset (?mf ?id)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_RESET)
+  (return ?im)
+)
+
+(deffunction net-create-mps-stop-conveyor (?mf ?id)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_STOP_CONVEYOR)
+  (return ?im)
+)
+
+(deffunction net-create-mps-move-conveyor (?mf ?id ?side)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.MoveConveyorBelt"))
+  (switch ?side
+    (case OUTPUT then
+      (pb-set-field ?im-pb "direction" FORWARD)
+      (pb-set-field ?im-pb "stop_sensor" SENSOR_OUTPUT)
+    )
+    (case INPUT then
+      (pb-set-field ?im-pb "direction" BACKWARD)
+      (pb-set-field ?im-pb "stop_sensor" SENSOR_INPUT)
+    )
+    (case MIDDLE then
+      (pb-set-field ?im-pb "direction" FORWARD)
+      (pb-set-field ?im-pb "stop_sensor" SENSOR_MIDDLE)
+    )
+  )
+
+  (pb-set-field ?im "conveyor_belt" ?im-pb)
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_MOVE_CONVEYOR)
+  (return ?im)
+)
+
+(deffunction net-create-mps-wait-for-pickup (?mf ?id ?side)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+; TODO this is inclomplete
+  (bind ?im-pb (pb-create "llsf_msgs.SetSignalLight"))
+    (pb-set-field ?im-pb "red" OFF)
+    (pb-set-field ?im-pb "yellow" BLINK)
+    (pb-set-field ?im-pb "green" OFF)
+  (pb-set-field ?im "light_state" ?im-pb)
+; missing, what sensor I need to check
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_WAIT_FOR_PICKUP)
+  (return ?im)
+)
+
+(deffunction net-create-bs-process (?mf ?id ?color)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.BSPushBase"))
+  (switch ?color
+    (case BASE_RED    then (pb-set-field ?im-pb "slot" ?*BS_SLOT_BASE_RED*))
+    (case BASE_BLACK  then (pb-set-field ?im-pb "slot" ?*BS_SLOT_BASE_BLACK*))
+    (case BASE_SILVER then (pb-set-field ?im-pb "slot" ?*BS_SLOT_BASE_SILVER*))
+  )
+  (pb-set-field ?im "bs" ?im-pb)
+
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_BS)
+  (return ?im)
+)
+
+(deffunction net-create-ss-process (?mf ?id ?operation ?x ?y ?z)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-slot (pb-create "llsf_msgs.SSSlot"))
+  (pb-set-field ?im-slot "x" ?x)
+  (pb-set-field ?im-slot "y" ?y)
+  (pb-set-field ?im-slot "z" ?z)
+
+  (bind ?im-st (pb-create "llsf_msgs.SSTask"))
+  (pb-set-field ?im-st "operation" ?operation)
+  (pb-set-field ?im-st "slot" ?im-slot)
+
+  (pb-set-field ?im "ss" ?im-st)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_SS)
+  (return ?im)
+)
+
+(deffunction net-create-ds-process (?mf ?id ?gate)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.DSActivateGate"))
+  (pb-set-field ?im-pb "gate" ?gate)
+
+  (pb-set-field ?im "ds" ?im-pb)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_DS)
+  (return ?im)
+)
+
+(deffunction net-create-cs-process (?mf ?id ?op)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.CSTask"))
+  (pb-set-field ?im-pb "operation" ?op)
+
+  (pb-set-field ?im "cs" ?im-pb)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_CS)
+  (return ?im)
+)
+
+(deffunction net-create-rs-process (?mf ?id ?color)
+  (bind ?im (net-create-instruct-machine-generic ?mf ?id))
+
+  (bind ?im-pb (pb-create "llsf_msgs.RSMountRing"))
+  (if (eq ?color (nth$ 1 (fact-slot-value ?mf rs-ring-colors)))
+   then
+    (pb-set-field ?im-pb "feeder" 0)
+   else
+    (if (eq ?color (nth$ 2 (fact-slot-value ?mf rs-ring-colors)))
+     then
+      (pb-set-field ?im-pb "feeder" 1)
+     else
+      (printout error "RefBox error, can't instruct correct feeder to mount ring" crlf)
+      (printout error "want to mount " ?color " but availabe is " (fact-slot-value ?mf rs-ring-colors) crlf)
+    )
+  )
+
+  (pb-set-field ?im "rs" ?im-pb)
+  (pb-set-field ?im "set" INSTRUCT_MACHINE_RS)
+  (return ?im)
+)
+

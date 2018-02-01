@@ -50,7 +50,7 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellRobot::LLSFRefBoxShellRobot(int begin_y, int begin_x)
-  : NCursesPanel(2, 24, begin_y, begin_x)
+  : NCursesPanel(2, 28, begin_y, begin_x)
 {
 }
 
@@ -118,7 +118,7 @@ LLSFRefBoxShellRobot::refresh()
     if (td_seconds >= 10) {
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
     } else if (td_seconds >= 5) {
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW));
     } else {
       attron(' '|COLOR_PAIR(COLOR_DEFAULT));
     }
@@ -139,10 +139,10 @@ LLSFRefBoxShellRobot::refresh()
       } else if (maintenance_time_remaining_ < 16) {
 	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
       } else if (maintenance_time_remaining_ < 31) {
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW));
       }
       printw(1, width() - 10, "%3is", (int)truncf(maintenance_time_remaining_));
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW));
     } else if (state_ == llsf_msgs::DISQUALIFIED) {
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
     }

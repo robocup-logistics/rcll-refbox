@@ -4,31 +4,55 @@
 ;
 ;  Created: Thu Feb 07 19:31:12 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
+
+(deffunction mps-reset (?gt ?mf)
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-reset ?mf ?id))
+
+  (net-assert-mps-change ?id (fact-slot-value ?mf name) ?gt RESET ?s) 
+)
+
+(defrule machine-reset-finished
+  "mps reset finished successfully"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task RESET))
+  ?m <- (machine (name ?n))
+  =>  
+;  (printout t "Machine " ?n " successfully change the light" crlf)
+  (retract ?id-comm ?pb)
+)
 
 (defrule m-shutdown "Shutdown machines at the end"
   (finalize)
   ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
   (modify ?mf (desired-lights))
-  (mps-reset (str-cat ?m))
+  (do-for-fact ((?gs gamestate)) true
+    (mps-reset ?gs:game-time ?mf)
+  )
 )
 
 
 (defrule machine-init
   (init)
   =>
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (mps-reset ?machine:name)
+  (do-for-fact ((?gs gamestate)) true
+    (delayed-do-for-all-facts ((?machine machine)) TRUE
+      (mps-reset ?gs:game-time ?machine)
+    )
   )
 )
 
 (defrule machine-lights "Set machines if desired lights differ from actual lights"
-  ?mf <- (machine (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
+  (gamestate (game-time ?gt))
+  ?mf <- (machine (name ?n) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
   =>
-  ;(printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
-  (modify ?mf (actual-lights ?dl))
+  ;(printout t ?n " actual lights: " ?al "  desired: " ?dl crlf)
 	(if (member$ RED-ON ?dl) then (bind ?red-state ON)
 	 else (if (member$ RED-BLINK ?dl) then (bind ?red-state BLINK)
 	 else (bind ?red-state OFF)))
@@ -39,7 +63,75 @@
 	 else (if (member$ GREEN-BLINK ?dl) then (bind ?green-state BLINK)
 	 else (bind ?green-state OFF)))
 
-	(mps-set-lights (str-cat ?m) (str-cat ?red-state) (str-cat ?yellow-state) (str-cat ?green-state))
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-set-lights ?mf ?id ?red-state ?yellow-state ?green-state))
+
+  (net-assert-mps-change ?id ?n ?gt CHANGE-LIGHT ?s)
+
+  (modify ?mf (actual-lights ?dl))
+)
+
+(defrule machine-lights-finished
+  "light change finished successfully"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task CHANGE-LIGHT))
+  ?m <- (machine (name ?n))
+  =>  
+;  (printout t "Machine " ?n " successfully change the light" crlf)
+  (retract ?id-comm ?pb)
+)
+
+(defrule machine-pull-msgs-finised
+  "pull of msgs from mps finished successfully"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n) (sensors $?sensors))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task PULL-MSG))
+  ?m <- (machine (name ?n))
+  =>  
+  (foreach ?sensor $?sensors
+    (if (pb-has-field ?sensor "added_bases")
+     then
+      (printout t "Bases: " (fact-slot-value ?m bases-added) " + " (pb-field-value ?sensor "added_bases") crlf)
+      (modify ?m (bases-added (+ (fact-slot-value ?m bases-added) (pb-field-value ?sensor "added_bases"))))
+    )
+    (if (pb-has-field ?sensor "barcode")
+     then
+      (printout t "TODO!!!!!!!!!!! received barcode" ?sensor-index ": " (pb-field-value ?sensor "barcode") crlf)
+    )
+  )
+
+  (retract ?id-comm ?pb)
+)
+
+(defrule machine-wait-for-product-too-long
+  "a machines was prepared, but the product was not fed into the machine in time"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?id-comm <- (mps-comm-msg (id ?id-final) (name ?n) (task WAIT-FOR-PRODUCT))
+  ?mf <- (machine (name ?n) (state PREPARED)
+         (processing-state WAIT-FOR-PRODUCT) (waiting-for-product-since ?wait-since&:(timeout-sec ?gt ?wait-since ?*WAIT-FOR-PRODUCT-MAX*)))
+  =>
+  (bind ?id (net-get-new-id))
+  (bind ?s (net-create-mps-stop-conveyor ?mf ?id))
+
+  (net-assert-mps-change ?id ?n ?gt STOP-CONVEYOR ?s)
+
+  (retract ?id-comm)
+  (modify ?mf (state BROKEN) (broken-reason (str-cat "Prepared " ?n " but did not fed product in time")))
+)
+
+(defrule machine-finished-unknown
+  "I get a msg from a machine with an unknown ID"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (game-time ?gt))
+  ?pb <- (pb-machine-reply (id ?id-final) (machine ?n))
+  (not (mps-comm-msg (id ?id-final)))
+  =>  
+  (printout debug "Received finish msg from MPS " ?n " with unknown ID " ?id-final " silently ignoreing this (probably just old)" crlf)
+  (retract ?pb)
 )
 
 (deffunction zone-magenta-for-cyan (?cyan-zone)
@@ -68,58 +160,54 @@
 )
 
 (deffunction machine-init-randomize (?ring-colors)
-  (if ?*RANDOMIZE-GAME* then
-    ; Gather all available light codes
-    (bind ?light-codes (create$))
-    (do-for-all-facts ((?lc machine-light-code)) TRUE
-      (bind ?light-codes (create$ ?light-codes ?lc:id))
-    )
-    ; Randomize light codes
-    (bind ?light-codes (randomize$ ?light-codes))
-    ; Assign random light codes
-    (delayed-do-for-all-facts ((?m-cyan machine)) (eq ?m-cyan:team CYAN)
-      ;(do-for-fact ((?light-code machine-light-code)) (= ?light-code:id (nth$ 1 ?light-codes))
-      ;  (printout t "Light code " ?light-code:code " for machine " ?m-cyan:name crlf)
-      ;)
-      (modify ?m-cyan (exploration-light-code (nth$ 1 ?light-codes)))
-
-      (do-for-fact ((?m-magenta machine))
-        (eq ?m-magenta:name (machine-magenta-for-cyan ?m-cyan:name))
-	(modify ?m-magenta (exploration-light-code (nth$ 1 ?light-codes)))
-      )
-
-      (bind ?light-codes (delete$ ?light-codes 1 1))
-    )
-  )
-
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
+;    (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
+; TODO 2017
     (modify ?machine (productions 0) (state IDLE)
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
 
-	(if (any-factp ((?m machine)) (eq ?m:zone TBD))
+  (bind ?overwrite-generating false)
+  (do-for-fact ((?cv confval)) (and (eq ?cv:path "/llsfrb/game/random-field")
+                                    (eq ?cv:type BOOL)
+                               )
+    (bind ?overwrite-generating ?cv:value)
+  )
+
+  ; if the field is not compleate
+  ; or when the field should be regenerated
+  (if (or (any-factp ((?m machine)) (eq ?m:zone TBD))
+          (eq (str-cat ?overwrite-generating) "true")
+      )
    then
     (printout t "Randomizing from scratch" crlf)
-    ; randomly assigned machines to zones
-		(bind ?zones-cyan (randomize$ ?*MACHINE-ZONES-CYAN*))
-    ; Remove all zones for which a machine has already been assigned
-		(do-for-all-facts ((?m machine)) (neq ?m:zone TBD)
-      (bind ?zones-cyan (delete-member$ ?zones-cyan ?m:zone))
-	  )
-		(delayed-do-for-all-facts ((?m-cyan machine))
-      (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:zone TBD))
+    ; reset all zones, since we cannot do partial assinemend anymore
+    (delayed-do-for-all-facts ((?m machine)) TRUE
+      (modify ?m (zone TBD))
+    )
+    ; randomly assigned machines to zones using the external generator
+		(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
+    (bind ?machines (mps-generator-get-generated-field))
+    (delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
+      (if (member$ ?m:name ?machines)
+       then
+        (bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
+        (bind ?rot (nth$ (+ (member$ ?m:name ?machines) 2) ?machines))
+        (printout t ?m:name ": " ?zone " with " ?rot crlf)
+        (modify ?m (zone ?zone) (rotation ?rot))
+       else
+        (printout error ?m:name " not found in generation" crlf)
+      )
+    )
 
-      (bind ?zone (nth$ 1 ?zones-cyan))
-      (bind ?zones-cyan (delete$ ?zones-cyan 1 1))
-      (printout t "CYAN Machine " ?m-cyan:name " is in zone " ?zone crlf)
-      (modify ?m-cyan (zone ?zone))
-
-      (do-for-fact ((?m-magenta machine))
-        (eq ?m-magenta:name (machine-magenta-for-cyan ?m-cyan:name))
-        (printout t "MAGENTA Machine " ?m-magenta:name " is in zone " (zone-magenta-for-cyan ?zone) crlf)
-        (modify ?m-magenta (zone (zone-magenta-for-cyan ?zone)))
+    ; Mirror machines for other team
+    (delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
+      (do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
+        (modify ?mc
+          (zone (mirror-zone ?mm:zone))
+          (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
+        )
       )
     )
 
@@ -128,133 +216,19 @@
 	    (create$ (str-cat "RS" (random 1 2)) (str-cat "CS" (random 1 2))))
 		(foreach ?ms ?machines-to-swap
       (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-        (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
-						 (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
+          (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
+					  	 (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
 
 				(printout t "Swapping " ?m-cyan:name " with " ?m-magenta:name crlf)
 
 				(bind ?z-cyan ?m-cyan:zone)
+				(bind ?r-cyan ?m-cyan:rotation)
 				(bind ?z-magenta ?m-magenta:zone)
-				(modify ?m-cyan    (zone ?z-magenta))
-				(modify ?m-magenta (zone ?z-cyan))
+				(bind ?r-magenta ?m-magenta:rotation)
+				(modify ?m-cyan    (zone ?z-magenta) (rotation ?r-magenta))
+				(modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
 			)
 	  )
-
-   else
-	  (printout t "Performing " ?*RANDOMIZE-STEPS-MACHINES*
-							" randomization steps on loaded config" crlf)
-	  (loop-for-count ?*RANDOMIZE-STEPS-MACHINES*
-      ; collect all machines on cyan side
-      (bind ?cyan-side-machines (create$))
-			(do-for-all-facts ((?m machine)) TRUE
-				(if
-				  (and (member$ ?m:zone ?*MACHINE-ZONES-CYAN*)
-							 (member$ (sym-cat (sub-string 3 4 ?m:name)) ?*MACHINE-RANDOMIZE-TYPES*))
-         then
-          (bind ?cyan-side-machines (append$ ?cyan-side-machines ?m:name))
-        )
-      )
-			; decide on randomization step
-      (bind ?rm (pick-random$ ?cyan-side-machines))
-      (if (> (random 1 10) ?*RANDOMIZE-INTER-SIDE-SWAP-PROB*)
-       then
-        ; swap with another zone on the same side
-			 (bind ?candidates ?*MACHINE-ZONES-CYAN*)
-			 ; Remove machine itself
-			 (do-for-fact ((?m machine)) (eq ?m:name ?rm)
-				 (bind ?idx (member$ ?m:zone ?candidates))
-         (bind ?candidates (delete$ ?candidates ?idx ?idx))
-       )
-
-			 ; Remove DS and BS zones
-			 (do-for-all-facts ((?m machine))
-				 (and (eq ?m:team CYAN) (or (eq ?m:mtype BS) (eq ?m:mtype DS)))
-
-				 (bind ?idx (member$ ?m:zone ?candidates))
-         (bind ?candidates (delete$ ?candidates ?idx ?idx))
-			 )
-
-			 (bind ?swap-zone (pick-random$ ?candidates))
-
-			 (if (any-factp ((?m machine)) (eq ?m:zone ?swap-zone))
-        then
-				 (do-for-fact ((?m machine)) (eq ?m:zone ?swap-zone)
-			 	   (bind ?swap-m ?m:name)
-         )
-
-         (printout t "On-side dual-machine swap " ?rm " with " ?swap-m crlf)
-
-				 (do-for-fact ((?m1 machine) (?m2 machine))
-				 	(and (eq ?m1:name ?rm) (eq ?m2:name ?swap-m))
-
-					(modify ?m1 (zone ?m2:zone))
-					(modify ?m2 (zone ?m1:zone))
-					(assert (zone-swap (m1-name ?m1:name) (m1-new-zone ?m2:zone)
-														 (m2-name ?m2:name) (m2-new-zone ?m1:zone)))
-         )
-
-				 (do-for-fact ((?m1 machine) (?m2 machine))
-					 (and (eq ?m1:name (machine-opposite-team ?rm))
-								(eq ?m2:name (machine-opposite-team ?swap-m)))
-
-					 (modify ?m1 (zone ?m2:zone))
-					 (modify ?m2 (zone ?m1:zone))
-					 (assert (zone-swap (m1-name ?m1:name) (m1-new-zone ?m2:zone)
-															(m2-name ?m2:name) (m2-new-zone ?m1:zone)))
-				 )
-        else
-
-         (printout t "On-side single-machine swap " ?rm " to zone " ?swap-zone crlf)
-
-				 (bind ?m2-swap-zone (machine-opposite-zone ?swap-zone))
-
-				 (do-for-fact ((?m1 machine) (?m2 machine))
-					 (and (eq ?m1:name ?rm)
-								(eq ?m2:name (machine-opposite-team ?rm)))
-
-
-					(modify ?m1 (zone ?swap-zone))
-					(modify ?m2 (zone ?m2-swap-zone))
-					(assert (zone-swap (m1-name ?m1:name) (m1-new-zone ?swap-zone)
-														 (m2-name ?m2:name) (m2-new-zone ?m2-swap-zone)))
-         )
-       )
-       else
-        (printout t "Inter-side swap " ?rm crlf)
-        ; swap machine with other field side and matching machine
-			  ; of the same type
-				(bind ?m1-team (sub-string 1 1 ?rm))
-				(bind ?m-type (sym-cat (sub-string 3 4 ?rm)))
-				(bind ?m1-num  (sym-cat (sub-string 5 5 ?rm)))
-				(bind ?m2-team (if (eq ?m1-team "C") then "M" else "C"))
-				(bind ?m3-num  (if (eq ?m1-num "1") then "2" else "1"))
-
-				(bind ?m1-name (sym-cat ?m1-team "-" ?m-type ?m1-num))
-				(bind ?m2-name (sym-cat ?m2-team "-" ?m-type ?m1-num))
-
-				(bind ?m3-name (sym-cat ?m1-team "-" ?m-type ?m3-num))
-				(bind ?m4-name (sym-cat ?m2-team "-" ?m-type ?m3-num))
-
-				(do-for-fact ((?m1 machine) (?m2 machine))
-					(and (eq ?m1:name ?m1-name) (eq ?m2:name ?m2-name))
-          (modify ?m1 (zone ?m2:zone))
-          (modify ?m2 (zone ?m1:zone))
-					;(printout t "M1/M2: Swapping " ?m1-name " with " ?m2-name crlf)
-					(assert (zone-swap (m1-name ?m1:name) (m1-new-zone ?m2:zone)
-														 (m2-name ?m2:name) (m2-new-zone ?m1:zone)))
-        )
-
-				(do-for-fact ((?m3 machine) (?m4 machine))
-					(and (eq ?m3:name ?m3-name) (eq ?m4:name ?m4-name))
-          (modify ?m3 (zone ?m4:zone))
-          (modify ?m4 (zone ?m3:zone))
-					;(printout t "M3/M4: Swapping " ?m3-name " with " ?m4-name crlf)
-					(assert (zone-swap (m1-name ?m3:name) (m1-new-zone ?m4:zone)
-														 (m2-name ?m4:name) (m2-new-zone ?m3:zone)))
-        )
-      )
-    )
-
   )
 
   ; assign random down times
@@ -280,18 +254,6 @@
 
       (modify ?c (down-period ?start-time ?end-time))
     )
-  )
-
-  ; Calculate exploration hashes
-  (delayed-do-for-all-facts ((?m-cyan machine) (?m-magenta machine))
-    (and (eq ?m-cyan:team CYAN) (eq ?m-magenta:team MAGENTA)
-	 (eq ?m-magenta:name (machine-magenta-for-cyan ?m-cyan:name)))
-
-    (bind ?rs (gen-random-string 8))
-
-    (printout t "Machines " ?m-cyan:name "/" ?m-magenta:name " exploration string:" ?rs crlf)
-    (modify ?m-cyan (exploration-type ?rs))
-    (modify ?m-magenta (exploration-type ?rs))
   )
 
   ; Randomize ring colors per machine
@@ -326,11 +288,12 @@
   (assert (machines-printed))
   (bind ?t (if (eq ?teams (create$ "" "")) then t else debug))
 
-  (do-for-all-facts ((?m machine)) TRUE
-    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?m:exploration-light-code)
-      (printout ?t "Light code " ?light-code:code " for machine " ?m:name crlf)
-    )
-  )
+; TODO 2017
+;  (do-for-all-facts ((?m machine)) TRUE
+;    (do-for-fact ((?light-code machine-light-code)) (= ?light-code:id ?m:exploration-light-code)
+;      (printout ?t "Light code " ?light-code:code " for machine " ?m:name crlf)
+;    )
+;  )
 
   (do-for-all-facts ((?m machine)) (> (nth$ 1 ?m:down-period) -1.0)
     (printout ?t ?m:name " down from "

@@ -142,6 +142,8 @@ llsfrb:
     teams: [Carologistics]
     crypto-keys:
       Carologistics: randomkey
+    # whenever a random field should be generated or not (e.g. used from mongodb)
+    random-field: true
 
   shell:
     refbox-host: localhost
