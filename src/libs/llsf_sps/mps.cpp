@@ -12,7 +12,12 @@ MPS::MPS(const char* ip, int port) {
   struct timeval response_timeout;
   response_timeout.tv_sec = 0;      // timeout in seconds
   response_timeout.tv_usec = 300000;     // timeout in microseconds
+#if LIBMODBUS_VERSION_MAJOR > 3 \
+    || (LIBMODBUS_VERSION_MAJOR == 3 && LIBMODBUS_VERSION_MINOR >= 1)
+  modbus_set_response_timeout(this->mb, response_timeout.tv_sec, response_timeout.tv_usec);
+#else
   modbus_set_response_timeout(this->mb, &response_timeout);
+#endif
 
   machineState = IDLE;
   
@@ -35,7 +40,12 @@ void MPS::reconnect() {
   struct timeval response_timeout;
   response_timeout.tv_sec = 5;      // timeout in seconds
   response_timeout.tv_usec = 0;     // timeout in microseconds
+#if LIBMODBUS_VERSION_MAJOR > 3 \
+    || (LIBMODBUS_VERSION_MAJOR == 3 && LIBMODBUS_VERSION_MINOR >= 1)
+  modbus_set_response_timeout(this->mb, response_timeout.tv_sec, response_timeout.tv_usec);
+#else
   modbus_set_response_timeout(this->mb, &response_timeout);
+#endif
 
   machineState = IDLE;
   
