@@ -38,6 +38,7 @@ syntax = "proto2";
 
 package llsf_msgs;
 
+import "MachineDescription.proto";
 import "ProductColor.proto";
 import "Team.proto";
 
@@ -49,9 +50,9 @@ enum MachineSide {
   OUTPUT = 2;
 }
 
-enum CsOp {
-  RETRIEVE_CAP = 1;
-  MOUNT_CAP    = 2;
+message SSTask {
+  required SSOp   operation = 2;
+  required SSSlot shelf     = 3;
 }
 
 message PrepareInstructionBS {
@@ -63,12 +64,16 @@ message PrepareInstructionDS {
   required uint32 gate = 1;
 }
 
+message PrepareInstructionSS {
+  required SSTask task = 1;
+}
+
 message PrepareInstructionRS {
   required RingColor ring_color = 1;
 }
 
 message PrepareInstructionCS {
-  required CsOp operation = 1;
+  required CSOp operation = 1;
 }
 
 message PrepareMachine {
@@ -83,6 +88,19 @@ message PrepareMachine {
 
   optional PrepareInstructionBS instruction_bs = 4;
   optional PrepareInstructionDS instruction_ds = 5;
+  optional PrepareInstructionSS instruction_ss = 8;
   optional PrepareInstructionRS instruction_rs = 6;
   optional PrepareInstructionCS instruction_cs = 7;
 }
+
+message ResetMachine {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 104;
+  }
+
+  required Team   team_color = 1;
+  // Machine name which to instruct
+  required string machine = 2;
+}
+

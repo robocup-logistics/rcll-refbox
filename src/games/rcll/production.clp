@@ -103,9 +103,52 @@
 	        (bind ?prepmsg (pb-field-value ?p "instruction_ds"))
 		(bind ?gate (pb-field-value ?prepmsg "gate"))
 		(printout t "Prepared " ?mname " (gate: " ?gate ")" crlf)
-	        (modify ?m (state PREPARED) (ds-gate ?gate))
+	        (modify ?m (state PREPARED) (ds-gate ?gate)
+                           (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                           ;(wait-for-product-since ?gt))
                else
 		(modify ?m (state BROKEN) (prev-state ?m:state)
+			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+	      )
+            )
+            (case SS then
+	      (if (pb-has-field ?p "instruction_ss")
+	       then
+	        (bind ?prepmsg (pb-field-value ?p "instruction_ss"))
+	        (bind ?task (pb-field-value ?prepmsg "task"))
+		(bind ?operation (sym-cat (pb-field-value ?task "operation")))
+		(bind ?slot (pb-field-value ?task "shelf"))
+                (bind ?slot-x (pb-field-value ?slot "x"))
+                (bind ?slot-y (pb-field-value ?slot "y"))
+                (bind ?slot-z (pb-field-value ?slot "z"))
+
+                (if (eq ?operation RETRIEVE)
+                 then
+                  ; check if slot is filled
+                  (if (any-factp ((?ss-slot machine-ss-filled)) (and (eq ?ss-slot:name ?mname)
+                                                                     (and (eq (nth$ 1 ?ss-slot:slot) ?slot-x)
+                                                                          (and (eq (nth$ 2 ?ss-slot:slot) ?slot-y)
+                                                                               (eq (nth$ 3 ?ss-slot:slot) ?slot-z)
+                                                                          )
+                                                                     )
+                                                                )
+                      )
+                   then
+                    (printout t "Prepared " ?mname " (RETRIVE: (" ?slot-x ", " ?slot-y ", " ?slot-z ") )" crlf)
+                    (modify ?m (state PREPARED) (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z))
+                   else
+		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with RETRIVE (" ?slot-x ", " ?slot-y ", " ?slot-z ") but this is empty")))
+                  )
+                 else
+                  (if (eq ?operation STORE)
+                   then
+		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with STORE-operation")))
+                   else
+		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation")))
+                  )
+                )
+               else
+		(modify ?m (state BROKEN)(prev-state ?m:state)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
@@ -117,7 +160,9 @@
 		(if (member$ ?ring-color ?m:rs-ring-colors)
 		 then
 		  (printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
-	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color))
+	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color)
+                             (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                             ;(wait-for-product-since ?gt))
                  else
 		  (modify ?m (state BROKEN) (prev-state ?m:state)
 			  (broken-reason (str-cat "Prepare received for " ?mname
@@ -139,7 +184,9 @@
 		    (if (not ?m:cs-retrieved)
 		     then
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-	              (modify ?m (state PREPARED) (cs-operation ?cs-op))
+	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
+                                 (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                                 ;(wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN) (prev-state ?m:state)
 			      (broken-reason (str-cat "Prepare received for " ?mname ": "
@@ -150,7 +197,9 @@
 		    (if ?m:cs-retrieved
 		     then
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-	              (modify ?m (state PREPARED) (cs-operation ?cs-op))
+	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
+                                 (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                                 ;(wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN) (prev-state ?m:state)
 			      (broken-reason (str-cat "Prepare received for " ?mname
@@ -170,6 +219,34 @@
   )
 )
 
+(defrule prod-machine-reset-by-team
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (protobuf-msg (type "llsf_msgs.ResetMachine") (ptr ?p)
+		     (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
+  (network-peer (id ?cid) (group ?group))
+  =>
+  (retract ?pf)
+  (bind ?mname (sym-cat (pb-field-value ?p "machine")))
+  (bind ?team (sym-cat (pb-field-value ?p "team_color")))
+  (if (and (eq ?ct PEER) (neq ?team ?group))
+   then
+    ; message received for a team over the wrong channel, deny
+    (assert (attention-message (team ?group)
+	      (text (str-cat "Invalid reset for team " ?team " of team " ?group))))
+   else
+    (if (not (any-factp ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))))
+     then
+      (assert (attention-message (team ?team)
+		(text (str-cat "Reset received for invalid machine " ?mname))))
+     else
+      (printout t "Received reset for " ?mname crlf)
+      (do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
+	(modify ?m (state BROKEN) (prev-state ?m:state)
+                   (broken-reason (str-cat "Machine " ?mname " resetted by the team " ?team)))
+      )
+    )
+  )
+)
 
 ; **** Machine state processing
 
@@ -190,15 +267,6 @@
   =>
   (printout t "Machine " ?n " switching directly to PROCESSING on prepare" crlf)
   (modify ?m (state PROCESSING) (proc-state PREPARED) (desired-lights GREEN-BLINK)
-	  (prep-blink-start ?gt))
-)
-
-(defrule prod-proc-state-prepared
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype ?t) (state PREPARED) (proc-state ~PREPARED))
-  =>
-  (printout t "Machine " ?n " of type " ?t " switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
 	  (prep-blink-start ?gt))
 )
 
@@ -225,6 +293,20 @@
   (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
 )
 
+(defrule prod-proc-state-processing-ds-start
+  "BS must be instructed to dispense base for processing"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED)
+		 (ds-gate ?gate))
+  =>
+  (printout t "Machine " ?n " of type DS switching to PREPARED state" crlf)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+             (prep-blink-start ?gt))
+  (printout t "Machine " ?n " processing to gate " ?gate crlf)
+  (mps-ds-process (str-cat ?n) ?gate)
+)
+
 (defrule prod-proc-state-processing-ds
   "BS must be instructed to dispense base for processing"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -232,9 +314,7 @@
   ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (ds-gate ?gate))
   =>
-  (printout t "Machine " ?n " processing to gate " ?gate crlf)
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-gate 0) (ds-last-gate ?gate))
-  (mps-ds-process (str-cat ?n) ?gate)
 )
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
@@ -251,6 +331,22 @@
 				  (- ?ba ?bu) " < " ?req-bases ")")))
 )
 
+(defrule prod-proc-state-processing-rs-start
+  "Instruct RS to mount ring"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (proc-state ~PREPARED)
+		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
+                 (bases-added ?ba) (bases-used ?bu))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
+  =>
+  (printout t "Machine " ?n " of type RS switching to PREPARED state" crlf)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+             (prep-blink-start ?gt))
+  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) crlf)
+  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
+)
+
 (defrule prod-proc-state-processing-rs
   "Instruct RS to mount ring"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -261,8 +357,6 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) crlf)
-  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
 (defrule prod-proc-state-processing-cs-mount-without-retrieve
@@ -276,6 +370,20 @@
 	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
 )
 
+(defrule prod-proc-state-processing-cs-mount-start
+  "Process on CS"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (proc-state ~PREPARED)
+		 (cs-operation ?cs-op))
+  =>
+  (printout t "Machine " ?n " of type CS switching to PREPARED state" crlf)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+	  (prep-blink-start ?gt))
+  (printout t ?cs-op " on machine " ?n crlf)
+  (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
+)
+
 (defrule prod-proc-state-processing-cs-mount
   "Process on CS"
   (declare (salience ?*PRIORITY_HIGH*))
@@ -284,8 +392,6 @@
 		 (cs-operation ?cs-op))
   =>
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t ?cs-op " on machine " ?n crlf)
-  (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
 )
 
 (defrule prod-proc-state-processed-ds
@@ -415,16 +521,6 @@
     (ds-gate 0) (ds-last-gate 0) (cs-retrieved FALSE))
 )
   
-
-(defrule prod-machine-input-not-prepared
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state&~PREPARED&~BROKEN&~DOWN&~PROCESSING) (mps-state AVAILABLE))
-  =>
-  (modify ?m (state BROKEN) (prev-state ?state)
-	  (broken-reason (str-cat "Input to " ?n " while not prepared " ?state)))
-)
-
-
 (defrule prod-machine-loaded-with-too-many
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state ?state&~BROKEN&~DOWN) (bases-added ?ba)
@@ -436,9 +532,25 @@
 
 (defrule prod-machine-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PREPARED) (mps-state AVAILABLE))
+  ?m <- (machine (name ?n) (state PREPARED))
+  (or (and (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
+        (machine (name ?n) (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-PROCESSING*)))
+      )
+      (and (confval (path "/llsfrb/simulation/enable") (type BOOL) (value true))
+        (machine (name ?n) (mps-state AVAILABLE))
+      )
+  )
   =>
   (modify ?m (state PROCESSING) (proc-start ?gt) (mps-state AVAILABLE-HANDLED))
+)
+
+(defrule prod-prepared-but-no-input
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype ~BS) (state PREPARED|PROCESSING|PROCESSED)
+        (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
+  =>
+  (modify ?m (state BROKEN) (prev-state PROCESSING)
+             (broken-reason (str-cat "MPS " ?n " prepared, but no product feed in time")))
 )
 
 (defrule prod-machine-proc-done

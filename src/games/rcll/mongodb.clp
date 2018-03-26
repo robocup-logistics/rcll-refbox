@@ -4,6 +4,7 @@
 ;
 ;  Created: Mon Jun 10 19:06:19 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -84,11 +85,10 @@
      (bson-append ?m-doc "type" ?m:mtype)
      (bson-append ?m-doc "zone" ?m:zone)
      (bson-append-array ?m-doc "pose" ?m:pose)
+     (bson-append ?m-doc "orientation" ?m:rotation)
      (bson-append ?m-doc "productions" ?m:productions)
      (bson-append ?m-doc "proc-time" ?m:proc-time)
      (bson-append-array ?m-doc "down-period" ?m:down-period)
-     (bson-append ?m-doc "exploration-light-code" ?m:exploration-light-code)
-     (bson-append ?m-doc "exploration-type" ?m:exploration-type)
 
      (if (eq ?m:mtype RS) then
        (bson-append-array ?m-doc "rs-ring-colors" ?m:rs-ring-colors)
@@ -206,6 +206,7 @@
     (bind ?m-doc (bson-create))
 		(bson-append ?m-doc "name" ?m:name)
 		(bson-append ?m-doc "zone" ?m:zone)
+		(bson-append ?m-doc "rotation" ?m:rotation)
 		(bson-array-append ?m-arr ?m-doc)
 		(bson-destroy ?m-doc)
   )
@@ -219,21 +220,24 @@
 
 (deffunction mongodb-load-machine-zones ()
 	; retrieve time range of latest completed game
-  (bind ?t-query (bson-parse "{\"end-time\": { \"$exists\": 1 }}"))
+  ;(bind ?t-query (bson-parse "{\"end-time\": { \"$exists\": 1 }}"))
+  (bind ?t-query (bson-parse "{}"))
   (bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
 	(bind ?t-cursor (mongodb-query-sort "llsfrb.game_report" ?t-query ?t-sort))
 	(if (mongodb-cursor-more ?t-cursor)
    then
     (bind ?t-doc (mongodb-cursor-next ?t-cursor))
 	  (bind ?stime (bson-get-time ?t-doc "start-time"))
-	  (bind ?etime (bson-get-time ?t-doc "end-time"))
+;	  (bind ?etime (bson-get-time ?t-doc "end-time"))
 		(bson-destroy ?t-doc)
 
 	  ; retrieve machine config
-		(bind ?qs (str-cat "{\"$and\": [{time: { \"$gte\": { \"$date\": "
-											 (mongodb-time-as-ms ?stime) "}}},"
-											 "{time: { \"$lte\": { \"$date\": "
-											 (mongodb-time-as-ms ?etime) "}}}]}}"))
+;		(bind ?qs (str-cat "{\"$and\": [{time: { \"$gte\": { \"$date\": "
+;											 (mongodb-time-as-ms ?stime) "}}},"
+;											 "{time: { \"$lte\": { \"$date\": "
+;											 (mongodb-time-as-ms ?etime) "}}}]}}"))
+		;(bind ?qs (str-cat "{\"time\": ISODate(\"" (mongodb-time-as-ms ?stime) "\"}"))
+		(bind ?qs (str-cat "{}"))
 		(bind ?query (bson-parse ?qs))
 		(bind ?sort  (bson-parse "{time: -1}"))
 		(bind ?cursor (mongodb-query-sort "llsfrb.machine_zones" ?query ?sort))
@@ -245,18 +249,23 @@
 			(foreach ?m-p ?m-arr
 				(bind ?m-name (sym-cat (bson-get ?m-p "name")))
 				(bind ?m-zone (sym-cat (bson-get ?m-p "zone")))
-				;(printout t "Machine " ?m-name " is in zone " ?m-zone crlf)
+				(bind ?m-rotation (sym-cat (bson-get ?m-p "rotation")))
+				;(printout t "Machine " ?m-name " is in zone " ?m-zone " with rotation " ?m-rotation crlf)
 				(do-for-fact ((?m machine)) (eq ?m:name ?m-name)
-					(modify ?m (zone ?m-zone))
+					(modify ?m (zone ?m-zone) (rotation (integer (eval ?m-rotation))))
 			  )
 				(bson-destroy ?m-p)
       )
 		  (bson-destroy ?doc)
-
+     else
+	    (printout error "Empty result in mongoDB from llsfrb.machine_zones" crlf)
     )
     (mongodb-cursor-destroy ?cursor)
 	  (bson-destroy ?query)
 	  (bson-destroy ?sort)
+   else
+	  (printout error "Empty result in mongoDB from llsfrb.game_report" crlf)
+    
   )
   (mongodb-cursor-destroy ?t-cursor)
 	(bson-destroy ?t-query)
@@ -264,6 +273,7 @@
 )
 
 (defrule mongodb-store-machine-zones
+  (game-parameterized)
 	(mongodb-wrote-game-report begin $?stime)
 	=>
 	(printout t "Storing machine zones to database" crlf)
@@ -274,6 +284,8 @@
   (declare (salience ?*PRIORITY_FIRST*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
+  (test (any-factp ((?m machine)) (eq ?m:zone TBD)))
 	=>
+  (printout t "load from mongo" crlf)
 	(mongodb-load-machine-zones)
 )

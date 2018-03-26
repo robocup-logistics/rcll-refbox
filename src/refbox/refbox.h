@@ -52,7 +52,9 @@
 #  include <mongo/bson/bson.h>
 #endif
 
-
+namespace mps_placing_clips {
+  class MPSPlacingGenerator;
+}
 namespace protobuf_clips {
   class ClipsProtobufCommunicator;
 }
@@ -185,6 +187,7 @@ class LLSFRefBox
   Logger::LogLevel log_level_;
   llsf_sps::SPSComm *sps_;
   protobuf_clips::ClipsProtobufCommunicator *pb_comm_;
+  std::shared_ptr<mps_placing_clips::MPSPlacingGenerator> mps_placing_generator_;
 
   CLIPS::Environment                       *clips_;
   //std::recursive_mutex                      clips_mutex_;

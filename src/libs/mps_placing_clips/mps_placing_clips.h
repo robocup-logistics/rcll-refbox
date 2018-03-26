@@ -1,9 +1,10 @@
 
 /***************************************************************************
- *  colors.cpp - LLSF RefBox shell
+ *  mps_placing_clips.h - mps_placing generator for CLIPS
  *
- *  Created: Wed Mar 06 14:25:31 2013
- *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *  Created: Tue Apr 16 13:41:13 2013
+ *  Copyright  2013-2014  Tim Niemueller [www.niemueller.de]
+ *                  2017  Tobias Neumann
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -34,42 +35,54 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "colors.h"
-#include <curses.h>
+#ifndef __MPS_PLACING_CLIPS_H_
+#define __MPS_PLACING_CLIPS_H_
 
-namespace llsfrb_shell {
+#include <list>
+#include <map>
+#include <memory>
+#include <thread>
+#include <clipsmm.h>
+
+#include <core/threading/mutex.h>
+
+class MPSPlacing;
+
+namespace mps_placing_clips {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-void
-init_colors()
+class MPSPlacingGenerator
 {
-  short default_fore, default_back;
-  pair_content(0, &default_fore, &default_back);
-  //chtype default_back = getbkgd(stdscr);
+ public:
+  MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex &env_mutex);
+  ~MPSPlacingGenerator();
 
-  //init_color(COLOR_ORANGE, 1000, 500, 0);
+  void generate_start();
+  void generate_abort();
+  CLIPS::Value generate_running();
+  CLIPS::Value field_layout_generated();
+  CLIPS::Values get_generated_field();
 
-  init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
-  init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW1, default_back);
-  init_pair(COLOR_BLACK_ON_BACK, default_fore, default_back);
-  init_pair(COLOR_WHITE_ON_BACK, COLOR_WHITE, default_back);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_GREEN_ON_BACK, COLOR_GREEN, default_back);
-  init_pair(COLOR_BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_WHITE_ON_YELLOW, COLOR_WHITE, COLOR_YELLOW1);
-  init_pair(COLOR_WHITE_ON_GREEN, COLOR_WHITE, COLOR_GREEN);
-  init_pair(COLOR_CYAN_ON_BACK, COLOR_CYAN, default_back);
-  init_pair(COLOR_MAGENTA_ON_BACK, COLOR_MAGENTA, default_back);
-  init_pair(COLOR_WHITE_ON_CYAN, COLOR_WHITE, COLOR_CYAN);
-  init_pair(COLOR_WHITE_ON_MAGENTA, COLOR_WHITE, COLOR_MAGENTA);
-  init_pair(COLOR_WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
-  init_pair(COLOR_WHITE_ON_ORANGE, COLOR_WHITE, COLOR_ORANGE);
-  init_pair(COLOR_WHITE_ON_BLACK, COLOR_WHITE, COLOR_BLACK);
-  init_pair(COLOR_BLACK_ON_YELLOW, COLOR_BLACK, COLOR_YELLOW1);
+ private:
+  void          setup_clips();
+  CLIPS::Environment   *clips_;
+  fawkes::Mutex        &clips_mutex_;
 
-}
+  void generator_thread();
 
-} // end of namespace llsfrb_shell
+  std::shared_ptr<std::thread> generator_thread_;
+  std::shared_ptr<MPSPlacing> generator_;
+  bool is_generation_running_;
+  bool is_field_generated_;
+
+  fawkes::Mutex map_mutex_;
+
+  std::list<std::string>  functions_;
+  CLIPS::Fact::pointer    avail_fact_;
+};
+
+} // end namespace protobuf_clips
+
+#endif

@@ -977,21 +977,21 @@ LLSFRefBoxShell::run()
 
   panel_->bkgd(' '|COLOR_PAIR(0));
   panel_->frame();
-  panel_->vline(1,                  panel_->width() - 26, height);
-  panel_->addch(0,                  panel_->width() - 26, ACS_TTEE);
-  panel_->addch(height, panel_->width() - 26, ACS_BTEE);
+  panel_->vline(1,                  panel_->width() - 30, height);
+  panel_->addch(0,                  panel_->width() - 30, ACS_TTEE);
+  panel_->addch(height, panel_->width() - 30, ACS_BTEE);
 
-  panel_->hline(height - 7, panel_->width() - 25, 24);
-  panel_->addch(height - 7, panel_->width() - 26, ACS_LTEE);
+  panel_->hline(height - 7, panel_->width() - 29, 28);
+  panel_->addch(height - 7, panel_->width() - 30, ACS_LTEE);
   panel_->addch(height - 7, panel_->width() -  1, ACS_RTEE);
 
-  panel_->hline(13, panel_->width() - 25, 24);
-  panel_->addch(13, panel_->width() - 26, ACS_LTEE);
-  panel_->addch(13, panel_->width() -  1, ACS_RTEE);
+  panel_->hline(15, panel_->width() - 29, 28);
+  panel_->addch(15, panel_->width() - 30, ACS_LTEE);
+  panel_->addch(15, panel_->width() -  1, ACS_RTEE);
 
-  panel_->hline(2, 1, panel_->width() - 26);
+  panel_->hline(2, 1, panel_->width() - 30);
   panel_->addch(2, 0, ACS_LTEE);
-  panel_->addch(2, panel_->width() - 26, ACS_RTEE);
+  panel_->addch(2, panel_->width() - 30, ACS_RTEE);
 
   int rb_log_lines   = height - 10;
 
@@ -999,26 +999,26 @@ LLSFRefBoxShell::run()
   //panel_->addch(rb_log_lines + 3, 0, ACS_LTEE);
   //panel_->addch(rb_log_lines + 3, panel_->width() - 26, ACS_RTEE);
 
-  panel_->hline(height - 7, 1, panel_->width() - 26);
+  panel_->hline(height - 7, 1, panel_->width() - 30);
   panel_->addch(height - 7, 0, ACS_LTEE);
-  panel_->addch(height - 7, panel_->width() - 26, ACS_PLUS);
+  panel_->addch(height - 7, panel_->width() - 30, ACS_PLUS);
 
   panel_->attron(A_BOLD);
   panel_->addstr(0, panel_->width() - 17, "Machines");
   panel_->addstr(0, (panel_->width() - 26) / 2 - 7, "Attention Message");
   panel_->addstr(2, (panel_->width() - 26) / 2 - 4, "RefBox Log");
-  panel_->addstr(13, panel_->width() - 16, "Robots");
+  panel_->addstr(15, panel_->width() - 16, "Robots");
   panel_->addstr(height-7, panel_->width() - 15, "Game");
   panel_->addstr(height-7, (panel_->width() - 26) / 2 - 2, "Orders");
   panel_->attroff(A_BOLD);
 
   panel_->attron(A_BOLD);
-  panel_->addstr(height-6, panel_->width() - 24, "State:");
-  panel_->addstr(height-5, panel_->width() - 24, "Phase:");
-  panel_->addstr(height-4, panel_->width() - 24, "Time:");
-  panel_->addstr(height-3, panel_->width() - 24, "Points:");
-  panel_->addstr(height-2, panel_->width() - 24, "Cyan:");
-  panel_->addstr(height-1, panel_->width() - 24, "Magenta:");
+  panel_->addstr(height-6, panel_->width() - 28, "State:");
+  panel_->addstr(height-5, panel_->width() - 28, "Phase:");
+  panel_->addstr(height-4, panel_->width() - 28, "Time:");
+  panel_->addstr(height-3, panel_->width() - 28, "Points:");
+  panel_->addstr(height-2, panel_->width() - 28, "Cyan:");
+  panel_->addstr(height-1, panel_->width() - 28, "Magenta:");
   panel_->attroff(A_BOLD);
 
   panel_->show();
@@ -1061,12 +1061,12 @@ LLSFRefBoxShell::run()
   navbar_->addstr(0, navbar_->cols() - 5, "STOP");
   navbar_->refresh();
 
-  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 28, 3, 1);
+  rb_log_ = new NCursesPanel(rb_log_lines,  panel_->width() - 34, 3, 1);
   rb_log_->scrollok(TRUE);
 
-  const int mx = panel_->width() - 25;
-  std::vector<std::string> mnames = {"C-BS", "C-DS", "C-RS1", "C-RS2", "C-CS1", "C-CS2",
-				     "M-BS", "M-DS", "M-RS1", "M-RS2", "M-CS1", "M-CS2"};
+  const int mx = panel_->width() - 29;
+  std::vector<std::string> mnames = {"C-BS", "C-DS", "C-SS", "C-RS1", "C-RS2", "C-CS1", "C-CS2",
+				     "M-BS", "M-DS", "M-SS", "M-RS1", "M-RS2", "M-CS1", "M-CS2"};
   for (size_t m = 0; m < mnames.size(); ++m) {
     std::string &mname = mnames[m];
     std::string type = mname.substr(2, 2);
@@ -1079,12 +1079,12 @@ LLSFRefBoxShell::run()
     m->second->refresh();
   }
 
-  const int robots_max_height = (panel_->height() - 22);
+  const int robots_max_height = (panel_->height() - 24);
   const int max_robots = std::max(MIN_NUM_ROBOTS, robots_max_height/2);
 
   robots_.resize(max_robots, NULL);
   for (size_t i = 0; i < robots_.size(); ++i) {
-    robots_[i] = new LLSFRefBoxShellRobot(14 + 2 * i, panel_->width() - 25);
+    robots_[i] = new LLSFRefBoxShellRobot(16 + 2 * i, panel_->width() - 29);
     robots_[i]->refresh();
   }
 
@@ -1097,13 +1097,13 @@ LLSFRefBoxShell::run()
 
   panel_->refresh();
 
-  p_attmsg_       = new NCursesPanel(1, panel_->width() - 27, 1, 1);
-  p_state_        = new NCursesPanel(1, 14, height-6,  panel_->width() - 15);
-  p_phase_        = new NCursesPanel(1, 14, height-5,  panel_->width() - 15);
-  p_time_         = new NCursesPanel(1, 14, height-4,  panel_->width() - 15);
-  p_points_       = new NCursesPanel(1, 14, height-3,  panel_->width() - 15);
-  p_team_cyan_    = new NCursesPanel(1, 14, height-2,  panel_->width() - 15);
-  p_team_magenta_ = new NCursesPanel(1, 14, height-1,  panel_->width() - 15);
+  p_attmsg_       = new NCursesPanel(1, panel_->width() - 31, 1, 1);
+  p_state_        = new NCursesPanel(1, 14, height-6,  panel_->width() - 19);
+  p_phase_        = new NCursesPanel(1, 14, height-5,  panel_->width() - 19);
+  p_time_         = new NCursesPanel(1, 14, height-4,  panel_->width() - 19);
+  p_points_       = new NCursesPanel(1, 14, height-3,  panel_->width() - 19);
+  p_team_cyan_    = new NCursesPanel(1, 14, height-2,  panel_->width() - 19);
+  p_team_magenta_ = new NCursesPanel(1, 14, height-1,  panel_->width() - 19);
 
   p_state_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   p_state_->addstr("DISCONNECTED");

@@ -3,6 +3,7 @@
 ;
 ;  Created: Thu Feb 14 17:26:27 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2017  Tobias Neumann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -382,6 +383,7 @@
 
     (bind ?mtype (fact-slot-value ?mf mtype))
     (bind ?zone (fact-slot-value ?mf zone))
+    (bind ?rotation (fact-slot-value ?mf rotation))
 
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
     (pb-set-field ?m "type" ?mtype)
@@ -395,8 +397,9 @@
     )
     (if (any-factp ((?gs gamestate)) (eq ?gs:phase PRODUCTION))
       then
-			 (pb-set-field ?m "state" (fact-slot-value ?mf state))
-       (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
+			  (pb-set-field ?m "state" (fact-slot-value ?mf state))
+        (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
+        (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
 
       else (pb-set-field ?m "state" "")
     )
@@ -406,6 +409,7 @@
       (if (neq ?zone TBD) then
         (pb-set-field ?m "zone" (fact-slot-value ?mf zone))
       )
+      (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
       (if (eq ?mtype RS) then
         (pb-set-field ?m "loaded_with"
           (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
@@ -437,6 +441,20 @@
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
 	    (pb-set-field ?pm "gate" (fact-slot-value ?mf ds-gate))
             (pb-set-field ?m "instruction_ds" ?pm)
+	  )
+	  (case SS then
+	    (bind ?pssm (pb-create "llsf_msgs.SSSlot"))
+	    (pb-set-field ?pssm "x" (nth$ 1 (fact-slot-value ?mf ss-slot)))
+	    (pb-set-field ?pssm "y" (nth$ 2 (fact-slot-value ?mf ss-slot)))
+	    (pb-set-field ?pssm "z" (nth$ 3 (fact-slot-value ?mf ss-slot)))
+
+	    (bind ?psm (pb-create "llsf_msgs.SSTask"))
+	    (pb-set-field ?psm "operation" (fact-slot-value ?mf ss-operation))
+	    (pb-set-field ?psm "shelf" ?pssm)
+
+	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
+	    (pb-set-field ?pm "task" ?psm)
+      (pb-set-field ?m "instruction_ss" ?pm)
 	  )
 	  (case RS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionRS"))
@@ -471,7 +489,7 @@
 			 	(and (eq ?report:rtype RECORD) (eq ?report:name (fact-slot-value ?mf name)))
 
 				(pb-set-field ?m "correctly_reported" (if (eq ?report:correctly-reported TRUE) then TRUE else FALSE))
-				(pb-set-field ?m "exploration_type_state" ?report:type-state)
+				(pb-set-field ?m "exploration_rotation_state" ?report:rotation-state)
 				(pb-set-field ?m "exploration_zone_state" ?report:zone-state)
       )
     )

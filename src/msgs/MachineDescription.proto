@@ -1,9 +1,10 @@
 
 /***************************************************************************
- *  colors.cpp - LLSF RefBox shell
+ *  MachineDescription.proto - LLSF Protocol - Machine Specification message
  *
- *  Created: Wed Mar 06 14:25:31 2013
+ *  Created: Mon Mar 20 22:13:50 2017
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *             2017  Tobias Neumann
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -34,42 +35,38 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "colors.h"
-#include <curses.h>
+syntax = "proto2";
 
-namespace llsfrb_shell {
-#if 0 /* just to make Emacs auto-indent happy */
-}
-#endif
+package llsf_msgs;
 
-void
-init_colors()
-{
-  short default_fore, default_back;
-  pair_content(0, &default_fore, &default_back);
-  //chtype default_back = getbkgd(stdscr);
+option java_package = "org.robocup_logistics.llsf_msgs";
+option java_outer_classname = "MachineDescriptionProtos";
 
-  //init_color(COLOR_ORANGE, 1000, 500, 0);
-
-  init_pair(COLOR_RED_ON_BACK, COLOR_RED, default_back);
-  init_pair(COLOR_YELLOW_ON_BACK, COLOR_YELLOW1, default_back);
-  init_pair(COLOR_BLACK_ON_BACK, default_fore, default_back);
-  init_pair(COLOR_WHITE_ON_BACK, COLOR_WHITE, default_back);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_GREEN_ON_BACK, COLOR_GREEN, default_back);
-  init_pair(COLOR_BLACK_ON_WHITE, COLOR_BLACK, COLOR_WHITE);
-  init_pair(COLOR_WHITE_ON_RED, COLOR_WHITE, COLOR_RED);
-  init_pair(COLOR_WHITE_ON_YELLOW, COLOR_WHITE, COLOR_YELLOW1);
-  init_pair(COLOR_WHITE_ON_GREEN, COLOR_WHITE, COLOR_GREEN);
-  init_pair(COLOR_CYAN_ON_BACK, COLOR_CYAN, default_back);
-  init_pair(COLOR_MAGENTA_ON_BACK, COLOR_MAGENTA, default_back);
-  init_pair(COLOR_WHITE_ON_CYAN, COLOR_WHITE, COLOR_CYAN);
-  init_pair(COLOR_WHITE_ON_MAGENTA, COLOR_WHITE, COLOR_MAGENTA);
-  init_pair(COLOR_WHITE_ON_BLUE, COLOR_WHITE, COLOR_BLUE);
-  init_pair(COLOR_WHITE_ON_ORANGE, COLOR_WHITE, COLOR_ORANGE);
-  init_pair(COLOR_WHITE_ON_BLACK, COLOR_WHITE, COLOR_BLACK);
-  init_pair(COLOR_BLACK_ON_YELLOW, COLOR_BLACK, COLOR_YELLOW1);
-
+enum LightColor {
+  RED = 0;
+  YELLOW = 1;
+  GREEN = 2;
 }
 
-} // end of namespace llsfrb_shell
+enum LightState {
+  OFF = 0;
+  ON = 1;
+  BLINK = 2;
+}
+
+enum SSOp {
+  STORE   = 1;
+  RETRIEVE = 2;
+}
+
+message SSSlot {
+  // Ordering is a right hand coordinate system, starting at the left bottom front corner
+  required uint32 x = 1; // [0-5] height; the shelfs
+  required uint32 y = 2; // [0-4] width;  the place on the shelf
+  required uint32 z = 3; // [0-1] depth;  the front or back row of the shelf
+}
+
+enum CSOp {
+  RETRIEVE_CAP = 1;
+  MOUNT_CAP    = 2;
+}
