@@ -59,15 +59,39 @@ OBJS_rcll_set_machine_lights = rcll-set-machine-lights.o
 LIBS_rcll_simulate_mps = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_simulate_mps = rcll-simulate-mps.o
 
+LIBS_rcll_mps_relay = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs modbus
+OBJS_rcll_mps_relay = rcll-mps-relay.o \
+													modbus/Machine.o modbus/timeUtils.o \
+													modbus/BaseStation.o \
+													modbus/StorageStation.o \
+													modbus/DeliveryStation.o \
+													modbus/RingStation.o \
+													modbus/CapStation.o
+
+LIBS_rcll_modbus_mockup = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs modbus
+OBJS_rcll_modbus_mockup = rcll-modbus-mockup.o \
+													modbus/Machine.o modbus/timeUtils.o \
+													modbus/BaseStation.o \
+													modbus/StorageStation.o \
+													modbus/DeliveryStation.o \
+													modbus/RingStation.o \
+													modbus/CapStation.o
+
 LIBS_rcll_refbox_instruct = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_refbox_instruct = rcll-refbox-instruct.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
+
+  CFLAGS  += $(CFLAGS_PROTOBUF) \
+       $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+  LDFLAGS += $(LDFLAGS_PROTOBUF) \
+       $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
   OBJS_all += $(OBJS_llsf_show_peers) $(OBJS_llsf_fake_robot) $(OBJS_llsf_report_machine) \
 	      $(OBJS_rcll_prepare_machine) $(OBJS_rcll_set_machine_state) \
 	      $(OBJS_rcll_machine_add_base) $(OBJS_rcll_set_machine_lights) \
 	      $(OBJS_rcll_simulate_mps) $(OBJS_rcll_refbox_instruct) \
-				$(OBJS_rcll_reset_machine)
+        $(OBJS_rcll_reset_machine)
   BINS_all += $(BINDIR)/llsf-show-peers $(BINDIR)/llsf-fake-robot \
 	      $(BINDIR)/llsf-report-machine $(BINDIR)/rcll-prepare-machine \
 	      $(BINDIR)/rcll-set-machine-state \
@@ -75,59 +99,8 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
 	      $(BINDIR)/rcll-simulate-mps \
 	      $(BINDIR)/rcll-machine-add-base \
 	      $(BINDIR)/rcll-refbox-instruct \
-				$(BINDIR)/rcll-reset-machine
+        $(BINDIR)/rcll-reset-machine
 
-  CFLAGS_llsf_show_peers  += $(CFLAGS_PROTOBUF) \
-	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_llsf_show_peers += $(LDFLAGS_PROTOBUF) \
-	     		     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_llsf_fake_robot  += $(CFLAGS_PROTOBUF) \
-	     		     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_llsf_fake_robot += $(LDFLAGS_PROTOBUF) \
-	     		     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_llsf_report_machine  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_llsf_report_machine += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_rcll_prepare_machine  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_prepare_machine += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_rcll_reset_machine  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_reset_machine += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_rcll_set_machine_state  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_set_machine_state += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_rcll_set_machine_lights  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_set_machine_lights += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_rcll_simulate_mps  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_simulate_mps += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_rcll_machine_add_base  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_machine_add_base += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  CFLAGS_rcll_refbox_instruct  += $(CFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_rcll_refbox_instruct += $(LDFLAGS_PROTOBUF) \
-	     		         $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
-
-  #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
 else
   ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
@@ -138,13 +111,17 @@ else
 endif
 
 ifeq ($(HAVE_LIBMODBUS),1)
-  OBJS_all +=	$(OBJS_llsf_puck) $(OBJS_llsf_signal_ctrl)
-  BINS_all +=	$(BINDIR)/llsf-puck $(BINDIR)/llsf-signal-ctrl
+  OBJS_all +=	$(OBJS_llsf_puck) \
+              $(OBJS_llsf_signal_ctrl) \
+              $(OBJS_rcll-mps_relay) \
+              $(OBJS_rcll_modbus_mockup)
+  BINS_all +=	$(BINDIR)/llsf-puck \
+              $(BINDIR)/llsf-signal-ctrl \
+              $(BINDIR)/rcll-mps-relay \
+              $(BINDIR)/rcll-modbus-mockup
 
-  CFLAGS  += $(CFLAGS_PROTOBUF) \
-	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) \
-	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+  CFLAGS  += $(CFLAGS_LIBMODBUS)
+  LDFLAGS += $(LDFLAGS_LIBMODBUS)
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
 else
   ifneq ($(HAVE_LIBMODBUS),1)
@@ -158,7 +135,7 @@ all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
 $(WARN_TARGETS_BOOST): warning_boost_%:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_comm library$(TNORMAL) (Boost library $* not found)"
 warning_libmodbus:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF Puck Tool$(TNORMAL) (libmodbus not found)"
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF Puck Tool and rcll-modbus-mockup$(TNORMAL) (libmodbus not found)"
 endif
 
 include $(BUILDSYSDIR)/base.mk
