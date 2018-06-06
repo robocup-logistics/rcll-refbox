@@ -69,7 +69,7 @@ MPSRefboxInterface::process() {
         }
       }
     }
-  } catch(fawkes::Exception e) {
+  } catch(fawkes::Exception &e) {
     e.print_trace();
   }
 }
