@@ -46,13 +46,9 @@ namespace mps_placing_clips {
 }
 #endif
 
-/** @class MPSPlacingGenerator <protobuf_clips/communicator.h>
- * CLIPS protobuf integration class.
- * This class adds functionality related to protobuf to a given CLIPS
- * environment. It supports the creation of communication channels
- * through protobuf_comm. An instance maintains its own message register
- * shared among server, peer, and clients.
- * @author Tim Niemueller
+/** @class MPSPlacingGenerator <mps_placing_clips/mps_placing_clips.h>
+ * MPS Placing integration.
+ * @author Tobias Neumann
  */
 
 /** Constructor.
