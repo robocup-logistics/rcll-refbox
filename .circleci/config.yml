@@ -1,0 +1,31 @@
+# vim:syntax=yaml
+version: 2
+jobs:
+  build:
+    docker:
+      - image: fedora:28
+    steps:
+      - run:
+          name: Install dependencies
+          command: |
+            dnf install -y --nodocs \
+              avahi-devel \
+              boost-devel \
+              clips-devel \
+              clipsmm-devel \
+              gcc-c++ \
+              gecode-devel \
+              git \
+              glibmm24-devel \
+              gtkmm30-devel \
+              libmodbus-devel \
+              mongodb-devel \
+              ncurses-devel \
+              openssh-clients \
+              openssl-devel \
+              protobuf-compiler \
+              protobuf-devel \
+              which \
+              yaml-cpp-devel
+      - checkout
+      - run: make all
