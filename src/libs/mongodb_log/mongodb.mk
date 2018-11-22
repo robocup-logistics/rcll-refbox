@@ -30,7 +30,7 @@ ifneq ($(wildcard /usr/include/mongo/client/dbclient.h /usr/local/include/mongo/
     LDFLAGS_MONGODB = -lm -lpthread \
 		      $(call boost-libs-ldflags,thread system filesystem) \
 		      $(LDFLAGS_LIBSSL)
-    ifneq ($(wildcard $(SYSROOT)/usr/lib/libmongoclient.so $(SYSROOT)/usr/lib64/libmongoclient.so $(SYSROOT)/usr/local/lib/libmongoclient.so $(SYSROOT)/usr/local/lib64/libmongoclient.so),)
+    ifneq ($(wildcard $(SYSROOT)/usr/lib/libmongoclient.so $(SYSROOT)/usr/lib64/libmongoclient.so $(SYSROOT)/usr/local/lib/libmongoclient.so $(SYSROOT)/usr/local/lib64/libmongoclient.so $(SYSROOT)/usr/lib/x86_64-linux-gnu/libmongoclient.so $(SYSROOT)/usr/local/lib/x86_64-linux-gnu/libmongoclient.so),)
       # we are linking against a shared library, add to link flags
       LDFLAGS_MONGODB += -lmongoclient
     endif
