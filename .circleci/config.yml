@@ -31,7 +31,7 @@ jobs:
       - run: make all
   build_ubuntu:
     docker:
-      - image: ubuntu:xenial
+      - image: ubuntu:bionic
     steps:
       - run:
           name: Install dependencies
