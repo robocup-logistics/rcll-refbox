@@ -200,9 +200,10 @@
 				(case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*))
 			)
 		)
-		(assert (points (phase PRODUCTION) (game-time ?game-time) (team ?team)
-										(points ?points)
-										(reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc " for order " ?id))))
+    (assert (points (phase PRODUCTION) (game-time ?game-time) (team ?team)
+                    (points ?points)
+                    (reason (str-cat "Mounted CC" ?cc " ring " ?r-index " of CC"
+                                     ?cc " for order " ?id))))
 	)
 	(bind ?pre-cap-points 0)
 	(switch ?complexity
