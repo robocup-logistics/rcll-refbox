@@ -71,9 +71,11 @@ endif
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
-.PHONY: warning_libmodbus warning_clips
+.PHONY: warning_libmodbus warning_protobuf warning_clips warning_mongodb $(WARN_TARGETS_BOOST)
 warning_libmodbus:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (libmodbus not found)"
+warning_protobuf:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (protobuf not found)"
 warning_clips:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (clipsmm not found)"
 warning_mongodb:
