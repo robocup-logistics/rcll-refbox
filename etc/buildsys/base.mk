@@ -31,7 +31,7 @@ endif
 
 ifeq ($(FAIL_ON_WARNING),1)
   ifneq ($(WARN_TARGETS),)
-all: $(WARN_TARGETS) fail_on_warning
+all: fail_on_warning
   endif
 endif
 
