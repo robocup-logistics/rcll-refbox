@@ -69,15 +69,27 @@ endif
 # Dependencies
 -include $(DEPDIR)/*.d
 
+ifeq ($(FAIL_ON_WARNING),1)
+  ifneq ($(WARN_TARGETS),)
+    WARN_FAIL_TARGET=fail_on_warning
+  endif
+endif
+
 # One to build 'em all
 .PHONY: all gui
 ifeq ($(MAKELEVEL),1)
   EXTRA_ALL = $(LIBS_gui) $(PLUGINS_gui) $(BINS_gui) $(TARGETS_gui) $(MANPAGES_gui)
 endif
-all: presubdirs $(LIBS_all:%.so=%.$(SOEXT)) $(PLUGINS_all:%.so=%.$(SOEXT)) $(BINS_all) $(MANPAGES_all) $(TARGETS_all) $(EXTRA_ALL) subdirs
-gui: presubdirs $(LIBS_gui:%.so=%.$(SOEXT)) $(PLUGINS_gui:%.so=%.$(SOEXT)) $(BINS_gui) $(MANPAGES_gui) $(TARGETS_gui) subdirs
+all: presubdirs $(WARN_FAIL_TARGET) $(LIBS_all:%.so=%.$(SOEXT)) $(PLUGINS_all:%.so=%.$(SOEXT)) $(BINS_all) $(MANPAGES_all) $(TARGETS_all) $(EXTRA_ALL) subdirs
+gui: presubdirs $(WARN_FAIL_TARGET) $(LIBS_gui:%.so=%.$(SOEXT)) $(PLUGINS_gui:%.so=%.$(SOEXT)) $(BINS_gui) $(MANPAGES_gui) $(TARGETS_gui) subdirs
 uncolored-all: all
 uncolored-gui: gui
+
+.PHONY: fail_on_warning
+fail_on_warning:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Warnings are considered to be errors!$(TNORMAL)" \
+	                 "Build with FAIL_ON_WARNING=0 to disable."
+	$(SILENT)exit 1
 
 ifdef OBJS_all
 ifneq ($(OBJS_all),)

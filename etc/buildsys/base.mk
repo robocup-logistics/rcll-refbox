@@ -28,14 +28,3 @@ ifneq ($(OBJDIR),$(notdir $(CURDIR)))
 else
   include $(BUILDSYSDIR)/rules.mk
 endif
-
-ifeq ($(FAIL_ON_WARNING),1)
-  ifneq ($(WARN_TARGETS),)
-all: fail_on_warning
-  endif
-endif
-
-.PHONY: fail_on_warning
-fail_on_warning:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)A warning occurred and all warnings are considered to be errors!$(TNORMAL) Build with FAIL_ON_WARNING=0 to disable."
-	$(SILENT)exit 1
