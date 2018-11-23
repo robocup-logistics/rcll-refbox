@@ -28,7 +28,7 @@ jobs:
               which \
               yaml-cpp-devel
       - checkout
-      - run: make all
+      - run: make all FAIL_ON_WARNING=1
   build_ubuntu:
     docker:
       - image: ubuntu:bionic
@@ -61,7 +61,7 @@ jobs:
               libyaml-cpp-dev \
               protobuf-compiler
       - checkout
-      - run: make all
+      - run: make all FAIL_ON_WARNING=1
 workflows:
   version: 2
   build:

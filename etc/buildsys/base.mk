@@ -28,4 +28,3 @@ ifneq ($(OBJDIR),$(notdir $(CURDIR)))
 else
   include $(BUILDSYSDIR)/rules.mk
 endif
-
