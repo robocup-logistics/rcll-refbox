@@ -41,19 +41,22 @@
 
 (defrule order-recv-SetOrderDelivered
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (protobuf-msg (type "llsf_msgs.SetOrderDelivered") (ptr ?p) (rcvd-via STREAM)
-		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
+  ?pf <- (protobuf-msg (type "llsf_msgs.SetOrderDelivered") (ptr ?p) (rcvd-via STREAM))
   =>
-  (bind ?id (pb-field-value ?p "order_id"))
-  (bind ?team (sym-cat (pb-field-value ?p "team_color")))
-  (if (not (any-factp ((?o order)) (= ?o:id ?id)))
+  (if (not (do-for-fact
+            ((?pd product-delivered))
+            (and (eq ?pd:order (pb-field-value ?p "order_id"))
+                 (eq ?pd:team (sym-cat (pb-field-value ?p "team_color"))))
+                 (eq ?pd:confirmed FALSE)
+            (printout t "Confirmed delivery of order " ?pd:order
+                        " by team " ?pd:team crlf)
+            (modify ?pd (confirmed TRUE))))
    then
-    (printout error "Received SetOrderDelivered for non-existing order " ?id crlf)
-   else
-    (do-for-fact ((?o order)) (= ?o:id ?id)
-      (assert (product-delivered (game-time ?gt) (order ?id) (team ?team)))
-    )
+    (printout error "Received invalid SetOrderDelivered"
+                    " (order " (pb-field-value ?p "order_id")
+                    ", team " (pb-field-value ?p "team_color") ")" crlf)
   )
+  (retract ?pf)
 )
 
 
