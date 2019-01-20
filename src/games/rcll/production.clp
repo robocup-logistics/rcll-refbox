@@ -102,8 +102,9 @@
 	       then
 	        (bind ?prepmsg (pb-field-value ?p "instruction_ds"))
 		(bind ?gate (pb-field-value ?prepmsg "gate"))
-		(printout t "Prepared " ?mname " (gate: " ?gate ")" crlf)
-	        (modify ?m (state PREPARED) (ds-gate ?gate)
+		(bind ?order (pb-field-value ?prepmsg "order_id"))
+		(printout t "Prepared " ?mname " (gate: " ?gate ", order: " ?order ")" crlf)
+	        (modify ?m (state PREPARED) (ds-gate ?gate) (ds-order ?order)
                            (mps-state AVAILABLE) (wait-for-product-since ?gt))
                            ;(wait-for-product-since ?gt))
                else

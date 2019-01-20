@@ -71,6 +71,7 @@
 
   (slot ds-gate (type INTEGER))
   (slot ds-last-gate (type INTEGER))
+  (slot ds-order (type INTEGER))
 
   (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
   (multislot ss-slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
