@@ -40,7 +40,6 @@
 )
 
 (defrule order-recv-SetOrderDelivered
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.SetOrderDelivered") (ptr ?p) (rcvd-via STREAM))
   =>
   (if (not (do-for-fact
