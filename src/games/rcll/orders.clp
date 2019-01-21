@@ -74,38 +74,51 @@
   (retract ?pf)
 	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
-	
+
   (modify ?of (quantity-delivered ?q-del-new))
   (if (< (nth$ ?q-del-idx ?q-del) ?q-req)
    then
     (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
-		    (points ?*PRODUCTION-POINTS-DELIVERY*) 
+		    (points ?*PRODUCTION-POINTS-DELIVERY*)
 		    (reason (str-cat "Delivered item for order " ?id))))
 
-    (foreach ?r ?ring-colors
-      (do-for-fact ((?rs ring-spec)) (eq ?rs:color ?r)
-        (assert (points (game-time ?game-time)
-			(points (* ?rs:req-bases ?*PRODUCTION-POINTS-ADDITIONAL-BASE*))
-			(team ?team) (phase PRODUCTION)
-			(reason (str-cat "Mounted ring of CC" ?rs:req-bases
-					 " for order " ?id))))
-      )
-    )
-    (bind ?complexity-num (length$ ?ring-colors))
-    (if (> ?complexity-num 0) then
-      (assert (points (game-time ?game-time) ;(points (* ?complexity-num ?*PRODUCTION-POINTS-PER-RING*))
-		      (team ?team) (phase PRODUCTION)
-		      (reason (str-cat "Mounted last ring for complexity "
-				       ?complexity " order " ?id))))
-    )
-    
+		(foreach ?r ?ring-colors
+			(bind ?points 0)
+			(bind ?cc 0)
+			(do-for-fact ((?rs ring-spec)) (eq ?rs:color ?r)
+				(bind ?cc ?rs:req-bases)
+				(switch ?rs:req-bases
+					(case 0 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC0-STEP*))
+					(case 1 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC1-STEP*))
+					(case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*))
+				)
+			)
+			(assert (points (phase PRODUCTION) (game-time ?game-time) (team ?team)
+			                (points ?points)
+			                (reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
+			                                 " for order " ?id))))
+	  )
+		(bind ?pre-cap-points 0)
+		(switch ?complexity
+			(case C1 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C1-PRECAP*))
+			(case C2 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C2-PRECAP*))
+			(case C3 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C3-PRECAP*))
+		)
+		(bind ?complexity-num (length$ ?ring-colors))
+		(if (> ?complexity-num 0) then
+			(assert (points (game-time ?game-time) (points ?pre-cap-points)
+			                (team ?team) (phase PRODUCTION)
+			                (reason (str-cat "Mounted last ring for complexity "
+			                                 ?complexity " order " ?id))))
+		)
+
     (assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
 		    (team ?team) (phase PRODUCTION)
 		    (reason (str-cat "Mounted cap for order " ?id))))
 
    else
     (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
-		    (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*) 
+		    (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
 		    (reason (str-cat "Delivered item for order " ?id))))
   )
 )
