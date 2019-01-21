@@ -197,6 +197,28 @@
   (pb-destroy ?attmsg)
 )
 
+(defrule send-delivery-msg
+  ?pd <- (product-delivered (id ?id) (team ?team) (order ?order)
+                            (game-time ?time) (confirmed FALSE)
+                            (delivery-gate ?gate))
+  =>
+  (bind ?msg (pb-create "llsf_msgs.UnconfirmedDelivery"))
+  (pb-set-field ?msg "id" ?id)
+  (pb-set-field ?msg "team_color" ?team)
+  (pb-set-field ?msg "order_id" ?order)
+  (pb-set-field ?msg "gate" ?gate)
+  (bind ?delivery-time (pb-field-value ?msg "delivery_time"))
+  (if (eq (type ?delivery-time) EXTERNAL-ADDRESS) then
+    (bind ?gt (time-from-sec ?time))
+    (pb-set-field ?delivery-time "sec" (nth$ 1 ?gt))
+    (pb-set-field ?delivery-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
+    (pb-set-field ?msg "delivery_time" ?delivery-time) ; destroys ?delivery-time!
+  )
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
+    (pb-send ?client:id ?msg))
+  (pb-destroy ?msg)
+)
+
 (defrule net-recv-SetGameState
   ?sf <- (gamestate (state ?state))
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p) (rcvd-via STREAM))
