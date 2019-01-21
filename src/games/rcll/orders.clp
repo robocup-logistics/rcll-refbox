@@ -61,24 +61,25 @@
 
 
 (defrule order-delivered-correct
-  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (product-delivered (game-time ?game-time) (team ?team) (delivery-gate ?gate)
-                            (order ?id&~0) (confirmed TRUE))
+	?gf <- (gamestate (state RUNNING) (phase PRODUCTION))
+	?pf <- (product-delivered (game-time ?delivery-time) (team ?team)
+	                          (order ?id&~0) (delivery-gate ?gate)
+	                          (confirmed TRUE))
   ; the actual order we are delivering
   ?of <- (order (id ?id) (active TRUE) (complexity ?complexity)
-								(delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
-								(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
-								(quantity-requested ?q-req) (quantity-delivered $?q-del)
-								(delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))&:(<= ?gt (nth$ 2 ?dp))))
+	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
+	        (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
+	        (quantity-requested ?q-req) (quantity-delivered $?q-del)
+	        (delivery-period $?dp &:(>= ?delivery-time (nth$ 1 ?dp))
+	                              &:(<= ?delivery-time (nth$ 2 ?dp))))
 	=>
   (retract ?pf)
 	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
 
   (modify ?of (quantity-delivered ?q-del-new))
-  (if (< (nth$ ?q-del-idx ?q-del) ?q-req)
-   then
-    (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+  (if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
+    (assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
 		    (points ?*PRODUCTION-POINTS-DELIVERY*)
 		    (reason (str-cat "Delivered item for order " ?id))))
 
@@ -93,7 +94,7 @@
 					(case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*))
 				)
 			)
-			(assert (points (phase PRODUCTION) (game-time ?game-time) (team ?team)
+			(assert (points (phase PRODUCTION) (game-time ?delivery-time) (team ?team)
 			                (points ?points)
 			                (reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
 			                                 " for order " ?id))))
@@ -106,18 +107,18 @@
 		)
 		(bind ?complexity-num (length$ ?ring-colors))
 		(if (> ?complexity-num 0) then
-			(assert (points (game-time ?game-time) (points ?pre-cap-points)
+			(assert (points (game-time ?delivery-time) (points ?pre-cap-points)
 			                (team ?team) (phase PRODUCTION)
 			                (reason (str-cat "Mounted last ring for complexity "
 			                                 ?complexity " order " ?id))))
 		)
 
-    (assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
+    (assert (points (game-time ?delivery-time) (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
 		    (team ?team) (phase PRODUCTION)
 		    (reason (str-cat "Mounted cap for order " ?id))))
 
    else
-    (assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
+    (assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
 		    (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
 		    (reason (str-cat "Delivered item for order " ?id))))
   )
