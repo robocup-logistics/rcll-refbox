@@ -225,39 +225,6 @@ class OrderDeliverMenu : public Menu
   std::vector<ItemPair> items_;
 };
 
-class OrderByColorDeliverMenu : public Menu
-{
- public:
-  OrderByColorDeliverMenu(NCursesWindow *parent, llsf_msgs::Team team,
-                          std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
-                          std::shared_ptr<llsf_msgs::GameState> gstate);
-
-  llsf_msgs::BaseColor               base_color();
-  std::vector<llsf_msgs::RingColor>  ring_colors();
-  llsf_msgs::CapColor                cap_color();
-  bool                               wants_specific();
-  operator bool() const;
-
- private:
-  typedef std::tuple<llsf_msgs::BaseColor, std::vector<llsf_msgs::RingColor>, llsf_msgs::CapColor, std::string> ItemTuple;
-
-  virtual void On_Menu_Init();
-  int det_lines(llsf_msgs::Team team, std::shared_ptr<llsf_msgs::OrderInfo> &oinfo);
-  std::string product_spec_to_string(const llsf_msgs::Order &o);
-  void product_selected(int i);
-  void set_wants_specific();
-
- private:
-  std::shared_ptr<llsf_msgs::OrderInfo> oinfo_;
-  llsf_msgs::Team team_;
-  bool wants_specific_;
-  bool product_selected_;
-  int  product_idx_;
-  std::string s_specific_;
-  std::string s_cancel_;
-  std::vector<ItemTuple> items_;
-};
-
 
 } // end of namespace llsfrb
 
