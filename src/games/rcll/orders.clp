@@ -70,8 +70,7 @@
 	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
 	        (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
 	        (quantity-requested ?q-req) (quantity-delivered $?q-del)
-	        (delivery-period $?dp &:(>= ?delivery-time (nth$ 1 ?dp))
-	                              &:(<= ?delivery-time (nth$ 2 ?dp))))
+	        (delivery-period $?dp &:(>= ?delivery-time (nth$ 1 ?dp))))
 	=>
   (retract ?pf)
 	(bind ?q-del-idx (order-q-del-index ?team))
@@ -79,10 +78,32 @@
 
   (modify ?of (quantity-delivered ?q-del-new))
   (if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
-    (assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-		    (points ?*PRODUCTION-POINTS-DELIVERY*)
-		    (reason (str-cat "Delivered item for order " ?id))))
 
+		; Delivery points
+		(if (<= ?delivery-time (nth$ 2 ?dp)) then
+			(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+			                (points ?*PRODUCTION-POINTS-DELIVERY*)
+			                (reason (str-cat "Delivered item for order " ?id))))
+		else
+			(if (< (- ?delivery-time (nth$ 2 ?dp))
+			       ?*PRODUCTION-DELIVER-MAX-LATENESS-TIME*)
+			 then
+				; 15 - floor(T_d - T_e) * 1.5 + 5
+				(bind ?points (+ (- 15 (* (floor (- ?delivery-time (nth$ 2 ?dp))) 1.5)) 5))
+				(assert (points (game-time ?delivery-time) (points (integer ?points))
+				                (team ?team) (phase PRODUCTION)
+				                (reason (str-cat "Delivered item for order " ?id
+				                                 " (late delivery grace time)"))))
+			else
+				(assert (points (game-time ?delivery-time)
+				                (points ?*PRODUCTION-POINTS-DELIVERY-TOO-LATE*)
+				                (team ?team) (phase PRODUCTION)
+				                (reason (str-cat "Delivered item for order " ?id
+				                                 " (too late delivery)"))))
+			)
+		)
+
+		; Production points for ring color complexities
 		(foreach ?r ?ring-colors
 			(bind ?points 0)
 			(bind ?cc 0)
@@ -99,6 +120,8 @@
 			                (reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
 			                                 " for order " ?id))))
 	  )
+
+		; Production points for mounting the last ring (pre-cap points)
 		(bind ?pre-cap-points 0)
 		(switch ?complexity
 			(case C1 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C1-PRECAP*))
@@ -113,6 +136,7 @@
 			                                 ?complexity " order " ?id))))
 		)
 
+		; Production points for mounting the cap
     (assert (points (game-time ?delivery-time) (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
 		    (team ?team) (phase PRODUCTION)
 		    (reason (str-cat "Mounted cap for order " ?id))))
@@ -134,79 +158,6 @@
                              (text (str-cat "Invalid order delivered by " ?team ": "
                                             "no active order with ID "
                                             ?order crlf))))
-)
-
-
-(defrule order-delivered-by-color-late
-  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (product-delivered (game-time ?game-time) (team ?team) (delivery-gate ?gate) (order 0)
-														(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color))
-  ; the actual order we are delivering
-  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity)
-								(delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
-								(base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
-								(quantity-requested ?q-req)
-								(quantity-delivered $?q-del&:(< (order-q-del-team ?q-del ?team) ?q-req))
-								(delivery-period $?dp&:(> ?gt (nth$ 2 ?dp))))
-
-	?sf <- (signal (type order-info))
-	=>
-  (retract ?pf)
-
-	; Cause immediate sending of order info
-	(modify ?sf (time (create$ 0 0)) (count 0))
-
-	(bind ?q-del-idx (order-q-del-index ?team))
-  (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
-  (modify ?of (quantity-delivered ?q-del-new))
-
-	(foreach ?r ?ring-colors
-		(bind ?points 0)
-		(bind ?cc 0)			 
-		(do-for-fact ((?rs ring-spec)) (eq ?rs:color ?r)
-			(bind ?cc ?rs:req-bases)			 
-			(switch ?rs:req-bases
-				(case 0 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC0-STEP*))
-				(case 1 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC1-STEP*))
-				(case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*))
-			)
-		)
-		(assert (points (phase PRODUCTION) (game-time ?game-time) (team ?team)
-										(points ?points)
-										(reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc " for order " ?id))))
-	)
-	(bind ?pre-cap-points 0)
-	(switch ?complexity
-		(case C1 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C1-PRECAP*))
-		(case C2 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C2-PRECAP*))
-		(case C3 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C3-PRECAP*))
-	)
-	(bind ?complexity-num (length$ ?ring-colors))
-	(if (> ?complexity-num 0) then
-    (assert (points (game-time ?game-time) (points ?pre-cap-points)
-										(team ?team) (phase PRODUCTION)
-										(reason (str-cat "Mounted last ring for complexity "
-													 ?complexity " order " ?id))))
-	)
-
-	(assert (points (game-time ?game-time) (team ?team) (phase PRODUCTION)
-									(points ?*PRODUCTION-POINTS-MOUNT-CAP*)
-									(reason (str-cat "Mounted cap for order " ?id))))
-
-  (if (< (- ?gt (nth$ 2 ?dp)) ?*PRODUCTION-DELIVER-MAX-LATENESS-TIME*)
-   then
-    ; 15 - floor(T_d - T_e) * 1.5 + 5
-	  (bind ?points (+ (- 15 (* (floor (- ?game-time (nth$ 2 ?dp))) 1.5)) 5))
-		(assert (points (game-time ?game-time) (points (integer ?points))
-										(team ?team) (phase PRODUCTION)
-										(reason (str-cat "Delivered item for order " ?id
-																		" (late delivery grace time)"))))
-   else
-	  (assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-DELIVERY-TOO-LATE*)
-										(team ?team) (phase PRODUCTION)
-										(reason (str-cat "Delivered item for order " ?id
-																		 " (too late delivery)")))) 
-  )
 )
 
 (defrule order-delivered-wrong-delivgate
