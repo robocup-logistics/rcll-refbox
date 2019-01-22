@@ -107,12 +107,12 @@ message UnconfirmedDelivery {
 }
 
 
-message SetOrderDelivered {
+message ConfirmDelivery {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 43;
+    MSG_TYPE = 46;
   }
 
-  required Team team_color = 1;
-  required uint32 order_id = 2;
+  required uint32 delivery_id = 1;
+  required bool   correct     = 2;
 }
