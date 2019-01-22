@@ -527,32 +527,6 @@ LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, const llsf_msgs:
 }
 
 void
-LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, llsf_msgs::BaseColor base_color,
-                                          std::vector<llsf_msgs::RingColor> ring_colors,
-                                          llsf_msgs::CapColor cap_color)
-{
-  llsf_msgs::SetOrderDeliveredByColor od;
-  od.set_team_color(team);
-  od.set_base_color(base_color);
-  for (const auto &c : ring_colors) od.add_ring_colors(c);
-  od.set_cap_color(cap_color);
-  std::string ring_colors_s;
-  for (size_t i = 0; i < ring_colors.size(); ++i) {
-	  if (i > 0)  ring_colors_s += "|";
-	  ring_colors_s += llsf_msgs::RingColor_Name(ring_colors[i]).c_str();
-  }
-  logf("Sending completed order for team %s (base: %s, rings: %s, cap: %s)",
-       llsf_msgs::Team_Name(team).c_str(),
-       llsf_msgs::BaseColor_Name(base_color).c_str(), ring_colors_s.c_str(),
-       llsf_msgs::CapColor_Name(cap_color).c_str());
-  try {
-    client->send(od);
-  } catch (std::runtime_error &e) {
-    logf("Sending SetOrderDelivered failed: %s", e.what());
-  }
-}
-
-void
 LLSFRefBoxShell::client_connected()
 {
   p_state_->erase();
