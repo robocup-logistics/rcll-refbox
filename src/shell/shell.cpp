@@ -821,6 +821,22 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
   }
 
+  std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery;
+  if ((delivery = std::dynamic_pointer_cast<llsf_msgs::UnconfirmedDelivery>(msg))) {
+    bool duplicate = false;
+    for (auto && existing_delivery : unconfirmed_deliveries_) {
+      if (existing_delivery->id() == delivery->id()) {
+        duplicate = true;
+        break;
+      }
+    }
+    if (!duplicate) {
+      unconfirmed_deliveries_.push_back(delivery);
+      logf("New unconfirmed delivery by %s for order %u",
+          llsf_msgs::Team_Name(delivery->team_color()).c_str(),
+          delivery->order_id());
+    }
+  }
 
   std::shared_ptr<llsf_log_msgs::LogMessage> lm;
   if ((lm = std::dynamic_pointer_cast<llsf_log_msgs::LogMessage>(msg))) {
@@ -1153,6 +1169,7 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_log_msgs::LogMessage>();
   message_register.add_message_type<llsf_msgs::VersionInfo>();
   message_register.add_message_type<llsf_msgs::GameInfo>();
+  message_register.add_message_type<llsf_msgs::UnconfirmedDelivery>();
 
   client->signal_connected().connect(
     boost::bind(&LLSFRefBoxShell::dispatch_client_connected, this));
