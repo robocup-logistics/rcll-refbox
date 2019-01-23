@@ -40,13 +40,12 @@
 )
 
 (defrule order-recv-SetOrderDelivered
-  ?pf <- (protobuf-msg (type "llsf_msgs.SetOrderDelivered") (ptr ?p) (rcvd-via STREAM))
+  ?pf <- (protobuf-msg (type "llsf_msgs.ConfirmDelivery") (ptr ?p) (rcvd-via STREAM))
   =>
   (if (not (do-for-fact
             ((?pd product-delivered))
-            (and (eq ?pd:order (pb-field-value ?p "order_id"))
-                 (eq ?pd:team (sym-cat (pb-field-value ?p "team_color"))))
-                 (eq ?pd:confirmed FALSE)
+            (and (eq ?pd:id (pb-field-value ?p "delivery_id"))
+                 (eq ?pd:confirmed FALSE))
             (printout t "Confirmed delivery of order " ?pd:order
                         " by team " ?pd:team crlf)
             (modify ?pd (confirmed TRUE))))
