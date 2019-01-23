@@ -223,7 +223,7 @@
 )
 
 (deftemplate product-delivered
-  (slot id (default-dynamic (gen-int-id)))
+  (slot id (type INTEGER) (default-dynamic (gen-int-id)))
   (slot game-time (type FLOAT))
 	(slot order (type INTEGER) (default 0))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
