@@ -146,13 +146,6 @@
   (return ?rv)
 )
 
-(deffunction gen-int-id ()
-  "Generate a unique uint that can be used as an ID."
-  (bind ?id-string (str-cat (gensym*)))
-  (return (string-to-field (sub-string 4 (length$ ?id-string) ?id-string)))
-)
-
-
 (deffunction ceil (?f)
   (bind ?rf (round ?f))
   (return (if (>= (- ?rf ?f) 0) then ?rf else (+ ?rf 1)))

@@ -216,6 +216,12 @@
   (multislot period (type INTEGER) (cardinality 2 2))
 )  
  
+(deffunction gen-int-id ()
+  "Generate a unique uint that can be used as an ID."
+  (bind ?id-string (str-cat (gensym*)))
+  (return (string-to-field (sub-string 4 (length$ ?id-string) ?id-string)))
+)
+
 (deftemplate product-delivered
   (slot id (default-dynamic (gen-int-id)))
   (slot game-time (type FLOAT))
