@@ -552,9 +552,9 @@ OrderDeliverMenu::OrderDeliverMenu
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
-  for (size_t i = 0; i < deliveries.size(); i++) {
-    std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery = deliveries[i];
-    int min = delivery->delivery_time().sec() / 60;
+  for (auto && delivery : deliveries) {
+		if (delivery->team_color() != team) { continue; }
+		int min = delivery->delivery_time().sec() / 60;
     int sec = delivery->delivery_time().sec() - min * 60;
     std::string s;
     for (int j = 0; j < oinfo->orders_size(); ++j) {
