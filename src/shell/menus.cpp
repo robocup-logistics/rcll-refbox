@@ -621,9 +621,11 @@ OrderDeliverMenu::On_Menu_Init()
   attroff(A_BOLD);
 
   for (size_t i = 0; i < items_.size(); ++i) {
-    // We must substract 1 because items_[i][1] contains the ID of the order,
-    // but oinfo_->orders is an array starting at 0
-    const llsf_msgs::Order &o = oinfo_->orders(std::get<1>(items_[i]) - 1);
+    const llsf_msgs::Order &o = *std::find_if(oinfo_->orders().begin(),
+                                              oinfo_->orders().end(),
+                                              [this, i](const llsf_msgs::Order &o) {
+                                               return o.id() == std::get<1>(items_[i]);
+                                              });
 
     if (team_ == llsf_msgs::CYAN) {
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
