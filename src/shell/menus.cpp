@@ -560,7 +560,7 @@ OrderDeliverMenu::OrderDeliverMenu
     for (int j = 0; j < oinfo->orders_size(); ++j) {
       const llsf_msgs::Order &o = oinfo->orders(j);
       if (o.id() == delivery->order_id()) {
-        s = boost::str(boost::format("%2u: %2s %2u:%2u")
+        s = boost::str(boost::format("%2u: %2s %02u:%02u")
             % o.id()
             % llsf_msgs::Order::Complexity_Name(o.complexity())
             % min % sec);
