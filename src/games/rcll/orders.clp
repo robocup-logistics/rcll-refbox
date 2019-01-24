@@ -46,9 +46,14 @@
             ((?pd product-delivered))
             (and (eq ?pd:id (pb-field-value ?p "delivery_id"))
                  (eq ?pd:confirmed FALSE))
-            (printout t "Confirmed delivery of order " ?pd:order
-                        " by team " ?pd:team crlf)
-            (modify ?pd (confirmed TRUE))))
+            (if (eq (pb-field-value ?p "correct") 1) then
+              (printout t "Correct delivery for order " ?pd:order
+                          " by team " ?pd:team crlf)
+              (modify ?pd (confirmed TRUE)))
+            else
+              (printout t "Delivery for order " ?pd:order " by team " ?pd:team
+                          " was incorrect!" crlf)
+              (retract ?pd)))
    then
     (printout error "Received invalid SetOrderDelivered"
                     " (order " (pb-field-value ?p "order_id")
