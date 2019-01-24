@@ -237,6 +237,11 @@ main(int argc, char **argv)
       printf("Invalid base color\n"); exit(-2);
     }
   } else if (machine_type_ == "DS") {
+    if (argp.num_items() != 4) {
+      printf("Wrong number of arguments. Expected 4, got %zu\n", argp.num_items());
+      usage(argv[0]);
+      exit(-1);
+    }
     ds_gate_  = argp.parse_item_int(2);
     ds_order_id_ = argp.parse_item_int(3);
   } else if (machine_type_ == "SS") {
