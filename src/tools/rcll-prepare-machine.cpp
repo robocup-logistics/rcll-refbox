@@ -202,7 +202,7 @@ usage(const char *progname)
 	 "\n"
 	 "instructions are specific for the machine type:\n"
 	 "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
-	 "DS:  <gate number> <order_id>\n"
+	 "DS:  <order_id> <gate number>\n"
 	 "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
 	 "RS:  (RING_BLUE|RING_GREEN|RING_ORANGE|RING_YELLOW)\n"
 	 "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n",
@@ -242,8 +242,8 @@ main(int argc, char **argv)
       usage(argv[0]);
       exit(-1);
     }
-    ds_gate_  = argp.parse_item_int(2);
-    ds_order_id_ = argp.parse_item_int(3);
+    ds_order_id_ = argp.parse_item_int(2);
+    ds_gate_  = argp.parse_item_int(3);
   } else if (machine_type_ == "SS") {
     if (argp.num_items() < 6) {
       printf("SS machine requires operation and x, y, z arguments %zu\n", argp.num_items());
