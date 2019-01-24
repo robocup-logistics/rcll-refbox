@@ -564,14 +564,11 @@ OrderDeliverMenu::OrderDeliverMenu
             % o.id()
             % llsf_msgs::Order::Complexity_Name(o.complexity())
             % min % sec);
+        items_[ni++] = std::make_tuple(delivery->id(), delivery->order_id(), s);
         break;
-      }
+			}
     }
-    if (s.empty()) {
-      s = boost::str(boost::format("%2u: ?? ??:??") % delivery->order_id());
-    }
-    items_[ni++] = std::make_tuple(delivery->id(), delivery->order_id(), s);
-  }
+	}
   std::sort(items_.begin(), items_.end());
 
   for (int i = 0; i < ni; ++i) {
