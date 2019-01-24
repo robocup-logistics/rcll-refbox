@@ -539,34 +539,44 @@ RobotMaintenanceMenu::det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
 
 OrderDeliverMenu::OrderDeliverMenu
   (NCursesWindow *parent, llsf_msgs::Team team,
+   std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries,
    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
    std::shared_ptr<llsf_msgs::GameState> gstate)
-  : Menu(det_lines(team, oinfo) + 1 + 2, 25 + 2,
-	 (parent->lines() - (det_lines(team, oinfo) + 1))/2,
+  : Menu(det_lines(team, deliveries) + 1 + 2, 25 + 2,
+	 (parent->lines() - (det_lines(team, deliveries) + 1))/2,
 	 (parent->cols() - 26)/2),
     oinfo_(oinfo), team_(team)
 {
-  order_selected_ = false;
-  int n_items = det_lines(team, oinfo);
+  delivery_selected_ = false;
+  int n_items = det_lines(team, deliveries);
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
-  for (int i = 0; i < oinfo->orders_size(); ++i) {
-    const llsf_msgs::Order &o = oinfo->orders(i);
-
-    bool active = (gstate->game_time().sec() >= o.delivery_period_begin() &&
-		   gstate->game_time().sec() <= o.delivery_period_end());
-
-    std::string s = boost::str(boost::format("%s %2u: %u x %2s")
-			       % (active ? "*" : " ") % o.id() % o.quantity_requested()
-			       % llsf_msgs::Order::Complexity_Name(o.complexity()));
-    items_[ni++] = std::make_pair(i, s);
+  for (size_t i = 0; i < deliveries.size(); i++) {
+    std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery = deliveries[i];
+    int min = delivery->delivery_time().sec() / 60;
+    int sec = delivery->delivery_time().sec() - min * 60;
+    std::string s;
+    for (int j = 0; j < oinfo->orders_size(); ++j) {
+      const llsf_msgs::Order &o = oinfo->orders(j);
+      if (o.id() == delivery->order_id()) {
+        s = boost::str(boost::format("%2u: %2s %2u:%2u")
+            % o.id()
+            % llsf_msgs::Order::Complexity_Name(o.complexity())
+            % min % sec);
+        break;
+      }
+    }
+    if (s.empty()) {
+      s = boost::str(boost::format("%2u: ?? ??:??") % delivery->order_id());
+    }
+    items_[ni++] = std::make_pair(delivery->order_id(), s);
   }
   std::sort(items_.begin(), items_.end());
 
   for (int i = 0; i < ni; ++i) {
     SignalItem *item = new SignalItem(items_[i].second);
-    item->signal().connect(boost::bind(&OrderDeliverMenu::order_selected,
+    item->signal().connect(boost::bind(&OrderDeliverMenu::delivery_selected,
 				       this, items_[i].first));
     mitems[i] = item;
   }
@@ -580,16 +590,16 @@ OrderDeliverMenu::OrderDeliverMenu
 }
 
 void
-OrderDeliverMenu::order_selected(int i)
+OrderDeliverMenu::delivery_selected(int i)
 {
-  order_selected_ = true;
-  order_idx_ = i;
+  delivery_selected_ = true;
+  delivery_idx_ = i;
 }
 
-const llsf_msgs::Order &
-OrderDeliverMenu::order()
+int
+OrderDeliverMenu::delivery() const
 {
-  return oinfo_->orders(order_idx_);
+  return delivery_idx_;
 }
 
 void
@@ -616,18 +626,6 @@ OrderDeliverMenu::On_Menu_Init()
     } else {
       attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
     }
-    printw(i+1, 14, "%u", o.quantity_delivered_cyan());
-
-    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-    addstr(i+1, 15, "/");
-
-    if (team_ == llsf_msgs::MAGENTA) {
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA)|A_BOLD);
-    } else {
-      attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
-    }
-    printw(i+1, 16, "%u", o.quantity_delivered_magenta());
-
 
     switch (o.base_color()) {
     case llsf_msgs::BASE_RED:
@@ -637,7 +635,7 @@ OrderDeliverMenu::On_Menu_Init()
     case llsf_msgs::BASE_BLACK:
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
     }
-    addstr(i+1, 18, " ");
+    addstr(i+1, 14, " ");
 
     for (int j = 0; j < o.ring_colors_size(); ++j) {
       switch (o.ring_colors(j)) {
@@ -650,12 +648,12 @@ OrderDeliverMenu::On_Menu_Init()
       case llsf_msgs::RING_YELLOW:
 	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
       }
-      addstr(i+1, 19+j, " ");
+      addstr(i+1, 15+j, " ");
     }
 
     for (int j = o.ring_colors_size(); j < 4; ++j) {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-      addstr(i+1, 19+j, " ");
+      addstr(i+1, 15+j, " ");
     }
 
     switch (o.cap_color()) {
@@ -664,10 +662,10 @@ OrderDeliverMenu::On_Menu_Init()
     case llsf_msgs::CAP_GREY:
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
     }
-    addstr(i+1, 22, " ");
+    addstr(i+1, 18, " ");
 
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-    printw(i+1, 24, "D%u", o.delivery_gate());
+    printw(i+1, 20, "D%u", o.delivery_gate());
   }
 
   refresh();
@@ -675,18 +673,20 @@ OrderDeliverMenu::On_Menu_Init()
 
 int
 OrderDeliverMenu::det_lines(llsf_msgs::Team team,
-			    std::shared_ptr<llsf_msgs::OrderInfo> &oinfo)
+			    std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> &deliveries)
 {
-  if (oinfo) {
-    return oinfo->orders_size();
-  } else {
-    return 0;
+  int lines = 0;
+  for (auto && delivery : deliveries) {
+    if (delivery->team_color() == team) {
+      lines++;
+    }
   }
+  return lines;
 }
 
 OrderDeliverMenu::operator bool() const
 {
-  return order_selected_;
+  return delivery_selected_;
 }
 
 

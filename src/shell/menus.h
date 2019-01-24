@@ -204,22 +204,25 @@ class OrderDeliverMenu : public Menu
 {
  public:
   OrderDeliverMenu(NCursesWindow *parent, llsf_msgs::Team team,
+		   std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries,
 		   std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
 		   std::shared_ptr<llsf_msgs::GameState> gstate);
 
-  const llsf_msgs::Order &  order();
+  int delivery() const;
   operator bool() const;
 
  private:
   virtual void On_Menu_Init();
-  int det_lines(llsf_msgs::Team team, std::shared_ptr<llsf_msgs::OrderInfo> &oinfo);
-  void order_selected(int i);
+  int det_lines(llsf_msgs::Team team,
+      std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> &deliveries);
+  void delivery_selected(int i);
 
  private:
   std::shared_ptr<llsf_msgs::OrderInfo> oinfo_;
   llsf_msgs::Team team_;
-  bool order_selected_;
-  int order_idx_;
+  bool delivery_selected_;
+  int delivery_idx_;
+  bool correct_;
   std::string s_cancel_;
   typedef std::pair<unsigned int, std::string> ItemPair;
   std::vector<ItemPair> items_;

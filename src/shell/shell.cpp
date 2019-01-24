@@ -327,10 +327,12 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	  tcsm();
 	  if (tcsm) {
 		  OrderDeliverMenu odm(panel_, tcsm.get_team_color(),
+		                            unconfirmed_deliveries_,
 		                            last_orderinfo_, last_game_state_);
 		  odm();
 		  if (odm) {
-			  send_set_order_delivered(tcsm.get_team_color(), odm.order());
+        // TODO: check if the order was correct
+        send_confirm_delivery(odm.delivery(), true);
 		  }
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
@@ -496,34 +498,21 @@ LLSFRefBoxShell::send_robot_maintenance(llsf_msgs::Team team,
 }
 
 void
-LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, const llsf_msgs::Order &order)
+LLSFRefBoxShell::send_confirm_delivery(unsigned int delivery_id, bool correct)
 {
-	unsigned int order_id = order.id();
-
-  llsf_msgs::SetOrderDelivered od;
-  od.set_team_color(team);
-  od.set_order_id(order_id);
-  logf("Sending completed order %u for team %s", order_id, llsf_msgs::Team_Name(team).c_str());
+  llsf_msgs::ConfirmDelivery od;
+  od.set_delivery_id(delivery_id);
+  od.set_correct(correct);
+  if (correct) {
+    logf("Confirming correct delivery %u", delivery_id);
+  } else {
+    logf("Confirming incorrect delivery %u", delivery_id);
+  }
   try {
     client->send(od);
   } catch (std::runtime_error &e) {
-    logf("Sending SetOrderDelivered failed: %s", e.what());
+    logf("Sending ConfirmDelivery failed: %s", e.what());
   }
-
-	/*
-	llsf_msgs::SetOrderDeliveredByColor od;
-  od.set_team_color(team);
-  od.set_base_color(order.base_color());
-  for (int i = 0; i < order.ring_colors_size(); ++i) {
-	  od.add_ring_colors(order.ring_colors(i));
-  }
-  od.set_cap_color(order.cap_color());
-  try {
-    client->send(od);
-  } catch (std::runtime_error &e) {
-    logf("Sending SetOrderDeliveredByColor failed: %s", e.what());
-  }
-	*/
 }
 
 void
