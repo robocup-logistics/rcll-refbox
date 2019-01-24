@@ -209,7 +209,7 @@ class OrderDeliverMenu : public Menu
 		   std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
 		   std::shared_ptr<llsf_msgs::GameState> gstate);
 
-  int delivery() const;
+  std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery() const;
   operator bool() const;
 
  private:
@@ -220,13 +220,40 @@ class OrderDeliverMenu : public Menu
 
  private:
   std::shared_ptr<llsf_msgs::OrderInfo> oinfo_;
+  std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries_;
   llsf_msgs::Team team_;
   bool delivery_selected_;
-  int delivery_idx_;
+  unsigned int delivery_idx_;
   bool correct_;
   std::string s_cancel_;
   typedef std::tuple<unsigned int, unsigned int, std::string> ItemTuple;
   std::vector<ItemTuple> items_;
+};
+
+class DeliveryCorrectMenu : public Menu
+{
+public:
+	DeliveryCorrectMenu(NCursesWindow *                                 parent,
+	                    llsf_msgs::Team                                 team,
+	                    std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery,
+	                    std::shared_ptr<llsf_msgs::OrderInfo>           oinfo);
+
+	bool correct() const;
+	operator bool() const;
+
+private:
+	virtual void On_Menu_Init();
+  void correct_selected(bool);
+
+private:
+	std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery_;
+	bool                                            correct_;
+	bool                                            correct_selected_;
+	std::shared_ptr<llsf_msgs::OrderInfo>           oinfo_;
+	llsf_msgs::Team                                 team_;
+	std::string                                     s_yes_;
+	std::string                                     s_no_;
+	std::string                                     s_cancel_;
 };
 
 

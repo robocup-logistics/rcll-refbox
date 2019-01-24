@@ -331,9 +331,15 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 		                            last_orderinfo_, last_game_state_);
 		  odm();
 		  if (odm) {
-        // TODO: check if the order was correct
-        send_confirm_delivery(odm.delivery(), true);
-		  }
+				DeliveryCorrectMenu dcm(panel_,
+							                  tcsm.get_team_color(),
+							                  odm.delivery(),
+							                  last_orderinfo_);
+        dcm();
+        if (dcm) {
+				  send_confirm_delivery(odm.delivery()->id(), dcm.correct());
+        }
+			}
 	  }
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}

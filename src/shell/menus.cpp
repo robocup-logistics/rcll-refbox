@@ -545,7 +545,7 @@ OrderDeliverMenu::OrderDeliverMenu
   : Menu(det_lines(team, deliveries) + 1 + 2, 25 + 2,
 	 (parent->lines() - (det_lines(team, deliveries) + 1))/2,
 	 (parent->cols() - 26)/2),
-    oinfo_(oinfo), team_(team)
+    oinfo_(oinfo), deliveries_(deliveries), team_(team)
 {
   delivery_selected_ = false;
   int n_items = det_lines(team, deliveries);
@@ -596,10 +596,15 @@ OrderDeliverMenu::delivery_selected(int i)
   delivery_idx_ = i;
 }
 
-int
+std::shared_ptr<llsf_msgs::UnconfirmedDelivery>
 OrderDeliverMenu::delivery() const
 {
-  return delivery_idx_;
+	auto delivery = std::find_if(deliveries_.begin(),
+	                             deliveries_.end(),
+	                             [this](std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery) {
+		                             return delivery->id() == delivery_idx_;
+	                             });
+	return *delivery;
 }
 
 void
@@ -691,5 +696,105 @@ OrderDeliverMenu::operator bool() const
   return delivery_selected_;
 }
 
+DeliveryCorrectMenu::DeliveryCorrectMenu(NCursesWindow *                                 parent,
+                                         llsf_msgs::Team                                 team,
+                                         std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery,
+                                         std::shared_ptr<llsf_msgs::OrderInfo>           oinfo)
+: Menu(5, 25 + 2, (parent->lines() - 2) / 2, (parent->cols() - 26) / 2),
+  delivery_(delivery),
+  correct_(false),
+  correct_selected_(false),
+  oinfo_(oinfo),
+  team_(team),
+  s_yes_("YES"),
+  s_no_("NO"),
+  s_cancel_("CANCEL")
+{
+	NCursesMenuItem **mitems = new NCursesMenuItem *[4];
+	SignalItem *yes_item = new SignalItem(s_yes_);
+	yes_item->signal().connect(boost::bind(&DeliveryCorrectMenu::correct_selected, this, true));
+  int idx = 0;
+	mitems[idx++] = yes_item;
+	SignalItem *no_item = new SignalItem(s_no_);
+	no_item->signal().connect(boost::bind(&DeliveryCorrectMenu::correct_selected, this, false));
+	mitems[idx++] = no_item;
+	SignalItem *cancel_item = new SignalItem(s_cancel_);
+	mitems[idx++] = cancel_item;
+	mitems[idx++] = new NCursesMenuItem();
+	set_mark("");
+	set_format(idx-1, 1);
+	InitMenu(mitems, true, true);
+}
+
+void
+DeliveryCorrectMenu::On_Menu_Init()
+{
+	bkgd(' ' | COLOR_PAIR(COLOR_DEFAULT));
+
+	if (team_ == llsf_msgs::CYAN) {
+		attron(' ' | COLOR_PAIR(COLOR_CYAN_ON_BACK));
+	} else {
+		attron(' ' | COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+	}
+	box();
+
+	attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_BACK) | A_BOLD);
+	addstr(0, (width() - 18) / 2, " Correct Delivery? ");
+	attroff(A_BOLD);
+
+
+	const llsf_msgs::Order &o =
+	  *std::find_if(oinfo_->orders().begin(),
+	                oinfo_->orders().end(),
+	                [this](const llsf_msgs::Order &o) { return o.id() == delivery_->order_id(); });
+  printw(1, 14, "C%u", o.complexity());
+	switch (o.base_color()) {
+	case llsf_msgs::BASE_RED: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED)); break;
+	case llsf_msgs::BASE_SILVER: attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+	case llsf_msgs::BASE_BLACK: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_BLACK)); break;
+	}
+	addstr(2, 14, " ");
+
+	for (int j = 0; j < o.ring_colors_size(); ++j) {
+		switch (o.ring_colors(j)) {
+		case llsf_msgs::RING_BLUE: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+		case llsf_msgs::RING_GREEN: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+		case llsf_msgs::RING_ORANGE: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+		case llsf_msgs::RING_YELLOW: attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
+		}
+		addstr(2, 15 + j, " ");
+	}
+
+	for (int j = o.ring_colors_size(); j < 4; ++j) {
+		attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+		addstr(2, 15 + j, " ");
+	}
+
+	switch (o.cap_color()) {
+	case llsf_msgs::CAP_BLACK: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_BLACK)); break;
+	case llsf_msgs::CAP_GREY: attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+	}
+	addstr(2, 18, " ");
+
+	attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_BACK));
+	printw(3, 14, "D%u", o.delivery_gate());
+	refresh();
+}
+
+void
+DeliveryCorrectMenu::correct_selected(bool correct) {
+	correct_selected_ = true;
+	correct_ = correct;
+}
+
+bool
+DeliveryCorrectMenu::correct() const {
+	return correct_;
+}
+
+DeliveryCorrectMenu::operator bool() const
+{
+	return correct_selected_;
+}
 
 } // end of namespace llsfrb
