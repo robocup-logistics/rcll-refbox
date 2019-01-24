@@ -500,19 +500,25 @@ LLSFRefBoxShell::send_robot_maintenance(llsf_msgs::Team team,
 void
 LLSFRefBoxShell::send_confirm_delivery(unsigned int delivery_id, bool correct)
 {
-  llsf_msgs::ConfirmDelivery od;
-  od.set_delivery_id(delivery_id);
-  od.set_correct(correct);
-  if (correct) {
-    logf("Confirming correct delivery %u", delivery_id);
-  } else {
-    logf("Confirming incorrect delivery %u", delivery_id);
-  }
-  try {
-    client->send(od);
-  } catch (std::runtime_error &e) {
-    logf("Sending ConfirmDelivery failed: %s", e.what());
-  }
+	unconfirmed_deliveries_.erase(
+	  std::find_if(std::begin(unconfirmed_deliveries_),
+	               std::end(unconfirmed_deliveries_),
+	               [delivery_id](const std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery) {
+		               return delivery->id() == delivery_id;
+	               }));
+	llsf_msgs::ConfirmDelivery od;
+	od.set_delivery_id(delivery_id);
+	od.set_correct(correct);
+	if (correct) {
+		logf("Confirming correct delivery %u", delivery_id);
+	} else {
+		logf("Confirming incorrect delivery %u", delivery_id);
+	}
+	try {
+		client->send(od);
+	} catch (std::runtime_error &e) {
+		logf("Sending ConfirmDelivery failed: %s", e.what());
+	}
 }
 
 void
