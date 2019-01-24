@@ -42,6 +42,7 @@
 #include <cstddef>
 #include <cursesm.h>
 #include <string>
+#include <tuple>
 #include <boost/signals2.hpp>
 #include <boost/asio.hpp>
 #include <msgs/MachineInfo.pb.h>
@@ -224,8 +225,8 @@ class OrderDeliverMenu : public Menu
   int delivery_idx_;
   bool correct_;
   std::string s_cancel_;
-  typedef std::pair<unsigned int, std::string> ItemPair;
-  std::vector<ItemPair> items_;
+  typedef std::tuple<unsigned int, unsigned int, std::string> ItemTuple;
+  std::vector<ItemTuple> items_;
 };
 
 

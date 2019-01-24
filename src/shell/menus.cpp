@@ -570,14 +570,14 @@ OrderDeliverMenu::OrderDeliverMenu
     if (s.empty()) {
       s = boost::str(boost::format("%2u: ?? ??:??") % delivery->order_id());
     }
-    items_[ni++] = std::make_pair(delivery->order_id(), s);
+    items_[ni++] = std::make_tuple(delivery->id(), delivery->order_id(), s);
   }
   std::sort(items_.begin(), items_.end());
 
   for (int i = 0; i < ni; ++i) {
-    SignalItem *item = new SignalItem(items_[i].second);
+    SignalItem *item = new SignalItem(std::get<2>(items_[i]));
     item->signal().connect(boost::bind(&OrderDeliverMenu::delivery_selected,
-				       this, items_[i].first));
+				       this, std::get<0>(items_[i])));
     mitems[i] = item;
   }
   s_cancel_ = "** CANCEL **";
@@ -619,7 +619,9 @@ OrderDeliverMenu::On_Menu_Init()
   attroff(A_BOLD);
 
   for (size_t i = 0; i < items_.size(); ++i) {
-    const llsf_msgs::Order &o = oinfo_->orders(items_[i].first);
+    // We must substract 1 because items_[i][1] contains the ID of the order,
+    // but oinfo_->orders is an array starting at 0
+    const llsf_msgs::Order &o = oinfo_->orders(std::get<1>(items_[i]) - 1);
 
     if (team_ == llsf_msgs::CYAN) {
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
