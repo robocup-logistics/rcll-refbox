@@ -93,6 +93,16 @@ message OrderInfo {
   repeated Order orders = 1;
 }
 
+message SetOrderDelivered {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 43;
+  }
+
+  required Team   team_color = 1;
+  required uint32 order_id   = 2;
+}
+
 message UnconfirmedDelivery {
   enum CompType {
     COMP_ID  = 2000;
