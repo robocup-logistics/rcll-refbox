@@ -325,6 +325,12 @@
   (game-print-points-team MAGENTA)
 )
 
+(deffunction game-summary ()
+  (game-print-points)
+  (assert (attention-message (text "Game Over") (time 60)))
+  (printout t "===  Game Over  ===" crlf)
+)
+
 (defrule game-over
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
 		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta))
@@ -357,7 +363,18 @@
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (desired-lights RED-BLINK))
   )
-  (game-print-points)
-  (assert (attention-message (text "Game Over") (time 60)))
-  (printout t "===  Game Over  ===" crlf)
+  (if (any-factp ((?pd product-delivered)) TRUE) then
+    (assert (attention-message (text "Game ended, please confirm deliveries!")))
+    (assert (postgame-for-unconfirmed-deliveries))
+  else
+    (game-summary)
+  )
+)
+
+(defrule game-postgame-no-unconfirmed-deliveries
+  ?w <- (postgame-for-unconfirmed-deliveries)
+  (not (product-delivered))
+  =>
+  (retract ?w)
+  (game-summary)
 )
