@@ -181,11 +181,11 @@
 )
 
 (defrule order-delivered-wrong-too-soon
-  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (product-delivered (game-time ?game-time) (team ?team) (order ?id)
                             (confirmed TRUE))
   ; the actual order we are delivering
-  (order (id ?id) (active TRUE) (delivery-period $?dp&:(< ?gt (nth$ 1 ?dp))))
+  (order (id ?id) (active TRUE) (delivery-period $?dp&:(< ?game-time (nth$ 1 ?dp))))
 	=>
   (retract ?pf)
 	(printout warn "Delivered item for order " ?id " (too soon, before time window)" crlf)
