@@ -40,6 +40,16 @@
 )
 
 (defrule order-recv-SetOrderDelivered
+  (gamestate (phase PRODUCTION) (game-time ?gt))
+  ?pf <- (protobuf-msg (type "llsf_msgs.SetOrderDelivered") (ptr ?p) (rcvd-via STREAM))
+  =>
+  (bind ?team (pb-field-value ?p "team_color"))
+  (bind ?order (pb-field-value ?p "order_id"))
+  (assert (product-delivered (game-time ?gt) (team ?team) (order ?order) (confirmed TRUE)))
+  (printout t "Delivery by team " ?team " for order " ?order " reported!" crlf)
+)
+
+(defrule order-recv-ConfirmDelivery
   (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (protobuf-msg (type "llsf_msgs.ConfirmDelivery") (ptr ?p) (rcvd-via STREAM))
   =>
