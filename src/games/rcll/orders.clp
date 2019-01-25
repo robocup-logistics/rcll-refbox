@@ -50,11 +50,11 @@
             (if (eq (pb-field-value ?p "correct") 1) then
               (printout t "Correct delivery for order " ?pd:order
                           " by team " ?pd:team crlf)
-              (modify ?pd (confirmed TRUE)))
+              (modify ?pd (confirmed TRUE))
             else
-              (printout t "Delivery for order " ?pd:order " by team " ?pd:team
-                          " was incorrect!" crlf)
-              (retract ?pd)))
+              (printout t "Incorrect delivery for order " ?pd:order
+                          " by team " ?pd:team crlf)
+              (retract ?pd))))
    then
     (printout error "Received invalid SetOrderDelivered"
                     " (order " (pb-field-value ?p "order_id")
