@@ -119,6 +119,7 @@ class LLSFRefBoxShell
   void send_robot_maintenance(llsf_msgs::Team team,
 			      unsigned int robot_number, bool maintenance);
   void send_confirm_delivery(unsigned int delivery_id, bool correct);
+  void send_delivery_by_order_id(unsigned int order_id, llsf_msgs::Team team);
 
   void log(llsf_log_msgs::LogMessage::LogLevel log_level,
 	   long int ts_sec, long int ts_nsec,

@@ -325,22 +325,25 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	} else {
 	  TeamColorSelectMenu tcsm(panel_);
 	  tcsm();
-	  if (tcsm) {
-		  OrderDeliverMenu odm(panel_, tcsm.get_team_color(),
-		                            unconfirmed_deliveries_,
-		                            last_orderinfo_, last_game_state_);
-		  odm();
-		  if (odm) {
-				DeliveryCorrectMenu dcm(panel_,
-							                  tcsm.get_team_color(),
-							                  odm.delivery(),
-							                  last_orderinfo_);
-        dcm();
-        if (dcm) {
-				  send_confirm_delivery(odm.delivery()->id(), dcm.correct());
-        }
+		if (tcsm) {
+			OrderDeliverMenu odm(
+				panel_, tcsm.get_team_color(), unconfirmed_deliveries_, last_orderinfo_, last_game_state_);
+			odm();
+			if (odm) {
+				if (odm.show_all()) {
+					SelectOrderByIDMenu oidm(panel_,
+								                   tcsm.get_team_color(),
+								                   last_orderinfo_,
+								                   last_game_state_);
+					oidm();
+					if (oidm) { send_delivery_by_order_id(oidm.order().id(), tcsm.get_team_color()); }
+				} else {
+					DeliveryCorrectMenu dcm(panel_, tcsm.get_team_color(), odm.delivery(), last_orderinfo_);
+					dcm();
+					if (dcm) { send_confirm_delivery(odm.delivery()->id(), dcm.correct()); }
+				}
 			}
-	  }
+		}
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}
 	break;
@@ -525,6 +528,19 @@ LLSFRefBoxShell::send_confirm_delivery(unsigned int delivery_id, bool correct)
 	} catch (std::runtime_error &e) {
 		logf("Sending ConfirmDelivery failed: %s", e.what());
 	}
+}
+
+void
+LLSFRefBoxShell::send_delivery_by_order_id(unsigned int order_id, llsf_msgs::Team team)
+{
+  llsf_msgs::SetOrderDelivered od;
+  od.set_order_id(order_id);
+  od.set_team_color(team);
+  try {
+    client->send(od);
+  } catch(std::runtime_error &e) {
+    logf("Sending SetOrderDelivered failed: %s", e.what());
+  }
 }
 
 void
