@@ -621,11 +621,16 @@ OrderDeliverMenu::On_Menu_Init()
   attroff(A_BOLD);
 
   for (size_t i = 0; i < items_.size(); ++i) {
-    const llsf_msgs::Order &o = *std::find_if(oinfo_->orders().begin(),
-                                              oinfo_->orders().end(),
-                                              [this, i](const llsf_msgs::Order &o) {
-                                               return o.id() == std::get<1>(items_[i]);
-                                              });
+    auto order_p = std::find_if(oinfo_->orders().begin(),
+                                oinfo_->orders().end(),
+                                [this, i](const llsf_msgs::Order &o) {
+                                  return o.id() == std::get<1>(items_[i]);
+                                });
+    if (order_p == oinfo_->orders().end()) {
+      addstr(i + 1, 14, "UNKNOWN");
+      continue;
+    }
+    const llsf_msgs::Order &o = *order_p;
 
     if (team_ == llsf_msgs::CYAN) {
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
