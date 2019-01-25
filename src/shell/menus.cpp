@@ -542,7 +542,7 @@ OrderDeliverMenu::OrderDeliverMenu
    std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries,
    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
    std::shared_ptr<llsf_msgs::GameState> gstate)
-  : Menu(det_lines(team, deliveries) + 1 + 2, 25 + 2,
+  : Menu(det_lines(team, deliveries) + 1 + 2 + 1, 25 + 2,
 	 (parent->lines() - (det_lines(team, deliveries) + 1))/2,
 	 (parent->cols() - 26)/2),
     oinfo_(oinfo), deliveries_(deliveries), team_(team)
@@ -551,7 +551,7 @@ OrderDeliverMenu::OrderDeliverMenu
   int n_items = det_lines(team, deliveries);
   items_.resize(n_items);
   int ni = 0;
-  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  NCursesMenuItem **mitems = new NCursesMenuItem*[3 + n_items];
   for (auto && delivery : deliveries) {
 		if (delivery->team_color() != team) { continue; }
 		int min = delivery->delivery_time().sec() / 60;
@@ -577,13 +577,25 @@ OrderDeliverMenu::OrderDeliverMenu
 				       this, std::get<0>(items_[i])));
     mitems[i] = item;
   }
+
+  s_show_all_ = "** SHOW ALL **";
+  SignalItem *show_all_item = new SignalItem(s_show_all_);
+  show_all_item->signal().connect(boost::bind(&OrderDeliverMenu::show_all_selected, this));
+  mitems[ni] = show_all_item;
+
   s_cancel_ = "** CANCEL **";
-  mitems[ni] = new SignalItem(s_cancel_);
-  mitems[ni+1] = new NCursesMenuItem();
+  mitems[ni + 1] = new SignalItem(s_cancel_);
+  mitems[ni + 2] = new NCursesMenuItem();
 
   set_mark("");
-  set_format(ni+1, 1);
+  set_format(ni+2, 1);
   InitMenu(mitems, true, true);
+}
+
+void
+OrderDeliverMenu::show_all_selected()
+{
+  show_all_selected_ = true;
 }
 
 void
@@ -602,6 +614,12 @@ OrderDeliverMenu::delivery() const
 		                             return delivery->id() == delivery_idx_;
 	                             });
 	return *delivery;
+}
+
+bool
+OrderDeliverMenu::show_all() const
+{
+  return show_all_selected_;
 }
 
 void
@@ -697,7 +715,7 @@ OrderDeliverMenu::det_lines(llsf_msgs::Team team,
 
 OrderDeliverMenu::operator bool() const
 {
-  return delivery_selected_;
+  return show_all_selected_ || delivery_selected_;
 }
 
 DeliveryCorrectMenu::DeliveryCorrectMenu(NCursesWindow *                                 parent,

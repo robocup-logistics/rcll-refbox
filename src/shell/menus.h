@@ -210,21 +210,25 @@ class OrderDeliverMenu : public Menu
 		   std::shared_ptr<llsf_msgs::GameState> gstate);
 
   std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery() const;
+  bool show_all() const;
   operator bool() const;
 
  private:
   virtual void On_Menu_Init();
   int det_lines(llsf_msgs::Team team,
       std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> &deliveries);
+  void show_all_selected();
   void delivery_selected(int i);
 
  private:
   std::shared_ptr<llsf_msgs::OrderInfo> oinfo_;
   std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries_;
   llsf_msgs::Team team_;
+  bool show_all_selected_;
   bool delivery_selected_;
   unsigned int delivery_idx_;
   bool correct_;
+  std::string s_show_all_;
   std::string s_cancel_;
   typedef std::tuple<unsigned int, unsigned int, std::string> ItemTuple;
   std::vector<ItemTuple> items_;
