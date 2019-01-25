@@ -718,6 +718,159 @@ OrderDeliverMenu::operator bool() const
   return show_all_selected_ || delivery_selected_;
 }
 
+SelectOrderByIDMenu::SelectOrderByIDMenu
+  (NCursesWindow *parent, llsf_msgs::Team team,
+   std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
+   std::shared_ptr<llsf_msgs::GameState> gstate)
+  : Menu(det_lines(team, oinfo) + 1 + 2, 25 + 2,
+	 (parent->lines() - (det_lines(team, oinfo) + 1))/2,
+	 (parent->cols() - 26)/2),
+    oinfo_(oinfo), team_(team)
+{
+  order_selected_ = false;
+  int n_items = det_lines(team, oinfo);
+  items_.resize(n_items);
+  int ni = 0;
+  NCursesMenuItem **mitems = new NCursesMenuItem*[2 + n_items];
+  for (int i = 0; i < oinfo->orders_size(); ++i) {
+    const llsf_msgs::Order &o = oinfo->orders(i);
+
+    bool active = (gstate->game_time().sec() >= o.delivery_period_begin() &&
+		   gstate->game_time().sec() <= o.delivery_period_end());
+
+    std::string s = boost::str(boost::format("%s %2u: %u x %2s")
+			       % (active ? "*" : " ") % o.id() % o.quantity_requested()
+			       % llsf_msgs::Order::Complexity_Name(o.complexity()));
+    items_[ni++] = std::make_pair(i, s);
+  }
+  std::sort(items_.begin(), items_.end());
+
+  for (int i = 0; i < ni; ++i) {
+    SignalItem *item = new SignalItem(items_[i].second);
+    item->signal().connect(boost::bind(&SelectOrderByIDMenu::order_selected,
+				       this, items_[i].first));
+    mitems[i] = item;
+  }
+  s_cancel_ = "** CANCEL **";
+  mitems[ni] = new SignalItem(s_cancel_);
+  mitems[ni+1] = new NCursesMenuItem();
+
+  set_mark("");
+  set_format(ni+1, 1);
+  InitMenu(mitems, true, true);
+}
+
+void
+SelectOrderByIDMenu::order_selected(int i)
+{
+  order_selected_ = true;
+  order_idx_ = i;
+}
+
+const llsf_msgs::Order &
+SelectOrderByIDMenu::order()
+{
+  return oinfo_->orders(order_idx_);
+}
+
+void
+SelectOrderByIDMenu::On_Menu_Init()
+{
+  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+
+  if (team_ == llsf_msgs::CYAN) {
+    attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+  } else {
+    attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+  }
+  box();
+
+  attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK)|A_BOLD);
+  addstr(0, (width() - 8) / 2, " Orders ");
+  attroff(A_BOLD);
+
+  for (size_t i = 0; i < items_.size(); ++i) {
+    const llsf_msgs::Order &o = oinfo_->orders(items_[i].first);
+
+    if (team_ == llsf_msgs::CYAN) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_CYAN)|A_BOLD);
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
+    }
+    printw(i+1, 14, "%u", o.quantity_delivered_cyan());
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    addstr(i+1, 15, "/");
+
+    if (team_ == llsf_msgs::MAGENTA) {
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA)|A_BOLD);
+    } else {
+      attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
+    }
+    printw(i+1, 16, "%u", o.quantity_delivered_magenta());
+
+
+    switch (o.base_color()) {
+    case llsf_msgs::BASE_RED:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));   break;
+    case llsf_msgs::BASE_SILVER:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    case llsf_msgs::BASE_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    }
+    addstr(i+1, 18, " ");
+
+    for (int j = 0; j < o.ring_colors_size(); ++j) {
+      switch (o.ring_colors(j)) {
+      case llsf_msgs::RING_BLUE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLUE)); break;
+      case llsf_msgs::RING_GREEN:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_GREEN)); break;
+      case llsf_msgs::RING_ORANGE:
+	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_ORANGE)); break;
+      case llsf_msgs::RING_YELLOW:
+	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
+      }
+      addstr(i+1, 19+j, " ");
+    }
+
+    for (int j = o.ring_colors_size(); j < 4; ++j) {
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
+      addstr(i+1, 19+j, " ");
+    }
+
+    switch (o.cap_color()) {
+    case llsf_msgs::CAP_BLACK:
+      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
+    case llsf_msgs::CAP_GREY:
+      attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
+    }
+    addstr(i+1, 22, " ");
+
+    attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
+    printw(i+1, 24, "D%u", o.delivery_gate());
+  }
+
+  refresh();
+}
+
+int
+SelectOrderByIDMenu::det_lines(llsf_msgs::Team team,
+			    std::shared_ptr<llsf_msgs::OrderInfo> &oinfo)
+{
+  if (oinfo) {
+    return oinfo->orders_size();
+  } else {
+    return 0;
+  }
+}
+
+SelectOrderByIDMenu::operator bool() const
+{
+  return order_selected_;
+}
+
+
 DeliveryCorrectMenu::DeliveryCorrectMenu(NCursesWindow *                                 parent,
                                          llsf_msgs::Team                                 team,
                                          std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery,

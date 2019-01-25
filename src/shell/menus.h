@@ -234,6 +234,31 @@ class OrderDeliverMenu : public Menu
   std::vector<ItemTuple> items_;
 };
 
+class SelectOrderByIDMenu : public Menu
+{
+public:
+  SelectOrderByIDMenu(NCursesWindow *                       parent,
+                      llsf_msgs::Team                       team,
+                      std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
+                      std::shared_ptr<llsf_msgs::GameState> gstate);
+  const llsf_msgs::Order &order();
+  operator bool() const;
+
+private:
+  virtual void On_Menu_Init();
+  int          det_lines(llsf_msgs::Team team, std::shared_ptr<llsf_msgs::OrderInfo> & oinfo);
+  void         order_selected(int i);
+
+private:
+  std::shared_ptr<llsf_msgs::OrderInfo>        oinfo_;
+  llsf_msgs::Team                              team_;
+  bool                                         order_selected_;
+  int                                          order_idx_;
+  std::string                                  s_cancel_;
+  typedef std::pair<unsigned int, std::string> ItemPair;
+  std::vector<ItemPair>                        items_;
+};
+
 class DeliveryCorrectMenu : public Menu
 {
 public:
