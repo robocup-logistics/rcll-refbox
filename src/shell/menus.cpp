@@ -746,11 +746,17 @@ DeliveryCorrectMenu::On_Menu_Init()
 	addstr(0, (width() - 18) / 2, " Correct Delivery? ");
 	attroff(A_BOLD);
 
+	auto order_p =
+	  std::find_if(oinfo_->orders().begin(),
+	               oinfo_->orders().end(),
+	               [this](const llsf_msgs::Order &o) { return o.id() == delivery_->order_id(); });
+	if (order_p == oinfo_->orders().end()) {
+		printw(1, 14, "UNKNOWN");
+		refresh();
+		return;
+	}
 
-	const llsf_msgs::Order &o =
-	  *std::find_if(oinfo_->orders().begin(),
-	                oinfo_->orders().end(),
-	                [this](const llsf_msgs::Order &o) { return o.id() == delivery_->order_id(); });
+	const llsf_msgs::Order &o = *order_p;
   printw(1, 14, "C%u", o.complexity());
 	switch (o.base_color()) {
 	case llsf_msgs::BASE_RED: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED)); break;
