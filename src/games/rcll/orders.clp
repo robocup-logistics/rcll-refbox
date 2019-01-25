@@ -65,7 +65,7 @@
 
 
 (defrule order-delivered-correct
-	?gf <- (gamestate (state RUNNING) (phase PRODUCTION))
+	?gf <- (gamestate (phase PRODUCTION|POST_GAME))
 	?pf <- (product-delivered (game-time ?delivery-time) (team ?team)
 	                          (order ?id&~0) (delivery-gate ?gate)
 	                          (confirmed TRUE))
@@ -153,7 +153,7 @@
 )
 
 (defrule order-delivered-invalid
-  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (product-delivered (game-time ?game-time) (team ?team) (order ?order))
 	(not (order (id ?order)))
 	=>
@@ -165,7 +165,7 @@
 )
 
 (defrule order-delivered-wrong-delivgate
-  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (product-delivered (game-time ?game-time) (team ?team)
                             (delivery-gate ?gate) (order ?id) (confirmed TRUE))
   ; the actual order we are delivering
@@ -181,7 +181,7 @@
 )
 
 (defrule order-delivered-wrong-too-soon
-  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
   ?pf <- (product-delivered (game-time ?game-time) (team ?team) (order ?id)
                             (confirmed TRUE))
   ; the actual order we are delivering
@@ -197,7 +197,7 @@
 )
 
 (defrule order-delivered-wrong-too-many
-  ?gf <- (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (product-delivered (game-time ?game-time) (team ?team) (order ?id)
                             (confirmed TRUE))
   ; the actual order we are delivering
