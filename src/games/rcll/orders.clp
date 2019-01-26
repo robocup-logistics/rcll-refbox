@@ -64,7 +64,9 @@
             else
               (printout t "Incorrect delivery for order " ?pd:order
                           " by team " ?pd:team crlf)
-              (retract ?pd))))
+              (retract ?pd))
+            ; make sure do-for-fact evaluates to TRUE
+            TRUE))
    then
     (printout error "Received invalid SetOrderDelivered"
                     " (order " (pb-field-value ?p "order_id")
