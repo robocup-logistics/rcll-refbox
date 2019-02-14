@@ -581,9 +581,10 @@
   (pb-destroy ?s)
 )
 
-(deffunction net-create-UnconfirmedDelivery (?id ?time)
+(deffunction net-create-UnconfirmedDelivery (?id ?team ?time)
   (bind ?msg (pb-create "llsf_msgs.UnconfirmedDelivery"))
   (pb-set-field ?msg "id" ?id)
+  (pb-set-field ?msg "team" ?team)
   (bind ?delivery-time (pb-field-value ?msg "delivery_time"))
   (if (eq (type ?delivery-time) EXTERNAL-ADDRESS) then
     (bind ?gt (time-from-sec ?time))
@@ -617,15 +618,10 @@
 		(nth$ 2 (fact-slot-value ?order-fact delivery-period)))
   (do-for-all-facts
     ((?delivery product-delivered))
-    (eq ?delivery:confirmed FALSE)
-    (bind ?d (net-create-UnconfirmedDelivery ?delivery:id ?delivery:game-time))
-    (switch ?delivery:team
-      (case CYAN then
-        (pb-add-list ?o "unconfirmed_deliveres_cyan" ?d)
-      )
-      (case MAGENTA then
-        (pb-add-list ?o "unconfirmed_deliveres_magenta" ?d)
-      )
+    (and (eq ?delivery:confirmed FALSE) (eq ?delivery:order (fact-slot-value ?order-fact id)))
+    (bind ?d (net-create-UnconfirmedDelivery ?delivery:id ?delivery:team ?delivery:game-time))
+    (pb-add-list ?o "unconfirmed_deliveries" ?d)
+  )
   (return ?o)
 )
 
