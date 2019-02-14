@@ -52,7 +52,8 @@ message UnconfirmedDelivery {
   }
 
   required uint32 id            = 1;
-  required Time   delivery_time = 2;
+  required Team   team          = 2;
+  required Time   delivery_time = 3;
 }
 
 message Order {
@@ -91,8 +92,7 @@ message Order {
   // (non-defunct, i.e. non-red light) gate
   required uint32 delivery_gate = 11;
 
-  repeated UnconfirmedDelivery unconfirmed_deliveries_cyan    = 12;
-  repeated UnconfirmedDelivery unconfirmed_deliveries_magenta = 13;
+  repeated UnconfirmedDelivery unconfirmed_deliveries = 12;
 }
 
 message OrderInfo {
