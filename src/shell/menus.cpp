@@ -541,9 +541,9 @@ OrderDeliverMenu::OrderDeliverMenu
   (NCursesWindow *parent, llsf_msgs::Team team,
    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
    std::shared_ptr<llsf_msgs::GameState> gstate)
-  : Menu(det_lines(team, oinfo) + 1 + 2 + 1, 25 + 2,
-	 (parent->lines() - (det_lines(team, oinfo) + 1))/2,
-	 (parent->cols() - 26)/2),
+  : Menu(det_lines(team, oinfo) + 2 + 2, 18 + 2,
+	 (parent->lines() - (det_lines(team, oinfo) + 2))/2,
+	 (parent->cols() - 18)/2),
     oinfo_(oinfo), team_(team)
 {
   delivery_selected_ = false;
