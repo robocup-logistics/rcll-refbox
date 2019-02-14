@@ -197,28 +197,6 @@
   (pb-destroy ?attmsg)
 )
 
-(defrule send-delivery-msg
-  ?pd <- (product-delivered (id ?id) (team ?team) (order ?order)
-                            (game-time ?time) (confirmed FALSE)
-                            (delivery-gate ?gate))
-  =>
-  (bind ?msg (pb-create "llsf_msgs.UnconfirmedDelivery"))
-  (pb-set-field ?msg "id" ?id)
-  (pb-set-field ?msg "team_color" ?team)
-  (pb-set-field ?msg "order_id" ?order)
-  (pb-set-field ?msg "gate" ?gate)
-  (bind ?delivery-time (pb-field-value ?msg "delivery_time"))
-  (if (eq (type ?delivery-time) EXTERNAL-ADDRESS) then
-    (bind ?gt (time-from-sec ?time))
-    (pb-set-field ?delivery-time "sec" (nth$ 1 ?gt))
-    (pb-set-field ?delivery-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
-    (pb-set-field ?msg "delivery_time" ?delivery-time) ; destroys ?delivery-time!
-  )
-  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
-    (pb-send ?client:id ?msg))
-  (pb-destroy ?msg)
-)
-
 (defrule net-recv-SetGameState
   ?sf <- (gamestate (state ?state))
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p) (rcvd-via STREAM))
@@ -603,6 +581,18 @@
   (pb-destroy ?s)
 )
 
+(deffunction net-create-UnconfirmedDelivery (?id ?time)
+  (bind ?msg (pb-create "llsf_msgs.UnconfirmedDelivery"))
+  (pb-set-field ?msg "id" ?id)
+  (bind ?delivery-time (pb-field-value ?msg "delivery_time"))
+  (if (eq (type ?delivery-time) EXTERNAL-ADDRESS) then
+    (bind ?gt (time-from-sec ?time))
+    (pb-set-field ?delivery-time "sec" (nth$ 1 ?gt))
+    (pb-set-field ?delivery-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
+    (pb-set-field ?msg "delivery_time" ?delivery-time) ; destroys ?delivery-time!
+  )
+  (return ?msg)
+)
 
 (deffunction net-create-Order (?order-fact)
   (bind ?o (pb-create "llsf_msgs.Order"))
@@ -625,7 +615,17 @@
 		(nth$ 1 (fact-slot-value ?order-fact delivery-period)))
   (pb-set-field ?o "delivery_period_end"
 		(nth$ 2 (fact-slot-value ?order-fact delivery-period)))
-
+  (do-for-all-facts
+    ((?delivery product-delivered))
+    (eq ?delivery:confirmed FALSE)
+    (bind ?d (net-create-UnconfirmedDelivery ?delivery:id ?delivery:game-time))
+    (switch ?delivery:team
+      (case CYAN then
+        (pb-add-list ?o "unconfirmed_deliveres_cyan" ?d)
+      )
+      (case MAGENTA then
+        (pb-add-list ?o "unconfirmed_deliveres_magenta" ?d)
+      )
   (return ?o)
 )
 
