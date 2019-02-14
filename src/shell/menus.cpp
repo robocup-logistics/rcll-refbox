@@ -539,34 +539,32 @@ RobotMaintenanceMenu::det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
 
 OrderDeliverMenu::OrderDeliverMenu
   (NCursesWindow *parent, llsf_msgs::Team team,
-   std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries,
    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
    std::shared_ptr<llsf_msgs::GameState> gstate)
-  : Menu(det_lines(team, deliveries) + 1 + 2 + 1, 25 + 2,
-	 (parent->lines() - (det_lines(team, deliveries) + 1))/2,
+  : Menu(det_lines(team, oinfo) + 1 + 2 + 1, 25 + 2,
+	 (parent->lines() - (det_lines(team, oinfo) + 1))/2,
 	 (parent->cols() - 26)/2),
-    oinfo_(oinfo), deliveries_(deliveries), team_(team)
+    oinfo_(oinfo), team_(team)
 {
   delivery_selected_ = false;
-  int n_items = det_lines(team, deliveries);
+  show_all_selected_ = false;
+  int n_items = det_lines(team, oinfo);
   items_.resize(n_items);
   int ni = 0;
   NCursesMenuItem **mitems = new NCursesMenuItem*[3 + n_items];
-  for (auto && delivery : deliveries) {
-		if (delivery->team_color() != team) { continue; }
-		int min = delivery->delivery_time().sec() / 60;
-    int sec = delivery->delivery_time().sec() - min * 60;
-    std::string s;
-    for (int j = 0; j < oinfo->orders_size(); ++j) {
-      const llsf_msgs::Order &o = oinfo->orders(j);
-      if (o.id() == delivery->order_id()) {
-        s = boost::str(boost::format("%2u: %2s %02u:%02u")
-            % o.id()
-            % llsf_msgs::Order::Complexity_Name(o.complexity())
-            % min % sec);
-        items_[ni++] = std::make_tuple(delivery->id(), delivery->order_id(), s);
-        break;
-			}
+  for (int i = 0; i < oinfo->orders_size(); ++i) {
+    const llsf_msgs::Order &order = oinfo->orders(i);
+    for (int j = 0; j < order.unconfirmed_deliveries_size(); j++) {
+      const llsf_msgs::UnconfirmedDelivery &delivery = order.unconfirmed_deliveries(j);
+		  if (delivery.team() != team) { continue; }
+		  int min = delivery.delivery_time().sec() / 60;
+      int sec = delivery.delivery_time().sec() - min * 60;
+      std::string s;
+      s = boost::str(boost::format("%2u: %2s %02u:%02u")
+          % order.id()
+          % llsf_msgs::Order::Complexity_Name(order.complexity())
+          % min % sec);
+      items_[ni++] = std::make_tuple(delivery.id(), order.id(), s);
     }
 	}
   std::sort(items_.begin(), items_.end());
@@ -605,15 +603,10 @@ OrderDeliverMenu::delivery_selected(int i)
   delivery_idx_ = i;
 }
 
-std::shared_ptr<llsf_msgs::UnconfirmedDelivery>
+unsigned int
 OrderDeliverMenu::delivery() const
 {
-	auto delivery = std::find_if(deliveries_.begin(),
-	                             deliveries_.end(),
-	                             [this](std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery) {
-		                             return delivery->id() == delivery_idx_;
-	                             });
-	return *delivery;
+  return delivery_idx_;
 }
 
 bool
@@ -702,12 +695,14 @@ OrderDeliverMenu::On_Menu_Init()
 
 int
 OrderDeliverMenu::det_lines(llsf_msgs::Team team,
-			    std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> &deliveries)
+                            std::shared_ptr<llsf_msgs::OrderInfo> &order_info)
 {
   int lines = 0;
-  for (auto && delivery : deliveries) {
-    if (delivery->team_color() == team) {
-      lines++;
+  for (int i = 0; i < order_info->orders_size(); i++) {
+    for (int j = 0; j < order_info->orders(i).unconfirmed_deliveries_size(); j++) {
+      if (order_info->orders(i).unconfirmed_deliveries(j).team() == team) {
+        lines++;
+      }
     }
   }
   return lines;
@@ -873,10 +868,10 @@ SelectOrderByIDMenu::operator bool() const
 
 DeliveryCorrectMenu::DeliveryCorrectMenu(NCursesWindow *                                 parent,
                                          llsf_msgs::Team                                 team,
-                                         std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery,
+                                         unsigned int                                    delivery,
                                          std::shared_ptr<llsf_msgs::OrderInfo>           oinfo)
 : Menu(5, 25 + 2, (parent->lines() - 2) / 2, (parent->cols() - 26) / 2),
-  delivery_(delivery),
+  delivery_id_(delivery),
   correct_(false),
   correct_selected_(false),
   oinfo_(oinfo),
@@ -920,7 +915,14 @@ DeliveryCorrectMenu::On_Menu_Init()
 	auto order_p =
 	  std::find_if(oinfo_->orders().begin(),
 	               oinfo_->orders().end(),
-	               [this](const llsf_msgs::Order &o) { return o.id() == delivery_->order_id(); });
+	               [this](const llsf_msgs::Order &o) {
+                   for (int i = 0; i < o.unconfirmed_deliveries_size(); i++) {
+                     if (o.unconfirmed_deliveries(i).id() == delivery_id_) {
+                       return true;
+                     }
+                   }
+                   return false;
+                 });
 	if (order_p == oinfo_->orders().end()) {
 		printw(1, 14, "UNKNOWN");
 		refresh();

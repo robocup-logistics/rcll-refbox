@@ -327,7 +327,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	  tcsm();
 		if (tcsm) {
 			OrderDeliverMenu odm(
-				panel_, tcsm.get_team_color(), unconfirmed_deliveries_, last_orderinfo_, last_game_state_);
+				panel_, tcsm.get_team_color(), last_orderinfo_, last_game_state_);
 			odm();
 			if (odm) {
 				if (odm.show_all()) {
@@ -340,7 +340,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 				} else {
 					DeliveryCorrectMenu dcm(panel_, tcsm.get_team_color(), odm.delivery(), last_orderinfo_);
 					dcm();
-					if (dcm) { send_confirm_delivery(odm.delivery()->id(), dcm.correct()); }
+					if (dcm) { send_confirm_delivery(odm.delivery(), dcm.correct()); }
 				}
 			}
 		}
@@ -509,12 +509,6 @@ LLSFRefBoxShell::send_robot_maintenance(llsf_msgs::Team team,
 void
 LLSFRefBoxShell::send_confirm_delivery(unsigned int delivery_id, bool correct)
 {
-	unconfirmed_deliveries_.erase(
-	  std::find_if(std::begin(unconfirmed_deliveries_),
-	               std::end(unconfirmed_deliveries_),
-	               [delivery_id](const std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery) {
-		               return delivery->id() == delivery_id;
-	               }));
 	llsf_msgs::ConfirmDelivery od;
 	od.set_delivery_id(delivery_id);
 	od.set_correct(correct);
@@ -835,23 +829,6 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
     for (size_t i = oidx; i < orders_.size(); ++i) {
       orders_[i]->reset();
-    }
-  }
-
-  std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery;
-  if ((delivery = std::dynamic_pointer_cast<llsf_msgs::UnconfirmedDelivery>(msg))) {
-    bool duplicate = false;
-    for (auto && existing_delivery : unconfirmed_deliveries_) {
-      if (existing_delivery->id() == delivery->id()) {
-        duplicate = true;
-        break;
-      }
-    }
-    if (!duplicate) {
-      unconfirmed_deliveries_.push_back(delivery);
-      logf("New unconfirmed delivery by %s for order %u",
-          llsf_msgs::Team_Name(delivery->team_color()).c_str(),
-          delivery->order_id());
     }
   }
 
@@ -1186,7 +1163,6 @@ LLSFRefBoxShell::run()
   message_register.add_message_type<llsf_log_msgs::LogMessage>();
   message_register.add_message_type<llsf_msgs::VersionInfo>();
   message_register.add_message_type<llsf_msgs::GameInfo>();
-  message_register.add_message_type<llsf_msgs::UnconfirmedDelivery>();
 
   client->signal_connected().connect(
     boost::bind(&LLSFRefBoxShell::dispatch_client_connected, this));

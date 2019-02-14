@@ -205,24 +205,21 @@ class OrderDeliverMenu : public Menu
 {
  public:
   OrderDeliverMenu(NCursesWindow *parent, llsf_msgs::Team team,
-		   std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries,
 		   std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
 		   std::shared_ptr<llsf_msgs::GameState> gstate);
 
-  std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery() const;
+  unsigned int delivery() const;
   bool show_all() const;
   operator bool() const;
 
  private:
   virtual void On_Menu_Init();
-  int det_lines(llsf_msgs::Team team,
-      std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> &deliveries);
-  void show_all_selected();
+	int          det_lines(llsf_msgs::Team team, std::shared_ptr<llsf_msgs::OrderInfo> &order_info);
+	void show_all_selected();
   void delivery_selected(int i);
 
  private:
   std::shared_ptr<llsf_msgs::OrderInfo> oinfo_;
-  std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>> deliveries_;
   llsf_msgs::Team team_;
   bool show_all_selected_;
   bool delivery_selected_;
@@ -264,7 +261,7 @@ class DeliveryCorrectMenu : public Menu
 public:
 	DeliveryCorrectMenu(NCursesWindow *                                 parent,
 	                    llsf_msgs::Team                                 team,
-	                    std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery,
+	                    unsigned int                                    delivery,
 	                    std::shared_ptr<llsf_msgs::OrderInfo>           oinfo);
 
 	bool correct() const;
@@ -275,14 +272,14 @@ private:
   void correct_selected(bool);
 
 private:
-	std::shared_ptr<llsf_msgs::UnconfirmedDelivery> delivery_;
-	bool                                            correct_;
-	bool                                            correct_selected_;
-	std::shared_ptr<llsf_msgs::OrderInfo>           oinfo_;
-	llsf_msgs::Team                                 team_;
-	std::string                                     s_yes_;
-	std::string                                     s_no_;
-	std::string                                     s_cancel_;
+	unsigned int                          delivery_id_;
+	bool                                  correct_;
+	bool                                  correct_selected_;
+	std::shared_ptr<llsf_msgs::OrderInfo> oinfo_;
+	llsf_msgs::Team                       team_;
+	std::string                           s_yes_;
+	std::string                           s_no_;
+	std::string                           s_cancel_;
 };
 
 

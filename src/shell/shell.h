@@ -168,8 +168,6 @@ class LLSFRefBoxShell
   std::vector<LLSFRefBoxShellRobot *> robots_;
   std::map<std::string, LLSFRefBoxShellMachine *> machines_;
   std::vector<LLSFRefBoxShellOrder *> orders_;
-  std::vector<std::shared_ptr<llsf_msgs::UnconfirmedDelivery>>
-    unconfirmed_deliveries_;
 
   boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
