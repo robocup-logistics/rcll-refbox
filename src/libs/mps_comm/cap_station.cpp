@@ -1,5 +1,5 @@
-#include "CapStation.h"
-#include "MPSIoMapping.h"
+#include "cap_station.h"
+#include "mps_io_mapping.h"
 #include <iostream>
 
 namespace llsfrb {

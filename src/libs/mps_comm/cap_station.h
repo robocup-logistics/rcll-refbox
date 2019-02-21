@@ -2,7 +2,7 @@
 // A cap station can be used, to mount caps on top of things.
 #pragma once
 
-#include "Machine.h"
+#include "machine.h"
 
 namespace llsfrb {
 #if 0

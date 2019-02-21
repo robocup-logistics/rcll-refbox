@@ -1,7 +1,7 @@
-#include "Machine.h"
-#include "MPSIoMapping.h"
-#include "timeUtils.h"
-#include "timeoutException.h"
+#include "machine.h"
+#include "mps_io_mapping.h"
+#include "time_utils.h"
+#include "exceptions.h"
 #include <stdexcept>
 #include <iostream>
 #include <stdexcept>

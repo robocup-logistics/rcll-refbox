@@ -1,5 +1,5 @@
-#include "DeliveryStation.h"
-#include "MPSIoMapping.h"
+#include "delivery_station.h"
+#include "mps_io_mapping.h"
 #include <iostream>
 
 namespace llsfrb {
