@@ -47,6 +47,7 @@
 
 #include <thread>         // std::thread
 #include <mutex>          // std::mutex
+#include <iostream>
 
 #include "modbus/MPSIoMapping.h"
 #include "modbus/BaseStation.h"
