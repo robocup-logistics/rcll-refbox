@@ -450,7 +450,7 @@
 
 	    (bind ?psm (pb-create "llsf_msgs.SSTask"))
 	    (pb-set-field ?psm "operation" (fact-slot-value ?mf ss-operation))
-	    (pb-set-field ?psm "slot" ?pssm)
+	    (pb-set-field ?psm "shelf" ?pssm)
 
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
 	    (pb-set-field ?pm "task" ?psm)

@@ -43,6 +43,7 @@ MPSIncomingStation::~MPSIncomingStation() {}
 */
 void MPSIncomingStation::getCap(int color, int side) {
   uint16_t send[3] = {(uint16_t)this->lastId, (uint16_t)color, (uint16_t)side};
+  send[0] = (uint16_t)1;
   std::cout << send[0] << " " << color << " " << side << std::endl;
   int rc = modbus_write_registers(mb, 0, 3, send);
 

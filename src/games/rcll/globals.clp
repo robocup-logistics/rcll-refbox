@@ -52,7 +52,10 @@
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
   ; How long to wait after retrieval to switch to IDLE state
-  ?*RETRIEVE-WAIT-IDLE-TIME* = 0
+  ?*RETRIEVE-WAIT-IDLE-TIME* = 5
+  ; How long to wait after prepare before the MPS gets resetted
+  ?*PREPARE-WAIT-TILL-RESET* = 45
+  ?*PREPARE-WAIT-TILL-PROCESSING* = 5
 
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1

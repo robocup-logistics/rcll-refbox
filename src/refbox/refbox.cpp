@@ -366,6 +366,8 @@ LLSFRefBox::~LLSFRefBox()
     finalize_clips_logger(clips_->cobj());
   }
 
+  mps_placing_generator_.reset();
+
   delete pb_comm_;
   delete config_;
   delete sps_;

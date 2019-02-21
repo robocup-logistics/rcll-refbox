@@ -46,13 +46,9 @@ namespace mps_placing_clips {
 }
 #endif
 
-/** @class MPSPlacingGenerator <protobuf_clips/communicator.h>
- * CLIPS protobuf integration class.
- * This class adds functionality related to protobuf to a given CLIPS
- * environment. It supports the creation of communication channels
- * through protobuf_comm. An instance maintains its own message register
- * shared among server, peer, and clients.
- * @author Tim Niemueller
+/** @class MPSPlacingGenerator <mps_placing_clips/mps_placing_clips.h>
+ * MPS Placing integration.
+ * @author Tobias Neumann
  */
 
 /** Constructor.
@@ -67,11 +63,21 @@ MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env,
   is_generation_running_ = false;
   is_field_generated_ = false;
   generator_ = nullptr;
+  generator_thread_ = nullptr;
 }
 
 /** Destructor. */
 MPSPlacingGenerator::~MPSPlacingGenerator()
 {
+  if (is_generation_running_) {
+    generate_abort();
+  }
+  if (generator_thread_) {
+    generator_thread_->join();
+    generator_thread_.reset();
+  }
+  generator_.reset();
+  avail_fact_.reset();
   {
     fawkes::MutexLocker lock(&clips_mutex_);
 
@@ -124,6 +130,8 @@ void
 MPSPlacingGenerator::generate_abort()
 {
   if ( 0 == pthread_cancel( generator_thread_->native_handle() ) ) {
+    generator_thread_->join();
+    generator_thread_.reset();
     is_generation_running_ = false;
     is_field_generated_ = false;
   } else {
@@ -155,7 +163,6 @@ MPSPlacingGenerator::get_generated_field()
     return CLIPS::Values(1, CLIPS::Value("INVALID-GENERATION-BUT-WHY", CLIPS::TYPE_SYMBOL));
   }
 
-  printf("Field is generated\n");
   CLIPS::Values machines;
   machines.reserve( poses.size() * 3 );
   for (MPSPlacingPlacing pose : poses) {
