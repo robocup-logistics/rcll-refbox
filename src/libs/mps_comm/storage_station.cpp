@@ -1,5 +1,5 @@
-#include "StorageStation.h"
-#include "MPSIoMapping.h"
+#include "storage_station.h"
+#include "mps_io_mapping.h"
 #include <iostream>
 
 namespace llsfrb {

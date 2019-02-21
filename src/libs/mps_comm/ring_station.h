@@ -1,7 +1,7 @@
 // The ring station mounts rings on bases
 #pragma once
 
-#include "Machine.h"
+#include "machine.h"
 
 namespace llsfrb {
 #if 0

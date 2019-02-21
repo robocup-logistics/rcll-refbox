@@ -20,8 +20,8 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
 LIBS_libllsf_sps = stdc++ m llsfrbcore
-OBJS_libllsf_sps = Machine.o BaseStation.o CapStation.o DeliveryStation.o RingStation.o StorageStation.o timeUtils.o
-HDRS_libllsf_sps = Machine.h BaseStation.h CapStation.h DeliveryStation.h RingStation.h StorageStation.h timeUtils.h MPSIoMapping.h timeoutException.h
+OBJS_libllsf_sps = machine.o base_station.o cap_station.o delivery_station.o ring_station.o storage_station.o time_utils.o
+HDRS_libllsf_sps = machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h
 
 OBJS_all = $(OBJS_libllsf_sps)
 
