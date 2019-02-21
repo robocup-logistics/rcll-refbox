@@ -47,6 +47,7 @@
 
 #include <thread>         // std::thread
 #include <mutex>          // std::mutex
+#include <iostream>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
