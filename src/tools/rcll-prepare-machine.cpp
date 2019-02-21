@@ -145,9 +145,9 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
     printf("MachineInfo received:\n");
     for (int i = 0; i < mi->machines_size(); ++i) {
       const Machine &m = mi->machines(i);
-      printf("  %s, prepared: %s\n", m.name().c_str(),
-	     m.state() == "PREPARED" ? "YES" : "NO");
-      if (0 == machine_name_.compare(m.name()) && m.state() == "PREPARED") {
+      printf("  %s, state: %s\n", m.name().c_str(), m.state().c_str());
+      if (0 == machine_name_.compare(m.name()) &&
+          (m.state() == "PREPARED" || m.state() == "PROCESSING" || m.state() == "PROCESSED")) {
         raise (SIGINT);
         quit = true;
       }
