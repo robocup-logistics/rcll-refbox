@@ -13,6 +13,7 @@ namespace modbus {
 #endif
 
 class RingStation: public Machine {
+  static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
   public:
     RingStation();
     virtual ~RingStation();

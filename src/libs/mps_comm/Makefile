@@ -19,9 +19,9 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
-LIBS_libllsf_sps = stdc++ m llsfrbcore
-OBJS_libllsf_sps = machine.o base_station.o cap_station.o delivery_station.o ring_station.o storage_station.o time_utils.o
-HDRS_libllsf_sps = machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h
+LIBS_libllsf_sps = stdc++ m llsfrbcore pthread opcuaclient opcuacore opcuaprotocol opcuaserver mbedtls mbedcrypto mbedx509
+OBJS_libllsf_sps = opc_utils.o machine.o base_station.o cap_station.o delivery_station.o ring_station.o storage_station.o time_utils.o
+HDRS_libllsf_sps = subscription_client.h opc_utils.h machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h
 
 OBJS_all = $(OBJS_libllsf_sps)
 
