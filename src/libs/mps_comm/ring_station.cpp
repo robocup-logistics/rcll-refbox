@@ -11,6 +11,8 @@ namespace modbus {
 }
 #endif
 
+const std::vector<OpcUtils::MPSRegister> RingStation::SUB_REGISTERS({ OpcUtils::MPSRegister::SLIDECOUNT_IN, OpcUtils::MPSRegister::BARCODE_IN, OpcUtils::MPSRegister::ERROR_IN, OpcUtils::MPSRegister::STATUS_BUSY_IN, OpcUtils::MPSRegister::STATUS_ENABLE_IN, OpcUtils::MPSRegister::STATUS_ERROR_IN, OpcUtils::MPSRegister::STATUS_READY_IN });
+
 RingStation::RingStation() : Machine(Station::STATION_RING) { }
 RingStation::~RingStation() {}
 

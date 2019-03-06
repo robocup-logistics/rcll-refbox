@@ -17,24 +17,42 @@ namespace modbus {
 }
 #endif
 
-Machine::Machine(unsigned short int machine_type) : abort_operation_(false), machine_type_(machine_type), in_registers_(4), out_registers_(4), connection_(nullptr) {
-  for (int i = 0; i < 4; ++i) {
-    in_registers_.push_back(0);
-    out_registers_.push_back(0);
-  }
+const std::vector<OpcUtils::MPSRegister> Machine::SUB_REGISTERS({ OpcUtils::MPSRegister::BARCODE_IN, OpcUtils::MPSRegister::ERROR_IN, OpcUtils::MPSRegister::STATUS_BUSY_IN, OpcUtils::MPSRegister::STATUS_ENABLE_IN, OpcUtils::MPSRegister::STATUS_ERROR_IN, OpcUtils::MPSRegister::STATUS_READY_IN });
+// CHANGE
+const std::string Machine::LOG_PATH = ""; /*"./logs/log.txt"; */
+
+Machine::Machine(unsigned short int machine_type) : abort_operation_(false), machine_type_(machine_type) {//, in_registers_(4), out_registers_(4) {
+  initLogger();
 }
 
 
-void Machine::send_command(unsigned short command, unsigned short payload1, unsigned short payload2, int timeout, unsigned char status) {
-  //cout << "Send Command " << command << endl;
-  out_registers_[0] = command;
-  out_registers_[1] = payload1;
-  out_registers_[2] = payload2;
-  out_registers_[3] = status;
-  //std::lock_guard<std::mutex> g(lock_);
-//  if (not wait_for_ready(timeout))
-//    throw std::runtime_error("Previous command did not end within timeout");
-  push_registers();
+void Machine::send_command(unsigned short command, unsigned short payload1, unsigned short payload2, int timeout, unsigned char status, unsigned char error) {
+  logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
+  OpcUtils::MPSRegister registerOffset;
+  if(command < Station::STATION_BASE)
+    registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
+  else
+    registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
+
+  bool statusBit = (bool)(status & Status::STATUS_BUISY); /* CHECK */
+  OpcUtils::MPSRegister reg;
+  reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
+  setNodeValue(registerNodes[reg], (uint16_t)command, reg);
+  reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+  setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
+  reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+  setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
+  reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
+  setNodeValue(registerNodes[reg], statusBit, reg);
+  reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
+  setNodeValue(registerNodes[reg], (uint8_t)error, reg);
+
+  if(command < Station::STATION_BASE)
+    return;
+
+  reg = OpcUtils::MPSRegister::STATUS_BUSY_IN;
+  getReturnValue(reg)->setValue(OpcUtils::getNodeValueWithCorrectType(registerNodes[reg], statusBit));
+
   if (status & Status::STATUS_BUISY) {
     wait_for_buisy();
   }
@@ -55,29 +73,24 @@ bool Machine::wait_for_ready(int timeout) {
     clock_gettime(CLOCK_MONOTONIC, &time_0);
   }
     
-  do {
+  while (!getReturnValue(OpcUtils::MPSRegister::STATUS_READY_IN)->ToInt())
+  {
     {
       std::lock_guard<std::mutex> l(lock_);
       if (abort_operation_) {
         std::cout << "Abort operation" << std::endl;
         return false;
       }
-      update_registers();
-    }
-    if (in_registers_.at(3) & Status::STATUS_BUISY) {
-      out_registers_[3] &= ~ Status::STATUS_BUISY;
-      push_registers();
     }
     if (timeout >= 0) {
       clock_gettime(CLOCK_MONOTONIC, &time_c);
       timespec_diff( &time_0, &time_c, &time_d);
-      if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > timeout) {
+      if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > timeout*10) { /* REMOVE *10 from timeout */
         return false;
       }
     }
-      
-  } while (! (in_registers_.at(3) & (Status::STATUS_READY | Status::STATUS_ERR)));
-  if (in_registers_.at(3) & Status::STATUS_READY)
+  }
+  if (getReturnValue(OpcUtils::MPSRegister::STATUS_ENABLE_IN)->ToInt())
     return true;
   else
     return false;
@@ -87,61 +100,36 @@ void Machine::wait_for_buisy() {
   struct timespec time_c, time_0, time_d;
   clock_gettime(CLOCK_MONOTONIC, &time_0);
     
-  do {
-    update_registers();
-    if (in_registers_.at(3) & Status::STATUS_BUISY) {
-      out_registers_[3] &= ~ Status::STATUS_BUISY;
-      push_registers();
-      break;
-    }
+  while ((getReturnValue(OpcUtils::MPSRegister::STATUS_BUSY_IN)->ToInt())) {
     clock_gettime(CLOCK_MONOTONIC, &time_c);
     timespec_diff( &time_0, &time_c, &time_d);
-    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUISY) {
+    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUISY*10) { /* REMOVE *10 from timeout */
       throw timeout_exception("Machine did not reset buisy flag within time limit");
     }
-  } while (! (in_registers_.at(3) & (Status::STATUS_READY | Status::STATUS_ERR)));
+  }
 }
 
 bool Machine::wait_for_free() {
   for(;;) {
-    update_registers();
-    if (not (in_registers_.at(3) & Status::STATUS_BUISY)) {
+    if (!getReturnValue(OpcUtils::MPSRegister::STATUS_BUSY_IN)->ToInt()) {
       return true;
     }
   }
+  return false;
 }
 
+bool Machine::connect_PLC(const std::string& ip, unsigned short port) {
+  if(!reconnect(ip.c_str(), port))
+    return false;
 
-// TODO: do error handeling here.
-//       eg throw error
-//       and maybe add error to an error list for protobuf messages
-void Machine::update_registers() {
-  modbus_read_registers( connection_, 0, 4, (unsigned short*) in_registers_.data());
-  // cout << "Read (" << in_registers_[0] << ", " << in_registers_[3] << ")" << endl;
-}
-
-// write out all registers to plc
-void Machine::push_registers() {
-  // cout << "Push (" << out_registers_[0] << ", " << out_registers_[3] << ")" << endl;
-  modbus_write_registers( connection_, 0, 4, (unsigned short*) out_registers_.data());
-}
-
-void Machine::connect_PLC(const std::string& ip, unsigned short port) {
-  connection_ = modbus_new_tcp(ip.c_str(), port);
-  if (modbus_connect(connection_)) {
-    std::ostringstream o;
-    o << "Connection to " << ip << " (" << port << ") failed:" << std::endl << modbus_strerror(errno);
-    throw std::runtime_error(o.str());
-  }
-  update_registers();
+  subscribe(SUB_REGISTERS, outs);
   identify();
+  return true;
 }
 
 Machine::~Machine() {
-  modbus_close(connection_);
-  modbus_free(connection_);
+  disconnect();
 }
-
   
 
 void Machine::set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state, unsigned short time) {
@@ -180,7 +168,6 @@ void Machine::set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state
       plc_state = LightState::LIGHT_STATE_OFF;
       // TODO error
   }
-  std::cout << "Send: " << m_color << " " << plc_state << " "  << time << std::endl;
   send_command( m_color, plc_state, time);
 }
 
@@ -206,6 +193,172 @@ void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::S
 
 void Machine::reset_light() {
   set_light(llsf_msgs::LightColor::RED, llsf_msgs::OFF);
+}
+
+void Machine::initLogger()
+{
+  if(LOG_PATH.empty() || LOG_PATH.length() < 1)  /* stdout redirected logging ... */
+    logger = spdlog::stdout_logger_mt("client");
+  else /* ... or logging to file */
+    logger = spdlog::basic_logger_mt("client", LOG_PATH);
+
+  logger->info("\n\n\nNew logging session started");
+
+  if(false) /* more information needed in log? */
+    logger->set_level(spdlog::level::debug);
+}
+
+bool Machine::reconnect(const char* ip, unsigned short port)
+{
+  try
+  {
+    OpcUa::EndpointDescription* endpoint = OpcUtils::getEndpoint(ip, port);
+    logger->info("Connecting to: {}", endpoint->EndpointUrl);
+
+    client = new OpcUa::UaClient(logger);
+    client->Connect(*endpoint);
+
+    nodeBasic = OpcUtils::getBasicNode(client);
+    nodeIn = OpcUtils::getInNode(client);
+
+    for(int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
+      registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i);
+  }
+  catch (const std::exception &exc)
+  {
+    logger->error("Error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
+    return false;
+  }
+  catch (...)
+  {
+    logger->error("Unknown error.");
+    return false;
+  }
+  return true;
+}
+
+bool Machine::disconnect()
+{
+  cancelAllSubscriptions(true);
+
+  logger->info("Disconnecting");
+  try
+  {
+    client->Disconnect();
+    logger->flush();
+    return true;
+  }
+  catch(...)
+  {
+    try
+    {
+      client->Abort();
+      logger->flush();
+      return true;
+    }
+    catch(...)
+    {
+      try
+      {
+        delete client;
+        client = nullptr;
+        logger->flush();
+        return true;
+      }
+      catch(...)
+      {
+
+      }
+    }
+  }
+  return false;
+}
+
+void Machine::subscribeAll()
+{
+  for(int i = OpcUtils::MPSRegister::ACTION_ID_IN; i != OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
+    subscribe(static_cast<OpcUtils::MPSRegister>(i));
+}
+
+void Machine::subscribe(std::vector<OpcUtils::MPSRegister> registers, OpcUtils::ReturnValue* retVals)
+{
+  for(OpcUtils::MPSRegister reg : registers)
+    subscribe(reg, retVals == nullptr ? nullptr : &retVals[reg]);
+}
+
+SubscriptionClient* Machine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue* retVal)
+{
+  auto it = subscriptions.end();
+  if((it = subscriptions.find(reg)) != subscriptions.end())
+    return it->second;
+  OpcUa::Node node = OpcUtils::getNode(client, reg);
+  SubscriptionClient* sub = new SubscriptionClient(logger, retVal);
+  sub->reg = reg;
+  sub->node = node;
+  sub->subscription = client->CreateSubscription(100, *sub);
+  sub->handle = sub->subscription->SubscribeDataChange(node);
+  logger->info("Subscribed to {} (name: {}, handle: {})", OpcUtils::REGISTER_NAMES[reg], node.GetBrowseName().Name, sub->handle);
+  subscriptions.insert(SubscriptionClient::pair(reg, sub));
+  return sub;
+}
+
+void Machine::cancelAllSubscriptions(bool log)
+{
+  if(log)
+    printFinalSubscribtions();
+
+  for(SubscriptionClient::map::iterator it = subscriptions.begin(); it != subscriptions.end();)
+  {
+    OpcUtils::MPSRegister reg = it->first;
+    SubscriptionClient* sub = it->second;
+    sub->subscription->UnSubscribe(sub->handle);
+    logger->info("Unsubscribed from {} (name: {}, handle: {})", OpcUtils::REGISTER_NAMES[reg], sub->node.GetBrowseName().Name, sub->handle);
+    it = subscriptions.erase(it);
+  }
+}
+
+SubscriptionClient::map::iterator Machine::cancelSubscription(OpcUtils::MPSRegister reg, bool log)
+{
+  auto it = subscriptions.find(reg);
+  if(it != subscriptions.end())
+  {
+    SubscriptionClient* sub = it->second;
+    sub->subscription->UnSubscribe(sub->handle);
+    logger->info("Unsubscribed from {} (name: {}, handle: {})", OpcUtils::REGISTER_NAMES[reg], sub->node.GetBrowseName().Name, sub->handle);
+    if(log)
+      OpcUtils::logReturnValue(getReturnValue(reg), logger, reg);
+    return subscriptions.erase(it);
+  }
+  return it;
+}
+
+OpcUtils::ReturnValue* Machine::getReturnValue(OpcUtils::MPSRegister reg)
+{
+  if(subscriptions.size() == 0)
+    return &outs[reg];
+  else
+  {
+    auto it = subscriptions.find(reg);
+    if(it != subscriptions.end())
+      return it->second->mpsValue;
+  }
+  return nullptr;
+}
+
+bool Machine::setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg)
+{
+  SubscriptionClient::map::iterator it = subscriptions.find(reg);
+  if(it != subscriptions.end())
+    return OpcUtils::setNodeValue(node, val, it->second->mpsValue);
+  return OpcUtils::setNodeValue(node, val);
+}
+
+void Machine::printFinalSubscribtions()
+{
+  if(subscriptions.size() > 0)
+    logger->info("Final values of subscribed registers:");
+  for(int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
+    OpcUtils::logReturnValue(getReturnValue((OpcUtils::MPSRegister)i), logger, (OpcUtils::MPSRegister)i);
 }
 
 }

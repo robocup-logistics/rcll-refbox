@@ -81,7 +81,8 @@ enum Operation {
 // The status flags.
 // To be combined with bitwise | and read with bitwise &
 enum Status {
-  STATUS_ERR = 4,
+  STATUS_ENABLED = 4,
+  STATUS_ERR = 3,
   STATUS_READY = 2,
   STATUS_BUISY = 1,
 };
