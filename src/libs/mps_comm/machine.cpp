@@ -34,7 +34,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
   else
     registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
 
-  bool statusBit = (bool)(status & Status::STATUS_BUISY); /* CHECK */
+  bool statusBit = (bool)(status & Status::STATUS_BUISY);
   OpcUtils::MPSRegister reg;
   reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
   setNodeValue(registerNodes[reg], (uint16_t)command, reg);
@@ -53,7 +53,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
   reg = OpcUtils::MPSRegister::STATUS_BUSY_IN;
   getReturnValue(reg)->setValue(OpcUtils::getNodeValueWithCorrectType(registerNodes[reg], statusBit));
 
-  if (status & Status::STATUS_BUISY) {
+  if (statusBit) {
     wait_for_buisy();
   }
   if (timeout and (not wait_for_ready(timeout))) {
@@ -85,7 +85,7 @@ bool Machine::wait_for_ready(int timeout) {
     if (timeout >= 0) {
       clock_gettime(CLOCK_MONOTONIC, &time_c);
       timespec_diff( &time_0, &time_c, &time_d);
-      if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > timeout*10) { /* REMOVE *10 from timeout */
+      if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > timeout*10) { /* TODO REMOVE *10 from timeout */
         return false;
       }
     }
@@ -103,7 +103,7 @@ void Machine::wait_for_buisy() {
   while ((getReturnValue(OpcUtils::MPSRegister::STATUS_BUSY_IN)->ToInt())) {
     clock_gettime(CLOCK_MONOTONIC, &time_c);
     timespec_diff( &time_0, &time_c, &time_d);
-    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUISY*10) { /* REMOVE *10 from timeout */
+    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUISY*10) { /* TODO REMOVE *10 from timeout */
       throw timeout_exception("Machine did not reset buisy flag within time limit");
     }
   }
@@ -295,7 +295,8 @@ SubscriptionClient* Machine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::Retu
   SubscriptionClient* sub = new SubscriptionClient(logger, retVal);
   sub->reg = reg;
   sub->node = node;
-  sub->subscription = client->CreateSubscription(100, *sub);
+  int response_timeout = 100;
+  sub->subscription = client->CreateSubscription(response_timeout, *sub);
   sub->handle = sub->subscription->SubscribeDataChange(node);
   logger->info("Subscribed to {} (name: {}, handle: {})", OpcUtils::REGISTER_NAMES[reg], node.GetBrowseName().Name, sub->handle);
   subscriptions.insert(SubscriptionClient::pair(reg, sub));
