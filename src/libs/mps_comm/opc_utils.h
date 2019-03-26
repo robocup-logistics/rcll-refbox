@@ -107,6 +107,10 @@ class OpcUtils {
   static const std::vector<std::string> BASIC_NODE_PATH;
   // static vector containing the path from root node to the "in" node in the MPS
   static const std::vector<std::string> IN_NODE_PATH;
+  // static vector containing the path from root node to the "basic" node in the 64 bit MPS
+  static const std::vector<std::string> BASIC_NODE_PATH_64;
+  // static vector containing the path from root node to the "in" node in the 64 bit MPS
+  static const std::vector<std::string> IN_NODE_PATH_64;
   
   // Concatenates the two parameters by separating them with ", "
   static std::string strLst(std::string l, std::string r);
@@ -134,6 +138,8 @@ class OpcUtils {
   static const std::vector<std::string> getNodeRelativePath(MPSRegister reg);
   // Get OPC UA node full path by MPSRegister
   static const std::vector<std::string> getNodeFullPath(MPSRegister reg);
+  // Get OPC UA node full path by MPSRegister for a 64 bit MPS
+  static const std::vector<std::string> getNodeFullPath64(MPSRegister reg);
   // Get node class name as string
   static std::string GetNodeClassName(OpcUa::NodeClass nodeClass);
   // Get node access level as string

@@ -14,6 +14,18 @@ namespace modbus {
 BaseStation::BaseStation() : Machine(Station::STATION_BASE) { }
 BaseStation::~BaseStation() {}
 
+void BaseStation::band_on_until_in() {
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
+}
+
+void BaseStation::band_on_until_mid() {
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
+}
+
+void BaseStation::band_on_until_out() {
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
+}
+
 void BaseStation::get_base(llsf_msgs::BaseColor color) {
   //lock_guard<mutex> g(lock_);
   llsfrb::modbus::BaseColor color_sps;;

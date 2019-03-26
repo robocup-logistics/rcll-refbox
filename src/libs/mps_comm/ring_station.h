@@ -22,6 +22,9 @@ class RingStation: public Machine {
     // void getRing();
     // Check, if the cap is ready for take away
     // deprecated
+    void band_on_until_in();
+    void band_on_until_mid();
+    void band_on_until_out();
     bool ring_ready();
 
     void mount_ring(unsigned int feeder);
