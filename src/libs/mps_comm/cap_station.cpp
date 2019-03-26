@@ -14,6 +14,19 @@ namespace modbus {
 CapStation::CapStation() : Machine(Station::STATION_CAP) { }
 CapStation::~CapStation() {}
 
+
+void CapStation::band_on_until_in() {
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
+}
+
+void CapStation::band_on_until_mid() {
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
+}
+
+void CapStation::band_on_until_out() {
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
+}
+
 void CapStation::retrieve_cap() {
   send_command(Operation::OPERATION_CAP_ACTION + machine_type_, Operation::OPERATION_CAP_RETRIEVE);
 }

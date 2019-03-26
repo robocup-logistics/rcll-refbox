@@ -20,6 +20,9 @@ class BaseStation: public Machine {
     
     // ----------------------------
     // deprecated commands start
+    void band_on_until_in();
+    void band_on_until_mid();
+    void band_on_until_out();
     // Send command to get a cap of given color
     // and on given side
     void get_base(llsf_msgs::BaseColor slot);

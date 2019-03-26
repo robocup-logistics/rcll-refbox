@@ -19,6 +19,9 @@ class CapStation: public Machine {
 
     // -----------------
     // deprecated methods
+    void band_on_until_in();
+    void band_on_until_mid();
+    void band_on_until_out();
     void retrieve_cap();
     void mount_cap();
     // end of deprecated
