@@ -616,9 +616,11 @@
 		(nth$ 1 (fact-slot-value ?order-fact delivery-period)))
   (pb-set-field ?o "delivery_period_end"
 		(nth$ 2 (fact-slot-value ?order-fact delivery-period)))
+
   (do-for-all-facts
     ((?delivery product-delivered))
     (and (eq ?delivery:confirmed FALSE) (eq ?delivery:order (fact-slot-value ?order-fact id)))
+
     (bind ?d (net-create-UnconfirmedDelivery ?delivery:id ?delivery:team ?delivery:game-time))
     (pb-add-list ?o "unconfirmed_deliveries" ?d)
   )
