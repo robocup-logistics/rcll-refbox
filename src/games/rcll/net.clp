@@ -440,6 +440,7 @@
 	  (case DS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
 	    (pb-set-field ?pm "gate" (fact-slot-value ?mf ds-gate))
+	    (pb-set-field ?pm "order_id" (fact-slot-value ?mf ds-order))
             (pb-set-field ?m "instruction_ds" ?pm)
 	  )
 	  (case SS then
@@ -580,6 +581,19 @@
   (pb-destroy ?s)
 )
 
+(deffunction net-create-UnconfirmedDelivery (?id ?team ?time)
+  (bind ?msg (pb-create "llsf_msgs.UnconfirmedDelivery"))
+  (pb-set-field ?msg "id" ?id)
+  (pb-set-field ?msg "team" ?team)
+  (bind ?delivery-time (pb-field-value ?msg "delivery_time"))
+  (if (eq (type ?delivery-time) EXTERNAL-ADDRESS) then
+    (bind ?gt (time-from-sec ?time))
+    (pb-set-field ?delivery-time "sec" (nth$ 1 ?gt))
+    (pb-set-field ?delivery-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
+    (pb-set-field ?msg "delivery_time" ?delivery-time) ; destroys ?delivery-time!
+  )
+  (return ?msg)
+)
 
 (deffunction net-create-Order (?order-fact)
   (bind ?o (pb-create "llsf_msgs.Order"))
@@ -603,6 +617,13 @@
   (pb-set-field ?o "delivery_period_end"
 		(nth$ 2 (fact-slot-value ?order-fact delivery-period)))
 
+  (do-for-all-facts
+    ((?delivery product-delivered))
+    (and (eq ?delivery:confirmed FALSE) (eq ?delivery:order (fact-slot-value ?order-fact id)))
+
+    (bind ?d (net-create-UnconfirmedDelivery ?delivery:id ?delivery:team ?delivery:game-time))
+    (pb-add-list ?o "unconfirmed_deliveries" ?d)
+  )
   (return ?o)
 )
 

@@ -325,23 +325,25 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	} else {
 	  TeamColorSelectMenu tcsm(panel_);
 	  tcsm();
-	  if (tcsm) {
-	    OrderByColorDeliverMenu odm(panel_, tcsm.get_team_color(),
-	                                last_orderinfo_, last_game_state_);
-	    odm();
-	    if (odm) {
-		    send_set_order_delivered(tcsm.get_team_color(),
-		                             odm.base_color(), odm.ring_colors(), odm.cap_color());
-	    } else if (odm.wants_specific()) {
-		    io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
-		    OrderDeliverMenu odm_spec(panel_, tcsm.get_team_color(),
-		                              last_orderinfo_, last_game_state_);
-		    odm_spec();
-		    if (odm_spec) {
-			    send_set_order_delivered(tcsm.get_team_color(), odm_spec.order());
-		    }
-	    }
-	  }
+		if (tcsm) {
+			OrderDeliverMenu odm(
+				panel_, tcsm.get_team_color(), last_orderinfo_, last_game_state_);
+			odm();
+			if (odm) {
+				if (odm.show_all()) {
+					SelectOrderByIDMenu oidm(panel_,
+								                   tcsm.get_team_color(),
+								                   last_orderinfo_,
+								                   last_game_state_);
+					oidm();
+					if (oidm) { send_delivery_by_order_id(oidm.order().id(), tcsm.get_team_color()); }
+				} else {
+					DeliveryCorrectMenu dcm(panel_, tcsm.get_team_color(), odm.delivery(), last_orderinfo_);
+					dcm();
+					if (dcm) { send_confirm_delivery(odm.delivery(), dcm.correct()); }
+				}
+			}
+		}
 	  io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	}
 	break;
@@ -505,58 +507,32 @@ LLSFRefBoxShell::send_robot_maintenance(llsf_msgs::Team team,
 }
 
 void
-LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, const llsf_msgs::Order &order)
+LLSFRefBoxShell::send_confirm_delivery(unsigned int delivery_id, bool correct)
 {
-	unsigned int order_id = order.id();
-
-  llsf_msgs::SetOrderDelivered od;
-  od.set_team_color(team);
-  od.set_order_id(order_id);
-  logf("Sending completed order %u for team %s", order_id, llsf_msgs::Team_Name(team).c_str());
-  try {
-    client->send(od);
-  } catch (std::runtime_error &e) {
-    logf("Sending SetOrderDelivered failed: %s", e.what());
-  }
-
-	/*
-	llsf_msgs::SetOrderDeliveredByColor od;
-  od.set_team_color(team);
-  od.set_base_color(order.base_color());
-  for (int i = 0; i < order.ring_colors_size(); ++i) {
-	  od.add_ring_colors(order.ring_colors(i));
-  }
-  od.set_cap_color(order.cap_color());
-  try {
-    client->send(od);
-  } catch (std::runtime_error &e) {
-    logf("Sending SetOrderDeliveredByColor failed: %s", e.what());
-  }
-	*/
+	llsf_msgs::ConfirmDelivery od;
+	od.set_delivery_id(delivery_id);
+	od.set_correct(correct);
+	if (correct) {
+		logf("Confirming correct delivery %u", delivery_id);
+	} else {
+		logf("Confirming incorrect delivery %u", delivery_id);
+	}
+	try {
+		client->send(od);
+	} catch (std::runtime_error &e) {
+		logf("Sending ConfirmDelivery failed: %s", e.what());
+	}
 }
 
 void
-LLSFRefBoxShell::send_set_order_delivered(llsf_msgs::Team team, llsf_msgs::BaseColor base_color,
-                                          std::vector<llsf_msgs::RingColor> ring_colors,
-                                          llsf_msgs::CapColor cap_color)
+LLSFRefBoxShell::send_delivery_by_order_id(unsigned int order_id, llsf_msgs::Team team)
 {
-  llsf_msgs::SetOrderDeliveredByColor od;
+  llsf_msgs::SetOrderDelivered od;
+  od.set_order_id(order_id);
   od.set_team_color(team);
-  od.set_base_color(base_color);
-  for (const auto &c : ring_colors) od.add_ring_colors(c);
-  od.set_cap_color(cap_color);
-  std::string ring_colors_s;
-  for (size_t i = 0; i < ring_colors.size(); ++i) {
-	  if (i > 0)  ring_colors_s += "|";
-	  ring_colors_s += llsf_msgs::RingColor_Name(ring_colors[i]).c_str();
-  }
-  logf("Sending completed order for team %s (base: %s, rings: %s, cap: %s)",
-       llsf_msgs::Team_Name(team).c_str(),
-       llsf_msgs::BaseColor_Name(base_color).c_str(), ring_colors_s.c_str(),
-       llsf_msgs::CapColor_Name(cap_color).c_str());
   try {
     client->send(od);
-  } catch (std::runtime_error &e) {
+  } catch(std::runtime_error &e) {
     logf("Sending SetOrderDelivered failed: %s", e.what());
   }
 }
@@ -855,7 +831,6 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       orders_[i]->reset();
     }
   }
-
 
   std::shared_ptr<llsf_log_msgs::LogMessage> lm;
   if ((lm = std::dynamic_pointer_cast<llsf_log_msgs::LogMessage>(msg))) {

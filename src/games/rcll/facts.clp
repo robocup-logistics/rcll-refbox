@@ -71,6 +71,7 @@
 
   (slot ds-gate (type INTEGER))
   (slot ds-last-gate (type INTEGER))
+  (slot ds-order (type INTEGER))
 
   (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
   (multislot ss-slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
@@ -215,11 +216,19 @@
   (multislot period (type INTEGER) (cardinality 2 2))
 )  
  
+(deffunction gen-int-id ()
+  "Generate a unique uint that can be used as an ID."
+  (bind ?id-string (str-cat (gensym*)))
+  (return (string-to-field (sub-string 4 (length$ ?id-string) ?id-string)))
+)
+
 (deftemplate product-delivered
+  (slot id (type INTEGER) (default-dynamic (gen-int-id)))
   (slot game-time (type FLOAT))
 	(slot order (type INTEGER) (default 0))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
 	(slot delivery-gate (type INTEGER))
+  (slot confirmed (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
 	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))

@@ -62,6 +62,7 @@ message PrepareInstructionBS {
 
 message PrepareInstructionDS {
   required uint32 gate = 1;
+  required uint32 order_id = 2;
 }
 
 message PrepareInstructionSS {

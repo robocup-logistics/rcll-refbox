@@ -58,6 +58,7 @@ std::string machine_type_;
 llsf_msgs::MachineSide bs_side_;
 llsf_msgs::BaseColor   bs_color_;
 int ds_gate_;
+int ds_order_id_;
 llsf_msgs::SSOp ss_op_;
 int ss_slot_x_;
 int ss_slot_y_;
@@ -171,6 +172,7 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
       } else if (machine_type_ == "DS") {
 	llsf_msgs::PrepareInstructionDS *prep_ds = prep.mutable_instruction_ds();
 	prep_ds->set_gate(ds_gate_);
+	prep_ds->set_order_id(ds_order_id_);
       } else if (machine_type_ == "SS") {
 	llsf_msgs::PrepareInstructionSS *prep_ss = prep.mutable_instruction_ss();
         
@@ -200,7 +202,7 @@ usage(const char *progname)
 	 "\n"
 	 "instructions are specific for the machine type:\n"
 	 "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
-	 "DS:  <gate number>\n"
+	 "DS:  <order_id> <gate number>\n"
 	 "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
 	 "RS:  (RING_BLUE|RING_GREEN|RING_ORANGE|RING_YELLOW)\n"
 	 "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n",
@@ -235,7 +237,13 @@ main(int argc, char **argv)
       printf("Invalid base color\n"); exit(-2);
     }
   } else if (machine_type_ == "DS") {
-    ds_gate_  = argp.parse_item_int(2);
+    if (argp.num_items() != 4) {
+      printf("Wrong number of arguments. Expected 4, got %zu\n", argp.num_items());
+      usage(argv[0]);
+      exit(-1);
+    }
+    ds_order_id_ = argp.parse_item_int(2);
+    ds_gate_  = argp.parse_item_int(3);
   } else if (machine_type_ == "SS") {
     if (argp.num_items() < 6) {
       printf("SS machine requires operation and x, y, z arguments %zu\n", argp.num_items());

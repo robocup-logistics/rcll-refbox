@@ -146,7 +146,6 @@
   (return ?rv)
 )
 
-
 (deffunction ceil (?f)
   (bind ?rf (round ?f))
   (return (if (>= (- ?rf ?f) 0) then ?rf else (+ ?rf 1)))

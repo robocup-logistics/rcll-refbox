@@ -102,8 +102,9 @@
 	       then
 	        (bind ?prepmsg (pb-field-value ?p "instruction_ds"))
 		(bind ?gate (pb-field-value ?prepmsg "gate"))
-		(printout t "Prepared " ?mname " (gate: " ?gate ")" crlf)
-	        (modify ?m (state PREPARED) (ds-gate ?gate)
+		(bind ?order (pb-field-value ?prepmsg "order_id"))
+		(printout t "Prepared " ?mname " (gate: " ?gate ", order: " ?order ")" crlf)
+	        (modify ?m (state PREPARED) (ds-gate ?gate) (ds-order ?order)
                            (mps-state AVAILABLE) (wait-for-product-since ?gt))
                            ;(wait-for-product-since ?gt))
                else
@@ -397,9 +398,12 @@
 (defrule prod-proc-state-processed-ds
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state ~PROCESSED))
+  ?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state ~PROCESSED)
+          (ds-order ?order) (team ?team))
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
+  (assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
+            (confirmed FALSE)))
   (modify ?m (state IDLE) (proc-state PROCESSED))
   (mps-deliver (str-cat ?n))
 )
