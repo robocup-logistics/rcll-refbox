@@ -118,8 +118,8 @@ bool Machine::wait_for_free() {
   return false;
 }
 
-bool Machine::connect_PLC(const std::string& ip, unsigned short port) {
-  if(!reconnect(ip.c_str(), port))
+bool Machine::connect_PLC(const std::string& ip, unsigned short port, bool simulation) {
+  if(!reconnect(ip.c_str(), port, simulation))
     return false;
 
   subscribe(SUB_REGISTERS, outs);
@@ -208,7 +208,7 @@ void Machine::initLogger()
     logger->set_level(spdlog::level::debug);
 }
 
-bool Machine::reconnect(const char* ip, unsigned short port)
+bool Machine::reconnect(const char* ip, unsigned short port, bool simulation)
 {
   try
   {
@@ -217,9 +217,22 @@ bool Machine::reconnect(const char* ip, unsigned short port)
 
     client = new OpcUa::UaClient(logger);
     client->Connect(*endpoint);
+  }
+  catch (const std::exception &exc)
+  {
+    logger->error("OPC UA connection error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
+    return false;
+  }
+  catch (...)
+  {
+    logger->error("Unknown error.");
+    return false;
+  }
 
-    nodeBasic = OpcUtils::getBasicNode(client);
-    nodeIn = OpcUtils::getInNode(client);
+  try
+  {
+    nodeBasic = OpcUtils::getBasicNode(client, simulation);
+    nodeIn = OpcUtils::getInNode(client, simulation);
 
     for(int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
       registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i);
