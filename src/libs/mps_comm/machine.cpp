@@ -18,8 +18,7 @@ namespace modbus {
 #endif
 
 const std::vector<OpcUtils::MPSRegister> Machine::SUB_REGISTERS({ OpcUtils::MPSRegister::BARCODE_IN, OpcUtils::MPSRegister::ERROR_IN, OpcUtils::MPSRegister::STATUS_BUSY_IN, OpcUtils::MPSRegister::STATUS_ENABLE_IN, OpcUtils::MPSRegister::STATUS_ERROR_IN, OpcUtils::MPSRegister::STATUS_READY_IN });
-// CHANGE
-const std::string Machine::LOG_PATH = ""; /*"./logs/log.txt"; */
+const std::string Machine::LOG_PATH = ""; /* TODO add log path if needed; if empty -> log is redirected to stdout */
 
 Machine::Machine(unsigned short int machine_type) : abort_operation_(false), machine_type_(machine_type) {//, in_registers_(4), out_registers_(4) {
   initLogger();
