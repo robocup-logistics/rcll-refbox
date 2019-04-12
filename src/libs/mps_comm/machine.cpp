@@ -235,11 +235,11 @@ bool Machine::reconnect(const char* ip, unsigned short port, bool simulation)
     nodeIn = OpcUtils::getInNode(client, simulation);
 
     for(int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
-      registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i);
+      registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i, simulation);
   }
   catch (const std::exception &exc)
   {
-    logger->error("Error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
+    logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
     return false;
   }
   catch (...)

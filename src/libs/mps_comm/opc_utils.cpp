@@ -330,8 +330,8 @@ void OpcUtils::ReturnValue::setValue(const OpcUa::Variant &val)
 const std::vector<std::string> OpcUtils::REGISTER_NAMES({ "ACTION_ID_IN", "BARCODE_IN", "DATA_IN", "ERROR_IN", "SLIDECOUNT_IN", "STATUS_BUSY_IN", "STATUS_ENABLE_IN", "STATUS_ERROR_IN", "STATUS_READY_IN", "ACTION_ID_BASIC", "BARCODE_BASIC", "DATA_BASIC", "ERROR_BASIC", "SLIDECOUNT_BASIC", "STATUS_BUSY_BASIC", "STATUS_ENABLE_BASIC", "STATUS_ERROR_BASIC", "STATUS_READY_BASIC" });
 
 /* CHANGE THE PATHS ONCE REAL MPS IS USED */
-const std::vector<std::string> OpcUtils::BASIC_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
-const std::vector<std::string> OpcUtils::IN_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
+const std::vector<std::string> OpcUtils::BASIC_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "4:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
+const std::vector<std::string> OpcUtils::IN_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "4:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
 const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
 const std::vector<std::string> OpcUtils::IN_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
 const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_64_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
@@ -393,16 +393,19 @@ OpcUa::EndpointDescription* OpcUtils::getEndpoint(const char *ip, unsigned short
   return endpoint;
 }
 
-OpcUa::Node OpcUtils::getNode(OpcUa::UaClient *client, MPSRegister reg)
+OpcUa::Node OpcUtils::getNode(OpcUa::UaClient *client, MPSRegister reg, bool simulation)
 {
+  if(!simulation)
+    return client->GetRootNode().GetChild(OpcUtils::getNodeFullPath(reg));
+
   try
   {
-    return client->GetRootNode().GetChild(OpcUtils::getNodeFullPath(reg));
+    return client->GetRootNode().GetChild(OpcUtils::getNodeFullPathSim(reg));
   }
   catch(const std::exception& e)
   { }
 
-  return client->GetRootNode().GetChild(OpcUtils::getNodeFullPath64(reg));
+  return client->GetRootNode().GetChild(OpcUtils::getNodeFullPath64Sim(reg));
 }
 
 OpcUa::Variant OpcUtils::getNodeValueWithCorrectType(OpcUa::Node node, boost::any val)
@@ -438,7 +441,7 @@ OpcUa::Node OpcUtils::getBasicNode(OpcUa::UaClient* client, bool simulation)
 {
   if(!simulation)
     return client->GetRootNode().GetChild(BASIC_NODE_PATH);
-    
+  
   try
   {
     return client->GetRootNode().GetChild(BASIC_NODE_PATH_SIM);
@@ -513,13 +516,26 @@ const std::vector<std::string> OpcUtils::getNodeFullPath(MPSRegister reg)
   return ret;
 }
 
-const std::vector<std::string> OpcUtils::getNodeFullPath64(MPSRegister reg)
+const std::vector<std::string> OpcUtils::getNodeFullPathSim(MPSRegister reg)
 {
   std::vector<std::string> ret;
   if (reg >= MPSRegister::ACTION_ID_BASIC)
-    ret = std::vector<std::string>(BASIC_NODE_PATH_64);
+    ret = std::vector<std::string>(BASIC_NODE_PATH_SIM);
   else
-    ret = std::vector<std::string>(IN_NODE_PATH_64);
+    ret = std::vector<std::string>(IN_NODE_PATH_SIM);
+
+  for (std::string p : getNodeRelativePath(reg))
+    ret.push_back(p);
+  return ret;
+}
+
+const std::vector<std::string> OpcUtils::getNodeFullPath64Sim(MPSRegister reg)
+{
+  std::vector<std::string> ret;
+  if (reg >= MPSRegister::ACTION_ID_BASIC)
+    ret = std::vector<std::string>(BASIC_NODE_PATH_64_SIM);
+  else
+    ret = std::vector<std::string>(IN_NODE_PATH_64_SIM);
 
   for (std::string p : getNodeRelativePath(reg))
     ret.push_back(p);

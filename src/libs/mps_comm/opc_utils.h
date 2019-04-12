@@ -131,7 +131,7 @@ class OpcUtils {
   // Get OPC UA Endpoint given by IP and port
   static OpcUa::EndpointDescription* getEndpoint(const char* ip, unsigned short port);
   // Get OPC UA node using MPSRegister
-  static OpcUa::Node getNode(OpcUa::UaClient* client, MPSRegister reg);
+  static OpcUa::Node getNode(OpcUa::UaClient* client, MPSRegister reg, bool simulation = false);
   // Get OPC UA Node value as OPC UA Variant with the needed type
   static OpcUa::Variant getNodeValueWithCorrectType(OpcUa::Node node, boost::any val);
   // Get "basic" OPC UA node
@@ -142,8 +142,10 @@ class OpcUtils {
   static const std::vector<std::string> getNodeRelativePath(MPSRegister reg);
   // Get OPC UA node full path by MPSRegister
   static const std::vector<std::string> getNodeFullPath(MPSRegister reg);
-  // Get OPC UA node full path by MPSRegister for a 64 bit MPS
-  static const std::vector<std::string> getNodeFullPath64(MPSRegister reg);
+  // Get OPC UA node full path by MPSRegister for a MPS simulation
+  static const std::vector<std::string> getNodeFullPathSim(MPSRegister reg);
+  // Get OPC UA node full path by MPSRegister for a 64 bit MPS simulation
+  static const std::vector<std::string> getNodeFullPath64Sim(MPSRegister reg);
   // Get node class name as string
   static std::string GetNodeClassName(OpcUa::NodeClass nodeClass);
   // Get node access level as string
