@@ -330,10 +330,12 @@ void OpcUtils::ReturnValue::setValue(const OpcUa::Variant &val)
 const std::vector<std::string> OpcUtils::REGISTER_NAMES({ "ACTION_ID_IN", "BARCODE_IN", "DATA_IN", "ERROR_IN", "SLIDECOUNT_IN", "STATUS_BUSY_IN", "STATUS_ENABLE_IN", "STATUS_ERROR_IN", "STATUS_READY_IN", "ACTION_ID_BASIC", "BARCODE_BASIC", "DATA_BASIC", "ERROR_BASIC", "SLIDECOUNT_BASIC", "STATUS_BUSY_BASIC", "STATUS_ENABLE_BASIC", "STATUS_ERROR_BASIC", "STATUS_READY_BASIC" });
 
 /* CHANGE THE PATHS ONCE REAL MPS IS USED */
-const std::vector<std::string> OpcUtils::BASIC_NODE_PATH({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
-const std::vector<std::string> OpcUtils::IN_NODE_PATH({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
-const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_64({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
-const std::vector<std::string> OpcUtils::IN_NODE_PATH_64({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
+const std::vector<std::string> OpcUtils::BASIC_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
+const std::vector<std::string> OpcUtils::IN_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
+const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
+const std::vector<std::string> OpcUtils::IN_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
+const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_64_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
+const std::vector<std::string> OpcUtils::IN_NODE_PATH_64_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
 
 // Formatting functions
 
@@ -432,28 +434,34 @@ OpcUa::Variant OpcUtils::getNodeValueWithCorrectType(OpcUa::Node node, boost::an
   }
 }
 
-OpcUa::Node OpcUtils::getBasicNode(OpcUa::UaClient* client)
+OpcUa::Node OpcUtils::getBasicNode(OpcUa::UaClient* client, bool simulation)
 {
+  if(!simulation)
+    return client->GetRootNode().GetChild(BASIC_NODE_PATH);
+    
   try
   {
-    return client->GetRootNode().GetChild(BASIC_NODE_PATH);
+    return client->GetRootNode().GetChild(BASIC_NODE_PATH_SIM);
   }
   catch(const std::exception& e)
   { }
   
-  return client->GetRootNode().GetChild(BASIC_NODE_PATH_64);
+  return client->GetRootNode().GetChild(BASIC_NODE_PATH_64_SIM);
 }
 
-OpcUa::Node OpcUtils::getInNode(OpcUa::UaClient* client)
+OpcUa::Node OpcUtils::getInNode(OpcUa::UaClient* client, bool simulation)
 {
+  if(!simulation)
+    return client->GetRootNode().GetChild(IN_NODE_PATH);
+
   try
   {
-    return client->GetRootNode().GetChild(IN_NODE_PATH);
+    return client->GetRootNode().GetChild(IN_NODE_PATH_SIM);
   }
   catch(const std::exception& e)
   { }
 
-  return client->GetRootNode().GetChild(IN_NODE_PATH_64);
+  return client->GetRootNode().GetChild(IN_NODE_PATH_64_SIM);
 }
 
 const std::vector<std::string> OpcUtils::getNodeRelativePath(MPSRegister reg)

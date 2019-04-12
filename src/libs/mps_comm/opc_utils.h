@@ -107,10 +107,14 @@ class OpcUtils {
   static const std::vector<std::string> BASIC_NODE_PATH;
   // static vector containing the path from root node to the "in" node in the MPS
   static const std::vector<std::string> IN_NODE_PATH;
-  // static vector containing the path from root node to the "basic" node in the 64 bit MPS
-  static const std::vector<std::string> BASIC_NODE_PATH_64;
-  // static vector containing the path from root node to the "in" node in the 64 bit MPS
-  static const std::vector<std::string> IN_NODE_PATH_64;
+  // static vector containing the path from root node to the "basic" node in the MPS simulation
+  static const std::vector<std::string> BASIC_NODE_PATH_SIM;
+  // static vector containing the path from root node to the "in" node in the MPS simulation
+  static const std::vector<std::string> IN_NODE_PATH_SIM;
+  // static vector containing the path from root node to the "basic" node in the 64 bit MPS simulation
+  static const std::vector<std::string> BASIC_NODE_PATH_64_SIM;
+  // static vector containing the path from root node to the "in" node in the 64 bit MPS simulation
+  static const std::vector<std::string> IN_NODE_PATH_64_SIM;
   
   // Concatenates the two parameters by separating them with ", "
   static std::string strLst(std::string l, std::string r);
@@ -131,9 +135,9 @@ class OpcUtils {
   // Get OPC UA Node value as OPC UA Variant with the needed type
   static OpcUa::Variant getNodeValueWithCorrectType(OpcUa::Node node, boost::any val);
   // Get "basic" OPC UA node
-  static OpcUa::Node getBasicNode(OpcUa::UaClient* client);
+  static OpcUa::Node getBasicNode(OpcUa::UaClient* client, bool simulation = false);
   // Get "in" OPC UA node
-  static OpcUa::Node getInNode(OpcUa::UaClient* client);
+  static OpcUa::Node getInNode(OpcUa::UaClient* client, bool simulation = false);
   // Get OPC UA node relative path (path after in or basic node) by MPSRegister
   static const std::vector<std::string> getNodeRelativePath(MPSRegister reg);
   // Get OPC UA node full path by MPSRegister
