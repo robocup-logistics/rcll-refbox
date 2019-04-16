@@ -93,6 +93,8 @@ message Order {
   required uint32 delivery_gate = 11;
 
   repeated UnconfirmedDelivery unconfirmed_deliveries = 12;
+
+  required bool competitive = 13;
 }
 
 message OrderInfo {
