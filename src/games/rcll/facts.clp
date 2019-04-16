@@ -182,6 +182,7 @@
 
   ; Product specification
   (slot complexity (type SYMBOL) (allowed-values C0 C1 C2 C3))
+  (slot competitive (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   ; the following is auto-generated based on the previously defined complexity
   (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)

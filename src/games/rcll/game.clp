@@ -171,6 +171,22 @@
     (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
     (modify ?ring (req-bases 0))
   )
+
+	; Randomly assign an order to be a competitive order
+	(bind ?potential-competitive-orders (create$))
+	(do-for-all-facts ((?order order))
+	                  (and (eq ?order:complexity C0) ; must be C0
+	                       (eq ?order:quantity-requested 1) ; must not request more than 1 product
+	                       (eq ?order:allow-overtime FALSE) ; no overtime order
+	                       (or (neq (nth$ 1 ?order:delivery-period) 0) ; no standing order
+	                           (neq (nth$ 2 ?order:delivery-period) ?*PRODUCTION-TIME*))
+	                  )
+	                  (bind ?potential-competitive-orders (insert$ ?potential-competitive-orders 1 ?order:id))
+	)
+	;(printout t "Potential competitive orders: " ?potential-competitive-orders crlf)
+	(bind ?competitive-order-id (nth$ (random 1 (length$ ?potential-competitive-orders)) ?potential-competitive-orders))
+	(do-for-fact ((?order order)) (eq ?order:id ?competitive-order-id)
+	  (modify ?order (competitive TRUE)))
 )
 
 (defrule game-print
