@@ -1067,7 +1067,7 @@ LLSFRefBoxShell::run()
   orders_.resize(12, NULL);
   for (size_t i = 0; i < orders_.size(); ++i) {
     orders_[i] = new LLSFRefBoxShellOrder(height - 6 + i / 2,
-					  (i % 2) ? ((panel_->width() - 24) / 2) : 1);
+					  (i % 2) ? ((panel_->width() - 27) / 2) : 1);
     orders_[i]->refresh();
   }
 

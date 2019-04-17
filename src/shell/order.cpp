@@ -49,7 +49,7 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellOrder::LLSFRefBoxShellOrder(int begin_y, int begin_x)
-  : NCursesPanel(1, 29, begin_y, begin_x),
+  : NCursesPanel(1, 31, begin_y, begin_x),
     id_(0), complexity_(llsf_msgs::Order::C0), competitive_(false),
     quantity_requested_(0),
     quantity_delivered_cyan_(0), quantity_delivered_magenta_(0),
