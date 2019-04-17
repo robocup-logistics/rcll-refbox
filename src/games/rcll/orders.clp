@@ -90,6 +90,7 @@
 	?pf <- (product-delivered (game-time ?delivery-time) (team ?team)
 	                          (order ?id&~0) (delivery-gate ?gate)
 	                          (confirmed TRUE))
+	(not (product-delivered (game-time ?other-delivery&:(< ?other-delivery ?delivery-time))))
   ; the actual order we are delivering
   ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (competitive ?competitive)
 	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
