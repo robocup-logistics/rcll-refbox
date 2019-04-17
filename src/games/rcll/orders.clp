@@ -11,6 +11,15 @@
   (if (eq ?team CYAN) then (return 1) else (return 2))
 )
 
+(deffunction order-q-del-other-index (?team)
+	(if (eq ?team CYAN)
+	 then
+		(return (order-q-del-index MAGENTA))
+	 else
+		(return (order-q-del-index CYAN))
+	)
+)
+
 (deffunction order-q-del-team (?q-del ?team)
 	(return (nth$ (order-q-del-index ?team) ?q-del))
 )
@@ -82,7 +91,7 @@
 	                          (order ?id&~0) (delivery-gate ?gate)
 	                          (confirmed TRUE))
   ; the actual order we are delivering
-  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity)
+  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (competitive ?competitive)
 	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
 	        (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
 	        (quantity-requested ?q-req) (quantity-delivered $?q-del)
@@ -115,6 +124,22 @@
 		)
 		(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
 		                (points ?points) (reason ?reason)))
+		(if ?competitive
+		 then
+			(if (> (nth$ (order-q-del-other-index ?team) ?q-del) (nth$ ?q-del-idx ?q-del))
+			 then
+				; the other team delivered first
+				(bind ?deduction (min ?points ?*PRODUCTION-POINTS-COMPETITIVE-SECOND-DEDUCTION*))
+				(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+				                (points (* -1 ?deduction))
+				                (reason (str-cat "Second delivery for competitive order " ?id))))
+			 else
+				; this team delivered first
+				(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+				                (points ?*PRODUCTION-POINTS-COMPETITIVE-FIRST-BONUS*)
+				                (reason (str-cat "First delivery for competitive order " ?id))))
+			)
+		)
 
 		; Production points for ring color complexities
 		(foreach ?r ?ring-colors
