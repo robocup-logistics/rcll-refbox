@@ -85,7 +85,7 @@
 
 (defrule robot-recv-SetRobotMaintenance
   ?pf <- (protobuf-msg (type "llsf_msgs.SetRobotMaintenance") (ptr ?p) (rcvd-via STREAM))
-  (gamestate (cont-time ?ctime) (game-time ?game-time))
+  (gamestate (phase ?phase) (cont-time ?ctime) (game-time ?game-time))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
   (do-for-fact ((?robot robot))
@@ -104,7 +104,7 @@
 	 then
 		(assert (points (game-time ?game-time)
 		                (points (* -1 ?cycle-cost))
-		                (team ?robot:team-color) (phase PRODUCTION)
+		                (team ?robot:team-color) (phase ?phase)
 		                (reason (str-cat "Maintenance of robot " ?robot:number))))
 	)
       )
