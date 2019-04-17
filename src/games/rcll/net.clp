@@ -600,6 +600,7 @@
 
   (pb-set-field ?o "id" (fact-slot-value ?order-fact id))
   (pb-set-field ?o "complexity" (fact-slot-value ?order-fact complexity))
+  (pb-set-field ?o "competitive" (fact-slot-value ?order-fact competitive))
   (pb-set-field ?o "base_color" (fact-slot-value ?order-fact base-color))
   (foreach ?rc (fact-slot-value ?order-fact ring-colors)
     (pb-add-list ?o "ring_colors" ?rc)

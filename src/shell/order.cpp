@@ -49,8 +49,9 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellOrder::LLSFRefBoxShellOrder(int begin_y, int begin_x)
-  : NCursesPanel(1, 29, begin_y, begin_x),
-    id_(0), complexity_(llsf_msgs::Order::C0), quantity_requested_(0),
+  : NCursesPanel(1, 31, begin_y, begin_x),
+    id_(0), complexity_(llsf_msgs::Order::C0), competitive_(false),
+    quantity_requested_(0),
     quantity_delivered_cyan_(0), quantity_delivered_magenta_(0),
     delivery_period_begin_(0), delivery_period_end_(0),
     delivery_gate_(1), game_time_(0.)
@@ -65,6 +66,7 @@ LLSFRefBoxShellOrder::~LLSFRefBoxShellOrder()
 
 void
 LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::Complexity complexity,
+			     bool competitive,
 			     llsf_msgs::BaseColor base_color,
 			     std::vector<llsf_msgs::RingColor> &ring_colors,
 			     llsf_msgs::CapColor  cap_color,
@@ -77,6 +79,7 @@ LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::Complexity compl
 {
   id_ = id;
   complexity_  = complexity;
+  competitive_ = competitive;
   base_color_  = base_color;
   ring_colors_ = ring_colors;
   cap_color_   = cap_color;
@@ -118,6 +121,7 @@ LLSFRefBoxShellOrder::refresh()
   erase();
   bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
 
+  unsigned int col = 0;
   if (id_ != 0) {
     unsigned int begin_min = delivery_period_begin_ / 60;
     unsigned int begin_sec = delivery_period_begin_ - begin_min * 60;
@@ -125,7 +129,8 @@ LLSFRefBoxShellOrder::refresh()
     unsigned int end_sec = delivery_period_end_ - end_min * 60;
 
     attron(A_BOLD);
-    printw(0, id_ >= 10 ? 0 : 1, "%u.", id_);
+    printw(0, id_ >= 10 ? col : col + 1, "%u.", id_);
+    col += 2;
     attroff(A_BOLD);
 
     if (game_time_ >= delivery_period_begin_ && game_time_ <= delivery_period_end_) {
@@ -137,20 +142,30 @@ LLSFRefBoxShellOrder::refresh()
     } else {
       attron(' '|COLOR_PAIR(COLOR_CYAN_ON_BACK));
     }
-    printw(0, 3, "%u", quantity_delivered_cyan_);
+    printw(0, ++col, "%u", quantity_delivered_cyan_);
 
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-    addstr(0, 4, "/");
+    addstr(0, ++col, "/");
 
     if (quantity_delivered_magenta_ > 0) {
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_MAGENTA));
     } else {
       attron(' '|COLOR_PAIR(COLOR_MAGENTA_ON_BACK));
     }
-    printw(0, 5, "%u", quantity_delivered_magenta_);
+    printw(0, ++col, "%u", quantity_delivered_magenta_);
 
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-    printw(0, 6, "/%u", quantity_requested_);
+    printw(0, ++col, "/%u", quantity_requested_);
+    col += 2;
+
+    if (competitive_) {
+      attron(' '|COLOR_PAIR(COLOR_YELLOW_ON_BACK));
+      printw(0, ++col, "C");
+    } else {
+      ++col;
+	}
+
+    col += 1;
 
     switch (base_color_) {
     case llsf_msgs::BASE_RED:
@@ -160,7 +175,7 @@ LLSFRefBoxShellOrder::refresh()
     case llsf_msgs::BASE_BLACK:
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
     }
-    addstr(0, 9, " ");
+    addstr(0, ++col, " ");
 
     if (ring_colors_.size() >= 1) {
       switch (ring_colors_[0]) {
@@ -176,7 +191,7 @@ LLSFRefBoxShellOrder::refresh()
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
     }
-    addstr(0, 10, " ");
+    addstr(0, ++col, " ");
 
     if (ring_colors_.size() >= 2) {
       switch (ring_colors_[1]) {
@@ -192,7 +207,7 @@ LLSFRefBoxShellOrder::refresh()
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
     }
-    addstr(0, 11, " ");
+    addstr(0, ++col, " ");
 
     if (ring_colors_.size() >= 3) {
       switch (ring_colors_[2]) {
@@ -208,7 +223,7 @@ LLSFRefBoxShellOrder::refresh()
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
     }
-    addstr(0, 12, " ");
+    addstr(0, ++col, " ");
 
     switch (cap_color_) {
     case llsf_msgs::CAP_BLACK:
@@ -216,10 +231,12 @@ LLSFRefBoxShellOrder::refresh()
     case llsf_msgs::CAP_GREY:
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
     }
-    addstr(0, 13, " ");
+    addstr(0, ++col, " ");
+
+    col += 1;
 
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-    printw(0, 15, "%02u:%02u-%02u:%02u D%u",
+    printw(0, ++col, "%02u:%02u-%02u:%02u D%u",
 	   begin_min, begin_sec, end_min, end_sec,
 	   delivery_gate_);
   }

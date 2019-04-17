@@ -182,6 +182,7 @@
 
   ; Product specification
   (slot complexity (type SYMBOL) (allowed-values C0 C1 C2 C3))
+  (slot competitive (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   ; the following is auto-generated based on the previously defined complexity
   (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
@@ -419,7 +420,8 @@
   (order (id  8) (complexity C1) (quantity-requested 1) (start-range 550 800)
 	       (activation-range 350 550) (duration-range 100 200))
   ; overtime
-  (order (id  9) (complexity C0) (quantity-requested 1) (start-range 1020 1020)
-         (activation-range 0 0) (duration-range 300 300) (allow-overtime TRUE))
+  (order (id  9) (complexity C0) (competitive TRUE) (quantity-requested 1)
+         (start-range 1020 1020) (activation-range 0 0) (duration-range 300 300)
+         (allow-overtime TRUE))
 )
 

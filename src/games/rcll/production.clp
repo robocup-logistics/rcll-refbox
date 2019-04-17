@@ -404,6 +404,8 @@
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
   (assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
             (confirmed FALSE)))
+	(assert (attention-message (team ?team)
+	                           (text (str-cat "Please confirm delivery for order " ?order))))
   (modify ?m (state IDLE) (proc-state PROCESSED))
   (mps-deliver (str-cat ?n))
 )

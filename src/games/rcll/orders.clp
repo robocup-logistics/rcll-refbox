@@ -11,6 +11,15 @@
   (if (eq ?team CYAN) then (return 1) else (return 2))
 )
 
+(deffunction order-q-del-other-index (?team)
+	(if (eq ?team CYAN)
+	 then
+		(return (order-q-del-index MAGENTA))
+	 else
+		(return (order-q-del-index CYAN))
+	)
+)
+
 (deffunction order-q-del-team (?q-del ?team)
 	(return (nth$ (order-q-del-index ?team) ?q-del))
 )
@@ -81,8 +90,9 @@
 	?pf <- (product-delivered (game-time ?delivery-time) (team ?team)
 	                          (order ?id&~0) (delivery-gate ?gate)
 	                          (confirmed TRUE))
+	(not (product-delivered (game-time ?other-delivery&:(< ?other-delivery ?delivery-time))))
   ; the actual order we are delivering
-  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity)
+  ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (competitive ?competitive)
 	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
 	        (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
 	        (quantity-requested ?q-req) (quantity-delivered $?q-del)
@@ -96,26 +106,39 @@
   (if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
 
 		; Delivery points
+		(bind ?points 0)
+		(bind ?reason "")
 		(if (<= ?delivery-time (nth$ 2 ?dp)) then
-			(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-			                (points ?*PRODUCTION-POINTS-DELIVERY*)
-			                (reason (str-cat "Delivered item for order " ?id))))
+			(bind ?points ?*PRODUCTION-POINTS-DELIVERY*)
+			(bind ?reason (str-cat "Delivered item for order " ?id))
 		else
 			(if (< (- ?delivery-time (nth$ 2 ?dp))
 			       ?*PRODUCTION-DELIVER-MAX-LATENESS-TIME*)
 			 then
 				; 15 - floor(T_d - T_e) * 1.5 + 5
-				(bind ?points (+ (- 15 (* (floor (- ?delivery-time (nth$ 2 ?dp))) 1.5)) 5))
-				(assert (points (game-time ?delivery-time) (points (integer ?points))
-				                (team ?team) (phase PRODUCTION)
-				                (reason (str-cat "Delivered item for order " ?id
-				                                 " (late delivery grace time)"))))
+				(bind ?points (integer (+ (- 15 (* (floor (- ?delivery-time (nth$ 2 ?dp))) 1.5)) 5)))
+				(bind ?reason (str-cat "Delivered item for order " ?id " (late delivery grace time)"))
 			else
-				(assert (points (game-time ?delivery-time)
-				                (points ?*PRODUCTION-POINTS-DELIVERY-TOO-LATE*)
-				                (team ?team) (phase PRODUCTION)
-				                (reason (str-cat "Delivered item for order " ?id
-				                                 " (too late delivery)"))))
+				(bind ?points ?*PRODUCTION-POINTS-DELIVERY-TOO-LATE*)
+				(bind ?reason (str-cat "Delivered item for order " ?id " (too late delivery)"))
+			)
+		)
+		(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+		                (points ?points) (reason ?reason)))
+		(if ?competitive
+		 then
+			(if (> (nth$ (order-q-del-other-index ?team) ?q-del) (nth$ ?q-del-idx ?q-del))
+			 then
+				; the other team delivered first
+				(bind ?deduction (min ?points ?*PRODUCTION-POINTS-COMPETITIVE-SECOND-DEDUCTION*))
+				(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+				                (points (* -1 ?deduction))
+				                (reason (str-cat "Second delivery for competitive order " ?id))))
+			 else
+				; this team delivered first
+				(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+				                (points ?*PRODUCTION-POINTS-COMPETITIVE-FIRST-BONUS*)
+				                (reason (str-cat "First delivery for competitive order " ?id))))
 			)
 		)
 
