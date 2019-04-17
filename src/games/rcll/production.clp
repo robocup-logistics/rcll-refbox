@@ -101,12 +101,16 @@
 	      (if (pb-has-field ?p "instruction_ds")
 	       then
 	        (bind ?prepmsg (pb-field-value ?p "instruction_ds"))
-		(bind ?gate (pb-field-value ?prepmsg "gate"))
-		(bind ?order (pb-field-value ?prepmsg "order_id"))
-		(printout t "Prepared " ?mname " (gate: " ?gate ", order: " ?order ")" crlf)
-	        (modify ?m (state PREPARED) (ds-gate ?gate) (ds-order ?order)
+		(bind ?order-id (pb-field-value ?prepmsg "order_id"))
+		(if (any-factp ((?order order)) (eq ?order:id ?order-id))
+		 then
+			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
+			(modify ?m (state PREPARED) (ds-order ?order-id)
                            (mps-state AVAILABLE) (wait-for-product-since ?gt))
-                           ;(wait-for-product-since ?gt))
+		else
+			(modify ?m (state BROKEN) (prev-state ?m:state)
+			  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
+		)
                else
 		(modify ?m (state BROKEN) (prev-state ?m:state)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
@@ -295,16 +299,16 @@
 )
 
 (defrule prod-proc-state-processing-ds-start
-  "BS must be instructed to dispense base for processing"
+  "Instruct DS to start processing"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED)
-		 (ds-gate ?gate))
+  (order (id ?order) (delivery-gate ?gate))
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED))
   =>
   (printout t "Machine " ?n " of type DS switching to PREPARED state" crlf)
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
              (prep-blink-start ?gt))
-  (printout t "Machine " ?n " processing to gate " ?gate crlf)
+  (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
   (mps-ds-process (str-cat ?n) ?gate)
 )
 

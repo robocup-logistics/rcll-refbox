@@ -321,7 +321,7 @@ LLSFRefBoxShellMachine::refresh()
     if (minfo_ && minfo_->has_instruction_ds()) {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
       addstr(0, 26, (boost::str(boost::format("%u")
-				% minfo_->instruction_ds().gate())).c_str());
+				% minfo_->instruction_ds().order_id())).c_str());
     } else {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
       addstr(0, 26, "  ");
