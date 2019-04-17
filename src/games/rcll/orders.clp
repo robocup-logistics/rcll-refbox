@@ -96,28 +96,25 @@
   (if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
 
 		; Delivery points
+		(bind ?points 0)
+		(bind ?reason "")
 		(if (<= ?delivery-time (nth$ 2 ?dp)) then
-			(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-			                (points ?*PRODUCTION-POINTS-DELIVERY*)
-			                (reason (str-cat "Delivered item for order " ?id))))
+			(bind ?points ?*PRODUCTION-POINTS-DELIVERY*)
+			(bind ?reason (str-cat "Delivered item for order " ?id))
 		else
 			(if (< (- ?delivery-time (nth$ 2 ?dp))
 			       ?*PRODUCTION-DELIVER-MAX-LATENESS-TIME*)
 			 then
 				; 15 - floor(T_d - T_e) * 1.5 + 5
-				(bind ?points (+ (- 15 (* (floor (- ?delivery-time (nth$ 2 ?dp))) 1.5)) 5))
-				(assert (points (game-time ?delivery-time) (points (integer ?points))
-				                (team ?team) (phase PRODUCTION)
-				                (reason (str-cat "Delivered item for order " ?id
-				                                 " (late delivery grace time)"))))
+				(bind ?points (integer (+ (- 15 (* (floor (- ?delivery-time (nth$ 2 ?dp))) 1.5)) 5)))
+				(bind ?reason (str-cat "Delivered item for order " ?id " (late delivery grace time)"))
 			else
-				(assert (points (game-time ?delivery-time)
-				                (points ?*PRODUCTION-POINTS-DELIVERY-TOO-LATE*)
-				                (team ?team) (phase PRODUCTION)
-				                (reason (str-cat "Delivered item for order " ?id
-				                                 " (too late delivery)"))))
+				(bind ?points ?*PRODUCTION-POINTS-DELIVERY-TOO-LATE*)
+				(bind ?reason (str-cat "Delivered item for order " ?id " (too late delivery)"))
 			)
 		)
+		(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+		                (points ?points) (reason ?reason)))
 
 		; Production points for ring color complexities
 		(foreach ?r ?ring-colors
