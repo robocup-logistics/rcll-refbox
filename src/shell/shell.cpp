@@ -817,15 +817,16 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
       const llsf_msgs::Order &ospec = ordins->orders(i);
       std::vector<llsf_msgs::RingColor> ring_colors(ospec.ring_colors_size());
       for (int j = 0; j < ospec.ring_colors_size(); ++j) {
-	ring_colors[j] = ospec.ring_colors(j);
+        ring_colors[j] = ospec.ring_colors(j);
       }
       orders_[oidx++]->update(ospec.id(), ospec.complexity(),
-			      ospec.base_color(), ring_colors, ospec.cap_color(),
-			      ospec.quantity_requested(),
-			      ospec.quantity_delivered_cyan(),
-			      ospec.quantity_delivered_magenta(),
-			      ospec.delivery_period_begin(),
-			      ospec.delivery_period_end(), ospec.delivery_gate());
+        ospec.competitive(),
+        ospec.base_color(), ring_colors, ospec.cap_color(),
+        ospec.quantity_requested(),
+        ospec.quantity_delivered_cyan(),
+        ospec.quantity_delivered_magenta(),
+        ospec.delivery_period_begin(),
+        ospec.delivery_period_end(), ospec.delivery_gate());
     }
     for (size_t i = oidx; i < orders_.size(); ++i) {
       orders_[i]->reset();

@@ -58,6 +58,7 @@ class LLSFRefBoxShellOrder : public NCursesPanel
   ~LLSFRefBoxShellOrder();
 
   void update(unsigned int id, llsf_msgs::Order::Complexity complexity,
+	      bool competitive,
 	      llsf_msgs::BaseColor base_color,
 	      std::vector<llsf_msgs::RingColor> &ring_colors,
 	      llsf_msgs::CapColor  cap_color,
@@ -74,6 +75,7 @@ class LLSFRefBoxShellOrder : public NCursesPanel
  private:
   unsigned int id_;
   llsf_msgs::Order::Complexity complexity_;
+  bool competitive_;
   llsf_msgs::BaseColor base_color_;
   std::vector<llsf_msgs::RingColor> ring_colors_;
   llsf_msgs::CapColor  cap_color_;

@@ -50,7 +50,8 @@ namespace llsfrb_shell {
 
 LLSFRefBoxShellOrder::LLSFRefBoxShellOrder(int begin_y, int begin_x)
   : NCursesPanel(1, 29, begin_y, begin_x),
-    id_(0), complexity_(llsf_msgs::Order::C0), quantity_requested_(0),
+    id_(0), complexity_(llsf_msgs::Order::C0), competitive_(false),
+    quantity_requested_(0),
     quantity_delivered_cyan_(0), quantity_delivered_magenta_(0),
     delivery_period_begin_(0), delivery_period_end_(0),
     delivery_gate_(1), game_time_(0.)
@@ -65,6 +66,7 @@ LLSFRefBoxShellOrder::~LLSFRefBoxShellOrder()
 
 void
 LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::Complexity complexity,
+			     bool competitive,
 			     llsf_msgs::BaseColor base_color,
 			     std::vector<llsf_msgs::RingColor> &ring_colors,
 			     llsf_msgs::CapColor  cap_color,
@@ -77,6 +79,7 @@ LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::Complexity compl
 {
   id_ = id;
   complexity_  = complexity;
+  competitive_ = competitive;
   base_color_  = base_color;
   ring_colors_ = ring_colors;
   cap_color_   = cap_color;
@@ -154,6 +157,15 @@ LLSFRefBoxShellOrder::refresh()
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
     printw(0, ++col, "/%u", quantity_requested_);
     col += 2;
+
+    if (competitive_) {
+      attron(' '|COLOR_PAIR(COLOR_YELLOW_ON_BACK));
+      printw(0, ++col, "C");
+    } else {
+      ++col;
+	}
+
+    col += 1;
 
     switch (base_color_) {
     case llsf_msgs::BASE_RED:
