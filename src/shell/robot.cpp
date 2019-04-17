@@ -149,13 +149,13 @@ LLSFRefBoxShellRobot::refresh()
     printw(1, width() - 5, "%s", RobotState_Name(state_).substr(0,3).c_str());
     standend();
 
+    attron(A_BOLD);
     if (maintenance_cycles_ > 0) {
-      attron(A_BOLD);
       attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
-      //mvwaddwstr(w, 1, width() - 1, L"\u26a0");
-      printw(1, width() - 1, "!");
-      standend();
     }
+    //mvwaddwstr(w, 1, width() - 1, L"\u26a0");
+    printw(1, width() - 1, "%1i", maintenance_cycles_);
+    standend();
 
   } else {
     bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));

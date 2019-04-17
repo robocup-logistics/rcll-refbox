@@ -256,6 +256,6 @@
 (defrule order-print-points
   (points (game-time ?gt) (points ?points) (team ?team) (phase ?phase) (reason ?reason))
   =>
-  (printout t "Awarding " ?points " points to team " ?team ": " ?reason
+  (printout t "Giving " ?points " points to team " ?team ": " ?reason
 	    " (" ?phase " @ " ?gt ")" crlf)
 )

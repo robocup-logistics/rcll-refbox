@@ -86,7 +86,8 @@
   ?*TECHCHALL-WAM-TIME* = 300
   ?*TECHCHALL-NAVIGATION-TIME* = 60
   ; number of allowed robot maintenance cycles
-  ?*MAINTENANCE-ALLOWED-CYCLES* = 1
+  ?*MAINTENANCE-ALLOWED-CYCLES* = 2
+  ?*MAINTENANCE-COST*           = (create$ 0 5)
   ?*MAINTENANCE-ALLOWED-TIME*   = 120
   ?*MAINTENANCE-WARN-TIME*      = 105
   ?*MAINTENANCE-GRACE-TIME*     =  15
