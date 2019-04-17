@@ -299,7 +299,7 @@
 )
 
 (defrule prod-proc-state-processing-ds-start
-  "BS must be instructed to dispense base for processing"
+  "Instruct DS to start processing"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (order (id ?order) (delivery-gate ?gate))
