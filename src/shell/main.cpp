@@ -62,9 +62,9 @@ main(int argc, char **argv)
     return -1;
   }
 
-  if (w < 87) {
+  if (w < 94) {
     ::endwin();
-    printf("A minimum of 87 columns is required in the terminal\n");
+    printf("A minimum of 94 columns is required in the terminal\n");
     return -1;
   }
 
