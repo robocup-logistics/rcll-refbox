@@ -13,7 +13,9 @@ namespace modbus {
 
 class SubscriptionClient : public OpcUa::SubscriptionHandler
 {
+  typedef std::function<void(OpcUtils::ReturnValue*)> ReturnValueCallback;
   std::shared_ptr<spdlog::logger> logger;
+  std::vector<ReturnValueCallback> callbacks;
 
   void DataChange(uint32_t handle, const OpcUa::Node &node, const OpcUa::Variant &val, OpcUa::AttributeId attr) override
   {
@@ -38,9 +40,12 @@ class SubscriptionClient : public OpcUa::SubscriptionHandler
           OpcUtils::logNodeValue(val, msg, OpcUtils::REGISTER_NAMES[reg], logger); */
       }
 
-      if(logger == nullptr)
-        return;
-      OpcUtils::logReturnValue(mpsValue, logger, reg, "DataChange: ");
+      if(logger != nullptr)
+      	OpcUtils::logReturnValue(mpsValue, logger, reg, "DataChange: ");
+
+      if(callbacks.size() > 0)
+	for(ReturnValueCallback callback : callbacks)
+	  callback(mpsValue);
     }
   }
 
@@ -65,6 +70,13 @@ public:
   ~SubscriptionClient()
   {
     delete mpsValue;
+  }
+
+  void add_callback(ReturnValueCallback callback)
+  { 
+    std::cout << "Adding callback" << std::endl;
+    callbacks.push_back(callback); 
+    std::cout << "Callback added" << std::endl;
   }
 };
 }
