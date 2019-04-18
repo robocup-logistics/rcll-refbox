@@ -332,8 +332,8 @@ const std::vector<std::string> OpcUtils::REGISTER_NAMES({ "ACTION_ID_IN", "BARCO
 /* CHANGE THE PATHS ONCE REAL MPS IS USED */
 const std::vector<std::string> OpcUtils::BASIC_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "4:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
 const std::vector<std::string> OpcUtils::IN_NODE_PATH({"Objects", "2:DeviceSet", "4:CPX-E-CEC-C1-PN", "4:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
-const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
-const std::vector<std::string> OpcUtils::IN_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
+const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
+const std::vector<std::string> OpcUtils::IN_NODE_PATH_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
 const std::vector<std::string> OpcUtils::BASIC_NODE_PATH_64_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:Basic"});
 const std::vector<std::string> OpcUtils::IN_NODE_PATH_64_SIM({"Objects", "2:DeviceSet", "4:CODESYS Control Win V3 x64", "3:Resources", "4:Application", "3:GlobalVars", "4:G", "4:In"});
 

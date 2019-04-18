@@ -119,11 +119,11 @@ protected:
   OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
 
   // Subscribe to a specified MPSRegister; If ReturnValue is set, the SubscriptionClient internal ReturnValue is overridden
-  SubscriptionClient *subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *retVal = nullptr);
+  SubscriptionClient *subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *retVal = nullptr, bool simulation = false);
   // Subscribe to multiple specified MPSRegisters; If ReturnValues are set, the SubscriptionClients internal ReturnValues are overridden
-  void subscribe(std::vector<OpcUtils::MPSRegister> registers, OpcUtils::ReturnValue *retVals = nullptr);
+  void subscribe(std::vector<OpcUtils::MPSRegister> registers, OpcUtils::ReturnValue *retVals = nullptr, bool simulation = false);
   // Subscribe to all existing MPSRegisters
-  void subscribeAll();
+  void subscribeAll(bool simulation = false);
   // Cancel a subscription given a specific MPSRegister; If default argument is true, final subscription value will be printed before deleting
   SubscriptionClient::map::iterator cancelSubscription(OpcUtils::MPSRegister reg, bool log = false);
   // Cancel all existing subscriptions; If default argument is true, final subscription values will be printed before deleting

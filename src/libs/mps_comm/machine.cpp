@@ -121,7 +121,7 @@ bool Machine::connect_PLC(const std::string& ip, unsigned short port, bool simul
   if(!reconnect(ip.c_str(), port, simulation))
     return false;
 
-  subscribe(SUB_REGISTERS, outs);
+  subscribe(SUB_REGISTERS, outs, simulation);
   identify();
   return true;
 }
@@ -286,27 +286,38 @@ bool Machine::disconnect()
   return false;
 }
 
-void Machine::subscribeAll()
+void Machine::subscribeAll(bool simulation)
 {
   for(int i = OpcUtils::MPSRegister::ACTION_ID_IN; i != OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
-    subscribe(static_cast<OpcUtils::MPSRegister>(i));
+    subscribe(static_cast<OpcUtils::MPSRegister>(i), nullptr, simulation);
 }
 
-void Machine::subscribe(std::vector<OpcUtils::MPSRegister> registers, OpcUtils::ReturnValue* retVals)
+void Machine::subscribe(std::vector<OpcUtils::MPSRegister> registers, OpcUtils::ReturnValue* retVals, bool simulation)
 {
   for(OpcUtils::MPSRegister reg : registers)
-    subscribe(reg, retVals == nullptr ? nullptr : &retVals[reg]);
+    subscribe(reg, retVals == nullptr ? nullptr : &retVals[reg], simulation);
 }
 
-SubscriptionClient* Machine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue* retVal)
+SubscriptionClient* Machine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue* retVal, bool simulation)
 {
   auto it = subscriptions.end();
   if((it = subscriptions.find(reg)) != subscriptions.end())
     return it->second;
-  OpcUa::Node node = OpcUtils::getNode(client, reg);
+  OpcUa::Node node = OpcUtils::getNode(client, reg, simulation);
   SubscriptionClient* sub = new SubscriptionClient(logger, retVal);
   sub->reg = reg;
   sub->node = node;
+  /*
+  EXAMPLE lambda callback on value change using logger
+  std::weak_ptr<spdlog::logger> weak_logger(logger);
+  sub->add_callback([weak_logger, reg](OpcUtils::ReturnValue* retVal)
+  {
+    auto logger = weak_logger.lock();
+    if (logger) {
+      OpcUtils::logReturnValue(retVal, logger, reg, "Callback received:");
+    }
+  });
+  */
   int response_timeout = 100;
   sub->subscription = client->CreateSubscription(response_timeout, *sub);
   sub->handle = sub->subscription->SubscribeDataChange(node);
