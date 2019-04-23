@@ -25,6 +25,10 @@ namespace modbus
 }
 #endif
 
+enum ConveyorDirection { forward, backward };
+
+enum MPSSensor { input, middle, output };
+
 class Machine
 {
 public:
@@ -49,7 +53,7 @@ public:
   void set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state = llsf_msgs::ON,
                  unsigned short time = 0);
 
-  void conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor);
+  void conveyor_move(ConveyorDirection direction, MPSSensor sensor);
 
   // Sends reset light command
   void reset_light();

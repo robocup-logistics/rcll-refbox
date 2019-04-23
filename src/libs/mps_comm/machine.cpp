@@ -170,17 +170,17 @@ void Machine::set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state
   send_command( m_color, plc_state, time);
 }
 
-void Machine::conveyor_move(llsf_msgs::ConveyorDirection direction, llsf_msgs::SensorOnMPS sensor)
+void Machine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 {
   unsigned short sensor_sps = -1;
   switch (sensor) {
-    case llsf_msgs::SensorOnMPS::SENSOR_INPUT:
+    case input:
       sensor_sps = 1;
       break;
-    case llsf_msgs::SensorOnMPS::SENSOR_MIDDLE:
+    case middle:
       sensor_sps = 2;
       break;
-    case llsf_msgs::SensorOnMPS::SENSOR_OUTPUT:
+    case output:
       sensor_sps = 3;
       break;
     default:
