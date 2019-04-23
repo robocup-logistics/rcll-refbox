@@ -195,19 +195,19 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 	    if(mpstype == "BS") {
 	      logger_->log_info("RefBox", "Adding BS %s:%u", mpsip.c_str(), port);
-        mps = new BaseStation();
+        mps = new BaseStation(cfg_name);
 	    }
 	    else if(mpstype == "CS") {
 	      logger_->log_info("RefBox", "Adding CS %s:%u", mpsip.c_str(), port, cfg_name.c_str());
-	      mps = new CapStation();
+	      mps = new CapStation(cfg_name);
 	    }
 	    else if(mpstype == "RS") {
 	      logger_->log_info("RefBox", "Adding RS %s:%u", mpsip.c_str(), port);
-	      mps = new RingStation();
+	      mps = new RingStation(cfg_name);
 	    }
 	    else if(mpstype == "DS") {
 	      logger_->log_info("RefBox", "Adding DS %s:%u", mpsip.c_str(), port);
-	      mps = new DeliveryStation();
+	      mps = new DeliveryStation(cfg_name);
 	    }
 	    else {
 	      throw fawkes::Exception("this type wont match");
