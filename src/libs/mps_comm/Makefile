@@ -19,7 +19,7 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
-LIBS_libmps_comm = stdc++ m llsfrbcore pthread opcuaclient opcuacore opcuaprotocol opcuaserver mbedtls mbedcrypto mbedx509
+LIBS_libmps_comm = stdc++ m llsfrbcore pthread opcuaclient opcuacore opcuaprotocol
 OBJS_libmps_comm = opc_utils.o machine.o base_station.o cap_station.o delivery_station.o ring_station.o storage_station.o time_utils.o
 HDRS_libmps_comm = subscription_client.h opc_utils.h machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h
 
