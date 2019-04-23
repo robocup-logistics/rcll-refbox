@@ -20,7 +20,7 @@ namespace modbus {
 const std::vector<OpcUtils::MPSRegister> Machine::SUB_REGISTERS({ OpcUtils::MPSRegister::BARCODE_IN, OpcUtils::MPSRegister::ERROR_IN, OpcUtils::MPSRegister::STATUS_BUSY_IN, OpcUtils::MPSRegister::STATUS_ENABLE_IN, OpcUtils::MPSRegister::STATUS_ERROR_IN, OpcUtils::MPSRegister::STATUS_READY_IN });
 const std::string Machine::LOG_PATH = ""; /* TODO add log path if needed; if empty -> log is redirected to stdout */
 
-Machine::Machine(unsigned short int machine_type) : abort_operation_(false), machine_type_(machine_type) {//, in_registers_(4), out_registers_(4) {
+Machine::Machine(std::string name, unsigned short int machine_type) : abort_operation_(false), name_(name), machine_type_(machine_type) {//, in_registers_(4), out_registers_(4) {
   initLogger();
 }
 
@@ -197,9 +197,9 @@ void Machine::reset_light() {
 void Machine::initLogger()
 {
   if(LOG_PATH.empty() || LOG_PATH.length() < 1)  /* stdout redirected logging ... */
-    logger = spdlog::stdout_logger_mt("client");
+    logger = spdlog::stdout_logger_mt(name_);
   else /* ... or logging to file */
-    logger = spdlog::basic_logger_mt("client", LOG_PATH);
+    logger = spdlog::basic_logger_mt(name_, LOG_PATH);
 
   logger->info("\n\n\nNew logging session started");
 

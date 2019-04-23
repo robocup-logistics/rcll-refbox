@@ -14,7 +14,7 @@ namespace modbus {
 
 class DeliveryStation: public Machine {
   public:
-    DeliveryStation();
+    DeliveryStation(std::string name);
     virtual ~DeliveryStation();
 
     // Send command to deliver a product

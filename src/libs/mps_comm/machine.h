@@ -32,7 +32,7 @@ enum MPSSensor { input, middle, output };
 class Machine
 {
 public:
-  Machine(unsigned short int machine_type);
+  Machine(std::string name, unsigned short int machine_type);
 
   virtual ~Machine();
 
@@ -74,6 +74,7 @@ public:
   bool wait_for_free();
 
 protected:
+  const std::string name_;
   // machine type
   const unsigned short int machine_type_;
   // wait, until the ready bit is set.

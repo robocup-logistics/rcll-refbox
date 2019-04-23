@@ -16,7 +16,7 @@ namespace modbus {
 
 class StorageStation: public Machine {
   public:
-    StorageStation();
+    StorageStation(std::string name);
     virtual ~StorageStation();
 
     // Send command to deliver a product

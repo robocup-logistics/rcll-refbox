@@ -11,7 +11,7 @@ namespace modbus {
 }
 #endif
 
-CapStation::CapStation() : Machine(Station::STATION_CAP) { }
+CapStation::CapStation(std::string name) : Machine(name, Station::STATION_CAP) { }
 CapStation::~CapStation() {}
 
 
