@@ -44,8 +44,9 @@
 #include <core/threading/mutex_locker.h>
 #include <utils/llsf/machines.h>
 #include <protobuf_comm/server.h>
-#include <llsf_sps/mps_refbox_interface.h>
 #include <core/threading/thread_list.h>
+
+#include <mps_comm/mps_refbox_interface.h>
 
 #include <clipsmm.h>
 #ifdef HAVE_MONGODB
@@ -57,10 +58,6 @@ namespace mps_placing_clips {
 }
 namespace protobuf_clips {
   class ClipsProtobufCommunicator;
-}
-
-namespace llsf_sps {
-  class SPSComm;
 }
 
 #ifdef HAVE_AVAHI
@@ -145,7 +142,6 @@ class LLSFRefBox
   CLIPS::Values clips_bson_get_time(void *bson, std::string field_name);
 #endif
 
-  void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
   void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
   void          clips_mps_rs_mount_ring(std::string machine, int slide);
   void          clips_mps_cs_process(std::string machine, std::string operation);
@@ -156,7 +152,6 @@ class LLSFRefBox
   void          clips_mps_reset(std::string machine);
   void          clips_mps_reset_base_counter(std::string machine);
   void          clips_mps_deliver(std::string machine);
-  void          sps_read_rfids();
 
   void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
 				uint16_t component_id, uint16_t msg_type,
@@ -185,7 +180,6 @@ class LLSFRefBox
   Logger        *logger_;
   MultiLogger   *clips_logger_;
   Logger::LogLevel log_level_;
-  llsf_sps::SPSComm *sps_;
   protobuf_clips::ClipsProtobufCommunicator *pb_comm_;
   std::shared_ptr<mps_placing_clips::MPSPlacingGenerator> mps_placing_generator_;
 

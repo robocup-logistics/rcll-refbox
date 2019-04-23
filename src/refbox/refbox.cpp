@@ -43,16 +43,11 @@
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
 #include <mps_placing_clips/mps_placing_clips.h>
-#include <llsf_sps/sps_comm.h>
 #include <logging/multi.h>
 #include <logging/file.h>
 #include <logging/network.h>
 #include <logging/console.h>
-#include <llsf_sps/mps_refbox_interface.h>
-#include <llsf_sps/mps_incoming_station.h>
-#include <llsf_sps/mps_pick_place_1.h>
-#include <llsf_sps/mps_pick_place_2.h>
-#include <llsf_sps/mps_deliver.h>
+#include <mps_comm/base_station.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -74,7 +69,6 @@
 
 #include <string>
 
-using namespace llsf_sps;
 using namespace protobuf_comm;
 using namespace protobuf_clips;
 using namespace llsf_utils;
@@ -161,34 +155,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		    (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
 
   try {
-    sps_ = NULL;
-    if (config_->get_bool("/llsfrb/sps/enable")) {
-      logger_->log_info("RefBox", "Connecting to SPS");
-      bool test_lights = true;
-      try {
-	test_lights = config_->get_bool("/llsfrb/sps/test-lights");
-      } catch (fawkes::Exception &e) {} // ignore, use default
-
-      if (config_->exists("/llsfrb/sps/hosts") && cfg_machine_assignment_ == ASSIGNMENT_2014) {
-	sps_ = new SPSComm(config_->get_strings("/llsfrb/sps/hosts"),
-			   config_->get_uint("/llsfrb/sps/port"),
-			   config_->get_string("/llsfrb/sps/machine-type"));
-      }
-
-      sps_->reset_lights();
-      sps_->reset_rfids();
-      if (test_lights) {
-	sps_->test_lights();
-      }
-    }
-  } catch (fawkes::Exception &e) {
-    logger_->log_warn("RefBox", "Cannot connect to SPS, running without");
-    delete sps_;
-    sps_ = NULL;
-  }
-
-
-  try {
     mps_ = NULL;
     if (config_->get_bool("/llsfrb/mps/enable")) {
       mps_ = new MPSRefboxInterface("MPSInterface");
@@ -222,34 +188,32 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	  } catch (Exception &e) {} // ignored, assume enabled
 
 	  if (active) {
-
+      modbus::Machine *mps;
  	    std::string mpstype = config_->get_string((cfg_prefix + "type").c_str());  
 	    std::string mpsip = config_->get_string((cfg_prefix + "host").c_str());
 	    unsigned int port = config_->get_uint((cfg_prefix + "port").c_str());
 
 	    if(mpstype == "BS") {
 	      logger_->log_info("RefBox", "Adding BS %s:%u", mpsip.c_str(), port);
-	      MPSIncomingStation *is = new MPSIncomingStation(mpsip.c_str(), port, cfg_name.c_str());
-	      mps_->insertMachine(cfg_name, is, is);
+        mps = new BaseStation();
 	    }
 	    else if(mpstype == "CS") {
 	      logger_->log_info("RefBox", "Adding CS %s:%u", mpsip.c_str(), port, cfg_name.c_str());
-	      MPSPickPlace1 *pp1 = new MPSPickPlace1(mpsip.c_str(), port, cfg_name.c_str());
-	      mps_->insertMachine(cfg_name, pp1, pp1);
+	      mps = new CapStation();
 	    }
 	    else if(mpstype == "RS") {
 	      logger_->log_info("RefBox", "Adding RS %s:%u", mpsip.c_str(), port);
-	      MPSPickPlace2 *pp2 = new MPSPickPlace2(mpsip.c_str(), port, cfg_name.c_str());
-	      mps_->insertMachine(cfg_name, pp2, pp2);
+	      mps = new RingStation();
 	    }
 	    else if(mpstype == "DS") {
 	      logger_->log_info("RefBox", "Adding DS %s:%u", mpsip.c_str(), port);
-	      MPSDeliver *del = new MPSDeliver(mpsip.c_str(), port, cfg_name.c_str());
-	      mps_->insertMachine(cfg_name, del, del);
+	      mps = new DeliveryStation();
 	    }
 	    else {
 	      throw fawkes::Exception("this type wont match");
 	    }
+      mps->connect_PLC(mpsip, port);
+      mps_->insertMachine(cfg_name, mps);
 	    mps_configs.insert(cfg_name);
 	  } else {
 	    ignored_mps_configs.insert(cfg_name);
@@ -370,7 +334,6 @@ LLSFRefBox::~LLSFRefBox()
 
   delete pb_comm_;
   delete config_;
-  delete sps_;
   delete clips_;
   delete logger_;
   delete clips_logger_;
@@ -428,7 +391,6 @@ LLSFRefBox::setup_protobuf_comm()
 
   } catch (std::runtime_error &e) {
     delete config_;
-    delete sps_;
     delete pb_comm_;
     throw;
   }
@@ -473,7 +435,6 @@ LLSFRefBox::setup_clips()
   clips_->add_function("load-config", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_load_config)));
   clips_->add_function("config-path-exists", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_path_exists)));
   clips_->add_function("config-get-bool", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_bool)));
-  clips_->add_function("sps-set-signal", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_sps_set_signal)));
 
   if (mps_ && ! simulation) {
     clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
@@ -483,7 +444,7 @@ LLSFRefBox::setup_clips()
     clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
     clips_->add_function("mps-set-lights", sigc::slot<void, std::string, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
     clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
-    clips_->add_function("mps-reset-base-counter", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
+    //clips_->add_function("mps-reset-base-counter", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
     clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
   }
 
@@ -605,34 +566,22 @@ LLSFRefBox::clips_config_get_bool(std::string path)
 
 
 void
-LLSFRefBox::clips_sps_set_signal(std::string machine, std::string light, std::string state)
-{
-  if (! sps_)  return;
-  try {
-    unsigned int m = to_machine(machine, cfg_machine_assignment_);
-    sps_->set_light(m, light, state);
-  } catch (fawkes::Exception &e) {
-    logger_->log_warn("RefBox", "Failed to set signal: %s", e.what());
-  }
-}
-
-void
 LLSFRefBox::clips_mps_reset(std::string machine)
 {
   logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
 
   if (! mps_)  return;
-  MPS *station;
+  Machine *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->resetMachine();
-    station->clearRegister();
+    station->reset();
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
   }
 }
 
+/*
 void
 LLSFRefBox::clips_mps_reset_base_counter(std::string machine)
 {
@@ -648,6 +597,7 @@ LLSFRefBox::clips_mps_reset_base_counter(std::string machine)
     return;
   }
 }
+*/
 
 
 void
@@ -656,10 +606,10 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
   logger_->log_info("MPS", "Delivering on %s", machine.c_str());
 
   if (! mps_)  return;
-  MPS *station;
+  Machine *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->deliverProduct();
+    station->conveyor_move(llsfrb::modbus::ConveyorDirection::forward, llsfrb::modbus::MPSSensor::output);
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
@@ -672,22 +622,23 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::s
   logger_->log_info("MPS", "Dispense %s: %s at %s",
 		    machine.c_str(), color.c_str(), side.c_str());
   if (! mps_)  return;
-  MPSIncomingStation *station;
+  BaseStation *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    int color_id = 0;
+    llsf_msgs::BaseColor color_id;
     if (color == "BASE_RED") {
-      color_id = 1;
+      color_id = llsf_msgs::BaseColor::BASE_RED;
     } else if (color == "BASE_SILVER") {
-      color_id = 2;
+      color_id = llsf_msgs::BaseColor::BASE_SILVER;
     } else if (color == "BASE_BLACK") {
-      color_id = 3;
+      color_id = llsf_msgs::BaseColor::BASE_BLACK;
     } else {
       logger_->log_error("MPS", "Invalid color %s", color.c_str());
       return;
     }
 
-    int side_id = 0;
+    /*
+    int side_id;
     if (side == "INPUT") {
       side_id = 2;
     } else if (side == "OUTPUT") {
@@ -696,8 +647,10 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::s
       logger_->log_error("MPS", "Invalid side %s", side.c_str());
       return;
     }
+    */
 
-    station->getCap(color_id, side_id);
+    // TODO: also pass the side
+    station->get_base(color_id);
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
@@ -711,10 +664,10 @@ LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
   logger_->log_info("MPS", "Processing on %s: slide %d",
 		    machine.c_str(), slide);
   if (! mps_)  return;
-  MPSDeliver *station;
+  DeliveryStation *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->sendDeliver(slide);
+    station->deliver_product(slide);
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
@@ -727,10 +680,10 @@ LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
   logger_->log_info("MPS", "Mount ring on %s: slide %d",
 		    machine.c_str(), slide);
   if (! mps_)  return;
-  MPSPickPlace2 *station;
+  RingStation *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->produceRing(slide);
+    station->mount_ring(slide);
   } else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
@@ -744,13 +697,13 @@ LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
   logger_->log_info("MPS", "%s on %s",
 		    operation.c_str(), machine.c_str());
   if (! mps_)  return;
-  MPSPickPlace1 *station;
+  CapStation *station;
   station = mps_->get_station(machine, station);
   if (station) {
     if (operation == "RETRIEVE_CAP") {
-      station->produceEnd(2);
+      station->retrieve_cap();
     } else if (operation == "MOUNT_CAP") {
-      station->produceEnd(1);
+      station->mount_cap();
     } else {
       logger_->log_error("MPS", "Invalid operation '%s' on %s",
 			 operation.c_str(), machine.c_str());
@@ -769,39 +722,37 @@ LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::str
   //		    machine.c_str(), color.c_str(), state.c_str());
 
   if (! mps_)  return;
-  MPS *station;
+  Machine *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    int color_id = 0;
+    llsf_msgs::LightColor color_id;
     if (color == "RED") {
-      color_id = 1;
+      color_id = llsf_msgs::LightColor::RED;
     } else if (color == "YELLOW") {
-      color_id = 2;
+      color_id = llsf_msgs::LightColor::YELLOW;
     } else if (color == "GREEN") {
-      color_id = 3;
+      color_id = llsf_msgs::LightColor::GREEN;
     } else {
       logger_->log_error("MPS", "Invalid color %s", color.c_str());
       return;
     }
 
-    int state_id = 0;
-    int blink_id = 0;
+    llsf_msgs::LightState state_id;
     if (state == "ON") {
-      state_id = 1;
-      blink_id = 0;
+      state_id = llsf_msgs::LightState::ON;
     } else if (state == "BLINK") {
-      state_id = 1;
-      blink_id = 1;
+      state_id = llsf_msgs::LightState::BLINK;
     } else if (state == "OFF") {
-      state_id = 0;
-      blink_id = 0;
+      state_id = llsf_msgs::LightState::OFF;
     } else {
       logger_->log_error("MPS", "Invalid state %s", state.c_str());
       return;
     }
 
     //printf("Set light %i %i %i\n", color_id, state_id, blink_id);
-    station->setLight(color_id, state_id, blink_id);
+    // TODO time?
+    int time = 0;
+    station->set_light(color_id, state_id, time);
 
   } else {
     //logger_->log_error("MPS", "Invalid station %s", machine.c_str());
@@ -813,48 +764,9 @@ void
 LLSFRefBox::clips_mps_set_lights(std::string machine, std::string red_state,
                                  std::string yellow_state, std::string green_state)
 {
-  //logger_->log_info("MPS", "Set light on %s: red %s yellow %s  green %s",
-  //                  machine.c_str(), red_state.c_str(), yellow_state.c_str(), green_state.c_str());
-
-  if (! mps_)  return;
-  MPS *station;
-  station = mps_->get_station(machine, station);
-  if (station) {
-
-	  // 0 is off, 1 is on, 2 is blink
-	  int lights[3];
-
-    if (red_state == "ON") {
-	    lights[0] = 1;
-    } else if (red_state == "BLINK") {
-	    lights[0] = 2;
-    } else {
-	    lights[0] = 0;
-    }
-
-    if (yellow_state == "ON") {
-	    lights[1] = 1;
-    } else if (yellow_state == "BLINK") {
-	    lights[1] = 2;
-    } else {
-	    lights[1] = 0;
-    }
-
-    if (green_state == "ON") {
-	    lights[2] = 1;
-    } else if (green_state == "BLINK") {
-	    lights[2] = 2;
-    } else {
-	    lights[2] = 0;
-    }
-
-    //printf("Set light %i %i %i\n", color_id, state_id, blink_id);
-    station->setAllLights(lights);
-
-  } else {
-    //logger_->log_error("MPS", "Invalid station %s", machine.c_str());
-    return;
-  }
+  clips_mps_set_light(machine, "RED", red_state);
+  clips_mps_set_light(machine, "YELLOW", yellow_state);
+  clips_mps_set_light(machine, "GREEN", green_state);
 }
 
 #ifdef HAVE_MONGODB
@@ -1603,41 +1515,6 @@ LLSFRefBox::clips_bson_get_time(void *bson, std::string field_name)
 #endif
 
 
-void
-LLSFRefBox::sps_read_rfids()
-{
-  if (! sps_)  return;
-
-  //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
-  fawkes::MutexLocker lock(&clips_mutex_);
-
-
-  try {
-    std::vector<uint32_t> puck_ids = sps_->read_rfids();
-    for (unsigned int i = 0; i < puck_ids.size(); ++i) {
-      const char *machine_name = to_string(i, cfg_machine_assignment_);
-      if (puck_ids[i] == SPSComm::NO_PUCK) {
-        clips_->assert_fact_f("(rfid-input (machine %s) (has-puck FALSE))",
-			      machine_name);
-      } else {
-        clips_->assert_fact_f("(rfid-input (machine %s) (has-puck TRUE) (id %u))",
-			      machine_name, puck_ids[i]);
-      }
-    }
-  } catch (fawkes::Exception &e) {
-    logger_->log_warn("RefBox", "Failed to read RFIDs");
-    logger_->log_warn("RefBox", e);
-    try {
-      sps_->try_reconnect();
-      logger_->log_info("RefBox", "Successfully reconnected");
-    } catch (fawkes::Exception &e) {
-      logger_->log_error("RefBox", "Failed to reconnect");
-      logger_->log_error("RefBox", e);
-    }
-  }
-}
-
-
 /** Start the timer for another run. */
 void
 LLSFRefBox::start_timer()
@@ -1675,11 +1552,12 @@ LLSFRefBox::handle_timer(const boost::system::error_code& error)
 	  //       ms.first.c_str(), ms.second.c_str(), 0);
           std::string type = ms.first.substr(2, 2);
           unsigned int num_bases = 0;
-          if (type == "RS") {
-            MPSPickPlace2 *station;
-            station = mps_->get_station(ms.first, station);
-            if (station)  num_bases = station->getCountSlide();
-          }
+          // TODO get RS base count
+          //if (type == "RS") {
+          //  RingStation *station;
+          //  station = mps_->get_station(ms.first, station);
+          //  if (station)  num_bases = station->getCountSlide();
+          //}
 	  clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
 				ms.first.c_str(), ms.second.c_str(), num_bases);
 	}
