@@ -11,13 +11,11 @@
 #include <core/threading/thread_list.h>
 #include <map>
 
-#include <llsf_sps/mps.h>
-#include <llsf_sps/mps_incoming_station.h>
-#include <llsf_sps/mps_pick_place_1.h>
-#include <llsf_sps/mps_pick_place_2.h>
-#include <llsf_sps/mps_deliver.h>
+#include "machine.h"
+#include "stations.h"
 
 using namespace fawkes;
+using namespace llsfrb::modbus;
 
 /*!
 * \class MPSRefboxInterface
@@ -28,7 +26,7 @@ class MPSRefboxInterface {
   unsigned int          __max_thread_time_usec;
   unsigned int          __max_thread_time_sec;
   ThreadList           *mpsThreadList;
-  std::map<std::string, MPS *>  mpses_;
+  std::map<std::string, Machine *>  mpses_;
   
  public:
   /*!
@@ -48,9 +46,9 @@ class MPSRefboxInterface {
   /*!
    * \fn insertMachine(Thread *t)
    * \brief insert machine into thread list
-   * \param t Reference to thread that have to be insert into list
+   * \param mps The Machine object to insert
    */
-  void insertMachine(std::string station_name, MPS *mps, Thread *t);
+  void insertMachine(std::string station_name, Machine *mps);
 
   void process();
 
@@ -63,7 +61,7 @@ class MPSRefboxInterface {
       return NULL;
     }
 
-    MPS *mps = mpses_[name];
+    Machine *mps = mpses_[name];
     C typed_mps = dynamic_cast<C>(mps);
     if (! typed_mps) {
       return NULL;
