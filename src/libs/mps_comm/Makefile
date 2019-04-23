@@ -19,11 +19,11 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
-LIBS_libllsf_sps = stdc++ m llsfrbcore pthread opcuaclient opcuacore opcuaprotocol opcuaserver mbedtls mbedcrypto mbedx509
-OBJS_libllsf_sps = opc_utils.o machine.o base_station.o cap_station.o delivery_station.o ring_station.o storage_station.o time_utils.o
-HDRS_libllsf_sps = subscription_client.h opc_utils.h machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h
+LIBS_libmps_comm = stdc++ m llsfrbcore pthread opcuaclient opcuacore opcuaprotocol opcuaserver mbedtls mbedcrypto mbedx509
+OBJS_libmps_comm = opc_utils.o machine.o base_station.o cap_station.o delivery_station.o ring_station.o storage_station.o time_utils.o
+HDRS_libmps_comm = subscription_client.h opc_utils.h machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h
 
-OBJS_all = $(OBJS_libllsf_sps)
+OBJS_all = $(OBJS_libmps_comm)
 
 ifeq ($(CC),gcc)
   ifneq ($(call gcc_atleast_version,4,6),1)
@@ -36,7 +36,7 @@ ifneq ($(GCC_TOO_OLD),1)
     CFLAGS  += $(CFLAGS_LIBMODBUS) $(CFLAGS_CPP11)
     LDFLAGS += $(LDFLAGS_LIBMODBUS)
 
-    LIBS_all  = $(LIBDIR)/libllsf_sps.so
+    LIBS_all  = $(LIBDIR)/libmps_comm.so
   else
     ifneq ($(HAVE_LIBMODBUS),1)
       WARN_TARGETS += warning_libmodbus
