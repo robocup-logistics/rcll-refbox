@@ -437,12 +437,13 @@ LLSFRefBox::setup_clips()
   clips_->add_function("config-get-bool", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_bool)));
 
   if (mps_ && ! simulation) {
+    clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
+    clips_->add_function("mps-set-lights", sigc::slot<void, std::string, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
+    clips_->add_function("mps-reset-lights", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_lights)));
     clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
     clips_->add_function("mps-ds-process", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
     clips_->add_function("mps-rs-mount-ring", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
     clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
-    clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
-    clips_->add_function("mps-set-lights", sigc::slot<void, std::string, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
     clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
     //clips_->add_function("mps-reset-base-counter", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
     clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
@@ -767,6 +768,16 @@ LLSFRefBox::clips_mps_set_lights(std::string machine, std::string red_state,
   clips_mps_set_light(machine, "RED", red_state);
   clips_mps_set_light(machine, "YELLOW", yellow_state);
   clips_mps_set_light(machine, "GREEN", green_state);
+}
+
+void
+LLSFRefBox::clips_mps_reset_lights(std::string machine)
+{
+  if (! mps_) return;
+	Machine *station = mps_->get_station(machine, station);
+  if (station) {
+    station->reset_light();
+  }
 }
 
 #ifdef HAVE_MONGODB

@@ -149,6 +149,7 @@ class LLSFRefBox
   void          clips_mps_set_light(std::string machine, std::string light, std::string state);
   void          clips_mps_set_lights(std::string machine, std::string red_state,
                                      std::string yellow_state, std::string green_state);
+  void          clips_mps_reset_lights(std::string machine);
   void          clips_mps_reset(std::string machine);
   void          clips_mps_reset_base_counter(std::string machine);
   void          clips_mps_deliver(std::string machine);
