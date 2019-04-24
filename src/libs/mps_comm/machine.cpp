@@ -307,17 +307,7 @@ SubscriptionClient* Machine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::Retu
   SubscriptionClient* sub = new SubscriptionClient(logger, retVal);
   sub->reg = reg;
   sub->node = node;
-  /*
-  EXAMPLE lambda callback on value change using logger
-  std::weak_ptr<spdlog::logger> weak_logger(logger);
-  sub->add_callback([weak_logger, reg](OpcUtils::ReturnValue* retVal)
-  {
-    auto logger = weak_logger.lock();
-    if (logger) {
-      OpcUtils::logReturnValue(retVal, logger, reg, "Callback received:");
-    }
-  });
-  */
+
   int response_timeout = 100;
   sub->subscription = client->CreateSubscription(response_timeout, *sub);
   sub->handle = sub->subscription->SubscribeDataChange(node);
@@ -383,6 +373,25 @@ void Machine::printFinalSubscribtions()
     logger->info("Final values of subscribed registers:");
   for(int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
     OpcUtils::logReturnValue(getReturnValue((OpcUtils::MPSRegister)i), logger, (OpcUtils::MPSRegister)i);
+}
+
+
+void Machine::addCallback(SubscriptionClient::ReturnValueCallback callback, OpcUtils::MPSRegister reg, OpcUtils::ReturnValue* retVal, bool simulation)
+{
+  SubscriptionClient* sub = subscribe(reg, retVal, simulation);
+  sub->add_callback(callback);
+
+  /*
+  EXAMPLE lambda callback on value change using logger
+  std::weak_ptr<spdlog::logger> weak_logger(logger);
+  ReturnValueCallback cb = [weak_logger, reg](OpcUtils::ReturnValue* retVal)
+  {
+    auto logger = weak_logger.lock();
+    if (logger) {
+      OpcUtils::logReturnValue(retVal, logger, reg, "Callback received:");
+    }
+  };
+  */
 }
 
 }
