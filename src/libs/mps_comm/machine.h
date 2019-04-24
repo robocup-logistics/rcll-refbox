@@ -130,6 +130,9 @@ protected:
   void cancelAllSubscriptions(bool log = false);
   // Print the final subscription values
   void printFinalSubscribtions();
+
+public:
+  void addCallback(SubscriptionClient::ReturnValueCallback callback, OpcUtils::MPSRegister, OpcUtils::ReturnValue* retVal = nullptr, bool simulation = false);
 };
 
 } // namespace modbus

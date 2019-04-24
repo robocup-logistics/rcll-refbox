@@ -9,11 +9,39 @@ namespace modbus {
 }
 #endif
 
-#define stringify( name ) # name
 
 class SubscriptionClient : public OpcUa::SubscriptionHandler
 {
+public:
   typedef std::function<void(OpcUtils::ReturnValue*)> ReturnValueCallback;
+  typedef std::pair<OpcUtils::MPSRegister, SubscriptionClient*> pair;
+  typedef std::map<OpcUtils::MPSRegister, SubscriptionClient*> map;
+  OpcUa::Subscription::SharedPtr subscription;
+  OpcUtils::ReturnValue* mpsValue = nullptr;
+  uint32_t handle;
+  OpcUtils::MPSRegister reg;
+  OpcUa::Node node;
+
+  SubscriptionClient(std::shared_ptr<spdlog::logger> logger_, OpcUtils::ReturnValue* mpsValue_) : logger(logger_), mpsValue(mpsValue_)
+  {
+  }
+  SubscriptionClient(std::shared_ptr<spdlog::logger> logger_) : SubscriptionClient(logger_, nullptr)
+  {
+  }
+  SubscriptionClient() : SubscriptionClient(nullptr)
+  {
+  }
+  ~SubscriptionClient()
+  {
+    delete mpsValue;
+  }
+
+  void add_callback(ReturnValueCallback callback)
+  { 
+    callbacks.push_back(callback); 
+  }
+
+protected:
   std::shared_ptr<spdlog::logger> logger;
   std::vector<ReturnValueCallback> callbacks;
 
@@ -47,36 +75,6 @@ class SubscriptionClient : public OpcUa::SubscriptionHandler
 	for(ReturnValueCallback callback : callbacks)
 	  callback(mpsValue);
     }
-  }
-
-public:
-  typedef std::pair<OpcUtils::MPSRegister, SubscriptionClient*> pair;
-  typedef std::map<OpcUtils::MPSRegister, SubscriptionClient*> map;
-  OpcUa::Subscription::SharedPtr subscription;
-  OpcUtils::ReturnValue* mpsValue = nullptr;
-  uint32_t handle;
-  OpcUtils::MPSRegister reg;
-  OpcUa::Node node;
-
-  SubscriptionClient(std::shared_ptr<spdlog::logger> logger_, OpcUtils::ReturnValue* mpsValue_) : logger(logger_), mpsValue(mpsValue_)
-  {
-  }
-  SubscriptionClient(std::shared_ptr<spdlog::logger> logger_) : SubscriptionClient(logger_, nullptr)
-  {
-  }
-  SubscriptionClient() : SubscriptionClient(nullptr)
-  {
-  }
-  ~SubscriptionClient()
-  {
-    delete mpsValue;
-  }
-
-  void add_callback(ReturnValueCallback callback)
-  { 
-    std::cout << "Adding callback" << std::endl;
-    callbacks.push_back(callback); 
-    std::cout << "Callback added" << std::endl;
   }
 };
 }
