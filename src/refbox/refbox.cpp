@@ -565,6 +565,20 @@ LLSFRefBox::clips_config_get_bool(std::string path)
   }
 }
 
+bool
+LLSFRefBox::mutex_future_ready(const std::string &name)
+{
+	auto mf_it = mutex_futures_.find(name);
+	if (mf_it != mutex_futures_.end()) {
+		auto fut_status = mutex_futures_[name].wait_for(std::chrono::milliseconds(0));
+		if (fut_status != std::future_status::ready) {
+			return false;
+		} else {
+			mutex_futures_.erase(mf_it);
+		}
+	}
+	return true;
+}
 
 void
 LLSFRefBox::clips_mps_reset(std::string machine)
@@ -600,8 +614,17 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
   Machine *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->conveyor_move(llsfrb::modbus::ConveyorDirection::forward, llsfrb::modbus::MPSSensor::output);
-  } else {
+		if (!mutex_future_ready(machine)) { return; }
+		auto fut = std::async(std::launch::async, [this, station, machine] {
+			station->conveyor_move(llsfrb::modbus::ConveyorDirection::forward,
+			                       llsfrb::modbus::MPSSensor::output);
+			MutexLocker lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine);
+			return true;
+		});
+
+    mutex_futures_[machine] = std::move(fut);
+	} else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
   }
@@ -640,9 +663,20 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::s
     }
     */
 
-    // TODO: also pass the side
-    station->get_base(color_id);
-  } else {
+		if (!mutex_future_ready(machine)) {
+			// We do not have any error handling in place
+			return;
+		}
+		auto fut = std::async(std::launch::async, [this, station, machine, color_id] {
+			// TODO: also pass the side
+			station->get_base(color_id);
+			MutexLocker lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-feedback bs-dispense success %s)", machine);
+			return true;
+		});
+
+		mutex_futures_[machine] = std::move(fut);
+	} else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
   }
@@ -658,8 +692,16 @@ LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
   DeliveryStation *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->deliver_product(slide);
-  } else {
+		if (!mutex_future_ready(machine)) { return; }
+		auto fut = std::async(std::launch::async, [this, station, machine, slide] {
+			station->deliver_product(slide);
+			MutexLocker lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-feedback ds-process success %s)", machine);
+			return true;
+		});
+
+		mutex_futures_[machine] = std::move(fut);
+	} else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
   }
@@ -674,8 +716,16 @@ LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
   RingStation *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->mount_ring(slide);
-  } else {
+		if (!mutex_future_ready(machine)) { return; }
+		auto fut = std::async(std::launch::async, [this, station, machine, slide] {
+			station->mount_ring(slide);
+			MutexLocker lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-feedback rs-mount-ring success %s)", machine);
+			return true;
+		});
+
+    mutex_futures_[machine] = std::move(fut);
+	} else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
   }
@@ -687,19 +737,28 @@ LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
 {
   logger_->log_info("MPS", "%s on %s",
 		    operation.c_str(), machine.c_str());
-  if (! mps_)  return;
+	if (operation != "RETRIEVE_CAP" && operation != "MOUNT_CAP") {
+		logger_->log_error("MPS", "Invalid operation '%s' on %s", operation.c_str(), machine.c_str());
+    return;
+	}
+	if (! mps_)  return;
   CapStation *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    if (operation == "RETRIEVE_CAP") {
-      station->retrieve_cap();
-    } else if (operation == "MOUNT_CAP") {
-      station->mount_cap();
-    } else {
-      logger_->log_error("MPS", "Invalid operation '%s' on %s",
-			 operation.c_str(), machine.c_str());
-    }
-  } else {
+		if (!mutex_future_ready(machine)) { return; }
+		auto fut = std::async(std::launch::async, [this, station, machine, operation] {
+			if (operation == "RETRIEVE_CAP") {
+				station->retrieve_cap();
+			} else if (operation == "MOUNT_CAP") {
+				station->mount_cap();
+			}
+      MutexLocker lock(&clips_mutex_);
+      clips_->assert_fact_f("(mps-feedback %s success %s)", operation, machine);
+			return true;
+		});
+
+    mutex_futures_[machine] = std::move(fut);
+	} else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
   }

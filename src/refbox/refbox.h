@@ -112,6 +112,8 @@ class LLSFRefBox
   CLIPS::Value  clips_config_path_exists(std::string path);
   CLIPS::Value  clips_config_get_bool(std::string path);
 
+	bool mutex_future_ready(const std::string &name);
+
 #ifdef HAVE_MONGODB
   CLIPS::Value  clips_bson_create();
   CLIPS::Value  clips_bson_parse(std::string document);
@@ -189,7 +191,9 @@ class LLSFRefBox
   fawkes::Mutex                             clips_mutex_;
   std::map<long int, CLIPS::Fact::pointer>  clips_msg_facts_;
 
-  boost::asio::io_service      io_service_;
+	std::map<std::string, std::future<bool>> mutex_futures_;
+
+	boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
   boost::posix_time::ptime     timer_last_;
 
