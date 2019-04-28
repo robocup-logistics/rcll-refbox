@@ -422,7 +422,6 @@
   (printout t "Machine " ?n " of type CS switching to PREPARED state" crlf)
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
 	  (prep-blink-start ?gt))
-  (printout t ?cs-op " on machine " ?n crlf)
   (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
 )
 
@@ -433,7 +432,21 @@
   ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (cs-operation ?cs-op))
   =>
+  (printout t ?cs-op " on machine " ?n crlf)
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
+)
+
+(defrule prod-proc-state-cs-op-finished
+	"The CS finished mounting/retrieving the cap, continue delivering the workpiece"
+	(declare (salience ?*PRIORITY_HIGH*))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state PROCESSING)
+	               (cs-operation ?cs-op))
+	?fb <- (mps-feedback ?cs-op success ?n)
+	=>
+	(printout t "Machine " ?n " finished " ?cs-op crlf)
+	(modify ?m (state PROCESSED))
+	(retract ?fb)
 )
 
 (defrule prod-proc-state-processed-ds
@@ -483,13 +496,20 @@
 (defrule prod-proc-state-processed-cs
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state ~PROCESSED)
-		 (cs-operation ?cs-op))
+  ?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state ~PROCESSED))
   =>
-  (printout t "Machine " ?n " finished " ?cs-op crlf)
-  (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
-  (modify ?m (proc-state PROCESSED) (cs-retrieved ?have-cap))
+	(modify ?m (proc-state PROCESSED))
   (mps-deliver (str-cat ?n))
+)
+
+(defrule prod-proc-state-cs-done
+  (declare (salience ?*PRIORITY_HIGH*))
+	?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state PROCESSED) (cs-operation ?cs-op))
+	?fb <- (mps-feedback mps-deliver success ?n)
+	=>
+  (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
+  (modify ?m (state READY-AT-OUTPUT) (prev-state PROCESSED) (cs-retrieved ?have-cap))
+	(retract ?fb)
 )
 
 ;(defrule prod-proc-state-processed
