@@ -18,7 +18,6 @@ jobs:
               git \
               glibmm24-devel \
               gtkmm30-devel \
-              libmodbus-devel \
               mongodb-devel \
               ncurses-devel \
               openssh-clients \
@@ -27,6 +26,12 @@ jobs:
               protobuf-devel \
               which \
               yaml-cpp-devel
+      - run:
+          name: Install freeopcua from COPR
+          command: >
+            dnf install -y --nodocs 'dnf-command(copr)' &&
+            dnf -y copr enable thofmann/freeopcua &&
+            dnf install -y --nodocs freeopcua-devel
       - checkout
       - run: make all FAIL_ON_WARNING=1
   build_ubuntu:
