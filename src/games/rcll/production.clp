@@ -298,7 +298,7 @@
   (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
 )
 
-(defrule prod-proc-state-processing-ds-start
+(defrule prod-proc-state-ds-prepared
   "Instruct DS to start processing"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -308,8 +308,27 @@
   (printout t "Machine " ?n " of type DS switching to PREPARED state" crlf)
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
              (prep-blink-start ?gt))
+)
+
+(defrule prod-proc-state-ds-processing
+	"DS is prepared and received a product."
+  (declare (salience ?*PRIORITY_HIGHER*))
+	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
+	               (ds-order ?order))
+  (order (id ?order) (delivery-gate ?gate))
+	=>
+	(modify ?m (proc-state PROCESSING))
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
   (mps-ds-process (str-cat ?n) ?gate)
+)
+
+(defrule prod-proc-state-ds-process-done
+	"DS finished processing"
+	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state PROCESSING))
+	?fb <- (mps-feedback ds-process success ?n)
+	=>
+	(modify ?m (state PROCESSED) (prev-state PROCESSING))
+	(retract ?fb)
 )
 
 (defrule prod-proc-state-processing-ds
@@ -400,18 +419,27 @@
 )
 
 (defrule prod-proc-state-processed-ds
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state ~PROCESSED)
-          (ds-order ?order) (team ?team))
+	(declare (salience ?*PRIORITY_HIGH*))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state ~PROCESSED)
+	               (ds-order ?order) (team ?team))
   =>
-  (printout t "Machine " ?n " finished processing, moving to output" crlf)
-  (assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
-            (confirmed FALSE)))
+	(modify ?m (proc-state PROCESSED))
+	(assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
+	                           (confirmed FALSE)))
 	(assert (attention-message (team ?team)
 	                           (text (str-cat "Please confirm delivery for order " ?order))))
-  (modify ?m (state IDLE) (proc-state PROCESSED))
-  (mps-deliver (str-cat ?n))
+	(mps-deliver (str-cat ?n))
+)
+
+(defrule prod-proc-state-ds-delivery-done
+  (declare (salience ?*PRIORITY_HIGH*))
+	?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state PROCESSED))
+	?fb <- (mps-feedback mps-deliver success ?n)
+	=>
+  (printout t "Machine " ?n " finished processing, moving to output" crlf)
+  (modify ?m (state IDLE) (prev-state PROCESSED))
+	(retract ?fb)
 )
 
 (defrule prod-proc-state-processed-rs
