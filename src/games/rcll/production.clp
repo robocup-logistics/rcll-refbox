@@ -485,11 +485,20 @@
 (defrule production-mps-broken
 	"The MPS is BROKEN. Inform the referee and reset the machine to stop the conveyor belt."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0))
+  ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason)
+                 (broken-since 0.0) (bases-added ?ba) (bases-used ?bu))
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
   (modify ?m (broken-since ?gt))
+  ; Revoke points awarded for unused bases at RS slide
+  (bind ?unused-bases (- ?ba ?bu))
+  (if (> ?unused-bases 0) then
+   (bind ?deduct (* -1 (min ?unused-bases ?*LOADED-WITH-MAX*)))
+   (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+                   (points (* ?deduct ?*PRODUCTION-POINTS-ADDITIONAL-BASE*))
+                   (reason (str-cat "Deducting unused additional bases at " ?n))))
+  )
   (mps-reset (str-cat ?n))
 )
 
