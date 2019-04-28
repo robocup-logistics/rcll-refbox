@@ -589,8 +589,14 @@ LLSFRefBox::clips_mps_reset(std::string machine)
   Machine *station;
   station = mps_->get_station(machine, station);
   if (station) {
-    station->reset();
-  } else {
+    if (!mutex_future_ready(machine)) { return; }
+		auto fut = std::async(std::launch::async, [station, machine] {
+			station->reset();
+			return true;
+		});
+
+		mutex_futures_[machine] = std::move(fut);
+	} else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
   }
