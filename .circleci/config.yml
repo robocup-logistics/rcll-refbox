@@ -64,7 +64,7 @@ jobs:
               libyaml-cpp-dev \
               protobuf-compiler
       - checkout
-      - run: make all FAIL_ON_WARNING=1
+      - run: make all FAIL_ON_WARNING=0
 workflows:
   version: 2
   build:
