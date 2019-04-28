@@ -22,7 +22,7 @@ public:
   OpcUtils::MPSRegister reg;
   OpcUa::Node node;
 
-  SubscriptionClient(std::shared_ptr<spdlog::logger> logger_, OpcUtils::ReturnValue* mpsValue_) : logger(logger_), mpsValue(mpsValue_)
+  SubscriptionClient(std::shared_ptr<spdlog::logger> logger_, OpcUtils::ReturnValue* mpsValue_) :  mpsValue(mpsValue_), logger(logger_)
   {
   }
   SubscriptionClient(std::shared_ptr<spdlog::logger> logger_) : SubscriptionClient(logger_, nullptr)
