@@ -619,7 +619,7 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 			station->conveyor_move(llsfrb::modbus::ConveyorDirection::forward,
 			                       llsfrb::modbus::MPSSensor::output);
 			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine);
+			clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine.c_str());
 			return true;
 		});
 
@@ -671,7 +671,7 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::s
 			// TODO: also pass the side
 			station->get_base(color_id);
 			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback bs-dispense success %s)", machine);
+			clips_->assert_fact_f("(mps-feedback bs-dispense success %s)", machine.c_str());
 			return true;
 		});
 
@@ -696,7 +696,7 @@ LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
 		auto fut = std::async(std::launch::async, [this, station, machine, slide] {
 			station->deliver_product(slide);
 			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback ds-process success %s)", machine);
+			clips_->assert_fact_f("(mps-feedback ds-process success %s)", machine.c_str());
 			return true;
 		});
 
@@ -720,7 +720,7 @@ LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
 		auto fut = std::async(std::launch::async, [this, station, machine, slide] {
 			station->mount_ring(slide);
 			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback rs-mount-ring success %s)", machine);
+			clips_->assert_fact_f("(mps-feedback rs-mount-ring success %s)", machine.c_str());
 			return true;
 		});
 
@@ -752,8 +752,9 @@ LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
 			} else if (operation == "MOUNT_CAP") {
 				station->mount_cap();
 			}
-      MutexLocker lock(&clips_mutex_);
-      clips_->assert_fact_f("(mps-feedback %s success %s)", operation, machine);
+			MutexLocker lock(&clips_mutex_);
+
+			clips_->assert_fact_f("(mps-feedback %s success %s)", operation.c_str(), machine.c_str());
 			return true;
 		});
 
