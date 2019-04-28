@@ -295,6 +295,15 @@
   (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
 )
 
+(defrule prod-proc-state-bs-dispense-done
+	"DS finished delivering a base"
+	?fb <- (mps-feedback bs-dispense success ?n)
+	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state PROCESSING))
+	=>
+	(modify ?m (state PROCESSED) (mps-state DELIVERED))
+	(retract ?fb)
+)
+
 (defrule prod-proc-state-ds-prepared
   "Instruct DS to start processing"
   (declare (salience ?*PRIORITY_HIGHER*))
