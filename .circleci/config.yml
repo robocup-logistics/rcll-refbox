@@ -55,8 +55,6 @@ jobs:
               libgecode-dev \
               libglibmm-2.4-dev \
               libgtkmm-3.0-dev \
-              libmodbus-dev \
-              libmodbus-dev \
               libmongoclient-dev \
               libncurses5-dev \
               libncursesw5-dev \
