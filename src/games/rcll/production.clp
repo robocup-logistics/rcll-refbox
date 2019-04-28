@@ -469,12 +469,22 @@
 (defrule prod-proc-state-broken
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state BROKEN) (proc-state ~BROKEN)
-		 (team ?team) (broken-reason ?reason))
+		 (team ?team) (broken-reason ?reason)
+     (bases-added ?ba) (bases-used ?bu))
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
   (modify ?m (proc-state BROKEN) (broken-since ?gt)
 	  (desired-lights RED-BLINK YELLOW-BLINK))
+
+  (bind ?unused-bases (- ?ba ?bu))
+  (if (> ?unused-bases 0)
+	 then
+   (bind ?deduct (* -1 (min ?unused-bases ?*LOADED-WITH-MAX*)))
+   (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+                   (points (* ?deduct ?*PRODUCTION-POINTS-ADDITIONAL-BASE*))
+                   (reason (str-cat "Deducting unused additional bases at " ?n))))
+	)
 )
 
 (defrule prod-proc-state-broken-recover
