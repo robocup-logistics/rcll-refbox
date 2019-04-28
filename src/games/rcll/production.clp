@@ -430,10 +430,16 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state ~PROCESSED)
-		 (cs-operation ?cs-op))
+                 (team ?team) (cs-operation ?cs-op))
   =>
   (printout t "Machine " ?n " finished " ?cs-op crlf)
   (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
+  (if ?have-cap
+   then
+     (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+                     (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
+                     (reason (str-cat "Retrieved Cap at " ?n))))
+  )
   (modify ?m (proc-state PROCESSED) (cs-retrieved ?have-cap))
   (mps-deliver (str-cat ?n))
 )
