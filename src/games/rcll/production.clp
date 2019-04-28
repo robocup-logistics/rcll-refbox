@@ -106,7 +106,7 @@
 		 then
 			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
 			(modify ?m (state PREPARED) (ds-order ?order-id)
-                           (mps-state AVAILABLE) (wait-for-product-since ?gt))
+                           (wait-for-product-since ?gt))
 		else
 			(modify ?m (state BROKEN) (prev-state ?m:state)
 			  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
@@ -166,8 +166,7 @@
 		 then
 		  (printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
 	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color)
-                             (mps-state AVAILABLE) (wait-for-product-since ?gt))
-                             ;(wait-for-product-since ?gt))
+                             (wait-for-product-since ?gt))
                  else
 		  (modify ?m (state BROKEN) (prev-state ?m:state)
 			  (broken-reason (str-cat "Prepare received for " ?mname
@@ -190,8 +189,7 @@
 		     then
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
 	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
-                                 (mps-state AVAILABLE) (wait-for-product-since ?gt))
-                                 ;(wait-for-product-since ?gt))
+                                  (wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN) (prev-state ?m:state)
 			      (broken-reason (str-cat "Prepare received for " ?mname ": "
@@ -203,8 +201,7 @@
 		     then
  		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
 	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
-                                 (mps-state AVAILABLE) (wait-for-product-since ?gt))
-                                 ;(wait-for-product-since ?gt))
+                                  (wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN) (prev-state ?m:state)
 			      (broken-reason (str-cat "Prepare received for " ?mname
