@@ -471,12 +471,12 @@
 )
 
 
-
 (defrule prod-proc-state-broken
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state BROKEN) (proc-state ~BROKEN)
 		 (team ?team) (broken-reason ?reason)
-     (bases-added ?ba) (bases-used ?bu))
+     (bases-added ?ba) (bases-used ?bu)
+     (cs-retrieved ?have-cap))
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
@@ -491,6 +491,12 @@
                    (points (* ?deduct ?*PRODUCTION-POINTS-ADDITIONAL-BASE*))
                    (reason (str-cat "Deducting unused additional bases at " ?n))))
 	)
+  (if ?have-cap
+   then
+   (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+                     (points (* -1  ?*PRODUCTION-POINTS-RETRIEVE-CAP*))
+                     (reason (str-cat "Deducting retrieved cap at " ?n))))
+  )
 )
 
 (defrule prod-proc-state-broken-recover
