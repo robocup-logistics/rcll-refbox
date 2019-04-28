@@ -1,5 +1,5 @@
 #*****************************************************************************
-#           Makefile Build System for Fawkes: llsf_sps Library
+#           Makefile Build System for Fawkes: mps_comm Library
 #                            -------------------
 #   Created on Thu Feb 14 09:30:32 2013
 #   Copyright (C) 2013 by Tim Niemueller, AllemaniACs RoboCup Team
@@ -19,46 +19,25 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
-LIBS_libmps_comm = stdc++ m llsfrbcore pthread opcuaclient opcuacore opcuaprotocol
+LIBS_libmps_comm = stdc++ m llsfrbcore pthread
 OBJS_libmps_comm = opc_utils.o machine.o base_station.o cap_station.o delivery_station.o ring_station.o storage_station.o time_utils.o mps_refbox_interface.o
 HDRS_libmps_comm = subscription_client.h opc_utils.h machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h mps_refbox_interface.h
 
 OBJS_all = $(OBJS_libmps_comm)
 
-ifeq ($(CC),gcc)
-  ifneq ($(call gcc_atleast_version,4,6),1)
-    GCC_TOO_OLD=1
-  endif
-endif
-
-ifneq ($(GCC_TOO_OLD),1)
-  ifeq ($(HAVE_CPP11)$(HAVE_LIBMODBUS),11)
-    CFLAGS  += $(CFLAGS_LIBMODBUS) $(CFLAGS_CPP11)
-    LDFLAGS += $(LDFLAGS_LIBMODBUS)
-
-    LIBS_all  = $(LIBDIR)/libmps_comm.so
-  else
-    ifneq ($(HAVE_LIBMODBUS),1)
-      WARN_TARGETS += warning_libmodbus
-    endif
-    ifneq ($(HAVE_CPP11),1)
-      WARN_TARGETS += warning_cpp11
-    endif
-  endif
+ifeq ($(HAVE_MPS_COMM),1)
+  CFLAGS  += $(CFLAGS_MPS_COMM)
+  LDFLAGS += $(LDFLAGS_MPS_COMM)
+  LIBS_all = $(LIBDIR)/libmps_comm.so
 else
-      WARN_TARGETS += warning_old_gcc
+  WARN_TARGETS += warning_libmps_comm
 endif
 
 ifeq ($(OBJSSUBMAKE),1)
-all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
+all: $(WARN_TARGETS)
 .PHONY: $(WARN_TARGETS)
-warning_libmodbus:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF SPS library$(TNORMAL) (libmodbus not found)"
-warning_cpp11:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF SPS library$(TNORMAL) (compiler has no C++11 support)"
-warning_old_gcc:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF SPS library$(TNORMAL) (GCC too old, have $(GCC_VERSION), required 4.6)"
+warning_libmps_comm:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build libmps_comm$(TNORMAL) (freeopcua not found)"
 endif
 
 include $(BUILDSYSDIR)/base.mk
-
