@@ -411,14 +411,18 @@
 
 (defrule production-cs-move-to-output
 	"The CS has completed mounting/retrieving a cap. Move the workpiece to the output."
-	(gamestate (state RUNNING) (phase PRODUCTION))
-	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP)
-	               (mps-busy FALSE))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (team ?team)
+                   (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP) (mps-busy FALSE))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
-	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+	(if (eq ?cs-op RETRIEVE_CAP) then
+		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+		                (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
+		                (reason (str-cat "Retrieved cap at " ?n)))))
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
+	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
 (defrule production-bs-cs-rs-ready-at-output
