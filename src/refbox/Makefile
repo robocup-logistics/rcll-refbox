@@ -19,7 +19,6 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/clips.mk
 include $(BUILDSYSDIR)/boost.mk
-include $(BUILDCONFDIR)/llsf_sps/llsf_sps.mk
 include $(BUILDCONFDIR)/mongodb_log/mongodb.mk
 include $(BUILDCONFDIR)/netcomm/netcomm.mk
 
