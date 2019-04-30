@@ -634,8 +634,8 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
   if (station) {
 		if (!mutex_future_ready(machine)) { return; }
 		auto fut = std::async(std::launch::async, [this, station, machine] {
-			station->conveyor_move(llsfrb::modbus::ConveyorDirection::forward,
-			                       llsfrb::modbus::MPSSensor::output);
+			station->conveyor_move(llsfrb::modbus::ConveyorDirection::FORWARD,
+			                       llsfrb::modbus::MPSSensor::OUTPUT);
 			MutexLocker lock(&clips_mutex_);
 			clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine.c_str());
 			return true;

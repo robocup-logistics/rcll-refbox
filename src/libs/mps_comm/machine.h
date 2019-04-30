@@ -25,9 +25,9 @@ namespace modbus
 }
 #endif
 
-enum ConveyorDirection { forward, backward };
+enum ConveyorDirection { FORWARD = 1, BACKWARD = 2};
 
-enum MPSSensor { input, middle, output };
+enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
 class Machine
 {
