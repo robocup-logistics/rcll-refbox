@@ -69,6 +69,30 @@
 )
 
 
+;-------------------------Workpiece Availability------------------------------
+(defrule workpiece-available
+    "Workpiece seen at machine"
+    (gamestate (phase PRODUCTION))
+    ?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?m-name)
+                      (state ?state&~AVAILABLE&~PROCESSED) (visible TRUE))
+    (machine (name ?m-name) (state ~BROKEN))
+    =>
+    (printout t "Workpiece " ?id ": Visible at " ?m-name crlf)
+    (modify ?wf (state AVAILABLE))
+)
+
+(defrule workpiece-retrieved
+    "Workpiece no longer at machine"
+    (gamestate (phase PRODUCTION))
+    ?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?m-name)
+                      (state AVAILABLE|PROCESSED) (visible FALSE))
+    (machine (name ?m-name) (state IDLE|WAIT-IDLE|BROKEN))
+    =>
+    (printout t "Workpiece " ?id ": Retrieved from " ?m-name crlf)
+    (modify ?wf (state RETRIEVED))
+)
+
+
 (defrule workpiece-incoming-cleanup
 	"Remove transient incoming facts"
 	(declare (salience ?*PRIORITY_CLEANUP*))
