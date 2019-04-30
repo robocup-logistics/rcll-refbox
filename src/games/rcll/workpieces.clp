@@ -93,6 +93,55 @@
 )
 
 
+;--------------------------Workpiece Processing-------------------------------
+(defrule workpiece-at-bs
+	"Confirm workpiece base_color when visible at BS
+   ps. The workpiece should have been created already"
+	(gamestate (phase PRODUCTION))
+	?wf <- (workpiece (id ?id) (rtype RECORD) (state AVAILABLE)
+                    (at-machine ?m-name) (base-color ?base-color))
+  ?pf <- (product-processed (at-machine ?m-name) (mtype BS)
+                            (workpiece ?wp-id) (confirmed FALSE)
+                            (base-color ?bs-color))
+	=>
+  (printout t "Workpiece " ?id ": Confirming process " ?m-name crlf)
+  (if (neq ?bs-color ?base-color)
+   then
+	  (printout t "Workpiece " ?id ": Base color corrected [" ?base-color
+                "->" ?bs-color "]" crlf)
+  )
+  (modify ?pf (workpiece ?id) (confirmed TRUE))
+  (modify ?wf (state PROCESSED) (base-color ?bs-color))
+)
+
+(defrule workpiece-processed-at-rs
+	"Update the availbe workpiece with the recent prodcut processing  "
+	(gamestate (phase PRODUCTION))
+	?wf <- (workpiece (id ?id) (rtype RECORD) (state AVAILABLE)
+                    (at-machine ?m-name) (ring-colors $?ring-colors))
+	?pf <- (product-processed (at-machine ?m-name) (mtype RS)
+                            (workpiece ?wp-id) (confirmed FALSE)
+                            (ring-color ?r-color))
+	=>
+  (printout t "Workpiece " ?id ": Confirming process " ?m-name crlf)
+   ;TODO: Find out what points needs to be given
+   (modify ?pf (workpiece ?id) (confirmed TRUE))
+   (modify ?wf (state PROCESSED)
+               (ring-colors (append$ ?ring-colors ?r-color)))
+)
+
+;(defrule workpiece-processed-at-cs
+;	""
+;	(gamestate (phase PRODUCTION))
+;	?wf <- (workpiece (rtype RECORD) (id ?wf-id) (at-machine ?m-name) (state AVAILABLE))
+;	?p <- (product-processed (id ?p-id) (workpiece-id ?workpiece-id)
+;                           (at-machine ?m-name) (mtype CS) )
+;  (not (eq ?workpiece-id ?wf-id))
+;	=>
+;  (printout t "Workpiece " ?id ": Processed at " ?m-name crlf)
+;   ;Add the proper operation
+;   (modify ?wf (state PROCESSED))
+;)
 (defrule workpiece-incoming-cleanup
 	"Remove transient incoming facts"
 	(declare (salience ?*PRIORITY_CLEANUP*))
