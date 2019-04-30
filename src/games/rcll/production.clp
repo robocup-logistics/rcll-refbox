@@ -303,7 +303,8 @@
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (order (id ?order) (delivery-gate ?gate))
-  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED))
+  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED)
+                  (ds-order ?order))
   =>
   (printout t "Machine " ?n " of type DS switching to PREPARED state" crlf)
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
