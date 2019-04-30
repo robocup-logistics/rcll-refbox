@@ -16,15 +16,15 @@ CapStation::~CapStation() {}
 
 
 void CapStation::band_on_until_in() {
-  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN, ConveyorDirection::BACKWARD);
 }
 
 void CapStation::band_on_until_mid() {
-  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID, ConveyorDirection::FORWARD);
 }
 
 void CapStation::band_on_until_out() {
-  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
+  send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT, ConveyorDirection::FORWARD);
 }
 
 void CapStation::retrieve_cap() {
