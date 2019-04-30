@@ -442,7 +442,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state PROCESSING)
 	               (cs-operation ?cs-op))
-	?fb <- (mps-feedback ?cs-op success ?n)
+	?fb <- (mps-feedback ?n ?cs-op DONE)
 	=>
 	(printout t "Machine " ?n " finished " ?cs-op crlf)
 	(modify ?m (state PROCESSED))
@@ -612,6 +612,14 @@
   =>
   (modify ?m (state BROKEN) (prev-state ?state)
 	  (broken-reason (str-cat ?n ": too many additional bases loaded")))
+)
+
+(defrule prod-mps-state-available
+	?m <- (machine (name ?n))
+	?fb <- (mps-feedback ?n ? AVAILABLE)
+	=>
+	(modify ?m (mps-state AVAILABLE))
+	(retract ?fb)
 )
 
 (defrule prod-machine-input
