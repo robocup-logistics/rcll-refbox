@@ -399,6 +399,18 @@
   (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
 )
 
+(defrule prod-proc-state-processed-bs
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype BS) (state PROCESSED) (proc-state ~PROCESSED)
+          (bs-color ?base-color) (team ?team))
+  =>
+  (printout t "Machine " ?n " finished processing, moving to output" crlf)
+  (assert (product-processed (at-machine ?n) (mtype BS) (base-color ?base-color)
+                             (team ?team) (game-time ?gt)))
+  (modify ?m (proc-state PROCESSED))
+)
+
 (defrule prod-proc-state-processed-ds
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -418,10 +430,12 @@
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (proc-state ~PROCESSED)
-		 (rs-ring-color ?ring-color) (bases-used ?bu))
+                 (team ?team) (rs-ring-color ?ring-color) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
+  (assert (product-processed (at-machine ?n) (mtype RS) (ring-color ?ring-color)
+                             (team ?team) (game-time ?gt)))
   (modify ?m (proc-state PROCESSED) (bases-used (+ ?bu ?req-bases)))
   (mps-deliver (str-cat ?n))
 )
@@ -439,6 +453,9 @@
      (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
                      (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
                      (reason (str-cat "Retrieved Cap at " ?n))))
+    else
+     (assert (product-processed (at-machine ?n) (mtype CS)
+                                (team ?team) (game-time ?gt)))
   )
   (modify ?m (proc-state PROCESSED) (cs-retrieved ?have-cap))
   (mps-deliver (str-cat ?n))
