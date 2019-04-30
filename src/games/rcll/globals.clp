@@ -49,6 +49,8 @@
   ?*RETRIEVE-WAIT-IDLE-TIME* = 5
   ; How long to wait after prepare before the MPS gets resetted
   ?*PREPARE-WAIT-TILL-RESET* = 45
+  ; How long to wait before resetting a machine that is processing
+  ?*PROCESSING-WAIT-TILL-RESET* = 90
   ?*PREPARE-WAIT-TILL-PROCESSING* = 5
 
   ; number of points for specific actions

@@ -631,11 +631,20 @@
 
 (defrule prod-prepared-but-no-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype ~BS) (state PREPARED|PROCESSING|PROCESSED)
+  ?m <- (machine (name ?n) (mtype ~BS) (state PREPARED)
         (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
   =>
   (modify ?m (state BROKEN) (prev-state PROCESSING)
              (broken-reason (str-cat "MPS " ?n " prepared, but no product feed in time")))
+)
+
+(defrule prod-processing-timeout
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (state PROCESSING|PROCESSED)
+        (wait-for-product-since ?ws
+	        &:(timeout-sec ?gt ?ws (+ ?*PREPARE-WAIT-TILL-RESET* ?*PROCESSING-WAIT-TILL-RESET*))))
+	=>
+	(mps-reset (str-cat ?n))
 )
 
 (defrule prod-machine-proc-done
