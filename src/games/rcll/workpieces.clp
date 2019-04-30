@@ -142,6 +142,31 @@
 ;   ;Add the proper operation
 ;   (modify ?wf (state PROCESSED))
 ;)
+
+
+;------------------------------Sanity Checks
+
+
+(defrule workpiece-available-twice
+ "Error differnt workpieces availble at same  machines"
+	(gamestate (phase PRODUCTION))
+	?wf1 <- (workpiece (rtype RECORD) (id ?first-id)
+                     (at-machine ?at-machine)
+                     (state AVAILABLE|PROCESSED))
+  ?wf2 <- (workpiece (rtype RECORD)
+                     (id ?second-id&:(neq ?first-id ?second-id))
+                     (at-machine ?at-machine)
+                     (state AVAILABLE|PROCESSED))
+ =>
+	(printout t "Workpiece " ?first-id " and " ?second-id
+               "are both AVAILABE at " ?at-machine crlf)
+
+)
+
+;TODO: if mounting ring with no base
+
+
+;----------------------------------------Clean Up Incoming
 (defrule workpiece-incoming-cleanup
 	"Remove transient incoming facts"
 	(declare (salience ?*PRIORITY_CLEANUP*))
