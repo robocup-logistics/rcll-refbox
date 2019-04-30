@@ -283,9 +283,12 @@
 (defrule production-bs-move-conveyor
   "The BS has dispensed a base. We now need to move the conveyor"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
+	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE)
+                   (bs-side ?side) (bs-color ?bs-color) (team ?team))
 	=>
 	(printout t "Machine " ?n " moving base to " ?side crlf)
+	(assert (product-processed (at-machine ?n) (mtype BS) (team ?team)
+	                           (game-time ?gt) (base-color ?bs-color)))
 	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy WAIT))
 	(if (eq ?side INPUT)
 	 then
@@ -337,9 +340,12 @@
 (defrule production-rs-move-to-output
 	"Ring is mounted, move to output"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE))
+	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE)
+	               (rs-ring-color ?ring-color) (team ?team))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
+	(assert (product-processed (at-machine ?n) (mtype RS) (team ?team)
+	                           (game-time ?gt) (ring-color ?ring-color)))
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
@@ -418,7 +424,11 @@
 	(if (eq ?cs-op RETRIEVE_CAP) then
 		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
 		                (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
-		                (reason (str-cat "Retrieved cap at " ?n)))))
+		                (reason (str-cat "Retrieved cap at " ?n))))
+	else
+		(assert (product-processed (at-machine ?n) (mtype CS)
+		                           (team ?team) (game-time ?gt)))
+	)
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")

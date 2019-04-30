@@ -251,6 +251,22 @@
   (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
 )
 
+(deftemplate product-processed
+  (slot id (type INTEGER) (default-dynamic (gen-int-id)))
+  (slot workpiece (type INTEGER) (default 0))
+  (slot game-time (type FLOAT))
+  (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (slot mtype (type SYMBOL) (allowed-values BS DS RS CS SS))
+  (slot at-machine (type SYMBOL)
+				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+	(slot delivery-gate (type INTEGER))
+  (slot confirmed (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+  (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK))
+  (slot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+)
+
+
 (deftemplate gamestate
   (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE) (default STANDALONE))
   (slot state (type SYMBOL)
