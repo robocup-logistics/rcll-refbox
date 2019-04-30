@@ -26,6 +26,8 @@ class MPSRefboxInterface {
   unsigned int          __max_thread_time_usec;
   unsigned int          __max_thread_time_sec;
   ThreadList           *mpsThreadList;
+
+ public:
   std::map<std::string, Machine *>  mpses_;
   
  public:
