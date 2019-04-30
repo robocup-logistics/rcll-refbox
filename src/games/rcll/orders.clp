@@ -142,39 +142,6 @@
 			)
 		)
 
-		; Production points for ring color complexities
-		(foreach ?r ?ring-colors
-			(bind ?points 0)
-			(bind ?cc 0)
-			(do-for-fact ((?rs ring-spec)) (eq ?rs:color ?r)
-				(bind ?cc ?rs:req-bases)
-				(switch ?rs:req-bases
-					(case 0 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC0-STEP*))
-					(case 1 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC1-STEP*))
-					(case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*))
-				)
-			)
-			(assert (points (phase PRODUCTION) (game-time ?delivery-time) (team ?team)
-			                (points ?points)
-			                (reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
-			                                 " for order " ?id))))
-	  )
-
-		; Production points for mounting the last ring (pre-cap points)
-		(bind ?pre-cap-points 0)
-		(switch ?complexity
-			(case C1 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C1-PRECAP*))
-			(case C2 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C2-PRECAP*))
-			(case C3 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C3-PRECAP*))
-		)
-		(bind ?complexity-num (length$ ?ring-colors))
-		(if (> ?complexity-num 0) then
-			(assert (points (game-time ?delivery-time) (points ?pre-cap-points)
-			                (team ?team) (phase PRODUCTION)
-			                (reason (str-cat "Mounted last ring for complexity "
-			                                 ?complexity " order " ?id))))
-		)
-
 		; Production points for mounting the cap
     (assert (points (game-time ?delivery-time) (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
 		    (team ?team) (phase PRODUCTION)
@@ -258,4 +225,52 @@
   =>
   (printout t "Giving " ?points " points to team " ?team ": " ?reason
 	    " (" ?phase " @ " ?gt ")" crlf)
+)
+
+;-------------------------------------Score for Intermediate
+(defrule order-step-mount-ring
+ "Production points for mounting a ring on an intermediate product "
+  ?pf <- (product-processed (id ?p-id)
+                            (mtype RS)
+                            (team ?team)
+                            (confirmed TRUE)
+                            (workpiece ?w-id)
+                            (game-time ?g-time)
+                            (at-machine ?m-name)
+                            (ring-color ?r-color&~nil))
+  (workpiece (id ?w-id)
+             (order ?o-id)
+             (ring-colors $?wp-r-colors&:(member$ ?r-color?wp-r-colors)))
+  (order (id ?o-id) 
+         (complexity ?complexity)
+         (ring-colors $?r-colors&:(eq ?wp-r-colors
+                                      (subseq$ ?r-colors 1 (length$ ?wp-r-colors)))))
+  (ring-spec (color ?r-color) (req-bases ?cc))
+  (not (points (product-step ?p-id)))
+   =>
+  ; Production points for ring color complexities
+  (bind ?points 0)
+    (switch ?cc
+        (case 0 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC0-STEP*))
+        (case 1 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC1-STEP*))
+        (case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*))   U)
+    (assert (points (phase PRODUCTION) (game-time ?g-time) (team ?team)
+                    (points ?points) (product-step ?p-id)
+                    (reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
+                                       " for order " ?o-id))))
+    ; Production points for mounting the last ring (pre-cap points)
+    (bind ?complexity-num (length$ ?r-colors))
+    (if (eq (nth$ ?complexity-num ?r-colors) ?r-color)
+    then
+    (bind ?pre-cap-points 0)
+    (switch ?complexity
+      (case C1 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C1-PRECAP*))
+      (case C2 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C2-PRECAP*))
+      (case C3 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C3-PRECAP*))
+    )
+        (assert (points (game-time ?g-time) (points ?pre-cap-points)
+                        (team ?team) (phase PRODUCTION) (product-step ?p-id)
+                        (reason (str-cat "Mounted last ring for complexity "
+                                          ?complexity " order " ?o-id))))
+  )
 )
