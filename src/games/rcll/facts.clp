@@ -334,6 +334,7 @@
   (slot game-time (type FLOAT))
   (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION WHACK_A_MOLE_CHALLENGE))
   (slot reason (type STRING))
+  (slot product-step (type INTEGER) (default 0))
 )
 
 (deftemplate zone-swap
