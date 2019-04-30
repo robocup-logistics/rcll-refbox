@@ -43,11 +43,11 @@
 (defrule workpiece-update
 	"Update a workpiece if information changes"
 	(gamestate (phase PRODUCTION))
-	(workpiece (rtype INCOMING) (id ?id) (team ?team) (at-machine ?at-machine) (visible ?visible))
-	?wf <- (workpiece (rtype RECORD) (id ?id) (team ?r-team) (at-machine ?r-at-machine) (visible ?r-visible))
-	(test (or (neq ?team ?r-team) (neq ?at-machine ?r-at-machine) (neq ?visible ?r-visible)))
+	(workpiece (rtype INCOMING) (id ?id) (at-machine ?at-machine) (visible ?visible))
+	?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?r-at-machine) (visible ?r-visible))
+	(test (or (neq ?at-machine ?r-at-machine) (neq ?visible ?r-visible)))
 	=>
-	(modify ?wf (team ?team) (at-machine ?at-machine) (visible ?visible))
+	(modify ?wf (at-machine ?at-machine) (visible ?visible))
 )
 
 (defrule workpiece-assign-order
