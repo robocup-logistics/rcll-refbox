@@ -447,7 +447,19 @@ LLSFRefBox::setup_clips()
     clips_->add_function("mps-reset", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
     clips_->add_function("mps-reset-base-counter", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
     clips_->add_function("mps-deliver", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
-  }
+
+		for (auto &mps : mps_->mpses_) {
+			mps.second->addCallback(
+			  [this, mps](OpcUtils::ReturnValue *ret) {
+				  if (!ret->bool_s) {
+					  fawkes::MutexLocker clips_lock(&clips_mutex_);
+					  clips_->assert_fact_f("(mps-status-feedback %s IDLE)", mps.first.c_str());
+				  }
+			  },
+			  OpcUtils::MPSRegister::STATUS_READY_IN,
+			  nullptr);
+		}
+	}
 
   clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 
