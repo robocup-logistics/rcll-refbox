@@ -665,9 +665,11 @@
 
 (defrule prod-machine-retrieved
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-state RETRIEVED)
-		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
+  ?m <- (machine (name ?n) (state READY-AT-OUTPUT)
+                 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
+  ?mps-status <- (mps-status-feedback ?n IDLE)
   =>
+  (retract ?mps-status)
   (modify ?m (state WAIT-IDLE) (retrieved-at ?gt) (desired-lights YELLOW-BLINK))
 )
 
