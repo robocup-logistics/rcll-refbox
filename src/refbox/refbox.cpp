@@ -765,18 +765,23 @@ LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
   if (station) {
 		if (!mutex_future_ready(machine)) { return; }
 		auto fut = std::async(std::launch::async, [this, station, machine, operation] {
+			MutexLocker lock(&clips_mutex_, false);
+			station->band_on_until_mid();
+			lock.relock();
+			clips_->assert_fact_f("(mps-feedback %s %s AVAILABLE)", machine.c_str(), operation.c_str());
+			lock.unlock();
 			if (operation == "RETRIEVE_CAP") {
 				station->retrieve_cap();
 			} else if (operation == "MOUNT_CAP") {
 				station->mount_cap();
 			}
-			MutexLocker lock(&clips_mutex_);
-
-			clips_->assert_fact_f("(mps-feedback %s success %s)", operation.c_str(), machine.c_str());
+			station->band_on_until_out();
+			lock.relock();
+			clips_->assert_fact_f("(mps-feedback %s %s DONE)", machine.c_str(), operation.c_str());
 			return true;
 		});
 
-    mutex_futures_[machine] = std::move(fut);
+		mutex_futures_[machine] = std::move(fut);
 	} else {
     logger_->log_error("MPS", "Invalid station %s", machine.c_str());
     return;
