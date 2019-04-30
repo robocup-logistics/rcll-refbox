@@ -93,6 +93,70 @@
 )
 
 
+;--------------------------Workpiece Processing-------------------------------
+(defrule workpiece-at-bs
+    "Confirm workpiece base_color when visible at BS
+    ps. The workpiece should have been created already"
+    (gamestate (phase PRODUCTION))
+    ?wf <- (workpiece (id ?id) 
+                      (rtype RECORD)
+                      (state AVAILABLE)
+                      (at-machine ?m-name)
+                      (base-color ?base-color))
+  ?pf <- (product-processed (mtype BS)
+                            (confirmed FALSE)
+                            (workpiece ?wp-id)
+                            (at-machine ?m-name)
+                            (base-color ?bs-color))
+   =>
+  (printout t "Workpiece " ?id ": Confirming process " ?m-name crlf)
+  (if (neq ?bs-color ?base-color)
+    then (printout t "Workpiece " ?id ": Base color corrected ["
+                     ?base-color  "->" ?bs-color "]" crlf)
+  )
+  (modify ?pf (workpiece ?id) (confirmed TRUE))
+  (modify ?wf (state PROCESSED) (base-color ?bs-color))
+)
+
+(defrule workpiece-processed-at-rs
+    "Update the availbe workpiece with the recent prodcut processing  "
+    (gamestate (phase PRODUCTION))
+    ?wf <- (workpiece (id ?id)
+                      (rtype RECORD)
+                      (state AVAILABLE)
+                      (at-machine ?m-name)
+                      (ring-colors $?ring-colors))
+    ?pf <- (product-processed (mtype RS)
+                              (confirmed FALSE)
+                              (workpiece ?wp-id)
+                              (at-machine ?m-name)
+                              (ring-color ?r-color))
+    =>
+    (printout t "Workpiece " ?id ": Confirming process " ?m-name crlf)
+    ;TODO: Find out what points needs to be given
+    (modify ?pf (workpiece ?id) (confirmed TRUE))
+    (modify ?wf (state PROCESSED)
+                (ring-colors (append$ ?ring-colors ?r-color)))
+)
+
+;------------------------------Sanity Checks
+(defrule workpiece-available-twice
+    "Error differnt workpieces availble at same  machines"
+    (gamestate (phase PRODUCTION))
+    ?wf1 <- (workpiece (rtype RECORD) (id ?first-id)
+                       (at-machine ?at-machine)
+                       (state AVAILABLE|PROCESSED))
+    ?wf2 <- (workpiece (rtype RECORD)
+                       (id ?second-id&:(neq ?first-id ?second-id))
+                       (at-machine ?at-machine)
+                       (state AVAILABLE|PROCESSED))
+    =>
+    (printout t "Workpiece " ?first-id " and " ?second-id
+                "are both AVAILABE at " ?at-machine crlf)
+)
+
+
+;----------------------------------------Clean Up Incoming
 (defrule workpiece-incoming-cleanup
 	"Remove transient incoming facts"
 	(declare (salience ?*PRIORITY_CLEANUP*))
