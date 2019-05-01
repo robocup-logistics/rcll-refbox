@@ -265,6 +265,8 @@
   (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK))
   (slot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+  (slot scored (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+	(slot order (type INTEGER) (default 0))
 )
 
 

@@ -233,6 +233,7 @@
   ?pf <- (product-processed (id ?p-id)
                             (mtype RS)
                             (team ?team)
+                            (scored FALSE)
                             (confirmed TRUE)
                             (workpiece ?w-id)
                             (game-time ?g-time)
@@ -278,4 +279,5 @@
                         (reason (str-cat "Mounted last ring for complexity "
                                           ?complexity " order " ?o-id))))
   )
+  (modify ?pf (scored TRUE) (order ?o-id))
 )
