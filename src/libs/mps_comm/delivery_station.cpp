@@ -15,9 +15,7 @@ DeliveryStation::DeliveryStation(std::string name) : Machine(name, Station::STAT
 DeliveryStation::~DeliveryStation() {}
 
 void DeliveryStation::deliver_product(int slot) {
-  //lock_guard<mutex> g(lock_);
   send_command(machine_type_ | Operation::OPERATION_DELIVER, slot);
-  wait_for_ready();
 }
 
 void DeliveryStation::identify() {
