@@ -424,9 +424,41 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (printout t "Machine " ?n " of type RS switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK) (task MOVE-MID) (mps-busy TRUE)
              (prep-blink-start ?gt))
+  (mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
+)
+
+(defrule prod-proc-rs-mount-ring
+	"Workpiece is in the middle, mount a ring"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
+	               (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors))
+	=>
+	(printout t "Machine " ?n ": mount ring" crlf)
+	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy TRUE))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
+)
+
+(defrule prod-proc-rs-move-to-output
+	"Ring is mounted, move to output"
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE))
+	=>
+	(printout t "Machine " ?n ": move to output" crlf)
+	(modify ?m (task MOVE-OUT) (mps-busy TRUE))
+	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+)
+
+(defrule proc-proc-rs-done
+	"Workpiece is in output, switch to READY-AT-OUTPUT"
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOVE-OUT) (mps-busy FALSE))
+	=>
+	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
 
 (defrule prod-proc-state-processing-rs
