@@ -149,6 +149,9 @@ llsfrb:
     refbox-host: localhost
     refbox-port: 4444
 
+  workpiece-tracking:
+   enable: false
+
   simulation:
     enable: true
     # synchronize refbox time with the time of a simulation 
