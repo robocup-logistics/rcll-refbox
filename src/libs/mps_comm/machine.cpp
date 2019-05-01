@@ -46,20 +46,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
   reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
   setNodeValue(registerNodes[reg], (uint8_t)error, reg);
 
-  if(command < Station::STATION_BASE)
-    return;
-
-  reg = OpcUtils::MPSRegister::STATUS_BUSY_IN;
-  getReturnValue(reg)->setValue(OpcUtils::getNodeValueWithCorrectType(registerNodes[reg], statusBit));
-
-  if (statusBit) {
-    wait_for_buisy();
-  }
-  if (timeout and (not wait_for_ready(timeout))) {
-    std::ostringstream str;
-    str << "Timeout during command #" << command << " (Timeout was " << timeout << ")";
-    throw timeout_exception(str.str());
-  }
+  return;
 }
 
 void Machine::reset() {
