@@ -230,7 +230,8 @@
 ;-------------------------------------Score for Intermediate
 (defrule order-step-mount-ring
  "Prodtcion points for mounting a ring on an intermediate product "
-  ?pf <- (product-processed (id ?p-id) (workpiece ?w-id) (confirmed TRUE)
+  ?pf <- (product-processed (id ?p-id) (workpiece ?w-id)
+                            (confirmed TRUE) (scored FALSE)
                             (at-machine ?m-name) (mtype RS)
                             (game-time ?g-time) (team ?team)
                             (ring-color ?r-color&~nil))
@@ -273,4 +274,5 @@
                     (reason (str-cat "Mounted last ring for complexity "
                                      ?complexity " order " ?o-id))))
   )
+  (modify ?pf (scored TRUE) (order ?o-id))
 )
