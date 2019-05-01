@@ -45,7 +45,6 @@ void BaseStation::get_base(llsf_msgs::BaseColor color) {
   }
 
   send_command(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
-  wait_for_ready();
 }
 
 // Need information on how to access this
