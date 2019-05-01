@@ -66,7 +66,7 @@
             ((?pd product-delivered))
             (and (eq ?pd:id (pb-field-value ?p "delivery_id"))
                  (eq ?pd:confirmed FALSE))
-            (if (eq (pb-field-value ?p "correct") 1) then
+            (if (eq (pb-field-value ?p "correct") TRUE) then
               (printout t "Correct delivery for order " ?pd:order
                           " by team " ?pd:team crlf)
               (modify ?pd (confirmed TRUE))
