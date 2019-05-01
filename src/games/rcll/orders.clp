@@ -228,6 +228,19 @@
 )
 
 ;-------------------------------------Score for Intermediate
+(deffunction order-step-scoring-allowed (?order-id ?team ?q-req ?mtype ?base ?ring ?cap)
+   (bind ?scored-for-step
+           (find-all-facts ((?p product-processed)) (and (eq ?p:scored TRUE)
+                                                       (eq ?p:order ?order-id)
+                                                       (eq ?p:team ?team)
+                                                       (eq ?p:mtype ?mtype)
+                                                       (eq ?p:base-color ?base)
+                                                       (eq ?p:ring-color ?ring)
+                                                       (eq ?p:cap-color ?cap)
+                                                       (eq ?p:confirmed TRUE))))
+  (return (> ?q-req (length$ ?scored-for-step)))
+)
+
 (defrule order-step-mount-ring
  "Production points for mounting a ring on an intermediate product "
   ?pf <- (product-processed (id ?p-id)
@@ -238,11 +251,14 @@
                             (workpiece ?w-id)
                             (game-time ?g-time)
                             (at-machine ?m-name)
-                            (ring-color ?r-color&~nil))
+                            (base-color ?step-b-color)
+                            (cap-color ?step-c-color)
+                            (ring-color ?step-r-color&~nil))
   (workpiece (id ?w-id)
+             (team ?team)
              (order ?o-id)
              (base-color ?base-color)
-             (ring-colors $?wp-r-colors&:(member$ ?r-color
+             (ring-colors $?wp-r-colors&:(member$ ?step-r-color
                                                   ?wp-r-colors)))
   (order (id ?o-id)
          (complexity ?complexity)
@@ -251,22 +267,23 @@
          (base-color ?base-color)
          (ring-colors $?r-colors&:(eq ?wp-r-colors
                                       (subseq$ ?r-colors 1 (length$ ?wp-r-colors)))))
-  (ring-spec (color ?r-color) (req-bases ?cc))
+  (ring-spec (color ?step-r-color) (req-bases ?cc))
   (not (points (product-step ?p-id)))
+  (test (order-step-scoring-allowed ?o-id ?team ?q-req RS ?step-b-color ?step-r-color ?step-c-color))
    =>
   ; Production points for ring color complexities
   (bind ?points 0)
     (switch ?cc
         (case 0 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC0-STEP*))
         (case 1 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC1-STEP*))
-        (case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*))   U)
+        (case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*)))
     (assert (points (phase PRODUCTION) (game-time ?g-time) (team ?team)
                     (points ?points) (product-step ?p-id)
                     (reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
                                        " for order " ?o-id))))
     ; Production points for mounting the last ring (pre-cap points)
     (bind ?complexity-num (length$ ?r-colors))
-    (if (eq (nth$ ?complexity-num ?r-colors) ?r-color)
+    (if (eq (nth$ ?complexity-num ?r-colors) ?step-r-color)
     then
     (bind ?pre-cap-points 0)
     (switch ?complexity
