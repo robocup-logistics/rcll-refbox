@@ -461,6 +461,18 @@
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
 
+(defrule prod-proc-new-base-on-RS-slide
+	"The counter for the RS slide has been updated"
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (state ?state) (mtype RS))
+	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?count)
+	=>
+	(assert (machine-mps-state (name ?n) (state ?state) (num-bases ?count)))
+	(retract ?fb)
+)
+
+
 (defrule prod-proc-state-processing-rs
   "Instruct RS to mount ring"
   (declare (salience ?*PRIORITY_HIGH*))
