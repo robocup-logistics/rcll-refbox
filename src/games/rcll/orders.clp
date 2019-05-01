@@ -235,13 +235,16 @@
                             (game-time ?g-time) (team ?team)
                             (ring-color ?r-color&~nil))
   (workpiece (id ?w-id) (order ?o-id)
+             (base-color ?base-color)
              (ring-colors $?wp-r-colors&:(member$ ?r-color
                                                   ?wp-r-colors)))
   (order (id ?o-id) (complexity ?complexity)
+	       (quantity-requested ?q-req)
+	       (delivery-period $?dp &:(<= ?g-time (nth$ 2 ?dp)))
+	       (base-color ?base-color)
          (ring-colors $?r-colors&:(eq ?wp-r-colors
                                       (subseq$ ?r-colors 1 (length$ ?wp-r-colors)))))
   (ring-spec (color ?r-color) (req-bases ?cc))
-
   (not (points (product-step ?p-id)))
    =>
   ; Production points for ring color complexities
