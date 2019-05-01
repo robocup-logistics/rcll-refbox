@@ -774,6 +774,7 @@
         (wait-for-product-since ?ws
 	        &:(timeout-sec ?gt ?ws (+ ?*PREPARE-WAIT-TILL-RESET* ?*PROCESSING-WAIT-TILL-RESET*))))
 	=>
+	(modify ?m (state IDLE) (task nil))
 	(mps-reset (str-cat ?n))
 )
 
