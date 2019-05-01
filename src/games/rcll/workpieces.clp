@@ -68,6 +68,24 @@
 	(printout t "Workpiece " ?id " received a ring, determined order to be " ?order-id crlf)
 )
 
+(defrule workpiece-resign-order
+    "Resign order from workpiece, if they became incosistent"
+    (gamestate (phase PRODUCTION))
+    ?wf <- (workpiece (id ?id)
+                      (rtype RECORD)
+                      (team ?r-team)
+                      (order ?o-id&:(neq ?o-id 0))
+                      (cap-color ?cap-color)
+                      (base-color ?base-color)
+                      (ring-colors $?ring-colors&:(> (length$ ?ring-colors) 0)))
+    (order (id ?o-id) 
+           (base-color ?base-color)
+           (ring-colors $?order-ring-colors&:(neq ?ring-colors
+                                                (subseq$ ?order-ring-colors 1 (length$ ?ring-colors)))))
+    =>
+    (modify ?wf (order 0))
+    (printout t "Workpiece " ?id " received a ring, became incosistent with " ?o-id crlf)
+)
 
 ;-------------------------Workpiece Availability------------------------------
 (defrule workpiece-available
