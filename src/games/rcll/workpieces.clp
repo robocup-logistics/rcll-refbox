@@ -34,6 +34,55 @@
 	(return (random (nth$ 1 ?*WORKPIECE-RANGE-RED*) (nth$ 2 ?*WORKPIECE-RANGE-CLEAR*)))
 )
 
+(deffunction workpiece-simulate-tracking (?order-id ?team ?delivery-time)
+  (do-for-fact ((?order order)) (eq ?order:id ?order-id)
+      ;Create a workpiece
+      (do-for-fact ((?m machine)) (and (eq ?m:mtype DS) (eq ?m:team ?team))
+         (bind ?workpiece-id (workpiece-gen-id-for-base-color ?order:base-color))
+         (assert (workpiece (team ?team)
+                            (rtype RECORD)
+                            (state AVAILABLE)
+                            (id ?workpiece-id)
+                            (order ?order-id)
+                            (at-machine ?m:name)
+                            (base-color ?order:base-color)
+                            (ring-colors ?order:ring-colors)
+                            (cap-color ?order:cap-color))))
+
+      ;Simulate Base retrieval process
+      (do-for-fact ((?m machine)) (and (eq ?m:mtype BS) (eq ?m:team ?team))
+         (assert (product-processed (mtype BS)
+                                    (team ?team)
+                                    (confirmed TRUE)
+                                    (at-machine ?m:name)
+                                    (workpiece ?workpiece-id)
+                                    (game-time ?delivery-time)
+                                    (base-color ?order:base-color))))
+      ;Simulate Ring mouting processes
+      (foreach ?r ?order:ring-colors
+        (do-for-fact ((?m machine)) (and (eq ?m:mtype RS)(eq ?m:team ?team)
+                                         (member$ ?r ?m:rs-ring-colors))
+           (assert (product-processed (mtype RS)
+                                      (team ?team)
+                                      (confirmed TRUE)
+                                      (at-machine ?m:name)
+                                      (workpiece ?workpiece-id)
+                                      (game-time ?delivery-time)
+                                      (ring-color ?r)))))
+      ;Simulate Cap mounting process on a random cap station
+      (do-for-fact ((?m machine)) (and (eq ?m:mtype CS) (eq ?m:team ?team))
+         (assert (product-processed (mtype CS)
+                                    (team ?team)
+                                    (confirmed TRUE)
+                                    (at-machine ?m:name)
+                                    (workpiece ?workpiece-id)
+                                    (game-time ?delivery-time)
+                                    (cap-color ?order:cap-color))))
+
+
+   )
+)
+
 (defrule workpiece-learn-new
 	"Learn a new workpiece we had not seen before"
 	(gamestate (phase PRODUCTION))
