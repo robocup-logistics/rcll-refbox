@@ -21,6 +21,19 @@
 	(return BASE_INVALID)
 )
 
+(deffunction workpiece-gen-id-for-base-color (?base-color)
+	(if (eq ?base-color BASE_RED)
+		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-RED*) (nth$ 2 ?*WORKPIECE-RANGE-RED*))))
+	(if (eq ?base-color BASE_SILVER)
+		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-SILVER*) (nth$ 2  ?*WORKPIECE-RANGE-SILVER*))))
+	(if (eq ?base-color BASE_BLACK)
+		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-BLACK*) (nth$ 2 ?*WORKPIECE-RANGE-BLACK*))))
+	(if (eq ?base-color BASE_CLEAR)
+		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-CLEAR*) (nth$ 2  ?*WORKPIECE-RANGE-CLEAR*))))
+  (printout error "Invalid workpiece base-color" ?base-color  ". assign random id." crlf)
+	(return (random (nth$ 1 ?*WORKPIECE-RANGE-RED*) (nth$ 2 ?*WORKPIECE-RANGE-CLEAR*)))
+)
+
 (defrule workpiece-learn-new
 	"Learn a new workpiece we had not seen before"
 	(gamestate (phase PRODUCTION))
