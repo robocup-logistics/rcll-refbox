@@ -729,25 +729,17 @@ LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
 void
 LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
 {
-  logger_->log_info("MPS", "Mount ring on %s: slide %d",
-		    machine.c_str(), slide);
-  if (! mps_)  return;
-  RingStation *station;
-  station = mps_->get_station(machine, station);
-  if (station) {
-		if (!mutex_future_ready(machine)) { return; }
-		auto fut = std::async(std::launch::async, [this, station, machine, slide] {
-			station->mount_ring(slide);
-			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback rs-mount-ring success %s)", machine.c_str());
-			return true;
-		});
-
-    mutex_futures_[machine] = std::move(fut);
-	} else {
-    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
-    return;
-  }
+	logger_->log_info("MPS", "Mount ring on %s: slide %d", machine.c_str(), slide);
+	if (!mps_) {
+		logger_->log_error("MPS", "MPS stations are not initialized");
+		return;
+	}
+	RingStation *station = mps_->get_station(machine, station);
+	if (!station) {
+		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+		return;
+	}
+	station->mount_ring(slide);
 }
 
 void
