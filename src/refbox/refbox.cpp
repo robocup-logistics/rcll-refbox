@@ -737,23 +737,16 @@ LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
 {
   logger_->log_info("MPS", "Processing on %s: slide %d",
 		    machine.c_str(), slide);
-  if (! mps_)  return;
-  DeliveryStation *station;
-  station = mps_->get_station(machine, station);
-  if (station) {
-		if (!mutex_future_ready(machine)) { return; }
-		auto fut = std::async(std::launch::async, [this, station, machine, slide] {
-			station->deliver_product(slide);
-			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback ds-process success %s)", machine.c_str());
-			return true;
-		});
-
-		mutex_futures_[machine] = std::move(fut);
-	} else {
-    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+	if (!mps_) {
+    logger_->log_error("MPS", "MPS stations are not initialized");
     return;
   }
+	DeliveryStation *station = mps_->get_station(machine, station);
+	if (!station) {
+		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+		return;
+	}
+  station->deliver_product(slide);
 }
 
 void
