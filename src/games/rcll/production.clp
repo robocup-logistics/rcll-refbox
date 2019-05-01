@@ -328,21 +328,29 @@
   ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED))
   =>
   (printout t "Machine " ?n " of type DS switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK) (ds-gate ?gate)
              (prep-blink-start ?gt))
 )
 
 (defrule prod-proc-state-ds-processing
 	"DS is prepared and received a product."
   (declare (salience ?*PRIORITY_HIGHER*))
-	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
+	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil)
 	               (ds-order ?order))
   (order (id ?order) (delivery-gate ?gate))
 	=>
-	(modify ?m (proc-state PROCESSING))
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
+	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy TRUE))
   (mps-ds-process (str-cat ?n) ?gate)
 )
+
+(defrule prod-ds-delivery-finished
+  (declare (salience ?*PRIORITY_HIGHER*))
+	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE))
+	=>
+	(modify ?m (state PROCESSED) (task nil))
+)
+
 
 (defrule prod-proc-state-ds-process-done
 	"DS finished processing"
@@ -360,7 +368,7 @@
   ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
 		 (ds-gate ?gate))
   =>
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-gate 0) (ds-last-gate ?gate))
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-gate ?gate) (ds-last-gate ?gate))
 )
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
@@ -511,17 +519,14 @@
 	                           (confirmed FALSE)))
 	(assert (attention-message (team ?team)
 	                           (text (str-cat "Please confirm delivery for order " ?order))))
-	(mps-deliver (str-cat ?n))
 )
 
 (defrule prod-proc-state-ds-delivery-done
   (declare (salience ?*PRIORITY_HIGH*))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state PROCESSED))
-	?fb <- (mps-feedback mps-deliver success ?n)
 	=>
-  (printout t "Machine " ?n " finished processing, moving to output" crlf)
+  (printout t "Machine " ?n " finished processing" crlf)
   (modify ?m (state IDLE) (prev-state PROCESSED))
-	(retract ?fb)
 )
 
 (defrule prod-proc-state-processed-rs
