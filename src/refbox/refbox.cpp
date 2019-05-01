@@ -461,12 +461,33 @@ LLSFRefBox::setup_clips()
 		for (auto &mps : mps_->mpses_) {
 			mps.second->addCallback(
 			  [this, mps](OpcUtils::ReturnValue *ret) {
-				  if (!ret->bool_s) {
-					  fawkes::MutexLocker clips_lock(&clips_mutex_);
-					  clips_->assert_fact_f("(mps-status-feedback %s IDLE)", mps.first.c_str());
+				  std::string ready;
+				  if (ret->bool_s) {
+					  ready = "TRUE";
+				  } else {
+					  ready = "FALSE";
 				  }
+				  fawkes::MutexLocker clips_lock(&clips_mutex_);
+				  clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
+				                        mps.first.c_str(),
+				                        ready.c_str());
 			  },
 			  OpcUtils::MPSRegister::STATUS_READY_IN,
+			  nullptr);
+			mps.second->addCallback(
+			  [this, mps](OpcUtils::ReturnValue *ret) {
+				  std::string busy;
+				  if (ret->bool_s) {
+					  busy = "TRUE";
+				  } else {
+					  busy = "FALSE";
+				  }
+				  fawkes::MutexLocker clips_lock(&clips_mutex_);
+				  clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
+				                        mps.first.c_str(),
+				                        busy.c_str());
+			  },
+			  OpcUtils::MPSRegister::STATUS_BUSY_IN,
 			  nullptr);
 		}
 	}
