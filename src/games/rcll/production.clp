@@ -59,6 +59,22 @@
   )
 )
 
+(defrule prod-mps-state-ready
+	?m <- (machine (name ?n))
+  ?mps-status <- (mps-status-feedback ?n READY ?ready)
+	=>
+	(retract ?mps-status)
+	(modify ?m (mps-ready ?ready))
+)
+
+(defrule prod-mps-state-busy
+	?m <- (machine (name ?n))
+  ?mps-status <- (mps-status-feedback ?n BUSY ?busy)
+	=>
+	(retract ?mps-status)
+	(modify ?m (mps-busy ?busy))
+)
+
 (defrule prod-machine-prepare
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.PrepareMachine") (ptr ?p)
@@ -412,7 +428,7 @@
 	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
 )
 
-(defrule prod-proc-state-processing-cs-mount-start
+(defrule prod-cs-cap-move-to-mid
   "Process on CS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -421,8 +437,43 @@
   =>
   (printout t "Machine " ?n " of type CS switching to PREPARED state" crlf)
   (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
-	  (prep-blink-start ?gt))
-  (mps-cs-process (str-cat ?n) (str-cat ?cs-op))
+						 (task MOVE-MID) (prep-blink-start ?gt) (mps-busy TRUE))
+	(mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
+)
+
+(defrule production-cs-cap-main-op
+	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
+	               (cs-operation ?cs-op))
+	=>
+	(printout t "Machine " ?n ": " ?cs-op crlf)
+	(modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task RETRIEVE-CAP) (mps-busy TRUE))
+	(if (eq ?cs-op RETRIEVE_CAP)
+	 then
+		(mps-cs-retrieve-cap (str-cat ?n))
+	 else
+		(mps-cs-mount-cap (str-cat ?n))
+	)
+)
+
+(defrule production-cs-move-to-output
+	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task RETRIEVE-CAP) (mps-busy FALSE))
+	=>
+	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+	(modify ?m (task MOVE-OUT) (mps-busy TRUE))
+)
+
+(defrule production-cs-done
+	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task MOVE-OUT) (mps-busy FALSE)
+	               (cs-operation ?cs-op))
+	=>
+	(modify ?m (state READY-AT-OUTPUT) (task nil) (mps-ready TRUE)
+	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
+)
+
+(defrule production-mps-product-retrieved
+	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
+	=>
+	(modify ?m (state IDLE))
 )
 
 (defrule prod-proc-state-processing-cs-mount
