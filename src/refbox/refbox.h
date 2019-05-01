@@ -144,6 +144,12 @@ class LLSFRefBox
   CLIPS::Values clips_bson_get_time(void *bson, std::string field_name);
 #endif
 
+	void clips_mps_move_conveyor(std::string machine,
+	                             std::string goal_position,
+	                             std::string conveyor_direction = "FORWARD");
+	void clips_mps_cs_retrieve_cap(std::string machine);
+	void clips_mps_cs_mount_cap(std::string machine);
+
   void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
   void          clips_mps_rs_mount_ring(std::string machine, int slide);
   void          clips_mps_cs_process(std::string machine, std::string operation);

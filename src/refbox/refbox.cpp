@@ -437,7 +437,17 @@ LLSFRefBox::setup_clips()
   clips_->add_function("config-get-bool", sigc::slot<CLIPS::Value, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_bool)));
 
   if (mps_ && ! simulation) {
-    clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
+		clips_->add_function("mps-move-conveyor",
+		                     sigc::slot<void, std::string, std::string, std::string>(
+		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_move_conveyor)));
+		clips_->add_function("mps-cs-retrieve-cap",
+		                     sigc::slot<void, std::string>(
+		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_retrieve_cap)));
+		clips_->add_function("mps-cs-mount-cap",
+		                     sigc::slot<void, std::string>(
+		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_mount_cap)));
+
+		clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
     clips_->add_function("mps-set-lights", sigc::slot<void, std::string, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
     clips_->add_function("mps-reset-lights", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_lights)));
     clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
@@ -749,12 +759,77 @@ LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
   }
 }
 
+void
+LLSFRefBox::clips_mps_move_conveyor(std::string machine,
+                                    std::string goal_position,
+                                    std::string conveyor_direction /*= "FORWARD"*/)
+{
+	if (!mps_) {
+    logger_->log_error("MPS", "MPS stations are not initialized");
+    return;
+  }
+	Machine *station = mps_->get_station(machine, station);
+	if (!station) {
+		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+		return;
+	}
+	MPSSensor goal;
+  if (goal_position == "INPUT") {
+    goal = INPUT;
+	} else if (goal_position == "MIDDLE") {
+		goal = MIDDLE;
+	} else if (goal_position == "OUTPUT") {
+		goal = OUTPUT;
+	} else {
+    logger_->log_error("MPS", "Unknown conveyor position %s", goal_position.c_str());
+    return;
+  }
+  ConveyorDirection direction;
+  if (conveyor_direction == "FORWARD") {
+    direction = FORWARD;
+  } else if (conveyor_direction == "BACKWARD") {
+    direction = BACKWARD;
+  } else {
+    logger_->log_error("MPS", "Unknown conveyor direction %s", conveyor_direction.c_str());
+    return;
+  }
+  station->conveyor_move(direction, goal);
+}
 
 void
-LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
+LLSFRefBox::clips_mps_cs_retrieve_cap(std::string machine)
 {
-  logger_->log_info("MPS", "%s on %s",
-		    operation.c_str(), machine.c_str());
+	if (!mps_) {
+    logger_->log_error("MPS", "MPS stations are not initialized");
+    return;
+  }
+	CapStation *station = mps_->get_station(machine, station);
+	if (!station) {
+		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+		return;
+	}
+  station->retrieve_cap();
+}
+
+void
+LLSFRefBox::clips_mps_cs_mount_cap(std::string machine)
+{
+	if (!mps_) {
+		logger_->log_error("MPS", "MPS stations are not initialized");
+		return;
+	}
+	CapStation *station = mps_->get_station(machine, station);
+	if (!station) {
+		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+		return;
+	}
+	station->mount_cap();
+}
+
+
+void LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
+{
+	logger_->log_info("MPS", "%s on %s", operation.c_str(), machine.c_str());
 	if (operation != "RETRIEVE_CAP" && operation != "MOUNT_CAP") {
 		logger_->log_error("MPS", "Invalid operation '%s' on %s", operation.c_str(), machine.c_str());
     return;
