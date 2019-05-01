@@ -150,7 +150,7 @@ class LLSFRefBox
 	void clips_mps_cs_retrieve_cap(std::string machine);
 	void clips_mps_cs_mount_cap(std::string machine);
 
-  void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
+  void          clips_mps_bs_dispense(std::string machine, std::string color);
   void          clips_mps_rs_mount_ring(std::string machine, int slide);
   void          clips_mps_cs_process(std::string machine, std::string operation);
   void          clips_mps_ds_process(std::string machine, int slide);

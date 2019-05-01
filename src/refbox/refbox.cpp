@@ -446,11 +446,13 @@ LLSFRefBox::setup_clips()
 		clips_->add_function("mps-cs-mount-cap",
 		                     sigc::slot<void, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_mount_cap)));
+		clips_->add_function("mps-bs-dispense",
+		                     sigc::slot<void, std::string, std::string>(
+		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
 
 		clips_->add_function("mps-set-light", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
     clips_->add_function("mps-set-lights", sigc::slot<void, std::string, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
     clips_->add_function("mps-reset-lights", sigc::slot<void, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_lights)));
-    clips_->add_function("mps-bs-dispense", sigc::slot<void, std::string, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
     clips_->add_function("mps-ds-process", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
     clips_->add_function("mps-rs-mount-ring", sigc::slot<void, std::string, int>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
     clips_->add_function("mps-cs-process", sigc::slot<void, std::string, std::string>(sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
@@ -680,55 +682,30 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 }
 
 void
-LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color, std::string side)
+LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color)
 {
-  logger_->log_info("MPS", "Dispense %s: %s at %s",
-		    machine.c_str(), color.c_str(), side.c_str());
-  if (! mps_)  return;
-  BaseStation *station;
-  station = mps_->get_station(machine, station);
-  if (station) {
-    llsf_msgs::BaseColor color_id;
-    if (color == "BASE_RED") {
-      color_id = llsf_msgs::BaseColor::BASE_RED;
-    } else if (color == "BASE_SILVER") {
-      color_id = llsf_msgs::BaseColor::BASE_SILVER;
-    } else if (color == "BASE_BLACK") {
-      color_id = llsf_msgs::BaseColor::BASE_BLACK;
-    } else {
-      logger_->log_error("MPS", "Invalid color %s", color.c_str());
-      return;
-    }
-
-    /*
-    int side_id;
-    if (side == "INPUT") {
-      side_id = 2;
-    } else if (side == "OUTPUT") {
-      side_id = 1;
-    } else {
-      logger_->log_error("MPS", "Invalid side %s", side.c_str());
-      return;
-    }
-    */
-
-		if (!mutex_future_ready(machine)) {
-			// We do not have any error handling in place
-			return;
-		}
-		auto fut = std::async(std::launch::async, [this, station, machine, color_id] {
-			// TODO: also pass the side
-			station->get_base(color_id);
-			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback bs-dispense success %s)", machine.c_str());
-			return true;
-		});
-
-		mutex_futures_[machine] = std::move(fut);
-	} else {
-    logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+	logger_->log_info("MPS", "Dispense %s: %s", machine.c_str(), color.c_str());
+	if (!mps_) {
+    logger_->log_error("MPS", "MPS stations are not initialized");
     return;
   }
+	BaseStation *station = mps_->get_station(machine, station);
+	if (!station) {
+		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+		return;
+	}
+	llsf_msgs::BaseColor color_id;
+	if (color == "BASE_RED") {
+		color_id = llsf_msgs::BaseColor::BASE_RED;
+	} else if (color == "BASE_SILVER") {
+		color_id = llsf_msgs::BaseColor::BASE_SILVER;
+	} else if (color == "BASE_BLACK") {
+		color_id = llsf_msgs::BaseColor::BASE_BLACK;
+	} else {
+		logger_->log_error("MPS", "Invalid color %s", color.c_str());
+		return;
+	}
+	station->get_base(color_id);
 }
 
 
