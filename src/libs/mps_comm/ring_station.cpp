@@ -45,7 +45,7 @@ void RingStation::identify() {
 }
 
 void RingStation::mount_ring(unsigned int feeder) {
-  send_command(Operation::OPERATION_MOUNT_RING + machine_type_, feeder + 1);
+  send_command(Operation::OPERATION_MOUNT_RING + machine_type_, feeder);
 }
 
 }
