@@ -491,6 +491,19 @@ LLSFRefBox::setup_clips()
 			  },
 			  OpcUtils::MPSRegister::STATUS_BUSY_IN,
 			  nullptr);
+			// TODO proper MPS type check
+			if (mps.first == "C-RS1" || mps.first == "C-RS2" || mps.first == "M-RS1"
+			    || mps.first == "M-RS2") {
+				mps.second->addCallback(
+				  [this, mps](OpcUtils::ReturnValue *ret) {
+					  fawkes::MutexLocker clips_lock(&clips_mutex_);
+					  clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
+					                        mps.first.c_str(),
+					                        // TODO right type?
+					                        ret->uint16_s);
+				  },
+				  OpcUtils::MPSRegister::SLIDECOUNT_IN);
+			}
 		}
 	}
 
