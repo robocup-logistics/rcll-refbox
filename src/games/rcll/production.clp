@@ -302,13 +302,42 @@
   "BS must be instructed to dispense base for processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (bs-side ?side) (bs-color ?color))
+  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING) (bs-color ?color))
   =>
-  (printout t "Machine " ?n " dispensing " ?color " base on " ?side crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
+  (printout t "Machine " ?n " dispensing " ?color " base" crlf)
+  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task DISPENSE) (mps-busy TRUE))
   ; TODO: (mps-instruct DISPENSE-BASE ?side ?color)
-  (mps-bs-dispense (str-cat ?n) (str-cat ?color) (str-cat ?side))
+  (mps-bs-dispense (str-cat ?n) (str-cat ?color))
+)
+
+(defrule prod-bs-move-conveyor
+	"The BS has dispensed a base. We now need to move the conveyor"
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
+	=>
+	(printout t "Machine " ?n " moving base to " ?side crlf)
+	(modify ?m (task MOVE-OUT) (mps-busy TRUE))
+	(if (eq ?side INPUT)
+	 then
+		(mps-move-conveyor (str-cat ?n) "INPUT" "BACKWARD")
+	 else
+		(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+	)
+)
+
+(defrule prod-bs-done
+	"We finished moving the base to the right side, machine is now READY-AT-OUTPUT"
+	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task MOVE-OUT) (mps-busy FALSE))
+	=>
+	(modify ?m (state READY-AT-OUTPUT) (task nil) (mps-ready TRUE))
+)
+
+(defrule prod-bs-idle
+	"The base has been picked up"
+	?m <- (machine (name ?n) (mtype BS|RS) (state READY-AT-OUTPUT) (task MOVE-OUT) (mps-ready FALSE))
+	=>
+	(modify ?m (state IDLE))
 )
 
 (defrule prod-proc-state-bs-dispense-done
@@ -688,7 +717,7 @@
 (defrule prod-prepared-but-no-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype ?type&~BS) (state ?state
-	               &:(or (and (eq ?type DS) (eq ?state PROCESSING)) (eq ?state PREPARED)))
+	               &:(or (and (member$ ?type (create$ DS BS)) (eq ?state PROCESSING)) (eq ?state PREPARED)))
         (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
   =>
   (modify ?m (state BROKEN) (prev-state PROCESSING)
