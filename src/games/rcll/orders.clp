@@ -152,6 +152,8 @@
 		    (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
 		    (reason (str-cat "Delivered item for order " ?id))))
   )
+
+  (workpiece-simulate-tracking ?id ?team ?delivery-time)
 )
 
 (defrule order-delivered-invalid
@@ -180,6 +182,7 @@
 									(team ?team) (phase PRODUCTION)
 									(reason (str-cat "Delivered item for order " ?id
 																	 " (wrong delivery gate)"))))
+ (workpiece-simulate-tracking ?id ?team ?game-time)
 )
 
 (defrule order-delivered-wrong-too-soon
@@ -196,6 +199,7 @@
 									(team ?team) (phase PRODUCTION)
 									(reason (str-cat "Delivered item for order " ?id
 																	 " (too soon, before time window)"))))
+ (workpiece-simulate-tracking ?id ?team ?game-time)
 )
 
 (defrule order-delivered-wrong-too-many
