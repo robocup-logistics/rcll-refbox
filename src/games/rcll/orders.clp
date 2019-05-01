@@ -142,11 +142,6 @@
 			)
 		)
 
-		; Production points for mounting the cap
-    (assert (points (game-time ?delivery-time) (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
-		    (team ?team) (phase PRODUCTION)
-		    (reason (str-cat "Mounted cap for order " ?id))))
-
    else
     (assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
 		    (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
@@ -301,4 +296,41 @@
                                           ?complexity " order " ?o-id))))
   )
   (modify ?pf (scored TRUE) (order ?o-id))
+)
+
+(defrule order-step-mount-cap
+    "Production points for mounting a cap on an intermediate product "
+    ?pf <- (product-processed (id ?p-id)
+                              (mtype CS)
+                              (team ?team)
+                              (scored FALSE)
+                              (confirmed TRUE)
+                              (workpiece ?w-id)
+                              (game-time ?g-time)
+                              (at-machine ?m-name)
+                              (base-color ?step-b-color)
+                              (ring-color ?step-r-color)
+                              (cap-color ?step-c-color&~nil))
+    (workpiece (id ?w-id)
+               (team ?team)
+               (order ?o-id)
+               (base-color ?base-color)
+               (ring-colors $?ring-colors)
+               (cap-color ?cap-color&:(eq ?cap-color ?step-c-color)))
+    (order (id ?o-id)
+           (complexity ?complexity)
+           (quantity-requested ?q-req)
+           (delivery-period $?dp &:(<= ?g-time (nth$ 2 ?dp)))
+           (base-color ?base-color)
+           (ring-colors $?ring-colors)
+           (cap-color ?cap-color))
+    (not (points (product-step ?p-id)))
+    (test (order-step-scoring-allowed ?o-id ?team ?q-req CS ?step-b-color ?step-r-color ?step-c-color))
+     =>
+     ; Production points for mounting the cap
+     (assert (points (game-time ?g-time) (team ?team)
+                     (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
+                     (phase PRODUCTION) (product-step ?p-id)
+                     (reason (str-cat "Mounted cap for order " ?o-id))))
+     (modify ?pf (scored TRUE) (order ?o-id))
 )
