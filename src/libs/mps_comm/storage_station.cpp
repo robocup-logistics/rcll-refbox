@@ -11,7 +11,7 @@ namespace modbus {
 }
 #endif
 
-StorageStation::StorageStation(std::string name) : Machine(name, Station::STATION_STORAGE) { }
+StorageStation::StorageStation(std::string name, std::string ip, unsigned short port) : Machine(name, Station::STATION_STORAGE, ip, port) { }
 StorageStation::~StorageStation() {}
 
 void StorageStation::get_product(int slot) {

@@ -15,7 +15,7 @@ namespace modbus {
 
 class CapStation: public Machine {
   public:
-    CapStation(std::string name);
+    CapStation(std::string name, std::string ip, unsigned short port);
 
     // -----------------
     // deprecated methods

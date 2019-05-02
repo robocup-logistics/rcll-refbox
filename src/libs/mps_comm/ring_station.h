@@ -15,7 +15,7 @@ namespace modbus {
 class RingStation: public Machine {
   static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
   public:
-    RingStation(std::string name);
+    RingStation(std::string name, std::string ip, unsigned short port);
     virtual ~RingStation();
 
     // Send command to get a ring

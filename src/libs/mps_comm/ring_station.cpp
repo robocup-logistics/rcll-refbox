@@ -13,7 +13,7 @@ namespace modbus {
 
 const std::vector<OpcUtils::MPSRegister> RingStation::SUB_REGISTERS({ OpcUtils::MPSRegister::SLIDECOUNT_IN, OpcUtils::MPSRegister::BARCODE_IN, OpcUtils::MPSRegister::ERROR_IN, OpcUtils::MPSRegister::STATUS_BUSY_IN, OpcUtils::MPSRegister::STATUS_ENABLE_IN, OpcUtils::MPSRegister::STATUS_ERROR_IN, OpcUtils::MPSRegister::STATUS_READY_IN });
 
-RingStation::RingStation(std::string name) : Machine(name, Station::STATION_RING) { }
+RingStation::RingStation(std::string name, std::string ip, unsigned short port) : Machine(name, Station::STATION_RING, ip, port) { }
 RingStation::~RingStation() {}
 
 void RingStation::band_on_until_in() {

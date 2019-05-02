@@ -11,7 +11,7 @@ namespace modbus {
 }
 #endif
 
-DeliveryStation::DeliveryStation(std::string name) : Machine(name, Station::STATION_DELIVERY) { }
+DeliveryStation::DeliveryStation(std::string name, std::string ip, unsigned short port) : Machine(name, Station::STATION_DELIVERY, ip, port) { }
 DeliveryStation::~DeliveryStation() {}
 
 void DeliveryStation::deliver_product(int slot) {

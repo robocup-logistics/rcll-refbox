@@ -11,7 +11,7 @@ namespace modbus {
 }
 #endif
 
-BaseStation::BaseStation(std::string name) : Machine(name, Station::STATION_BASE) { }
+BaseStation::BaseStation(std::string name, std::string ip, unsigned short port) : Machine(name, Station::STATION_BASE, ip, port) { }
 BaseStation::~BaseStation() {}
 
 void BaseStation::band_on_until_in() {

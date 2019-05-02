@@ -15,7 +15,7 @@ namespace modbus {
 
 class BaseStation: public Machine {
   public:
-    BaseStation(std::string name);
+    BaseStation(std::string name, std::string ip, unsigned short port);
     virtual ~BaseStation();
     
     // ----------------------------

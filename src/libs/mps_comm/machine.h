@@ -32,7 +32,7 @@ enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 class Machine
 {
 public:
-  Machine(std::string name, unsigned short int machine_type);
+  Machine(std::string name, unsigned short int machine_type, std::string ip, unsigned short port);
 
   virtual ~Machine();
 
@@ -46,7 +46,7 @@ public:
                     unsigned short payload2 = 0, int timeout = 0, unsigned char status = 1, unsigned char error = 0);
 
   // Create a modbus connection to machine
-  bool connect_PLC(const std::string &ip, unsigned short port, bool simulation = false);
+  bool connect_PLC(bool simulation = false);
 
   // Set the light of specified color to specified state
   // color: 1 - 3, state 0 - 2
@@ -77,6 +77,8 @@ protected:
   const std::string name_;
   // machine type
   const unsigned short int machine_type_;
+  std::string ip_;
+  unsigned short port_;
   // wait, until the ready bit is set.
   // That is, when the command is handled completely
   // timeout in ms, 0 -> no timeout
