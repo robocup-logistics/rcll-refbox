@@ -2,6 +2,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <tuple>
 //#include <modbus.h>
 // modbus defines ON and OFF, which causes conflict with protobuf
 //#undef OFF
@@ -31,6 +32,9 @@ enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
 class Machine
 {
+	typedef std::tuple<SubscriptionClient::ReturnValueCallback, OpcUtils::MPSRegister, OpcUtils::ReturnValue *>
+	    Callback;
+
 public:
   Machine(std::string name, unsigned short int machine_type, std::string ip, unsigned short port);
 
@@ -86,9 +90,11 @@ protected:
   // wait, until the buisy flag is set.
   // This is nescessary, because it has to be unset, when it gets set.
   void wait_for_buisy();
+	void register_callback(Callback, bool simulation = false);
 
+	std::vector<Callback> callbacks_;
 
-  // OPC UA related variables
+	// OPC UA related variables
 
   /* OVERRIDE */
   // OVERRIDE: static vector containing the MPSRegisters to automatically subscribe; This should be overwritten if needed

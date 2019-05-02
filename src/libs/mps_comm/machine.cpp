@@ -48,6 +48,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 		setNodeValue(registerNodes[reg], (uint8_t)error, reg);
 	} catch (std::runtime_error &e) {
 		logger->warn("Failed to send command to {}, reconnecting", name_);
+		subscriptions.clear();
 		connect_PLC(false);
 		// Send command again
 		send_command(command, payload1, payload2, timeout, status, error);
@@ -117,6 +118,9 @@ bool Machine::connect_PLC(bool simulation) {
 
   subscribe(SUB_REGISTERS, outs, simulation);
   identify();
+  for (auto &cb : callbacks_) {
+    register_callback(cb, simulation);
+  }
   return true;
 }
 
@@ -357,21 +361,16 @@ void Machine::printFinalSubscribtions()
 
 void Machine::addCallback(SubscriptionClient::ReturnValueCallback callback, OpcUtils::MPSRegister reg, OpcUtils::ReturnValue* retVal, bool simulation)
 {
-  SubscriptionClient* sub = subscribe(reg, retVal, simulation);
-  sub->add_callback(callback);
-
-  /*
-  EXAMPLE lambda callback on value change using logger
-  std::weak_ptr<spdlog::logger> weak_logger(logger);
-  ReturnValueCallback cb = [weak_logger, reg](OpcUtils::ReturnValue* retVal)
-  {
-    auto logger = weak_logger.lock();
-    if (logger) {
-      OpcUtils::logReturnValue(retVal, logger, reg, "Callback received:");
-    }
-  };
-  */
+  Callback cb = std::make_tuple(callback, reg, retVal);
+  callbacks_.push_back(cb);
+  register_callback(cb);
 }
 
+void Machine::register_callback(Callback callback, bool simulation)
+{
+  logger->info("Registering callback");
+  SubscriptionClient* sub = subscribe(std::get<1>(callback), std::get<2>(callback), simulation);
+  sub->add_callback(std::get<0>(callback));
+}
 }
 }
