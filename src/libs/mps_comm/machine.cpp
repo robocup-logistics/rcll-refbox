@@ -26,27 +26,34 @@ Machine::Machine(std::string name, unsigned short int machine_type, std::string 
 
 
 void Machine::send_command(unsigned short command, unsigned short payload1, unsigned short payload2, int timeout, unsigned char status, unsigned char error) {
-  logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
-  OpcUtils::MPSRegister registerOffset;
-  if(command < Station::STATION_BASE)
-    registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
-  else
-    registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
+	logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
+	try {
+		OpcUtils::MPSRegister registerOffset;
+		if (command < Station::STATION_BASE)
+			registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
+		else
+			registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
 
-  bool statusBit = (bool)(status & Status::STATUS_BUISY);
-  OpcUtils::MPSRegister reg;
-  reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
-  setNodeValue(registerNodes[reg], (uint16_t)command, reg);
-  reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-  setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
-  reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-  setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
-  reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
-  setNodeValue(registerNodes[reg], statusBit, reg);
-  reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
-  setNodeValue(registerNodes[reg], (uint8_t)error, reg);
+		bool                  statusBit = (bool)(status & Status::STATUS_BUISY);
+		OpcUtils::MPSRegister reg;
+		reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
+		setNodeValue(registerNodes[reg], (uint16_t)command, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+		setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+		setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
+		setNodeValue(registerNodes[reg], statusBit, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
+		setNodeValue(registerNodes[reg], (uint8_t)error, reg);
+	} catch (std::runtime_error &e) {
+		logger->warn("Failed to send command to {}, reconnecting", name_);
+		connect_PLC(false);
+		// Send command again
+		send_command(command, payload1, payload2, timeout, status, error);
+	}
 
-  return;
+	return;
 }
 
 void Machine::reset() {
