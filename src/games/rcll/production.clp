@@ -678,6 +678,7 @@
   (assert (attention-message (team ?team) (text ?reason)))
   (modify ?m (proc-state BROKEN) (broken-since ?gt)
 	  (desired-lights RED-BLINK YELLOW-BLINK))
+  (mps-reset (str-cat ?n))
 )
 
 (defrule prod-proc-state-broken-recover
