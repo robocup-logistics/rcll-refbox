@@ -462,6 +462,14 @@
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
 
+(defrule produdction-ignore-rs-slide-counter-in-non-production
+	"We are not in production phase, ignore slide events on the RS"
+	(gamestate (phase ~PRODUCTION))
+	?fb <- (mps-status-feedback ? SLIDE-COUNTER ?)
+	=>
+	(retract ?fb)
+)
+
 (defrule prod-proc-new-base-on-RS-slide
 	"The counter for the RS slide has been updated"
 	(declare (salience ?*PRIORITY_HIGHER*))
