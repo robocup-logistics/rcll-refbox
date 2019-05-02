@@ -3,11 +3,13 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <queue>
 //#include <modbus.h>
 // modbus defines ON and OFF, which causes conflict with protobuf
 //#undef OFF
 //#undef ON
 #include <mutex>
+#include <condition_variable>
 
 //#include <msgs/MachineInstructions.pb.h>
 /* REMOVE */
@@ -83,7 +85,13 @@ protected:
   const unsigned short int machine_type_;
   std::string ip_;
   unsigned short port_;
-  // wait, until the ready bit is set.
+  std::atomic<bool> shutdown_;
+  std::mutex command_queue_mutex_;
+  std::mutex command_mutex_;
+  std::condition_variable queue_condition_;
+	std::queue<std::function<void(void)>> command_queue_;
+  std::thread worker_thread_;
+	// wait, until the ready bit is set.
   // That is, when the command is handled completely
   // timeout in ms, 0 -> no timeout
   bool wait_for_ready(int timeout = 0);
@@ -91,6 +99,7 @@ protected:
   // This is nescessary, because it has to be unset, when it gets set.
   void wait_for_buisy();
 	void register_callback(Callback, bool simulation = false);
+  void dispatch_command_queue();
 
 	std::vector<Callback> callbacks_;
 

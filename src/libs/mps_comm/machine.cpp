@@ -20,40 +20,74 @@ namespace modbus {
 const std::vector<OpcUtils::MPSRegister> Machine::SUB_REGISTERS({ OpcUtils::MPSRegister::BARCODE_IN, OpcUtils::MPSRegister::ERROR_IN, OpcUtils::MPSRegister::STATUS_BUSY_IN, OpcUtils::MPSRegister::STATUS_ENABLE_IN, OpcUtils::MPSRegister::STATUS_ERROR_IN, OpcUtils::MPSRegister::STATUS_READY_IN });
 const std::string Machine::LOG_PATH = ""; /* TODO add log path if needed; if empty -> log is redirected to stdout */
 
-Machine::Machine(std::string name, unsigned short int machine_type, std::string ip, unsigned short port) : abort_operation_(false), name_(name), machine_type_(machine_type), ip_(ip), port_(port) {//, in_registers_(4), out_registers_(4) {
-  initLogger();
+Machine::Machine(std::string        name,
+                 unsigned short int machine_type,
+                 std::string        ip,
+                 unsigned short     port)
+: abort_operation_(false),
+  name_(name),
+  machine_type_(machine_type),
+  ip_(ip),
+  port_(port),
+  shutdown_(false)
+{
+	initLogger();
+	worker_thread_ = std::thread(&Machine::dispatch_command_queue, this);
+}
+
+void Machine::dispatch_command_queue()
+{
+	std::unique_lock<std::mutex> lock(command_queue_mutex_);
+	// Always process the queue before shutdown
+	while (!shutdown_ || !command_queue_.empty()) {
+		queue_condition_.wait(lock, [this] { return !command_queue_.empty() || shutdown_; });
+    if (!command_queue_.empty()) {
+			auto command = command_queue_.front();
+			command_queue_.pop();
+			lock.unlock();
+			command();
+			lock.lock();
+    }
+	}
 }
 
 
 void Machine::send_command(unsigned short command, unsigned short payload1, unsigned short payload2, int timeout, unsigned char status, unsigned char error) {
-	logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
-	try {
-		OpcUtils::MPSRegister registerOffset;
-		if (command < Station::STATION_BASE)
-			registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
-		else
-			registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
+	std::function<void(void)> call = [this, command, payload1, payload2, timeout, status, error] {
+		std::unique_lock<std::mutex> lock(command_mutex_);
+		try {
+			logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
+			OpcUtils::MPSRegister registerOffset;
+			if (command < Station::STATION_BASE)
+				registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
+			else
+				registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
 
-		bool                  statusBit = (bool)(status & Status::STATUS_BUISY);
-		OpcUtils::MPSRegister reg;
-		reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
-		setNodeValue(registerNodes[reg], (uint16_t)command, reg);
-		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-		setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
-		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-		setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
-		reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
-		setNodeValue(registerNodes[reg], statusBit, reg);
-		reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
-		setNodeValue(registerNodes[reg], (uint8_t)error, reg);
-	} catch (std::runtime_error &e) {
-		logger->warn("Failed to send command to {}, reconnecting", name_);
-		subscriptions.clear();
-		connect_PLC(false);
-		// Send command again
-		send_command(command, payload1, payload2, timeout, status, error);
-	}
-
+			bool                  statusBit = (bool)(status & Status::STATUS_BUISY);
+			OpcUtils::MPSRegister reg;
+			reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
+			setNodeValue(registerNodes[reg], (uint16_t)command, reg);
+			reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+			setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
+			reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+			setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
+			reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
+			setNodeValue(registerNodes[reg], statusBit, reg);
+			reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
+			setNodeValue(registerNodes[reg], (uint8_t)error, reg);
+			logger->info("Finished command: {} {} {} {}", command, payload1, payload2, status);
+		} catch (std::runtime_error &e) {
+			logger->warn("Failed to send command to {}, reconnecting", name_);
+			subscriptions.clear();
+			connect_PLC(false);
+			// Send command again
+			send_command(command, payload1, payload2, timeout, status, error);
+		}
+	};
+	std::unique_lock<std::mutex> lock(command_queue_mutex_);
+  command_queue_.push(call);
+  lock.unlock();
+  queue_condition_.notify_one();
 	return;
 }
 
@@ -125,7 +159,12 @@ bool Machine::connect_PLC(bool simulation) {
 }
 
 Machine::~Machine() {
-  disconnect();
+  shutdown_ = true;
+  queue_condition_.notify_all();
+  if (worker_thread_.joinable()) {
+		worker_thread_.join();
+  }
+	disconnect();
 }
   
 
