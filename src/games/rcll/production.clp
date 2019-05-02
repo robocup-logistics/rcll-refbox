@@ -404,12 +404,12 @@
   "Must check sufficient number of bases for RS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED)
 		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
 	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
   =>
-  (modify ?m (state BROKEN) (proc-state PROCESSING)
+  (modify ?m (state BROKEN)
 	  (broken-reason (str-cat ?n ": insufficient bases ("
 				  (- ?ba ?bu) " < " ?req-bases ")")))
 )
