@@ -48,6 +48,8 @@ void Machine::dispatch_command_queue()
 			command_queue_.pop();
 			lock.unlock();
 			command();
+			using namespace std::chrono_literals;
+			std::this_thread::sleep_for(40ms);
 			lock.lock();
     }
 	}
