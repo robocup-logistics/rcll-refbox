@@ -466,10 +466,10 @@
 	"The counter for the RS slide has been updated"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (state ?state) (mtype RS))
-	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?count)
+	?m <- (machine (name ?n) (state ?state) (mtype RS) (num-bases ?old-num-bases)
+	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?)
 	=>
-	(assert (machine-mps-state (name ?n) (state ?state) (num-bases ?count)))
+	(assert (machine-mps-state (name ?n) (state ?state) (num-bases (+ 1 ?old-num-bases))))
 	(retract ?fb)
 )
 
