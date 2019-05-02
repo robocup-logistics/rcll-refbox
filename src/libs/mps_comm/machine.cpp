@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <sstream>
+#include <chrono>
 
 namespace llsfrb {
 #if 0
@@ -29,7 +30,8 @@ Machine::Machine(std::string        name,
   machine_type_(machine_type),
   ip_(ip),
   port_(port),
-  shutdown_(false)
+  shutdown_(false),
+  heartbeat_active_(false)
 {
 	initLogger();
 	worker_thread_ = std::thread(&Machine::dispatch_command_queue, this);
@@ -49,6 +51,17 @@ void Machine::dispatch_command_queue()
 			lock.lock();
     }
 	}
+}
+
+void Machine::heartbeat()
+{
+  heartbeat_active_ = true;
+  using namespace std::chrono_literals;
+  while (!shutdown_) {
+    send_command(COMMAND_NOTHING, 0, 0, 1);
+    std::this_thread::sleep_for(1s);
+  }
+  heartbeat_active_ = false;
 }
 
 
@@ -155,7 +168,10 @@ bool Machine::connect_PLC(bool simulation) {
   for (auto &cb : callbacks_) {
     register_callback(cb, simulation);
   }
-  return true;
+  if (!heartbeat_active_) {
+		heartbeat_thread_ = std::thread(&Machine::heartbeat, this);
+  }
+	return true;
 }
 
 Machine::~Machine() {
@@ -163,6 +179,9 @@ Machine::~Machine() {
   queue_condition_.notify_all();
   if (worker_thread_.joinable()) {
 		worker_thread_.join();
+  }
+  if (heartbeat_thread_.joinable()) {
+    heartbeat_thread_.join();
   }
 	disconnect();
 }

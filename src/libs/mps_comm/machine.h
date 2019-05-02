@@ -91,6 +91,8 @@ protected:
   std::condition_variable queue_condition_;
 	std::queue<std::function<void(void)>> command_queue_;
   std::thread worker_thread_;
+  std::thread heartbeat_thread_;
+  std::atomic<bool> heartbeat_active_;
 	// wait, until the ready bit is set.
   // That is, when the command is handled completely
   // timeout in ms, 0 -> no timeout
@@ -100,6 +102,7 @@ protected:
   void wait_for_buisy();
 	void register_callback(Callback, bool simulation = false);
   void dispatch_command_queue();
+  void heartbeat();
 
 	std::vector<Callback> callbacks_;
 
