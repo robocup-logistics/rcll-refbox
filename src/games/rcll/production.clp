@@ -474,11 +474,26 @@
 	"The counter for the RS slide has been updated"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (state ?state) (mtype RS) (num-bases ?old-num-bases)
+	?m <- (machine (name ?n) (state ?state) (mtype RS) (team ?team)
+	               (bases-used ?bases-used) (bases-added ?old-num-bases))
 	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?)
 	=>
-	(assert (machine-mps-state (name ?n) (state ?state) (num-bases (+ 1 ?old-num-bases))))
 	(retract ?fb)
+	(if (neq ?state BROKEN)
+	 then
+		(bind ?num-bases (+ 1 ?old-num-bases))
+		(printout t "Machine " ?n " base added (count: " ?num-bases ")" crlf)
+		(if (<= (- ?num-bases ?bases-used) ?*LOADED-WITH-MAX*)
+		 then
+			(assert (points (game-time ?gt) (points ?*PRODUCTION-POINTS-ADDITIONAL-BASE*)
+			                (team ?team) (phase PRODUCTION)
+			                (reason (str-cat "Added additional base to " ?n))))
+			(modify ?m (bases-added ?num-bases))
+		 else
+			(modify ?m (state BROKEN) (prev-state ?state)
+			           (broken-reason (str-cat ?n ": too many additional bases loaded")))
+		)
+	)
 )
 
 (defrule prod-proc-state-processing-cs-mount-without-retrieve
@@ -656,40 +671,6 @@
 
 ; **** MPS state changes
 
-(defrule prod-proc-mps-state-change
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?ms <- (machine-mps-state (name ?n) (state ?mps-state) (num-bases ?num-bases))
-  ?m <- (machine (name ?n) (state ?state) (team ?team) (bases-added ?bases-added) (bases-used ?bases-used))
-  (or (machine (name ?n) (mps-state ~?mps-state))
-      (machine (name ?n) (bases-added ~?num-bases)))
-  =>
-  (retract ?ms)
-	(if (neq ?state BROKEN)
-	 then
-		(printout t "Machine " ?n " MPS state " ?mps-state " (bases added: " ?num-bases ", state " ?state ")" crlf)
-		(if (and (> ?num-bases ?bases-added)
-		         (<= (- ?num-bases ?bases-used) ?*LOADED-WITH-MAX*))
-		 then
-			(assert (points (game-time ?gt) (points ?*PRODUCTION-POINTS-ADDITIONAL-BASE*)
-			                (team ?team) (phase PRODUCTION)
-			                (reason (str-cat "Added additional base to " ?n))))
-		)
-		(if (eq ?state DOWN)
-		 then (modify ?m (mps-state-deferred ?mps-state) (bases-added ?num-bases))
-		 else (modify ?m (mps-state ?mps-state) (bases-added ?num-bases))
-		)
-	)
-)
-
-(defrule prod-proc-mps-state-nochange
-  "Cleanup machine states if no change occured"
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?ms <- (machine-mps-state (name ?n) (state ?mps-state))
-  ?m <- (machine (name ?n) (mps-state ?mps-state))
-  =>
-  (retract ?ms)
-)
-
 ; **** Mapping MPS to machine state reactions
 (defrule prod-machine-reset
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -699,15 +680,6 @@
   (modify ?m (state IDLE) (prev-state IDLE) (proc-state IDLE) (desired-lights GREEN-ON)
 	  (mps-state IDLE) (mps-state-deferred NONE) (broken-reason "")
     (ds-gate 0) (ds-last-gate 0) (cs-retrieved FALSE))
-)
-  
-(defrule prod-machine-loaded-with-too-many
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state&~BROKEN&~DOWN) (bases-added ?ba)
-		 (bases-used ?bu&:(> (- ?ba ?bu) ?*LOADED-WITH-MAX*)))
-  =>
-  (modify ?m (state BROKEN) (prev-state ?state)
-	  (broken-reason (str-cat ?n ": too many additional bases loaded")))
 )
 
 (defrule prod-mps-state-available
