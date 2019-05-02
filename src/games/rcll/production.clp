@@ -663,19 +663,22 @@
   (or (machine (name ?n) (mps-state ~?mps-state))
       (machine (name ?n) (bases-added ~?num-bases)))
   =>
-  (printout t "Machine " ?n " MPS state " ?mps-state " (bases added: " ?num-bases ", state " ?state ")" crlf)
   (retract ?ms)
-	(if (and (> ?num-bases ?bases-added)
-					 (<= (- ?num-bases ?bases-used) ?*LOADED-WITH-MAX*))
+	(if (neq ?state BROKEN)
 	 then
-	  (assert (points (game-time ?gt) (points ?*PRODUCTION-POINTS-ADDITIONAL-BASE*)
-										(team ?team) (phase PRODUCTION)
-										(reason (str-cat "Added additional base to " ?n))))
+		(printout t "Machine " ?n " MPS state " ?mps-state " (bases added: " ?num-bases ", state " ?state ")" crlf)
+		(if (and (> ?num-bases ?bases-added)
+		         (<= (- ?num-bases ?bases-used) ?*LOADED-WITH-MAX*))
+		 then
+			(assert (points (game-time ?gt) (points ?*PRODUCTION-POINTS-ADDITIONAL-BASE*)
+			                (team ?team) (phase PRODUCTION)
+			                (reason (str-cat "Added additional base to " ?n))))
+		)
+		(if (eq ?state DOWN)
+		 then (modify ?m (mps-state-deferred ?mps-state) (bases-added ?num-bases))
+		 else (modify ?m (mps-state ?mps-state) (bases-added ?num-bases))
+		)
 	)
-  (if (eq ?state DOWN)
-   then (modify ?m (mps-state-deferred ?mps-state) (bases-added ?num-bases))
-   else (modify ?m (mps-state ?mps-state) (bases-added ?num-bases))
-  )
 )
 
 (defrule prod-proc-mps-state-nochange
