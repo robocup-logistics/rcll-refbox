@@ -418,13 +418,13 @@
   "Instruct RS to mount ring"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (proc-state ~PREPARED)
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task nil)
 		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
                  (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (printout t "Machine " ?n " of type RS switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK) (task MOVE-MID) (mps-busy TRUE)
+  (modify ?m (desired-lights GREEN-BLINK) (task MOVE-MID) (mps-busy TRUE)
              (prep-blink-start ?gt))
   (mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
@@ -434,10 +434,11 @@
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
-	               (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors))
+	               (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors) (bases-used ?bu))
+  (ring-spec (color ?ring-color) (req-bases ?req-bases))
 	=>
 	(printout t "Machine " ?n ": mount ring" crlf)
-	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy TRUE))
+	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy TRUE) (bases-used (+ ?bu ?req-bases)))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
@@ -469,32 +470,6 @@
 	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?count)
 	=>
 	(assert (machine-mps-state (name ?n) (state ?state) (num-bases ?count)))
-	(retract ?fb)
-)
-
-
-(defrule prod-proc-state-processing-rs
-  "Instruct RS to mount ring"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
-                 (bases-added ?ba) (bases-used ?bu))
-  (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
-  =>
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-  (printout t "Mounting ring " ?n " from slide " (member$ ?ring-color ?ring-colors) crlf)
-)
-
-(defrule prod-proc-state-processing-ring-mounted
-	"RS mounted a ring, continue by delivering it"
-	(declare (salience ?*PRIORITY_HIGH*))
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (proc-state PROCESSING))
-	?fb <- (mps-feedback rs-mount-ring success ?n)
-	=>
-	(printout t "Machine " ?n " finished mounting a ring" crlf)
-	(modify ?m (state PROCESSED))
 	(retract ?fb)
 )
 
@@ -600,26 +575,6 @@
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
   (modify ?m (state IDLE) (prev-state PROCESSED))
-)
-
-(defrule prod-proc-state-processed-rs
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (proc-state ~PROCESSED) (bases-used ?bu)
-	               (rs-ring-color ?ring-color))
-  (ring-spec (color ?ring-color) (req-bases ?req-bases))
-  =>
-	(modify ?m (proc-state PROCESSED) (bases-used (+ ?bu ?req-bases)))
-  (mps-deliver (str-cat ?n))
-)
-
-(defrule prod-proc-state-rs-done
-  (declare (salience ?*PRIORITY_HIGH*))
-	?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (proc-state PROCESSED))
-	?fb <- (mps-feedback mps-deliver success ?n)
-	=>
-  (modify ?m (state READY-AT-OUTPUT) (prev-state PROCESSED))
-	(retract ?fb)
 )
 
 (defrule prod-proc-state-processed-cs
