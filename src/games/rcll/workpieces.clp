@@ -256,7 +256,7 @@
   =>
   (printout t "Workpiece " ?id ": Confirming process at  " ?m-name crlf)
   (modify ?pf (workpiece ?id))
-  (modify ?wf (cap-color ?c-color) (confirmed TRUE))
+  (modify ?wf (cap-color ?c-color))
   ;The cap-color will most probably be nil at the moment of processing cause
   ;the info is not present yet. The color will be confirmed by the referee
   ;(latest on delivery confirmation)
@@ -284,7 +284,7 @@
                 " is inconistent with the requested delivery for order with ID-" ?order-id
                 " This inconsistency will be resolved upon delivery confirmation" crlf)
    )
-   (modify ?pf (workpiece ?id) (confirmed TRUE))
+   (modify ?pf (workpiece ?id))
 )
 
 ;------------------------------Sanity Checks

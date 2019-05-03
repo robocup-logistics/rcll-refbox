@@ -125,7 +125,7 @@
               (do-for-fact ((?cs-step product-processed))
                                       (and (eq ?cs-step:workpiece ?wp:id)
                                            (eq ?cs-step:mtype CS))
-                 (modify ?cs-step (cap-color ?cap-color))
+                 (modify ?cs-step (cap-color ?cap-color) (confirmed TRUE))
               )
             )
            else
@@ -135,8 +135,9 @@
             (retract ?wp)
             (workpiece-simulate-tracking ?id ?team ?delivery-time)
           )
+          (modify ?step (confirmed TRUE))
       )
-  )
+   )
 )
 
 (defrule order-delivered-correct
