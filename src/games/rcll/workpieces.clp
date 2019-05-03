@@ -154,7 +154,7 @@
     "Workpiece seen at machine"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?m-name)
-                      (state ?state&~AVAILABLE&~PROCESSED) (visible TRUE))
+                      (state ?state&~AVAILABLE) (visible TRUE))
     (machine (name ?m-name) (state ~BROKEN))
     =>
     (printout t "Workpiece " ?id ": Visible at " ?m-name crlf)
@@ -165,7 +165,7 @@
     "Workpiece no longer at machine"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?m-name)
-                      (state AVAILABLE|PROCESSED) (visible FALSE))
+                      (state AVAILABLE) (visible FALSE))
     (machine (name ?m-name) (state IDLE|WAIT-IDLE|BROKEN))
     =>
     (printout t "Workpiece " ?id ": Retrieved from " ?m-name crlf)
@@ -195,7 +195,7 @@
                      ?base-color  "->" ?bs-color "]" crlf)
   )
   (modify ?pf (workpiece ?id) (confirmed TRUE))
-  (modify ?wf (state PROCESSED) (base-color ?bs-color))
+  (modify ?wf (base-color ?bs-color))
 )
 
 (defrule workpiece-processed-at-rs
@@ -215,8 +215,7 @@
     (printout t "Workpiece " ?id ": Confirming process " ?m-name crlf)
     ;TODO: Find out what points needs to be given
     (modify ?pf (workpiece ?id) (confirmed TRUE))
-    (modify ?wf (state PROCESSED)
-                (ring-colors (append$ ?ring-colors ?r-color)))
+    (modify ?wf (ring-colors (append$ ?ring-colors ?r-color)))
 )
 
 ;------------------------------Sanity Checks
@@ -225,11 +224,11 @@
     (gamestate (phase PRODUCTION))
     ?wf1 <- (workpiece (rtype RECORD) (id ?first-id)
                        (at-machine ?at-machine)
-                       (state AVAILABLE|PROCESSED))
+                       (state AVAILABLE))
     ?wf2 <- (workpiece (rtype RECORD)
                        (id ?second-id&:(neq ?first-id ?second-id))
                        (at-machine ?at-machine)
-                       (state AVAILABLE|PROCESSED))
+                       (state AVAILABLE))
     =>
     (printout t "Workpiece " ?first-id " and " ?second-id
                 "are both AVAILABE at " ?at-machine crlf)

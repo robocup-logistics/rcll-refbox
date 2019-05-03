@@ -285,10 +285,12 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE)
                    (bs-side ?side) (bs-color ?bs-color) (team ?team))
+	(confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking-enabled))
 	=>
 	(printout t "Machine " ?n " moving base to " ?side crlf)
-	(assert (product-processed (at-machine ?n) (mtype BS) (team ?team)
-	                           (game-time ?gt) (base-color ?bs-color)))
+	(if (eq ?tracking-enabled true) then
+		(assert (product-processed (at-machine ?n) (mtype BS) (team ?team)
+		                           (game-time ?gt) (base-color ?bs-color))))
 	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy WAIT))
 	(if (eq ?side INPUT)
 	 then
@@ -342,10 +344,12 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE)
 	               (rs-ring-color ?ring-color) (team ?team))
+	(confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking-enabled))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
-	(assert (product-processed (at-machine ?n) (mtype RS) (team ?team)
-	                           (game-time ?gt) (ring-color ?ring-color)))
+	(if (eq ?tracking-enabled true) then
+		(assert (product-processed (at-machine ?n) (mtype RS) (team ?team)
+		                           (game-time ?gt) (ring-color ?ring-color))))
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
@@ -419,15 +423,16 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (team ?team)
                    (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP) (mps-busy FALSE))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking-enabled))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
 	(if (eq ?cs-op RETRIEVE_CAP) then
 		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
 		                (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
 		                (reason (str-cat "Retrieved cap at " ?n))))
-	else
+	else (if (eq ?tracking-enabled true) then
 		(assert (product-processed (at-machine ?n) (mtype CS)
-		                           (team ?team) (game-time ?gt)))
+		                           (team ?team) (game-time ?gt))))
 	)
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))

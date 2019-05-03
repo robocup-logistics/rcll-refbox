@@ -214,7 +214,7 @@
 	(slot rtype (type SYMBOL) (allowed-values INCOMING RECORD))
 	(slot at-machine (type SYMBOL)
 				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
-  (slot state (type SYMBOL) (allowed-values IDLE AVAILABLE PROCESSED RETRIEVED) (default IDLE))
+  (slot state (type SYMBOL) (allowed-values IDLE AVAILABLE RETRIEVED) (default IDLE))
   (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK BASE_CLEAR))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
 						 (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
