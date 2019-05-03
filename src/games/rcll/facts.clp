@@ -66,6 +66,7 @@
   (slot prep-blink-start (type FLOAT))
   (slot retrieved-at (type FLOAT))
   (slot wait-for-product-since (type FLOAT))
+  (slot mps-base-counter (type INTEGER) (default 0))
   (slot bases-added (type INTEGER) (default 0))
   (slot bases-used (type INTEGER) (default 0))
 

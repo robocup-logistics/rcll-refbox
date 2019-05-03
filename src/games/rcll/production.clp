@@ -465,8 +465,10 @@
 (defrule produdction-ignore-rs-slide-counter-in-non-production
 	"We are not in production phase, ignore slide events on the RS"
 	(gamestate (phase ~PRODUCTION))
-	?fb <- (mps-status-feedback ? SLIDE-COUNTER ?)
+	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?bases)
+	?m <- (machine (name ?n))
 	=>
+	(modify ?m (mps-base-counter ?bases))
 	(retract ?fb)
 )
 
@@ -475,8 +477,9 @@
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (state ?state) (mtype RS) (team ?team)
-	               (bases-used ?bases-used) (bases-added ?old-num-bases))
-	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?)
+	               (bases-used ?bases-used) (bases-added ?old-num-bases)
+	               (mps-base-counter ?mps-counter))
+	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
 	=>
 	(retract ?fb)
 	(if (neq ?state BROKEN)
