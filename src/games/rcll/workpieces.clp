@@ -231,6 +231,28 @@
     (modify ?wf (ring-colors (append$ ?ring-colors ?r-color)))
 )
 
+(defrule workpiece-processed-at-cs
+    "Update the available workpiece with the recent product processing  "
+    (gamestate (phase PRODUCTION))
+    ?wf <- (workpiece (id ?id)
+                      (rtype RECORD)
+                      (state AVAILABLE)
+                      (at-machine ?m-name)
+                      (cap-color nil))
+ ?pf <- (product-processed (mtype CS)
+                           (workpiece 0)
+                           (confirmed FALSE)
+                           (at-machine ?m-name)
+                           (cap-color ?c-color))
+  (not (product-processed (workpiece ?id) (mtype CS) (confirmed TRUE)))
+  =>
+  (printout t "Workpiece " ?id ": Confirming process at  " ?m-name crlf)
+  (modify ?pf (workpiece ?id))
+  (modify ?wf (cap-color ?c-color) (confirmed TRUE))
+  ;The cap-color will most probably be nil at the moment of processing cause
+  ;the info is not present yet. The color will be confirmed by the referee
+  ;(latest on delivery confirmation)
+)
 ;------------------------------Sanity Checks
 (defrule workpiece-make-sure-wp-tracks-requested-order
     ""
