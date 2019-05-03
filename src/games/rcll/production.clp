@@ -418,12 +418,16 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state ~PROCESSED)
           (ds-order ?order) (team ?team))
+ (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking-enabled))
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
   (assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
             (confirmed FALSE)))
 	(assert (attention-message (team ?team)
 	                           (text (str-cat "Please confirm delivery for order " ?order))))
+  (if (eq ?tracking-enabled true) then
+    (assert (product-processed (at-machine ?n) (mtype DS)
+                               (order ?order)(team ?team) (game-time ?gt))))
   (modify ?m (state IDLE) (proc-state PROCESSED))
   (mps-deliver (str-cat ?n))
 )
