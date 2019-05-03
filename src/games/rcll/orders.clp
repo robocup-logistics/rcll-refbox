@@ -271,6 +271,18 @@
 																	 " (too many)"))))
 )
 
+(defrule order-remove-delivered-facts
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?pf <- (product-delivered (game-time ?game-time) (order ?id) (confirmed TRUE)
+                            (team ?team))
+  ?sf <- (product-processed (game-time ?game-time) (order ?id) (scored TRUE)
+                            (team ?team) (mtype DS) (workpiece ?w-id))
+  (order (id ?id))
+  (workpiece (id ?w-id))
+	=>
+  (modify ?pf)
+)
+
 (defrule order-print-points
   (points (game-time ?gt) (points ?points) (team ?team) (phase ?phase) (reason ?reason))
   =>
