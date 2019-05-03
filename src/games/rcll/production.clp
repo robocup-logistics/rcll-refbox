@@ -107,7 +107,7 @@
 		(bind ?side (sym-cat (pb-field-value ?prepmsg "side")))
 		(bind ?color (sym-cat (pb-field-value ?prepmsg "color")))
 		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
-	        (modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color))
+	        (modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color) (wait-for-product-since ?gt))
                else
 		(modify ?m (state BROKEN)(prev-state ?m:state)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
@@ -156,7 +156,7 @@
                       )
                    then
                     (printout t "Prepared " ?mname " (RETRIVE: (" ?slot-x ", " ?slot-y ", " ?slot-z ") )" crlf)
-                    (modify ?m (state PREPARED) (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z))
+                    (modify ?m (state PREPARED) (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z) (wait-for-product-since ?gt))
                    else
 		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with RETRIVE (" ?slot-x ", " ?slot-y ", " ?slot-z ") but this is empty")))
                   )
@@ -713,6 +713,7 @@
         (wait-for-product-since ?ws
 	        &:(timeout-sec ?gt ?ws (+ ?*PREPARE-WAIT-TILL-RESET* ?*PROCESSING-WAIT-TILL-RESET*))))
 	=>
+	(printout error "Machine " ?n " timed out while processing" crlf)
 	(modify ?m (state IDLE) (task nil))
 	(mps-reset (str-cat ?n))
 )
