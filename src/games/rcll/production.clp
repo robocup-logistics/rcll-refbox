@@ -404,11 +404,13 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PROCESSED) (proc-state ~PROCESSED)
           (bs-color ?base-color) (team ?team))
+  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking-enabled))
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
-  (assert (product-processed (at-machine ?n) (mtype BS) (base-color ?base-color)
-                             (team ?team) (game-time ?gt)))
-  (modify ?m (proc-state PROCESSED))
+  (if (eq ?tracking-enabled true) then
+    (assert (product-processed (at-machine ?n) (mtype BS) (base-color ?base-color)
+                               (team ?team) (game-time ?gt))))
+ (modify ?m (proc-state PROCESSED))
 )
 
 (defrule prod-proc-state-processed-ds
@@ -432,10 +434,12 @@
   ?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (proc-state ~PROCESSED)
                  (team ?team) (rs-ring-color ?ring-color) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
+ (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking-enabled))
   =>
   (printout t "Machine " ?n " finished processing, moving to output" crlf)
-  (assert (product-processed (at-machine ?n) (mtype RS) (ring-color ?ring-color)
-                             (team ?team) (game-time ?gt)))
+  (if (eq ?tracking-enabled true) then
+    (assert (product-processed (at-machine ?n) (mtype RS) (ring-color ?ring-color)
+                               (team ?team) (game-time ?gt))))
   (modify ?m (proc-state PROCESSED) (bases-used (+ ?bu ?req-bases)))
   (mps-deliver (str-cat ?n))
 )
@@ -445,6 +449,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state ~PROCESSED)
                  (team ?team) (cs-operation ?cs-op))
+ (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking-enabled))
   =>
   (printout t "Machine " ?n " finished " ?cs-op crlf)
   (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
@@ -454,8 +459,9 @@
                      (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
                      (reason (str-cat "Retrieved Cap at " ?n))))
     else
-     (assert (product-processed (at-machine ?n) (mtype CS)
-                                (team ?team) (game-time ?gt)))
+    (if (eq ?tracking-enabled true) then
+       (assert (product-processed (at-machine ?n) (mtype CS)
+                                  (team ?team) (game-time ?gt))))
   )
   (modify ?m (proc-state PROCESSED) (cs-retrieved ?have-cap))
   (mps-deliver (str-cat ?n))
