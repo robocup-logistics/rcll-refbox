@@ -85,6 +85,60 @@
 )
 
 
+(defrule order-delivery-confirmed-by-refree
+    ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+    ?pf <- (product-delivered (game-time ?delivery-time) (team ?team)
+                              (order ?id&~0) (confirmed TRUE))
+    ; the actual order we are confirming
+    ?of <- (order (id ?id)
+                  (active TRUE)
+                  (delivery-gate ?dgate)
+                  (complexity ?complexity)
+                  (base-color ?base-color)
+                  (ring-colors $?ring-colors)
+                  (cap-color ?cap-color))
+    (confval (path "/llsfrb/workpiece-tracking/enable")
+             (value ?tracking-enabled)
+             (type BOOL))
+    =>
+   (if (neq ?tracking-enabled true)
+    then (workpiece-simulate-tracking ?id ?team ?delivery-time)
+    else
+      ;Find delivery step and the tracked WP.
+      ;Confirm whether WP is consistent with the order.
+      ;Confirm the Cap-color if not yet known
+      (bind ?found-delivery-step FALSE)
+      (do-for-fact ((?step product-processed) (?wp workpiece))
+                              (and (eq ?step:workpiece ?wp:id)
+                                   (eq ?step:order ?id)
+                                   (eq ?step:mtype DS)
+                                   (eq ?step:team ?team)
+                                   (eq ?step:game-time ?delivery-time)
+                                   (eq ?step:scored FALSE))
+          (if (eq ?wp:order ?step:order)
+           then
+            (printout t "Confirming " ?cap-color 
+                        " for Workpiece " ?wp:id " for order " ?id crlf)
+            (if (eq ?wp:cap-color nil)
+            then
+              (modify ?wp (cap-color ?cap-color))
+              (do-for-fact ((?cs-step product-processed))
+                                      (and (eq ?cs-step:workpiece ?wp:id)
+                                           (eq ?cs-step:mtype CS))
+                 (modify ?cs-step (cap-color ?cap-color))
+              )
+            )
+           else
+            (printout warn "A Workpiece tracking order " ?wp:order
+                         " is confirmed by referee to deliver order!" ?id  crlf)
+            (printout warn "Rectifying all points scored for the wrong tracked order!" ?id  crlf)
+            (retract ?wp)
+            (workpiece-simulate-tracking ?id ?team ?delivery-time)
+          )
+      )
+  )
+)
+
 (defrule order-delivered-correct
 	?gf <- (gamestate (phase PRODUCTION|POST_GAME))
 	?pf <- (product-delivered (game-time ?delivery-time) (team ?team)
@@ -148,7 +202,6 @@
 		    (reason (str-cat "Delivered item for order " ?id))))
   )
 
-  (workpiece-simulate-tracking ?id ?team ?delivery-time)
 )
 
 (defrule order-delivered-invalid
@@ -177,7 +230,6 @@
 									(team ?team) (phase PRODUCTION)
 									(reason (str-cat "Delivered item for order " ?id
 																	 " (wrong delivery gate)"))))
- (workpiece-simulate-tracking ?id ?team ?game-time)
 )
 
 (defrule order-delivered-wrong-too-soon
@@ -194,7 +246,6 @@
 									(team ?team) (phase PRODUCTION)
 									(reason (str-cat "Delivered item for order " ?id
 																	 " (too soon, before time window)"))))
- (workpiece-simulate-tracking ?id ?team ?game-time)
 )
 
 (defrule order-delivered-wrong-too-many
