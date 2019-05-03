@@ -216,18 +216,23 @@
   (modify ?wf (ring-colors (append$ ?ring-colors ?r-color)))
 )
 
-;(defrule workpiece-processed-at-cs
-;	""
-;	(gamestate (phase PRODUCTION))
-;	?wf <- (workpiece (rtype RECORD) (id ?wf-id) (at-machine ?m-name) (state AVAILABLE))
-;	?p <- (product-processed (id ?p-id) (workpiece-id ?workpiece-id)
-;                           (at-machine ?m-name) (mtype CS) )
-;  (not (eq ?workpiece-id ?wf-id))
-;	=>
-;  (printout t "Workpiece " ?id ": Processed at " ?m-name crlf)
-;   ;Add the proper operation
-;   (modify ?wf (state PROCESSED))
-;)
+(defrule workpiece-processed-at-cs
+ "Update the availbe workpiece with the recent prodcut processing  "
+ (gamestate (phase PRODUCTION))
+ ?wf <- (workpiece (id ?id) (rtype RECORD) (state AVAILABLE)
+                   (at-machine ?m-name) (cap-color nil))
+ ?pf <- (product-processed (at-machine ?m-name) (mtype CS)
+                           (workpiece 0) (confirmed FALSE)
+                           (cap-color ?c-color))
+  (not (product-processed (workpiece ?id) (mtype CS) (confirmed TRUE)))
+	=>
+  (printout t "Workpiece " ?id ": Confirming process at  " ?m-name crlf)
+  (modify ?pf (workpiece ?id))
+  (modify ?wf (cap-color ?c-color) (confirmed TRUE))
+  ;The cap-color will most probably be nil at the moment of processing cause
+  ;the info is not present yet. The color will be confirmed by the referee
+  ;(latest on delivery confirmation)
+)
 
 
 ;------------------------------Sanity Checks
