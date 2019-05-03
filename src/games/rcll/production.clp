@@ -273,7 +273,7 @@
   ?m <- (machine (name ?n) (state IDLE) (proc-state ~IDLE))
   =>
   (printout t "Machine " ?n " switching to IDLE state" crlf)
-  (modify ?m (proc-state IDLE) (desired-lights GREEN-ON))
+  (modify ?m (proc-state IDLE) (desired-lights GREEN-ON) (task nil))
   (mps-reset (str-cat ?n))
 )
 
