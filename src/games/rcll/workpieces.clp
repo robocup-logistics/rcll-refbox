@@ -120,11 +120,17 @@
    the first ring will immediately determine the order of the workpiece."
 	(gamestate (phase PRODUCTION))
 	?wf <- (workpiece (rtype RECORD) (id ?id) (order 0) (team ?r-team)
-										(base-color ?base-color) (cap-color ?cap-color)
-										; we can only determine the order if a ring has been mounted
-										(ring-colors $?ring-colors&:(> (length$ ?ring-colors) 0)))
+                    (cap-color ?cap-color)
+										(base-color ?base-color)
+                    (ring-colors $?ring-colors))
 	(order (id ?order-id) (base-color ?base-color)
-				 (ring-colors $?order-ring-colors&:(eq (first$ ?order-ring-colors) (first$ ?ring-colors))))
+				 (ring-colors $?order-ring-colors)
+         (cap-color ?order-cap-color))
+ (test (or (eq ?cap-color nil)
+       (eq ?cap-color ?order-cap-color)))
+ (test (or (and (eq (length$ ?ring-colors) 0) (eq (length$ ?order-ring-colors) 0))
+           (and (> (length$ ?ring-colors) 0)
+                (eq ?ring-colors (subseq$ ?order-ring-colors 1 (length$ ?ring-colors))))))
 	=>
 	(modify ?wf (order ?order-id))
 	(printout t "Workpiece " ?id " received a ring, determined order to be " ?order-id crlf)
@@ -133,16 +139,22 @@
 (defrule workpiece-resign-order
 	"Resign order from workpiece, if they became incosistent"
 	(gamestate (phase PRODUCTION))
-	?wf <- (workpiece (rtype RECORD) (id ?id) (order ?o-id&:(neq ?o-id 0)) (team ?r-team)
-										(base-color ?base-color) (cap-color ?cap-color)
-										; we can only determine the order if a ring has been mounted
-										(ring-colors $?ring-colors&:(> (length$ ?ring-colors) 0)))
-	(order (id ?o-id) (base-color ?base-color)
-          (ring-colors $?order-ring-colors&:(neq ?ring-colors
-                                                (subseq$ ?order-ring-colors 1 (length$ ?ring-colors)))))
+	?wf <- (workpiece (rtype RECORD) (id ?id) (order ?order-id) (team ?r-team)
+										(base-color ?base-color)
+										(ring-colors $?ring-colors)
+                    (cap-color ?cap-color))
+	(order (id ?order-id)
+         (base-color ?order-base-color)
+         (ring-colors $?order-ring-colors)
+         (cap-color ?order-cap-color))
+ (test (or (neq ?base-color ?order-base-color)
+           (and (> (length$ ?ring-colors) 0)
+                (neq ?ring-colors (subseq$ ?order-ring-colors 1 (length$ ?ring-colors))))
+           (and (neq ?cap-color nil)
+                (neq ?cap-color ?order-cap-color))))
 	=>
 	(modify ?wf (order 0))
-	(printout t "Workpiece " ?id " received a ring, became incosistent with " ?o-id crlf)
+	(printout t "Workpiece [" ?id "] became incosistent with tracked order  ID-" ?order-id  crlf)
 )
 
 ;-------------------------Workpiece Availability------------------------------
@@ -219,7 +231,29 @@
 
 
 ;------------------------------Sanity Checks
-
+(defrule workpiece-make-sure-wp-tracks-requested-order
+	""
+	(gamestate (phase PRODUCTION))
+	?wf <- (workpiece (id ?wp-id) (rtype RECORD)
+                    (at-machine ?m-name)
+                    (order ?tracked-order-id)
+                    (base-color ?tracked-base-color)
+                    (ring-colors ?tracked-ring-colors)
+                    (cap-color ?tracked-cap-color))
+	?pf <- (product-processed (at-machine ?m-name) (mtype DS)
+                            (workpiece ?wp-id)
+                            (confirmed TRUE)
+                            (order ?deliver-order-id&:(neq ?deliver-order-id ?tracked-order-id)))
+  (order (id ?req-order-id)
+         (base-color ?tracked-base-color)
+         (ring-colors ?tracked-ring-colors)
+         (cap-color ?tracked-cap-color))
+  (order (id ?tracked-order-id&:(neq ?tracked-order-id ?req-order-id)))
+	=>
+  (printout t "Workpiece [" ?wp-id "] Order IDs corrected [" ?tracked-order-id
+              "->" ?deliver-order-id "]"  crlf)
+  (modify ?wf (order ?deliver-order-id))
+)
 
 (defrule workpiece-available-twice
  "Error differnt workpieces availble at same  machines"
