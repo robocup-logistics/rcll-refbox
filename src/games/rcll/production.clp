@@ -474,6 +474,9 @@
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE)
 	               (ds-order ?order) (team ?team))
   =>
+	(bind ?p-id (gen-int-id))
+	(assert (product-processed (at-machine ?n) (mtype DS) (team ?team) (game-time ?gt)
+	                           (id ?p-id) (order ?order) (confirmed FALSE)))
 	(modify ?m (state PROCESSED) (task nil))
 	(assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
 	                           (confirmed FALSE)))
@@ -483,6 +486,7 @@
 
 (defrule production-ds-processed
   "The DS finished processing the workpiece, set the machine to IDLE and reset it."
+	(declare (salience ?*PRIORITY_LAST*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>

@@ -78,7 +78,15 @@
                                     (workpiece ?workpiece-id)
                                     (game-time ?delivery-time)
                                     (cap-color ?order:cap-color))))
-
+      (do-for-fact ((?m machine)) (and (eq ?m:mtype DS) (eq ?m:team ?team))
+         (assert (product-processed (mtype DS)
+                                    (team ?team)
+                                    (confirmed TRUE)
+                                    (order ?order:id)
+                                    (at-machine ?m:name)
+                                    (workpiece ?workpiece-id)
+                                    (game-time ?delivery-time)
+                                    (delivery-gate ?order:delivery-gate))))
 
    )
 )
@@ -253,6 +261,32 @@
   ;the info is not present yet. The color will be confirmed by the referee
   ;(latest on delivery confirmation)
 )
+
+(defrule workpiece-processed-at-ds
+    "Update the availbe workpiece with the recent prodcut processing  "
+    (gamestate (phase PRODUCTION))
+    ?wf <- (workpiece (id ?id)
+                      (rtype RECORD)
+                      (state AVAILABLE)
+                      (at-machine ?m-name)
+                      ;This will be CONFIRMED by the referee later on.
+                      (order ?unconfirmed-order-id))
+    ?pf <- (product-processed (mtype DS)
+                              (workpiece 0)
+                              (confirmed FALSE)
+                              (order ?order-id))
+    ; The process that WILL be done on that WP anyways.
+    =>
+    (printout t "Workpiece [" ?id "] Confirming process at " ?m-name crlf)
+    (if (neq ?order-id ?unconfirmed-order-id)
+      then
+      (printout t "Workpiece [" ?id "]: Tracked for order with  ID-" ?unconfirmed-order-id
+                " is inconistent with the requested delivery for order with ID-" ?order-id
+                " This inconsistency will be resolved upon delivery confirmation" crlf)
+   )
+   (modify ?pf (workpiece ?id) (confirmed TRUE))
+)
+
 ;------------------------------Sanity Checks
 (defrule workpiece-make-sure-wp-tracks-requested-order
     ""
