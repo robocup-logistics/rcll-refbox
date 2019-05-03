@@ -438,7 +438,7 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
 	=>
 	(printout t "Machine " ?n ": mount ring" crlf)
-	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy TRUE) (bases-used (+ ?bu ?req-bases)))
+	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy TRUE) (bases-used (+ ?bu ?req-bases)) (desired-lights GREEN-ON YELLOW-ON))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
