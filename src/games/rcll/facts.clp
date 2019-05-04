@@ -239,17 +239,10 @@
   (return (string-to-field (sub-string 4 (length$ ?id-string) ?id-string)))
 )
 
-(deftemplate product-delivered
-  (slot id (type INTEGER) (default-dynamic (gen-int-id)))
-  (slot game-time (type FLOAT))
-	(slot order (type INTEGER) (default 0))
-  (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
-	(slot delivery-gate (type INTEGER))
-  (slot confirmed (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
-  (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
-  (multislot ring-colors (type SYMBOL) (cardinality 0 3)
-	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
+(deftemplate referee-confirmation
+  (slot process-id (type INTEGER) (default-dynamic (gen-int-id)))
+  (slot state (type SYMBOL) (allowed-values REQUIRED CONFIRMED DENIED)
+        (default REQUIRED))
 )
 
 (deftemplate product-processed

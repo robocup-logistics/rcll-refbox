@@ -477,11 +477,10 @@
 	(bind ?p-id (gen-int-id))
 	(assert (product-processed (at-machine ?n) (mtype DS) (team ?team) (game-time ?gt)
 	                           (id ?p-id) (order ?order) (confirmed FALSE)))
-	(modify ?m (state PROCESSED) (task nil))
-	(assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
-	                           (confirmed FALSE)))
+	(assert (referee-confirmation (process-id ?p-id) (state REQUIRED)))
 	(assert (attention-message (team ?team)
 	                           (text (str-cat "Please confirm delivery for order " ?order))))
+	(modify ?m (state PROCESSED) (task nil))
 )
 
 (defrule production-ds-processed

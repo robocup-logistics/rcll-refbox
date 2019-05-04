@@ -336,7 +336,7 @@
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (desired-lights RED-BLINK))
   )
-  (if (any-factp ((?pd product-delivered)) TRUE) then
+  (if (any-factp ((?pd referee-confirmation)) TRUE) then
     (assert (attention-message (text "Game ended, please confirm deliveries!")))
     (assert (postgame-for-unconfirmed-deliveries))
   else
@@ -354,7 +354,7 @@
 
 (defrule game-postgame-no-unconfirmed-deliveries
   ?w <- (postgame-for-unconfirmed-deliveries)
-  (not (product-delivered))
+  (not (referee-confirmation))
   =>
   (retract ?w)
   (game-summary)
