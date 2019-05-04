@@ -37,8 +37,8 @@
 (deffunction workpiece-simulate-tracking (?order-id ?team ?delivery-time)
   (do-for-fact ((?order order)) (eq ?order:id ?order-id)
       ;Create a workpiece
+      (bind ?workpiece-id (workpiece-gen-id-for-base-color ?order:base-color))
       (do-for-fact ((?m machine)) (and (eq ?m:mtype DS) (eq ?m:team ?team))
-         (bind ?workpiece-id (workpiece-gen-id-for-base-color ?order:base-color))
          (assert (workpiece (team ?team)
                             (rtype RECORD)
                             (state AVAILABLE)
@@ -88,7 +88,9 @@
      ;                               (game-time ?delivery-time)
      ;                               (delivery-gate ?order:delivery-gate))))
 
+    return ?workpiece-id
    )
+  return 0
 )
 
 (defrule workpiece-learn-new
