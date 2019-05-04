@@ -231,6 +231,10 @@
 	      )
             )
           )
+        else
+          (if (eq ?m:state READY-AT-OUTPUT) then
+            (modify ?m (state BROKEN) (prev-state ?m:state))
+          )
         )
       )
     )
