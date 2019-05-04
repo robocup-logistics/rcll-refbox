@@ -143,6 +143,7 @@
                    (eq (length$ ?order-ring-colors) 0))
               (and (> (length$ ?ring-colors) 0)
                    (eq ?ring-colors (subseq$ ?order-ring-colors 1 (length$ ?ring-colors))))))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (modify ?wf (order ?order-id))
     (printout t "Workpiece " ?id " received a ring, determined order to be " ?order-id crlf)
@@ -167,6 +168,7 @@
                    (neq ?ring-colors (subseq$ ?order-ring-colors 1 (length$ ?ring-colors))))
               (and (neq ?cap-color nil)
                    (neq ?cap-color ?order-cap-color))))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (modify ?wf (order 0))
     (printout t "Workpiece [" ?id "] became incosistent with tracked order  ID-" ?order-id  crlf)
@@ -211,7 +213,8 @@
                             (workpiece ?wp-id)
                             (at-machine ?m-name)
                             (base-color ?bs-color))
-   =>
+  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
+  =>
   (printout t "Workpiece " ?id ": Confirming process " ?m-name crlf)
   (if (neq ?bs-color ?base-color)
     then (printout t "Workpiece " ?id ": Base color corrected ["
@@ -234,6 +237,7 @@
                               (workpiece ?wp-id)
                               (at-machine ?m-name)
                               (ring-color ?r-color))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (printout t "Workpiece " ?id ": Confirming process " ?m-name crlf)
     ;TODO: Find out what points needs to be given
@@ -255,7 +259,8 @@
                            (at-machine ?m-name)
                            (cap-color ?c-color))
   (not (product-processed (workpiece ?id) (mtype CS) (confirmed TRUE)))
-  =>
+  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
+   =>
   (printout t "Workpiece " ?id ": Confirming process at  " ?m-name crlf)
   (modify ?pf (workpiece ?id))
   (modify ?wf (cap-color ?c-color))
@@ -265,7 +270,7 @@
 )
 
 (defrule workpiece-processed-at-ds
-    "Update the availbe workpiece with the recent prodcut processing  "
+    "Update the available workpiece with the recent product processing  "
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
                       (rtype RECORD)
@@ -273,17 +278,18 @@
                       (at-machine ?m-name)
                       ;This will be CONFIRMED by the referee later on.
                       (order ?unconfirmed-order-id))
+    ; The process that WILL be done on that WP anyways.
     ?pf <- (product-processed (mtype DS)
                               (workpiece 0)
                               (confirmed FALSE)
                               (order ?order-id))
-    ; The process that WILL be done on that WP anyways.
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (printout t "Workpiece [" ?id "] Confirming process at " ?m-name crlf)
     (if (neq ?order-id ?unconfirmed-order-id)
       then
       (printout t "Workpiece [" ?id "]: Tracked for order with  ID-" ?unconfirmed-order-id
-                " is inconistent with the requested delivery for order with ID-" ?order-id
+                " is inconsistent with the requested delivery for order with ID-" ?order-id
                 " This inconsistency will be resolved upon delivery confirmation" crlf)
    )
    (modify ?pf (workpiece ?id))
@@ -310,6 +316,7 @@
          (ring-colors ?tracked-ring-colors)
          (cap-color ?tracked-cap-color))
   (order (id ?tracked-order-id&:(neq ?tracked-order-id ?req-order-id)))
+  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
   =>
   (printout t "Workpiece [" ?wp-id "] Order IDs corrected [" ?tracked-order-id
               "->" ?deliver-order-id "]"  crlf)
@@ -326,6 +333,7 @@
                        (id ?second-id&:(neq ?first-id ?second-id))
                        (at-machine ?at-machine)
                        (state AVAILABLE))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (printout t "Workpiece " ?first-id " and " ?second-id
                 "are both AVAILABE at " ?at-machine crlf)
