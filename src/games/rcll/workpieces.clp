@@ -122,6 +122,14 @@
 	(modify ?wf (at-machine ?at-machine) (visible ?visible))
 )
 
+(defrule workpiece-incoming-cleanup
+	"Remove transient incoming facts"
+	(declare (salience ?*PRIORITY_CLEANUP*))
+	?wf <- (workpiece (rtype INCOMING))
+	=>
+	(retract ?wf)
+)
+
 (defrule workpiece-assign-order
    "Assign order to workpiece.
    This has a very specific assumption about the ring colors. We assume that
@@ -324,7 +332,7 @@
 )
 
 (defrule workpiece-available-twice
-    "Error differnt workpieces availble at same  machines"
+    "Error different workpieces available at same  machines"
     (gamestate (phase PRODUCTION))
     ?wf1 <- (workpiece (rtype RECORD) (id ?first-id)
                        (at-machine ?at-machine)
@@ -337,14 +345,4 @@
     =>
     (printout t "Workpiece " ?first-id " and " ?second-id
                 "are both AVAILABE at " ?at-machine crlf)
-)
-
-
-;----------------------------------------Clean Up Incoming
-(defrule workpiece-incoming-cleanup
-	"Remove transient incoming facts"
-	(declare (salience ?*PRIORITY_CLEANUP*))
-	?wf <- (workpiece (rtype INCOMING))
-	=>
-	(retract ?wf)
 )
