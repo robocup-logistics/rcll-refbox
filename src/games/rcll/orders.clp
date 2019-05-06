@@ -130,9 +130,9 @@
                               )
                          )
                      else
-                       (printout warn "A Workpiece tracking order " ?wp:order
-                          " is confirmed by referee to deliver order!" ?order-id  crlf)
-                       (printout warn "Rectifying all points scored for the wrong tracked order!"
+                       (printout warn "A WP tracking an order " ?wp:order
+                          " is confirmed by referee to deliver order " ?order-id  crlf)
+                       (printout warn "Rectifying all points scored for the wrong tracked order."
                                         ?order-id  crlf)
                        (retract ?wp)
                        (bind ?wp-id (workpiece-simulate-tracking ?order-id ?team ?delivery-time))
