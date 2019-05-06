@@ -142,6 +142,7 @@
                     (base-color ?base-color)
                     (ring-colors $?ring-colors))
     (order (id ?order-id)
+           (active TRUE)
            (base-color ?base-color)
            (ring-colors $?order-ring-colors)
            (cap-color ?order-cap-color))
