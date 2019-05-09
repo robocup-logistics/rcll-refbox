@@ -354,7 +354,7 @@
 	(modify ?m (state PROCESSED) (task nil))
 )
 
-(defrule prod-proc-state-processing-rs-insufficient-bases
+(defrule production-rs-insufficient-bases
   "Must check sufficient number of bases for RS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -368,7 +368,7 @@
 				  (- ?ba ?bu) " < " ?req-bases ")")))
 )
 
-(defrule prod-proc-state-processing-rs-start
+(defrule production-rs-start
   "Instruct RS to mount ring"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -383,7 +383,7 @@
   (mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
 
-(defrule prod-proc-rs-mount-ring
+(defrule production-rs-mount-ring
 	"Workpiece is in the middle, mount a ring"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -396,7 +396,7 @@
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
-(defrule prod-proc-rs-move-to-output
+(defrule production-rs-move-to-output
 	"Ring is mounted, move to output"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -407,7 +407,7 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
-(defrule proc-proc-rs-done
+(defrule production-rs-ready-at-output
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -416,7 +416,7 @@
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
 
-(defrule produdction-ignore-rs-slide-counter-in-non-production
+(defrule production-rs-ignore-slide-counter-in-non-production
 	"We are not in production phase, ignore slide events on the RS"
 	(gamestate (phase ~PRODUCTION))
 	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?bases)
@@ -426,7 +426,7 @@
 	(retract ?fb)
 )
 
-(defrule prod-proc-new-base-on-RS-slide
+(defrule production-rs-new-base-on-slide
 	"The counter for the RS slide has been updated"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
