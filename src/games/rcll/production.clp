@@ -281,17 +281,6 @@
   (mps-reset (str-cat ?n))
 )
 
-(defrule prod-proc-state-prepared-bs
-  "BS station goes directly to processing"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype BS) (state PREPARED) (proc-state ~PREPARED))
-  =>
-  (printout t "Machine " ?n " switching directly to PROCESSING on prepare" crlf)
-  (modify ?m (state PROCESSING) (proc-state PREPARED) (desired-lights GREEN-BLINK)
-	  (prep-blink-start ?gt))
-)
-
 (defrule prod-proc-state-prepared-stop-blinking
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PREPARED|PROCESSING)
@@ -302,15 +291,15 @@
   (modify ?m (desired-lights GREEN-ON))
 )
 
-(defrule prod-proc-state-processing-bs
+(defrule production-bs-dispense
   "BS must be instructed to dispense base for processing"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state ~PROCESSING) (bs-color ?color))
+  ?m <- (machine (name ?n) (mtype BS) (state PREPARED) (bs-color ?color) (task nil))
   =>
   (printout t "Machine " ?n " dispensing " ?color " base" crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task DISPENSE) (mps-busy TRUE))
-  ; TODO: (mps-instruct DISPENSE-BASE ?side ?color)
+  (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
+	           (task DISPENSE) (mps-busy TRUE))
   (mps-bs-dispense (str-cat ?n) (str-cat ?color))
 )
 
@@ -321,7 +310,7 @@
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
 	=>
 	(printout t "Machine " ?n " moving base to " ?side crlf)
-	(modify ?m (task MOVE-OUT) (mps-busy TRUE))
+	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy TRUE))
 	(if (eq ?side INPUT)
 	 then
 		(mps-move-conveyor (str-cat ?n) "INPUT" "BACKWARD")
@@ -330,27 +319,19 @@
 	)
 )
 
-(defrule prod-bs-done
+(defrule production-bs-ready-at-output
 	"We finished moving the base to the right side, machine is now READY-AT-OUTPUT"
-	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task MOVE-OUT) (mps-busy FALSE))
+	?m <- (machine (name ?n) (mtype BS) (state PROCESSED) (task MOVE-OUT) (mps-busy FALSE))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil) (mps-ready TRUE))
 )
 
-(defrule prod-bs-idle
+(defrule production-bs-idle
 	"The base has been picked up"
 	?m <- (machine (name ?n) (mtype BS|RS) (state READY-AT-OUTPUT) (task MOVE-OUT) (mps-ready FALSE))
 	=>
 	(modify ?m (state IDLE))
-)
-
-(defrule prod-proc-state-bs-dispense-done
-	"DS finished delivering a base"
-	?fb <- (mps-feedback bs-dispense success ?n)
-	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (proc-state PROCESSING))
-	=>
-	(modify ?m (state PROCESSED) (mps-state DELIVERED))
-	(retract ?fb)
+	(mps-reset (str-cat ?n))
 )
 
 (defrule prod-proc-state-ds-prepared
