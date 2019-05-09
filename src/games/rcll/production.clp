@@ -453,26 +453,26 @@
 	)
 )
 
-(defrule prod-proc-state-processing-cs-mount-without-retrieve
+(defrule production-cs-mount-without-retrieve
   "Process on CS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
+  ?m <- (machine (name ?n) (mtype CS) (state PREPARED)
 		 (cs-operation MOUNT_CAP) (cs-retrieved FALSE))
   =>
   (modify ?m (state BROKEN) (proc-state PROCESSING)
 	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
 )
 
-(defrule prod-cs-cap-move-to-mid
+(defrule production-cs-cap-move-to-mid
   "Process on CS"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (proc-state ~PREPARED)
-		 (cs-operation ?cs-op))
+  ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task nil)
+	               (cs-operation ?cs-op))
   =>
-  (printout t "Machine " ?n " of type CS switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK)
+  (printout t "Machine " ?n " prepared for " ?cs-op crlf)
+  (modify ?m (desired-lights GREEN-BLINK)
 						 (task MOVE-MID) (prep-blink-start ?gt) (mps-busy TRUE))
 	(mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
@@ -481,28 +481,24 @@
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
 	               (cs-operation ?cs-op))
 	=>
-	(printout t "Machine " ?n ": " ?cs-op crlf)
-	(modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task RETRIEVE-CAP) (mps-busy TRUE))
+	(modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task ?cs-op) (mps-busy TRUE))
 	(if (eq ?cs-op RETRIEVE_CAP)
 	 then
 		(mps-cs-retrieve-cap (str-cat ?n))
+		(printout t "Machine " ?n " retrieving a cap" crlf)
 	 else
 		(mps-cs-mount-cap (str-cat ?n))
+		(printout t "Machine " ?n " mounting a cap" crlf)
 	)
 )
 
 (defrule production-cs-move-to-output
-	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task RETRIEVE-CAP) (mps-busy FALSE))
+	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP)
+	               (mps-busy FALSE))
 	=>
+	(printout t "Machine " ?n ": move to output" crlf)
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
-	(modify ?m (task MOVE-OUT) (mps-busy TRUE))
-)
-
-(defrule production-cs-done
-	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task MOVE-OUT) (mps-busy FALSE)
-	               (cs-operation ?cs-op))
-	=>
-	(modify ?m (state READY-AT-OUTPUT) (task nil) (mps-ready TRUE)
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy TRUE)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
 )
 
@@ -510,30 +506,7 @@
 	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
 	=>
 	(modify ?m (state IDLE))
-)
-
-(defrule prod-proc-state-processing-cs-mount
-  "Process on CS"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (cs-operation ?cs-op))
-  =>
-  (printout t ?cs-op " on machine " ?n crlf)
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON))
-)
-
-(defrule prod-proc-state-cs-op-finished
-	"The CS finished mounting/retrieving the cap, continue delivering the workpiece"
-	(declare (salience ?*PRIORITY_HIGH*))
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (proc-state PROCESSING)
-	               (cs-operation ?cs-op))
-	?fb <- (mps-feedback ?n ?cs-op DONE)
-	=>
-	(printout t "Machine " ?n " finished " ?cs-op crlf)
-	(modify ?m (state PROCESSED))
-	(retract ?fb)
+	(mps-reset (str-cat ?n))
 )
 
 (defrule prod-proc-state-processed-ds
