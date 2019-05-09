@@ -334,55 +334,24 @@
 	(mps-reset (str-cat ?n))
 )
 
-(defrule prod-proc-state-ds-prepared
-  "Instruct DS to start processing"
+(defrule production-ds-start-processing
+	"DS is prepared, start processing"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  (order (id ?order) (delivery-gate ?gate))
-  ?m <- (machine (name ?n) (mtype DS) (state PREPARED) (proc-state ~PREPARED))
-  =>
-  (printout t "Machine " ?n " of type DS switching to PREPARED state" crlf)
-  (modify ?m (proc-state PREPARED) (desired-lights GREEN-BLINK) (ds-gate ?gate)
-             (prep-blink-start ?gt))
-)
-
-(defrule prod-proc-state-ds-processing
-	"DS is prepared and received a product."
-  (declare (salience ?*PRIORITY_HIGHER*))
-	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil)
-	               (ds-order ?order))
+	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil) (ds-order ?order))
   (order (id ?order) (delivery-gate ?gate))
 	=>
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
-	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy TRUE))
+	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy TRUE)
+	           (desired-lights GREEN-ON YELLOW-ON))
   (mps-ds-process (str-cat ?n) ?gate)
 )
 
-(defrule prod-ds-delivery-finished
+(defrule production-ds-delivery-finished
   (declare (salience ?*PRIORITY_HIGHER*))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE))
 	=>
 	(modify ?m (state PROCESSED) (task nil))
-)
-
-
-(defrule prod-proc-state-ds-process-done
-	"DS finished processing"
-	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state PROCESSING))
-	?fb <- (mps-feedback ds-process success ?n)
-	=>
-	(modify ?m (state PROCESSED) (prev-state PROCESSING))
-	(retract ?fb)
-)
-
-(defrule prod-proc-state-processing-ds
-  "BS must be instructed to dispense base for processing"
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (proc-state ~PROCESSING)
-		 (ds-gate ?gate))
-  =>
-  (modify ?m (proc-state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (ds-gate ?gate) (ds-last-gate ?gate))
 )
 
 (defrule prod-proc-state-processing-rs-insufficient-bases
