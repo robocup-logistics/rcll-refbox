@@ -403,7 +403,7 @@
 	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
-	(modify ?m (task MOVE-OUT) (mps-busy TRUE))
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy TRUE))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
@@ -411,7 +411,7 @@
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOVE-OUT) (mps-busy FALSE))
+	?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (task MOVE-OUT) (mps-busy FALSE))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
