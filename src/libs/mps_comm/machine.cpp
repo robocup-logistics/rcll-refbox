@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <chrono>
+#include <thread>
 
 namespace llsfrb {
 #if 0
@@ -20,6 +21,9 @@ namespace modbus {
 
 const std::vector<OpcUtils::MPSRegister> Machine::SUB_REGISTERS({ OpcUtils::MPSRegister::BARCODE_IN, OpcUtils::MPSRegister::ERROR_IN, OpcUtils::MPSRegister::STATUS_BUSY_IN, OpcUtils::MPSRegister::STATUS_ENABLE_IN, OpcUtils::MPSRegister::STATUS_ERROR_IN, OpcUtils::MPSRegister::STATUS_READY_IN });
 const std::string Machine::LOG_PATH = ""; /* TODO add log path if needed; if empty -> log is redirected to stdout */
+
+constexpr std::chrono::seconds Machine::simulate_busy_duration_;
+constexpr std::chrono::seconds Machine::simulate_ready_duration_;
 
 Machine::Machine(std::string        name,
                  unsigned short int machine_type,
@@ -66,6 +70,22 @@ void Machine::heartbeat()
   heartbeat_active_ = false;
 }
 
+void Machine::simulate_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret)
+{
+	for (auto &cb : callbacks_) {
+		if (std::get<1>(cb) == reg) {
+			SubscriptionClient::ReturnValueCallback fct = std::get<0>(cb);
+			fct(ret);
+		}
+	}
+}
+
+void Machine::simulate_callback(OpcUtils::MPSRegister reg, bool ret)
+{
+  OpcUtils::ReturnValue ret_val;
+  ret_val.bool_s = ret;
+  return simulate_callback(reg, &ret_val);
+}
 
 void Machine::send_command(unsigned short command, unsigned short payload1, unsigned short payload2, int timeout, unsigned char status, unsigned char error) {
 	std::function<void(void)> call = [this, command, payload1, payload2, status, error] {
@@ -74,6 +94,17 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 		do {
 			try {
 				logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
+        if (simulate_) {
+          if (command > 100) {
+            simulate_callback(OpcUtils::MPSRegister::STATUS_BUSY_IN, true);
+            std::this_thread::sleep_for(simulate_busy_duration_);
+            simulate_callback(OpcUtils::MPSRegister::STATUS_BUSY_IN, false);
+            simulate_callback(OpcUtils::MPSRegister::STATUS_READY_IN, true);
+            std::this_thread::sleep_for(simulate_ready_duration_);
+            simulate_callback(OpcUtils::MPSRegister::STATUS_READY_IN, false);
+          }
+          return;
+        }
 				OpcUtils::MPSRegister registerOffset;
 				if (command < Station::STATION_BASE)
 					registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
@@ -165,6 +196,9 @@ bool Machine::wait_for_free() {
 }
 
 bool Machine::connect_PLC(bool simulation) {
+  if (simulate_) {
+    return true;
+  }
   if(!reconnect(ip_.c_str(), port_, simulation))
     return false;
 
@@ -431,6 +465,9 @@ void Machine::addCallback(SubscriptionClient::ReturnValueCallback callback, OpcU
 
 void Machine::register_callback(Callback callback, bool simulation)
 {
+  if (simulate_) {
+    return;
+  }
   logger->info("Registering callback");
   SubscriptionClient* sub = subscribe(std::get<1>(callback), std::get<2>(callback), simulation);
   sub->add_callback(std::get<0>(callback));
