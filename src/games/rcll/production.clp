@@ -287,7 +287,6 @@
 		 (actual-lights GREEN-BLINK) (desired-lights GREEN-BLINK)
 		 (prep-blink-start ?bs&:(timeout-sec ?gt ?bs ?*PREPARED-BLINK-TIME*)))
   =>
-  (printout t "Machine " ?n " in PREPARED state stopping blinking" crlf)
   (modify ?m (desired-lights GREEN-ON))
 )
 
@@ -332,26 +331,6 @@
 	=>
 	(modify ?m (state IDLE))
 	(mps-reset (str-cat ?n))
-)
-
-(defrule production-ds-start-processing
-	"DS is prepared, start processing"
-  (declare (salience ?*PRIORITY_HIGHER*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil) (ds-order ?order))
-  (order (id ?order) (delivery-gate ?gate))
-	=>
-  (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
-	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy TRUE)
-	           (desired-lights GREEN-ON YELLOW-ON))
-  (mps-ds-process (str-cat ?n) ?gate)
-)
-
-(defrule production-ds-delivery-finished
-  (declare (salience ?*PRIORITY_HIGHER*))
-	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE))
-	=>
-	(modify ?m (state PROCESSED) (task nil))
 )
 
 (defrule production-rs-insufficient-bases
@@ -509,25 +488,39 @@
 	(mps-reset (str-cat ?n))
 )
 
-(defrule prod-proc-state-processed-ds
+(defrule production-ds-start-processing
+	"DS is prepared, start processing"
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil) (ds-order ?order))
+  (order (id ?order) (delivery-gate ?gate))
+	=>
+  (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
+	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy TRUE)
+	           (desired-lights GREEN-ON YELLOW-ON))
+  (mps-ds-process (str-cat ?n) ?gate)
+)
+
+(defrule production-ds-order-delivered
 	(declare (salience ?*PRIORITY_HIGH*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state ~PROCESSED)
+	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE)
 	               (ds-order ?order) (team ?team))
   =>
-	(modify ?m (proc-state PROCESSED))
+	(modify ?m (state PROCESSED) (task nil))
 	(assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
 	                           (confirmed FALSE)))
 	(assert (attention-message (team ?team)
 	                           (text (str-cat "Please confirm delivery for order " ?order))))
 )
 
-(defrule prod-proc-state-ds-delivery-done
+(defrule production-ds-processed
   (declare (salience ?*PRIORITY_HIGH*))
-	?m <- (machine (name ?n) (mtype DS) (state PROCESSED) (proc-state PROCESSED))
+	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
-  (modify ?m (state IDLE) (prev-state PROCESSED))
+  (modify ?m (state IDLE) (desired-lights GREEN-ON))
+	(mps-reset (str-cat ?n))
 )
 
 (defrule prod-proc-state-processed-cs
