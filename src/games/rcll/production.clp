@@ -386,13 +386,13 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
-(defrule production-rs-ready-at-output
+(defrule production-cs-rs-ready-at-output
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype RS) (state PROCESSED) (task MOVE-OUT) (mps-busy FALSE))
+	?m <- (machine (name ?n) (mtype CS|RS) (state PROCESSED) (task MOVE-OUT) (mps-busy FALSE))
 	=>
-	(modify ?m (state READY-AT-OUTPUT) (task nil))
+	(modify ?m (state READY-AT-OUTPUT) (task nil) (mps-ready TRUE))
 )
 
 (defrule production-rs-ignore-slide-counter-in-non-production
@@ -522,34 +522,6 @@
   (modify ?m (state IDLE) (desired-lights GREEN-ON))
 	(mps-reset (str-cat ?n))
 )
-
-(defrule prod-proc-state-processed-cs
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state ~PROCESSED))
-  =>
-	(modify ?m (proc-state PROCESSED))
-  (mps-deliver (str-cat ?n))
-)
-
-(defrule prod-proc-state-cs-done
-  (declare (salience ?*PRIORITY_HIGH*))
-	?m <- (machine (name ?n) (mtype CS) (state PROCESSED) (proc-state PROCESSED) (cs-operation ?cs-op))
-	?fb <- (mps-feedback mps-deliver success ?n)
-	=>
-  (bind ?have-cap (eq ?cs-op RETRIEVE_CAP))
-  (modify ?m (state READY-AT-OUTPUT) (prev-state PROCESSED) (cs-retrieved ?have-cap))
-	(retract ?fb)
-)
-
-;(defrule prod-proc-state-processed
-;  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-;  ?m <- (machine (name ?n) (state PROCESSED) (proc-state ~PROCESSED))
-;  =>
-;  (printout t "Machine " ?n " finished processing, moving to output" crlf)
-;  (modify ?m (proc-state PROCESSED))
-;  (mps-deliver (str-cat ?n))
-;)
 
 (defrule prod-proc-state-ready-at-output
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
