@@ -318,13 +318,6 @@
 	)
 )
 
-(defrule production-bs-ready-at-output
-	"We finished moving the base to the right side, machine is now READY-AT-OUTPUT"
-	?m <- (machine (name ?n) (mtype BS) (state PROCESSED) (task MOVE-OUT) (mps-busy FALSE))
-	=>
-	(modify ?m (state READY-AT-OUTPUT) (task nil) (mps-ready TRUE))
-)
-
 (defrule production-bs-idle
 	"The base has been picked up"
 	?m <- (machine (name ?n) (mtype BS|RS) (state READY-AT-OUTPUT) (task MOVE-OUT) (mps-ready FALSE))
@@ -386,11 +379,11 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
-(defrule production-cs-rs-ready-at-output
+(defrule production-bs-cs-rs-ready-at-output
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype CS|RS) (state PROCESSED) (task MOVE-OUT) (mps-busy FALSE))
+	?m <- (machine (name ?n) (mtype BS|CS|RS) (state PROCESSED) (task MOVE-OUT) (mps-busy FALSE))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil) (mps-ready TRUE))
 )
