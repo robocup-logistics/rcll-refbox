@@ -29,13 +29,13 @@ Machine::Machine(std::string        name,
                  unsigned short int machine_type,
                  std::string        ip,
                  unsigned short     port,
-                 const bool         mock)
+                 ConnectionMode     connection_mode)
 : abort_operation_(false),
   name_(name),
   machine_type_(machine_type),
   ip_(ip),
   port_(port),
-  mock_(mock),
+  connection_mode_(connection_mode),
   shutdown_(false),
   heartbeat_active_(false)
 {
@@ -96,7 +96,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 		do {
 			try {
 				logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
-        if (mock_) {
+        if (connection_mode_ == MOCKUP) {
           if (command > 100) {
             mock_callback(OpcUtils::MPSRegister::STATUS_BUSY_IN, true);
             std::this_thread::sleep_for(mock_busy_duration_);
@@ -130,7 +130,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 			} catch (std::runtime_error &e) {
 				logger->warn("Failed to send command to {}, reconnecting", name_);
 				subscriptions.clear();
-				connect_PLC(false);
+				connect_PLC();
 				success = false;
 			}
 		} while (!success);
@@ -197,10 +197,11 @@ bool Machine::wait_for_free() {
   return false;
 }
 
-bool Machine::connect_PLC(bool simulation) {
-  if (mock_) {
+bool Machine::connect_PLC() {
+  if (connection_mode_ == MOCKUP) {
     return true;
   }
+  bool simulation = (connection_mode_ == SIMULATION);
   if(!reconnect(ip_.c_str(), port_, simulation))
     return false;
 
@@ -467,7 +468,7 @@ void Machine::addCallback(SubscriptionClient::ReturnValueCallback callback, OpcU
 
 void Machine::register_callback(Callback callback, bool simulation)
 {
-  if (mock_) {
+  if (connection_mode_ == MOCKUP) {
     return;
   }
   logger->info("Registering callback");

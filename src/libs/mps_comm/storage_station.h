@@ -16,7 +16,7 @@ namespace mps_comm {
 
 class StorageStation: public Machine {
   public:
-    StorageStation(std::string name, std::string ip, unsigned short port);
+    StorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
     virtual ~StorageStation();
 
     // Send command to deliver a product

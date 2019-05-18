@@ -11,7 +11,14 @@ namespace mps_comm {
 }
 #endif
 
-DeliveryStation::DeliveryStation(std::string name, std::string ip, unsigned short port) : Machine(name, Station::STATION_DELIVERY, ip, port) { }
+DeliveryStation::DeliveryStation(std::string    name,
+                                 std::string    ip,
+                                 unsigned short port,
+                                 ConnectionMode mode)
+: Machine(name, Station::STATION_DELIVERY, ip, port, mode)
+{
+}
+
 DeliveryStation::~DeliveryStation() {}
 
 void DeliveryStation::deliver_product(int slot) {

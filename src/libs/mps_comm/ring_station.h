@@ -15,7 +15,7 @@ namespace mps_comm {
 class RingStation: public Machine {
   static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
   public:
-    RingStation(std::string name, std::string ip, unsigned short port);
+    RingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
     virtual ~RingStation();
 
     // Send command to get a ring

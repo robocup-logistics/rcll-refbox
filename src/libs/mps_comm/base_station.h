@@ -15,7 +15,7 @@ namespace mps_comm {
 
 class BaseStation: public Machine {
   public:
-    BaseStation(std::string name, std::string ip, unsigned short port);
+    BaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
     virtual ~BaseStation();
     
     // ----------------------------

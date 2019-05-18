@@ -15,9 +15,9 @@ namespace mps_comm {
 
 class CapStation: public Machine {
   public:
-    CapStation(std::string name, std::string ip, unsigned short port);
+	  CapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
 
-    // -----------------
+	  // -----------------
     // deprecated methods
     void band_on_until_in();
     void band_on_until_mid();

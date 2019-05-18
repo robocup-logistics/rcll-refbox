@@ -35,7 +35,9 @@ class Machine
 	    Callback;
 
 public:
-  Machine(std::string name, unsigned short int machine_type, std::string ip, unsigned short port, bool mock_ = false);
+  enum ConnectionMode { MOCKUP, SIMULATION, PLC, };
+
+  Machine(std::string name, unsigned short int machine_type, std::string ip, unsigned short port, ConnectionMode = PLC);
 
   virtual ~Machine();
 
@@ -49,7 +51,7 @@ public:
                     unsigned short payload2 = 0, int timeout = 0, unsigned char status = 1, unsigned char error = 0);
 
   // Create a OPC connection to a machine
-  bool connect_PLC(bool simulation = false);
+  bool connect_PLC();
 
   // Set the light of specified color to specified state
   // color: 1 - 3, state 0 - 2
@@ -82,9 +84,11 @@ protected:
   const unsigned short int machine_type_;
   std::string ip_;
   unsigned short port_;
-  const bool mock_;
-  static constexpr std::chrono::seconds mock_busy_duration_{3};
+
+	const ConnectionMode                  connection_mode_;
+	static constexpr std::chrono::seconds mock_busy_duration_{3};
   static constexpr std::chrono::seconds mock_ready_duration_{5};
+
   std::atomic<bool> shutdown_;
   std::mutex command_queue_mutex_;
   std::mutex command_mutex_;

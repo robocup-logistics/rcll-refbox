@@ -11,7 +11,11 @@ namespace mps_comm {
 }
 #endif
 
-BaseStation::BaseStation(std::string name, std::string ip, unsigned short port) : Machine(name, Station::STATION_BASE, ip, port) { }
+BaseStation::BaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode)
+: Machine(name, Station::STATION_BASE, ip, port, mode)
+{
+}
+
 BaseStation::~BaseStation() {}
 
 void BaseStation::band_on_until_in() {
