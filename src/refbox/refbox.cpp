@@ -193,21 +193,40 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	    std::string mpsip = config_->get_string((cfg_prefix + "host").c_str());
 	    unsigned int port = config_->get_uint((cfg_prefix + "port").c_str());
 
-	    if(mpstype == "BS") {
+      std::string connection_string = "plc";
+			try {
+				connection_string = config_->get_string((cfg_prefix + "connection").c_str());
+			} catch (Exception &e) {
+			}
+
+      Machine::ConnectionMode connection_mode;
+      if (connection_string == "plc") {
+        connection_mode = Machine::PLC;
+      } else if (connection_string == "simulation") {
+        connection_mode = Machine::SIMULATION;
+      } else if (connection_string == "mockup") {
+        connection_mode = Machine::MOCKUP;
+      } else {
+				throw Exception("Unexpected config value for key '%s': '%s'",
+							          (cfg_prefix + "connection").c_str(),
+							          connection_string.c_str());
+			}
+
+			if(mpstype == "BS") {
 	      logger_->log_info("RefBox", "Adding BS %s:%u", mpsip.c_str(), port);
-        mps = new BaseStation(cfg_name, mpsip, port);
+        mps = new BaseStation(cfg_name, mpsip, port, connection_mode);
 	    }
 	    else if(mpstype == "CS") {
 	      logger_->log_info("RefBox", "Adding CS %s:%u", mpsip.c_str(), port, cfg_name.c_str());
-	      mps = new CapStation(cfg_name, mpsip, port);
+	      mps = new CapStation(cfg_name, mpsip, port, connection_mode);
 	    }
 	    else if(mpstype == "RS") {
 	      logger_->log_info("RefBox", "Adding RS %s:%u", mpsip.c_str(), port);
-	      mps = new RingStation(cfg_name, mpsip, port);
+	      mps = new RingStation(cfg_name, mpsip, port, connection_mode);
 	    }
 	    else if(mpstype == "DS") {
 	      logger_->log_info("RefBox", "Adding DS %s:%u", mpsip.c_str(), port);
-	      mps = new DeliveryStation(cfg_name, mpsip, port);
+	      mps = new DeliveryStation(cfg_name, mpsip, port, connection_mode);
 	    }
 	    else {
 	      throw fawkes::Exception("this type wont match");
