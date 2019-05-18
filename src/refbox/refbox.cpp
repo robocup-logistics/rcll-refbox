@@ -194,7 +194,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	    unsigned int port = config_->get_uint((cfg_prefix + "port").c_str());
 
       std::string connection_string = "plc";
+      try {
+        // common setting for all machines
+        connection_string = config_->get_string((prefix + "connection").c_str());
+			} catch (Exception &e) {
+			}
 			try {
+        // machine-specific setting
 				connection_string = config_->get_string((cfg_prefix + "connection").c_str());
 			} catch (Exception &e) {
 			}
