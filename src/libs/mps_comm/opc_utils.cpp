@@ -5,7 +5,7 @@ namespace llsfrb
 #if 0
 }
 #endif
-namespace modbus
+namespace mps_comm
 {
 #if 0
 }
@@ -921,5 +921,5 @@ bool OpcUtils::browseServer(OpcUa::UaClient *client, std::shared_ptr<spdlog::log
   }
   return node;
 }*/
-} // namespace modbus
+} // namespace mps_comm
 } // namespace llsfrb

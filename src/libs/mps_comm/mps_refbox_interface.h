@@ -15,7 +15,7 @@
 #include "stations.h"
 
 using namespace fawkes;
-using namespace llsfrb::modbus;
+using namespace llsfrb::mps_comm;
 
 /*!
 * \class MPSRefboxInterface

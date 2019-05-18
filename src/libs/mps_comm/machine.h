@@ -5,10 +5,6 @@
 #include <tuple>
 #include <queue>
 #include <chrono>
-//#include <modbus.h>
-// modbus defines ON and OFF, which causes conflict with protobuf
-//#undef OFF
-//#undef ON
 #include <mutex>
 #include <condition_variable>
 
@@ -23,7 +19,7 @@ namespace llsfrb
 #if 0
 }
 #endif
-namespace modbus
+namespace mps_comm
 {
 #if 0
 }
@@ -43,7 +39,7 @@ public:
 
   virtual ~Machine();
 
-  // This method will send a command over the modbus connection
+  // This method will send a command to the machine
   // A Command consist of
   //   *) command word
   //   *) payload1
@@ -52,7 +48,7 @@ public:
   void send_command(unsigned short command, unsigned short payload1 = 0,
                     unsigned short payload2 = 0, int timeout = 0, unsigned char status = 1, unsigned char error = 0);
 
-  // Create a modbus connection to machine
+  // Create a OPC connection to a machine
   bool connect_PLC(bool simulation = false);
 
   // Set the light of specified color to specified state
@@ -166,5 +162,5 @@ public:
   void addCallback(SubscriptionClient::ReturnValueCallback callback, OpcUtils::MPSRegister, OpcUtils::ReturnValue* retVal = nullptr, bool simulation = false);
 };
 
-} // namespace modbus
+} // namespace mps_comm
 } // namespace llsfrb

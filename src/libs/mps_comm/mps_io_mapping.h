@@ -6,12 +6,12 @@ namespace llsfrb {
 #if 0
 }
 #endif
-namespace modbus {
+namespace mps_comm {
 #if 0
 }
 #endif
 
-// Base commands for modbus communication:
+// Base commands for mps_comm communication:
 // Each machine type has a base prefix.
 // The sub commands are added to these base prefixes.
 enum Station {

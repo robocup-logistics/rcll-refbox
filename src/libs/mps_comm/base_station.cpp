@@ -6,7 +6,7 @@ namespace llsfrb {
 #if 0
 }
 #endif
-namespace modbus {
+namespace mps_comm {
 #if 0
 }
 #endif
@@ -28,16 +28,16 @@ void BaseStation::band_on_until_out() {
 
 void BaseStation::get_base(llsf_msgs::BaseColor color) {
   //lock_guard<mutex> g(lock_);
-  llsfrb::modbus::BaseColor color_sps;;
+  llsfrb::mps_comm::BaseColor color_sps;;
   switch (color) {
     case llsf_msgs::BASE_RED:
-      color_sps = llsfrb::modbus::BaseColor::BASE_COLOR_RED;
+      color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_RED;
       break;
     case llsf_msgs::BASE_BLACK:
-      color_sps = llsfrb::modbus::BaseColor::BASE_COLOR_BLACK;
+      color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_BLACK;
       break;
     case llsf_msgs::BASE_SILVER:
-      color_sps = llsfrb::modbus::BaseColor::BASE_COLOR_SILVER;
+      color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_SILVER;
       break;
     default:
       std::cout << "Error in RefBox, NOT implemented base color" << std::endl;

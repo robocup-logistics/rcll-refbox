@@ -8,7 +8,7 @@ namespace llsfrb {
 #if 0
 }
 #endif
-namespace modbus {
+namespace mps_comm {
 #if 0
 }
 #endif
