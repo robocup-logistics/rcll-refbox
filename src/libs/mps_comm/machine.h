@@ -35,7 +35,7 @@ class Machine
 	    Callback;
 
 public:
-  Machine(std::string name, unsigned short int machine_type, std::string ip, unsigned short port);
+  Machine(std::string name, unsigned short int machine_type, std::string ip, unsigned short port, bool mock_ = false);
 
   virtual ~Machine();
 
@@ -77,14 +77,14 @@ public:
   bool wait_for_free();
 
 protected:
-  static constexpr bool mock_{false};
-  static constexpr std::chrono::seconds mock_busy_duration_{3};
-  static constexpr std::chrono::seconds mock_ready_duration_{5};
   const std::string name_;
   // machine type
   const unsigned short int machine_type_;
   std::string ip_;
   unsigned short port_;
+  const bool mock_;
+  static constexpr std::chrono::seconds mock_busy_duration_{3};
+  static constexpr std::chrono::seconds mock_ready_duration_{5};
   std::atomic<bool> shutdown_;
   std::mutex command_queue_mutex_;
   std::mutex command_mutex_;

@@ -28,12 +28,14 @@ constexpr std::chrono::seconds Machine::mock_ready_duration_;
 Machine::Machine(std::string        name,
                  unsigned short int machine_type,
                  std::string        ip,
-                 unsigned short     port)
+                 unsigned short     port,
+                 const bool         mock)
 : abort_operation_(false),
   name_(name),
   machine_type_(machine_type),
   ip_(ip),
   port_(port),
+  mock_(mock),
   shutdown_(false),
   heartbeat_active_(false)
 {
