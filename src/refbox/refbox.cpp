@@ -188,7 +188,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	  } catch (Exception &e) {} // ignored, assume enabled
 
 	  if (active) {
-      modbus::Machine *mps;
+      mps_comm::Machine *mps;
  	    std::string mpstype = config_->get_string((cfg_prefix + "type").c_str());  
 	    std::string mpsip = config_->get_string((cfg_prefix + "host").c_str());
 	    unsigned int port = config_->get_uint((cfg_prefix + "port").c_str());
@@ -680,8 +680,8 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
   if (station) {
 		if (!mutex_future_ready(machine)) { return; }
 		auto fut = std::async(std::launch::async, [this, station, machine] {
-			station->conveyor_move(llsfrb::modbus::ConveyorDirection::FORWARD,
-			                       llsfrb::modbus::MPSSensor::OUTPUT);
+			station->conveyor_move(llsfrb::mps_comm::ConveyorDirection::FORWARD,
+			                       llsfrb::mps_comm::MPSSensor::OUTPUT);
 			MutexLocker lock(&clips_mutex_);
 			clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine.c_str());
 			return true;
