@@ -77,9 +77,9 @@ public:
   bool wait_for_free();
 
 protected:
-  static constexpr bool simulate_{false};
-  static constexpr std::chrono::seconds simulate_busy_duration_{3};
-  static constexpr std::chrono::seconds simulate_ready_duration_{5};
+  static constexpr bool mock_{false};
+  static constexpr std::chrono::seconds mock_busy_duration_{3};
+  static constexpr std::chrono::seconds mock_ready_duration_{5};
   const std::string name_;
   // machine type
   const unsigned short int machine_type_;
@@ -101,8 +101,8 @@ protected:
   // This is nescessary, because it has to be unset, when it gets set.
   void wait_for_buisy();
 	void register_callback(Callback, bool simulation = false);
-  void simulate_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
-  void simulate_callback(OpcUtils::MPSRegister reg, bool ret);
+  void mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
+  void mock_callback(OpcUtils::MPSRegister reg, bool ret);
   void dispatch_command_queue();
   void heartbeat();
 
