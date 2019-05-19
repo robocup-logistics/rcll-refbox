@@ -478,7 +478,7 @@
 (defrule production-mps-product-retrieved
 	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
 	=>
-	(modify ?m (state IDLE))
+	(modify ?m (state IDLE) (desired-lights GREEN-ON))
 	(mps-reset (str-cat ?n))
 )
 
@@ -517,24 +517,12 @@
 	(mps-reset (str-cat ?n))
 )
 
-(defrule prod-proc-state-ready-at-output
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state READY-AT-OUTPUT) (proc-state ~READY-AT-OUTPUT))
+(defrule production-lights-ready-at-output
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  ?m <- (machine (state READY-AT-OUTPUT) (desired-lights $?d&:(neq ?d (create$ YELLOW-ON))))
   =>
-  (printout t "Machine " ?n " finished processing, ready at output" crlf)
-  (modify ?m (proc-state READY-AT-OUTPUT) (desired-lights YELLOW-ON))
+  (modify ?m (desired-lights YELLOW-ON))
 )
-
-(defrule prod-proc-state-retrieval-timeout
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state WAIT-IDLE)
-		 (retrieved-at ?r&:(timeout-sec ?gt ?r ?*RETRIEVE-WAIT-IDLE-TIME*)))
-  =>
-  (printout t "retrieval timeout, going to IDLE" crlf)
-  (modify ?m (state IDLE) (proc-state WAIT-IDLE))
-)
-
-
 
 (defrule prod-proc-state-broken
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -617,22 +605,11 @@
 
 (defrule prod-machine-ready-at-output
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSING|PROCESSED|WAIT-IDLE) (mps-state DELIVERED)
+  ?m <- (machine (name ?n) (state PROCESSING|PROCESSED) (mps-state DELIVERED)
 		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
   =>
   (modify ?m (state READY-AT-OUTPUT))
 )
-
-(defrule prod-machine-retrieved
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state READY-AT-OUTPUT)
-                 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
-  ?mps-status <- (mps-status-feedback ?n IDLE)
-  =>
-  (retract ?mps-status)
-  (modify ?m (state WAIT-IDLE) (retrieved-at ?gt) (desired-lights YELLOW-BLINK))
-)
-
 
 (defrule prod-pb-recv-SetMachineState
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
