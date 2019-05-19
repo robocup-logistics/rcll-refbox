@@ -208,6 +208,7 @@
                                   (wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN) (prev-state ?m:state)
+			      (cs-retrieved FALSE)
 			      (broken-reason (str-cat "Prepare received for " ?mname ": "
 						      "cannot retrieve while already holding")))
                     )
