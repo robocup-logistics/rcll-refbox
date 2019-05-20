@@ -299,7 +299,7 @@
   =>
   (printout t "Machine " ?n " dispensing " ?color " base" crlf)
   (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
-	           (task DISPENSE) (mps-busy TRUE))
+	           (task DISPENSE) (mps-busy WAIT))
   (mps-bs-dispense (str-cat ?n) (str-cat ?color))
 )
 
@@ -310,7 +310,7 @@
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
 	=>
 	(printout t "Machine " ?n " moving base to " ?side crlf)
-	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy TRUE))
+	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy WAIT))
 	(if (eq ?side INPUT)
 	 then
 		(mps-move-conveyor (str-cat ?n) "INPUT" "BACKWARD")
@@ -351,7 +351,7 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (printout t "Machine " ?n " of type RS switching to PREPARED state" crlf)
-  (modify ?m (desired-lights GREEN-BLINK) (task MOVE-MID) (mps-busy TRUE)
+  (modify ?m (desired-lights GREEN-BLINK) (task MOVE-MID) (mps-busy WAIT)
              (prep-blink-start ?gt))
   (mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
@@ -365,7 +365,7 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
 	=>
 	(printout t "Machine " ?n ": mount ring" crlf)
-	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy TRUE) (bases-used (+ ?bu ?req-bases)) (desired-lights GREEN-ON YELLOW-ON))
+	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy WAIT) (bases-used (+ ?bu ?req-bases)) (desired-lights GREEN-ON YELLOW-ON))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
@@ -376,7 +376,7 @@
 	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
-	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy TRUE))
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
@@ -447,7 +447,7 @@
   =>
   (printout t "Machine " ?n " prepared for " ?cs-op crlf)
   (modify ?m (desired-lights GREEN-BLINK)
-						 (task MOVE-MID) (prep-blink-start ?gt) (mps-busy TRUE))
+						 (task MOVE-MID) (prep-blink-start ?gt) (mps-busy WAIT))
 	(mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
 
@@ -455,7 +455,7 @@
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
 	               (cs-operation ?cs-op))
 	=>
-	(modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task ?cs-op) (mps-busy TRUE))
+	(modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task ?cs-op) (mps-busy WAIT))
 	(if (eq ?cs-op RETRIEVE_CAP)
 	 then
 		(mps-cs-retrieve-cap (str-cat ?n))
@@ -472,7 +472,7 @@
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
-	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy TRUE)
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
 )
 
@@ -491,7 +491,7 @@
   (order (id ?order) (delivery-gate ?gate))
 	=>
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
-	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy TRUE)
+	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy WAIT)
 	           (desired-lights GREEN-ON YELLOW-ON))
   (mps-ds-process (str-cat ?n) ?gate)
 )

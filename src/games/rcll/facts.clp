@@ -29,8 +29,8 @@
   (slot mps-state (type SYMBOL) (default IDLE))
 	; The task currently being executed on the MPS
 	(slot task (type SYMBOL))
-	(slot mps-busy (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
-	(slot mps-ready (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+	(slot mps-busy (type SYMBOL) (allowed-values TRUE FALSE WAIT) (default FALSE))
+	(slot mps-ready (type SYMBOL) (allowed-values TRUE FALSE WAIT) (default FALSE))
   (slot proc-time (type INTEGER))
   (slot proc-start (type FLOAT))
   (multislot down-period (type FLOAT) (cardinality 2 2) (default -1.0 -1.0))
