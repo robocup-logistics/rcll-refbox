@@ -10,6 +10,7 @@
 
 (defrule m-shutdown "Shutdown machines at the end"
   (finalize)
+	(gamestate (phase POST_GAME))
   ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
   (modify ?mf (desired-lights))

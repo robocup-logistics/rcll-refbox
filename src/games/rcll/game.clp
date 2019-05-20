@@ -387,6 +387,14 @@
   )
 )
 
+(defrule game-over-on-finalize
+	"Switch to post-game if the refbox is stopped"
+	(finalize)
+	?gs <- (gamestate (phase ~POST_GAME))
+	=>
+	(modify ?gs (phase POST_GAME))
+)
+
 (defrule game-postgame-no-unconfirmed-deliveries
   ?w <- (postgame-for-unconfirmed-deliveries)
   (not (product-delivered))
