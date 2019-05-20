@@ -48,16 +48,10 @@
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state&~DOWN)
-		  (mps-state-deferred ?mps-state)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
   =>
 	(printout t "Machine " ?name " is up again" crlf)
-	(if (eq ?mps-state NONE)
-	 then
-		(modify ?mf (state ?prev-state))
-	 else
-		(modify ?mf (state ?prev-state) (mps-state ?mps-state) (mps-state-deferred NONE))
-  )
+	(modify ?mf (state ?prev-state))
 )
 
 (defrule prod-mps-state-ready
@@ -545,43 +539,14 @@
 	(modify ?m (state IDLE) (prev-state BROKEN) (bases-used ?ba) (cs-retrieved FALSE) (broken-since 0.0))
 )
 
-
-; **** MPS state changes
-
-; **** Mapping MPS to machine state reactions
-(defrule prod-machine-reset
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-
-  ?m <- (machine (name ?n) (state ?state&~IDLE) (mps-state RESET))
-  =>
-  (modify ?m (state IDLE) (prev-state IDLE) (desired-lights GREEN-ON)
-	  (mps-state IDLE) (mps-state-deferred NONE) (broken-reason "")
-    (ds-gate 0) (ds-last-gate 0) (cs-retrieved FALSE))
-)
-
-(defrule prod-mps-state-available
-	?m <- (machine (name ?n))
-	?fb <- (mps-feedback ?n ? AVAILABLE)
-	=>
-	(modify ?m (mps-state AVAILABLE))
-	(retract ?fb)
-)
-
-(defrule prod-machine-input
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PREPARED) (mps-state AVAILABLE))
-  =>
-  (modify ?m (state PROCESSING) (proc-start ?gt) (mps-state AVAILABLE-HANDLED))
-)
-
-(defrule prod-prepared-but-no-input
+(defrule production-prepared-but-no-input
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype ?type&~BS) (state ?state
 	               &:(or (and (member$ ?type (create$ DS BS)) (eq ?state PROCESSING)) (eq ?state PREPARED)))
-        (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
+	               (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
   =>
   (modify ?m (state BROKEN) (prev-state PROCESSING)
-             (broken-reason (str-cat "MPS " ?n " prepared, but no product feed in time")))
+             (broken-reason (str-cat "MPS " ?n " prepared, but no product fed in time")))
 )
 
 (defrule prod-processing-timeout
@@ -595,22 +560,6 @@
 	(mps-reset (str-cat ?n))
 )
 
-(defrule prod-machine-proc-done
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSING) (mps-state PROCESSED)
-		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
-  =>
-  (modify ?m (state PROCESSED))
-)
-
-(defrule prod-machine-ready-at-output
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSING|PROCESSED) (mps-state DELIVERED)
-		 (proc-time ?pt) (proc-start ?pstart&:(timeout-sec ?gt ?pstart ?pt)))
-  =>
-  (modify ?m (state READY-AT-OUTPUT))
-)
-
 (defrule prod-pb-recv-SetMachineState
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.SetMachineState") (ptr ?p) (rcvd-via STREAM)
@@ -620,8 +569,8 @@
   (bind ?state (sym-cat (pb-field-value ?p "state")))
   (printout t "Received state " ?state " for machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-    (assert (machine-mps-state (name ?mname) (state ?state) (num-bases ?m:bases-added)))
-  )
+		(modify ?m (state ?state))
+	)
 )
 
 (defrule prod-pb-recv-MachineAddBase

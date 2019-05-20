@@ -24,9 +24,6 @@
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
 					    PROCESSED READY-AT-OUTPUT WAIT-IDLE DOWN))
   (slot prev-state (type SYMBOL) (default IDLE))
-  ; This is the state indicated by the MPS
-  (slot mps-state-deferred (type SYMBOL) (default NONE))
-  (slot mps-state (type SYMBOL) (default IDLE))
 	; The task currently being executed on the MPS
 	(slot task (type SYMBOL))
 	(slot mps-busy (type SYMBOL) (allowed-values TRUE FALSE WAIT) (default FALSE))
