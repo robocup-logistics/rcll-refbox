@@ -23,8 +23,6 @@
   ; Overall refbox machine state
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
 					    PROCESSED READY-AT-OUTPUT WAIT-IDLE DOWN))
-  ; Set on processing a state change
-  (slot proc-state (type SYMBOL) (default IDLE))
   (slot prev-state (type SYMBOL) (default IDLE))
   ; This is the state indicated by the MPS
   (slot mps-state-deferred (type SYMBOL) (default NONE))
@@ -36,7 +34,7 @@
   (slot proc-time (type INTEGER))
   (slot proc-start (type FLOAT))
   (multislot down-period (type FLOAT) (cardinality 2 2) (default -1.0 -1.0))
-  (slot broken-since (type FLOAT))
+  (slot broken-since (type FLOAT) (default 0.0))
   (slot broken-reason (type STRING))
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))

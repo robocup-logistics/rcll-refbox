@@ -51,11 +51,12 @@
 		  (mps-state-deferred ?mps-state)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
   =>
-  (printout t "Machine " ?name " is up again" crlf)
-  (if (eq ?mps-state NONE)
-   then (modify ?mf (state ?prev-state) (proc-state DOWN))
-   else (modify ?mf (state ?prev-state) (proc-state DOWN)
-		(mps-state ?mps-state) (mps-state-deferred NONE))
+	(printout t "Machine " ?name " is up again" crlf)
+	(if (eq ?mps-state NONE)
+	 then
+		(modify ?mf (state ?prev-state))
+	 else
+		(modify ?mf (state ?prev-state) (mps-state ?mps-state) (mps-state-deferred NONE))
   )
 )
 
@@ -273,16 +274,15 @@
 
 ; **** Machine state processing
 
-(defrule prod-proc-state-idle
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state IDLE) (proc-state ~IDLE))
+(defrule production-green-light-on-idle
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  ?m <- (machine (name ?n) (state IDLE) (actual-lights $?lights&:(neq ?lights (create$ GREEN-ON))))
   =>
-  (printout t "Machine " ?n " switching to IDLE state" crlf)
-  (modify ?m (proc-state IDLE) (desired-lights GREEN-ON) (task nil))
+  (modify ?m  (desired-lights GREEN-ON))
   (mps-reset (str-cat ?n))
 )
 
-(defrule prod-proc-state-prepared-stop-blinking
+(defrule production-prepared-stop-blinking
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PREPARED|PROCESSING)
 		 (actual-lights GREEN-BLINK) (desired-lights GREEN-BLINK)
@@ -434,8 +434,8 @@
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED)
 		 (cs-operation MOUNT_CAP) (cs-retrieved FALSE))
   =>
-  (modify ?m (state BROKEN) (proc-state PROCESSING)
-	  (broken-reason (str-cat ?n ": tried to mount without retrieving")))
+  (modify ?m (state BROKEN)
+	           (broken-reason (str-cat ?n ": tried to mount without retrieving")))
 )
 
 (defrule production-cs-cap-move-to-mid
@@ -525,25 +525,24 @@
   (modify ?m (desired-lights YELLOW-ON))
 )
 
-(defrule prod-proc-state-broken
+(defrule production-mps-broken
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state BROKEN) (proc-state ~BROKEN)
-		 (team ?team) (broken-reason ?reason))
+  ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0))
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
-  (modify ?m (proc-state BROKEN) (broken-since ?gt)
+  (modify ?m (broken-since ?gt)
 	  (desired-lights RED-BLINK YELLOW-BLINK))
   (mps-reset (str-cat ?n))
 )
 
-(defrule prod-proc-state-broken-recover
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state BROKEN) (bases-added ?ba)
-		 (broken-since ?bs&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
-  =>
-  (printout t "Machine " ?n " recovered" crlf)
-  (modify ?m (state IDLE) (prev-state BROKEN) (bases-used ?ba) (cs-retrieved FALSE))
+(defrule production-mps-broken-recover
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (state BROKEN) (bases-added ?ba)
+	               (broken-since ?bs&~0.0&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
+	=>
+	(printout t "Machine " ?n " recovered" crlf)
+	(modify ?m (state IDLE) (prev-state BROKEN) (bases-used ?ba) (cs-retrieved FALSE) (broken-since 0.0))
 )
 
 
@@ -555,7 +554,7 @@
 
   ?m <- (machine (name ?n) (state ?state&~IDLE) (mps-state RESET))
   =>
-  (modify ?m (state IDLE) (prev-state IDLE) (proc-state IDLE) (desired-lights GREEN-ON)
+  (modify ?m (state IDLE) (prev-state IDLE) (desired-lights GREEN-ON)
 	  (mps-state IDLE) (mps-state-deferred NONE) (broken-reason "")
     (ds-gate 0) (ds-last-gate 0) (cs-retrieved FALSE))
 )
