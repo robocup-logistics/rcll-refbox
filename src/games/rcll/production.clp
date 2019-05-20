@@ -632,7 +632,6 @@
   (bind ?mname (sym-cat (pb-field-value ?p "machine_name")))
   (printout t "Add base to machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-    (assert (machine-mps-state (name ?mname) (state ?m:mps-state)
-			       (num-bases (+ ?m:bases-added 1))))
+		(assert (mps-status-feedback ?m:name SLIDE-COUNTER (+ 1 ?m:bases-added)))
   )
 )
