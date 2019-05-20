@@ -419,6 +419,7 @@
 			           (broken-reason (str-cat ?n ": too many additional bases loaded")))
 		)
 	)
+	(modify ?m (mps-base-counter ?mps-counter))
 )
 
 (defrule production-cs-mount-without-retrieve
