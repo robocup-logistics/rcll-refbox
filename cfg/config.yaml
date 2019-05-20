@@ -18,69 +18,81 @@ llsfrb:
     game: game.log
 
   mps:
-    enable: false
+    enable: true
     # type: 1(incoming station), 2(singel p&p), 3(double p&p), 4(delivery station)
     stations:
       C-BS:
-        active: false
+        active: true
         type: BS
         host: !ipv4 192.168.2.27
         port: !tcp-port 4840
+        connection: mockup
       C-CS1:
-        active: false
+        active: true
         host: !ipv4 192.168.2.24
         port: !tcp-port 4840
         type: CS
+        connection: mockup
       C-CS2:
-        active: false
+        active: true
         host: !ipv4 192.168.2.25
         port: !tcp-port 4840
         type: CS
+        connection: mockup
       C-RS1:
-        active: false
+        active: true
         host: !ipv4 192.168.2.23
         port: !tcp-port 4840
         type: RS
+        connection: mockup
       C-RS2:
         active: true
         host: !ipv4 192.168.2.26
         port: !tcp-port 4840
         type: RS
+        connection: mockup
       C-DS:
-        active: false
+        active: true
         host: !ipv4 192.168.2.28
         port: !tcp-port 4840
         type: DS
+        connection: mockup
       M-BS:
-        active: false
+        active: true
         host: !ipv4 192.168.2.33
         port: !tcp-port 4840
         type: BS
+        connection: mockup
       M-CS1:
-        active: false
+        active: true
         host: !ipv4 192.168.2.30
         port: !tcp-port 4840
         type: CS
+        connection: mockup
       M-CS2:
-        active: false
+        active: true
         host: !ipv4 192.168.2.32
         port: !tcp-port 4840
         type: CS  
+        connection: mockup
       M-RS1:
-        active: false
+        active: true
         host: !ipv4 192.168.2.31
         port: !tcp-port 4840
         type: RS
+        connection: mockup
       M-RS2:
-        active: false
+        active: true
         host: !ipv4 192.168.2.34
         port: !tcp-port 4840
         type: RS
+        connection: mockup
       M-DS:
-        active: false
+        active: true
         host: !ipv4 192.168.2.29
         port: !tcp-port 4840
         type: DS
+        connection: mockup
 
   clips:
     # Timer interval, in milliseconds
@@ -144,7 +156,7 @@ llsfrb:
     refbox-port: 4444
 
   simulation:
-    enable: true
+    enable: false
     # synchronize refbox time with the time of a simulation 
     time-sync:
       enable: true
