@@ -384,24 +384,33 @@
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
 
-(defrule production-rs-ignore-slide-counter-in-non-production
-	"We are not in production phase, ignore slide events on the RS"
-	(gamestate (phase ~PRODUCTION))
-	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?bases)
-	?m <- (machine (name ?n))
-	=>
-	(modify ?m (mps-base-counter ?bases))
-	(retract ?fb)
-)
-
 (defrule production-rs-new-base-on-slide
 	"The counter for the RS slide has been updated"
 	(declare (salience ?*PRIORITY_HIGHER*))
+	?m <- (machine (name ?n) (mps-base-counter ?mps-counter))
+	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
+	=>
+	(retract ?fb)
+	(modify ?m (mps-base-counter ?new-counter))
+	(assert (mps-add-base-on-slide ?n))
+)
+
+(defrule production-rs-ignore-slide-counter-in-non-production
+	"We are not in production phase, ignore slide events on the RS"
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(gamestate (phase ~PRODUCTION))
+	?fb <- (mps-add-base-on-slide ?n)
+	=>
+	(retract ?fb)
+)
+
+(defrule production-rs-process-base-on-slide
+	"Process a new base in the slide"
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (state ?state) (mtype RS) (team ?team)
-	               (bases-used ?bases-used) (bases-added ?old-num-bases)
-	               (mps-base-counter ?mps-counter))
-	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
+	               (bases-used ?bases-used) (bases-added ?old-num-bases))
+	?fb <- (mps-add-base-on-slide ?n)
 	=>
 	(retract ?fb)
 	(if (neq ?state BROKEN)
@@ -419,7 +428,6 @@
 			           (broken-reason (str-cat ?n ": too many additional bases loaded")))
 		)
 	)
-	(modify ?m (mps-base-counter ?mps-counter))
 )
 
 (defrule production-cs-mount-without-retrieve
@@ -582,6 +590,6 @@
   (bind ?mname (sym-cat (pb-field-value ?p "machine_name")))
   (printout t "Add base to machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-		(assert (mps-status-feedback ?m:name SLIDE-COUNTER (+ 1 ?m:bases-added)))
+		(assert (mps-add-base-on-slide ?m:name))
   )
 )
