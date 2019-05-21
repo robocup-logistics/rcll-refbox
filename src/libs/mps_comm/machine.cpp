@@ -113,7 +113,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 				else
 					registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
 
-				bool                  statusBit = (bool)(status & Status::STATUS_BUISY);
+				bool                  statusBit = (bool)(status & Status::STATUS_BUSY);
 				OpcUtils::MPSRegister reg;
 				reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
 				setNodeValue(registerNodes[reg], (uint16_t)command, reg);
@@ -175,15 +175,15 @@ bool Machine::wait_for_ready(int timeout) {
     return false;
 }
 
-void Machine::wait_for_buisy() {
+void Machine::wait_for_busy() {
   struct timespec time_c, time_0, time_d;
   clock_gettime(CLOCK_MONOTONIC, &time_0);
     
   while ((getReturnValue(OpcUtils::MPSRegister::STATUS_BUSY_IN)->ToInt())) {
     clock_gettime(CLOCK_MONOTONIC, &time_c);
     timespec_diff( &time_0, &time_c, &time_d);
-    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUISY*10) { /* TODO REMOVE *10 from timeout */
-      throw timeout_exception("Machine did not reset buisy flag within time limit");
+    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUSY*10) { /* TODO REMOVE *10 from timeout */
+      throw timeout_exception("Machine did not reset busy flag within time limit");
     }
   }
 }

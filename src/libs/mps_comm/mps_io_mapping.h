@@ -87,7 +87,7 @@ enum Status {
   STATUS_ENABLED = 4,
   STATUS_ERR = 3,
   STATUS_READY = 2,
-  STATUS_BUISY = 1,
+  STATUS_BUSY = 1,
 };
 
 // TBD: timeout for the band to reach the end position
@@ -96,11 +96,11 @@ enum Status {
 // NOTE: The timeout shall be handeled on refbox side
 enum Timeout {
   TIMEOUT_BAND = 0,
-  // TBD: time out for the msp to unset the buisy flag in ms
+  // TBD: time out for the msp to unset the busy flag in ms
   // Normally this shall be within one PLC cycle.
   // (a couple of milli seconds).
   // However, due to protocol overhead, I use 1 sec as limit.
-  TIMEOUT_BUISY = 1000,
+  TIMEOUT_BUSY = 1000,
 };
 
 }

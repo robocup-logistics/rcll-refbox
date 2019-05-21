@@ -46,7 +46,7 @@ public:
   //   *) command word
   //   *) payload1
   //   *) payload2
-  //   *) status flag (shall be 1 = BUISY)
+  //   *) status flag (shall be 1 = BUSY)
   void send_command(unsigned short command, unsigned short payload1 = 0,
                     unsigned short payload2 = 0, int timeout = 0, unsigned char status = 1, unsigned char error = 0);
 
@@ -101,9 +101,9 @@ protected:
   // That is, when the command is handled completely
   // timeout in ms, 0 -> no timeout
   bool wait_for_ready(int timeout = 0);
-  // wait, until the buisy flag is set.
+  // wait, until the busy flag is set.
   // This is nescessary, because it has to be unset, when it gets set.
-  void wait_for_buisy();
+  void wait_for_busy();
 	void register_callback(Callback, bool simulation = false);
   void mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
   void mock_callback(OpcUtils::MPSRegister reg, bool ret);
