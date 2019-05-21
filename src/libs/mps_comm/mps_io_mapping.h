@@ -96,11 +96,6 @@ enum Status {
 // NOTE: The timeout shall be handeled on refbox side
 enum Timeout {
   TIMEOUT_BAND = 0,
-  // TBD: time out for the msp to unset the busy flag in ms
-  // Normally this shall be within one PLC cycle.
-  // (a couple of milli seconds).
-  // However, due to protocol overhead, I use 1 sec as limit.
-  TIMEOUT_BUSY = 1000,
 };
 
 }

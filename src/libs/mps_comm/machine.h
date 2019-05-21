@@ -75,9 +75,6 @@ public:
   std::mutex lock_;
   bool abort_operation_;
 
-  // Needed to check, if a product was retrieved.
-  bool wait_for_free();
-
 protected:
   const std::string name_;
   // machine type
@@ -97,13 +94,6 @@ protected:
   std::thread worker_thread_;
   std::thread heartbeat_thread_;
   std::atomic<bool> heartbeat_active_;
-	// wait, until the ready bit is set.
-  // That is, when the command is handled completely
-  // timeout in ms, 0 -> no timeout
-  bool wait_for_ready(int timeout = 0);
-  // wait, until the busy flag is set.
-  // This is nescessary, because it has to be unset, when it gets set.
-  void wait_for_busy();
 	void register_callback(Callback, bool simulation = false);
   void mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
   void mock_callback(OpcUtils::MPSRegister reg, bool ret);

@@ -146,57 +146,6 @@ void Machine::reset() {
   send_command(machine_type_ | Command::COMMAND_RESET);
 }
 
-bool Machine::wait_for_ready(int timeout) {
-  struct timespec time_c, time_0, time_d;
-  if (timeout >= 0) {
-    clock_gettime(CLOCK_MONOTONIC, &time_0);
-  }
-    
-  while (!getReturnValue(OpcUtils::MPSRegister::STATUS_READY_IN)->ToInt())
-  {
-    {
-      std::lock_guard<std::mutex> l(lock_);
-      if (abort_operation_) {
-        std::cout << "Abort operation" << std::endl;
-        return false;
-      }
-    }
-    if (timeout >= 0) {
-      clock_gettime(CLOCK_MONOTONIC, &time_c);
-      timespec_diff( &time_0, &time_c, &time_d);
-      if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > timeout) {
-        return false;
-      }
-    }
-  }
-  if (getReturnValue(OpcUtils::MPSRegister::STATUS_ENABLE_IN)->ToInt())
-    return true;
-  else
-    return false;
-}
-
-void Machine::wait_for_busy() {
-  struct timespec time_c, time_0, time_d;
-  clock_gettime(CLOCK_MONOTONIC, &time_0);
-    
-  while ((getReturnValue(OpcUtils::MPSRegister::STATUS_BUSY_IN)->ToInt())) {
-    clock_gettime(CLOCK_MONOTONIC, &time_c);
-    timespec_diff( &time_0, &time_c, &time_d);
-    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUSY) {
-      throw timeout_exception("Machine did not reset busy flag within time limit");
-    }
-  }
-}
-
-bool Machine::wait_for_free() {
-  for(;;) {
-    if (!getReturnValue(OpcUtils::MPSRegister::STATUS_BUSY_IN)->ToInt()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool Machine::connect_PLC() {
   if (connection_mode_ == MOCKUP) {
     return true;
