@@ -24,7 +24,6 @@ StorageStation::~StorageStation() {}
 void StorageStation::get_product(int slot) {
   //lock_guard<mutex> g(lock_);
   send_command(machine_type_ + Operation::OPERATION_GET_F_PRODUCT, slot);
-  wait_for_ready();
 }
 
 void StorageStation::identify() {
