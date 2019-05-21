@@ -164,7 +164,7 @@ bool Machine::wait_for_ready(int timeout) {
     if (timeout >= 0) {
       clock_gettime(CLOCK_MONOTONIC, &time_c);
       timespec_diff( &time_0, &time_c, &time_d);
-      if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > timeout*10) { /* TODO REMOVE *10 from timeout */
+      if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > timeout) {
         return false;
       }
     }
@@ -182,7 +182,7 @@ void Machine::wait_for_busy() {
   while ((getReturnValue(OpcUtils::MPSRegister::STATUS_BUSY_IN)->ToInt())) {
     clock_gettime(CLOCK_MONOTONIC, &time_c);
     timespec_diff( &time_0, &time_c, &time_d);
-    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUSY*10) { /* TODO REMOVE *10 from timeout */
+    if( time_d.tv_sec * 1000 + time_d.tv_nsec / 1000000 > Timeout::TIMEOUT_BUSY) {
       throw timeout_exception("Machine did not reset busy flag within time limit");
     }
   }
