@@ -19,7 +19,7 @@
   ;(assert (attention-message (text "Entering Production Phase")))
 )
 
-(defrule prod-machine-down
+(defrule production-machine-down
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (mtype ?mtype)
 		  (state ?state&~DOWN) (proc-start ?proc-start)
@@ -36,7 +36,7 @@
   )
 )
 
-(defrule prod-machine-up
+(defrule production-machine-up
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state&~DOWN)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
@@ -45,7 +45,7 @@
 	(modify ?mf (state ?prev-state))
 )
 
-(defrule prod-machine-prepare
+(defrule production-machine-prepare
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.PrepareMachine") (ptr ?p)
 		       (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
@@ -212,7 +212,7 @@
   )
 )
 
-(defrule prod-machine-reset-by-team
+(defrule production-machine-reset-by-team
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.ResetMachine") (ptr ?p)
 		     (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
@@ -279,7 +279,7 @@
   (mps-bs-dispense (str-cat ?n) (str-cat ?color))
 )
 
-(defrule prod-bs-move-conveyor
+(defrule production-bs-move-conveyor
   "The BS has dispensed a base. We now need to move the conveyor"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
@@ -307,7 +307,7 @@
 				  (- ?ba ?bu) " < " ?req-bases ")")))
 )
 
-(defrule production-rs-start
+(defrule production-rs-move-to-mid
   "The RS is PREPARED. Start moving the workpiece to the middle to mount a ring."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task nil)
@@ -386,7 +386,7 @@
 	)
 )
 
-(defrule production-cs-cap-move-to-mid
+(defrule production-cs-move-to-mid
   "Start moving the workpiece to the middle if the CS is PREPARED."
   (gamestate (state RUNNING) (phase PRODUCTION))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task nil)
@@ -397,7 +397,7 @@
 	(mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
 
-(defrule production-cs-cap-main-op
+(defrule production-cs-main-op
 	"Workpiece is in the middle of the CS. MOUNT or RETRIEVE the cap, depending
 	 on the instructed task."
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
@@ -498,7 +498,7 @@
              (broken-reason (str-cat "MPS " ?n " prepared, but no product fed in time")))
 )
 
-(defrule prod-processing-timeout
+(defrule production-timeout-while-processing
   "The machine got stuck while processing the workpiece. This is machine failure and not a failure
    by the team. Thus, just reset the machine and set it back to IDLE. Do not set it to BROKEN."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -511,7 +511,7 @@
 	(mps-reset (str-cat ?n))
 )
 
-(defrule prod-pb-recv-SetMachineState
+(defrule production-pb-recv-SetMachineState
   "We received a manual override of the machine state, process it accordingly."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.SetMachineState") (ptr ?p) (rcvd-via STREAM)
@@ -525,7 +525,7 @@
 	)
 )
 
-(defrule prod-pb-recv-MachineAddBase
+(defrule production-pb-recv-MachineAddBase
   "We received a manual SLIDE-COUNTER event. Process it just like a regular SLIDE-COUNTER event."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.MachineAddBase") (ptr ?p) (rcvd-via STREAM)
