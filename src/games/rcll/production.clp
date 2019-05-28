@@ -310,14 +310,6 @@
 	)
 )
 
-(defrule production-bs-idle
-	"The workpiece has been picked up and is no longer on the conveyor belt. Switch to IDLE."
-	?m <- (machine (name ?n) (mtype BS|RS) (state READY-AT-OUTPUT) (task MOVE-OUT) (mps-ready FALSE))
-	=>
-	(modify ?m (state IDLE))
-	(mps-reset (str-cat ?n))
-)
-
 (defrule production-rs-insufficient-bases
   "The RS has been prepared but it does not have sufficient additional material; switch to BROKEN."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
