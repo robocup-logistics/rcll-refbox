@@ -435,17 +435,6 @@
 	)
 )
 
-(defrule production-cs-mount-without-retrieve
-  "Set the CS to BROKEN if it is prepared for MOUNT_CAP but there is no cap in the machine."
-  (declare (salience ?*PRIORITY_HIGHER*))
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype CS) (state PREPARED)
-		 (cs-operation MOUNT_CAP) (cs-retrieved FALSE))
-  =>
-  (modify ?m (state BROKEN)
-	           (broken-reason (str-cat ?n ": tried to mount without retrieving")))
-)
-
 (defrule production-cs-cap-move-to-mid
   "Start moving the workpiece to the middle if the CS is PREPARED."
   (declare (salience ?*PRIORITY_HIGHER*))
