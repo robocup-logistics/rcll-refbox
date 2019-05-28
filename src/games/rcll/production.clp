@@ -269,6 +269,7 @@
 ; **** Machine state processing
 
 (defrule production-green-light-on-idle
+  "Set the light signal to GREEN for a machine that is IDLE"
   (gamestate (state RUNNING) (phase PRODUCTION))
   ?m <- (machine (name ?n) (state IDLE) (actual-lights $?lights&:(neq ?lights (create$ GREEN-ON))))
   =>
@@ -277,6 +278,7 @@
 )
 
 (defrule production-prepared-stop-blinking
+  "The machine is PREPARED and has been blinking, change the light signal to GREEN (non-blinking)"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PREPARED|PROCESSING)
 		 (actual-lights GREEN-BLINK) (desired-lights GREEN-BLINK)
@@ -286,7 +288,7 @@
 )
 
 (defrule production-bs-dispense
-  "BS must be instructed to dispense base for processing"
+  "Start dispensing a base from a prepared BS"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PREPARED) (bs-color ?color) (task nil))
@@ -298,7 +300,7 @@
 )
 
 (defrule prod-bs-move-conveyor
-	"The BS has dispensed a base. We now need to move the conveyor"
+  "The BS has dispensed a base. We now need to move the conveyor"
   (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
@@ -314,7 +316,7 @@
 )
 
 (defrule production-bs-idle
-	"The base has been picked up"
+	"The workpiece has been picked up and is no longer on the conveyor belt. Switch to IDLE."
 	?m <- (machine (name ?n) (mtype BS|RS) (state READY-AT-OUTPUT) (task MOVE-OUT) (mps-ready FALSE))
 	=>
 	(modify ?m (state IDLE))
@@ -322,7 +324,7 @@
 )
 
 (defrule production-rs-insufficient-bases
-  "Must check sufficient number of bases for RS"
+  "The RS has been prepared but it does not have sufficient additional material; switch to BROKEN."
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED)
@@ -336,7 +338,7 @@
 )
 
 (defrule production-rs-start
-  "Instruct RS to mount ring"
+  "The RS is PREPARED. Start moving the workpiece to the middle to mount a ring."
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task nil)
@@ -351,7 +353,7 @@
 )
 
 (defrule production-rs-mount-ring
-	"Workpiece is in the middle, mount a ring"
+  "Workpiece is in the middle of the conveyor belt of the RS, mount a ring."
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
@@ -385,7 +387,8 @@
 )
 
 (defrule production-rs-new-base-on-slide
-	"The counter for the RS slide has been updated"
+	"Process a SLIDE-COUNTER event sent by the PLC. Do not directly increase the
+	 counter but assert a transient mps-add-base-on-slide fact instead."
 	(declare (salience ?*PRIORITY_HIGHER*))
 	?m <- (machine (name ?n) (mps-base-counter ?mps-counter))
 	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
@@ -405,7 +408,9 @@
 )
 
 (defrule production-rs-process-base-on-slide
-	"Process a new base in the slide"
+	"Process the transient mps-add-base-on-slide, which is either created by a
+	 SLIDE-COUNTER event or by receiving a protobuf message. Actually increment
+	 the counter of the machine."
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (state ?state) (mtype RS) (team ?team)
@@ -431,7 +436,7 @@
 )
 
 (defrule production-cs-mount-without-retrieve
-  "Process on CS"
+  "Set the CS to BROKEN if it is prepared for MOUNT_CAP but there is no cap in the machine."
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED)
@@ -442,7 +447,7 @@
 )
 
 (defrule production-cs-cap-move-to-mid
-  "Process on CS"
+  "Start moving the workpiece to the middle if the CS is PREPARED."
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task nil)
@@ -455,6 +460,8 @@
 )
 
 (defrule production-cs-cap-main-op
+	"Workpiece is in the middle of the CS. MOUNT or RETRIEVE the cap, depending
+	 on the instructed task."
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
 	               (cs-operation ?cs-op))
 	=>
@@ -470,6 +477,7 @@
 )
 
 (defrule production-cs-move-to-output
+	"The CS has completed mounting/retrieving a cap. Move the workpiece to the output."
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP)
 	               (mps-busy FALSE))
 	=>
@@ -480,6 +488,7 @@
 )
 
 (defrule production-mps-product-retrieved
+	"The workpiece has been taken away, set the machine to IDLE and reset it."
 	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
 	=>
 	(modify ?m (state IDLE) (desired-lights GREEN-ON))
@@ -487,7 +496,7 @@
 )
 
 (defrule production-ds-start-processing
-	"DS is prepared, start processing"
+  "DS is prepared, start processing the delivered workpiece."
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil) (ds-order ?order))
@@ -500,6 +509,7 @@
 )
 
 (defrule production-ds-order-delivered
+	"The DS processed the workpiece, ask the referee for confirmation of the delivery."
 	(declare (salience ?*PRIORITY_HIGH*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE)
@@ -513,6 +523,7 @@
 )
 
 (defrule production-ds-processed
+  "The DS finished processing the workpiece, set the machine to IDLE and reset it."
   (declare (salience ?*PRIORITY_HIGH*))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>
@@ -522,6 +533,7 @@
 )
 
 (defrule production-lights-ready-at-output
+	"The machine is READY-AT-OUTPUT, set the light signal to YELLOW."
   (gamestate (state RUNNING) (phase PRODUCTION))
   ?m <- (machine (state READY-AT-OUTPUT) (desired-lights $?d&:(neq ?d (create$ YELLOW-ON))))
   =>
@@ -529,6 +541,8 @@
 )
 
 (defrule production-mps-broken
+  "The MPS is BROKEN. Inform the referee and set the light signal. Also reset the machine to stop
+   the conveyor belt."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0))
   =>
@@ -540,6 +554,7 @@
 )
 
 (defrule production-mps-broken-recover
+	"Reset a machine that was BROKEN after the down time has passed."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (state BROKEN) (bases-added ?ba)
 	               (broken-since ?bs&~0.0&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
@@ -549,6 +564,7 @@
 )
 
 (defrule production-prepared-but-no-input
+  "The machine has been prepared but has never received a workpiece. Set it to BROKEN."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype ?type&~BS) (state ?state
 	               &:(or (and (member$ ?type (create$ DS BS)) (eq ?state PROCESSING)) (eq ?state PREPARED)))
@@ -559,6 +575,8 @@
 )
 
 (defrule prod-processing-timeout
+  "The machine got stuck while processing the workpiece. This is machine failure and not a failure
+   by the team. Thus, just reset the machine and set it back to IDLE. Do not set it to BROKEN."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PROCESSING|PROCESSED)
         (wait-for-product-since ?ws
@@ -570,6 +588,7 @@
 )
 
 (defrule prod-pb-recv-SetMachineState
+  "We received a manual override of the machine state, process it accordingly."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.SetMachineState") (ptr ?p) (rcvd-via STREAM)
 		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
@@ -583,6 +602,7 @@
 )
 
 (defrule prod-pb-recv-MachineAddBase
+  "We received a manual SLIDE-COUNTER event. Process it just like a regular SLIDE-COUNTER event."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.MachineAddBase") (ptr ?p) (rcvd-via STREAM)
 		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
