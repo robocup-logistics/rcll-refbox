@@ -342,15 +342,6 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
-(defrule production-bs-cs-rs-ready-at-output
-	"Workpiece is in output, switch to READY-AT-OUTPUT"
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype BS|CS|RS) (state PROCESSED) (task MOVE-OUT)
-	               (mps-busy FALSE) (mps-ready TRUE))
-	=>
-	(modify ?m (state READY-AT-OUTPUT) (task nil))
-)
-
 (defrule production-rs-ignore-slide-counter-in-non-production
 	"We are not in production phase, ignore slide events on the RS"
 	(gamestate (phase ~PRODUCTION))
@@ -423,6 +414,15 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
+)
+
+(defrule production-bs-cs-rs-ready-at-output
+	"Workpiece is in output, switch to READY-AT-OUTPUT"
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype BS|CS|RS) (state PROCESSED) (task MOVE-OUT)
+	               (mps-busy FALSE) (mps-ready TRUE))
+	=>
+	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
 
 (defrule production-mps-product-retrieved
