@@ -16,12 +16,6 @@
   (do-for-fact ((?sf signal)) (eq ?sf:type machine-info-bc)
     (modify ?sf (count 1) (time 0 0))
   )
-
-  ; Set lights
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights GREEN-ON))
-  )
-
   ;(assert (attention-message (text "Entering Production Phase")))
 )
 
@@ -35,10 +29,10 @@
   (printout t "Machine " ?name " down for " ?down-time " sec" crlf)
   (if (eq ?state PROCESSING)
    then
-    (modify ?mf (state DOWN) (desired-lights RED-ON) (prev-state ?state)
+    (modify ?mf (state DOWN) (prev-state ?state)
 	    (proc-start (+ ?proc-start ?down-time)))
    else
-    (modify ?mf (state DOWN) (prev-state ?state) (desired-lights RED-ON))
+    (modify ?mf (state DOWN) (prev-state ?state))
   )
 )
 
@@ -275,34 +269,13 @@
 	(assert (mps-add-base-on-slide ?n))
 )
 
-
-(defrule production-green-light-on-idle
-  "Set the light signal to GREEN for a machine that is IDLE"
-  (gamestate (state RUNNING) (phase PRODUCTION))
-  ?m <- (machine (name ?n) (state IDLE) (actual-lights $?lights&:(neq ?lights (create$ GREEN-ON))))
-  =>
-  (modify ?m  (desired-lights GREEN-ON))
-  (mps-reset (str-cat ?n))
-)
-
-(defrule production-prepared-stop-blinking
-  "The machine is PREPARED and has been blinking, change the light signal to GREEN (non-blinking)"
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PREPARED|PROCESSING)
-		 (actual-lights GREEN-BLINK) (desired-lights GREEN-BLINK)
-		 (prep-blink-start ?bs&:(timeout-sec ?gt ?bs ?*PREPARED-BLINK-TIME*)))
-  =>
-  (modify ?m (desired-lights GREEN-ON))
-)
-
 (defrule production-bs-dispense
   "Start dispensing a base from a prepared BS"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PREPARED) (bs-color ?color) (task nil))
   =>
   (printout t "Machine " ?n " dispensing " ?color " base" crlf)
-  (modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON)
-	           (task DISPENSE) (mps-busy WAIT))
+	(modify ?m (state PROCESSING) (task DISPENSE) (mps-busy WAIT))
   (mps-bs-dispense (str-cat ?n) (str-cat ?color))
 )
 
@@ -343,8 +316,7 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
   (printout t "Machine " ?n " of type RS switching to PREPARED state" crlf)
-  (modify ?m (desired-lights GREEN-BLINK) (task MOVE-MID) (mps-busy WAIT)
-             (prep-blink-start ?gt))
+  (modify ?m (task MOVE-MID) (mps-busy WAIT))
   (mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
 
@@ -356,7 +328,7 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
 	=>
 	(printout t "Machine " ?n ": mount ring" crlf)
-	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy WAIT) (bases-used (+ ?bu ?req-bases)) (desired-lights GREEN-ON YELLOW-ON))
+	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy WAIT) (bases-used (+ ?bu ?req-bases)))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
@@ -416,13 +388,12 @@
 
 (defrule production-cs-cap-move-to-mid
   "Start moving the workpiece to the middle if the CS is PREPARED."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task nil)
 	               (cs-operation ?cs-op))
   =>
   (printout t "Machine " ?n " prepared for " ?cs-op crlf)
-  (modify ?m (desired-lights GREEN-BLINK)
-						 (task MOVE-MID) (prep-blink-start ?gt) (mps-busy WAIT))
+  (modify ?m (task MOVE-MID) (mps-busy WAIT))
 	(mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
 
@@ -432,7 +403,7 @@
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
 	               (cs-operation ?cs-op))
 	=>
-	(modify ?m (state PROCESSING) (desired-lights GREEN-ON YELLOW-ON) (task ?cs-op) (mps-busy WAIT))
+	(modify ?m (state PROCESSING) (task ?cs-op) (mps-busy WAIT))
 	(if (eq ?cs-op RETRIEVE_CAP)
 	 then
 		(mps-cs-retrieve-cap (str-cat ?n))
@@ -458,7 +429,7 @@
 	"The workpiece has been taken away, set the machine to IDLE and reset it."
 	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
 	=>
-	(modify ?m (state IDLE) (desired-lights GREEN-ON))
+	(modify ?m (state IDLE))
 	(mps-reset (str-cat ?n))
 )
 
@@ -469,8 +440,7 @@
   (order (id ?order) (delivery-gate ?gate))
 	=>
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
-	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy WAIT)
-	           (desired-lights GREEN-ON YELLOW-ON))
+	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy WAIT))
   (mps-ds-process (str-cat ?n) ?gate)
 )
 
@@ -492,28 +462,18 @@
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
-  (modify ?m (state IDLE) (desired-lights GREEN-ON))
+  (modify ?m (state IDLE))
 	(mps-reset (str-cat ?n))
 )
 
-(defrule production-lights-ready-at-output
-	"The machine is READY-AT-OUTPUT, set the light signal to YELLOW."
-  (gamestate (state RUNNING) (phase PRODUCTION))
-  ?m <- (machine (state READY-AT-OUTPUT) (desired-lights $?d&:(neq ?d (create$ YELLOW-ON))))
-  =>
-  (modify ?m (desired-lights YELLOW-ON))
-)
-
 (defrule production-mps-broken
-  "The MPS is BROKEN. Inform the referee and set the light signal. Also reset the machine to stop
-   the conveyor belt."
+	"The MPS is BROKEN. Inform the referee and reset the machine to stop the conveyor belt."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0))
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
-  (modify ?m (broken-since ?gt)
-	  (desired-lights RED-BLINK YELLOW-BLINK))
+  (modify ?m (broken-since ?gt))
   (mps-reset (str-cat ?n))
 )
 
