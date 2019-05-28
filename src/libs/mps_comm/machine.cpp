@@ -95,7 +95,9 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 		bool                         success;
 		do {
 			try {
-				logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
+        if (command > 100) {
+					logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
+				}
         if (connection_mode_ == MOCKUP) {
           if (command > 100) {
             mock_callback(OpcUtils::MPSRegister::STATUS_BUSY_IN, true);
