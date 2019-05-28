@@ -51,22 +51,6 @@
 	(modify ?mf (state ?prev-state))
 )
 
-(defrule prod-mps-state-ready
-	?m <- (machine (name ?n))
-  ?mps-status <- (mps-status-feedback ?n READY ?ready)
-	=>
-	(retract ?mps-status)
-	(modify ?m (mps-ready ?ready))
-)
-
-(defrule prod-mps-state-busy
-	?m <- (machine (name ?n))
-  ?mps-status <- (mps-status-feedback ?n BUSY ?busy)
-	=>
-	(retract ?mps-status)
-	(modify ?m (mps-busy ?busy))
-)
-
 (defrule prod-machine-prepare
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.PrepareMachine") (ptr ?p)
@@ -263,7 +247,34 @@
   )
 )
 
-; **** Machine state processing
+; **** MPS status feedback processing
+(defrule production-mps-feedback-state-ready
+	?m <- (machine (name ?n))
+  ?mps-status <- (mps-status-feedback ?n READY ?ready)
+	=>
+	(retract ?mps-status)
+	(modify ?m (mps-ready ?ready))
+)
+
+(defrule production-mps-feedback-state-busy
+	?m <- (machine (name ?n))
+  ?mps-status <- (mps-status-feedback ?n BUSY ?busy)
+	=>
+	(retract ?mps-status)
+	(modify ?m (mps-busy ?busy))
+)
+
+(defrule production-mps-feedback-rs-new-base-on-slide
+	"Process a SLIDE-COUNTER event sent by the PLC. Do not directly increase the
+	 counter but assert a transient mps-add-base-on-slide fact instead."
+	?m <- (machine (name ?n) (mps-base-counter ?mps-counter))
+	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
+	=>
+	(retract ?fb)
+	(modify ?m (mps-base-counter ?new-counter))
+	(assert (mps-add-base-on-slide ?n))
+)
+
 
 (defrule production-green-light-on-idle
   "Set the light signal to GREEN for a machine that is IDLE"
@@ -366,17 +377,6 @@
 	               (mps-busy FALSE) (mps-ready TRUE))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
-)
-
-(defrule production-rs-new-base-on-slide
-	"Process a SLIDE-COUNTER event sent by the PLC. Do not directly increase the
-	 counter but assert a transient mps-add-base-on-slide fact instead."
-	?m <- (machine (name ?n) (mps-base-counter ?mps-counter))
-	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
-	=>
-	(retract ?fb)
-	(modify ?m (mps-base-counter ?new-counter))
-	(assert (mps-add-base-on-slide ?n))
 )
 
 (defrule production-rs-ignore-slide-counter-in-non-production
