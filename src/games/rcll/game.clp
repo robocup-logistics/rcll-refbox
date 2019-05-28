@@ -73,7 +73,6 @@
 
 (defrule game-mps-solver-start
   "start the solver"
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (game-time ?gt))
   (not (game-parameterized))
   ?mg <- (machine-generation (state NOT-STARTED))
@@ -85,7 +84,6 @@
 
 (defrule game-mps-solver-check
   "check if the solver is finished"
-  (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME) (game-time ?gt))
   ?mg <- (machine-generation (state STARTED) (generation-state-last-checked ?gs&:(timeout-sec ?gt ?gs ?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE*)))
   =>
@@ -100,7 +98,6 @@
 )
 
 (defrule game-parameterize
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
   (or (machine-generation (state FINISHED))

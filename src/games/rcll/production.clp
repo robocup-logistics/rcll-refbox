@@ -8,7 +8,6 @@
 ;---------------------------------------------------------------------------
 
 (defrule production-start
-  (declare (salience ?*PRIORITY_HIGH*))
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
   =>
   (modify ?gs (prev-phase PRODUCTION) (game-time 0.0))
@@ -27,7 +26,6 @@
 )
 
 (defrule prod-machine-down
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (mtype ?mtype)
 		  (state ?state&~DOWN) (proc-start ?proc-start)
@@ -45,7 +43,6 @@
 )
 
 (defrule prod-machine-up
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state&~DOWN)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
@@ -289,7 +286,6 @@
 
 (defrule production-bs-dispense
   "Start dispensing a base from a prepared BS"
-  (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PREPARED) (bs-color ?color) (task nil))
   =>
@@ -301,7 +297,6 @@
 
 (defrule prod-bs-move-conveyor
   "The BS has dispensed a base. We now need to move the conveyor"
-  (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
 	=>
@@ -325,7 +320,6 @@
 
 (defrule production-rs-insufficient-bases
   "The RS has been prepared but it does not have sufficient additional material; switch to BROKEN."
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED)
 		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
@@ -339,7 +333,6 @@
 
 (defrule production-rs-start
   "The RS is PREPARED. Start moving the workpiece to the middle to mount a ring."
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task nil)
 		 (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
@@ -354,7 +347,6 @@
 
 (defrule production-rs-mount-ring
   "Workpiece is in the middle of the conveyor belt of the RS, mount a ring."
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
 	               (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors) (bases-used ?bu))
@@ -367,7 +359,6 @@
 
 (defrule production-rs-move-to-output
 	"Ring is mounted, move to output"
-	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE))
 	=>
@@ -378,7 +369,6 @@
 
 (defrule production-bs-cs-rs-ready-at-output
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
-	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS|CS|RS) (state PROCESSED) (task MOVE-OUT)
 	               (mps-busy FALSE) (mps-ready TRUE))
@@ -389,7 +379,6 @@
 (defrule production-rs-new-base-on-slide
 	"Process a SLIDE-COUNTER event sent by the PLC. Do not directly increase the
 	 counter but assert a transient mps-add-base-on-slide fact instead."
-	(declare (salience ?*PRIORITY_HIGHER*))
 	?m <- (machine (name ?n) (mps-base-counter ?mps-counter))
 	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
 	=>
@@ -400,7 +389,6 @@
 
 (defrule production-rs-ignore-slide-counter-in-non-production
 	"We are not in production phase, ignore slide events on the RS"
-	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (phase ~PRODUCTION))
 	?fb <- (mps-add-base-on-slide ?n)
 	=>
@@ -411,7 +399,6 @@
 	"Process the transient mps-add-base-on-slide, which is either created by a
 	 SLIDE-COUNTER event or by receiving a protobuf message. Actually increment
 	 the counter of the machine."
-	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (state ?state) (mtype RS) (team ?team)
 	               (bases-used ?bases-used) (bases-added ?old-num-bases))
@@ -437,7 +424,6 @@
 
 (defrule production-cs-cap-move-to-mid
   "Start moving the workpiece to the middle if the CS is PREPARED."
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task nil)
 	               (cs-operation ?cs-op))
@@ -486,7 +472,6 @@
 
 (defrule production-ds-start-processing
   "DS is prepared, start processing the delivered workpiece."
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil) (ds-order ?order))
   (order (id ?order) (delivery-gate ?gate))
@@ -499,7 +484,6 @@
 
 (defrule production-ds-order-delivered
 	"The DS processed the workpiece, ask the referee for confirmation of the delivery."
-	(declare (salience ?*PRIORITY_HIGH*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE)
 	               (ds-order ?order) (team ?team))
@@ -513,7 +497,6 @@
 
 (defrule production-ds-processed
   "The DS finished processing the workpiece, set the machine to IDLE and reset it."
-  (declare (salience ?*PRIORITY_HIGH*))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
