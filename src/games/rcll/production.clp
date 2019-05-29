@@ -79,7 +79,7 @@
 		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
 	        (modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color) (wait-for-product-since ?gt))
                else
-		(modify ?m (state BROKEN)(prev-state ?m:state)
+		(modify ?m (state BROKEN)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
@@ -94,11 +94,11 @@
 			(modify ?m (state PREPARED) (ds-order ?order-id)
                            (wait-for-product-since ?gt))
 		else
-			(modify ?m (state BROKEN) (prev-state ?m:state)
+			(modify ?m (state BROKEN)
 			  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
 		)
                else
-		(modify ?m (state BROKEN) (prev-state ?m:state)
+		(modify ?m (state BROKEN)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
@@ -128,18 +128,18 @@
                     (printout t "Prepared " ?mname " (RETRIVE: (" ?slot-x ", " ?slot-y ", " ?slot-z ") )" crlf)
                     (modify ?m (state PREPARED) (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z) (wait-for-product-since ?gt))
                    else
-		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with RETRIVE (" ?slot-x ", " ?slot-y ", " ?slot-z ") but this is empty")))
+		    (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with RETRIVE (" ?slot-x ", " ?slot-y ", " ?slot-z ") but this is empty")))
                   )
                  else
                   (if (eq ?operation STORE)
                    then
-		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with STORE-operation")))
+		    (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE-operation")))
                    else
-		    (modify ?m (state BROKEN)(prev-state ?m:state) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation")))
+		    (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation")))
                   )
                 )
                else
-		(modify ?m (state BROKEN)(prev-state ?m:state)
+		(modify ?m (state BROKEN)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
@@ -154,12 +154,12 @@
 	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color)
                              (wait-for-product-since ?gt))
                  else
-		  (modify ?m (state BROKEN) (prev-state ?m:state)
+		  (modify ?m (state BROKEN)
 			  (broken-reason (str-cat "Prepare received for " ?mname
 						  " for invalid ring color (" ?ring-color ")")))
                 )
                else
-		(modify ?m (state BROKEN) (prev-state ?m:state)
+		(modify ?m (state BROKEN)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
               )
             )
@@ -177,7 +177,7 @@
 	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
                                   (wait-for-product-since ?gt))
                      else
-		      (modify ?m (state BROKEN) (prev-state ?m:state)
+		      (modify ?m (state BROKEN)
 			      (cs-retrieved FALSE)
 			      (broken-reason (str-cat "Prepare received for " ?mname ": "
 						      "cannot retrieve while already holding")))
@@ -190,21 +190,21 @@
 	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
                                   (wait-for-product-since ?gt))
                      else
-		      (modify ?m (state BROKEN) (prev-state ?m:state)
+		      (modify ?m (state BROKEN)
 			      (broken-reason (str-cat "Prepare received for " ?mname
 						      ": cannot mount without cap")))
                     )
 		  )
                 )
                else
-		(modify ?m (state BROKEN) (prev-state ?m:state)
+		(modify ?m (state BROKEN)
 			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
 	      )
             )
           )
         else
           (if (eq ?m:state READY-AT-OUTPUT) then
-            (modify ?m (state BROKEN) (prev-state ?m:state))
+            (modify ?m (state BROKEN))
           )
         )
       )
@@ -234,7 +234,7 @@
      else
       (printout t "Received reset for " ?mname crlf)
       (do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
-	(modify ?m (state BROKEN) (prev-state ?m:state)
+	(modify ?m (state BROKEN)
                    (broken-reason (str-cat "Machine " ?mname " resetted by the team " ?team)))
       )
     )
@@ -372,7 +372,7 @@
 			                (reason (str-cat "Added additional base to " ?n))))
 			(modify ?m (bases-added ?num-bases))
 		 else
-			(modify ?m (state BROKEN) (prev-state ?state)
+			(modify ?m (state BROKEN)
 			           (broken-reason (str-cat ?n ": too many additional bases loaded")))
 		)
 	)
@@ -489,7 +489,7 @@
 	               (broken-since ?bs&~0.0&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
 	=>
 	(printout t "Machine " ?n " recovered" crlf)
-	(modify ?m (state IDLE) (prev-state BROKEN) (bases-used ?ba) (cs-retrieved FALSE) (broken-since 0.0))
+	(modify ?m (state IDLE) (bases-used ?ba) (cs-retrieved FALSE) (broken-since 0.0))
 )
 
 (defrule production-prepared-but-no-input
@@ -499,7 +499,7 @@
 	                 &:(or (and (eq ?type DS) (eq ?state PROCESSING)) (eq ?state PREPARED)))
 	               (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
   =>
-  (modify ?m (state BROKEN) (prev-state PROCESSING)
+  (modify ?m (state BROKEN)
              (broken-reason (str-cat "MPS " ?n " prepared, but no product fed in time")))
 )
 
