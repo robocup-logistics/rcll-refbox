@@ -22,7 +22,7 @@
   (slot productions (type INTEGER) (default 0))
   ; Overall refbox machine state
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
-					    PROCESSED READY-AT-OUTPUT WAIT-IDLE DOWN))
+					    PROCESSED READY-AT-OUTPUT DOWN))
   (slot prev-state (type SYMBOL) (default IDLE))
 	; The task currently being executed on the MPS
 	(slot task (type SYMBOL))
