@@ -275,7 +275,7 @@
   ?m <- (machine (name ?n) (mtype BS) (state PREPARED) (bs-color ?color) (task nil))
   =>
   (printout t "Machine " ?n " dispensing " ?color " base" crlf)
-	(modify ?m (state PROCESSING) (task DISPENSE) (mps-busy WAIT))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task DISPENSE) (mps-busy WAIT))
   (mps-bs-dispense (str-cat ?n) (str-cat ?color))
 )
 
@@ -328,7 +328,8 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
 	=>
 	(printout t "Machine " ?n ": mount ring" crlf)
-	(modify ?m (state PROCESSING) (task MOUNT-RING) (mps-busy WAIT) (bases-used (+ ?bu ?req-bases)))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task MOUNT-RING) (mps-busy WAIT)
+	           (bases-used (+ ?bu ?req-bases)))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
 )
 
@@ -391,11 +392,11 @@
 (defrule production-cs-main-op
 	"Workpiece is in the middle of the CS. MOUNT or RETRIEVE the cap, depending
 	 on the instructed task."
-	(gamestate (state RUNNING) (phase PRODUCTION))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
 	               (cs-operation ?cs-op))
 	=>
-	(modify ?m (state PROCESSING) (task ?cs-op) (mps-busy WAIT))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?cs-op) (mps-busy WAIT))
 	(if (eq ?cs-op RETRIEVE_CAP)
 	 then
 		(mps-cs-retrieve-cap (str-cat ?n))
@@ -443,7 +444,7 @@
   (order (id ?order) (delivery-gate ?gate))
 	=>
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
-	(modify ?m (state PROCESSING) (task DELIVER) (mps-busy WAIT))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task DELIVER) (mps-busy WAIT))
   (mps-ds-process (str-cat ?n) ?gate)
 )
 
@@ -503,15 +504,15 @@
 )
 
 (defrule production-timeout-while-processing
-  "The machine got stuck while processing the workpiece. This is machine failure and not a failure
-   by the team. Thus, just reset the machine and set it back to IDLE. Do not set it to BROKEN."
+  "The machine got stuck while processing the workpiece. Set it to BROKEN.
+	 This may be caused by a machine failure or by a misplaced workpiece."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state PROCESSING|PROCESSED)
-        (wait-for-product-since ?ws
-	        &:(timeout-sec ?gt ?ws (+ ?*PREPARE-WAIT-TILL-RESET* ?*PROCESSING-WAIT-TILL-RESET*))))
+        (proc-start ?start&:(timeout-sec ?gt ?start ?*PROCESSING-WAIT-TILL-RESET*)))
 	=>
 	(printout error "Machine " ?n " timed out while processing" crlf)
-	(modify ?m (state IDLE) (task nil))
+	(modify ?m (state BROKEN) (task nil)
+	           (broken-reason (str-cat "MPS " ?n " timed out while processing")))
 	(mps-reset (str-cat ?n))
 )
 
