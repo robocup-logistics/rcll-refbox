@@ -3,7 +3,9 @@
 ;  game.clp - LLSF RefBox CLIPS game maintenance
 ;
 ;  Created: Tue Jun 11 15:19:25 2013
-;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
+;             2017       Tobias Neumann
+;             2019       Till Hofmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 

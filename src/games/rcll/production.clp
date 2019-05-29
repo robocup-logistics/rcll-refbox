@@ -3,7 +3,9 @@
 ;  production.clp - LLSF RefBox CLIPS production phase rules
 ;
 ;  Created: Thu Feb 07 19:31:12 2013
-;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
+;             2017       Tobias Neumann
+;             2019       Till Hofmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 

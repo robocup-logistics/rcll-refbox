@@ -3,8 +3,9 @@
 ;  facts.clp - LLSF RefBox CLIPS - facts specification
 ;
 ;  Created: Mon Feb 11 13:11:45 2013
-;  Copyright  2013  Tim Niemueller [www.niemueller.de]
-;             2017  Tobias Neumann
+;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
+;             2017       Tobias Neumann
+;             2019       Till Hofmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
