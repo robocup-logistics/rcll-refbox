@@ -391,6 +391,7 @@
 (defrule production-cs-main-op
 	"Workpiece is in the middle of the CS. MOUNT or RETRIEVE the cap, depending
 	 on the instructed task."
+	(gamestate (state RUNNING) (phase PRODUCTION))
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE)
 	               (cs-operation ?cs-op))
 	=>
@@ -407,6 +408,7 @@
 
 (defrule production-cs-move-to-output
 	"The CS has completed mounting/retrieving a cap. Move the workpiece to the output."
+	(gamestate (state RUNNING) (phase PRODUCTION))
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP)
 	               (mps-busy FALSE))
 	=>
@@ -427,6 +429,7 @@
 
 (defrule production-mps-product-retrieved
 	"The workpiece has been taken away, set the machine to IDLE and reset it."
+	(gamestate (state RUNNING) (phase PRODUCTION))
 	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
 	=>
 	(modify ?m (state IDLE))
@@ -459,6 +462,7 @@
 
 (defrule production-ds-processed
   "The DS finished processing the workpiece, set the machine to IDLE and reset it."
+	(gamestate (state RUNNING) (phase PRODUCTION))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
