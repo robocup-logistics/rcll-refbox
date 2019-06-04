@@ -3,8 +3,9 @@
 ;  facts.clp - LLSF RefBox CLIPS - facts specification
 ;
 ;  Created: Mon Feb 11 13:11:45 2013
-;  Copyright  2013  Tim Niemueller [www.niemueller.de]
-;             2017  Tobias Neumann
+;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
+;             2017       Tobias Neumann
+;             2019       Till Hofmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -22,17 +23,16 @@
   (slot productions (type INTEGER) (default 0))
   ; Overall refbox machine state
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
-					    PROCESSED READY-AT-OUTPUT WAIT-IDLE DOWN))
-  ; Set on processing a state change
-  (slot proc-state (type SYMBOL) (default IDLE))
+					    PROCESSED READY-AT-OUTPUT DOWN WAIT-IDLE))
   (slot prev-state (type SYMBOL) (default IDLE))
-  ; This is the state indicated by the MPS
-  (slot mps-state-deferred (type SYMBOL) (default NONE))
-  (slot mps-state (type SYMBOL) (default IDLE))
+	; The task currently being executed on the MPS
+	(slot task (type SYMBOL))
+	(slot mps-busy (type SYMBOL) (allowed-values TRUE FALSE WAIT) (default FALSE))
+	(slot mps-ready (type SYMBOL) (allowed-values TRUE FALSE WAIT) (default FALSE))
   (slot proc-time (type INTEGER))
   (slot proc-start (type FLOAT))
   (multislot down-period (type FLOAT) (cardinality 2 2) (default -1.0 -1.0))
-  (slot broken-since (type FLOAT))
+  (slot broken-since (type FLOAT) (default 0.0))
   (slot broken-reason (type STRING))
    ; x y theta (meters and rad)
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
@@ -60,8 +60,9 @@
   (slot rotation (type INTEGER) (default -1))
 
   (slot prep-blink-start (type FLOAT))
-  (slot retrieved-at (type FLOAT))
+  (slot idle-since (type FLOAT))
   (slot wait-for-product-since (type FLOAT))
+  (slot mps-base-counter (type INTEGER) (default 0))
   (slot bases-added (type INTEGER) (default 0))
   (slot bases-used (type INTEGER) (default 0))
 
@@ -200,7 +201,7 @@
   (multislot duration-range (type INTEGER) (cardinality 2 2) (default 60 180))
   ; Time window in which it must be delivered, set during initial randomization
   (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
-  (slot delivery-gate (type INTEGER))
+  (slot delivery-gate (type INTEGER) (default 1))
   (slot active (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot activate-at (type INTEGER) (default 0))
   (multislot activation-range (type INTEGER) (cardinality 2 2) (default 120 240))

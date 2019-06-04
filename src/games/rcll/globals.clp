@@ -3,8 +3,9 @@
 ;  globals.clp - LLSF RefBox global CLIPS variables
 ;
 ;  Created: Tue Feb 12 23:26:48 2013
-;  Copyright  2013  Tim Niemueller [www.niemueller.de]
-;             2017  Tobias Neumann
+;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
+;             2017       Tobias Neumann
+;             2019       Till Hofmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -45,10 +46,12 @@
   ?*LOADED-WITH-MAX* = 3
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
-  ; How long to wait after retrieval to switch to IDLE state
-  ?*RETRIEVE-WAIT-IDLE-TIME* = 5
+  ; How long to stay in WAIT-IDLE before switching to IDLE state
+  ?*WAIT-IDLE-TIME* = 5
   ; How long to wait after prepare before the MPS gets resetted
   ?*PREPARE-WAIT-TILL-RESET* = 45
+  ; How long to wait before resetting a machine that is processing
+  ?*PROCESSING-WAIT-TILL-RESET* = 90
   ?*PREPARE-WAIT-TILL-PROCESSING* = 5
 
   ; number of points for specific actions

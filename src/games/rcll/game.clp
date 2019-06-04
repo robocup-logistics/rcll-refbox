@@ -3,7 +3,9 @@
 ;  game.clp - LLSF RefBox CLIPS game maintenance
 ;
 ;  Created: Tue Jun 11 15:19:25 2013
-;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
+;             2017       Tobias Neumann
+;             2019       Till Hofmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -73,7 +75,6 @@
 
 (defrule game-mps-solver-start
   "start the solver"
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (game-time ?gt))
   (not (game-parameterized))
   ?mg <- (machine-generation (state NOT-STARTED))
@@ -85,7 +86,6 @@
 
 (defrule game-mps-solver-check
   "check if the solver is finished"
-  (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME) (game-time ?gt))
   ?mg <- (machine-generation (state STARTED) (generation-state-last-checked ?gs&:(timeout-sec ?gt ?gs ?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE*)))
   =>
@@ -100,7 +100,6 @@
 )
 
 (defrule game-parameterize
-  (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
   (not (game-parameterized))
   (or (machine-generation (state FINISHED))
@@ -385,6 +384,14 @@
   else
     (game-summary)
   )
+)
+
+(defrule game-over-on-finalize
+	"Switch to post-game if the refbox is stopped"
+	(finalize)
+	?gs <- (gamestate (phase ~POST_GAME))
+	=>
+	(modify ?gs (phase POST_GAME))
 )
 
 (defrule game-postgame-no-unconfirmed-deliveries

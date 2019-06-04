@@ -1,8 +1,8 @@
 #*****************************************************************************
-#           Makefile Build System for Fawkes: llsf_sps Library
+#                  Makefile Build System for the RCLL Refbox
 #                            -------------------
-#   Created on Thu Feb 14 09:49:27 2013
-#   Copyright (C) 2013 by Tim Niemueller, AllemaniACs RoboCup Team
+#   Created on Sun 28 Apr 2019 16:00:20 CEST
+#   Copyright (C) 2019 by Till Hofmann <hofmann@kbsg.rwth-aachen.de>
 #
 #*****************************************************************************
 #
@@ -13,11 +13,13 @@
 #
 #*****************************************************************************
 
+FREEOPCUA_COMPONENTS=libopcuacore libopcuaclient libopcuaprotocol
 ifneq ($(PKGCONFIG),)
-  HAVE_LIBMODBUS = $(if $(shell $(PKGCONFIG) --exists 'libmodbus'; echo $${?/1/}),1,0)
+  HAVE_FREEOPCUA= $(if $(shell $(PKGCONFIG) --exists $(FREEOPCUA_COMPONENTS); echo $${?/1/}),1,0)
 endif
 
-ifeq ($(HAVE_LIBMODBUS),1)
-  CFLAGS_LIBMODBUS  = $(shell $(PKGCONFIG) --cflags 'libmodbus')
-  LDFLAGS_LIBMODBUS = $(shell $(PKGCONFIG) --libs 'libmodbus')
+ifeq ($(HAVE_FREEOPCUA),1)
+	HAVE_MPS_COMM = 1
+  CFLAGS_MPS_COMM  = $(shell $(PKGCONFIG) --cflags $(FREEOPCUA_COMPONENTS))
+  LDFLAGS_MPS_COMM = $(shell $(PKGCONFIG) --libs $(FREEOPCUA_COMPONENTS)) -lmbedtls
 endif

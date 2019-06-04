@@ -66,7 +66,6 @@
 
 #include <cstring>
 #include <unistd.h>
-#include <modbus/modbus.h>
 
 //#include <libs/llsf_sps/mps_band.h>
 

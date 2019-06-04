@@ -10,7 +10,6 @@
 ; Sort robots by team and name, such that do-for-all-facts on the robot deftemplate
 ; iterates in a nice order, e.g. for net-send-RobotInfo
 (defrule robots-sort
-  (declare (salience ?*PRIORITY_HIGH*))
   ?oa <- (robot (number ?number-a) (team-color ?tc-a))
   (or ?ob <- (robot (team-color ?tc-a)
 		    (number ?number-b&:(> ?number-a ?number-b)&:(< (fact-index ?oa) (fact-index ?ob))))

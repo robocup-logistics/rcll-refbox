@@ -21,6 +21,7 @@
 (load* (resolve-file setup.clp))
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
+(load* (resolve-file machine-lights.clp))
 ;(load* (resolve-file challenges.clp))
 
 (defrule config-timer-interval

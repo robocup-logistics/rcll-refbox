@@ -44,8 +44,9 @@
 #include <core/threading/mutex_locker.h>
 #include <utils/llsf/machines.h>
 #include <protobuf_comm/server.h>
-#include <llsf_sps/mps_refbox_interface.h>
 #include <core/threading/thread_list.h>
+
+#include <mps_comm/mps_refbox_interface.h>
 
 #include <clipsmm.h>
 #ifdef HAVE_MONGODB
@@ -57,10 +58,6 @@ namespace mps_placing_clips {
 }
 namespace protobuf_clips {
   class ClipsProtobufCommunicator;
-}
-
-namespace llsf_sps {
-  class SPSComm;
 }
 
 #ifdef HAVE_AVAHI
@@ -115,6 +112,8 @@ class LLSFRefBox
   CLIPS::Value  clips_config_path_exists(std::string path);
   CLIPS::Value  clips_config_get_bool(std::string path);
 
+	bool mutex_future_ready(const std::string &name);
+
 #ifdef HAVE_MONGODB
   CLIPS::Value  clips_bson_create();
   CLIPS::Value  clips_bson_parse(std::string document);
@@ -145,18 +144,23 @@ class LLSFRefBox
   CLIPS::Values clips_bson_get_time(void *bson, std::string field_name);
 #endif
 
-  void          clips_sps_set_signal(std::string machine, std::string light, std::string state);
-  void          clips_mps_bs_dispense(std::string machine, std::string color, std::string side);
+	void clips_mps_move_conveyor(std::string machine,
+	                             std::string goal_position,
+	                             std::string conveyor_direction = "FORWARD");
+	void clips_mps_cs_retrieve_cap(std::string machine);
+	void clips_mps_cs_mount_cap(std::string machine);
+
+  void          clips_mps_bs_dispense(std::string machine, std::string color);
   void          clips_mps_rs_mount_ring(std::string machine, int slide);
   void          clips_mps_cs_process(std::string machine, std::string operation);
   void          clips_mps_ds_process(std::string machine, int slide);
   void          clips_mps_set_light(std::string machine, std::string light, std::string state);
   void          clips_mps_set_lights(std::string machine, std::string red_state,
                                      std::string yellow_state, std::string green_state);
+  void          clips_mps_reset_lights(std::string machine);
   void          clips_mps_reset(std::string machine);
   void          clips_mps_reset_base_counter(std::string machine);
   void          clips_mps_deliver(std::string machine);
-  void          sps_read_rfids();
 
   void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
 				uint16_t component_id, uint16_t msg_type,
@@ -185,7 +189,6 @@ class LLSFRefBox
   Logger        *logger_;
   MultiLogger   *clips_logger_;
   Logger::LogLevel log_level_;
-  llsf_sps::SPSComm *sps_;
   protobuf_clips::ClipsProtobufCommunicator *pb_comm_;
   std::shared_ptr<mps_placing_clips::MPSPlacingGenerator> mps_placing_generator_;
 
@@ -194,7 +197,9 @@ class LLSFRefBox
   fawkes::Mutex                             clips_mutex_;
   std::map<long int, CLIPS::Fact::pointer>  clips_msg_facts_;
 
-  boost::asio::io_service      io_service_;
+	std::map<std::string, std::future<bool>> mutex_futures_;
+
+	boost::asio::io_service      io_service_;
   boost::asio::deadline_timer  timer_;
   boost::posix_time::ptime     timer_last_;
 

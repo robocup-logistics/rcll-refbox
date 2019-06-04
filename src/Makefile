@@ -22,7 +22,8 @@ SUBDIRS = libs msgs refbox shell tools
 # Explicit dependencies, this is needed to have make bail out if there is any
 # error. This is also necessary for working parallel build (i.e. for dual core)
 refbox tools shell: msgs
-msgs refbox tools shell: libs
+refbox tools shell: libs
+libs: msgs
 
 
 include $(BUILDSYSDIR)/base.mk

@@ -19,7 +19,7 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/clips.mk
 include $(BUILDSYSDIR)/boost.mk
-include $(BUILDCONFDIR)/llsf_sps/llsf_sps.mk
+include $(BUILDCONFDIR)/mps_comm/mps_comm.mk
 include $(BUILDCONFDIR)/mongodb_log/mongodb.mk
 include $(BUILDCONFDIR)/netcomm/netcomm.mk
 
@@ -29,10 +29,10 @@ REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 LIBS_llsf_refbox = stdc++ llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
-		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips llsf_sps llsf_mps_placing_clips
+		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips mps_comm llsf_mps_placing_clips
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
+ifeq ($(HAVE_PROTOBUF)$(HAVE_MPS_COMM)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   OBJS_all =	$(OBJS_llsf_refbox)
   BINS_all =	$(BINDIR)/llsf-refbox
 
@@ -55,7 +55,7 @@ else
     WARN_TARGETS += warning_protobuf
   endif
   ifneq ($(HAVE_LIBMODBUS),1)
-    WARN_TARGETS += warning_libmodbus
+    WARN_TARGETS += warning_libmps_comm
   endif
   ifneq ($(HAVE_CLIPS),1)
     WARN_TARGETS += warning_clips
@@ -71,13 +71,13 @@ endif
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
-.PHONY: warning_libmodbus warning_protobuf warning_clips warning_mongodb $(WARN_TARGETS_BOOST)
-warning_libmodbus:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (libmodbus not found)"
+.PHONY: warning_libmps_comm warning_protobuf warning_clips warning_mongodb $(WARN_TARGETS_BOOST)
+warning_libmps_comm:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (libmps_comm not available)"
 warning_protobuf:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (protobuf not found)"
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (protobuf not found)"
 warning_clips:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (clipsmm not found)"
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (clipsmm not found)"
 warning_mongodb:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Omitting MongoDB logging support$(TNORMAL) (MongoDB not found)"
 $(WARN_TARGETS_BOOST): warning_boost_%:
