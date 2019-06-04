@@ -23,7 +23,7 @@
   (slot productions (type INTEGER) (default 0))
   ; Overall refbox machine state
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
-					    PROCESSED READY-AT-OUTPUT DOWN))
+					    PROCESSED READY-AT-OUTPUT DOWN WAIT-IDLE))
   (slot prev-state (type SYMBOL) (default IDLE))
 	; The task currently being executed on the MPS
 	(slot task (type SYMBOL))
@@ -60,7 +60,7 @@
   (slot rotation (type INTEGER) (default -1))
 
   (slot prep-blink-start (type FLOAT))
-  (slot retrieved-at (type FLOAT))
+  (slot idle-since (type FLOAT))
   (slot wait-for-product-since (type FLOAT))
   (slot mps-base-counter (type INTEGER) (default 0))
   (slot bases-added (type INTEGER) (default 0))

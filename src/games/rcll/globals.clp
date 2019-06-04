@@ -46,6 +46,8 @@
   ?*LOADED-WITH-MAX* = 3
   ; Machine processing times; seconds
   ?*PREPARED-BLINK-TIME* = 3
+  ; How long to stay in WAIT-IDLE before switching to IDLE state
+  ?*WAIT-IDLE-TIME* = 5
   ; How long to wait after prepare before the MPS gets resetted
   ?*PREPARE-WAIT-TILL-RESET* = 45
   ; How long to wait before resetting a machine that is processing

@@ -432,11 +432,11 @@
 
 (defrule production-mps-product-retrieved
 	"The workpiece has been taken away, set the machine to IDLE and reset it."
-	(gamestate (state RUNNING) (phase PRODUCTION))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
 	=>
-	(modify ?m (state IDLE))
-	(mps-reset (str-cat ?n))
+	(printout t "Machine " ?n ": workpiece has been picked up" crlf)
+	(modify ?m (state WAIT-IDLE) (idle-since ?gt))
 )
 
 (defrule production-ds-start-processing
@@ -465,11 +465,20 @@
 
 (defrule production-ds-processed
   "The DS finished processing the workpiece, set the machine to IDLE and reset it."
-	(gamestate (state RUNNING) (phase PRODUCTION))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
-  (modify ?m (state IDLE))
+  (modify ?m (state WAIT-IDLE) (idle-since ?gt))
+)
+
+(defrule production-mps-idle
+	"The machine has been in WAIT-IDLE for the specified time, switch to IDLE."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (state WAIT-IDLE)
+	               (idle-since ?it&:(timeout-sec ?gt ?it ?*WAIT-IDLE-TIME*)))
+	=>
+	(modify ?m (state IDLE))
 	(mps-reset (str-cat ?n))
 )
 
