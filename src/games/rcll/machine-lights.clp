@@ -26,6 +26,13 @@
 	(modify ?m (desired-lights GREEN-ON))
 )
 
+(defrule machine-lights-wait-idle
+	(gamestate (phase PRODUCTION))
+	?m <- (machine (state WAIT-IDLE) (desired-lights $?dl&:(neq ?dl (create$ YELLOW-BLINK))))
+	=>
+	(modify ?m (desired-lights YELLOW-BLINK))
+)
+
 (defrule machine-lights-down
 	(gamestate (phase PRODUCTION))
 	?m <- (machine (state DOWN) (desired-lights $?dl&:(neq ?dl (create$ RED-ON))))
