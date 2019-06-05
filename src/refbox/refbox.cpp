@@ -106,7 +106,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
 
-  cfg_clips_dir_ = std::string(BASEDIR) + "/src/games/rcll/";
+  cfg_clips_dir_ = std::string(SHAREDIR) + "/games/rcll/";
 
   try {
     cfg_timer_interval_ = config_->get_uint("/llsfrb/clips/timer-interval");
@@ -386,6 +386,9 @@ LLSFRefBox::setup_protobuf_comm()
 	  }
 	  if ((pos = proto_dirs[i].find("@CONFDIR@")) != std::string::npos) {
 	    proto_dirs[i].replace(pos, 9, CONFDIR);
+	  }
+	  if ((pos = proto_dirs[i].find("@SHAREDIR@")) != std::string::npos) {
+	    proto_dirs[i].replace(pos, 10, SHAREDIR);
 	  }
 	
 	  if (proto_dirs[i][proto_dirs.size()-1] != '/') {
