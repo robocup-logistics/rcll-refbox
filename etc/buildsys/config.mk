@@ -113,6 +113,7 @@ EXEC_LOGDIR    = $(abspath $(EXEC_BASEDIR)/log)
 EXEC_DOCDIR    = $(abspath $(EXEC_BASEDIR)/doc)
 EXEC_TMPDIR    = /tmp
 EXEC_MANDIR    = $(abspath $(EXEX_DOCDIR)/man)
+EXEC_SHAREDIR  = $(TOP_BASEDIR)/src
 
 # Some paths divert in submodule configuration
 ifeq ($(SUBMODULE_INTERN),1)
@@ -175,6 +176,7 @@ CFLAGS_DEFS      = -DBASEDIR=\"$(abspath $(TOP_BASEDIR))\" \
 		   -DCONFDIR=\"$(EXEC_CONFDIR)\" -DUSERDIR=\"$(EXEC_USERDIR)\" \
 		   -DLOGDIR=\"$(EXEC_LOGDIR)\" -DRESDIR=\"$(EXEC_RESDIR)\" \
 		   -DTMPDIR=\"$(EXEC_TMPDIR)\" -DSRCDIR=\"$(abspath $(SRCDIR))\" \
+		   -DSHAREDIR=\"$(abspath $(EXEC_SHAREDIR))\" \
 		   -DBUILDTYPE=\"$(BUILD_TYPE)\" -DSOEXT=\"$(SOEXT)\"
 
 CFLAGS_MINIMUM   = -fPIC -pthread $(DEFAULT_INCLUDES) $(CFLAGS_DEFS)
