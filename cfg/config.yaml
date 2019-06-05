@@ -105,7 +105,7 @@ llsfrb:
                     net-send-VersionInfo]
 
   comm:
-    protobuf-dirs: ["@BASEDIR@/src/msgs"]
+    protobuf-dirs: ["@SHAREDIR@/msgs"]
 
     server-port: !tcp-port 4444
 
