@@ -177,6 +177,22 @@ class TeamColorSelectMenu : public Menu
   std::vector<llsf_msgs::Team> items_;
 };
 
+class RandomizeFieldMenu : public Menu
+{
+public:
+	RandomizeFieldMenu(NCursesWindow *parent);
+
+	operator bool() const { return confirmed_; }
+
+private:
+	virtual void On_Menu_Init();
+  int det_lines() const { return 3; }
+  int det_cols() const { return 20; }
+
+  bool confirmed_;
+  std::string s_yes_{"YES"};
+  std::string s_no_{"NO"};
+};
 
 class OrderDeliverMenu : public Menu
 {

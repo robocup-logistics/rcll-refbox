@@ -292,7 +292,21 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	}
 	break;
 
-      case KEY_F(9):
+			case KEY_F(5): {
+				RandomizeFieldMenu rfm(panel_);
+				rfm();
+				if (rfm) {
+					llsf_msgs::RandomizeField msg;
+					try {
+						client->send(msg);
+					} catch (std::runtime_error &e) {
+						logf("Sending RandomizeField message failed: %s", e.what());
+					}
+				}
+				break;
+			}
+
+			case KEY_F(9):
 	if (last_robotinfo_) {
 	  TeamColorSelectMenu tcsm(panel_);
 	  tcsm();
@@ -1018,16 +1032,23 @@ LLSFRefBoxShell::run()
   navbar_->addstr(0, 24, "TEAM");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 30, "F9");
+  navbar_->addstr(0, 30, "F5");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 33, "ROBOT");
+  navbar_->addstr(0, 33, "RANDOM FIELD");
+
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 40, "F12");
+  navbar_->addstr(0, 47, "F9");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 44, "DELIVER");
+  navbar_->addstr(0, 50, "ROBOT");
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr(0, 57, "F12");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 61, "DELIVER");
 
   navbar_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   navbar_->addstr(0, navbar_->cols() - 9, "SPC");

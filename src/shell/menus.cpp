@@ -324,6 +324,35 @@ TeamColorSelectMenu::det_lines()
   return team_enum_desc->value_count();
 }
 
+RandomizeFieldMenu::RandomizeFieldMenu(NCursesWindow *parent)
+: Menu(det_lines(), det_cols(), (parent->lines() - det_lines()) / 2, (parent->cols() - det_cols()) / 2),
+  confirmed_(false)
+{
+	NCursesMenuItem **mitems   = new NCursesMenuItem *[3];
+	SignalItem *      yes_item = new SignalItem(s_yes_);
+	yes_item->signal().connect([this]() { confirmed_ = true; });
+	SignalItem *no_item = new SignalItem(s_no_);
+	no_item->signal().connect([this]() { confirmed_ = false; });
+	int idy       = 0;
+	mitems[idy++] = yes_item;
+	mitems[idy++] = no_item;
+  mitems[idy++] = new NCursesMenuItem();
+	set_mark("");
+	set_format(1, idy - 1);
+	InitMenu(mitems, true, true);
+}
+
+void
+RandomizeFieldMenu::On_Menu_Init()
+{
+  bkgd(' ' | COLOR_PAIR(COLOR_DEFAULT));
+  box();
+  attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_BACK) | A_BOLD);
+  addstr(0, (width() - 18) / 2, " Randomize Field? ");
+  attroff(A_BOLD);
+  refresh();
+}
+
 
 RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *parent, llsf_msgs::Team team,
 					   std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
