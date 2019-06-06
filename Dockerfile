@@ -1,8 +1,13 @@
-# Dockerfile
-# Copyright (C) 2019 Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+#   Dockerfile for the RCLL Refbox
+#   Created on Wed Jun 05 15:12:42 2019
+#   Copyright (C) 2019 Till Hofmann <hofmann@kbsg.rwth-aachen.de>
 #
-# Distributed under terms of the MIT license.
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
 #
+
 FROM fedora:29 as buildenv
 RUN dnf install -y --nodocs \
       avahi-devel \
