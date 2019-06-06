@@ -32,7 +32,8 @@ COPY . /buildenv/
 SHELL ["/usr/bin/bash", "-c"]
 WORKDIR /buildenv
 RUN make -j`nproc` -l`nproc` FAIL_ON_WARNING=1 \
-    EXEC_CONFDIR=/etc/rcll-refbox EXEC_BINDIR=/usr/local/bin EXEC_LIBDIR=/usr/local/lib64
+    EXEC_CONFDIR=/etc/rcll-refbox EXEC_BINDIR=/usr/local/bin EXEC_LIBDIR=/usr/local/lib64 \
+    EXEC_SHAREDIR=/usr/local/share/rcll-refbox
 # Compute the dependencies and store them in requires.txt
 RUN shopt -s globstar; \
     /usr/lib/rpm/rpmdeps -P lib/** bin/** > provides.txt && \
@@ -41,6 +42,8 @@ RUN shopt -s globstar; \
 FROM fedora:29
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
+COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
+COPY --from=buildenv /buildenv/src/msgs /usr/local/share/rcll-refbox/msgs
 COPY --from=buildenv /buildenv/cfg/* /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
