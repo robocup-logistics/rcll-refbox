@@ -50,3 +50,4 @@ RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs 'dnf-command(copr)' && \
     dnf -y copr enable thofmann/freeopcua && \
     dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
+CMD ["llsf-refbox"]
