@@ -261,15 +261,15 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
             {
                 // Angle 0
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING2, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_0) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_0) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_0) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_0) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_0) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
@@ -277,8 +277,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
 
                 // Angle 45
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_45) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_45) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
@@ -290,8 +290,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_45) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y+1][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_45) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y-1][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_45) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_45) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
@@ -301,15 +301,15 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
 
                 // Angle 90
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING2, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_90) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_90) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y-1][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_90) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y+1][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_90) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_90) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y+1][t-1] == 1));
@@ -317,8 +317,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
 
                 // Angle 135
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING2, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_135) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
 
@@ -331,8 +331,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_135) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y+1][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_135) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y-1][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_135) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_135) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y][t-1] == 1));
@@ -342,15 +342,15 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
 
                 // Angle 180
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING2, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_180) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_180) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_180) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_180) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_180) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y][t-1] == 1));
@@ -359,8 +359,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
 
                 // Angle 225
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING2, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_225) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_225) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
@@ -372,8 +372,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_225) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y-1][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_225) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y+1][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_225) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_225) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y][t-1] == 1));
@@ -384,15 +384,15 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
 
                 // Angle 270
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING2, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_270) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_270) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y-1][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_270) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y+1][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_270) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_270) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y-1][t-1] == 1));
@@ -400,8 +400,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
 
                 // Angle 315
 
-                // BASE, CAP1, CAP2, RING1, RING 2
-                for(int t=BASE; t<=RING2; t++)
+                // BASE, CAP1, CAP2, RING1, RING2, STORAGE
+                for(int t=BASE; t<=STORAGE; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_315) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_315) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
@@ -413,8 +413,8 @@ class MPSPlacing: public Gecode::IntMinimizeSpace
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_315) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x+1][y+1][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_315) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y-1][t-1] == 1));
                 }
-                // DELIVERY, STORAGE
-                for(int t=STORAGE; t<=DELIVERY; t++)
+                // DELIVERY
+                for(int t=DELIVERY; t<=DELIVERY; t++)
                 {
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_315) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x][y][t-1] == 1));
                     Gecode::rel(*this, ((mps_angle_[index(x,y)] == ANGLE_315) && (mps_type_[index(x,y)] == t)) >> (mps_resource_[x-1][y][t-1] == 1));
