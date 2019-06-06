@@ -16,8 +16,10 @@
 BASEDIR = ../../..
 include $(BASEDIR)/etc/buildsys/config.mk
 
-ifneq ($(HAVE_AVAHI),1)
-  WARN_TARGETS += warn_avahi
+ifneq ($(USE_AVAHI)$(HAVE_AVAHI),11)
+  ifeq ($(USE_AVAHI),1)
+    WARN_TARGETS += warn_avahi
+  endif
   OMIT_OBJECTS += dns-sd/%
 else
   CFLAGS += $(CFLAGS_AVAHI)
