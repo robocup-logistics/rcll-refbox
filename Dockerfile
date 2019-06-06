@@ -48,7 +48,7 @@ FROM fedora:29
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
-COPY --from=buildenv /buildenv/src/msgs /usr/local/share/rcll-refbox/msgs
+COPY --from=buildenv /buildenv/src/msgs/*.proto /usr/local/share/rcll-refbox/msgs/
 COPY --from=buildenv /buildenv/cfg/* /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
