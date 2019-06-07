@@ -177,6 +177,28 @@ class TeamColorSelectMenu : public Menu
   std::vector<llsf_msgs::Team> items_;
 };
 
+class GameMenu : public Menu
+{
+public:
+	enum SubMenu {
+		none,
+		randomize,
+	};
+	GameMenu(NCursesWindow *parent);
+	SubMenu get_next_menu() const;
+	operator bool() const;
+  int det_lines() const { return 4; }
+  int det_cols() const { return 14; }
+
+private:
+	virtual void On_Menu_Init();
+
+	bool menu_selected_;
+  const std::string s_randomize_{"RANDOM FIELD"};
+  const std::string s_cancel_{"** CANCEL **"};
+  SubMenu next_menu_;
+};
+
 class RandomizeFieldMenu : public Menu
 {
 public:

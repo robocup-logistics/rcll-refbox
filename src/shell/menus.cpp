@@ -324,6 +324,49 @@ TeamColorSelectMenu::det_lines()
   return team_enum_desc->value_count();
 }
 
+GameMenu::GameMenu(NCursesWindow *parent)
+: Menu(det_lines(), det_cols(), (parent->lines() - det_lines()) / 2, (parent->cols() - det_cols()) / 2),
+  menu_selected_(false)
+{
+	NCursesMenuItem **mitems         = new NCursesMenuItem *[3];
+	SignalItem *      randomize_item = new SignalItem(s_randomize_);
+	SignalItem *      cancel_item    = new SignalItem(s_cancel_);
+	randomize_item->signal().connect([this]() {
+		next_menu_     = randomize;
+		menu_selected_ = true;
+	});
+	int idx       = 0;
+	mitems[idx++] = randomize_item;
+	mitems[idx++] = cancel_item;
+	mitems[idx++] = new NCursesMenuItem();
+	set_mark("");
+	set_format(idx, 1);
+	InitMenu(mitems, true, true);
+}
+
+void
+GameMenu::On_Menu_Init()
+{
+  bkgd(' ' | COLOR_PAIR(COLOR_DEFAULT));
+  box();
+  attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_BACK) | A_BOLD);
+  addstr(0, (width() - 6) / 2, " GAME ");
+  attroff(A_BOLD);
+  refresh();
+}
+
+GameMenu::SubMenu
+GameMenu::get_next_menu() const
+{
+  return next_menu_;
+}
+
+GameMenu::operator bool() const
+{
+  return menu_selected_;
+}
+
+
 RandomizeFieldMenu::RandomizeFieldMenu(NCursesWindow *parent)
 : Menu(det_lines(), det_cols(), (parent->lines() - det_lines()) / 2, (parent->cols() - det_cols()) / 2),
   confirmed_(false)
