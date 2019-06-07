@@ -117,6 +117,10 @@ MPSPlacingGenerator::generator_thread()
 void
 MPSPlacingGenerator::generate_start()
 {
+  if (generator_thread_) {
+    generator_thread_->join();
+    generator_thread_.reset();
+  }
   is_generation_running_ = true;
   is_field_generated_ = false;
 
