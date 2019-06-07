@@ -182,13 +182,6 @@
   (assert (machines-initialized))
 )
 
-(defrule machines-reset-print
-  (game-reset)
-  ?mf <- (machines-printed)
-  =>
-  (retract ?mf)
-)
-
 (defrule machines-print
   (machines-initialized)
   (gamestate (teams $?teams) (phase PRODUCTION|EXPLORATION))

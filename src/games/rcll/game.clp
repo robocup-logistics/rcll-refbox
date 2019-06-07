@@ -9,26 +9,6 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(deffunction game-reset ()
-
-  ; Retract machine initialization state, if set
-  (do-for-fact ((?mi machines-initialized)) TRUE
-    (retract ?mi)
-  )
-
-  ; retract all delivery periods
-  ;(printout t "Retracting delivery periods" crlf)
-  (delayed-do-for-all-facts ((?dp delivery-period)) TRUE
-    (retract ?dp)
-  )
-
-  ; reset all down periods
-  ;(printout t "Resetting down periods" crlf) 
-  (delayed-do-for-all-facts ((?m machine)) TRUE
-    (modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
-  )
-)
-
 (deffunction game-calc-phase-points (?team-color ?phase)
   (bind ?phase-points 0)
   (do-for-all-facts ((?p points)) (and (eq ?p:phase ?phase) (eq ?p:team ?team-color))
@@ -44,33 +24,6 @@
     (bind ?points (+ ?points (max ?phase-points 0)))
   )
   (return ?points)
-)
-
-(defrule game-reset
-  (game-reset) ; this is a fact
-  =>
-  (game-reset) ; this is a function
-)
-
-(defrule game-reset-re-parameterize
-  (game-reset)
-  ?gf <- (game-parameterized)
-  =>
-  (retract ?gf)
-)
-
-(defrule game-reset-print
-  (game-reset)
-  ?gf <- (game-printed)
-  =>
-  (retract ?gf)
-)
-  
-(defrule game-reset-done
-  (declare (salience -10000))
-  ?gf <- (game-reset)
-  =>
-  (retract ?gf)
 )
 
 (defrule game-mps-solver-start
@@ -400,4 +353,39 @@
   =>
   (retract ?w)
   (game-summary)
+)
+
+(deffunction game-reset ()
+	; Retract machine initialization state, if set
+	(do-for-fact ((?mi machines-initialized)) TRUE
+		(retract ?mi)
+	)
+	; Retract all delivery periods
+	(delayed-do-for-all-facts ((?dp delivery-period)) TRUE
+		(retract ?dp)
+	)
+	; Reset all down periods
+	(delayed-do-for-all-facts ((?m machine)) TRUE
+		(modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
+	)
+	; Reset game parameterization
+	(do-for-fact ((?gp game-parameterized)) TRUE
+		(retract ?gp)
+	)
+	; Reset machine generation
+	(do-for-fact ((?mg machine-generation)) TRUE
+		(modify ?mg (state NOT-STARTED))
+	)
+	; Print machines again
+	(do-for-fact ((?mp machines-printed)) TRUE
+		(retract ?mp)
+	)
+)
+
+(defrule game-reset
+	"Allow calling the function via fact to avoid file loading order issues"
+	?gr <- (game-reset)
+	=>
+	(retract ?gr)
+	(game-reset)
 )
