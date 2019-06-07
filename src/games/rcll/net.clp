@@ -266,12 +266,9 @@
 (defrule net-recv-RandomizeField
 	?sf <- (gamestate (phase PRE_GAME|SETUP))
 	?mf <- (protobuf-msg (type "llsf_msgs.RandomizeField") (ptr ?p) (rcvd-via STREAM))
-	?mg <- (machine-generation (state ~STARTED))
-	?gp <- (game-parameterized)
 	=>
 	(retract ?mf)
-	(retract ?gp)
-	(modify ?mg (state NOT-STARTED))
+	(assert (game-reset))
 	(delayed-do-for-all-facts ((?m machine)) TRUE
 	  (modify ?m (zone TBD))
 	)
