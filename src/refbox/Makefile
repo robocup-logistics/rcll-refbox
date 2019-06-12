@@ -36,9 +36,9 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_MPS_COMM)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   OBJS_all =	$(OBJS_llsf_refbox)
   BINS_all =	$(BINDIR)/llsf-refbox
 
-  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_LIBMODBUS) $(CFLAGS_CLIPS) $(CFLAGS_MONGODB) \
+  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_MPS_COMM) $(CFLAGS_CLIPS) $(CFLAGS_MONGODB) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_LIBMODBUS) $(LDFLAGS_CLIPS) $(LDFLAGS_MONGODB) \
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_MPS_COMM) $(LDFLAGS_CLIPS) $(LDFLAGS_MONGODB) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   #MANPAGES_all =  $(MANDIR)/man1/llsf-refbox.1
 
@@ -54,7 +54,7 @@ else
   ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
   endif
-  ifneq ($(HAVE_LIBMODBUS),1)
+  ifneq ($(HAVE_MPS_COMM),1)
     WARN_TARGETS += warning_libmps_comm
   endif
   ifneq ($(HAVE_CLIPS),1)
