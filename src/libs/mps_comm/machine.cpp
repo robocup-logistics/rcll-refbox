@@ -127,7 +127,6 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 				setNodeValue(registerNodes[reg], statusBit, reg);
 				reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
 				setNodeValue(registerNodes[reg], (uint8_t)error, reg);
-				logger->info("Finished command: {} {} {} {}", command, payload1, payload2, status);
 				success = true;
 			} catch (std::runtime_error &e) {
 				logger->warn("Failed to send command to {}, reconnecting", name_);
