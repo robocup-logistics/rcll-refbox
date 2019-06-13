@@ -498,7 +498,7 @@
   ; Revoke points awarded for unused bases at RS slide
   (bind ?unused-bases (- ?ba ?bu))
   (if (> ?unused-bases 0) then
-   (bind ?deduct (* -1 (min ?unused-bases ?*LOADED-WITH-MAX*)))
+   (bind ?deduct (* -1 ?unused-bases))
    (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
                    (points (* ?deduct ?*PRODUCTION-POINTS-ADDITIONAL-BASE*))
                    (reason (str-cat "Deducting unused additional bases at " ?n))))
