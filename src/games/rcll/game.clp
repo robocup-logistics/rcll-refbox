@@ -380,6 +380,10 @@
 	(do-for-fact ((?mp machines-printed)) TRUE
 		(retract ?mp)
 	)
+	; Print game info again
+	(do-for-fact ((?gp game-printed)) TRUE
+		(retract ?gp)
+	)
 )
 
 (defrule game-reset
