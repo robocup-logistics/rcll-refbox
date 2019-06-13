@@ -1295,7 +1295,7 @@ Thread *
 Thread::current_thread()
 {
   if ( THREAD_KEY == PTHREAD_KEYS_MAX ) {
-    throw Exception("No thread has been initialized");
+    return NULL;
   }
   return (Thread *)pthread_getspecific(THREAD_KEY);
 }
