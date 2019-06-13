@@ -37,6 +37,7 @@
 #ifndef __LLSF_REFBOX_REFBOX_H_
 #define __LLSF_REFBOX_REFBOX_H_
 
+#include <future>
 #include <boost/asio.hpp>
 #include <google/protobuf/message.h>
 #include <logging/logger.h>
