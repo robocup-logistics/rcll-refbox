@@ -172,78 +172,6 @@ GenericItemsMenu::max_cols(int n_items, NCursesMenuItem **items)
 }
 
 
-MachinePlacingMenu::MachinePlacingMenu(NCursesWindow *parent,
-				       std::string machine, std::string puck,
-				       bool can_be_placed_under_rfid, bool can_be_loaded_with)
-  : Menu(det_lines(can_be_placed_under_rfid, can_be_loaded_with), 30,
-	 (parent->lines() - 5)/2, (parent->cols() - 30)/2)
-{
-  valid_selected_ = false;
-  place_under_rfid_ = false;
-  s_under_rfid_ = "Place " + puck.substr(0,2) + " under RFID of " + machine;
-  s_loaded_with_ = "Load " + machine + " with " + puck.substr(0,2);
-  s_cancel_ = "** CANCEL **";
-  NCursesMenuItem **mitems = new NCursesMenuItem*[4];
-
-  int idx = 0;
-
-  if (can_be_placed_under_rfid) {
-    SignalItem *item = new SignalItem(s_under_rfid_);
-    item->signal().connect(boost::bind(&MachinePlacingMenu::item_selected, this, true));
-    mitems[idx++] = item;
-  }
-
-  if (can_be_loaded_with) {
-    SignalItem *item = new SignalItem(s_loaded_with_);
-    item->signal().connect(boost::bind(&MachinePlacingMenu::item_selected, this, false));
-    mitems[idx++] = item;
-  }
-  mitems[idx++] = new SignalItem(s_cancel_);
-  mitems[idx++] = new NCursesMenuItem();
-    
-
-  set_mark("");
-  set_format(idx-1, 1);
-  InitMenu(mitems, true, true);
-  frame("Placing");
-}
-
-int
-MachinePlacingMenu::det_lines(bool can_be_placed_under_rfid, bool can_be_loaded_with)
-{
-  int rv = 3;
-  if (can_be_placed_under_rfid) rv += 1;
-  if (can_be_loaded_with) rv += 1;
-  return rv;
-}
-
-void
-MachinePlacingMenu::item_selected(bool under_rfid)
-{
-  valid_selected_ = true;
-  place_under_rfid_ = under_rfid;
-}
-
-bool
-MachinePlacingMenu::place_under_rfid()
-{
-  return place_under_rfid_;
-}
-
-void
-MachinePlacingMenu::On_Menu_Init()
-{
-  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
-  //subWindow().bkgd(parent_->getbkgd());
-  refresh();
-}
-
-MachinePlacingMenu::operator bool() const
-{
-  return valid_selected_;
-}
-
-
 TeamSelectMenu::TeamSelectMenu(NCursesWindow *parent,
 			       llsf_msgs::Team team,
 			       std::shared_ptr<llsf_msgs::GameInfo> gameinfo,
@@ -394,6 +322,78 @@ TeamColorSelectMenu::det_lines()
   const google::protobuf::EnumDescriptor *team_enum_desc =
     llsf_msgs::Team_descriptor();
   return team_enum_desc->value_count();
+}
+
+GameMenu::GameMenu(NCursesWindow *parent)
+: Menu(det_lines(), det_cols(), (parent->lines() - det_lines()) / 2, (parent->cols() - det_cols()) / 2),
+  menu_selected_(false)
+{
+	NCursesMenuItem **mitems         = new NCursesMenuItem *[3];
+	SignalItem *      randomize_item = new SignalItem(s_randomize_);
+	SignalItem *      cancel_item    = new SignalItem(s_cancel_);
+	randomize_item->signal().connect([this]() {
+		next_menu_     = randomize;
+		menu_selected_ = true;
+	});
+	int idx       = 0;
+	mitems[idx++] = randomize_item;
+	mitems[idx++] = cancel_item;
+	mitems[idx++] = new NCursesMenuItem();
+	set_mark("");
+	set_format(idx, 1);
+	InitMenu(mitems, true, true);
+}
+
+void
+GameMenu::On_Menu_Init()
+{
+  bkgd(' ' | COLOR_PAIR(COLOR_DEFAULT));
+  box();
+  attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_BACK) | A_BOLD);
+  addstr(0, (width() - 6) / 2, " GAME ");
+  attroff(A_BOLD);
+  refresh();
+}
+
+GameMenu::SubMenu
+GameMenu::get_next_menu() const
+{
+  return next_menu_;
+}
+
+GameMenu::operator bool() const
+{
+  return menu_selected_;
+}
+
+
+RandomizeFieldMenu::RandomizeFieldMenu(NCursesWindow *parent)
+: Menu(det_lines(), det_cols(), (parent->lines() - det_lines()) / 2, (parent->cols() - det_cols()) / 2),
+  confirmed_(false)
+{
+	NCursesMenuItem **mitems   = new NCursesMenuItem *[3];
+	SignalItem *      yes_item = new SignalItem(s_yes_);
+	yes_item->signal().connect([this]() { confirmed_ = true; });
+	SignalItem *no_item = new SignalItem(s_no_);
+	no_item->signal().connect([this]() { confirmed_ = false; });
+	int idy       = 0;
+	mitems[idy++] = yes_item;
+	mitems[idy++] = no_item;
+  mitems[idy++] = new NCursesMenuItem();
+	set_mark("");
+	set_format(1, idy - 1);
+	InitMenu(mitems, true, true);
+}
+
+void
+RandomizeFieldMenu::On_Menu_Init()
+{
+  bkgd(' ' | COLOR_PAIR(COLOR_DEFAULT));
+  box();
+  attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_BACK) | A_BOLD);
+  addstr(0, (width() - 18) / 2, " Randomize Field? ");
+  attroff(A_BOLD);
+  refresh();
 }
 
 

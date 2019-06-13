@@ -133,29 +133,6 @@ class RobotMaintenanceMenu : public Menu
   llsf_msgs::Team team_;
 };
 
-
-class MachinePlacingMenu : public Menu
-{
- public:
-  MachinePlacingMenu(NCursesWindow *parent, std::string machine, std::string puck,
-		     bool can_be_placed_under_rfid, bool can_be_loaded_with);
-
-  bool place_under_rfid();
-
-  operator bool() const;
-
- private:
-  void item_selected(bool under_rfid);
-  virtual void On_Menu_Init();
-  int det_lines(bool can_be_placed_under_rfid, bool can_be_loaded_with);
-
- private:
-  bool valid_selected_;
-  bool place_under_rfid_;
-  std::string s_cancel_, s_under_rfid_, s_loaded_with_;
-};
-
-
 class TeamSelectMenu : public Menu
 {
  public:
@@ -200,6 +177,44 @@ class TeamColorSelectMenu : public Menu
   std::vector<llsf_msgs::Team> items_;
 };
 
+class GameMenu : public Menu
+{
+public:
+	enum SubMenu {
+		none,
+		randomize,
+	};
+	GameMenu(NCursesWindow *parent);
+	SubMenu get_next_menu() const;
+	operator bool() const;
+  int det_lines() const { return 4; }
+  int det_cols() const { return 14; }
+
+private:
+	virtual void On_Menu_Init();
+
+	bool menu_selected_;
+  const std::string s_randomize_{"RANDOM FIELD"};
+  const std::string s_cancel_{"** CANCEL **"};
+  SubMenu next_menu_;
+};
+
+class RandomizeFieldMenu : public Menu
+{
+public:
+	RandomizeFieldMenu(NCursesWindow *parent);
+
+	operator bool() const { return confirmed_; }
+
+private:
+	virtual void On_Menu_Init();
+  int det_lines() const { return 3; }
+  int det_cols() const { return 20; }
+
+  bool confirmed_;
+  std::string s_yes_{"YES"};
+  std::string s_no_{"NO"};
+};
 
 class OrderDeliverMenu : public Menu
 {

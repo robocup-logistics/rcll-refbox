@@ -263,6 +263,19 @@
     then (delayed-do-for-all-facts ((?r robot)) TRUE (retract ?r)))
 )
 
+(defrule net-recv-RandomizeField
+	?sf <- (gamestate (phase PRE_GAME|SETUP))
+	?mf <- (protobuf-msg (type "llsf_msgs.RandomizeField") (ptr ?p) (rcvd-via STREAM))
+	=>
+	(retract ?mf)
+	(assert (game-reset))
+	(delayed-do-for-all-facts ((?m machine)) TRUE
+	  (modify ?m (zone TBD))
+	)
+)
+
+
+
 (deffunction net-create-GameState (?gs)
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))

@@ -263,7 +263,29 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
       case 'q':
 	io_service_.stop();
 	break;
-      case KEY_F(2):
+			case KEY_F(1): {
+				GameMenu gm(panel_);
+				gm();
+				if (gm) {
+					switch (gm.get_next_menu()) {
+					case GameMenu::SubMenu::randomize: {
+						RandomizeFieldMenu rfm(panel_);
+						rfm();
+						if (rfm) {
+							llsf_msgs::RandomizeField msg;
+							try {
+								client->send(msg);
+							} catch (std::runtime_error &e) {
+								logf("Sending RandomizeField message failed: %s", e.what());
+							}
+						}
+					}
+					default: break;
+					}
+				}
+				break;
+			}
+			case KEY_F(2):
 	(*m_state_)();
 	io_service_.dispatch(boost::bind(&LLSFRefBoxShell::refresh, this));
 	break;
@@ -292,7 +314,7 @@ LLSFRefBoxShell::handle_keyboard(const boost::system::error_code& error)
 	}
 	break;
 
-      case KEY_F(9):
+			case KEY_F(9):
 	if (last_robotinfo_) {
 	  TeamColorSelectMenu tcsm(panel_);
 	  tcsm();
@@ -1000,34 +1022,40 @@ LLSFRefBoxShell::run()
   panel_->refresh();
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 1, "F2");
+  navbar_->addstr(0, 1, "F1");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 4, "STATE");
+  navbar_->addstr(0, 4, "GAME");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 11, "F3");
+  navbar_->addstr(0, 10, "F2");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 14, "PHASE");
+  navbar_->addstr(0, 13, "STATE");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 21, "F4");
+  navbar_->addstr(0, 20, "F3");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 24, "TEAM");
+  navbar_->addstr(0, 23, "PHASE");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 30, "F9");
+  navbar_->addstr(0, 30, "F4");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 33, "ROBOT");
+  navbar_->addstr(0, 33, "TEAM");
 
   navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
-  navbar_->addstr(0, 40, "F12");
+  navbar_->addstr(0, 39, "F9");
   navbar_->standend();
   navbar_->attron(A_BOLD);
-  navbar_->addstr(0, 44, "DELIVER");
+  navbar_->addstr(0, 42, "ROBOT");
+
+  navbar_->attron(' '|COLOR_PAIR(1)|A_BOLD);
+  navbar_->addstr(0, 49, "F12");
+  navbar_->standend();
+  navbar_->attron(A_BOLD);
+  navbar_->addstr(0, 53, "DELIVER");
 
   navbar_->attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED)|A_BOLD);
   navbar_->addstr(0, navbar_->cols() - 9, "SPC");
