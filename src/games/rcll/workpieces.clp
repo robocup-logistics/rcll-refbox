@@ -40,7 +40,6 @@
       (bind ?workpiece-id (workpiece-gen-id-for-base-color ?order:base-color))
       (do-for-fact ((?m machine)) (and (eq ?m:mtype DS) (eq ?m:team ?team))
          (assert (workpiece (team ?team)
-                            (rtype RECORD)
                             (state AVAILABLE)
                             (id ?workpiece-id)
                             (order ?order-id)
@@ -168,7 +167,7 @@
    we assume that there is only a single order of complexity >0 each. Hence, knowing
    the first ring will immediately determine the order of the workpiece."
    (gamestate (phase PRODUCTION))
-   ?wf <- (workpiece (rtype RECORD) (id ?id) (order 0) (team ?r-team)
+   ?wf <- (workpiece (id ?id) (order 0) (team ?r-team)
                     (cap-color ?cap-color)
                     (base-color ?base-color)
                     (ring-colors $?ring-colors))
@@ -193,7 +192,6 @@
     "Resign order from workpiece, if they became incosistent"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
-                      (rtype RECORD)
                       (order ?order-id)
                       (team ?r-team)
                       (base-color ?base-color)
@@ -220,7 +218,6 @@
     ps. The workpiece should have been created already"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id) 
-                      (rtype RECORD)
                       (state AVAILABLE)
                       (at-machine ?m-name)
                       (base-color ?base-color))
@@ -244,7 +241,6 @@
     "Update the availbe workpiece with the recent prodcut processing  "
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
-                      (rtype RECORD)
                       (state AVAILABLE)
                       (at-machine ?m-name)
                       (ring-colors $?ring-colors))
@@ -265,7 +261,6 @@
     "Update the available workpiece with the recent product processing  "
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
-                      (rtype RECORD)
                       (state AVAILABLE)
                       (at-machine ?m-name)
                       (cap-color nil))
@@ -289,7 +284,6 @@
     "Update the available workpiece with the recent product processing  "
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
-                      (rtype RECORD)
                       (state AVAILABLE)
                       (at-machine ?m-name)
                       ;This will be CONFIRMED by the referee later on.
@@ -316,7 +310,6 @@
     ""
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?wp-id)
-                      (rtype RECORD)
                       (at-machine ?m-name)
                       (order ?tracked-order-id)
                       (base-color ?tracked-base-color)
@@ -342,11 +335,10 @@
 (defrule workpiece-available-twice
     "Error different workpieces available at same  machines"
     (gamestate (phase PRODUCTION))
-    ?wf1 <- (workpiece (rtype RECORD) (id ?first-id)
+    ?wf1 <- (workpiece (id ?first-id)
                        (at-machine ?at-machine)
                        (state AVAILABLE))
-    ?wf2 <- (workpiece (rtype RECORD)
-                       (id ?second-id&:(neq ?first-id ?second-id))
+    ?wf2 <- (workpiece (id ?second-id&:(neq ?first-id ?second-id))
                        (at-machine ?at-machine)
                        (state AVAILABLE))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
@@ -359,8 +351,7 @@
     "Process finished at a machine where no Workpiece is availabe"
 	(gamestate (phase PRODUCTION))
     (product-processed (at-machine ?at-machine) (confirmed FALSE))
-    (not (workpiece (rtype RECORD) (at-machine ?at-machine)
-                    (state AVAILABLE)))
+    (not (workpiece (at-machine ?at-machine) (state AVAILABLE)))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
 	(printout debug "Process finished at " ?at-machine

@@ -211,7 +211,6 @@
 (deftemplate workpiece
 	(slot id (type INTEGER))
 	(slot order (type INTEGER))
-	(slot rtype (type SYMBOL) (allowed-values INCOMING RECORD))
 	(slot at-machine (type SYMBOL)
 				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot state (type SYMBOL) (allowed-values IDLE AVAILABLE RETRIEVED) (default IDLE))

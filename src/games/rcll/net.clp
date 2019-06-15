@@ -311,7 +311,7 @@
   (bind ?wi (pb-create "llsf_msgs.WorkpieceInfo"))
 
   (do-for-all-facts
-    ((?wp workpiece)) (eq ?wp:rtype RECORD)
+    ((?wp workpiece)) TRUE
 
     (bind ?w (pb-create "llsf_msgs.Workpiece"))
 		(pb-set-field ?w "id" ?wp:id)
