@@ -147,6 +147,19 @@
     (printout warn "Received workpiece update for " ?id " but workpiece tracking is disabled" crlf)
 )
 
+(defrule workpiece-update-retrieved
+    "Workpiece no longer at machine"
+    (machine (name ?m-name) (state WAIT-IDLE|BROKEN))
+    (workpiece (id ?id) (at-machine ?m-name) (state AVAILABLE))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
+    =>
+    (do-for-all-facts ((?workpiece workpiece)) (and (eq ?workpiece:at-machine ?m-name)
+                                               (eq ?workpiece:state AVAILABLE))
+      (printout t "Workpiece " ?workpiece:id ": retrieved from " ?m-name crlf)
+      (modify ?workpiece (state RETRIEVED))
+    )
+)
+
 ;-----------------------------Order assignment---------------------------------
 (defrule workpiece-assign-order
    "Assign order to workpiece.
@@ -200,19 +213,6 @@
     (modify ?wf (order 0))
     (printout t "Workpiece [" ?id "] resigned from tracking order " ?order-id  crlf)
 )
-
-;-------------------------Workpiece Availability------------------------------
-(defrule workpiece-retrieved
-    "Workpiece no longer at machine"
-    (gamestate (phase PRODUCTION))
-    ?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?m-name)
-                      (state AVAILABLE) (visible FALSE))
-    (machine (name ?m-name) (state IDLE|WAIT-IDLE|BROKEN))
-    =>
-    (printout t "Workpiece [" ?id "] Retrieved from " ?m-name crlf)
-    (modify ?wf (state RETRIEVED))
-)
-
 
 ;--------------------------Workpiece Processing-------------------------------
 (defrule workpiece-at-bs
