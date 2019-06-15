@@ -34,6 +34,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+syntax = "proto2";
 package llsf_msgs;
 
 import "Team.proto";
@@ -51,8 +52,8 @@ message Workpiece {
   // Puck unique ID
   required uint32    id = 1;
 
-	// Machine which detected the workpiece
-	required string    at_machine = 2;
+  // Machine which detected the workpiece
+  required string    at_machine = 2;
 
   // last seen at machine
   optional float      visible = 3;
@@ -60,7 +61,6 @@ message Workpiece {
   // Team the puck belongs to
   optional Team      team_color = 4;
 
-	// The determined base colors
   optional BaseColor    base_color = 5;
   repeated RingColor    ring_colors = 6;
   optional CapColor     cap_color = 7;

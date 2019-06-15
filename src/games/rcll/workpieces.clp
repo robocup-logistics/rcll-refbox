@@ -103,7 +103,7 @@
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (retract ?mf)
-    (printout t "Workpiece " ?id ":  read at " ?m-name crlf)
+    (printout t "Workpiece " ?id ": at " ?m-name ", available!"crlf)
     (if (any-factp ((?wp workpiece)) (eq ?wp:id ?id)) then
        ;Update existing
        (do-for-fact ((?workpiece workpiece)) (eq ?workpiece:id ?id)
@@ -154,7 +154,7 @@
     =>
     (do-for-all-facts ((?workpiece workpiece)) (and (eq ?workpiece:at-machine ?m-name)
                                                (eq ?workpiece:state AVAILABLE))
-      (printout t "Workpiece " ?workpiece:id ": retrieved from " ?m-name crlf)
+      (printout t "Workpiece " ?workpiece:id ": at " ?m-name ", retrieved!" crlf)
       (modify ?workpiece (state RETRIEVED))
     )
 )
@@ -185,11 +185,11 @@
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (modify ?wf (order ?order-id))
-    (printout t "Workpiece [" ?id "] assigned to track a product for order " ?order-id crlf)
+    (printout t "Workpiece " ?id ": order assigned " ?order-id crlf)
 )
 
 (defrule workpiece-resign-order
-    "Resign order from workpiece, if they became incosistent"
+    "Resign order from workpiece, if they became inconsistent"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
                       (order ?order-id)
@@ -209,13 +209,13 @@
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (modify ?wf (order 0))
-    (printout t "Workpiece [" ?id "] resigned from tracking order " ?order-id  crlf)
+    (printout t "Workpiece " ?id ": order resigned " ?order-id  crlf)
 )
 
 ;--------------------------Workpiece Processing-------------------------------
 (defrule workpiece-at-bs
-    "Confirm workpiece base_color when visible at BS
-    ps. The workpiece should have been created already"
+    "When workpiece available at BS, confirm generated base-color against
+    prepared base-color."
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id) 
                       (state AVAILABLE)
@@ -228,9 +228,9 @@
                             (base-color ?bs-color))
   (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
   =>
-  (printout t "Workpiece [" ?id "] Processed at " ?m-name crlf)
+  (printout t "Workpiece " ?id ": at " ?m-name ", processed"crlf)
   (if (neq ?bs-color ?base-color)
-    then (printout t "Workpiece base color corrected ["
+    then (printout t "Workpiece correction ["
                      ?base-color  "->" ?bs-color "]" crlf)
   )
   (modify ?pf (workpiece ?id) (confirmed TRUE))
@@ -238,7 +238,8 @@
 )
 
 (defrule workpiece-processed-at-rs
-    "Update the availbe workpiece with the recent prodcut processing  "
+    "Update workpiece available at an RS with the recent production operation.
+    Link the production operation to the workpiece"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
                       (state AVAILABLE)
@@ -251,14 +252,14 @@
                               (ring-color ?r-color))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
-    (printout t "Workpiece [" ?id "] Processed at " ?m-name crlf)
-    ;TODO: Find out what points needs to be given
+    (printout t "Workpiece " ?id ": at " ?m-name ", processed" crlf)
     (modify ?pf (workpiece ?id) (confirmed TRUE))
     (modify ?wf (ring-colors (append$ ?ring-colors ?r-color)))
 )
 
 (defrule workpiece-processed-at-cs
-    "Update the available workpiece with the recent product processing  "
+    "Update the available workpiece at CS with the recent production operation.
+    Like the production operation to the workpiece."
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
                       (state AVAILABLE)
@@ -272,42 +273,41 @@
   (not (product-processed (workpiece ?id) (mtype CS) (confirmed TRUE)))
   (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
    =>
-  (printout t "Workpiece [" ?id "] Processed at  " ?m-name crlf)
+  (printout t "Workpiece " ?id ": at  " ?m-name ", processed" crlf)
   (modify ?pf (workpiece ?id))
   (modify ?wf (cap-color ?c-color))
-  ;The cap-color will most probably be nil at the moment of processing cause
-  ;the info is not present yet. The color will be confirmed by the referee
-  ;(latest on delivery confirmation)
+  ;Cap-color info needs to be confirmed by the referee (latest on delivery)
 )
 
 (defrule workpiece-processed-at-ds
-    "Update the available workpiece with the recent product processing  "
+    "Update the available workpiece with the recent production operation.
+    Link the delivery to the available workpiece"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?id)
                       (state AVAILABLE)
                       (at-machine ?m-name)
-                      ;This will be CONFIRMED by the referee later on.
-                      (order ?unconfirmed-order-id))
-    ; The process that WILL be done on that WP anyways.
+                      (order ?tracked-order-id))
     ?pf <- (product-processed (mtype DS)
                               (workpiece 0)
                               (confirmed FALSE)
+                              (at-machine ?m-name)
                               (order ?order-id))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
-    (printout t "Workpiece [" ?id "] Processed at " ?m-name crlf)
-    (if (neq ?order-id ?unconfirmed-order-id)
+    (printout t "Workpiece " ?id ": at " ?m-name ", processed" crlf)
+    (if (neq ?order-id ?tracked-order-id)
       then
-      (printout t "WP[" ?id "] tracking a product of order " ?unconfirmed-order-id
-                " is inconsistent with the requested delivery (order" ?order-id crlf)
-      (printout t "This will be verified when referee confirms the delivery!" crlf)
+      (printout t "Workpiece " ?id ": Delivery requested for order " ?order-id
+                " not the tracked order " ?tracked-order-id crlf)
+      (printout t "Conflict will be resolved upon referee confirmation!" crlf)
    )
    (modify ?pf (workpiece ?id))
 )
 
 ;------------------------------Sanity Checks
 (defrule workpiece-make-sure-wp-tracks-requested-order
-    ""
+    "The delivery process was confirmed (by referee) for an non tracked yet
+    identical order"
     (gamestate (phase PRODUCTION))
     ?wf <- (workpiece (id ?wp-id)
                       (at-machine ?m-name)
@@ -319,17 +319,17 @@
                               (confirmed TRUE)
                               (workpiece ?wp-id)
                               (at-machine ?m-name)
-                              (order ?deliver-order-id&:(neq ?deliver-order-id ?tracked-order-id)))
-  (order (id ?req-order-id)
+                              (order ?delivered-order-id&:(neq ?delivered-order-id ?tracked-order-id)))
+  (order (id ?delivered-order-id)
          (base-color ?tracked-base-color)
          (ring-colors ?tracked-ring-colors)
          (cap-color ?tracked-cap-color))
-  (order (id ?tracked-order-id&:(neq ?tracked-order-id ?req-order-id)))
   (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
   =>
-  (printout t "Workpiece [" ?wp-id "] Order IDs corrected [" ?tracked-order-id
-              "->" ?deliver-order-id "]"  crlf)
-  (modify ?wf (order ?deliver-order-id))
+  (printout t "Workpiece " ?wp-id ": order ID corrected [" ?tracked-order-id
+              "->" ?delivered-order-id "]"  crlf)
+  (modify ?wf (order ?delivered-order-id))
+  ;TODO: Also apply the change to all the product-processed facts
 )
 
 (defrule workpiece-available-twice
@@ -344,10 +344,10 @@
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (printout warn "Workpiece " ?first-id " and " ?second-id
-                "are both AVAILABE at " ?at-machine crlf)
+                "are both available at " ?at-machine crlf)
 )
 
-(defrule workpiece-non-availble-at-machine
+(defrule workpiece-non-available-at-machine
     "Processed operation finished at a machine where workpiece was identified"
     ?pf <- (product-processed (at-machine ?at-machine) (workpiece 0))
     (machine (name ?at-machine) (state WAIT-IDLE|BROKEN))
