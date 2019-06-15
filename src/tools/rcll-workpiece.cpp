@@ -68,7 +68,6 @@ enum {
 
 std::string  machine_name_;
 unsigned int workpiece_id_;
-bool         workpiece_visible_;
 llsf_msgs::RingColor workpiece_ring_;
 
 void
@@ -87,7 +86,6 @@ handle_connected()
 		llsf_msgs::Workpiece wp;
 		wp.set_id(workpiece_id_);
 		wp.set_at_machine(machine_name_);
-		wp.set_visible(workpiece_visible_);
 		client_->send(wp);
 
 		usleep(200000);
@@ -130,9 +128,9 @@ handle_message(uint16_t component_id, uint16_t msg_type,
 						if (j > 0) rings += " ";
 						rings += llsf_msgs::RingColor_Name(w.ring_colors(j));
 					}
-					printf("WP %3i %8s %8s  %13s  %s|%s|%s\n",
+					printf("WP %3i %8s %8s  %.5f  %s|%s|%s\n",
 					       w.id(), w.at_machine().c_str(), llsf_msgs::Team_Name(w.team_color()).c_str(),
-					       w.visible() ? "(visible)" : "(not visible)",
+					       w.visible(),
 					       w.has_base_color() ? llsf_msgs::BaseColor_Name(w.base_color()).c_str() : "?",
 					       rings.c_str(),
 					       w.has_cap_color() ? llsf_msgs::CapColor_Name(w.cap_color()).c_str() : "?");
@@ -157,7 +155,6 @@ usage(const char *progname)
 	       "  Send a workpiece update, arguments are:\n"
 	       "  <ID> numeric ID\n"
 	       "  <machine> Machine at which the workpiece should be reported\n"
-	       "  <visible> true or false depending on intended visibility\n\n"
 	       "add-ring <ID> <ring_color>\n"
 	       "  Add a specific ring to a workpiece (debug only)\n"
 	       "  <ID> numeric ID\n"
@@ -190,7 +187,6 @@ main(int argc, char **argv)
 	  opmode_ = SEND_WORKPIECE;
 	  workpiece_id_ = argp.parse_item_int(1);
 	  machine_name_ = argp.items()[2];
-	  workpiece_visible_ = (strcmp(argp.items()[3], "true") == 0);
   } else if (command == "add-ring") {
 	  if (argp.num_items() != 3) {
 		  printf("Invalid number of arguments for adding a ring.\n");

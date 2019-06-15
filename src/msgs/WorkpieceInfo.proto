@@ -54,9 +54,8 @@ message Workpiece {
 	// Machine which detected the workpiece
 	required string    at_machine = 2;
 
-	// Is the workpiece currently visible
-	// at the given machine?
-	optional bool      visible = 3;
+  // last seen at machine
+  optional float      visible = 3;
 	
   // Team the puck belongs to
   optional Team      team_color = 4;

@@ -220,7 +220,7 @@
 						 (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
-  (slot visible (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+  (slot visible (type FLOAT))
 )
 
 (deftemplate ring-spec
