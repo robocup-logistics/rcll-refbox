@@ -126,6 +126,28 @@
     (printout warn "Received workpiece update for " ?id " while not in production" crlf)
 )
 
+(defrule workpiece-update-machine-broken
+    "workpiece update received at while machine is broken"
+    (gamestate (phase PRODUCTION))
+    ?mf <- (mps-status-feedback ?machine BARCODE ?id)
+    (machine (name ?machine) (state BROKEN))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
+	=>
+    (retract ?mf)
+    (printout warn "Received workpiece update for " ?id " while " ?machine "  BROKEN" crlf)
+)
+
+(defrule workpiece-update-tracking-disabled
+    "workpiece update received but tracking is disabled"
+    (gamestate (phase PRODUCTION))
+    ?mf <- (mps-status-feedback ?machine BARCODE ?id)
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value false))
+	=>
+    (retract ?mf)
+    (printout warn "Received workpiece update for " ?id " but workpiece tracking is disabled" crlf)
+)
+
+;-----------------------------Order assignment---------------------------------
 (defrule workpiece-assign-order
    "Assign order to workpiece.
    This has a very specific assumption about the ring colors. We assume that
