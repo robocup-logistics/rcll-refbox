@@ -286,8 +286,8 @@
 
 	(printout t "Got " ?id " at " ?at-machine-str " visible? " ?visible crlf)
 
-  (assert (workpiece (rtype INCOMING) (id ?id) (at-machine (sym-cat ?at-machine-str))
-										 (visible ?visible)))
+  (assert (mps-status-feedback (sym-cat ?at-machine-str) BARCODE ?id))
+
 )
 
 (defrule net-recv-WorkpieceAddRing

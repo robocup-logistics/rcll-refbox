@@ -93,41 +93,37 @@
   return 0
 )
 
-(defrule workpiece-learn-new
-	"Learn a new workpiece we had not seen before"
-	(gamestate (phase PRODUCTION))
-	(workpiece (rtype INCOMING) (id ?id) (at-machine ?at-machine) (visible ?visible))
-	(not (workpiece (rtype RECORD) (id ?id)))
-	=>
-	(assert (workpiece (rtype RECORD) (id ?id) (team (machine-team ?at-machine))
-										 (base-color (workpiece-base-color-by-id ?id))
-										 (at-machine ?at-machine) (visible ?visible)))
+
+;-------------------------Workpiece Availability------------------------------
+(defrule workpiece-update-available
+    "Workpiece available on a usable machine while tracking is enabled.
+    Update workpiece by read event information (mps-status-feedback)"
+    (gamestate (phase PRODUCTION) (game-time ?gt))
+    ?mf <- (mps-status-feedback ?m-name BARCODE ?id)
+    (machine (name ?m-name) (state ~BROKEN) (team ?team))
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
+    =>
+    (retract ?mf)
+    (printout t "Workpiece " ?id ":  read at " ?m-name crlf)
+    (if (any-factp ((?wp workpiece)) (eq ?wp:id ?id)) then
+       ;Update existing
+       (do-for-fact ((?workpiece workpiece)) (eq ?workpiece:id ?id)
+         (modify ?workpiece (at-machine ?m-name) (state AVAILABLE) (visible ?gt)))
+      else
+        ;Learn new
+        (assert (workpiece (at-machine ?m-name) (state AVAILABLE) (visible ?gt) (id ?id)
+                           (team ?team) (base-color (workpiece-base-color-by-id ?id))))
+    )
 )
 
-(defrule workpiece-not-in-production
-	"workpiece update received at wrong time"
-	(gamestate (phase ~PRODUCTION))
-	(workpiece (rtype INCOMING) (id ?id) (at-machine ?at-machine) (visible ?visible))
+(defrule workpiece-update-not-in-production
+    "workpiece update received at wrong time"
+    (gamestate (phase ~PRODUCTION))
+    ?mf <- (mps-status-feedback ?machine BARCODE ?id)
+    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
 	=>
-	(printout warn "Received workpiece update for " ?id " while not in production" crlf)
-)
-
-(defrule workpiece-update
-	"Update a workpiece if information changes"
-	(gamestate (phase PRODUCTION))
-	(workpiece (rtype INCOMING) (id ?id) (at-machine ?at-machine) (visible ?visible))
-	?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?r-at-machine) (visible ?r-visible))
-	(test (or (neq ?at-machine ?r-at-machine) (neq ?visible ?r-visible)))
-	=>
-	(modify ?wf (at-machine ?at-machine) (visible ?visible))
-)
-
-(defrule workpiece-incoming-cleanup
-	"Remove transient incoming facts"
-	(declare (salience ?*PRIORITY_CLEANUP*))
-	?wf <- (workpiece (rtype INCOMING))
-	=>
-	(retract ?wf)
+    (retract ?mf)
+    (printout warn "Received workpiece update for " ?id " while not in production" crlf)
 )
 
 (defrule workpiece-assign-order
@@ -184,17 +180,6 @@
 )
 
 ;-------------------------Workpiece Availability------------------------------
-(defrule workpiece-available
-    "Workpiece seen at machine"
-    (gamestate (phase PRODUCTION))
-    ?wf <- (workpiece (rtype RECORD) (id ?id) (at-machine ?m-name)
-                      (state ?state&~AVAILABLE) (visible TRUE))
-    (machine (name ?m-name) (state ~BROKEN))
-    =>
-    (printout t "Workpiece [" ?id "]  Visible at " ?m-name crlf)
-    (modify ?wf (state AVAILABLE))
-)
-
 (defrule workpiece-retrieved
     "Workpiece no longer at machine"
     (gamestate (phase PRODUCTION))
