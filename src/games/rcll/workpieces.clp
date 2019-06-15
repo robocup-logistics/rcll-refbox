@@ -343,19 +343,18 @@
                        (state AVAILABLE))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
-    (printout t "Workpiece " ?first-id " and " ?second-id
+    (printout warn "Workpiece " ?first-id " and " ?second-id
                 "are both AVAILABE at " ?at-machine crlf)
 )
 
 (defrule workpiece-non-availble-at-machine
-    "Process finished at a machine where no Workpiece is availabe"
-	(gamestate (phase PRODUCTION))
-    (product-processed (at-machine ?at-machine) (confirmed FALSE))
-    (not (workpiece (at-machine ?at-machine) (state AVAILABLE)))
+    "Processed operation finished at a machine where workpiece was identified"
+    ?pf <- (product-processed (at-machine ?at-machine) (workpiece 0))
+    (machine (name ?at-machine) (state WAIT-IDLE|BROKEN))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
-	(printout debug "Process finished at " ?at-machine
-              " yet No workpiece is Available!!" crlf)
-	(printout warn "Barcode scanner might be broken at " ?at-machine
-                   " no WP recognized" crlf)
+    (retract ?pf)
+    (printout warn "Operation at " ?at-machine " could not be linked to a workpiece!" crlf)
+    (printout debug "Barcode scanner might be broken at " ?at-machine
+                    " no workpiece was recognized" crlf)
 )
