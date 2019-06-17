@@ -509,18 +509,15 @@
      (modify ?pf (scored TRUE) (order ?o-id))
 )
 
-(defrule order-remove-points-of-deleted-workpiece
-    "When a workpiece is removed. Remove all points given for its steps"
-    ?pf <- (product-processed (id ?id) (workpiece ?w-id)
+
+;-------------------------------fault handling
+(defrule order-remove-operations-scored-with-no-workpiece
+    "When a workpiece is removed, remove related operations"
+    ?pf <- (product-processed (id ?id) (workpiece ?w-id&~0)
                               (confirmed TRUE) (scored TRUE)
                               (mtype ~DS) (team ?team))
     (not (workpiece (id ?w-id)))
     =>
-    (do-for-all-facts ((?points points)) (eq ?points:product-step ?id)
-      (printout t " Removing " ?points:points
-                  " points of: " ?points:reason crlf)
-      (retract ?points)
-    )
     (retract ?pf)
 )
 
