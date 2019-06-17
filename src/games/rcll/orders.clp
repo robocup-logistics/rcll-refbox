@@ -532,3 +532,64 @@
    (printout t " Removing " ?points  " points of: " ?reason crlf)
    (retract ?pf)
 )
+
+(defrule order-inconsistent-operation-with-workpiece
+"Intermediate scored operation became inconsistent its workpiece. This should
+ never happen. Operations should always be inline with their workpiece."
+    ?pf <- (product-processed (id ?p-id)
+                              (team ?team)
+                              (mtype ?mtype)
+                              (scored TRUE)
+                              (confirmed TRUE)
+                              (workpiece ?w-id)
+                              (game-time ?operation-time)
+                              (at-machine ?operation-machine)
+                              (base-color ?operation-base)
+                              (ring-color ?operation-ring)
+                              (cap-color ?operation-cap))
+    (workpiece (id ?w-id)
+               (team ?team)
+               (order ?order)
+               (base-color ?base-color)
+               (ring-colors $?ring-colors)
+               (cap-color ?cap-color))
+    (or (and (eq ?mtype BS) (neq ?operation-base ?base-color))
+        (and (eq ?mtype CS) (neq ?operation-cap ?cap-color))
+        (and (eq ?mtype RS) (not (member$ ?operation-ring $?ring-colors)))
+    )
+    =>
+    (printout warn  "Inconsistent operation at " ?operation-machine
+                    " scored for workpiece " ?w-id " " crlf)
+)
+
+(defrule order-inconsistent-operation-order
+"Retrigger score calculation for operations scored for a different order than
+ the one the workpiece is currently tracking."
+    ?pf <- (product-processed (id ?p-id)
+                              (team ?team)
+                              (mtype ?mtype)
+                              (scored TRUE)
+                              (confirmed TRUE)
+                              (workpiece ?w-id)
+                              (at-machine ?operation-machine)
+                              (base-color ?operation-base)
+                              (ring-color ?operation-ring)
+                              (cap-color ?operation-cap)
+						(order ?operation-order))
+    (workpiece (id ?w-id)
+               (team ?team)
+               (order ?order)
+               (cap-color ?cap-color)
+               (base-color ?base-color)
+               (ring-colors $?ring-colors))
+    (order (id ?order) (active TRUE))
+    (test (or (and (eq ?mtype CS) (eq ?operation-cap ?cap-color))
+              (and (eq ?mtype RS) (member$ ?operation-ring $?ring-colors))))
+    (test (neq ?operation-order ?order))
+    =>
+    (modify ?pf (order ?order) (scored FALSE))
+    (printout warn "Workpiece " ?w-id  " currently tracks order " ?order
+                    " instead of " ?operation-order
+                     ", Canceling operation at " ?operation-machine  crlf)
+)
+
