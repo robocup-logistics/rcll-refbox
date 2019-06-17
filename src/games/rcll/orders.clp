@@ -523,3 +523,12 @@
     )
     (retract ?pf)
 )
+
+(defrule order-remove-points-of-invalid-operation
+   "When operations are removed or scored reset, remove points given for that operation"
+   ?pf <- (points (product-step ?id&~0) (points ?points) (reason ?reason))
+   (not (product-processed (id ?id) (scored TRUE)))
+   =>
+   (printout t " Removing " ?points  " points of: " ?reason crlf)
+   (retract ?pf)
+)
