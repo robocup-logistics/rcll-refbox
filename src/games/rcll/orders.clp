@@ -90,64 +90,6 @@
   (printout error "Confirmation could not be linked to an operation" crlf)
 )
 
-(defrule order-delivery-confirmed-by-refree
-	?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-	?pf <- (product-processed (game-time ?delivery-time) (team ?team)
-	                          (id ?p-id) (workpiece ?wp-id) (mtype DS)
-	                          (order ?order-id&~0) (confirmed FALSE))
-    ?rf <- (referee-confirmation (process-id ?p-id) (state CONFIRMED))
-    ; the actual order we are confirming
-    ?of <- (order (id ?order-id)
-                  (active TRUE)
-	              (delivery-gate ?dgate)
-                  (complexity ?complexity)
-	              (base-color ?base-color)
-                  (ring-colors $?ring-colors)
-                  (cap-color ?cap-color))
-   (confval (path "/llsfrb/workpiece-tracking/enable")
-            (value ?tracking-enabled)
-            (type BOOL))
-	=>
-    (if (eq ?tracking-enabled false)
-        then (bind ?wp-id (workpiece-simulate-tracking ?order-id ?team ?delivery-time))
-        else
-            ;Find the tracked WP.
-            ;Confirm whether WP is consistent with the order.
-            ;Confirm the Cap-color if not yet known
-            (bind ?found-tracked-workpiece FALSE)
-            (do-for-fact ((?wp workpiece)) (eq ?wp:id ?wp-id)
-                 (bind ?found-tracked-workpiece TRUE)
-                 (if (eq ?wp:order ?order-id)
-                     then
-                       (printout t "Confirming " ?cap-color
-                                   " for Workpiece " ?wp:id
-                                   " for order " ?order-id crlf)
-                        (if (eq ?wp:cap-color nil)
-                            then
-                              (modify ?wp (cap-color ?cap-color))
-                              (do-for-fact ((?cs-step product-processed))
-                                           (and (eq ?cs-step:workpiece ?wp:id)
-                                                (eq ?cs-step:mtype CS))
-                                  (modify ?cs-step (cap-color ?cap-color) (confirmed TRUE))
-                              )
-                         )
-                     else
-                       (printout warn "A WP tracking an order " ?wp:order
-                          " is confirmed by referee to deliver order " ?order-id  crlf)
-                       (printout warn "Rectifying all points scored for the wrong tracked order."
-                                        ?order-id  crlf)
-                       (retract ?wp)
-                       (bind ?wp-id (workpiece-simulate-tracking ?order-id ?team ?delivery-time))
-                       ;TODO: check each material-color and find the incosistent one
-                       ;correct the process and simulate it a new if needed
-                 )
-            )
-            ;TODO:Handle unavailble related WP (tracking failed at DS)
-    )
-    (modify ?pf (workpiece ?wp-id) (confirmed TRUE))
-    (retract ?rf)
-)
-
 (defrule order-delivery-confirmation-invalid-order
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id))
@@ -177,6 +119,148 @@
   (order (id ?order))
    =>
   (printout t "Confirmed delivery for order " ?order  " by team " ?team crlf)
+)
+
+(defrule order-delivery-confirmation-operation-confirmed-workpiece-non
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
+                            (workpiece 0) (game-time ?delivery-time))
+  ?of <- (order (id ?order) (active TRUE))
+  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL)
+           (value ?tracking-enabled))
+  =>
+  (printout t "Delivery for order " ?order  " by team " ?team " not linked to a workpiece" crlf)
+  (if (eq ?tracking-enabled false) then
+     ;TODO:; - Handle unavailable related WP (tracking failed at DS)
+     ;       - Disable tracking and retract all tracked points,
+     ;         if couldn't find a reasonable WP
+  )
+  (bind ?wp-id (workpiece-simulate-tracking ?order ?team ?delivery-time))
+  (modify ?pf (workpiece ?wp-id) (confirmed TRUE))
+  (retract ?rf)
+)
+
+(defrule order-delivery-confirmation-operation-confirmed-workpiece-rectify
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
+                            (workpiece ?workpiece-id) (game-time ?delivery-time))
+  ?wf <- (workpiece (id ?workpiece-id)
+                    (order ?workpiece-order)
+                    (cap-color ?workpiece-cap)
+                    (base-color ?workpiece-base)
+                    (ring-colors $?workpiece-rings))
+  ?of <- (order (id ?order)
+                (active TRUE)
+                (cap-color ?order-cap)
+	           (base-color ?order-base)
+                (ring-colors $?order-rings))
+
+  (test (or (neq ?workpiece-order ?order)
+            (neq ?workpiece-cap ?order-cap)
+            (neq ?workpiece-base $?order-base)
+            (neq $?workpiece-rings $?order-rings)))
+  =>
+  (printout t "Verifying operations performed on workpiece " ?workpiece-id  crlf)
+  (if (neq ?workpiece-base ?order-base) then
+    (if (not (do-for-fact ((?pd product-processed))
+                          (and (eq ?pd:mtype BS)
+                               (eq ?pd:workpiece ?workpiece-id)
+                               (eq ?pd:base-color ?workpiece-base))
+                          (modify ?pd (base-color ?order-base) (confirmed TRUE))
+                          TRUE))
+      then
+      (assert (product-processed (mtype BS)
+                                 (team ?team)
+                                 (order ?order)
+                                 (confirmed TRUE)
+                                 (workpiece ?workpiece-id)
+                                 (game-time ?delivery-time)
+                                 (base-color ?order-base)))
+    )
+    (printout t "Rectifying workpiece " ?workpiece-id ": operation at BS [" ?workpiece-base
+                 "->" ?order-base "]"  crlf)
+  )
+  (if (neq ?workpiece-cap ?order-cap) then
+    (if (not (do-for-fact ((?pd product-processed))
+                          (and
+                               (eq ?pd:mtype CS)
+                               (eq ?pd:workpiece ?workpiece-id)
+                               (eq ?pd:cap-color ?workpiece-cap))
+                          (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
+                          TRUE))
+      then
+      (assert (product-processed (mtype CS)
+                                 (team ?team)
+                                 (scored FALSE)
+                                 (confirmed TRUE)
+                                 (workpiece ?workpiece-id)
+                                 (game-time ?delivery-time)
+                                 (cap-color ?order-cap)))
+    )
+    (printout t "Rectifying workpiece " ?workpiece-id ": operation at CS [" ?workpiece-cap
+                 "->" ?order-cap "]"  crlf)
+  )
+  (if (neq ?order-rings ?workpiece-rings) then
+    (progn$ (?order-ring ?order-rings)
+       (bind ?workpiece-ring (nth$ ?order-ring-index ?workpiece-rings))
+       (if (neq ?workpiece-ring ?order-ring) then
+         (if (not (do-for-fact ((?pd product-processed))
+                          (and (eq ?pd:mtype RS)
+                               (eq ?pd:workpiece ?workpiece-id)
+                               (eq ?pd:ring-color ?workpiece-ring))
+                          (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
+                          TRUE))
+            then
+            (assert (product-processed (mtype RS)
+                                       (team ?team)
+                                       (scored FALSE)
+                                       (confirmed TRUE)
+                                       (workpiece ?workpiece-id)
+                                       (game-time ?delivery-time)
+                                       (ring-color ?order-ring)))
+         )
+         (printout t "Rectifying workpiece " ?workpiece-id ": operation at RS [" ?workpiece-ring
+                     "->" ?order-ring "]"  crlf)
+       )
+    )
+    ;Retrigger all rings score calculation if a single one is worng
+    (do-for-all-facts ((?pd product-processed)) (and (eq ?pd:workpiece ?workpiece-id)
+                                                     (eq ?pd:scored TRUE)
+                                                     (eq ?pd:mtype RS))
+                    (modify ?pd (scored FALSE)))
+  )
+  (if (neq ?workpiece-order ?order) then
+     (printout t "Rectifying workpiece " ?workpiece-id ": order ID corrected [" ?workpiece-order
+                 "->" ?order "]"  crlf)
+  )
+  (modify ?wf (order ?order) (base-color ?order-base) (cap-color ?order-cap) (ring-colors ?order-rings))
+  (do-for-fact ((?pd product-processed)) (and (eq ?pd:workpiece ?workpiece-id)
+                                               (eq ?pd:scored TRUE)
+                                               (eq ?pd:mtype DS))
+                (modify ?pd (scored FALSE)))
+)
+
+(defrule order-delivery-confirmation-operation-confirmed-workpiece-verified
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
+                            (workpiece ?wp-id) (game-time ?delivery-time))
+  ?wf <- (workpiece (id ?wp-id)
+                    (order ?order)
+                    (cap-color ?cap-color)
+                    (base-color ?base-color)
+                    (ring-colors $?ring-colors))
+  ?of <- (order (id ?order)
+                (active TRUE)
+                (cap-color ?cap-color)
+	           (base-color ?base-color)
+                (ring-colors $?ring-colors))
+   =>
+  (printout t "Workpiece " ?wp-id  " verified for order " ?order crlf)
+  (modify ?pf (workpiece ?wp-id) (confirmed TRUE))
+  (retract ?rf)
 )
 
 (defrule order-delivered-correct
