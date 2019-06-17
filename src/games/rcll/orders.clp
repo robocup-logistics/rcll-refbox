@@ -148,6 +148,19 @@
     (retract ?rf)
 )
 
+(defrule order-delivery-confirmation-invalid-order
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order))
+  (not (order (id ?order) (active TRUE)))
+  =>
+  (retract ?pf)
+  (retract ?rf)
+  (assert (attention-message (team ?team)
+                             (text (str-cat "Invalid order delivered by " ?team ": "
+                             "no active order with ID " ?order crlf))))
+)
+
 (defrule order-delivery-confirmation-operation-denied
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state DENIED))
@@ -234,22 +247,6 @@
 		    (product-step ?p-id)
 		    (reason (str-cat "Delivered item for order " ?id))))
   )
-
-)
-
-(defrule order-delivered-invalid
-  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-  ?pf <- (product-processed (game-time ?game-time) (team ?team) (order ?order)
-                            (id ?p-id) (mtype DS))
-  ?rf <- (referee-confirmation (process-id ?p-id))
-	(not (order (id ?order) (active TRUE)))
-	=>
-	(retract ?pf)
-	(retract ?rf)
-	(assert (attention-message (team ?team)
-                             (text (str-cat "Invalid order delivered by " ?team ": "
-                                            "no active order with ID "
-                                            ?order crlf))))
 )
 
 (defrule order-delivered-wrong-delivgate
