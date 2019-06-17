@@ -324,12 +324,16 @@
 
 (defrule workpiece-non-available-at-machine
     "Processed operation finished at a machine where workpiece was identified"
-    ?pf <- (product-processed (at-machine ?at-machine) (workpiece 0))
-    (machine (name ?at-machine) (state WAIT-IDLE|BROKEN))
+    ?pf <- (product-processed (at-machine ?at-machine) (mtype ~DS) (workpiece 0))
+    (machine (name ?at-machine) (mtype ?mtype)(state WAIT-IDLE|BROKEN))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (retract ?pf)
     (printout warn "Operation at " ?at-machine " could not be linked to a workpiece!" crlf)
     (printout debug "Barcode scanner might be broken at " ?at-machine
                     " no workpiece was recognized" crlf)
+    ;TODO: if its a BS or RS, disable tracking as implications are potentially
+    ;      too severe.
+    ;      Recovering from CS and DS failure could be attempted
 )
+
