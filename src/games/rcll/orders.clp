@@ -266,19 +266,19 @@
 (defrule order-delivered-correct
 	?gf <- (gamestate (phase PRODUCTION|POST_GAME))
 	?pf <- (product-processed (game-time ?delivery-time) (team ?team)
-	                          (order ?id&~0) (delivery-gate ?gate)
+	                          (order ?id) (delivery-gate ?gate)
 	                          (workpiece ?wp-id) (id ?p-id)
 	                          (scored FALSE) (mtype DS)
 	                          (confirmed TRUE))
 	(not (product-processed (game-time ?other-delivery&:(< ?other-delivery ?delivery-time))
 	                        (scored FALSE) (mtype DS)))
+  (workpiece (id ?wp-id) (order ?id))
   ; the actual order we are delivering
   ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (competitive ?competitive)
 	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
 	        (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
 	        (quantity-requested ?q-req) (quantity-delivered $?q-del)
 	        (delivery-period $?dp &:(>= ?delivery-time (nth$ 1 ?dp))))
-  ;(workpiece (id ?wp-id))
 	=>
   (modify ?pf (scored TRUE))
 	(bind ?q-del-idx (order-q-del-index ?team))
@@ -336,8 +336,9 @@
 (defrule order-delivered-wrong-delivgate
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (product-processed (game-time ?game-time) (team ?team)
-                            (scored FALSE) (mtype DS)
+                            (scored FALSE) (mtype DS) (workpiece ?wp-id)
                             (delivery-gate ?gate) (order ?id) (confirmed TRUE))
+  (workpiece (id ?wp-id) (order ?id))
   ; the actual order we are delivering
   (order (id ?id) (active TRUE) (delivery-gate ?dgate&~?gate&:(neq ?gate 0)))
 	=>
@@ -353,8 +354,9 @@
 (defrule order-delivered-wrong-too-soon
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (product-processed (game-time ?game-time) (team ?team) (order ?id)
-                            (scored FALSE) (mtype DS)
+                            (scored FALSE) (mtype DS) (workpiece ?wp-id)
                             (confirmed TRUE))
+  (workpiece (id ?wp-id) (order ?id))
   ; the actual order we are delivering
   (order (id ?id) (active TRUE) (delivery-period $?dp&:(< ?game-time (nth$ 1 ?dp))))
 	=>
@@ -370,8 +372,9 @@
 (defrule order-delivered-wrong-too-many
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (product-processed (game-time ?game-time) (team ?team) (order ?id)
-                            (scored FALSE) (mtype DS)
+                            (scored FALSE) (mtype DS) (workpiece ?wp-id)
                             (confirmed TRUE))
+  (workpiece (id ?wp-id) (order ?id))
   ; the actual order we are delivering
   ?of <- (order (id ?id) (active TRUE)
 								(quantity-requested ?q-req)
