@@ -64,18 +64,12 @@
   (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (protobuf-msg (type "llsf_msgs.ConfirmDelivery") (ptr ?p) (rcvd-via STREAM))
   =>
-  (if (not (do-for-fact
-            ((?pd product-processed) (?rc referee-confirmation))
-            (and (eq ?pd:id (pb-field-value ?p "delivery_id"))
-                 (eq ?pd:id ?rc:process-id)
+  (if (not (do-for-fact ((?rc referee-confirmation))
+            (and (eq ?rc:process-id (pb-field-value ?p "delivery_id"))
                  (eq ?rc:state REQUIRED))
             (if (eq (pb-field-value ?p "correct") TRUE) then
-              (printout t "Confirmed delivery for order " ?pd:order
-                          " by team " ?pd:team crlf)
               (modify ?rc (state CONFIRMED))
             else
-              (printout t "Denied delivery for order " ?pd:order
-                          " by team " ?pd:team crlf)
               (modify ?rc (state DENIED)))
             ; make sure do-for-fact evaluates to TRUE
             TRUE))
@@ -87,6 +81,14 @@
   (retract ?pf)
 )
 
+(defrule order-delivery-confirmation-no-operation
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id) (state ~REQUIRED))
+  (not (product-processed (id ?id)))
+  =>
+  (retract ?rf)
+  (printout error "Confirmation could not be linked to an operation" crlf)
+)
 
 (defrule order-delivery-confirmed-by-refree
 	?gf <- (gamestate (phase PRODUCTION|POST_GAME))
@@ -146,23 +148,23 @@
     (retract ?rf)
 )
 
-(defrule order-delivery-denied-by-refree
-	?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-	?pf <- (product-processed (game-time ?delivery-time) (team ?team)
-	                          (id ?p-id) (workpiece ?wp-id) (mtype DS)
-	                          (order ?order-id&~0) (confirmed FALSE))
-  ?rf <- (referee-confirmation (process-id ?p-id) (state DENIED))
-  ; the actual order we are confirmingd
-  ?of <- (order (id ?order-id))
-  (confval (path "/llsfrb/workpiece-tracking/enable")
-           (value ?tracking-enabled)
-           (type BOOL))
-	=>
- ;TODO:Handle unavailble related WP (tracking failed at DS)
- (retract ?pf)
- (retract ?rf)
+(defrule order-delivery-confirmation-operation-denied
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id) (state DENIED))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE))
+   =>
+  (retract ?pf)
+  (retract ?rf)
+  (printout t "Denied delivery for order " ?order  " by team " ?team crlf)
 )
 
+(defrule order-delivery-confirmation-operation-confirmed-print
+  ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE))
+  (order (id ?order))
+   =>
+  (printout t "Confirmed delivery for order " ?order  " by team " ?team crlf)
+)
 
 (defrule order-delivered-correct
 	?gf <- (gamestate (phase PRODUCTION|POST_GAME))
