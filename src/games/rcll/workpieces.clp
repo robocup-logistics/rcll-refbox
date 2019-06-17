@@ -304,33 +304,6 @@
 )
 
 ;------------------------------Sanity Checks
-(defrule workpiece-make-sure-wp-tracks-requested-order
-    "The delivery process was confirmed (by referee) for an non tracked yet
-    identical order"
-    (gamestate (phase PRODUCTION))
-    ?wf <- (workpiece (id ?wp-id)
-                      (at-machine ?m-name)
-                      (order ?tracked-order-id)
-                      (base-color ?tracked-base-color)
-                      (ring-colors ?tracked-ring-colors)
-                      (cap-color ?tracked-cap-color))
-    ?pf <- (product-processed (mtype DS) 
-                              (confirmed TRUE)
-                              (workpiece ?wp-id)
-                              (at-machine ?m-name)
-                              (order ?delivered-order-id&:(neq ?delivered-order-id ?tracked-order-id)))
-  (order (id ?delivered-order-id)
-         (base-color ?tracked-base-color)
-         (ring-colors ?tracked-ring-colors)
-         (cap-color ?tracked-cap-color))
-  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
-  =>
-  (printout t "Workpiece " ?wp-id ": order ID corrected [" ?tracked-order-id
-              "->" ?delivered-order-id "]"  crlf)
-  (modify ?wf (order ?delivered-order-id))
-  ;TODO: Also apply the change to all the product-processed facts
-)
-
 (defrule workpiece-available-twice
     "Error different workpieces available at same  machines"
     (gamestate (phase PRODUCTION))
