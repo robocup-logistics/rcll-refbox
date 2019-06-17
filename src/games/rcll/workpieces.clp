@@ -308,15 +308,18 @@
     "Error different workpieces available at same  machines"
     (gamestate (phase PRODUCTION))
     ?wf1 <- (workpiece (id ?first-id)
+                       (visible ?first-last-seen)
                        (at-machine ?at-machine)
                        (state AVAILABLE))
     ?wf2 <- (workpiece (id ?second-id&:(neq ?first-id ?second-id))
+                       (visible ?second-last-seen&:(>= ?second-last-seen ?first-last-seen))
                        (at-machine ?at-machine)
                        (state AVAILABLE))
     (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
-    (printout warn "Workpiece " ?first-id " and " ?second-id
-                "are both available at " ?at-machine crlf)
+    (modify ?wf1 (state RETRIEVED))
+    (printout warn "Workpiece " ?second-id " detected at " ?at-machine
+                   " while workpiece " ?first-id " is still available..retrieving the oldest!"crlf)
 )
 
 (defrule workpiece-non-available-at-machine
