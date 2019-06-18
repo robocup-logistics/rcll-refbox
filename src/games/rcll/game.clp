@@ -6,6 +6,7 @@
 ;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
 ;             2017       Tobias Neumann
 ;             2019       Till Hofmann
+;             2019       Mostafa Gomaa
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 

@@ -4,6 +4,7 @@
 ;
 ;  Created: Sun Feb 24 19:40:32 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;             2019  Mostafa Gomaa  [mostafa.gomaa@rwth-aachen.de]
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
