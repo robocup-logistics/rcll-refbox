@@ -338,61 +338,61 @@
 
 (defrule order-delivered-wrong-delivgate
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-  ?pf <- (product-processed (game-time ?game-time) (team ?team)
-                            (scored FALSE) (mtype DS) (workpiece ?wp-id)
-                            (delivery-gate ?gate) (order ?id) (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?id))
+  ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
+                            (id ?p-id)  (workpiece ?wp-id) (order ?o-id)
+                            (scored FALSE) (confirmed TRUE)
+                            (delivery-gate ?gate))
+  (workpiece (id ?wp-id) (order ?o-id))
   ; the actual order we are delivering
-  (order (id ?id) (active TRUE) (delivery-gate ?dgate&~?gate&:(neq ?gate 0)))
+  (order (id ?o-id) (active TRUE) (delivery-gate ?dgate&~?gate&:(neq ?gate 0)))
 	=>
   (modify ?pf (scored TRUE))
-	(printout warn "Delivered item for order " ?id " (wrong delivery gate, got " ?gate ", expected " ?dgate ")" crlf)
+	(printout warn "Delivered item for order " ?o-id " (wrong delivery gate, got " ?gate ", expected " ?dgate ")" crlf)
 
 	(assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
-									(team ?team) (phase PRODUCTION)
-									(reason (str-cat "Delivered item for order " ?id
+									(team ?team) (phase PRODUCTION) (product-step ?p-id)
+									(reason (str-cat "Delivered item for order " ?o-id
 																	 " (wrong delivery gate)"))))
 )
 
 (defrule order-delivered-wrong-too-soon
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-  ?pf <- (product-processed (game-time ?game-time) (team ?team) (order ?id)
-                            (scored FALSE) (mtype DS) (workpiece ?wp-id)
-                            (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?id))
+  ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
+                            (id ?p-id) (order ?o-id) (workpiece ?wp-id)
+                            (scored FALSE) (confirmed TRUE))
+  (workpiece (id ?wp-id) (order ?o-id))
   ; the actual order we are delivering
-  (order (id ?id) (active TRUE) (delivery-period $?dp&:(< ?game-time (nth$ 1 ?dp))))
+  (order (id ?o-id) (active TRUE) (delivery-period $?dp&:(< ?game-time (nth$ 1 ?dp))))
 	=>
   (modify ?pf (scored TRUE))
-	(printout warn "Delivered item for order " ?id " (too soon, before time window)" crlf)
+	(printout warn "Delivered item for order " ?o-id " (too soon, before time window)" crlf)
 
 	(assert (points (game-time ?game-time) (points 0)
-									(team ?team) (phase PRODUCTION)
-									(reason (str-cat "Delivered item for order " ?id
+									(team ?team) (phase PRODUCTION) (product-step ?p-id)
+									(reason (str-cat "Delivered item for order " ?o-id
 																	 " (too soon, before time window)"))))
 )
 
 (defrule order-delivered-wrong-too-many
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-  ?pf <- (product-processed (game-time ?game-time) (team ?team) (order ?id)
-                            (scored FALSE) (mtype DS) (workpiece ?wp-id)
-                            (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?id))
+  ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
+                            (id ?p-id) (order ?o-id) (workpiece ?wp-id)
+                            (scored FALSE) (confirmed TRUE))
+  (workpiece (id ?wp-id) (order ?o-id))
   ; the actual order we are delivering
-  ?of <- (order (id ?id) (active TRUE)
-								(quantity-requested ?q-req)
+  ?of <- (order (id ?o-id) (active TRUE) (quantity-requested ?q-req)
 								(quantity-delivered $?q-del&:(>= (order-q-del-team ?q-del ?team) ?q-req)))
   =>
   (modify ?pf (scored TRUE))
-	(printout warn "Delivered item for order " ?id " (too many)" crlf)
+	(printout warn "Delivered item for order " ?o-id " (too many)" crlf)
 
 	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
   (modify ?of (quantity-delivered ?q-del-new))
 
 	(assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
-									(team ?team) (phase PRODUCTION)
-									(reason (str-cat "Delivered item for order " ?id
+									(team ?team) (phase PRODUCTION) (product-step ?p-id)
+									(reason (str-cat "Delivered item for order " ?o-id
 																	 " (too many)"))))
 )
 
