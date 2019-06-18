@@ -235,11 +235,14 @@
      (printout t "Rectifying workpiece " ?workpiece-id ": order ID corrected [" ?workpiece-order
                  "->" ?order "]"  crlf)
   )
-  (modify ?wf (order ?order) (base-color ?order-base) (cap-color ?order-cap) (ring-colors ?order-rings))
   (do-for-fact ((?pd product-processed)) (and (eq ?pd:workpiece ?workpiece-id)
-                                               (eq ?pd:scored TRUE)
-                                               (eq ?pd:mtype DS))
-                (modify ?pd (scored FALSE)))
+                                              (eq ?pd:scored TRUE)
+                                              (eq ?pd:mtype DS)
+                                              (neq ?pd:id ?id))
+     (printout t "Rectifying workpiece " ?workpiece-id ": removing old delivery operation for order " ?pd:order  crlf)
+     (retract ?pd)
+  )
+  (modify ?wf (order ?order) (base-color ?order-base) (cap-color ?order-cap) (ring-colors ?order-rings))
 )
 
 (defrule order-delivery-confirmation-operation-confirmed-workpiece-verified
