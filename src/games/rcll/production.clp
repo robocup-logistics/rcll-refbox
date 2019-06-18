@@ -180,7 +180,6 @@
                                   (wait-for-product-since ?gt))
                      else
 		      (modify ?m (state BROKEN)
-			      (cs-retrieved FALSE)
 			      (broken-reason (str-cat "Prepare received for " ?mname ": "
 						      "cannot retrieve while already holding")))
                     )
@@ -411,14 +410,18 @@
 
 (defrule production-cs-move-to-output
 	"The CS has completed mounting/retrieving a cap. Move the workpiece to the output."
-	(gamestate (state RUNNING) (phase PRODUCTION))
-	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP)
-	               (mps-busy FALSE))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (team ?team)
+                   (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP) (mps-busy FALSE))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
-	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+	(if (eq ?cs-op RETRIEVE_CAP) then
+		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+		                (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
+		                (reason (str-cat "Retrieved cap at " ?n)))))
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
+	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
 (defrule production-bs-cs-rs-ready-at-output
@@ -485,11 +488,26 @@
 (defrule production-mps-broken
 	"The MPS is BROKEN. Inform the referee and reset the machine to stop the conveyor belt."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0))
+  ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0)
+                 (bases-added ?ba) (bases-used ?bu) (cs-retrieved ?cap-loaded))
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
   (modify ?m (broken-since ?gt))
+  ; Revoke points awarded for unused bases at RS slide
+  (bind ?unused-bases (- ?ba ?bu))
+  (if (> ?unused-bases 0) then
+   (bind ?deduct (* -1 ?unused-bases))
+   (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+                   (points (* ?deduct ?*PRODUCTION-POINTS-ADDITIONAL-BASE*))
+                   (reason (str-cat "Deducting unused additional bases at " ?n))))
+  )
+  ; Revoke points awarded for an unused cap at CS
+  (if ?cap-loaded then
+    (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+                    (points (* -1  ?*PRODUCTION-POINTS-RETRIEVE-CAP*))
+                    (reason (str-cat "Deducting retrieved cap at " ?n))))
+  )
   (mps-reset (str-cat ?n))
 )
 
