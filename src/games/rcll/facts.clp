@@ -209,6 +209,11 @@
   (slot allow-overtime (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
+(deftemplate workpiece-tracking
+    (slot enabled (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+    (slot reason (type STRING))
+)
+
 (deftemplate workpiece
 	(slot id (type INTEGER))
 	(slot order (type INTEGER))

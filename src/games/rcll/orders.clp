@@ -128,11 +128,10 @@
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece 0) (game-time ?delivery-time))
   ?of <- (order (id ?order) (active TRUE))
-  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL)
-           (value ?tracking-enabled))
+  (workpiece-tracking (enabled ?tracking-enabled))
   =>
   (printout t "Delivery for order " ?order  " by team " ?team " not linked to a workpiece" crlf)
-  (if (eq ?tracking-enabled false) then
+  (if (not ?tracking-enabled) then
      ;TODO:; - Handle unavailable related WP (tracking failed at DS)
      ;       - Disable tracking and retract all tracked points,
      ;         if couldn't find a reasonable WP

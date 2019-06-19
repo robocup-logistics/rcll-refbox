@@ -93,14 +93,34 @@
   return ?workpiece-id
 )
 
+(defrule workpiece-tracking-state-from-config
+  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?config-value))
+  (not (workpiece-tracking))
+  =>
+  (if (eq ?config-value true)
+  then
+    (assert (workpiece-tracking (enabled TRUE)  (reason "Set by config")))
+  else
+    (assert (workpiece-tracking (enabled FALSE) (reason "Set by config")))
+  )
+)
+
+(defrule workpiece-tracking-print
+  (workpiece-tracking (enabled ?enabled) (reason ?reason))
+  =>
+  (bind ?state "disabled")
+  (if ?enabled then (bind ?state "enabled"))
+  (printout warn "Workpiece tracking is " ?state ": " ?reason crlf)
+)
+
 ;-------------------------Workpiece Availability------------------------------
 (defrule workpiece-update-available
     "Workpiece available on a usable machine while tracking is enabled.
     Update workpiece by read event information (mps-status-feedback)"
+    (workpiece-tracking (enabled TRUE))
     (gamestate (phase PRODUCTION) (game-time ?gt))
     ?mf <- (mps-status-feedback ?m-name BARCODE ?id)
     (machine (name ?m-name) (state ~BROKEN) (team ?team))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (retract ?mf)
     (printout t "Workpiece " ?id ": at " ?m-name ", available!"crlf)
@@ -118,8 +138,8 @@
 (defrule workpiece-update-not-in-production
     "workpiece update received at wrong time"
     (gamestate (phase ~PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?mf <- (mps-status-feedback ?machine BARCODE ?id)
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
 	=>
     (retract ?mf)
     (printout warn "Received workpiece update for " ?id " while not in production" crlf)
@@ -128,9 +148,9 @@
 (defrule workpiece-update-machine-broken
     "workpiece update received at while machine is broken"
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?mf <- (mps-status-feedback ?machine BARCODE ?id)
     (machine (name ?machine) (state BROKEN))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
 	=>
     (retract ?mf)
     (printout warn "Received workpiece update for " ?id " while " ?machine "  BROKEN" crlf)
@@ -139,8 +159,8 @@
 (defrule workpiece-update-tracking-disabled
     "workpiece update received but tracking is disabled"
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled FALSE))
     ?mf <- (mps-status-feedback ?machine BARCODE ?id)
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value false))
 	=>
     (retract ?mf)
     (printout warn "Received workpiece update for " ?id " but workpiece tracking is disabled" crlf)
@@ -148,9 +168,9 @@
 
 (defrule workpiece-update-retrieved
     "Workpiece no longer at machine"
+    (workpiece-tracking (enabled TRUE))
     (machine (name ?m-name) (state WAIT-IDLE|BROKEN))
     (workpiece (id ?id) (at-machine ?m-name) (state AVAILABLE))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (do-for-all-facts ((?workpiece workpiece)) (and (eq ?workpiece:at-machine ?m-name)
                                                (eq ?workpiece:state AVAILABLE))
@@ -167,6 +187,7 @@
    we assume that there is only a single order of complexity >0 each. Hence, knowing
    the first ring will immediately determine the order of the workpiece."
    (gamestate (phase PRODUCTION))
+   (workpiece-tracking (enabled TRUE))
    ?wf <- (workpiece (id ?id) (order 0) (team ?r-team)
                     (cap-color ?cap-color)
                     (base-color ?base-color)
@@ -182,7 +203,6 @@
                    (eq (length$ ?order-ring-colors) 0))
               (and (> (length$ ?ring-colors) 0)
                    (eq ?ring-colors (subseq$ ?order-ring-colors 1 (length$ ?ring-colors))))))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (modify ?wf (order ?order-id))
     (printout t "Workpiece " ?id ": order assigned " ?order-id crlf)
@@ -191,6 +211,7 @@
 (defrule workpiece-resign-order
     "Resign order from workpiece, if they became inconsistent"
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (order ?order-id)
                       (team ?r-team)
@@ -206,7 +227,6 @@
                    (neq ?ring-colors (subseq$ ?order-ring-colors 1 (length$ ?ring-colors))))
               (and (neq ?cap-color nil)
                    (neq ?cap-color ?order-cap-color))))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (modify ?wf (order 0))
     (printout t "Workpiece " ?id ": order resigned " ?order-id  crlf)
@@ -217,6 +237,7 @@
     "When workpiece available at BS, confirm generated base-color against
     prepared base-color."
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id) 
                       (state AVAILABLE)
                       (at-machine ?m-name)
@@ -226,7 +247,6 @@
                             (workpiece ?wp-id)
                             (at-machine ?m-name)
                             (base-color ?bs-color))
-  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
   =>
   (printout t "Workpiece " ?id ": at " ?m-name ", processed"crlf)
   (if (neq ?bs-color ?base-color)
@@ -241,6 +261,7 @@
     "Update workpiece available at an RS with the recent production operation.
     Link the production operation to the workpiece"
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (state AVAILABLE)
                       (at-machine ?m-name)
@@ -250,7 +271,6 @@
                               (workpiece ?wp-id)
                               (at-machine ?m-name)
                               (ring-color ?r-color))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (printout t "Workpiece " ?id ": at " ?m-name ", processed" crlf)
     (modify ?pf (workpiece ?id) (confirmed TRUE))
@@ -261,6 +281,7 @@
     "Update the available workpiece at CS with the recent production operation.
     Like the production operation to the workpiece."
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (state AVAILABLE)
                       (at-machine ?m-name)
@@ -271,7 +292,6 @@
                            (at-machine ?m-name)
                            (cap-color ?c-color))
   (not (product-processed (workpiece ?id) (mtype CS) (confirmed TRUE)))
-  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
    =>
   (printout t "Workpiece " ?id ": at  " ?m-name ", processed" crlf)
   (modify ?pf (workpiece ?id))
@@ -283,6 +303,7 @@
     "Update the available workpiece with the recent production operation.
     Link the delivery to the available workpiece"
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (state AVAILABLE)
                       (at-machine ?m-name)
@@ -292,7 +313,6 @@
                               (confirmed FALSE)
                               (at-machine ?m-name)
                               (order ?order-id))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (printout t "Workpiece " ?id ": at " ?m-name ", processed" crlf)
     (if (neq ?order-id ?tracked-order-id)
@@ -308,6 +328,7 @@
 (defrule workpiece-available-twice
     "Error different workpieces available at same  machines"
     (gamestate (phase PRODUCTION))
+    (workpiece-tracking (enabled TRUE))
     ?wf1 <- (workpiece (id ?first-id)
                        (visible ?first-last-seen)
                        (at-machine ?at-machine)
@@ -316,7 +337,6 @@
                        (visible ?second-last-seen&:(>= ?second-last-seen ?first-last-seen))
                        (at-machine ?at-machine)
                        (state AVAILABLE))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (modify ?wf1 (state RETRIEVED))
     (printout warn "Workpiece " ?second-id " detected at " ?at-machine
@@ -325,9 +345,9 @@
 
 (defrule workpiece-non-available-at-machine
     "Processed operation finished at a machine where workpiece was identified"
+    (workpiece-tracking (enabled TRUE))
     ?pf <- (product-processed (at-machine ?at-machine) (mtype ~DS) (workpiece 0))
     (machine (name ?at-machine) (mtype ?mtype)(state WAIT-IDLE|BROKEN))
-    (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value true))
     =>
     (retract ?pf)
     (printout warn "Operation at " ?at-machine " could not be linked to a workpiece!" crlf)
