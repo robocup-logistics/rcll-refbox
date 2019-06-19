@@ -152,7 +152,7 @@ usage(const char *progname)
 	       "CMD is one of:\n"
 	       "list\n"
 	       "  List known workpieces and their statuses\n\n"
-	       "send <ID> <machine> <visible>\n"
+	       "send <ID> <machine>\n"
 	       "  Send a workpiece update, arguments are:\n"
 	       "  <ID> numeric ID\n"
 	       "  <machine> Machine at which the workpiece should be reported\n"
@@ -180,7 +180,7 @@ main(int argc, char **argv)
   if (command == "list") {
 	  opmode_ = LIST_WORKPIECES;
   } else if (command == "send") {
-	  if (argp.num_items() != 4) {
+	  if (argp.num_items() != 3) {
 		  printf("Invalid number of arguments for sending.\n");
 		  usage(argv[0]);
 		  exit(1);
