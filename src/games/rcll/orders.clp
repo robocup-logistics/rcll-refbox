@@ -122,24 +122,63 @@
   (printout t "Confirmed delivery for order " ?order  " by team " ?team crlf)
 )
 
-(defrule order-delivery-confirmation-operation-confirmed-workpiece-non
+(defrule order-delivery-confirmation-operation-confirmed-simulate-tracking
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece 0) (game-time ?delivery-time))
   ?of <- (order (id ?order) (active TRUE))
-  (workpiece-tracking (enabled ?tracking-enabled))
+  (or (workpiece-tracking (enabled FALSE))
+      (workpiece-tracking (fail-safe FALSE)))
   =>
-  (printout t "Delivery for order " ?order  " by team " ?team " not linked to a workpiece" crlf)
-  (if (not ?tracking-enabled) then
-     ;TODO:; - Handle unavailable related WP (tracking failed at DS)
-     ;       - Disable tracking and retract all tracked points,
-     ;         if couldn't find a reasonable WP
-  )
   (bind ?wp-id (workpiece-simulate-tracking ?order ?team ?delivery-time))
   (modify ?pf (workpiece ?wp-id) (confirmed TRUE))
   (retract ?rf)
 )
+
+(defrule order-delivery-confirmation-operation-confirmed-DS-read-fail-recovery
+ "Recover from reading failure at DS, iff there is a unique, fitting, caped unconfirmed, workpiece"
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
+                            (workpiece 0) (game-time ?delivery-time))
+  ?of <- (order (id ?order)
+                (active TRUE)
+                (base-color ?base-color)
+                (ring-colors $?ring-colors))
+  (workpiece (id ?wp-id)
+             (team ?team)
+             (base-color ?base-color)
+             (ring-colors $?ring-colors))
+  (product-processed (workpiece ?wp-id) (mtype CS) (confirmed FALSE))
+  (workpiece-tracking (enabled TRUE))
+  (not (and
+      (workpiece (team ?team)
+                  (base-color ?base-color)
+                  (ring-colors $?ring-colors)
+                  (id ?wpp-id&:(neq ?wpp-id ?wp-id)))
+      (product-processed (workpiece ?wpp-id) (mtype CS) (confirmed FALSE)))
+  )
+  =>
+  (printout t "Delivery for order " ?order  " by team " ?team " not linked to a workpiece" crlf)
+  (printout t "Linking to a fitting unique workpiece " ?wp-id   " ready for delivery " crlf)
+  (modify ?pf (workpiece ?wp-id))
+)
+
+(defrule order-delivery-confirmation-operation-confirmed-DS-read-fail-safe
+ "Disable tracking if fai-safe is on and couldn't recover"
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
+                            (workpiece 0) (game-time ?delivery-time))
+  ?of <- (order (id ?order) (active TRUE))
+  ?wf <- (workpiece-tracking (enabled TRUE) (fail-safe TRUE))
+  =>
+  (printout t "Could not find a unique workpiece fitting the delivery " crlf)
+  (modify ?wf (enabled FALSE) (reason (str-cat "Fail-safe reader at delivery" )))
+)
+
 
 (defrule order-delivery-confirmation-operation-confirmed-workpiece-rectify
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
