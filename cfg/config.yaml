@@ -156,7 +156,8 @@ llsfrb:
     refbox-port: 4444
 
   workpiece-tracking:
-   enable: false
+   enable: true
+   fail-safe: true
 
   simulation:
     enable: false

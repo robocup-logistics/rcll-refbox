@@ -211,6 +211,7 @@
 
 (deftemplate workpiece-tracking
     (slot enabled (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+    (slot fail-safe (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
     (slot reason (type STRING))
 )
 

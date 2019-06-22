@@ -94,15 +94,13 @@
 )
 
 (defrule workpiece-tracking-state-from-config
-  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?config-value))
+  (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking))
+  (confval (path "/llsfrb/workpiece-tracking/fail-safe") (type BOOL) (value ?disable-on-failure))
   (not (workpiece-tracking))
   =>
-  (if (eq ?config-value true)
-  then
-    (assert (workpiece-tracking (enabled TRUE)  (reason "Set by config")))
-  else
-    (assert (workpiece-tracking (enabled FALSE) (reason "Set by config")))
-  )
+  (if (eq ?tracking true) then (bind ?enabled TRUE) else (bind ?enabled FALSE))
+  (if (eq ?disable-on-failure true) then (bind ?fail-safe TRUE) else (bind ?fail-safe FALSE))
+  (assert (workpiece-tracking (enabled ?enabled) (fail-safe ?fail-safe) (reason "by config")))
 )
 
 (defrule workpiece-tracking-print
@@ -110,7 +108,7 @@
   =>
   (bind ?state "disabled")
   (if ?enabled then (bind ?state "enabled"))
-  (printout warn "Workpiece tracking is " ?state ": " ?reason crlf)
+  (printout warn "Workpiece tracking " ?state ", " ?reason crlf)
 )
 
 ;-------------------------Workpiece Availability------------------------------
@@ -356,5 +354,14 @@
     ;TODO: if its a BS or RS, disable tracking as implications are potentially
     ;      too severe.
     ;      Recovering from CS and DS failure could be attempted
+
+(defrule workpiece-tracking-disabled-remove-undelivered-workpiece
+    "If tracking was disabled for any reason, remove any undelivered workpieces."
+    (workpiece-tracking (enabled FALSE))
+    ?wf <- (workpiece (id ?w-id))
+    (not (product-processed (mtype DS) (workpiece ?w-id)))
+    =>
+    (retract ?wf)
+    (printout t "Removing obsolete workpiece " ?w-id crlf)
 )
 
