@@ -341,19 +341,25 @@
                    " while workpiece " ?first-id " is still available..retrieving the oldest!"crlf)
 )
 
-(defrule workpiece-non-available-at-machine
-    "Processed operation finished at a machine where workpiece was identified"
-    (workpiece-tracking (enabled TRUE))
-    ?pf <- (product-processed (at-machine ?at-machine) (mtype ~DS) (workpiece 0))
-    (machine (name ?at-machine) (mtype ?mtype)(state WAIT-IDLE|BROKEN))
+(defrule workpiece-failed-read-at-BS-RS
+    "Processed operation finished at a machine where workpiece was not identified"
+    ?wf <- (workpiece-tracking (enabled TRUE) (fail-safe ?fail-safe))
+    ?pf <- (product-processed (at-machine ?at-machine) (mtype ?mtype&~DS) (workpiece 0))
+    (machine (name ?at-machine) (mtype ?mtype) (state ?state&WAIT-IDLE|BROKEN))
     =>
     (retract ?pf)
-    (printout warn "Operation at " ?at-machine " could not be linked to a workpiece!" crlf)
-    (printout debug "Barcode scanner might be broken at " ?at-machine
-                    " no workpiece was recognized" crlf)
-    ;TODO: if its a BS or RS, disable tracking as implications are potentially
-    ;      too severe.
-    ;      Recovering from CS and DS failure could be attempted
+    (printout warn "Operation at " ?at-machine " not linked to a workpiece!" crlf)
+    (printout debug "Barcode scanner at " ?at-machine " failed to read workpiece" crlf)
+    (if (and ?fail-safe
+             (neq ?state BROKEN)
+             (neq ?mtype CS)
+             (neq ?mtype DS))
+     then
+     ; In case of failure at BS|RS, disabling tracking is recommended.
+     ; Recovering from CS|DS failure could be attempted upon confirmation.
+     (modify ?wf (enabled FALSE) (reason (str-cat " Fail-safe reader at " ?at-machine)))
+    )
+)
 
 (defrule workpiece-tracking-disabled-remove-undelivered-workpiece
     "If tracking was disabled for any reason, remove any undelivered workpieces."
