@@ -82,7 +82,22 @@
   (retract ?pf)
 )
 
-(defrule order-delivery-confirmation-no-operation
+(defrule order-referee-confirmation-automatic
+  "Automatically grant referee confirmation after DS idles,
+  if auto-confirm enabled"
+  (gamestate (phase PRODUCTION|POST_GAME))
+  (confval (path "/llsfrb/auto-confirm-delivery")
+           (type BOOL) (value true))
+  ?rf <- (referee-confirmation (process-id ?p-id) (state REQUIRED))
+  (product-processed (id ?p-id) (at-machine ?mname) (mtype DS) (order ?o-id))
+  (machine (name ?mname) (state IDLE))
+  (order (id ?o-id) (active TRUE))
+  =>
+  (printout warn "Automatic confirmation of delivery" crlf)
+  (modify ?rf (state CONFIRMED))
+)
+
+(defrule order-delivery-confirmation-invalid-operation
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state ~REQUIRED))
   (not (product-processed (id ?id)))
@@ -104,7 +119,7 @@
                              "no active order with ID " ?order crlf))))
 )
 
-(defrule order-delivery-confirmation-operation-denied
+(defrule order-delivery-confirmation-referee-denied
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state DENIED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE))
@@ -114,7 +129,7 @@
   (printout t "Denied delivery for order " ?order  " by team " ?team crlf)
 )
 
-(defrule order-delivery-confirmation-operation-confirmed-print
+(defrule order-delivery-confirmation-referee-confirmed-print
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE))
   (order (id ?order))
@@ -122,7 +137,7 @@
   (printout t "Confirmed delivery for order " ?order  " by team " ?team crlf)
 )
 
-(defrule order-delivery-confirmation-operation-confirmed-simulate-tracking
+(defrule order-delivery-confirmation-referee-confirmed-simulate-tracking
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
@@ -136,7 +151,7 @@
   (retract ?rf)
 )
 
-(defrule order-delivery-confirmation-operation-confirmed-DS-read-fail-recovery
+(defrule order-delivery-confirmation-referee-confirmed-DS-read-fail-recovery
  "Recover from reading failure at DS, iff there is a unique, fitting, caped unconfirmed, workpiece"
   (declare (salience ?*PRIORITY_HIGH*))
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
@@ -166,7 +181,7 @@
   (modify ?pf (workpiece ?wp-id))
 )
 
-(defrule order-delivery-confirmation-operation-confirmed-DS-read-fail-safe
+(defrule order-delivery-confirmation-referee-confirmed-DS-read-fail-safe
  "Disable tracking if fai-safe is on and couldn't recover"
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
@@ -180,7 +195,7 @@
 )
 
 
-(defrule order-delivery-confirmation-operation-confirmed-workpiece-rectify
+(defrule order-delivery-confirmation-referee-confirmed-workpiece-rectify
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
@@ -284,7 +299,7 @@
   (modify ?wf (order ?order) (base-color ?order-base) (cap-color ?order-cap) (ring-colors ?order-rings))
 )
 
-(defrule order-delivery-confirmation-operation-confirmed-workpiece-verified
+(defrule order-delivery-confirmation-referee-confirmed-workpiece-verified
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
