@@ -282,13 +282,9 @@
   (retract ?mf) ; message will be destroyed after rule completes
 
   (bind ?id (pb-field-value ?p "id"))
-	(bind ?at-machine-str (pb-field-value ?p "at_machine"))
-	(bind ?visible (if (pb-has-field ?p "visible") then (pb-field-value ?p "visible") else FALSE))
-
-	(printout t "Got " ?id " at " ?at-machine-str " visible? " ?visible crlf)
-
-  (assert (mps-status-feedback (sym-cat ?at-machine-str) BARCODE ?id))
-
+  (bind ?at-machine-str (pb-field-value ?p "at_machine"))
+  (printout t "Read barcode " ?id " at " ?at-machine-str crlf)
+  (assert (mps-read-barcode (sym-cat ?at-machine-str) ?id))
 )
 
 (defrule net-recv-WorkpieceAddRing

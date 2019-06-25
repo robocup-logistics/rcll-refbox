@@ -117,7 +117,7 @@
     Update workpiece by read event information (mps-status-feedback)"
     (workpiece-tracking (enabled TRUE))
     (gamestate (phase PRODUCTION) (game-time ?gt))
-    ?mf <- (mps-status-feedback ?m-name BARCODE ?id)
+    ?mf <- (mps-read-barcode ?m-name ?id)
     (machine (name ?m-name) (state ~BROKEN) (team ?team))
     =>
     (retract ?mf)

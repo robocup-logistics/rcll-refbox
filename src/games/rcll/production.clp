@@ -271,6 +271,16 @@
 	(assert (mps-add-base-on-slide ?n))
 )
 
+(defrule production-mps-feedback-barcode
+	"Process a BARCODE event sent by the PLC. Do not directly update the
+     workpiece but assert a transient mps-read-barcode fact instead."
+	?m <- (machine (name ?n))
+	?fb <- (mps-status-feedback ?n BARCODE ?barcode)
+	=>
+	(retract ?fb)
+	(assert (mps-read-barcode ?n ?barcode))
+)
+
 (defrule production-bs-dispense
   "Start dispensing a base from a prepared BS"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
