@@ -371,3 +371,17 @@
     (printout t "Removing obsolete workpiece " ?w-id crlf)
 )
 
+(defrule workpiece-unique-order-prefixs
+   "Warn if 'unique order prefix' assumption is violated. Assumption is
+   necessary for sound order to workpiece assignment.
+   Check workpiece-assig-order rule for details"
+   (order (id ?o1-id) (complexity ~C0) (ring-colors $?o1-ring-colors) (active TRUE))
+   (order (id ?o2-id&:(and (neq ?o2-id ?o1-id) (< ?o1-id ?o2-id)))
+          (complexity ~C0) (ring-colors $?o2-ring-colors) (active TRUE))
+   (workpiece-tracking (enabled TRUE))
+   (test (eq (first$ ?o1-ring-colors) (first$ ?o2-ring-colors)))
+   =>
+  (printout warn "Violated uniqueness assumption 'cx-order prefix', might influence tracking"  crlf)
+  (printout warn " Orders " ?o1-id " & " ?o2-id " have the same first ring color "
+                 (first$ ?o1-ring-colors) crlf)
+)
