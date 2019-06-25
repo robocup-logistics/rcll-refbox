@@ -72,7 +72,11 @@
 	(bind ?c1-first-ring (subseq$ ?ring-colors 1 1))
 	(bind ?c2-first-ring (subseq$ ?ring-colors 2 2))
 	(bind ?c3-first-ring (subseq$ ?ring-colors 3 3))
+	(bind ?cx-first-ring (subseq$ ?ring-colors 4 4))
 
+	(bind ?c1-counter 0)
+	(bind ?c2-counter 0)
+	(bind ?c3-counter 0)
   ; machine assignment if not already done
   (if (not (any-factp ((?mi machines-initialized)) TRUE))
 			then (machine-init-randomize ?ring-colors))
@@ -104,9 +108,18 @@
 		(bind ?order-ring-colors (create$))
 		(switch ?order:complexity
 			;(case C0 then) ; for C0 we have nothing to do, no ring color
-			(case C1 then (bind ?order-ring-colors (create$ ?c1-first-ring)))
-			(case C2 then (bind ?order-ring-colors (create$ ?c2-first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?c2-first-ring)) 1 1))))
-			(case C3 then (bind ?order-ring-colors (create$ ?c3-first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?c3-first-ring)) 1 2))))
+			(case C1 then (bind ?c1-counter (+ ?c1-counter 1))
+			              (if (<= ?c1-counter 1) then (bind ?first-ring ?c1-first-ring)
+			                                     else (bind ?first-ring ?cx-first-ring))
+			              (bind ?order-ring-colors (create$ ?first-ring)))
+			(case C2 then (bind ?c2-counter (+ ?c2-counter 1))
+			              (if (<= ?c2-counter 1) then (bind ?first-ring ?c2-first-ring)
+			                                     else (bind ?first-ring ?cx-first-ring))
+                             (bind ?order-ring-colors (create$ ?first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?first-ring)) 1 1))))
+			(case C3 then (bind ?c3-counter (+ ?c3-counter 1))
+			              (if (<= ?c3-counter 1) then (bind ?first-ring ?c3-first-ring)
+			                                     else (bind ?first-ring ?cx-first-ring))
+			              (bind ?order-ring-colors (create$ ?first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?first-ring)) 1 2))))
     )
 
 		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
