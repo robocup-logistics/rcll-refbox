@@ -213,6 +213,7 @@
     (slot enabled (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
     (slot fail-safe (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
     (slot reason (type STRING))
+    (slot broadcast (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
 (deftemplate workpiece

@@ -158,6 +158,7 @@ llsfrb:
   workpiece-tracking:
    enable: true
    fail-safe: true
+   broadcast: false
 
   simulation:
     enable: false

@@ -96,11 +96,13 @@
 (defrule workpiece-tracking-state-from-config
   (confval (path "/llsfrb/workpiece-tracking/enable") (type BOOL) (value ?tracking))
   (confval (path "/llsfrb/workpiece-tracking/fail-safe") (type BOOL) (value ?disable-on-failure))
+  (confval (path "/llsfrb/workpiece-tracking/broadcast") (type BOOL) (value ?send-info))
   (not (workpiece-tracking))
   =>
   (if (eq ?tracking true) then (bind ?enabled TRUE) else (bind ?enabled FALSE))
   (if (eq ?disable-on-failure true) then (bind ?fail-safe TRUE) else (bind ?fail-safe FALSE))
-  (assert (workpiece-tracking (enabled ?enabled) (fail-safe ?fail-safe) (reason "by config")))
+  (if (eq ?send-info true) then (bind ?broadcast TRUE) else (bind ?broadcast FALSE))
+  (assert (workpiece-tracking (enabled ?enabled) (fail-safe ?fail-safe) (reason "by config") (broadcast ?broadcast)))
 )
 
 (defrule workpiece-tracking-print

@@ -331,6 +331,7 @@
 (defrule net-send-WorkpieceInfo
   (time $?now)
   ?f <- (signal (type workpiece-info) (time $?t&:(timeout ?now ?t ?*WORKPIECEINFO-PERIOD*)) (seq ?seq))
+  (workpiece-tracking (enabled TRUE) (broadcast TRUE))
   (gamestate (cont-time ?ctime))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
