@@ -19,11 +19,6 @@ class StorageStation: public Machine {
     StorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
     virtual ~StorageStation();
 
-    // Send command to deliver a product
-    // slot is between 1 and 3
-    // deprecated
-    void get_product(int slot);
-
     // identify: tell the PLC, which machine it is controlling
     virtual void identify();
 };
