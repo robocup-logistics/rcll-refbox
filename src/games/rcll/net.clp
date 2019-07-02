@@ -523,17 +523,8 @@
             (pb-set-field ?m "instruction_ds" ?pm)
 	  )
 	  (case SS then
-	    (bind ?pssm (pb-create "llsf_msgs.SSSlot"))
-	    (pb-set-field ?pssm "x" (nth$ 1 (fact-slot-value ?mf ss-slot)))
-	    (pb-set-field ?pssm "y" (nth$ 2 (fact-slot-value ?mf ss-slot)))
-	    (pb-set-field ?pssm "z" (nth$ 3 (fact-slot-value ?mf ss-slot)))
-
-	    (bind ?psm (pb-create "llsf_msgs.SSTask"))
-	    (pb-set-field ?psm "operation" (fact-slot-value ?mf ss-operation))
-	    (pb-set-field ?psm "shelf" ?pssm)
-
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
-	    (pb-set-field ?pm "task" ?psm)
+	    (pb-set-field ?pm "operation" (fact-slot-value ?mf ss-operation))
       (pb-set-field ?m "instruction_ss" ?pm)
 	  )
 	  (case RS then

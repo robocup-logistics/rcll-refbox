@@ -76,7 +76,8 @@
   (slot ds-order (type INTEGER))
 
   (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
-  (multislot ss-slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
+  ;(multislot ss-slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
+	(slot ss-holding (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
 
   (slot rs-ring-color (type SYMBOL)
 	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
