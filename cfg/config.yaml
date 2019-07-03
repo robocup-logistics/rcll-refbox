@@ -59,7 +59,7 @@ llsfrb:
         connection: mockup
       C-SS:
         active: true
-        host: !ipv4 192.168.2.129
+        host: !ipv4 192.168.2.22
         port: !tcp-port 4840
         type: SS
         connection: mockup
@@ -101,7 +101,7 @@ llsfrb:
         connection: mockup
       M-SS:
         active: true
-        host: !ipv4 192.168.2.130
+        host: !ipv4 192.168.2.35
         port: !tcp-port 4840
         type: SS
         connection: mockup
