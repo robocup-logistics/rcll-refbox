@@ -498,18 +498,18 @@
 	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
                  (ss-operation RETRIEVE) (task nil))
 	=>
-	(modify ?m (state PROCESSING) (wait-for-product-since ?gt))
+	(modify ?m (state PROCESSING) (proc-start ?gt))
 )
 
 (defrule production-ss-processed-retrieval
 	"The conveyor started moving, go to processed."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (team ?team) (state PROCESSING) (ss-operation RETRIEVE)
-	               (wait-for-product-since ?t&:(timeout-sec ?gt ?t ?*PROCESS-TIME-SS*)))
+	               (proc-start ?t&:(timeout-sec ?gt ?t ?*PROCESS-TIME-SS*)))
 	=>
-  (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
-                   (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
-                   (reason (str-cat "Retrieved product from " ?n))))
+	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+	                (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
+	                (reason (str-cat "Retrieved product from " ?n))))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT) (ss-holding FALSE))
 )
