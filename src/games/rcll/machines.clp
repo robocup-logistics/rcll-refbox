@@ -69,6 +69,11 @@
   )
 )
 
+(deffunction machine-team (?machine-name)
+	(bind ?prefix (sub-string 1 1 (str-cat ?machine-name)))
+	(return (if (eq ?prefix "C") then CYAN else MAGENTA))
+)
+
 (deffunction machine-init-randomize (?ring-colors)
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE

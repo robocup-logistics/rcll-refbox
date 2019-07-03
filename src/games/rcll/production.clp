@@ -6,6 +6,7 @@
 ;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
 ;             2017       Tobias Neumann
 ;             2019       Till Hofmann
+;             2019       Mostafa Gomaa
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -270,6 +271,16 @@
 	(assert (mps-add-base-on-slide ?n))
 )
 
+(defrule production-mps-feedback-barcode
+	"Process a BARCODE event sent by the PLC. Do not directly update the
+     workpiece but assert a transient mps-read-barcode fact instead."
+	?m <- (machine (name ?n))
+	?fb <- (mps-status-feedback ?n BARCODE ?barcode)
+	=>
+	(retract ?fb)
+	(assert (mps-read-barcode ?n ?barcode))
+)
+
 (defrule production-bs-dispense
   "Start dispensing a base from a prepared BS"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -283,9 +294,14 @@
 (defrule production-bs-move-conveyor
   "The BS has dispensed a base. We now need to move the conveyor"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE) (bs-side ?side))
+	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE)
+                   (bs-side ?side) (bs-color ?bs-color) (team ?team))
+	(workpiece-tracking (enabled ?tracking-enabled))
 	=>
 	(printout t "Machine " ?n " moving base to " ?side crlf)
+	(if ?tracking-enabled then
+		(assert (product-processed (at-machine ?n) (mtype BS) (team ?team)
+		                           (game-time ?gt) (base-color ?bs-color))))
 	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy WAIT))
 	(if (eq ?side INPUT)
 	 then
@@ -337,9 +353,14 @@
 (defrule production-rs-move-to-output
 	"Ring is mounted, move to output"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE))
+	?m <- (machine (name ?n) (mtype RS) (state PROCESSING) (task MOUNT-RING) (mps-busy FALSE)
+	               (rs-ring-color ?ring-color) (team ?team))
+	(workpiece-tracking (enabled ?tracking-enabled))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
+	(if ?tracking-enabled then
+		(assert (product-processed (at-machine ?n) (mtype RS) (team ?team)
+		                           (game-time ?gt) (ring-color ?ring-color))))
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
@@ -413,12 +434,17 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (team ?team)
                    (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP) (mps-busy FALSE))
+	(workpiece-tracking (enabled ?tracking-enabled))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
 	(if (eq ?cs-op RETRIEVE_CAP) then
 		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
 		                (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
-		                (reason (str-cat "Retrieved cap at " ?n)))))
+		                (reason (str-cat "Retrieved cap at " ?n))))
+	else (if ?tracking-enabled then
+		(assert (product-processed (at-machine ?n) (mtype CS)
+		                           (team ?team) (game-time ?gt))))
+	)
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT)
 	           (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
@@ -459,15 +485,18 @@
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER) (mps-busy FALSE)
 	               (ds-order ?order) (team ?team))
   =>
-	(modify ?m (state PROCESSED) (task nil))
-	(assert (product-delivered (order ?order) (team ?team) (game-time ?gt)
-	                           (confirmed FALSE)))
+	(bind ?p-id (gen-int-id))
+	(assert (product-processed (at-machine ?n) (mtype DS) (team ?team) (game-time ?gt)
+	                           (id ?p-id) (order ?order) (confirmed FALSE)))
+	(assert (referee-confirmation (process-id ?p-id) (state REQUIRED)))
 	(assert (attention-message (team ?team)
 	                           (text (str-cat "Please confirm delivery for order " ?order))))
+	(modify ?m (state PROCESSED) (task nil))
 )
 
 (defrule production-ds-processed
   "The DS finished processing the workpiece, set the machine to IDLE and reset it."
+	(declare (salience ?*PRIORITY_LAST*))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>

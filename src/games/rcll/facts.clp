@@ -6,6 +6,7 @@
 ;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
 ;             2017       Tobias Neumann
 ;             2019       Till Hofmann
+;             2019       Mostafa Gomaa
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -208,6 +209,27 @@
   (slot allow-overtime (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
+(deftemplate workpiece-tracking
+    (slot enabled (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+    (slot fail-safe (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+    (slot reason (type STRING))
+    (slot broadcast (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+)
+
+(deftemplate workpiece
+	(slot id (type INTEGER))
+	(slot order (type INTEGER))
+	(slot at-machine (type SYMBOL)
+				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot state (type SYMBOL) (allowed-values IDLE AVAILABLE RETRIEVED) (default IDLE))
+  (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK BASE_CLEAR))
+  (multislot ring-colors (type SYMBOL) (cardinality 0 3)
+						 (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+  (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (slot visible (type FLOAT))
+)
+
 (deftemplate ring-spec
   (slot color (type SYMBOL) (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot req-bases (type INTEGER) (default 0))
@@ -224,18 +246,29 @@
   (return (string-to-field (sub-string 4 (length$ ?id-string) ?id-string)))
 )
 
-(deftemplate product-delivered
+(deftemplate referee-confirmation
+  (slot process-id (type INTEGER) (default-dynamic (gen-int-id)))
+  (slot state (type SYMBOL) (allowed-values REQUIRED CONFIRMED DENIED)
+        (default REQUIRED))
+)
+
+(deftemplate product-processed
   (slot id (type INTEGER) (default-dynamic (gen-int-id)))
+  (slot workpiece (type INTEGER) (default 0))
   (slot game-time (type FLOAT))
-	(slot order (type INTEGER) (default 0))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (slot mtype (type SYMBOL) (allowed-values BS DS RS CS SS))
+  (slot at-machine (type SYMBOL)
+				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
 	(slot delivery-gate (type INTEGER))
   (slot confirmed (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
-  (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
-  (multislot ring-colors (type SYMBOL) (cardinality 0 3)
-	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
+  (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK))
+  (slot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+  (slot scored (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+	(slot order (type INTEGER) (default 0))
 )
+
 
 (deftemplate gamestate
   (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE) (default STANDALONE))
@@ -304,6 +337,7 @@
   (slot game-time (type FLOAT))
   (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION WHACK_A_MOLE_CHALLENGE))
   (slot reason (type STRING))
+  (slot product-step (type INTEGER) (default 0))
 )
 
 (deftemplate zone-swap
@@ -342,6 +376,7 @@
   (signal (type order-info) (time (create$ 0 0)) (seq 1))
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
+  (signal (type workpiece-info) (time (create$ 0 0)) (seq 1))
   (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
   (setup-light-toggle CS2)
   (whac-a-mole-light NONE)
@@ -403,6 +438,9 @@
   ;(machine-light-code (id 10) (code RED-BLINK))
 )
 
+; check workpiece-assign-order rule in workpieces.clp for specific
+; assumptions for the 2016 game and order to workpiece assignment!
+; Especially: single C1, C2, and C3 orders!
 (deffacts orders
   ; standing order
   (order (id  1) (complexity C0) (quantity-requested 1) (start-range 0 0)

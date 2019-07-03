@@ -91,7 +91,7 @@
     (and (eq ?robot:number (pb-field-value ?p "robot_number"))
 	 (eq ?robot:team-color (sym-cat (pb-field-value ?p "team_color"))))
 
-    (if (= (pb-field-value ?p "maintenance") 1)
+    (if (eq (pb-field-value ?p "maintenance") TRUE)
     then
       (if (eq ?robot:state ACTIVE) then
 	(bind ?cycle (+ ?robot:maintenance-cycles 1))

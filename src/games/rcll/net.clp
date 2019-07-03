@@ -4,6 +4,7 @@
 ;  Created: Thu Feb 14 17:26:27 2013
 ;  Copyright  2013  Tim Niemueller [www.niemueller.de]
 ;             2017  Tobias Neumann
+;             2019  Mostafa Gomaa
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
@@ -103,7 +104,7 @@
   (do-for-fact ((?teams known-teams)) TRUE
     (foreach ?t ?teams:implied
       (pb-add-list ?gi "known_teams" ?t)
-    )    
+    )
   )
   (pb-send ?client-id ?gi)
   (pb-destroy ?gi)
@@ -147,7 +148,7 @@
   (bind ?has-pose FALSE)
   (bind ?pose (create$ 0.0 0.0 0.0))
   (bind ?pose-time (create$ 0 0))
-   
+
   (if (pb-has-field ?p "pose")
    then
     (bind ?has-pose TRUE)
@@ -274,12 +275,77 @@
 	)
 )
 
+(defrule net-recv-Workpiece
+  ?mf <- (protobuf-msg (type "llsf_msgs.Workpiece") (ptr ?p) (rcvd-at $?rcvd-at)
+											 (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
 
+  (bind ?id (pb-field-value ?p "id"))
+  (bind ?at-machine-str (pb-field-value ?p "at_machine"))
+  (printout t "Read barcode " ?id " at " ?at-machine-str crlf)
+  (assert (mps-read-barcode (sym-cat ?at-machine-str) ?id))
+)
+
+(defrule net-recv-WorkpieceAddRing
+  ?mf <- (protobuf-msg (type "llsf_msgs.WorkpieceAddRing") (ptr ?p) (rcvd-at $?rcvd-at)
+											 (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  =>
+  (retract ?mf) ; message will be destroyed after rule completes
+
+  (bind ?id (pb-field-value ?p "id"))
+	(bind ?ring-color (sym-cat (pb-field-value ?p "ring_color")))
+
+	(printout t "Add ring " ?ring-color " to workpiece " ?id crlf)
+
+	(do-for-fact ((?wp workpiece)) (eq ?wp:id ?id)
+		(printout t "Add ring " ?ring-color " to workpiece " ?id " *** " crlf)
+	  (modify ?wp (ring-colors (append$ ?wp:ring-colors ?ring-color)))
+	)
+)
+
+(deffunction net-create-WorkpieceInfo ()
+  (bind ?wi (pb-create "llsf_msgs.WorkpieceInfo"))
+
+  (do-for-all-facts
+    ((?wp workpiece)) TRUE
+
+    (bind ?w (pb-create "llsf_msgs.Workpiece"))
+		(pb-set-field ?w "id" ?wp:id)
+		(pb-set-field ?w "at_machine" (str-cat ?wp:at-machine))
+		(pb-set-field ?w "team" (str-cat ?wp:team))
+		(pb-set-field ?w "visible" ?wp:visible)
+
+		(if (neq ?wp:base-color nil) then
+			(pb-set-field ?w "base_color" (str-cat ?wp:base-color)))
+		(foreach ?rc ?wp:ring-colors (pb-add-list ?w "ring_colors" (str-cat ?rc)))
+		(if (neq ?wp:cap-color nil) then
+			(pb-set-field ?w "cap_color" (str-cat ?wp:cap-color)))
+
+		(pb-add-list ?wi "workpieces" ?w) ; destroys ?w
+  )	
+
+  (return ?wi)
+)
+
+(defrule net-send-WorkpieceInfo
+  (time $?now)
+  ?f <- (signal (type workpiece-info) (time $?t&:(timeout ?now ?t ?*WORKPIECEINFO-PERIOD*)) (seq ?seq))
+  (workpiece-tracking (enabled TRUE) (broadcast TRUE))
+  (gamestate (cont-time ?ctime))
+  =>
+  (modify ?f (time ?now) (seq (+ ?seq 1)))
+  (bind ?wi (net-create-WorkpieceInfo))
+
+  (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
+    (pb-send ?client:id ?wi))
+  (pb-destroy ?wi)
+)
 
 (deffunction net-create-GameState (?gs)
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))
-  (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then 
+  (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then
     (bind ?gt (time-from-sec (fact-slot-value ?gs game-time)))
     (pb-set-field ?gamestate-time "sec" (nth$ 1 ?gt))
     (pb-set-field ?gamestate-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
@@ -496,7 +562,7 @@
       (pb-set-field ?p "ori" (nth$ 3 (fact-slot-value ?mf pose)))
       (pb-set-field ?m "pose" ?p)
     )
-      
+
     ; In exploration phase, indicate whether this was correctly reported
     (do-for-fact ((?gs gamestate)) (eq ?gs:phase EXPLORATION)
       (do-for-fact ((?report exploration-report))
@@ -632,8 +698,10 @@
 		(nth$ 2 (fact-slot-value ?order-fact delivery-period)))
 
   (do-for-all-facts
-    ((?delivery product-delivered))
-    (and (eq ?delivery:confirmed FALSE) (eq ?delivery:order (fact-slot-value ?order-fact id)))
+    ((?delivery product-processed) (?rf referee-confirmation))
+    (and (eq ?delivery:confirmed FALSE) (eq ?delivery:order (fact-slot-value ?order-fact id))
+         (eq ?delivery:mtype DS) (eq ?delivery:id ?rf:process-id)
+         (eq ?rf:state REQUIRED))
 
     (bind ?d (net-create-UnconfirmedDelivery ?delivery:id ?delivery:team ?delivery:game-time))
     (pb-add-list ?o "unconfirmed_deliveries" ?d)
