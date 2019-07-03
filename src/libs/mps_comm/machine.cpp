@@ -128,7 +128,7 @@ void Machine::send_command(unsigned short command, unsigned short payload1, unsi
 				reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
 				setNodeValue(registerNodes[reg], (uint8_t)error, reg);
 				success = true;
-			} catch (std::runtime_error &e) {
+			} catch (std::exception &e) {
 				logger->warn("Failed to send command to {}, reconnecting", name_);
 				subscriptions.clear();
 				connect_PLC();
