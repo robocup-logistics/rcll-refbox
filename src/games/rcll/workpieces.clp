@@ -18,7 +18,7 @@
 		then (return BASE_SILVER))
 	(if (and (>= ?id (nth$ 1 ?*WORKPIECE-RANGE-CLEAR*)) (<= ?id (nth$ 2 ?*WORKPIECE-RANGE-CLEAR*)))
 			then (return BASE_CLEAR))
-	(printout error "Invalid workpiece ID " ?id ". Cannot determine base color." crlf)
+	(printout t "Invalid workpiece ID " ?id ". Cannot determine base color." crlf)
 	(return BASE_INVALID)
 )
 
