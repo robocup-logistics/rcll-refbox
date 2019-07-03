@@ -196,7 +196,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       std::string connection_string = "plc";
       try {
         // common setting for all machines
-        connection_string = config_->get_string((prefix + "connection").c_str());
+        connection_string = config_->get_string("/llsfrb/mps/connection");
 			} catch (Exception &e) {
 			}
 			try {
