@@ -495,24 +495,24 @@
 
 (defrule production-ss-start-retrieval
 	"SS is prepared, move the workpiece to the output."
-	(gamestate (state RUNNING) (phase PRODUCTION))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
                  (ss-operation RETRIEVE) (task nil))
 	=>
-	(modify ?m (state PROCESSING) (task MOVE-OUT) (mps-busy WAIT))
-	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+	(modify ?m (state PROCESSING) (wait-for-product-since ?gt))
 )
 
 (defrule production-ss-processed-retrieval
 	"The conveyor started moving, go to processed."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype SS) (team ?team) (state PROCESSING)
-                 (ss-operation RETRIEVE) (task MOVE-OUT) (mps-busy TRUE))
+	?m <- (machine (name ?n) (mtype SS) (team ?team) (state PROCESSING) (ss-operation RETRIEVE)
+	               (wait-for-product-since ?t&:(timeout-sec ?gt ?t ?*PROCESS-TIME-SS*)))
 	=>
   (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
                    (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
                    (reason (str-cat "Retrieved product from " ?n))))
-	(modify ?m (state PROCESSED) (ss-holding FALSE))
+	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT) (ss-holding FALSE))
 )
 
 (defrule production-mps-idle

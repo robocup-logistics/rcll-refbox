@@ -53,6 +53,7 @@
   ; How long to wait before resetting a machine that is processing
   ?*PROCESSING-WAIT-TILL-RESET* = 90
   ?*PREPARE-WAIT-TILL-PROCESSING* = 5
+  ?*PROCESS-TIME-SS* = 5
 
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1
