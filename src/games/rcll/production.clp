@@ -109,36 +109,24 @@
 	      (if (pb-has-field ?p "instruction_ss")
 	       then
 	        (bind ?prepmsg (pb-field-value ?p "instruction_ss"))
-	        (bind ?task (pb-field-value ?prepmsg "task"))
-		(bind ?operation (sym-cat (pb-field-value ?task "operation")))
-		(bind ?slot (pb-field-value ?task "shelf"))
-                (bind ?slot-x (pb-field-value ?slot "x"))
-                (bind ?slot-y (pb-field-value ?slot "y"))
-                (bind ?slot-z (pb-field-value ?slot "z"))
-
+	        (bind ?operation (sym-cat (pb-field-value ?prepmsg "operation")))
                 (if (eq ?operation RETRIEVE)
                  then
-                  ; check if slot is filled
-                  (if (any-factp ((?ss-slot machine-ss-filled)) (and (eq ?ss-slot:name ?mname)
-                                                                     (and (eq (nth$ 1 ?ss-slot:slot) ?slot-x)
-                                                                          (and (eq (nth$ 2 ?ss-slot:slot) ?slot-y)
-                                                                               (eq (nth$ 3 ?ss-slot:slot) ?slot-z)
-                                                                          )
-                                                                     )
-                                                                )
-                      )
+                  (if ?m:ss-holding
                    then
-                    (printout t "Prepared " ?mname " (RETRIVE: (" ?slot-x ", " ?slot-y ", " ?slot-z ") )" crlf)
-                    (modify ?m (state PREPARED) (ss-operation ?operation) (ss-slot ?slot-x ?slot-y ?slot-z) (wait-for-product-since ?gt))
+                    (printout t "Prepared " ?mname crlf)
+                    (modify ?m (state PREPARED) (ss-operation ?operation) (wait-for-product-since ?gt))
                    else
-		    (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with RETRIVE (" ?slot-x ", " ?slot-y ", " ?slot-z ") but this is empty")))
+                    (modify ?m (state BROKEN)
+                               (broken-reason
+                                 (str-cat "Prepare received for " ?mname ", but station is empty")))
                   )
                  else
                   (if (eq ?operation STORE)
                    then
-		    (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE-operation")))
+                     (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation")))
                    else
-		    (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation")))
+                     (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation " ?operation)))
                   )
                 )
                else
@@ -450,10 +438,10 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
-(defrule production-bs-cs-rs-ready-at-output
+(defrule production-bs-cs-rs-ss-ready-at-output
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype BS|CS|RS) (state PROCESSED) (task MOVE-OUT)
+	?m <- (machine (name ?n) (mtype BS|CS|RS|SS) (state PROCESSED) (task MOVE-OUT)
 	               (mps-busy FALSE) (mps-ready TRUE))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
@@ -502,6 +490,28 @@
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
   (modify ?m (state WAIT-IDLE) (idle-since ?gt))
+)
+
+(defrule production-ss-start-retrieval
+	"SS is prepared, move the workpiece to the output."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
+                 (ss-operation RETRIEVE) (task nil))
+	=>
+	(modify ?m (state PROCESSING) (proc-start ?gt))
+)
+
+(defrule production-ss-processed-retrieval
+	"The conveyor started moving, go to processed."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (team ?team) (state PROCESSING) (ss-operation RETRIEVE)
+	               (proc-start ?t&:(timeout-sec ?gt ?t ?*PROCESS-TIME-SS*)))
+	=>
+	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+	                (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
+	                (reason (str-cat "Retrieved product from " ?n))))
+	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT) (ss-holding FALSE))
 )
 
 (defrule production-mps-idle

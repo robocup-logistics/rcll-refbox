@@ -173,14 +173,7 @@ handle_message(boost::asio::ip::udp::endpoint &sender,
 	prep_ds->set_order_id(ds_order_id_);
       } else if (machine_type_ == "SS") {
 	llsf_msgs::PrepareInstructionSS *prep_ss = prep.mutable_instruction_ss();
-        
-        llsf_msgs::SSTask *ss_task = prep_ss->mutable_task();
-        ss_task->set_operation( ss_op_ );
-        
-        llsf_msgs::SSSlot *ss_slot = ss_task->mutable_shelf();
-        ss_slot->set_x(ss_slot_x_);
-        ss_slot->set_y(ss_slot_y_);
-        ss_slot->set_z(ss_slot_z_);
+	prep_ss->set_operation(ss_op_);
       } else if (machine_type_ == "RS") {
 	llsf_msgs::PrepareInstructionRS *prep_rs = prep.mutable_instruction_rs();
 	prep_rs->set_ring_color(rs_ring_color_);
@@ -201,7 +194,7 @@ usage(const char *progname)
 	 "instructions are specific for the machine type:\n"
 	 "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
 	 "DS:  <order_id>\n"
-	 "SS:  (RETRIEVE|STORE) <slot-x> <slot-y> <slot-z>\n"
+	 "SS:  (RETRIEVE|STORE)\n"
 	 "RS:  (RING_BLUE|RING_GREEN|RING_ORANGE|RING_YELLOW)\n"
 	 "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n",
 	 progname);
@@ -242,17 +235,14 @@ main(int argc, char **argv)
     }
     ds_order_id_ = argp.parse_item_int(2);
   } else if (machine_type_ == "SS") {
-    if (argp.num_items() < 6) {
-      printf("SS machine requires operation and x, y, z arguments %zu\n", argp.num_items());
+    if (argp.num_items() != 3) {
+      printf("Wrong number of arguments. Expected 3, got %zu\n", argp.num_items());
       usage(argv[0]);
       exit(-1);
     }
     if (! llsf_msgs::SSOp_Parse(argp.items()[2], &ss_op_)) {
       printf("Invalid operation\n"); exit(-2);
     }
-    ss_slot_x_  = argp.parse_item_int(3);
-    ss_slot_y_  = argp.parse_item_int(4);
-    ss_slot_z_  = argp.parse_item_int(5);
   } else if (machine_type_ == "RS") {
     if (! llsf_msgs::RingColor_Parse(argp.items()[2], &rs_ring_color_)) {
       printf("Invalid ring color\n"); exit(-2);

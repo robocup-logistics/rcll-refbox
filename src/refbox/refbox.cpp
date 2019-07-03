@@ -234,6 +234,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	      logger_->log_info("RefBox", "Adding DS %s:%u", mpsip.c_str(), port);
 	      mps = new DeliveryStation(cfg_name, mpsip, port, connection_mode);
 	    }
+      else if (mpstype == "SS") {
+	      logger_->log_info("RefBox", "Adding SS %s:%u", mpsip.c_str(), port);
+	      mps = new StorageStation(cfg_name, mpsip, port, connection_mode);
+      }
 	    else {
 	      throw fawkes::Exception("this type wont match");
 	    }
