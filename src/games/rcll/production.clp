@@ -119,13 +119,12 @@
                    else
                     (modify ?m (state BROKEN)
                                (broken-reason
-                                 (str-cat "Prepare received for " ?mname
-                                          ", but station is empty" crlf)))
+                                 (str-cat "Prepare received for " ?mname ", but station is empty")))
                   )
                  else
                   (if (eq ?operation STORE)
                    then
-                     (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE-operation")))
+                     (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation")))
                    else
                      (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation " ?operation)))
                   )
