@@ -57,7 +57,7 @@
                                     (confirmed TRUE)
                                     (at-machine ?m:name)
                                     (workpiece ?workpiece-id)
-                                    (game-time ?delivery-time)
+                                    (game-time 0.1)
                                     (base-color ?order:base-color))))
       ;Simulate Ring mouting processes
       (foreach ?r ?order:ring-colors
@@ -68,7 +68,7 @@
                                       (confirmed TRUE)
                                       (at-machine ?m:name)
                                       (workpiece ?workpiece-id)
-                                      (game-time ?delivery-time)
+                                      (game-time 0.1)
                                       (ring-color ?r)))))
       ;Simulate Cap mounting process on a random cap station
       (do-for-fact ((?m machine)) (and (eq ?m:mtype CS) (eq ?m:team ?team))
@@ -77,7 +77,7 @@
                                     (confirmed TRUE)
                                     (at-machine ?m:name)
                                     (workpiece ?workpiece-id)
-                                    (game-time ?delivery-time)
+                                    (game-time 0.1)
                                     (cap-color ?order:cap-color))))
      ; (do-for-fact ((?m machine)) (and (eq ?m:mtype DS) (eq ?m:team ?team))
      ;    (assert (product-processed (mtype DS)
