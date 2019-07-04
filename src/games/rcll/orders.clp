@@ -478,7 +478,7 @@
   (order (id ?o-id)
          (complexity ?complexity)
          (quantity-requested ?q-req)
-         (delivery-period $?dp &:(<= ?g-time (nth$ 2 ?dp)))
+         (delivery-period $?dp)
          (base-color ?base-color)
          (ring-colors $?r-colors&:(eq ?wp-r-colors
                                       (subseq$ ?r-colors 1 (length$ ?wp-r-colors)))))
@@ -536,7 +536,7 @@
     (order (id ?o-id)
            (complexity ?complexity)
            (quantity-requested ?q-req)
-           (delivery-period $?dp &:(<= ?g-time (nth$ 2 ?dp)))
+           (delivery-period $?dp)
            (base-color ?base-color)
            (ring-colors $?ring-colors)
            (cap-color ?cap-color))
