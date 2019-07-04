@@ -551,6 +551,28 @@
      (modify ?pf (scored TRUE) (order ?o-id))
 )
 
+(defrule order-step-mount-cap-unconfirmed
+    "Zero points given immediately for unconfirmed cap mount on an intermediate product "
+    ?pf <- (product-processed (id ?p-id)
+                              (mtype CS)
+                              (team ?team)
+                              (scored FALSE)
+                              (confirmed FALSE)
+                              (workpiece ?w-id)
+                              (game-time ?g-time)
+                              (cap-color nil))
+    (workpiece (id ?w-id)
+               (team ?team))
+    (not (points (product-step ?p-id)))
+    =>
+    ; Production points for more verbose cap mounting
+    (assert (points (game-time ?g-time) (team ?team)
+                    (points 0)
+                    (phase PRODUCTION) (product-step ?p-id)
+                    (reason (str-cat "Unconfirmed mounted cap"))))
+    (modify ?pf (scored TRUE))
+)
+
 
 ;-------------------------------fault handling
 (defrule order-remove-operations-scored-with-no-workpiece
