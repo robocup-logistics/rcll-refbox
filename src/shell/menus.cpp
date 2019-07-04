@@ -541,7 +541,7 @@ OrderDeliverMenu::OrderDeliverMenu
   (NCursesWindow *parent, llsf_msgs::Team team,
    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
    std::shared_ptr<llsf_msgs::GameState> gstate)
-  : Menu(det_lines(team, oinfo) + 2 + 2, 18 + 2,
+  : Menu(det_lines(team, oinfo) + 2 + 2, 19 + 2,
 	 (parent->lines() - (det_lines(team, oinfo) + 2))/2,
 	 (parent->cols() - 18)/2),
     oinfo_(oinfo), team_(team)
@@ -657,7 +657,7 @@ OrderDeliverMenu::On_Menu_Init()
     case llsf_msgs::BASE_BLACK:
       attron(' '|COLOR_PAIR(COLOR_WHITE_ON_BLACK));   break;
     }
-    addstr(i+1, 14, " ");
+    addstr(i+1, 15, " ");
 
     for (int j = 0; j < o.ring_colors_size(); ++j) {
       switch (o.ring_colors(j)) {
@@ -670,12 +670,12 @@ OrderDeliverMenu::On_Menu_Init()
       case llsf_msgs::RING_YELLOW:
 	attron(' '|COLOR_PAIR(COLOR_BLACK_ON_YELLOW)); break;
       }
-      addstr(i+1, 15+j, " ");
+      addstr(i+1, 16+j, " ");
     }
 
     for (int j = o.ring_colors_size(); j < 4; ++j) {
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE));
-      addstr(i+1, 15+j, " ");
+      addstr(i+1, 16+j, " ");
     }
 
     switch (o.cap_color()) {
@@ -684,10 +684,10 @@ OrderDeliverMenu::On_Menu_Init()
     case llsf_msgs::CAP_GREY:
       attron(' '|COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
     }
-    addstr(i+1, 18, " ");
+    addstr(i+1, 19, " ");
 
     attron(' '|COLOR_PAIR(COLOR_BLACK_ON_BACK));
-    printw(i+1, 20, "D%u", o.delivery_gate());
+    printw(i+1, 21, "D%u", o.delivery_gate());
   }
 
   refresh();
