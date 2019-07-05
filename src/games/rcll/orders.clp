@@ -536,7 +536,7 @@
     (order (id ?o-id)
            (complexity ?complexity)
            (quantity-requested ?q-req)
-           (delivery-period $?dp &:(<= ?g-time (nth$ 2 ?dp)))
+           (delivery-period $?dp)
            (base-color ?base-color)
            (ring-colors $?ring-colors)
            (cap-color ?cap-color))
@@ -544,10 +544,19 @@
     (test (order-step-scoring-allowed ?o-id ?team ?q-req CS ?step-b-color ?step-r-color ?step-c-color))
      =>
      ; Production points for mounting the cap
+     (bind ?reason "")
+     (bind ?points 0)
+     (if (<= ?g-time (nth$ 2 ?dp)) then
+       (bind ?reason (str-cat "Mounted cap for order " ?o-id))
+       (bind ?points ?*PRODUCTION-POINTS-MOUNT-CAP*)
+      else
+       (bind ?reason (str-cat "Late cap mount for order " ?o-id " (deadline: " (nth$ 2 ?dp) ")"))
+       (bind ?points 0)
+     )
      (assert (points (game-time ?g-time) (team ?team)
-                     (points ?*PRODUCTION-POINTS-MOUNT-CAP*)
+                     (points ?points)
                      (phase PRODUCTION) (product-step ?p-id)
-                     (reason (str-cat "Mounted cap for order " ?o-id))))
+                     (reason ?reason)))
      (modify ?pf (scored TRUE) (order ?o-id))
 )
 
