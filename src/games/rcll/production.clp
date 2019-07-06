@@ -22,22 +22,22 @@
   ;(assert (attention-message (text "Entering Production Phase")))
 )
 
-(defrule production-machine-down
-  (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
-  ?mf <- (machine (name ?name) (mtype ?mtype)
-		  (state ?state&~DOWN) (proc-start ?proc-start)
-		  (down-period $?dp&:(<= (nth$ 1 ?dp) ?gt)&:(>= (nth$ 2 ?dp) ?gt)))
-  =>
-  (bind ?down-time (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
-  (printout t "Machine " ?name " down for " ?down-time " sec" crlf)
-  (if (eq ?state PROCESSING)
-   then
-    (modify ?mf (state DOWN) (prev-state ?state)
-	    (proc-start (+ ?proc-start ?down-time)))
-   else
-    (modify ?mf (state DOWN) (prev-state ?state))
-  )
-)
+;(defrule production-machine-down
+;  (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
+;  ?mf <- (machine (name ?name) (mtype ?mtype)
+;		  (state ?state&~DOWN) (proc-start ?proc-start)
+;		  (down-period $?dp&:(<= (nth$ 1 ?dp) ?gt)&:(>= (nth$ 2 ?dp) ?gt)))
+;  =>
+;  (bind ?down-time (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
+;  (printout t "Machine " ?name " down for " ?down-time " sec" crlf)
+;  (if (eq ?state PROCESSING)
+;   then
+;    (modify ?mf (state DOWN) (prev-state ?state)
+;	    (proc-start (+ ?proc-start ?down-time)))
+;   else
+;    (modify ?mf (state DOWN) (prev-state ?state))
+;  )
+;)
 
 (defrule production-machine-up
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
@@ -45,7 +45,7 @@
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
   =>
 	(printout t "Machine " ?name " is up again" crlf)
-	(modify ?mf (state ?prev-state))
+	(modify ?mf (state ?prev-state) (prev-state DOWN))
 )
 
 (defrule production-machine-prepare
@@ -438,13 +438,22 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
+(defrule production-bs-cs-rs-ss-down
+	"Workpiece is in output, switch to READY-AT-OUTPUT"
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype BS|CS|RS|SS) (state PROCESSED) (task MOVE-OUT)
+	               (mps-busy FALSE) (mps-ready TRUE) (proc-start ?proc-start) (prev-state ~DOWN))
+	=>
+  (modify ?m (state DOWN) (prev-state PROCESSED) (proc-start (+ ?proc-start 60)) (down-period (create$ ?gt (+ ?gt 60))))
+)
+
 (defrule production-bs-cs-rs-ss-ready-at-output
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS|CS|RS|SS) (state PROCESSED) (task MOVE-OUT)
-	               (mps-busy FALSE) (mps-ready TRUE))
+	               (mps-busy FALSE) (mps-ready TRUE) (prev-state DOWN))
 	=>
-	(modify ?m (state READY-AT-OUTPUT) (task nil))
+	(modify ?m (state READY-AT-OUTPUT) (task nil) (prev-state PROCESSED))
 )
 
 (defrule production-mps-product-retrieved
