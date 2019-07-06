@@ -451,7 +451,7 @@
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS|CS|RS|SS) (state PROCESSED) (task MOVE-OUT)
-	               (mps-busy FALSE) (prev-state DOWN))
+	               (mps-busy FALSE) (prev-state DOWN) (proc-start ?ps&:(> ?gt (+ ?ps 30))))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil) (prev-state PROCESSED))
 )
