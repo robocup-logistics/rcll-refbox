@@ -451,15 +451,15 @@
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS|CS|RS|SS) (state PROCESSED) (task MOVE-OUT)
-	               (mps-busy FALSE) (prev-state DOWN) (proc-start ?ps&:(> ?gt (+ ?ps 30))))
+	               (mps-busy FALSE) (prev-state DOWN))
 	=>
-	(modify ?m (state READY-AT-OUTPUT) (task nil) (prev-state PROCESSED))
+	(modify ?m (state READY-AT-OUTPUT) (task nil) (prev-state PROCESSED) (proc-start ?gt))
 )
 
 (defrule production-mps-product-retrieved
 	"The workpiece has been taken away, set the machine to IDLE and reset it."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
+	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE) (proc-start ?ps&:(> ?gt (+ ?ps 5))))
 	=>
 	(printout t "Machine " ?n ": workpiece has been picked up" crlf)
 	(modify ?m (state WAIT-IDLE) (idle-since ?gt))
