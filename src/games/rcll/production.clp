@@ -443,6 +443,8 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS|CS|RS|SS) (state PROCESSED) (task MOVE-OUT)
 	               (mps-busy FALSE) (mps-ready TRUE))
+	(or (workpiece-tracking (enabled FALSE))
+	    (workpiece (at-machine ?n) (state AVAILABLE)))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
 )
