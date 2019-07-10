@@ -14,7 +14,11 @@
   (pb-set-field ?vi "version_minor" ?*VERSION-MINOR*)
   (pb-set-field ?vi "version_micro" ?*VERSION-MICRO*)
   (pb-set-field ?vi "version_string"
-		(str-cat ?*VERSION-MAJOR* "." ?*VERSION-MINOR* "." ?*VERSION-MICRO*))
+		(str-cat ?*VERSION-MAJOR*
+		         (if (> ?*VERSION-MINOR* 0) then (str-cat "." ?*VERSION-MINOR*) else "")
+		         (if (> ?*VERSION-MICRO* 0) then (str-cat "." ?*VERSION-MICRO*) else "")
+		)
+	)
   (return ?vi)
 )
 
