@@ -817,7 +817,9 @@ LLSFRefBoxShell::client_msg(uint16_t comp_id, uint16_t msg_type,
     }
     if (attmsg_has_endtime_) {
       boost::posix_time::ptime now(boost::posix_time::microsec_clock::local_time());
-      attmsg_endtime_ = now + boost::posix_time::seconds(am->time_to_show());
+      attmsg_endtime_ = now +
+        boost::posix_time::milliseconds(static_cast<long>(1000 *
+              am->time_to_show()));
     }
     if (attmsg_string_ != "") {
       log(llsf_log_msgs::LogMessage::LL_ERROR, "A", "%s", attmsg_string_.c_str());
