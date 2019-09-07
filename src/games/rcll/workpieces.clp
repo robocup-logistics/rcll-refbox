@@ -179,6 +179,15 @@
     )
 )
 
+(defrule workpiece-mps-waiting-in-processed
+  "Print a message if the MPS is in state PROCESSED but has not seen a workpiece yet."
+	(machine (name ?n) (state PROCESSED))
+  (workpiece-tracking (enabled TRUE))
+  (not (workpiece (at-machine ?n) (state AVAILABLE)))
+  =>
+  (printout warn "Machine " ?n " is waiting to detect a workpiece" crlf)
+)
+
 ;-----------------------------Order assignment---------------------------------
 (defrule workpiece-assign-order
    "Assign order to workpiece.
