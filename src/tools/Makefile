@@ -25,34 +25,34 @@ CFLAGS += $(CFLAGS_CPP11)
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_llsf_show_peers = stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_llsf_show_peers = stdc++ pthread llsfrbcore llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_llsf_show_peers = llsf-show-peers.o
 
-LIBS_llsf_fake_robot = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_llsf_fake_robot = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_llsf_fake_robot = llsf-fake-robot.o
 
-LIBS_llsf_report_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_llsf_report_machine = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_llsf_report_machine = llsf-report-machine.o
 
-LIBS_rcll_prepare_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_prepare_machine = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_prepare_machine = rcll-prepare-machine.o
 
-LIBS_rcll_reset_machine = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_reset_machine = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_reset_machine = rcll-reset-machine.o
 
-LIBS_rcll_set_machine_state = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_set_machine_state = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_set_machine_state = rcll-set-machine-state.o
 
-LIBS_rcll_machine_add_base = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_machine_add_base = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_machine_add_base = rcll-machine-add-base.o
 
-LIBS_rcll_set_machine_lights = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_set_machine_lights = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_set_machine_lights = rcll-set-machine-lights.o
 
-LIBS_rcll_refbox_instruct = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_refbox_instruct = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_refbox_instruct = rcll-refbox-instruct.o
 
-LIBS_rcll_workpiece = stdc++ llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
+LIBS_rcll_workpiece = stdc++ pthread llsfrbcore llsfrbutils llsfrbconfig llsf_protobuf_comm llsf_msgs
 OBJS_rcll_workpiece = rcll-workpiece.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
