@@ -32,7 +32,7 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   LDFLAGS += $(LDFLAGS_PROTOBUF) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  LIBS_libllsfrblogging = stdc++ llsfrbcore llsf_protobuf_comm llsf_log_msgs
+  LIBS_libllsfrblogging = stdc++ llsfrbcore llsf_protobuf_comm llsf_log_msgs pthread
   OBJS_libllsfrblogging = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp)))))
   HDRS_libllsfrblogging = $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h))
 
