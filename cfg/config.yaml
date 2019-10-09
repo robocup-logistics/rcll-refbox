@@ -168,7 +168,7 @@ llsfrb:
     refbox-port: 4444
 
   workpiece-tracking:
-   enable: true
+   enable: false
    fail-safe: true
    broadcast: false
 
