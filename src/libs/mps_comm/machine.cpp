@@ -54,8 +54,7 @@ void Machine::dispatch_command_queue()
 			command_queue_.pop();
 			lock.unlock();
 			command();
-			using namespace std::chrono_literals;
-			std::this_thread::sleep_for(40ms);
+			std::this_thread::sleep_for(std::chrono::milliseconds(40));
 			lock.lock();
     }
 	}
@@ -64,10 +63,9 @@ void Machine::dispatch_command_queue()
 void Machine::heartbeat()
 {
   heartbeat_active_ = true;
-  using namespace std::chrono_literals;
   while (!shutdown_) {
     send_command(COMMAND_NOTHING, 0, 0, 1);
-    std::this_thread::sleep_for(1s);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   heartbeat_active_ = false;
 }
