@@ -84,6 +84,21 @@
   (retract ?pf)
 )
 
+(defrule order-referee-confirmation-automatic
+  "Automatically grant referee confirmation after DS idles,
+  if auto-confirm enabled"
+  (gamestate (phase PRODUCTION|POST_GAME))
+  (confval (path "/llsfrb/auto-confirm-delivery")
+           (type BOOL) (value true))
+  ?pf <- (product-delivered (game-time ?delivery-time) (team ?team)
+	                       (order ?id&~0) (delivery-gate ?gate)
+	                       (confirmed FALSE))
+  (order (id ?id) (active TRUE))
+  =>
+  (printout warn "Automatic confirmation of delivery" crlf)
+  (modify ?pf (confirmed TRUE))
+)
+
 
 (defrule order-delivered-correct
 	?gf <- (gamestate (phase PRODUCTION|POST_GAME))

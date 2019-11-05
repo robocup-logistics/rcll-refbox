@@ -149,6 +149,11 @@ llsfrb:
     refbox-host: localhost
     refbox-port: 4444
 
+  #A requested delivery in the real world needs to be confirmed 'manually' by
+  # the referee before scoring. In simulation this might be tedious and
+  # unnecessary. 'Automatic' confirmation grants all delivery requests.
+  auto-confirm-delivery: true
+
   simulation:
     enable: true
     # synchronize refbox time with the time of a simulation 
