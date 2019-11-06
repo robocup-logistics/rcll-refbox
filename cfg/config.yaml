@@ -185,3 +185,6 @@ llsfrb:
       # estimate time by using the last given simulation time speed
       # (helps reducing the amount of messages to send)
       estimate-time: true
+
+  webshop:
+    enable: false
