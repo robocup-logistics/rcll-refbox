@@ -34,71 +34,69 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <protobuf_comm/client.h>
 #include <msgs/GameState.pb.h>
+#include <protobuf_comm/client.h>
 
 using namespace protobuf_comm;
 
 class ExampleClient
 {
- public:
-  ExampleClient(std::string host, unsigned short port)
-    : host_(host), port_(port)
-  {
-    client_ = new ProtobufStreamClient();
+public:
+	ExampleClient(std::string host, unsigned short port) : host_(host), port_(port)
+	{
+		client_ = new ProtobufStreamClient();
 
-    MessageRegister & message_register = client_->message_register();
-    message_register.add_message_type<llsf_msgs::GameState>();
+		MessageRegister &message_register = client_->message_register();
+		message_register.add_message_type<llsf_msgs::GameState>();
 
-    client_->signal_connected().connect(
-      boost::bind(&ExampleClient::client_connected, this));
-    client_->signal_disconnected().connect(
-      boost::bind(&ExampleClient::client_disconnected,
-		this, boost::asio::placeholders::error));
-    client_->signal_received().connect(
-      boost::bind(&ExampleClient::client_msg, this, _1, _2, _3));
+		client_->signal_connected().connect(boost::bind(&ExampleClient::client_connected, this));
+		client_->signal_disconnected().connect(
+		  boost::bind(&ExampleClient::client_disconnected, this, boost::asio::placeholders::error));
+		client_->signal_received().connect(boost::bind(&ExampleClient::client_msg, this, _1, _2, _3));
 
-    client_->async_connect(host.c_str(), port);
-  }
+		client_->async_connect(host.c_str(), port);
+	}
 
+	~ExampleClient()
+	{
+		delete client_;
+	}
 
-  ~ExampleClient()
-  {
-    delete client_;
-  }
+private:
+	void
+	client_connected()
+	{
+		printf("Client connected\n");
+	}
 
- private:
-  void client_connected()
-  { printf("Client connected\n"); }
+	void
+	client_disconnected(const boost::system::error_code &error)
+	{
+		printf("Client DISconnected\n");
+		usleep(100000);
+		client_->async_connect(host_.c_str(), port_);
+	}
 
-  void client_disconnected(const boost::system::error_code &error)
-  {
-    printf("Client DISconnected\n");
-    usleep(100000);
-    client_->async_connect(host_.c_str(), port_);
-  }
+	void
+	client_msg(uint16_t comp_id, uint16_t msg_type, std::shared_ptr<google::protobuf::Message> msg)
+	{
+		std::shared_ptr<llsf_msgs::GameState> g;
+		if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
+			printf("GameState received: %u/%u points\n", g->points_cyan(), g->points_magenta());
+		}
+	}
 
-  void client_msg(uint16_t comp_id, uint16_t msg_type,
-		  std::shared_ptr<google::protobuf::Message> msg)
-  {
-    std::shared_ptr<llsf_msgs::GameState> g;
-    if ((g = std::dynamic_pointer_cast<llsf_msgs::GameState>(msg))) {
-      printf("GameState received: %u/%u points\n",
-	     g->points_cyan(), g->points_magenta());
-    }
-  }
-
- private:
-  ProtobufStreamClient *client_;
-  std::string host_;
-  unsigned short port_;
+private:
+	ProtobufStreamClient *client_;
+	std::string           host_;
+	unsigned short        port_;
 };
 
-
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-  ExampleClient client("localhost", 4444);
-  while (true) {
-    usleep(100000);
-  }
+	ExampleClient client("localhost", 4444);
+	while (true) {
+		usleep(100000);
+	}
 }
