@@ -23,36 +23,37 @@
 #define __LIBS_MONGODB_LOG_MONGODB_LOG_PROTOBUF_H_
 
 #include <google/protobuf/message.h>
-#include <string>
 #include <mongo/bson/bson.h>
 
+#include <string>
 
 namespace fawkes {
-  class Mutex;
+class Mutex;
 }
 
 namespace mongo {
-  class DBClientBase;
+class DBClientBase;
 }
 
 class MongoDBLogProtobuf
 {
- public:
-  MongoDBLogProtobuf(std::string host_port, std::string collection);
-  virtual ~MongoDBLogProtobuf();
+public:
+	MongoDBLogProtobuf(std::string host_port, std::string collection);
+	virtual ~MongoDBLogProtobuf();
 
-  void write(google::protobuf::Message &m);
-  void write(google::protobuf::Message &m, mongo::BSONObj &meta_data);
+	void write(google::protobuf::Message &m);
+	void write(google::protobuf::Message &m, mongo::BSONObj &meta_data);
 
- private:
-  void add_field(const ::google::protobuf::FieldDescriptor *field,
-		 const ::google::protobuf::Message &m, mongo::BSONObjBuilder *b);
-  void add_message(const google::protobuf::Message &m, mongo::BSONObjBuilder *b);
+private:
+	void add_field(const ::google::protobuf::FieldDescriptor *field,
+	               const ::google::protobuf::Message &        m,
+	               mongo::BSONObjBuilder *                    b);
+	void add_message(const google::protobuf::Message &m, mongo::BSONObjBuilder *b);
 
- private:
-  std::string          collection_;
-  fawkes::Mutex       *mutex_;
-  mongo::DBClientBase *mongodb_;
+private:
+	std::string          collection_;
+	fawkes::Mutex *      mutex_;
+	mongo::DBClientBase *mongodb_;
 };
 
 #endif

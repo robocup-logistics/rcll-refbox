@@ -20,10 +20,9 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include <mongodb_log/mongodb_log_logger.h>
-
 #include <core/threading/mutex.h>
 #include <core/threading/mutex_locker.h>
+#include <mongodb_log/mongodb_log_logger.h>
 
 // from MongoDB
 #include <mongo/client/dbclient.h>
@@ -41,333 +40,332 @@ using namespace fawkes;
 /** Constructor. */
 MongoDBLogLogger::MongoDBLogLogger(std::string host_port, std::string collection)
 {
-  mutex_ = new Mutex();
+	mutex_ = new Mutex();
 
-  collection_ = collection;
+	collection_ = collection;
 
-  DBClientConnection *conn =
-    new DBClientConnection(/* auto reconnect */ true);
-  mongodb_ = conn;
-  std::string errmsg;
-  if (! conn->connect(host_port, errmsg)) {
-    throw Exception("Could not connect to MongoDB at %s: %s",
-		    host_port.c_str(), errmsg.c_str());
-  }
+	DBClientConnection *conn = new DBClientConnection(/* auto reconnect */ true);
+	mongodb_                 = conn;
+	std::string errmsg;
+	if (!conn->connect(host_port, errmsg)) {
+		throw Exception("Could not connect to MongoDB at %s: %s", host_port.c_str(), errmsg.c_str());
+	}
 }
-
 
 /** Destructor. */
 MongoDBLogLogger::~MongoDBLogLogger()
 {
-  delete mutex_;
+	delete mutex_;
 }
 
 void
-MongoDBLogLogger::insert_message(LogLevel ll, const char *component,
-				 const char *format, va_list va)
+MongoDBLogLogger::insert_message(LogLevel ll, const char *component, const char *format, va_list va)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
+	if (log_level <= ll) {
+		MutexLocker    lock(mutex_);
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
 
-    char *msg;
-    if (vasprintf(&msg, format, va) == -1) {
-      // Cannot do anything useful, drop log message
-      return;
-    }
+		char *msg;
+		if (vasprintf(&msg, format, va) == -1) {
+			// Cannot do anything useful, drop log message
+			return;
+		}
 
-    BSONObjBuilder b;
-    switch (ll) {
-    case LL_DEBUG: b.append("level", "DEBUG"); break;
-    case LL_INFO:  b.append("level", "INFO");  break;
-    case LL_WARN:  b.append("level", "WARN");  break;
-    case LL_ERROR: b.append("level", "ERROR"); break;
-    default:       b.append("level", "UNKN");  break;
-    }
-    b.append("component", component);
-    b.appendDate("time", nowd);
-    b.append("message", msg);
+		BSONObjBuilder b;
+		switch (ll) {
+		case LL_DEBUG: b.append("level", "DEBUG"); break;
+		case LL_INFO: b.append("level", "INFO"); break;
+		case LL_WARN: b.append("level", "WARN"); break;
+		case LL_ERROR: b.append("level", "ERROR"); break;
+		default: b.append("level", "UNKN"); break;
+		}
+		b.append("component", component);
+		b.appendDate("time", nowd);
+		b.append("message", msg);
 
-    free(msg);
+		free(msg);
 
-    try {
-      mongodb_->insert(collection_, b.obj());
-    } catch (mongo::DBException &e) {} // ignored
-  }
+		try {
+			mongodb_->insert(collection_, b.obj());
+		} catch (mongo::DBException &e) {
+		} // ignored
+	}
 }
 
 void
-MongoDBLogLogger::insert_message(LogLevel ll, const char *component,
-				 Exception &e)
+MongoDBLogLogger::insert_message(LogLevel ll, const char *component, Exception &e)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
+	if (log_level <= ll) {
+		MutexLocker    lock(mutex_);
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
 
-    for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
-      BSONObjBuilder b;
-      switch (ll) {
-      case LL_DEBUG: b.append("level", "DEBUG"); break;
-      case LL_INFO:  b.append("level", "INFO");  break;
-      case LL_WARN:  b.append("level", "WARN");  break;
-      case LL_ERROR: b.append("level", "ERROR"); break;
-      default:       b.append("level", "UNKN");  break;
-      }
-      b.append("component", component);
-      b.appendDate("time", nowd);
-      b.append("message", std::string("[EXCEPTION] ") + *i);
-      try {
-        mongodb_->insert(collection_, b.obj());
-      } catch (mongo::DBException &e) {} // ignored
-    }
-  }
+		for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
+			BSONObjBuilder b;
+			switch (ll) {
+			case LL_DEBUG: b.append("level", "DEBUG"); break;
+			case LL_INFO: b.append("level", "INFO"); break;
+			case LL_WARN: b.append("level", "WARN"); break;
+			case LL_ERROR: b.append("level", "ERROR"); break;
+			default: b.append("level", "UNKN"); break;
+			}
+			b.append("component", component);
+			b.appendDate("time", nowd);
+			b.append("message", std::string("[EXCEPTION] ") + *i);
+			try {
+				mongodb_->insert(collection_, b.obj());
+			} catch (mongo::DBException &e) {
+			} // ignored
+		}
+	}
 }
 
 void
-MongoDBLogLogger::vlog_debug(const char *component,
-			     const char *format, va_list va)
+MongoDBLogLogger::vlog_debug(const char *component, const char *format, va_list va)
 {
-  insert_message(LL_DEBUG, component, format, va);
+	insert_message(LL_DEBUG, component, format, va);
 }
 
 void
-MongoDBLogLogger::vlog_info(const char *component,
-			    const char *format, va_list va)
+MongoDBLogLogger::vlog_info(const char *component, const char *format, va_list va)
 {
-  insert_message(LL_INFO, component, format, va);
+	insert_message(LL_INFO, component, format, va);
 }
 
 void
-MongoDBLogLogger::vlog_warn(const char *component,
-			    const char *format, va_list va)
+MongoDBLogLogger::vlog_warn(const char *component, const char *format, va_list va)
 {
-  insert_message(LL_WARN, component, format, va);
+	insert_message(LL_WARN, component, format, va);
 }
 
 void
-MongoDBLogLogger::vlog_error(const char *component,
-			     const char *format, va_list va)
+MongoDBLogLogger::vlog_error(const char *component, const char *format, va_list va)
 {
-  insert_message(LL_ERROR, component, format, va);
+	insert_message(LL_ERROR, component, format, va);
 }
 
 void
 MongoDBLogLogger::log_debug(const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  insert_message(LL_DEBUG, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	insert_message(LL_DEBUG, component, format, arg);
+	va_end(arg);
 }
 
 void
 MongoDBLogLogger::log_info(const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  insert_message(LL_INFO, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	insert_message(LL_INFO, component, format, arg);
+	va_end(arg);
 }
 
 void
 MongoDBLogLogger::log_warn(const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  insert_message(LL_WARN, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	insert_message(LL_WARN, component, format, arg);
+	va_end(arg);
 }
 
 void
 MongoDBLogLogger::log_error(const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  insert_message(LL_ERROR, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	insert_message(LL_ERROR, component, format, arg);
+	va_end(arg);
 }
 
 void
 MongoDBLogLogger::log_debug(const char *component, Exception &e)
 {
-  insert_message(LL_DEBUG, component, e);
+	insert_message(LL_DEBUG, component, e);
 }
 
 void
 MongoDBLogLogger::log_info(const char *component, Exception &e)
 {
-  insert_message(LL_INFO, component, e);
+	insert_message(LL_INFO, component, e);
 }
 
 void
 MongoDBLogLogger::log_warn(const char *component, Exception &e)
 {
-  insert_message(LL_WARN, component, e);
+	insert_message(LL_WARN, component, e);
 }
 
 void
 MongoDBLogLogger::log_error(const char *component, Exception &e)
 {
-  insert_message(LL_ERROR, component, e);
+	insert_message(LL_ERROR, component, e);
 }
 
 void
-MongoDBLogLogger::tlog_insert_message(LogLevel ll, struct timeval *t,
-				      const char *component,
-				      const char *format, va_list va)
+MongoDBLogLogger::tlog_insert_message(LogLevel        ll,
+                                      struct timeval *t,
+                                      const char *    component,
+                                      const char *    format,
+                                      va_list         va)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    char *msg;
-    if (vasprintf(&msg, format, va) == -1) {
-      return;
-    }
+	if (log_level <= ll) {
+		MutexLocker lock(mutex_);
+		char *      msg;
+		if (vasprintf(&msg, format, va) == -1) {
+			return;
+		}
 
-    Date_t nowd = t->tv_sec * 1000 + t->tv_usec / 1000;
+		Date_t nowd = t->tv_sec * 1000 + t->tv_usec / 1000;
 
-    BSONObjBuilder b;
-    switch (ll) {
-    case LL_DEBUG: b.append("level", "DEBUG"); break;
-    case LL_INFO:  b.append("level", "INFO");  break;
-    case LL_WARN:  b.append("level", "WARN");  break;
-    case LL_ERROR: b.append("level", "ERROR"); break;
-    default:       b.append("level", "UNKN");  break;
-    }
-    b.append("component", component);
-    b.appendDate("time", nowd);
-    b.append("message", msg);
-    try {
-      mongodb_->insert(collection_, b.obj());
-    } catch (mongo::DBException &e) {} // ignored
+		BSONObjBuilder b;
+		switch (ll) {
+		case LL_DEBUG: b.append("level", "DEBUG"); break;
+		case LL_INFO: b.append("level", "INFO"); break;
+		case LL_WARN: b.append("level", "WARN"); break;
+		case LL_ERROR: b.append("level", "ERROR"); break;
+		default: b.append("level", "UNKN"); break;
+		}
+		b.append("component", component);
+		b.appendDate("time", nowd);
+		b.append("message", msg);
+		try {
+			mongodb_->insert(collection_, b.obj());
+		} catch (mongo::DBException &e) {
+		} // ignored
 
-    free(msg);
+		free(msg);
 
-    mutex_->unlock();
-  }
+		mutex_->unlock();
+	}
 }
 
 void
-MongoDBLogLogger::tlog_insert_message(LogLevel ll, struct timeval *t,
-				      const char *component, Exception &e)
+MongoDBLogLogger::tlog_insert_message(LogLevel        ll,
+                                      struct timeval *t,
+                                      const char *    component,
+                                      Exception &     e)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    Date_t nowd = t->tv_sec * 1000 + t->tv_usec / 1000;
-    for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
-      BSONObjBuilder b;
-      switch (ll) {
-      case LL_DEBUG: b.append("level", "DEBUG"); break;
-      case LL_INFO:  b.append("level", "INFO");  break;
-      case LL_WARN:  b.append("level", "WARN");  break;
-      case LL_ERROR: b.append("level", "ERROR"); break;
-      default:       b.append("level", "UNKN");  break;
-      }
-      b.append("component", component);
-      b.appendDate("time", nowd);
-      b.append("message", std::string("[EXCEPTION] ") + *i);
-      try {
-        mongodb_->insert(collection_, b.obj());
-      } catch (mongo::DBException &e) {} // ignored
-    }
-  }
+	if (log_level <= ll) {
+		MutexLocker lock(mutex_);
+		Date_t      nowd = t->tv_sec * 1000 + t->tv_usec / 1000;
+		for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
+			BSONObjBuilder b;
+			switch (ll) {
+			case LL_DEBUG: b.append("level", "DEBUG"); break;
+			case LL_INFO: b.append("level", "INFO"); break;
+			case LL_WARN: b.append("level", "WARN"); break;
+			case LL_ERROR: b.append("level", "ERROR"); break;
+			default: b.append("level", "UNKN"); break;
+			}
+			b.append("component", component);
+			b.appendDate("time", nowd);
+			b.append("message", std::string("[EXCEPTION] ") + *i);
+			try {
+				mongodb_->insert(collection_, b.obj());
+			} catch (mongo::DBException &e) {
+			} // ignored
+		}
+	}
 }
 
 void
-MongoDBLogLogger::tlog_debug(struct timeval *t, const char *component,
-			     const char *format, ...)
+MongoDBLogLogger::tlog_debug(struct timeval *t, const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  tlog_insert_message(LL_DEBUG, t, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	tlog_insert_message(LL_DEBUG, t, component, format, arg);
+	va_end(arg);
 }
 
 void
-MongoDBLogLogger::tlog_info(struct timeval *t, const char *component,
-			    const char *format, ...)
+MongoDBLogLogger::tlog_info(struct timeval *t, const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  tlog_insert_message(LL_INFO, t, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	tlog_insert_message(LL_INFO, t, component, format, arg);
+	va_end(arg);
 }
 
 void
-MongoDBLogLogger::tlog_warn(struct timeval *t, const char *component,
-			    const char *format, ...)
+MongoDBLogLogger::tlog_warn(struct timeval *t, const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  tlog_insert_message(LL_WARN, t, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	tlog_insert_message(LL_WARN, t, component, format, arg);
+	va_end(arg);
 }
 
 void
-MongoDBLogLogger::tlog_error(struct timeval *t, const char *component,
-			     const char *format, ...)
+MongoDBLogLogger::tlog_error(struct timeval *t, const char *component, const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  tlog_insert_message(LL_ERROR, t, component, format, arg);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	tlog_insert_message(LL_ERROR, t, component, format, arg);
+	va_end(arg);
 }
 
 void
-MongoDBLogLogger::tlog_debug(struct timeval *t, const char *component,
-			     Exception &e)
+MongoDBLogLogger::tlog_debug(struct timeval *t, const char *component, Exception &e)
 {
-  tlog_insert_message(LL_DEBUG, t, component, e);
+	tlog_insert_message(LL_DEBUG, t, component, e);
 }
 
 void
-MongoDBLogLogger::tlog_info(struct timeval *t, const char *component,
-			    Exception &e)
+MongoDBLogLogger::tlog_info(struct timeval *t, const char *component, Exception &e)
 {
-  tlog_insert_message(LL_INFO, t, component, e);
+	tlog_insert_message(LL_INFO, t, component, e);
 }
 
 void
-MongoDBLogLogger::tlog_warn(struct timeval *t, const char *component,
-			    Exception &e)
+MongoDBLogLogger::tlog_warn(struct timeval *t, const char *component, Exception &e)
 {
-  tlog_insert_message(LL_WARN, t, component, e);
+	tlog_insert_message(LL_WARN, t, component, e);
 }
 
 void
-MongoDBLogLogger::tlog_error(struct timeval *t, const char *component,
-			     Exception &e)
+MongoDBLogLogger::tlog_error(struct timeval *t, const char *component, Exception &e)
 {
-  tlog_insert_message(LL_ERROR, t, component, e);
+	tlog_insert_message(LL_ERROR, t, component, e);
 }
 
 void
-MongoDBLogLogger::vtlog_debug(struct timeval *t, const char *component,
-			      const char *format, va_list va)
+MongoDBLogLogger::vtlog_debug(struct timeval *t,
+                              const char *    component,
+                              const char *    format,
+                              va_list         va)
 {
-  tlog_insert_message(LL_DEBUG, t, component, format, va);
+	tlog_insert_message(LL_DEBUG, t, component, format, va);
 }
 
 void
-MongoDBLogLogger::vtlog_info(struct timeval *t, const char *component,
-			     const char *format, va_list va)
+MongoDBLogLogger::vtlog_info(struct timeval *t,
+                             const char *    component,
+                             const char *    format,
+                             va_list         va)
 {
-  tlog_insert_message(LL_INFO, t, component, format, va);
+	tlog_insert_message(LL_INFO, t, component, format, va);
 }
 
 void
-MongoDBLogLogger::vtlog_warn(struct timeval *t, const char *component,
-			     const char *format, va_list va)
+MongoDBLogLogger::vtlog_warn(struct timeval *t,
+                             const char *    component,
+                             const char *    format,
+                             va_list         va)
 {
-  tlog_insert_message(LL_WARN, t, component, format, va);
+	tlog_insert_message(LL_WARN, t, component, format, va);
 }
 
 void
-MongoDBLogLogger::vtlog_error(struct timeval *t, const char *component,
-			      const char *format, va_list va)
+MongoDBLogLogger::vtlog_error(struct timeval *t,
+                              const char *    component,
+                              const char *    format,
+                              va_list         va)
 {
-  tlog_insert_message(LL_ERROR, t, component, format, va);
+	tlog_insert_message(LL_ERROR, t, component, format, va);
 }
