@@ -37,46 +37,46 @@
 #ifndef __LLSF_REFBOX_SHELL_MACHINE_H_
 #define __LLSF_REFBOX_SHELL_MACHINE_H_
 
-#include <cstddef>
-#include <cursesp.h>
-
 #include <msgs/MachineInfo.pb.h>
 #include <msgs/ProductColor.pb.h>
 
-#include <vector>
+#include <cstddef>
+#include <cursesp.h>
 #include <map>
 #include <memory>
+#include <vector>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-
 class LLSFRefBoxShellMachine : public NCursesPanel
 {
- public:
-  LLSFRefBoxShellMachine(std::string name, std::string type,
-			 int begin_y, int begin_x, bool visible = true);
-  ~LLSFRefBoxShellMachine();
+public:
+	LLSFRefBoxShellMachine(std::string name,
+	                       std::string type,
+	                       int         begin_y,
+	                       int         begin_x,
+	                       bool        visible = true);
+	~LLSFRefBoxShellMachine();
 
-  void update(const llsf_msgs::Machine &minfo);
+	void update(const llsf_msgs::Machine &minfo);
 
-  void flip_blink_states();
-  void set_visible(bool visible);
+	void flip_blink_states();
+	void set_visible(bool visible);
 
-  void reset();
+	void reset();
 
-  int refresh();
+	int refresh();
 
- private:
-  bool                  visible_;
-  std::shared_ptr<llsf_msgs::Machine> minfo_;
-  std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;
-  std::map<llsf_msgs::LightColor, bool> blink_state_;
+private:
+	bool                                                   visible_;
+	std::shared_ptr<llsf_msgs::Machine>                    minfo_;
+	std::map<llsf_msgs::LightColor, llsf_msgs::LightState> lights_;
+	std::map<llsf_msgs::LightColor, bool>                  blink_state_;
 };
 
-
-} // end of namespace llsfrb
+} // namespace llsfrb_shell
 
 #endif

@@ -38,7 +38,6 @@
 #define __LLSF_REFBOX_SHELL_TEAM_H_
 
 #include <config/yaml.h>
-
 #include <msgs/Team.pb.h>
 
 namespace llsfrb_shell {
@@ -46,27 +45,21 @@ namespace llsfrb_shell {
 }
 #endif
 
-typedef enum {
-  CYAN = 0,
-  MAGENTA = 1
-} Team;
-
+typedef enum { CYAN = 0, MAGENTA = 1 } Team;
 
 inline bool
 operator==(const llsf_msgs::Team &t1, const Team &t2)
 {
-  return ((t1 == llsf_msgs::CYAN) && (t2 == CYAN)) ||
-         ((t1 == llsf_msgs::MAGENTA) && (t2 == MAGENTA));
+	return ((t1 == llsf_msgs::CYAN) && (t2 == CYAN))
+	       || ((t1 == llsf_msgs::MAGENTA) && (t2 == MAGENTA));
 }
 
 inline bool
 operator!=(const llsf_msgs::Team &t1, const Team &t2)
 {
-  return ((t1 == llsf_msgs::CYAN) && (t2 != CYAN)) ||
-         ((t1 == llsf_msgs::MAGENTA) && (t2 != MAGENTA));
+	return ((t1 == llsf_msgs::CYAN) && (t2 != CYAN))
+	       || ((t1 == llsf_msgs::MAGENTA) && (t2 != MAGENTA));
 }
-
-
 
 } // end of namespace llsfrb_shell
 

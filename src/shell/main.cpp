@@ -36,55 +36,57 @@
 
 #include "shell.h"
 
+#include <google/protobuf/message.h>
+
+#include <cursesw.h>
 #include <locale.h>
 #include <string>
-#include <google/protobuf/message.h>
-#include <cursesw.h>
 
 int
 main(int argc, char **argv)
 {
-  if (!setlocale(LC_CTYPE, "")) {
-    fprintf(stderr, "Can't set the specified locale! "
-	    "Check LANG, LC_CTYPE, LC_ALL.\n");
-    return 1;
-  }
+	if (!setlocale(LC_CTYPE, "")) {
+		fprintf(stderr,
+		        "Can't set the specified locale! "
+		        "Check LANG, LC_CTYPE, LC_ALL.\n");
+		return 1;
+	}
 
-  int rv = 0;
+	int rv = 0;
 
-  initscr();
-  int h, w;
-  getmaxyx(stdscr, h, w);
+	initscr();
+	int h, w;
+	getmaxyx(stdscr, h, w);
 
-  if (h < 35) {
-    ::endwin();
-    printf("A minimum of 35 lines is required in the terminal\n");
-    return -1;
-  }
+	if (h < 35) {
+		::endwin();
+		printf("A minimum of 35 lines is required in the terminal\n");
+		return -1;
+	}
 
-  if (w < 94) {
-    ::endwin();
-    printf("A minimum of 94 columns is required in the terminal\n");
-    return -1;
-  }
+	if (w < 94) {
+		::endwin();
+		printf("A minimum of 94 columns is required in the terminal\n");
+		return -1;
+	}
 
-  {
-    NCursesWindow rootw(::stdscr);
-    rootw.bkgd(' '|COLOR_PAIR(5));
+	{
+		NCursesWindow rootw(::stdscr);
+		rootw.bkgd(' ' | COLOR_PAIR(5));
 
-    NCursesWindow::useColors();
+		NCursesWindow::useColors();
 
-    llsfrb_shell::LLSFRefBoxShell shell;
-    rv = shell.run();
-  }
-  ::endwin();
+		llsfrb_shell::LLSFRefBoxShell shell;
+		rv = shell.run();
+	}
+	::endwin();
 
-  // Delete all global objects allocated by libprotobuf
-  google::protobuf::ShutdownProtobufLibrary();
+	// Delete all global objects allocated by libprotobuf
+	google::protobuf::ShutdownProtobufLibrary();
 
-  // If we do not exit but return here, a segfault happens during protobuf
-  // library cleanup, but only if we instantiate the network client in the
-  // shell. It seems to be related to library global variable instantiation.
-  // Very weird stuff!
-  exit(rv);
+	// If we do not exit but return here, a segfault happens during protobuf
+	// library cleanup, but only if we instantiate the network client in the
+	// shell. It seems to be related to library global variable instantiation.
+	// Very weird stuff!
+	exit(rv);
 }
