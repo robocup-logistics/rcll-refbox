@@ -37,36 +37,33 @@
 #ifndef __LLSF_REFBOX_SHELL_PUCK_H_
 #define __LLSF_REFBOX_SHELL_PUCK_H_
 
-#include <cstddef>
-#include <cursesp.h>
-
 #include <msgs/PuckInfo.pb.h>
 
+#include <cstddef>
+#include <cursesp.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-
 class LLSFRefBoxShellPuck : public NCursesPanel
 {
- public:
-  LLSFRefBoxShellPuck(int begin_y, int begin_x);
-  ~LLSFRefBoxShellPuck();
+public:
+	LLSFRefBoxShellPuck(int begin_y, int begin_x);
+	~LLSFRefBoxShellPuck();
 
-  void update(unsigned int id, llsf_msgs::PuckState state, bool at_machine_ = false);
-  void reset();
+	void update(unsigned int id, llsf_msgs::PuckState state, bool at_machine_ = false);
+	void reset();
 
-  int refresh();
+	int refresh();
 
- private:
-  unsigned int id_;
-  llsf_msgs::PuckState state_;
-  bool at_machine_;
+private:
+	unsigned int         id_;
+	llsf_msgs::PuckState state_;
+	bool                 at_machine_;
 };
 
-
-} // end of namespace llsfrb
+} // namespace llsfrb_shell
 
 #endif

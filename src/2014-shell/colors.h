@@ -42,19 +42,19 @@ namespace llsfrb_shell {
 }
 #endif
 
-#define COLOR_DEFAULT           0
-#define COLOR_BLACK_ON_WHITE    1
-#define COLOR_WHITE_ON_RED      2
-#define COLOR_WHITE_ON_YELLOW   3
-#define COLOR_WHITE_ON_GREEN    4
-#define COLOR_GREEN_ON_BACK     5
-#define COLOR_RED_ON_BACK       6
-#define COLOR_YELLOW_ON_BACK    7
-#define COLOR_BLACK_ON_BACK     8
-#define COLOR_WHITE_ON_BACK     9
-#define COLOR_CYAN_ON_BACK     10
-#define COLOR_MAGENTA_ON_BACK  11
-#define COLOR_WHITE_ON_CYAN    12
+#define COLOR_DEFAULT 0
+#define COLOR_BLACK_ON_WHITE 1
+#define COLOR_WHITE_ON_RED 2
+#define COLOR_WHITE_ON_YELLOW 3
+#define COLOR_WHITE_ON_GREEN 4
+#define COLOR_GREEN_ON_BACK 5
+#define COLOR_RED_ON_BACK 6
+#define COLOR_YELLOW_ON_BACK 7
+#define COLOR_BLACK_ON_BACK 8
+#define COLOR_WHITE_ON_BACK 9
+#define COLOR_CYAN_ON_BACK 10
+#define COLOR_MAGENTA_ON_BACK 11
+#define COLOR_WHITE_ON_CYAN 12
 #define COLOR_WHITE_ON_MAGENTA 13
 
 extern void init_colors();
