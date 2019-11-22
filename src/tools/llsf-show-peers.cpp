@@ -35,12 +35,12 @@
  */
 
 #include <config/yaml.h>
-
-#include <protobuf_comm/peer.h>
-#include <boost/asio.hpp>
 #include <msgs/BeaconSignal.pb.h>
 #include <msgs/GameState.pb.h>
 #include <msgs/RobotInfo.pb.h>
+#include <protobuf_comm/peer.h>
+
+#include <boost/asio.hpp>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
@@ -48,89 +48,93 @@ using namespace llsf_msgs;
 static bool quit = false;
 
 void
-signal_handler(const boost::system::error_code& error, int signum)
+signal_handler(const boost::system::error_code &error, int signum)
 {
-  if (!error) {
-    quit = true;
-  }
+	if (!error) {
+		quit = true;
+	}
 }
 
 void
 handle_recv_error(boost::asio::ip::udp::endpoint &endpoint, std::string msg)
 {
-  printf("Receive error from %s:%u: %s\n",
-	 endpoint.address().to_string().c_str(), endpoint.port(), msg.c_str());
+	printf("Receive error from %s:%u: %s\n",
+	       endpoint.address().to_string().c_str(),
+	       endpoint.port(),
+	       msg.c_str());
 }
 
 void
 handle_send_error(std::string msg)
 {
-  printf("Send error: %s\n", msg.c_str());
+	printf("Send error: %s\n", msg.c_str());
 }
 
 void
-handle_message(boost::asio::ip::udp::endpoint &sender,
-	       uint16_t component_id, uint16_t msg_type,
-	       std::shared_ptr<google::protobuf::Message> msg)
+handle_message(boost::asio::ip::udp::endpoint &           sender,
+               uint16_t                                   component_id,
+               uint16_t                                   msg_type,
+               std::shared_ptr<google::protobuf::Message> msg)
 {
-  std::shared_ptr<BeaconSignal> b;
-  if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
+	std::shared_ptr<BeaconSignal> b;
+	if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
 #if __WORDSIZE == 64
-    printf("Detected robot: %s:%s (seq %lu, team %s)\n",
+		printf("Detected robot: %s:%s (seq %lu, team %s)\n",
 #else
-    printf("Detected robot: %s:%s (seq %llu, team %s)\n",
+		printf("Detected robot: %s:%s (seq %llu, team %s)\n",
 #endif
-	   b->team_name().c_str(), b->peer_name().c_str(), b->seq(),
-	   b->has_team_color() ? Team_Name(b->team_color()).c_str() : "NONE");
-  }
+		       b->team_name().c_str(),
+		       b->peer_name().c_str(),
+		       b->seq(),
+		       b->has_team_color() ? Team_Name(b->team_color()).c_str() : "NONE");
+	}
 }
 
 int
 main(int argc, char **argv)
 {
-  llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
-  config->load("config.yaml");
+	llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
+	config->load("config.yaml");
 
-  ProtobufBroadcastPeer *peer;
+	ProtobufBroadcastPeer *peer;
 
-  if (config->exists("/llsfrb/comm/peer-send-port") &&
-      config->exists("/llsfrb/comm/peer-recv-port") )
-  {
-    peer = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-				     config->get_uint("/llsfrb/comm/peer-recv-port"),
-				     config->get_uint("/llsfrb/comm/peer-send-port"));
-  } else {
-    peer = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
-				     config->get_uint("/llsfrb/comm/peer-port"));
-  }
+	if (config->exists("/llsfrb/comm/peer-send-port")
+	    && config->exists("/llsfrb/comm/peer-recv-port")) {
+		peer = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
+		                                 config->get_uint("/llsfrb/comm/peer-recv-port"),
+		                                 config->get_uint("/llsfrb/comm/peer-send-port"));
+	} else {
+		peer = new ProtobufBroadcastPeer(config->get_string("/llsfrb/comm/peer-host"),
+		                                 config->get_uint("/llsfrb/comm/peer-port"));
+	}
 
-  boost::asio::io_service io_service;
+	boost::asio::io_service io_service;
 
-  MessageRegister & message_register = peer->message_register();
-  message_register.add_message_type<BeaconSignal>();
-  message_register.add_message_type<GameState>();
-  message_register.add_message_type<RobotInfo>();
+	MessageRegister &message_register = peer->message_register();
+	message_register.add_message_type<BeaconSignal>();
+	message_register.add_message_type<GameState>();
+	message_register.add_message_type<RobotInfo>();
 
-  peer->signal_received().connect(handle_message);
-  peer->signal_recv_error().connect(handle_recv_error);
-  peer->signal_send_error().connect(handle_send_error);
+	peer->signal_received().connect(handle_message);
+	peer->signal_recv_error().connect(handle_recv_error);
+	peer->signal_send_error().connect(handle_send_error);
 
 #if BOOST_ASIO_VERSION >= 100601
-  // Construct a signal set registered for process termination.
-  boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+	// Construct a signal set registered for process termination.
+	boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
 
-  // Start an asynchronous wait for one of the signals to occur.
-  signals.async_wait(signal_handler);
+	// Start an asynchronous wait for one of the signals to occur.
+	signals.async_wait(signal_handler);
 #endif
 
-  do {
-    io_service.run();
-    io_service.reset();
-  } while (! quit);
+	do {
+		io_service.run();
+		io_service.reset();
+	} while (!quit);
 
-  delete peer;
-  delete config;
+	delete peer;
+	delete config;
 
-  // Delete all global objects allocated by libprotobuf
-  google::protobuf::ShutdownProtobufLibrary();
+	// Delete all global objects allocated by libprotobuf
+	google::protobuf::ShutdownProtobufLibrary();
 }
