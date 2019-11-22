@@ -6,28 +6,29 @@
  */
 
 #include "MainWindow.h"
+
 #include <iostream>
 
 namespace LLSFVis {
 
-MainWindow::MainWindow() {
-
+MainWindow::MainWindow()
+{
 	set_default_size(1000, 800);
 	set_position(Gtk::WIN_POS_CENTER);
 	_vPaned = new Gtk::Paned(Gtk::ORIENTATION_HORIZONTAL);
 	add(*_vPaned);
 	_playField = new PlayField();
 
-	Machine* m = new Machine(100, 100, Machine::NORTH, "bla");
-	Puck* p = new Puck(100,150,"12","raw");
+	Machine *m = new Machine(100, 100, Machine::NORTH, "bla");
+	Puck *   p = new Puck(100, 150, "12", "raw");
 
 	_playField->add_machine(m);
 	_playField->add_puck(p);
 	_buttonBox = new Gtk::Box(Gtk::ORIENTATION_VERTICAL);
-	_button1 = new Gtk::Button("Button1");
-	_button2 = new Gtk::Button("Button2");
-	_button3 = new Gtk::Button("Button3");
-	_button4 = new Gtk::Button("Button4");
+	_button1   = new Gtk::Button("Button1");
+	_button2   = new Gtk::Button("Button2");
+	_button3   = new Gtk::Button("Button3");
+	_button4   = new Gtk::Button("Button4");
 	_buttonBox->pack_start(*_button1, Gtk::PACK_SHRINK);
 	_buttonBox->pack_start(*_button2, Gtk::PACK_SHRINK);
 	_buttonBox->pack_start(*_button3, Gtk::PACK_SHRINK);
@@ -46,10 +47,10 @@ MainWindow::MainWindow() {
 	_playField->show();
 	_vPaned->show();
 	show();
-
 }
 
-MainWindow::~MainWindow() {
+MainWindow::~MainWindow()
+{
 	// TODO Auto-generated destructor stub
 }
 

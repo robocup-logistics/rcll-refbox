@@ -10,58 +10,67 @@
 
 namespace LLSFVis {
 
-class Machine {
+class Machine
+{
 public:
+	enum Orientation { NORTH, WEST, EAST, SOUTH };
 
-	enum Orientation {
-		NORTH, WEST, EAST, SOUTH
-	};
+	Machine(int posX, int posY, Orientation ori, std::string textDescription)
+	: _posX(posX), _posY(posY), _orientation(ori), _textDescription(textDescription){};
 
-	Machine(int posX, int posY, Orientation ori, std::string textDescription) :
-			_posX(posX), _posY(posY), _orientation(ori), _textDescription(
-					textDescription) {
-	}
-	;
+	virtual ~Machine(){};
 
-	virtual ~Machine() {
-	}
-	;
-
-	Orientation getOrientation() const {
+	Orientation
+	getOrientation() const
+	{
 		return _orientation;
 	}
 
-	void setOrientation(Orientation orientation) {
+	void
+	setOrientation(Orientation orientation)
+	{
 		_orientation = orientation;
 	}
 
-	int getPosX() const {
+	int
+	getPosX() const
+	{
 		return _posX;
 	}
 
-	void setPosX(int posX) {
+	void
+	setPosX(int posX)
+	{
 		_posX = posX;
 	}
 
-	int getPosY() const {
+	int
+	getPosY() const
+	{
 		return _posY;
 	}
 
-	void setPosY(int posY) {
+	void
+	setPosY(int posY)
+	{
 		_posY = posY;
 	}
 
-	const std::string& getTextDescription() const {
+	const std::string &
+	getTextDescription() const
+	{
 		return _textDescription;
 	}
 
-	void setTextDescription(const std::string& textDescription) {
+	void
+	setTextDescription(const std::string &textDescription)
+	{
 		_textDescription = textDescription;
 	}
 
 private:
-	int _posX;
-	int _posY;
+	int         _posX;
+	int         _posY;
 	Orientation _orientation;
 	std::string _textDescription;
 };

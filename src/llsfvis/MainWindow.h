@@ -8,28 +8,29 @@
 #ifndef MAINWINDOW_H_
 #define MAINWINDOW_H_
 
-#include <gtkmm.h>
 #include "PlayField.h"
+
+#include <gtkmm.h>
 
 namespace LLSFVis {
 
-class MainWindow: public Gtk::Window {
+class MainWindow : public Gtk::Window
+{
 public:
 	MainWindow();
 	virtual ~MainWindow();
+
 private:
-	Gtk::Paned* _vPaned;
+	Gtk::Paned *_vPaned;
 
-	PlayField* _playField;
+	PlayField *_playField;
 
-	Gtk::Box* _buttonBox;
+	Gtk::Box *_buttonBox;
 
-	Gtk::Button* _button1;
-	Gtk::Button* _button2;
-	Gtk::Button* _button3;
-	Gtk::Button* _button4;
-
-
+	Gtk::Button *_button1;
+	Gtk::Button *_button2;
+	Gtk::Button *_button3;
+	Gtk::Button *_button4;
 };
 
 } /* namespace LLSFVis */

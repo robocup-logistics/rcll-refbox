@@ -6,38 +6,46 @@
  */
 
 #include "PlayField.h"
+
 #include <iostream>
 
 namespace LLSFVis {
 
-PlayField::PlayField() {
+PlayField::PlayField()
+{
 	set_size_request(800, 800);
-
 }
 
-void PlayField::add_machine(Machine* machine) {
+void
+PlayField::add_machine(Machine *machine)
+{
 	_machines.push_back(machine);
 }
 
-void PlayField::add_puck(Puck* puck) {
+void
+PlayField::add_puck(Puck *puck)
+{
 	_pucks.push_back(puck);
 }
 
-bool PlayField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
+bool
+PlayField::on_draw(const Cairo::RefPtr<Cairo::Context> &cr)
+{
 	cr->save();
 	//Blackground white
 	cr->set_source_rgb(1, 1, 1);
 	cr->paint();
 
 	//draw machines
-	for (std::vector<Machine*>::iterator iter_machines = _machines.begin();
-			iter_machines != _machines.end(); ++iter_machines) {
+	for (std::vector<Machine *>::iterator iter_machines = _machines.begin();
+	     iter_machines != _machines.end();
+	     ++iter_machines) {
 		draw_machine(cr, **iter_machines);
 	}
 
 	//draw puck
-	for (std::vector<Puck*>::iterator iter_pucks = _pucks.begin();
-			iter_pucks != _pucks.end(); ++iter_pucks) {
+	for (std::vector<Puck *>::iterator iter_pucks = _pucks.begin(); iter_pucks != _pucks.end();
+	     ++iter_pucks) {
 		draw_puck(cr, **iter_pucks);
 	}
 
@@ -45,13 +53,14 @@ bool PlayField::on_draw(const Cairo::RefPtr<Cairo::Context>& cr) {
 	return true;
 }
 
-void PlayField::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
-		const Machine& machine) {
+void
+PlayField::draw_machine(const Cairo::RefPtr<Cairo::Context> &cr, const Machine &machine)
+{
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
 	cr->set_line_width(2.0); //todo move to conffile
 
-	int leftX = machine.getPosX() - MACHINESIZE / 2;
+	int leftX  = machine.getPosX() - MACHINESIZE / 2;
 	int rightX = machine.getPosX() + MACHINESIZE / 2;
 	int upperY = machine.getPosY() - MACHINESIZE / 2;
 	int lowerY = machine.getPosY() + MACHINESIZE / 2;
@@ -62,17 +71,24 @@ void PlayField::draw_machine(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->line_to(leftX, lowerY);
 	cr->line_to(leftX, upperY);
 
-	draw_machine_t(cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(),
-			machine.getOrientation());
-	draw_text(cr, machine.getPosX() + MACHINESIZE / 2 + 10,
-			machine.getPosY() + 10, machine.getTextDescription());
+	draw_machine_t(
+	  cr, MACHINESIZE / 3, machine.getPosX(), machine.getPosY(), machine.getOrientation());
+	draw_text(cr,
+	          machine.getPosX() + MACHINESIZE / 2 + 10,
+	          machine.getPosY() + 10,
+	          machine.getTextDescription());
 	cr->stroke();
 
 	cr->restore();
 }
 
-void PlayField::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
-		int size, int x, int y, Machine::Orientation orientation) {
+void
+PlayField::draw_machine_t(const Cairo::RefPtr<Cairo::Context> &cr,
+                          int                                  size,
+                          int                                  x,
+                          int                                  y,
+                          Machine::Orientation                 orientation)
+{
 	switch (orientation) {
 	case Machine::NORTH:
 
@@ -101,13 +117,13 @@ void PlayField::draw_machine_t(const Cairo::RefPtr<Cairo::Context>& cr,
 		cr->move_to(x - size / 2, y);
 		cr->line_to(x + size / 2, y);
 		break;
-	default:
-		break;
+	default: break;
 	}
 }
 
-void PlayField::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
-		const Puck& puck) {
+void
+PlayField::draw_puck(const Cairo::RefPtr<Cairo::Context> &cr, const Puck &puck)
+{
 	cr->save();
 	cr->set_line_width(4);
 	cr->arc(puck.getPosX(), puck.getPosY(), PUCKSIZE / 3, 0.0, 2.0 * M_PI);
@@ -118,8 +134,9 @@ void PlayField::draw_puck(const Cairo::RefPtr<Cairo::Context>& cr,
 	cr->restore();
 }
 
-void PlayField::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int x, int y,
-		std::string text) {
+void
+PlayField::draw_text(const Cairo::RefPtr<Cairo::Context> &cr, int x, int y, std::string text)
+{
 	cr->save();
 	cr->set_source_rgb(0, 0, 0);
 	Pango::FontDescription font;
@@ -139,7 +156,8 @@ void PlayField::draw_text(const Cairo::RefPtr<Cairo::Context>& cr, int x, int y,
 	cr->restore();
 }
 
-PlayField::~PlayField() {
+PlayField::~PlayField()
+{
 	// TODO Auto-generated destructor stub
 }
 
