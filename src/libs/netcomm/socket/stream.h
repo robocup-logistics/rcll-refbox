@@ -30,16 +30,16 @@ namespace fawkes {
 
 class StreamSocket : public Socket
 {
- public:
-  StreamSocket(float timeout = 0.f);
-  StreamSocket(StreamSocket &s);
+public:
+	StreamSocket(float timeout = 0.f);
+	StreamSocket(StreamSocket &s);
 
-  virtual Socket *  clone();
+	virtual Socket *clone();
 
-  void set_nodelay(bool no_delay);
-  bool nodelay();
+	void set_nodelay(bool no_delay);
+	bool nodelay();
 
- protected:
+protected:
 };
 
 } // end namespace fawkes

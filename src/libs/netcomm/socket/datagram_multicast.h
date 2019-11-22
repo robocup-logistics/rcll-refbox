@@ -31,24 +31,22 @@ namespace fawkes {
 
 class MulticastDatagramSocket : public Socket
 {
- public:
-  MulticastDatagramSocket(const char *multicast_addr_s, unsigned short port,
-			  float timeout = 0.f);
-  MulticastDatagramSocket(MulticastDatagramSocket &s);
-  virtual ~MulticastDatagramSocket();
+public:
+	MulticastDatagramSocket(const char *multicast_addr_s, unsigned short port, float timeout = 0.f);
+	MulticastDatagramSocket(MulticastDatagramSocket &s);
+	virtual ~MulticastDatagramSocket();
 
-  virtual Socket *  clone();
+	virtual Socket *clone();
 
-  virtual void bind();
+	virtual void bind();
 
-  virtual void send(void *buf, unsigned int buf_len);
+	virtual void send(void *buf, unsigned int buf_len);
 
-  void set_loop(bool loop);
-  void set_ttl(int ttl);
+	void set_loop(bool loop);
+	void set_ttl(int ttl);
 
- private:
-  struct ::sockaddr_in *multicast_addr;
-
+private:
+	struct ::sockaddr_in *multicast_addr;
 };
 
 } // end namespace fawkes

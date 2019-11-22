@@ -31,21 +31,19 @@ namespace fawkes {
 
 class BroadcastDatagramSocket : public Socket
 {
- public:
-  BroadcastDatagramSocket(const char *broadcast_addr_s, unsigned short port,
-			  float timeout = 0.f);
-  BroadcastDatagramSocket(BroadcastDatagramSocket &s);
-  virtual ~BroadcastDatagramSocket();
+public:
+	BroadcastDatagramSocket(const char *broadcast_addr_s, unsigned short port, float timeout = 0.f);
+	BroadcastDatagramSocket(BroadcastDatagramSocket &s);
+	virtual ~BroadcastDatagramSocket();
 
-  virtual Socket *  clone();
+	virtual Socket *clone();
 
-  virtual void bind();
+	virtual void bind();
 
-  virtual void send(void *buf, unsigned int buf_len);
+	virtual void send(void *buf, unsigned int buf_len);
 
- private:
-  struct ::sockaddr_in *broadcast_addr;
-
+private:
+	struct ::sockaddr_in *broadcast_addr;
 };
 
 } // end namespace fawkes

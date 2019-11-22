@@ -21,9 +21,9 @@
  *  Read the full text in the LICENSE.GPL_WRE file in the doc directory.
  */
 
+#include <netcomm/socket/stream.h>
 #include <netcomm/utils/acceptor_thread.h>
 #include <netcomm/utils/incoming_connection_handler.h>
-#include <netcomm/socket/stream.h>
 
 namespace fawkes {
 
@@ -43,24 +43,23 @@ namespace fawkes {
  * @exception SocketException as thrown by StreamSocket connstructor, bind and listen.
  */
 NetworkAcceptorThread::NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
-					     unsigned short int port,
-					     const char *thread_name)
-  : Thread(thread_name)
+                                             unsigned short int                port,
+                                             const char *                      thread_name)
+: Thread(thread_name)
 {
-  __handler = handler;
-  __port    = port;
+	__handler = handler;
+	__port    = port;
 
-  set_prepfin_conc_loop(true);
+	set_prepfin_conc_loop(true);
 
-  try {
-    __socket = new StreamSocket();
-    __socket->bind(__port);
-    __socket->listen();
-  } catch (SocketException &e) {
-    throw;
-  }
+	try {
+		__socket = new StreamSocket();
+		__socket->bind(__port);
+		__socket->listen();
+	} catch (SocketException &e) {
+		throw;
+	}
 }
-
 
 /** Constructor.
  * @param handler Connection handler for newly accepted incoming connections.
@@ -70,30 +69,28 @@ NetworkAcceptorThread::NetworkAcceptorThread(NetworkIncomingConnectionHandler *h
  * @exception SocketException as thrown by StreamSocket connstructor, bind and listen.
  */
 NetworkAcceptorThread::NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
-					     StreamSocket *socket,
-					     const char *thread_name)
-  : Thread(thread_name)
+                                             StreamSocket *                    socket,
+                                             const char *                      thread_name)
+: Thread(thread_name)
 {
-  __handler = handler;
-  __port    = 0;
-  __socket  = socket;
+	__handler = handler;
+	__port    = 0;
+	__socket  = socket;
 
-  set_prepfin_conc_loop(true);
+	set_prepfin_conc_loop(true);
 
-  try {
-    __socket->listen();
-  } catch (SocketException &e) {
-    throw;
-  }
+	try {
+		__socket->listen();
+	} catch (SocketException &e) {
+		throw;
+	}
 }
-
 
 /** Destructor. */
 NetworkAcceptorThread::~NetworkAcceptorThread()
 {
-  delete __socket;
+	delete __socket;
 }
-
 
 /** Thread loop.
  * Waits on a socket for an incoming connection (blocking accept). If a new
@@ -102,8 +99,8 @@ NetworkAcceptorThread::~NetworkAcceptorThread()
 void
 NetworkAcceptorThread::loop()
 {
-  StreamSocket *s = __socket->accept<StreamSocket>();
-  __handler->add_connection(s);
+	StreamSocket *s = __socket->accept<StreamSocket>();
+	__handler->add_connection(s);
 }
 
 } // end namespace fawkes

@@ -21,19 +21,19 @@
  *  Read the full text in the LICENSE.GPL_WRE file in the doc directory.
  */
 
+#include <arpa/inet.h>
+#include <core/exceptions/system.h>
 #include <netcomm/service_discovery/service.h>
 #include <netcomm/utils/resolver.h>
-#include <core/exceptions/system.h>
-
-#include <sys/types.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
-#include <inttypes.h>
-#include <cstddef>
-#include <cstring>
-#include <cstdlib>
+#include <sys/types.h>
+
 #include <cstdarg>
+#include <cstddef>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <inttypes.h>
 
 namespace fawkes {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -57,24 +57,23 @@ namespace fawkes {
  * @param host host of service
  * @param port port of service
  */
-NetworkService::NetworkService(const char         *name,
-			       const char         *type,
-			       const char         *domain,
-			       const char         *host,
-			       unsigned short int  port)
+NetworkService::NetworkService(const char *       name,
+                               const char *       type,
+                               const char *       domain,
+                               const char *       host,
+                               unsigned short int port)
 {
-  _name   = strdup(name);
-  _type   = strdup(type);
-  _domain = strdup(domain);
-  _host   = strdup(host);
-  _port   = port;
+	_name   = strdup(name);
+	_type   = strdup(type);
+	_domain = strdup(domain);
+	_host   = strdup(host);
+	_port   = port;
 
-  _modified_name = NULL;
+	_modified_name = NULL;
 
-  _addr = NULL;
-  _addr_size = 0;
+	_addr      = NULL;
+	_addr_size = 0;
 }
-
 
 /** Constructor.
  * This constructor sets all parameters.
@@ -87,30 +86,29 @@ NetworkService::NetworkService(const char         *name,
  * @param addr_size size in bytes of addr parameter
  * @param txt list of TXT records
  */
-NetworkService::NetworkService(const char         *name,
-			       const char         *type,
-			       const char         *domain,
-			       const char         *host,
-			       unsigned short int  port,
-			       const struct sockaddr *addr,
-			       const socklen_t     addr_size,
-			       std::list<std::string> &txt)
+NetworkService::NetworkService(const char *            name,
+                               const char *            type,
+                               const char *            domain,
+                               const char *            host,
+                               unsigned short int      port,
+                               const struct sockaddr * addr,
+                               const socklen_t         addr_size,
+                               std::list<std::string> &txt)
 
 {
-  _name   = strdup(name);
-  _type   = strdup(type);
-  _domain = strdup(domain);
-  _host   = strdup(host);
-  _port   = port;
+	_name   = strdup(name);
+	_type   = strdup(type);
+	_domain = strdup(domain);
+	_host   = strdup(host);
+	_port   = port;
 
-  _modified_name = NULL;
+	_modified_name = NULL;
 
-  _addr = (struct sockaddr *)malloc(addr_size);
-  memcpy(_addr, addr, addr_size);
-  _addr_size = addr_size;
-  list = txt;
+	_addr = (struct sockaddr *)malloc(addr_size);
+	memcpy(_addr, addr, addr_size);
+	_addr_size = addr_size;
+	list       = txt;
 }
-
 
 /** Constructor.
  * This constructor sets all parameters. Host and domain are the
@@ -120,22 +118,19 @@ NetworkService::NetworkService(const char         *name,
  * @param type type of service
  * @param port port of service
  */
-NetworkService::NetworkService(const char         *name,
-			       const char         *type,
-			       unsigned short int  port)
+NetworkService::NetworkService(const char *name, const char *type, unsigned short int port)
 {
-  _name   = strdup(name);
-  _type   = strdup(type);
-  _domain = NULL;
-  _host   = NULL;
-  _port   = port;
+	_name   = strdup(name);
+	_type   = strdup(type);
+	_domain = NULL;
+	_host   = NULL;
+	_port   = port;
 
-  _modified_name = NULL;
+	_modified_name = NULL;
 
-  _addr = NULL;
-  _addr_size = 0;
+	_addr      = NULL;
+	_addr_size = 0;
 }
-
 
 /** Constructor.
  * This constructor sets all parameters. Host and domain are the
@@ -150,25 +145,25 @@ NetworkService::NetworkService(const char         *name,
  * @param port port of service
  */
 NetworkService::NetworkService(NetworkNameResolver *nnresolver,
-			       const char         *name,
-			       const char         *type,
-			       unsigned short int  port)
+                               const char *         name,
+                               const char *         type,
+                               unsigned short int   port)
 {
-  std::string s = name;
-  std::string::size_type hpos = s.find("%h");
-  if (nnresolver && (hpos != std::string::npos)) {
-    s.replace(hpos, 2, nnresolver->short_hostname());
-  }
-  _name   = strdup(s.c_str());
-  _type   = strdup(type);
-  _domain = NULL;
-  _host   = NULL;
-  _port   = port;
+	std::string            s    = name;
+	std::string::size_type hpos = s.find("%h");
+	if (nnresolver && (hpos != std::string::npos)) {
+		s.replace(hpos, 2, nnresolver->short_hostname());
+	}
+	_name   = strdup(s.c_str());
+	_type   = strdup(type);
+	_domain = NULL;
+	_host   = NULL;
+	_port   = port;
 
-  _modified_name = NULL;
+	_modified_name = NULL;
 
-  _addr = NULL;
-  _addr_size = 0;
+	_addr      = NULL;
+	_addr_size = 0;
 }
 
 /** Constructor.
@@ -177,34 +172,36 @@ NetworkService::NetworkService(NetworkNameResolver *nnresolver,
  * @param type type of service
  * @param domain domain of service
  */
-NetworkService::NetworkService(const char         *name,
-			       const char         *type,
-			       const char         *domain)
+NetworkService::NetworkService(const char *name, const char *type, const char *domain)
 {
-  _name   = strdup(name);
-  _type   = strdup(type);
-  _domain = strdup(domain);
+	_name   = strdup(name);
+	_type   = strdup(type);
+	_domain = strdup(domain);
 
-  _modified_name = NULL;
+	_modified_name = NULL;
 
-  _host   = NULL;
-  _port   = 0;
-  _addr = NULL;
-  _addr_size = 0;
+	_host      = NULL;
+	_port      = 0;
+	_addr      = NULL;
+	_addr_size = 0;
 }
-
 
 /** Destructor. */
 NetworkService::~NetworkService()
 {
-  if ( _name   != NULL)  free( _name );
-  if ( _type   != NULL)  free( _type );
-  if ( _domain != NULL)  free( _domain );
-  if ( _host   != NULL)  free( _host );
-  if ( _addr   != NULL)  free( _addr );
-  if ( _modified_name   != NULL)  free( _modified_name );
+	if (_name != NULL)
+		free(_name);
+	if (_type != NULL)
+		free(_type);
+	if (_domain != NULL)
+		free(_domain);
+	if (_host != NULL)
+		free(_host);
+	if (_addr != NULL)
+		free(_addr);
+	if (_modified_name != NULL)
+		free(_modified_name);
 }
-
 
 /** Copy constructor (pointer).
  * Create a copy of given NetworkService.
@@ -212,31 +209,30 @@ NetworkService::~NetworkService()
  */
 NetworkService::NetworkService(const NetworkService *s)
 {
-  _name = strdup(s->_name);
-  _type = strdup(s->_type);
-  _port = s->_port;
-  if ( s->_domain != NULL ) {
-    _domain = strdup(s->_domain);
-  } else {
-    _domain = NULL;
-  }
-  if ( s->_host != NULL ) {
-    _host = strdup(s->_host);
-  } else {
-    _host = NULL;
-  }
+	_name = strdup(s->_name);
+	_type = strdup(s->_type);
+	_port = s->_port;
+	if (s->_domain != NULL) {
+		_domain = strdup(s->_domain);
+	} else {
+		_domain = NULL;
+	}
+	if (s->_host != NULL) {
+		_host = strdup(s->_host);
+	} else {
+		_host = NULL;
+	}
 
-  _modified_name = NULL;
-  if (s->_modified_name != NULL) {
-    _modified_name = strdup(s->_modified_name);
-  }
+	_modified_name = NULL;
+	if (s->_modified_name != NULL) {
+		_modified_name = strdup(s->_modified_name);
+	}
 
-  _addr = NULL;
-  _addr_size = 0;
+	_addr      = NULL;
+	_addr_size = 0;
 
-  list = s->list;
+	list = s->list;
 }
-
 
 /** Copy constructor (reference).
  * Create a copy of given NetworkService.
@@ -244,31 +240,30 @@ NetworkService::NetworkService(const NetworkService *s)
  */
 NetworkService::NetworkService(const NetworkService &s)
 {
-  _name = strdup(s._name);
-  _type = strdup(s._type);
-  _port = s._port;
-  if ( s._domain != NULL ) {
-    _domain = strdup(s._domain);
-  } else {
-    _domain = NULL;
-  }
-  if ( s._host != NULL ) {
-    _host = strdup(s._host);
-  } else {
-    _host = NULL;
-  }
+	_name = strdup(s._name);
+	_type = strdup(s._type);
+	_port = s._port;
+	if (s._domain != NULL) {
+		_domain = strdup(s._domain);
+	} else {
+		_domain = NULL;
+	}
+	if (s._host != NULL) {
+		_host = strdup(s._host);
+	} else {
+		_host = NULL;
+	}
 
-  _modified_name = NULL;
-  if (s._modified_name != NULL) {
-    _modified_name = strdup(s._modified_name);
-  }
+	_modified_name = NULL;
+	if (s._modified_name != NULL) {
+		_modified_name = strdup(s._modified_name);
+	}
 
-  _addr = NULL;
-  _addr_size = 0;
+	_addr      = NULL;
+	_addr_size = 0;
 
-  list = s.list;
+	list = s.list;
 }
-
 
 /** Add a TXT record.
  * @param format format for TXT record to add, must be a "key=value" string,
@@ -277,17 +272,16 @@ NetworkService::NetworkService(const NetworkService &s)
 void
 NetworkService::add_txt(const char *format, ...)
 {
-  va_list arg;
-  va_start(arg, format);
-  char *tmp;
-  if (vasprintf(&tmp, format, arg) == -1) {
-    throw OutOfMemoryException("Cannot add txt record, no memory");
-  }
-  list.push_back(tmp);
-  free(tmp);
-  va_end(arg);
+	va_list arg;
+	va_start(arg, format);
+	char *tmp;
+	if (vasprintf(&tmp, format, arg) == -1) {
+		throw OutOfMemoryException("Cannot add txt record, no memory");
+	}
+	list.push_back(tmp);
+	free(tmp);
+	va_end(arg);
 }
-
 
 /** Set TXT records all at once.
  * @param txtlist list of TXT records
@@ -295,9 +289,8 @@ NetworkService::add_txt(const char *format, ...)
 void
 NetworkService::set_txt(std::list<std::string> &txtlist)
 {
-  list = txtlist;
+	list = txtlist;
 }
-
 
 /** Set name of service.
  * @param new_name new name
@@ -305,10 +298,9 @@ NetworkService::set_txt(std::list<std::string> &txtlist)
 void
 NetworkService::set_name(const char *new_name)
 {
-  free( _name );
-  _name = strdup(new_name);
+	free(_name);
+	_name = strdup(new_name);
 }
-
 
 /** Get name of service.
  * @return name of service
@@ -316,9 +308,8 @@ NetworkService::set_name(const char *new_name)
 const char *
 NetworkService::name() const
 {
-  return _name;
+	return _name;
 }
-
 
 /** Set modified name of service.
  * The modified name is the original name with a suffix that has been added
@@ -328,10 +319,10 @@ NetworkService::name() const
 void
 NetworkService::set_modified_name(const char *new_name) const
 {
-  if (_modified_name)  free(_modified_name);
-  _modified_name = strdup(new_name);
+	if (_modified_name)
+		free(_modified_name);
+	_modified_name = strdup(new_name);
 }
-
 
 /** Get modified name of service.
  * The modified name is the original name with a suffix that has been added
@@ -342,9 +333,8 @@ NetworkService::set_modified_name(const char *new_name) const
 const char *
 NetworkService::modified_name() const
 {
-  return _modified_name;
+	return _modified_name;
 }
-
 
 /** Get type of service.
  * @return type of service
@@ -352,9 +342,8 @@ NetworkService::modified_name() const
 const char *
 NetworkService::type() const
 {
-  return _type;
+	return _type;
 }
-
 
 /** Get domain of service.
  * @return domain of service
@@ -362,9 +351,8 @@ NetworkService::type() const
 const char *
 NetworkService::domain() const
 {
-  return _domain;
+	return _domain;
 }
-
 
 /** Get host of service.
  * @return host of service
@@ -372,9 +360,8 @@ NetworkService::domain() const
 const char *
 NetworkService::host() const
 {
-  return _host;
+	return _host;
 }
-
 
 /** Get port of service.
  * @return port of service
@@ -382,9 +369,8 @@ NetworkService::host() const
 unsigned short int
 NetworkService::port() const
 {
-  return _port;
+	return _port;
 }
-
 
 /** Get IP address of entry as string.
  * @return IP address as string
@@ -393,11 +379,10 @@ NetworkService::port() const
 std::string
 NetworkService::addr_string() const
 {
-  char ipaddr[INET_ADDRSTRLEN];
-  struct sockaddr_in *saddr = (struct sockaddr_in *)_addr;
-  return std::string(inet_ntop(AF_INET, &(saddr->sin_addr), ipaddr, sizeof(ipaddr)));
+	char                ipaddr[INET_ADDRSTRLEN];
+	struct sockaddr_in *saddr = (struct sockaddr_in *)_addr;
+	return std::string(inet_ntop(AF_INET, &(saddr->sin_addr), ipaddr, sizeof(ipaddr)));
 }
-
 
 /** Get TXT record list of service.
  * @return TXT record list of service
@@ -405,9 +390,8 @@ NetworkService::addr_string() const
 const std::list<std::string> &
 NetworkService::txt() const
 {
-  return list;
+	return list;
 }
-
 
 /** Equal operator for NetworkService reference.
  * @param s reference of service to compare to.
@@ -416,10 +400,8 @@ NetworkService::txt() const
 bool
 NetworkService::operator==(const NetworkService &s) const
 {
-  return ( (strcmp(_name, s._name) == 0) &&
-	   (strcmp(_type, s._type) == 0) );
+	return ((strcmp(_name, s._name) == 0) && (strcmp(_type, s._type) == 0));
 }
-
 
 /** Equal operator for NetworkService pointer.
  * @param s pointer to service to compare to.
@@ -428,10 +410,8 @@ NetworkService::operator==(const NetworkService &s) const
 bool
 NetworkService::operator==(const NetworkService *s) const
 {
-  return ( (strcmp(_name, s->_name) == 0) &&
-	   (strcmp(_type, s->_type) == 0) );
+	return ((strcmp(_name, s->_name) == 0) && (strcmp(_type, s->_type) == 0));
 }
-
 
 /** Less than operator.
  * @param s reference of service to compare to
@@ -441,12 +421,12 @@ NetworkService::operator==(const NetworkService *s) const
 bool
 NetworkService::operator<(const NetworkService &s) const
 {
-  int typediff = strcmp(_type, s._type);
-  if ( typediff == 0 ) {
-    return (strcmp(_name, s._name) < 0);
-  } else {
-    return (typediff < 0);
-  }
+	int typediff = strcmp(_type, s._type);
+	if (typediff == 0) {
+		return (strcmp(_name, s._name) < 0);
+	} else {
+		return (typediff < 0);
+	}
 }
 
 } // end namespace fawkes
