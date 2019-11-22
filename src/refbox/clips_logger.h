@@ -50,24 +50,22 @@ class Logger;
 
 class CLIPSLogger
 {
- public:
-  CLIPSLogger(Logger *logger, Logger *trace_logger, const char *component = 0);
-  ~CLIPSLogger();
+public:
+	CLIPSLogger(Logger *logger, Logger *trace_logger, const char *component = 0);
+	~CLIPSLogger();
 
-  void log(const char *logical_name, const char *str);
+	void log(const char *logical_name, const char *str);
 
- private:
-  Logger *logger_;
-  Logger *trace_logger_;
-  char *component_;
-  std::string buffer_;
+private:
+	Logger *    logger_;
+	Logger *    trace_logger_;
+	char *      component_;
+	std::string buffer_;
 };
 
-extern void
-init_clips_logger(void *env, Logger *logger, Logger *trace_logger);
+extern void init_clips_logger(void *env, Logger *logger, Logger *trace_logger);
 
-extern void
-finalize_clips_logger(void *env);
+extern void finalize_clips_logger(void *env);
 
 /// @endcond
 

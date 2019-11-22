@@ -37,12 +37,12 @@
 #include "clips_logger.h"
 
 #include <logging/logger.h>
+
 #include <clipsmm.h>
 
 extern "C" {
 #include <clips/clips.h>
 }
-
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -51,126 +51,130 @@ namespace llsfrb {
 
 /// @cond INTERNALS
 
+class CLIPSContextMaintainer
+{
+public:
+	CLIPSContextMaintainer(Logger *logger, Logger *trace_logger, const char *log_component_name)
+	{
+		this->logger = new CLIPSLogger(logger, trace_logger, log_component_name);
+	}
 
-class CLIPSContextMaintainer {
- public:
-  CLIPSContextMaintainer(Logger *logger, Logger *trace_logger, const char *log_component_name)
-  {
-    this->logger = new CLIPSLogger(logger, trace_logger, log_component_name);
-  }
+	~CLIPSContextMaintainer()
+	{
+		delete logger;
+	}
 
-  ~CLIPSContextMaintainer()
-  {
-    delete logger;
-  }
-
- public:
-  CLIPSLogger *logger;
+public:
+	CLIPSLogger *logger;
 };
-
 
 CLIPSLogger::CLIPSLogger(Logger *logger, Logger *trace_logger, const char *component)
 {
-  logger_ = logger;
-  trace_logger_ = trace_logger;
-  if (component) {
-    component_ = strdup(component);
-  } else {
-    component_ = NULL;
-  }
+	logger_       = logger;
+	trace_logger_ = trace_logger;
+	if (component) {
+		component_ = strdup(component);
+	} else {
+		component_ = NULL;
+	}
 }
 
 CLIPSLogger::~CLIPSLogger()
 {
-  if (component_) {
-    free(component_);
-  }
+	if (component_) {
+		free(component_);
+	}
 }
 
 void
 CLIPSLogger::log(const char *logical_name, const char *str)
 {
-  if (strcmp(str, "\n") == 0) {
-    if (strcmp(logical_name, "debug") == 0) {
-      logger_->log_debug(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    } else if (strcmp(logical_name, WTRACE) == 0) {
-      trace_logger_->log_debug(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    } else if (strcmp(logical_name, "warn") == 0 || strcmp(logical_name, WWARNING) == 0) {
-      logger_->log_warn(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    } else if (strcmp(logical_name, "error") == 0 || strcmp(logical_name, WERROR) == 0) {
-      logger_->log_error(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    } else {
-      logger_->log_info(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
-    }
+	if (strcmp(str, "\n") == 0) {
+		if (strcmp(logical_name, "debug") == 0) {
+			logger_->log_debug(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
+		} else if (strcmp(logical_name, WTRACE) == 0) {
+			trace_logger_->log_debug(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
+		} else if (strcmp(logical_name, "warn") == 0 || strcmp(logical_name, WWARNING) == 0) {
+			logger_->log_warn(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
+		} else if (strcmp(logical_name, "error") == 0 || strcmp(logical_name, WERROR) == 0) {
+			logger_->log_error(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
+		} else {
+			logger_->log_info(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
+		}
 
-    buffer_.clear();
-  } else {
-    buffer_ += str;
-  }
+		buffer_.clear();
+	} else {
+		buffer_ += str;
+	}
 }
-
 
 static int
 log_router_query(void *env, char *logical_name)
 {
-  if (strcmp(logical_name, "l") == 0) return TRUE;
-  if (strcmp(logical_name, "info") == 0) return TRUE;
-  if (strcmp(logical_name, "debug") == 0) return TRUE;
-  if (strcmp(logical_name, "warn") == 0) return TRUE;
-  if (strcmp(logical_name, "error") == 0) return TRUE;
-  if (strcmp(logical_name, "stdout") == 0) return TRUE;
-  if (strcmp(logical_name, WTRACE) == 0) return TRUE;
-  if (strcmp(logical_name, WWARNING) == 0) return TRUE;
-  if (strcmp(logical_name, WERROR) == 0) return TRUE;
-  if (strcmp(logical_name, WDISPLAY) == 0) return TRUE;
-  return FALSE;
+	if (strcmp(logical_name, "l") == 0)
+		return TRUE;
+	if (strcmp(logical_name, "info") == 0)
+		return TRUE;
+	if (strcmp(logical_name, "debug") == 0)
+		return TRUE;
+	if (strcmp(logical_name, "warn") == 0)
+		return TRUE;
+	if (strcmp(logical_name, "error") == 0)
+		return TRUE;
+	if (strcmp(logical_name, "stdout") == 0)
+		return TRUE;
+	if (strcmp(logical_name, WTRACE) == 0)
+		return TRUE;
+	if (strcmp(logical_name, WWARNING) == 0)
+		return TRUE;
+	if (strcmp(logical_name, WERROR) == 0)
+		return TRUE;
+	if (strcmp(logical_name, WDISPLAY) == 0)
+		return TRUE;
+	return FALSE;
 }
 
 static int
 log_router_print(void *env, char *logical_name, char *str)
 {
-  void *rc = GetEnvironmentRouterContext(env);
-  CLIPSLogger *logger = static_cast<CLIPSLogger *>(rc);
-  logger->log(logical_name, str);
-  return TRUE;
+	void *       rc     = GetEnvironmentRouterContext(env);
+	CLIPSLogger *logger = static_cast<CLIPSLogger *>(rc);
+	logger->log(logical_name, str);
+	return TRUE;
 }
 
 static int
 log_router_exit(void *env, int exit_code)
 {
-  return TRUE;
+	return TRUE;
 }
-
 
 void
 init_clips_logger(void *env, Logger *logger, Logger *trace_logger)
 {
-  CLIPSContextMaintainer *cm =
-    new CLIPSContextMaintainer(logger, trace_logger, "C");
+	CLIPSContextMaintainer *cm = new CLIPSContextMaintainer(logger, trace_logger, "C");
 
-  SetEnvironmentContext(env, cm);
+	SetEnvironmentContext(env, cm);
 
-  EnvAddRouterWithContext(env, (char *)"fawkeslog",
-			  /* exclusive */ 50,
-			  log_router_query,
-			  log_router_print,
-			  /* getc */   NULL,
-			  /* ungetc */ NULL,
-			  log_router_exit,
-			  cm->logger);
-
+	EnvAddRouterWithContext(env,
+	                        (char *)"fawkeslog",
+	                        /* exclusive */ 50,
+	                        log_router_query,
+	                        log_router_print,
+	                        /* getc */ NULL,
+	                        /* ungetc */ NULL,
+	                        log_router_exit,
+	                        cm->logger);
 }
-
 
 void
 finalize_clips_logger(void *env)
 {
-  CLIPSContextMaintainer *cm =
-    static_cast<CLIPSContextMaintainer *>(GetEnvironmentContext(env));
+	CLIPSContextMaintainer *cm = static_cast<CLIPSContextMaintainer *>(GetEnvironmentContext(env));
 
-  EnvDeleteRouter(env, (char *)"fawkeslog");
-  SetEnvironmentContext(env, NULL);
-  delete cm;
+	EnvDeleteRouter(env, (char *)"fawkeslog");
+	SetEnvironmentContext(env, NULL);
+	delete cm;
 }
 
 /// @endcond
