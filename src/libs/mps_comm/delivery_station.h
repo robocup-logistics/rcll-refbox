@@ -12,19 +12,20 @@ namespace mps_comm {
 }
 #endif
 
-class DeliveryStation: public Machine {
-  public:
-    DeliveryStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-    virtual ~DeliveryStation();
+class DeliveryStation : public Machine
+{
+public:
+	DeliveryStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	virtual ~DeliveryStation();
 
-    // Send command to deliver a product
-    // slot is between 1 and 3
-    // Deprecated
-    void deliver_product(int slot);
+	// Send command to deliver a product
+	// slot is between 1 and 3
+	// Deprecated
+	void deliver_product(int slot);
 
-    // Tell PLC, which machine it is
-    virtual void identify();
+	// Tell PLC, which machine it is
+	virtual void identify();
 };
 
-}
-}
+} // namespace mps_comm
+} // namespace llsfrb

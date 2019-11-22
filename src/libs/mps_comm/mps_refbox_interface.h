@@ -8,11 +8,12 @@
 #ifndef MPSREFBOXINTERFACE_H
 #define MPSREFBOXINTERFACE_H
 
-#include <core/threading/thread_list.h>
-#include <map>
-
 #include "machine.h"
 #include "stations.h"
+
+#include <core/threading/thread_list.h>
+
+#include <map>
 
 using namespace fawkes;
 using namespace llsfrb::mps_comm;
@@ -21,56 +22,57 @@ using namespace llsfrb::mps_comm;
 * \class MPSRefboxInterface
 * \brief This class handels the communication between refbox and server
 */
-class MPSRefboxInterface {
- private:
-  unsigned int          __max_thread_time_usec;
-  unsigned int          __max_thread_time_sec;
-  ThreadList           *mpsThreadList;
+class MPSRefboxInterface
+{
+private:
+	unsigned int __max_thread_time_usec;
+	unsigned int __max_thread_time_sec;
+	ThreadList * mpsThreadList;
 
- public:
-  std::map<std::string, Machine *>  mpses_;
-  
- public:
-  /*!
+public:
+	std::map<std::string, Machine *> mpses_;
+
+public:
+	/*!
    * \fn MPSRefboxInterface()
    * \brief Constructor
    */
-  MPSRefboxInterface();
+	MPSRefboxInterface();
 
-  MPSRefboxInterface(const char* name);
+	MPSRefboxInterface(const char *name);
 
-  /*!
+	/*!
    * \fn ~MPSRefboxInterface()
    * \brief Destructor
    */
-  ~MPSRefboxInterface();
+	~MPSRefboxInterface();
 
-  /*!
+	/*!
    * \fn insertMachine(Thread *t)
    * \brief insert machine into thread list
    * \param mps The Machine object to insert
    */
-  void insertMachine(std::string station_name, Machine *mps);
+	void insertMachine(std::string station_name, Machine *mps);
 
-  void process();
+	void process();
 
-  std::map<std::string, std::string> get_states();
+	std::map<std::string, std::string> get_states();
 
-  template<class C>
-  C get_station(const std::string &name, C &machine)
-  {
-    if (mpses_.find(name) == mpses_.end()) {
-      return NULL;
-    }
+	template <class C>
+	C
+	get_station(const std::string &name, C &machine)
+	{
+		if (mpses_.find(name) == mpses_.end()) {
+			return NULL;
+		}
 
-    Machine *mps = mpses_[name];
-    C typed_mps = dynamic_cast<C>(mps);
-    if (! typed_mps) {
-      return NULL;
-    }
-    machine = typed_mps;
-    return machine;
-  }
-
+		Machine *mps       = mpses_[name];
+		C        typed_mps = dynamic_cast<C>(mps);
+		if (!typed_mps) {
+			return NULL;
+		}
+		machine = typed_mps;
+		return machine;
+	}
 };
 #endif // MPSREFBOXINTERFACE_H

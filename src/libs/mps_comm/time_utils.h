@@ -12,8 +12,7 @@ namespace mps_comm {
 #if 0
 }
 #endif
-void timespec_diff(struct timespec *start, struct timespec *stop,
-                   struct timespec *result);
+void timespec_diff(struct timespec *start, struct timespec *stop, struct timespec *result);
 
-}
-}
+} // namespace mps_comm
+} // namespace llsfrb

@@ -1,5 +1,7 @@
 #include "delivery_station.h"
+
 #include "mps_io_mapping.h"
+
 #include <iostream>
 
 namespace llsfrb {
@@ -19,15 +21,21 @@ DeliveryStation::DeliveryStation(std::string    name,
 {
 }
 
-DeliveryStation::~DeliveryStation() {}
-
-void DeliveryStation::deliver_product(int slot) {
-  send_command(machine_type_ | Operation::OPERATION_DELIVER, slot);
+DeliveryStation::~DeliveryStation()
+{
 }
 
-void DeliveryStation::identify() {
-  send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
+void
+DeliveryStation::deliver_product(int slot)
+{
+	send_command(machine_type_ | Operation::OPERATION_DELIVER, slot);
 }
 
+void
+DeliveryStation::identify()
+{
+	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
 }
-}
+
+} // namespace mps_comm
+} // namespace llsfrb

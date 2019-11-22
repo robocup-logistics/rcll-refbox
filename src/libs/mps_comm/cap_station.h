@@ -13,25 +13,26 @@ namespace mps_comm {
 }
 #endif
 
-class CapStation: public Machine {
-  public:
-	  CapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+class CapStation : public Machine
+{
+public:
+	CapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
 
-	  // -----------------
-    // deprecated methods
-    void band_on_until_in();
-    void band_on_until_mid();
-    void band_on_until_out();
-    void retrieve_cap();
-    void mount_cap();
-    // end of deprecated
-    // ----------------
+	// -----------------
+	// deprecated methods
+	void band_on_until_in();
+	void band_on_until_mid();
+	void band_on_until_out();
+	void retrieve_cap();
+	void mount_cap();
+	// end of deprecated
+	// ----------------
 
-    virtual ~CapStation();
+	virtual ~CapStation();
 
-    // Tell plc, which machine I am
-    virtual void identify();
+	// Tell plc, which machine I am
+	virtual void identify();
 };
 
-}
-}
+} // namespace mps_comm
+} // namespace llsfrb

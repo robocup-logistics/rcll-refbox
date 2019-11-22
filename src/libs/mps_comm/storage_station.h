@@ -14,14 +14,15 @@ namespace mps_comm {
 }
 #endif
 
-class StorageStation: public Machine {
-  public:
-    StorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-    virtual ~StorageStation();
+class StorageStation : public Machine
+{
+public:
+	StorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	virtual ~StorageStation();
 
-    // identify: tell the PLC, which machine it is controlling
-    virtual void identify();
+	// identify: tell the PLC, which machine it is controlling
+	virtual void identify();
 };
 
-}
-}
+} // namespace mps_comm
+} // namespace llsfrb

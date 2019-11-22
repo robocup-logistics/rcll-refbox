@@ -12,26 +12,28 @@ namespace mps_comm {
 }
 #endif
 
-class RingStation: public Machine {
-  static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
-  public:
-    RingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-    virtual ~RingStation();
+class RingStation : public Machine
+{
+	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
 
-    // Send command to get a ring
-    // void getRing();
-    // Check, if the cap is ready for take away
-    // deprecated
-    void band_on_until_in();
-    void band_on_until_mid();
-    void band_on_until_out();
-    bool ring_ready();
+public:
+	RingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	virtual ~RingStation();
 
-    void mount_ring(unsigned int feeder);
+	// Send command to get a ring
+	// void getRing();
+	// Check, if the cap is ready for take away
+	// deprecated
+	void band_on_until_in();
+	void band_on_until_mid();
+	void band_on_until_out();
+	bool ring_ready();
 
-    // identify: tell PLC, which machine it is running on
-    virtual void identify();
+	void mount_ring(unsigned int feeder);
+
+	// identify: tell PLC, which machine it is running on
+	virtual void identify();
 };
 
-}
-}
+} // namespace mps_comm
+} // namespace llsfrb

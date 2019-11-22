@@ -1,5 +1,7 @@
 #include "storage_station.h"
+
 #include "mps_io_mapping.h"
+
 #include <iostream>
 
 namespace llsfrb {
@@ -19,11 +21,15 @@ StorageStation::StorageStation(std::string    name,
 {
 }
 
-StorageStation::~StorageStation() {}
-
-void StorageStation::identify() {
-  send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_SS);
+StorageStation::~StorageStation()
+{
 }
 
+void
+StorageStation::identify()
+{
+	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_SS);
 }
-}
+
+} // namespace mps_comm
+} // namespace llsfrb
