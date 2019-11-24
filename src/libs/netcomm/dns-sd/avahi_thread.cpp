@@ -21,6 +21,10 @@
  *  Read the full text in the LICENSE.GPL_WRE file in the doc directory.
  */
 
+#include "avahi_thread.h"
+
+#include "avahi_resolver_handler.h"
+
 #include <avahi-client/lookup.h>
 #include <avahi-client/publish.h>
 #include <avahi-common/alternative.h>
@@ -31,8 +35,6 @@
 #include <core/exceptions/software.h>
 #include <core/threading/mutex.h>
 #include <core/threading/wait_condition.h>
-#include <netcomm/dns-sd/avahi_resolver_handler.h>
-#include <netcomm/dns-sd/avahi_thread.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
