@@ -25,7 +25,7 @@ __buildsys_root_yamllint_mk_ := 1
 yamllint:
 	$(SILENT) echo -e "$(INDENT_PRINT)[CHK] Checking configuration files"
 	$(SILENT)if type -p yamllint >/dev/null; then \
-		if ! yamllint -s cfg/config.yaml cfg/conf.d/; then \
+		if ! yamllint -s cfg; then \
 			echo -e "$(TRED)--> yamllint reported issues, see above.$(TNORMAL)"; \
 			exit 1; \
 		else \
