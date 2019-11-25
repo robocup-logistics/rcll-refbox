@@ -182,7 +182,7 @@
             )
     )
     
-    (printout warn "INFO: Append " ?quantity "x products " ?id " to order " ?eid crlf)
+    (printout warn "INFO: Append " ?quantity "x of product " ?id " to external order " ?eid crlf)
   )
   
   ;-- remember orders and orderer (client)
@@ -193,14 +193,15 @@
           )
   )
     
-  (printout warn "INFO: Inserted order " ?eid " with " ?cnt " products" crlf)
+  (printout warn "INFO: Inserted external order " ?eid " with " ?cnt " products" crlf)
   (pb-send ?cid ?recv-resp)
   (pb-destroy ?recv-resp)
 )
 
 (defrule custom-product-delivered
-  ?pf <- (product-processed (order ?id&~0) (game-time ?gt))
-  ?of <- (order (id ?id))
+  ?pf <- (product-processed (game-time ?gt) (team ?team) (order ?order) (confirmed TRUE)
+                            (workpiece ?wp-id) (mtype DS) (scored FALSE))
+  ?of <- (order (id ?order))
   ?roi <- (orderer-client-response-product-info 
             (extern-id ?eid) 
             (product-id ?id)
@@ -220,13 +221,12 @@
             (quantity ?updquant)
             (last-delivered ?gt)
   )
-  
-  (printout warn "Delivered product of " ?id " (" ?updquant " remaining)" crlf)
+  (printout warn "Delivered 1 product of " ?id " (" ?updquant " remaining)" crlf)
 )
 
 (defrule custom-all-of-product-delivered
-  ?pf <- (product-processed (order ?id&~0))
-  ?of <- (order (id ?id))
+  ?pf <- (product-processed (order ?order&~0))
+  ?of <- (order (id ?order))
   ?roi <- (orderer-client-response-product-info 
             (extern-id ?eid) 
             (product-id ?id)
@@ -243,8 +243,7 @@
   ;-- remove response order info
   (retract ?roi)
   (modify ?ri (product-count ?updcnt))
-  
-  (printout warn "Delivered product " ?id " of " ?eid " (" ?updcnt " prod. remaining)" crlf)
+  (printout warn "Delivered all products of " ?id " from " ?eid " (" ?updcnt " prod. remaining)" crlf)
 )
 
 (defrule custom-order-complete
