@@ -39,8 +39,8 @@ public:
 	MongoDBLogProtobuf(std::string host_port, std::string collection);
 	virtual ~MongoDBLogProtobuf();
 
-	void write(google::protobuf::Message &m);
-	void write(google::protobuf::Message &m, bsoncxx::document::view_or_value &meta_data);
+	void write(const google::protobuf::Message &m);
+	void write(const google::protobuf::Message &m, const bsoncxx::document::view_or_value &meta_data);
 
 private:
 	void                              add_field(const ::google::protobuf::FieldDescriptor *field,

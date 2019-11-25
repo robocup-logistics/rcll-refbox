@@ -165,7 +165,7 @@ MongoDBLogProtobuf::add_message(const google::protobuf::Message &m)
 }
 
 void
-MongoDBLogProtobuf::write(google::protobuf::Message &m)
+MongoDBLogProtobuf::write(const google::protobuf::Message &m)
 {
 	fawkes::MutexLocker lock(mutex_);
 	document            doc{add_message(m)};
@@ -178,7 +178,7 @@ MongoDBLogProtobuf::write(google::protobuf::Message &m)
 
 
 void
-MongoDBLogProtobuf::write(google::protobuf::Message &m, view_or_value &meta_data)
+MongoDBLogProtobuf::write(const google::protobuf::Message &m, const view_or_value &meta_data)
 {
 	fawkes::MutexLocker lock(mutex_);
 	document            doc{add_message(m)};
