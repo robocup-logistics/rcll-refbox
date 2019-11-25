@@ -11,8 +11,10 @@ jobs:
             dnf install -y --nodocs \
               avahi-devel \
               boost-devel \
+              clang \
               clips-devel \
               clipsmm-devel \
+              findutils \
               gcc-c++ \
               gecode-devel \
               git \
@@ -25,7 +27,8 @@ jobs:
               protobuf-compiler \
               protobuf-devel \
               which \
-              yaml-cpp-devel
+              yaml-cpp-devel \
+              yamllint
       - run:
           name: Install freeopcua from COPR
           command: >
