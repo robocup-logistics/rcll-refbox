@@ -37,7 +37,7 @@ jobs:
             dnf install -y --nodocs freeopcua-devel
       - checkout
       - run: make quick-check
-      - run: make all FAIL_ON_WARNING=1
+      - run: make all FAIL_ON_WARNING=0
   build_ubuntu:
     docker:
       - image: ubuntu:bionic
