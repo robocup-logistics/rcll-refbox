@@ -33,6 +33,7 @@ jobs:
             dnf -y copr enable thofmann/freeopcua &&
             dnf install -y --nodocs freeopcua-devel
       - checkout
+      - run: make quick-check
       - run: make all FAIL_ON_WARNING=1
   build_ubuntu:
     docker:
