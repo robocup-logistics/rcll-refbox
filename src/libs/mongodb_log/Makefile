@@ -32,7 +32,7 @@ OBJS_all = $(OBJS_libllsf_mongodb_log)
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_MONGODB)$(HAVE_BOOST_LIBS),111)
   CFLAGS  += $(CFLAGS_PROTOBUF)  $(CFLAGS_MONGODB)  $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) -lmongoclient $(LDFLAGS_MONGODB) $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_MONGODB) $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   LIBS_all  = $(LIBDIR)/libllsf_mongodb_log.$(SOEXT)
 else

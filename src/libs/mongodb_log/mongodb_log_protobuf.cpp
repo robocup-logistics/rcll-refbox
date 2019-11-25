@@ -25,12 +25,17 @@
 #include <core/exception.h>
 #include <core/threading/mutex.h>
 #include <core/threading/mutex_locker.h>
-
-#include <mongo/client/dbclient.h>
 #include <google/protobuf/descriptor.h>
+#include <mongodb_log/mongodb_log_protobuf.h>
 
-using namespace mongo;
+#include <mongocxx/exception/operation_exception.hpp>
+
 using namespace google::protobuf;
+
+using bsoncxx::builder::basic::document;
+using bsoncxx::builder::basic::kvp;
+using bsoncxx::builder::basic::sub_document;
+using bsoncxx::document::view_or_value;
 
 /** @class MongoDBLogProtobuf <mongodb_log/mongodb_log_logger.h>
  * Thread that provides a logger writing to MongoDB.
@@ -42,18 +47,11 @@ using namespace google::protobuf;
 /** Constructor. */
 MongoDBLogProtobuf::MongoDBLogProtobuf(std::string host_port, std::string collection)
 {
-  mutex_ = new fawkes::Mutex();
+	mutex_ = new fawkes::Mutex();
 
-  collection_ = collection;
-
-  DBClientConnection *conn =
-    new DBClientConnection(/* auto reconnect */ true);
-  mongodb_ = conn;
-  std::string errmsg;
-  if (! conn->connect(host_port, errmsg)) {
-    throw fawkes::Exception("Could not connect to MongoDB at %s: %s",
-			    host_port.c_str(), errmsg.c_str());
-  }
+	std::string uri{"mongodb://" + host_port};
+	auto        client = mongocxx::client{mongocxx::uri{"mongodb://" + host_port}};
+	collection_        = client["rcll"][collection];
 }
 
 
@@ -64,148 +62,129 @@ MongoDBLogProtobuf::~MongoDBLogProtobuf()
 }
 
 void
-MongoDBLogProtobuf::add_field(const FieldDescriptor *field,
-			      const ::google::protobuf::Message &m, BSONObjBuilder *b)
+MongoDBLogProtobuf::add_field(const FieldDescriptor *            field,
+                              const ::google::protobuf::Message &m,
+                              document *                         doc)
 {
-  const Reflection *refl = m.GetReflection();
+	const Reflection *refl = m.GetReflection();
 
-  int count = 0;
-  if (field->is_repeated()) {
-    count = refl->FieldSize(m, field);
-  } else if (refl->HasField(m, field)) {
-    count = 1;
-  }
+	int count = 0;
+	if (field->is_repeated()) {
+		count = refl->FieldSize(m, field);
+	} else if (refl->HasField(m, field)) {
+		count = 1;
+	}
 
-  for (int j = 0; j < count; ++j) {
-    switch (field->type()) {
-#define HANDLE_PRIMITIVE_TYPE(TYPE, CPPTYPE, CPPTYPE_METHOD)		\
-      case FieldDescriptor::TYPE_##TYPE: {				\
-        const CPPTYPE value = field->is_repeated()			\
-	  ? refl->GetRepeated##CPPTYPE_METHOD(m, field, j)		\
-	  : refl->Get##CPPTYPE_METHOD(m, field);			\
-	  b->append(field->name(), value);				\
-	  break;							\
-      }
+	for (int j = 0; j < count; ++j) {
+		switch (field->type()) {
+#define HANDLE_PRIMITIVE_TYPE(TYPE, CPPTYPE, CPPTYPE_METHOD)                                    \
+	case FieldDescriptor::TYPE_##TYPE: {                                                          \
+		const CPPTYPE value = field->is_repeated() ? refl->GetRepeated##CPPTYPE_METHOD(m, field, j) \
+		                                           : refl->Get##CPPTYPE_METHOD(m, field);           \
+		doc->append(kvp(field->name(), value));                                                     \
+		break;                                                                                      \
+	}
 
-      HANDLE_PRIMITIVE_TYPE( INT32, int,           Int32);
-      HANDLE_PRIMITIVE_TYPE( INT64, long long int, Int64);
-      HANDLE_PRIMITIVE_TYPE(SINT32, int,           Int32);
-      HANDLE_PRIMITIVE_TYPE(SINT64, long long int, Int64);
-      HANDLE_PRIMITIVE_TYPE(UINT32, unsigned int,  UInt32);
-      HANDLE_PRIMITIVE_TYPE(UINT64, long long int, UInt64);
+			HANDLE_PRIMITIVE_TYPE(INT32, int, Int32);
+			HANDLE_PRIMITIVE_TYPE(INT64, long int, Int64);
+			HANDLE_PRIMITIVE_TYPE(SINT32, int, Int32);
+			HANDLE_PRIMITIVE_TYPE(SINT64, long int, Int64);
+			HANDLE_PRIMITIVE_TYPE(UINT32, long int, UInt32);
+			HANDLE_PRIMITIVE_TYPE(UINT64, long int, UInt64);
 
-      HANDLE_PRIMITIVE_TYPE( FIXED32, unsigned int,  UInt32);
-      HANDLE_PRIMITIVE_TYPE( FIXED64, long long int, UInt64);
-      HANDLE_PRIMITIVE_TYPE(SFIXED32, int,           Int32);
-      HANDLE_PRIMITIVE_TYPE(SFIXED64, long long int, Int64);
+			HANDLE_PRIMITIVE_TYPE(FIXED32, int, UInt32);
+			HANDLE_PRIMITIVE_TYPE(FIXED64, long int, UInt64);
+			HANDLE_PRIMITIVE_TYPE(SFIXED32, int, Int32);
+			HANDLE_PRIMITIVE_TYPE(SFIXED64, long int, Int64);
 
-      HANDLE_PRIMITIVE_TYPE(FLOAT , float , Float );
-      HANDLE_PRIMITIVE_TYPE(DOUBLE, double, Double);
+			HANDLE_PRIMITIVE_TYPE(FLOAT, float, Float);
+			HANDLE_PRIMITIVE_TYPE(DOUBLE, double, Double);
 
-      HANDLE_PRIMITIVE_TYPE(BOOL, bool, Bool);
+			HANDLE_PRIMITIVE_TYPE(BOOL, bool, Bool);
 #undef HANDLE_PRIMITIVE_TYPE
 
-      case FieldDescriptor::TYPE_MESSAGE: {
-	const google::protobuf::Message &sub_m = field->is_repeated()
-	  ? refl->GetRepeatedMessage(m, field, j)
-	  : refl->GetMessage(m, field);   
+		case FieldDescriptor::TYPE_MESSAGE: {
+			const google::protobuf::Message &sub_m =
+			  field->is_repeated() ? refl->GetRepeatedMessage(m, field, j) : refl->GetMessage(m, field);
+			doc->append(kvp(field->name(), add_message(sub_m)));
+			break;
+		}
 
-        BSONObjBuilder sub(b->subobjStart(field->name()));
-	add_message(sub_m, &sub);
-	sub.done();
-        break;
-      }
+		case FieldDescriptor::TYPE_GROUP: break;
 
-      case FieldDescriptor::TYPE_GROUP:
-        break;
+		case FieldDescriptor::TYPE_ENUM: {
+			const EnumValueDescriptor *value =
+			  field->is_repeated() ? refl->GetRepeatedEnum(m, field, j) : refl->GetEnum(m, field);
+			doc->append(kvp(field->name(), value->name()));
+			break;
+		}
 
-      case FieldDescriptor::TYPE_ENUM: {
-        const EnumValueDescriptor* value = field->is_repeated()
-	  ? refl->GetRepeatedEnum(m, field, j)
-	  : refl->GetEnum(m, field);
-	b->append(field->name(), value->name());
-	break;
-      }
+		// Handle strings separately so that we can get string references
+		// instead of copying.
+		case FieldDescriptor::TYPE_STRING: {
+			string        scratch;
+			const string &value = field->is_repeated()
+			                        ? refl->GetRepeatedStringReference(m, field, j, &scratch)
+			                        : refl->GetStringReference(m, field, &scratch);
+			//VerifyUTF8String(value.data(), value.length(), SERIALIZE);
+			doc->append(kvp(field->name(), value));
+			break;
+		}
 
-      // Handle strings separately so that we can get string references
-      // instead of copying.
-      case FieldDescriptor::TYPE_STRING: {
-        string scratch;
-	const string& value = field->is_repeated()
-	  ? refl->GetRepeatedStringReference(m, field, j, &scratch)
-	  : refl->GetStringReference(m, field, &scratch);
-	//VerifyUTF8String(value.data(), value.length(), SERIALIZE);
-	b->append(field->name(), value);
-	break;
-      }
-  
-      case FieldDescriptor::TYPE_BYTES: {
-        string scratch;
-	const string& value = field->is_repeated()
-	  ? refl->GetRepeatedStringReference(m, field, j, &scratch)
-	  : refl->GetStringReference(m, field, &scratch);
-	b->appendBinData(field->name(), value.size(), BinDataGeneral, value.c_str());
-	break;
-      }
-    }
-  }
+		case FieldDescriptor::TYPE_BYTES: {
+			string        scratch;
+			const string &value = field->is_repeated()
+			                        ? refl->GetRepeatedStringReference(m, field, j, &scratch)
+			                        : refl->GetStringReference(m, field, &scratch);
+			doc->append(kvp(field->name(), value));
+			break;
+		}
+		}
+	}
 }
 
-
-void
-MongoDBLogProtobuf::add_message(const google::protobuf::Message &m, BSONObjBuilder *b)
+document
+MongoDBLogProtobuf::add_message(const google::protobuf::Message &m)
 {
-  b->append("_type", m.GetTypeName());
+	document doc{};
+	doc.append(kvp("_type", m.GetTypeName()));
 
-  std::string data;
-  m.SerializeToString(&data);
-  b->appendBinData("_protobuf", data.size(), BinDataGeneral, data.c_str());
+	std::string data;
+	m.SerializeToString(&data);
+	doc.append(kvp("_protobuf", data));
 
   const Reflection *refl = m.GetReflection();
 
   std::vector<const FieldDescriptor *> fields;
   refl->ListFields(m, &fields);
 
-  for (size_t i = 0; i < fields.size(); ++i) {
-    add_field(fields[i], m, b);
-  }
+	for (size_t i = 0; i < fields.size(); ++i) {
+		add_field(fields[i], m, &doc);
+	}
+	return doc;
 }
 
 void
 MongoDBLogProtobuf::write(google::protobuf::Message &m)
 {
-  fawkes::MutexLocker lock(mutex_);
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
-
-  BSONObjBuilder b;
-  b.appendDate("_time", nowd);
-
-  add_message(m, &b);
-
-  try {
-    mongodb_->insert(collection_, b.obj());
-  } catch (mongo::DBException &e) {} // ignored
+	fawkes::MutexLocker lock(mutex_);
+	document            doc{add_message(m)};
+	doc.append(kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("_time", true)); }));
+	try {
+		collection_.insert_one(doc.view());
+	} catch (mongocxx::operation_exception &) {
+	} // ignored
 }
 
 
 void
-MongoDBLogProtobuf::write(google::protobuf::Message &m, mongo::BSONObj &meta_data)
+MongoDBLogProtobuf::write(google::protobuf::Message &m, view_or_value &meta_data)
 {
-  fawkes::MutexLocker lock(mutex_);
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
-
-  BSONObjBuilder b;
-  b.appendDate("_time", nowd);
-
-  add_message(m, &b);
-
-  b.append("_meta", meta_data);
-
-  try {
-    mongodb_->insert(collection_, b.obj());
-  } catch (mongo::DBException &e) {} // ignored
+	fawkes::MutexLocker lock(mutex_);
+	document            doc{add_message(m)};
+	doc.append(kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("_time", true)); }));
+	try {
+		collection_.insert_one(doc.view());
+	} catch (mongocxx::operation_exception &) {
+	} // ignored
 }
