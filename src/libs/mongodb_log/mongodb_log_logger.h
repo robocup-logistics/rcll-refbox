@@ -27,7 +27,6 @@
 #include <logging/logger.h>
 
 #include <mongocxx/client.hpp>
-#include <mongocxx/instance.hpp>
 #include <mongocxx/uri.hpp>
 #include <string>
 
@@ -91,7 +90,6 @@ private:
 private:
 	fawkes::Mutex *      mutex_;
 	mongocxx::collection collection_;
-	mongocxx::instance   mongodb_instance_;
 };
 
 #endif
