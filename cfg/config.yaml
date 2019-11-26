@@ -134,9 +134,9 @@ llsfrb:
     enable: false
     hostport: localhost
     collections:
-      text-log: llsfrb.log
-      clips-log: llsfrb.clipslog
-      protobuf: llsfrb.protobuf
+      text-log: log
+      clips-log: clipslog
+      protobuf: protobuf
 
   game:
     teams: [Carologistics]
