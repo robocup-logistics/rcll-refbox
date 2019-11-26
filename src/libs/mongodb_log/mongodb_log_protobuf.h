@@ -50,6 +50,7 @@ private:
 
 private:
 	fawkes::Mutex *      mutex_;
+	mongocxx::client     client_;
 	mongocxx::collection collection_;
 };
 
