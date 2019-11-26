@@ -51,8 +51,8 @@ MongoDBLogLogger::MongoDBLogLogger(std::string host_port, std::string collection
 {
 	mutex_ = new Mutex();
 	std::string uri{"mongodb://" + host_port};
-	auto        client = mongocxx::client{mongocxx::uri{"mongodb://" + host_port}};
-	collection_        = client["rcll"][collection];
+	client_     = mongocxx::client{mongocxx::uri{"mongodb://" + host_port}};
+	collection_ = client_["rcll"][collection];
 }
 
 
