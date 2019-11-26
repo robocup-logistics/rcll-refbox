@@ -224,12 +224,11 @@
   (bind ?t-query (bson-parse "{}"))
   (bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
 	(bind ?t-cursor (mongodb-query-sort "llsfrb.game_report" ?t-query ?t-sort))
-	(if (mongodb-cursor-more ?t-cursor)
-   then
-    (bind ?t-doc (mongodb-cursor-next ?t-cursor))
+  (bind ?t-doc (mongodb-cursor-next ?t-cursor))
+  (if (neq ?t-doc FALSE) then
 	  (bind ?stime (bson-get-time ?t-doc "start-time"))
+    (bson-destroy ?t-doc)
 ;	  (bind ?etime (bson-get-time ?t-doc "end-time"))
-		(bson-destroy ?t-doc)
 
 	  ; retrieve machine config
 ;		(bind ?qs (str-cat "{\"$and\": [{time: { \"$gte\": { \"$date\": "
@@ -241,9 +240,9 @@
 		(bind ?query (bson-parse ?qs))
 		(bind ?sort  (bson-parse "{time: -1}"))
 		(bind ?cursor (mongodb-query-sort "llsfrb.machine_zones" ?query ?sort))
-		(if (mongodb-cursor-more ?cursor)
+		(bind ?doc (mongodb-cursor-next ?cursor))
+		(if (neq ?doc FALSE) then
 		 then
-		  (bind ?doc (mongodb-cursor-next ?cursor))
 			(bind ?fn (bson-field-names ?doc))
 			(bind ?m-arr (bson-get-array ?doc "machines"))
 			(foreach ?m-p ?m-arr
@@ -256,10 +255,10 @@
 			  )
 				(bson-destroy ?m-p)
       )
-		  (bson-destroy ?doc)
      else
 	    (printout error "Empty result in mongoDB from llsfrb.machine_zones" crlf)
     )
+    (bson-destroy ?doc)
     (mongodb-cursor-destroy ?cursor)
 	  (bson-destroy ?query)
 	  (bson-destroy ?sort)
