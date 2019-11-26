@@ -166,7 +166,7 @@ MongoDBLogProtobuf::write(const google::protobuf::Message &m)
 {
 	fawkes::MutexLocker lock(mutex_);
 	document            doc{add_message(m)};
-	doc.append(kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("_time", true)); }));
+	doc.append(kvp("_time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
 	try {
 		collection_.insert_one(doc.view());
 	} catch (mongocxx::operation_exception &) {
@@ -178,7 +178,7 @@ MongoDBLogProtobuf::write(const google::protobuf::Message &m, const view_or_valu
 {
 	fawkes::MutexLocker lock(mutex_);
 	document            doc{add_message(m)};
-	doc.append(kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("_time", true)); }));
+	doc.append(kvp("_time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
 	try {
 		collection_.insert_one(doc.view());
 	} catch (mongocxx::operation_exception &) {
