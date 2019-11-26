@@ -26,6 +26,7 @@
 #include <core/threading/mutex_locker.h>
 
 #include <bsoncxx/builder/basic/document.hpp>
+#include <chrono>
 #include <mongocxx/client.hpp>
 #include <mongocxx/exception/operation_exception.hpp>
 #include <mongocxx/uri.hpp>
@@ -78,6 +79,7 @@ MongoDBLogLogger::insert_message(LogLevel ll, const char *component,
 		}
 
 		document doc{};
+		doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
 		switch (ll) {
 		case LL_DEBUG: doc.append(kvp("level", "DEBUG")); break;
 		case LL_INFO: doc.append(kvp("level", "INFO")); break;
@@ -86,12 +88,9 @@ MongoDBLogLogger::insert_message(LogLevel ll, const char *component,
 		default: doc.append(kvp("level", "UNKN")); break;
 		}
 		doc.append(kvp("component", component));
-		doc.append(kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("time", true)); }));
 		doc.append(kvp("message", msg));
-
-		free(msg);
-
 		collection_.insert_one(doc.view());
+		free(msg);
 	}
 }
 
@@ -111,9 +110,8 @@ MongoDBLogLogger::insert_message(LogLevel ll, const char *component,
 			case LL_ERROR: doc.append(kvp("level", "ERROR")); break;
 			default: doc.append(kvp("level", "UNKN")); break;
 			}
+			doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
 			doc.append(kvp("component", component));
-			doc.append(
-			  kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("time", true)); }));
 			doc.append(kvp("message", std::string("[EXCEPTION] ") + *i));
 			try {
 				collection_.insert_one(doc.view());
@@ -231,8 +229,7 @@ MongoDBLogLogger::tlog_insert_message(LogLevel ll, struct timeval *t,
 		default: doc.append(kvp("level", "UNKN")); break;
 		}
 		doc.append(kvp("component", component));
-
-		doc.append(kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("time", true)); }));
+		doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
 		doc.append(kvp("message", msg));
 		try {
 			collection_.insert_one(doc.view());
@@ -261,8 +258,7 @@ MongoDBLogLogger::tlog_insert_message(LogLevel ll, struct timeval *t,
 			default: doc.append(kvp("level", "UNKN")); break;
 			}
 			doc.append(kvp("component", component));
-			doc.append(
-			  kvp("$currentDate", [](sub_document subdoc) { subdoc.append(kvp("time", true)); }));
+			doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
 			doc.append(kvp("message", std::string("[EXCEPTION] ") + *i));
 			try {
 				collection_.insert_one(doc.view());
