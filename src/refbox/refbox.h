@@ -67,6 +67,7 @@ class ServicePublisher;
 
 #ifdef HAVE_MONGODB
 #	include <mongocxx/database.hpp>
+#	include <mongocxx/client.hpp>
 class MongoDBLogProtobuf;
 #endif
 
@@ -215,6 +216,7 @@ private: // members
 	bool                cfg_mongodb_enabled_;
 	std::string         cfg_mongodb_hostport_;
 	MongoDBLogProtobuf *mongodb_protobuf_;
+	mongocxx::client    client_;
 	mongocxx::database  database_;
 #endif
 

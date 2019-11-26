@@ -285,8 +285,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 		mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
 
-		auto client = mongocxx::client{mongocxx::uri{"mongodb://" + cfg_mongodb_hostport_}};
-		database_   = client["rcll"];
+		client_   = mongocxx::client{mongocxx::uri{"mongodb://" + cfg_mongodb_hostport_}};
+		database_ = client_["rcll"];
 
 		setup_clips_mongodb();
 
