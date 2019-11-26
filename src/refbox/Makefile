@@ -49,6 +49,8 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_MPS_COMM)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
 
   ifeq ($(HAVE_MONGODB),1)
     LIBS_llsf_refbox += llsf_mongodb_log
+  else
+    WARN_TARGETS += warning_mongodb
   endif
 else
   ifneq ($(HAVE_PROTOBUF),1)
@@ -71,7 +73,7 @@ endif
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
-.PHONY: warning_libmps_comm warning_protobuf warning_clips warning_mongodb $(WARN_TARGETS_BOOST)
+.PHONY: $(WARN_TARGETS)
 warning_libmps_comm:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (libmps_comm not available)"
 warning_protobuf:
