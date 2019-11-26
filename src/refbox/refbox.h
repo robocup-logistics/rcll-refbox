@@ -129,8 +129,8 @@ private: // methods
 	CLIPS::Value clips_mongodb_query_sort(std::string collection, void *bson, void *bson_sort);
 	CLIPS::Value clips_mongodb_query(std::string collection, void *bson);
 	//	CLIPS::Value  clips_mongodb_cursor_more(void *cursor);
-	//	CLIPS::Value  clips_mongodb_cursor_next(void *cursor);
-	//	void          clips_mongodb_cursor_destroy(void *cursor);
+	CLIPS::Value  clips_mongodb_cursor_next(void *cursor);
+	void          clips_mongodb_cursor_destroy(void *cursor);
 	CLIPS::Values clips_bson_field_names(void *bson);
 	CLIPS::Value  clips_bson_get(void *bson, std::string field_name);
 	CLIPS::Values clips_bson_get_array(void *bson, std::string field_name);

@@ -1164,17 +1164,17 @@ LLSFRefBox::setup_clips_mongodb()
 	clips_->add_function("mongodb-query-sort",
 	                     sigc::slot<CLIPS::Value, std::string, void *, void *>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_query_sort)));
-	/*
 	clips_->add_function("mongodb-cursor-destroy",
 	                     sigc::slot<void, void *>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_destroy)));
+	/*
 	clips_->add_function("mongodb-cursor-more",
 	                     sigc::slot<CLIPS::Value, void *>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_more)));
+  */
 	clips_->add_function("mongodb-cursor-next",
 	                     sigc::slot<CLIPS::Value, void *>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mongodb_cursor_next)));
-  */
 	clips_->add_function("bson-field-names",
 	                     sigc::slot<CLIPS::Values, void *>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_bson_field_names)));
@@ -1475,7 +1475,6 @@ LLSFRefBox::clips_mongodb_query(std::string collection, void *bson)
 	return clips_mongodb_query_sort(collection, bson, NULL);
 }
 
-/*
 void
 LLSFRefBox::clips_mongodb_cursor_destroy(void *cursor)
 {
@@ -1489,6 +1488,7 @@ LLSFRefBox::clips_mongodb_cursor_destroy(void *cursor)
 	delete c;
 }
 
+/*
 CLIPS::Value
 LLSFRefBox::clips_mongodb_cursor_more(void *cursor)
 {
@@ -1501,6 +1501,7 @@ LLSFRefBox::clips_mongodb_cursor_more(void *cursor)
 
 	return CLIPS::Value((*c)->more() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
 }
+*/
 
 CLIPS::Value
 LLSFRefBox::clips_mongodb_cursor_next(void *cursor)
@@ -1512,11 +1513,14 @@ LLSFRefBox::clips_mongodb_cursor_next(void *cursor)
 		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
 	}
 
-  auto doc = new document();
-  doc->append(bsoncxx::builder::concatenate((*c)->next());
+	auto it = (*c)->begin();
+	if (it == (*c)->end()) {
+		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+	auto doc = new document();
+	doc->append(bsoncxx::builder::concatenate(*it));
 	return CLIPS::Value(doc);
 }
-*/
 
 CLIPS::Values
 LLSFRefBox::clips_bson_field_names(void *bson)
