@@ -1051,10 +1051,10 @@ LLSFRefBox::setup_clips_mongodb()
 	                     sigc::slot<void, void *, std::string, CLIPS::Values>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_bson_append_array)));
 	clips_->add_function("bson-array-start",
-	                     sigc::slot<CLIPS::Value, void *, std::string>(
+	                     sigc::slot<CLIPS::Value>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_bson_array_start)));
 	clips_->add_function("bson-array-finish",
-	                     sigc::slot<void, void *>(
+	                     sigc::slot<void, void *, std::string, void *>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_bson_array_finish)));
 	clips_->add_function("bson-array-append",
 	                     sigc::slot<void, void *, CLIPS::Value>(
@@ -1231,28 +1231,43 @@ LLSFRefBox::clips_bson_append_array(void *bson,
 }
 
 CLIPS::Value
-LLSFRefBox::clips_bson_array_start(void *bson, std::string field_name)
+LLSFRefBox::clips_bson_array_start()
 {
-	// With the new libmongocxx, we can no longer create an open array as
-	// sub-field of another document.
-	throw Exception("Not implemented");
+	return CLIPS::Value(new bsoncxx::builder::basic::array{});
 }
 
 
 void
-LLSFRefBox::clips_bson_array_finish(void *barr)
+LLSFRefBox::clips_bson_array_finish(void *bson, std::string field_name, void *array)
 {
-	// With the new libmongocxx, we can no longer create an open array as
-	// sub-field of another document.
-	throw Exception("Not implemented");
+	auto doc       = static_cast<document *>(bson);
+	auto array_doc = static_cast<bsoncxx::builder::basic::array *>(array);
+	doc->append(kvp(field_name, array_doc->view()));
+	delete array_doc;
 }
 
 void
-LLSFRefBox::clips_bson_array_append(void *barr, CLIPS::Value value)
+LLSFRefBox::clips_bson_array_append(void *array, CLIPS::Value value)
 {
-	// With the new libmongocxx, we can no longer create an open array as
-	// sub-field of another document.
-	throw Exception("Not implemented");
+	auto array_doc = static_cast<bsoncxx::builder::basic::array *>(array);
+	switch (value.type()) {
+	case CLIPS::TYPE_FLOAT: array_doc->append(value.as_float()); break;
+
+	case CLIPS::TYPE_INTEGER: array_doc->append(static_cast<int64_t>(value.as_integer())); break;
+
+	case CLIPS::TYPE_SYMBOL:
+	case CLIPS::TYPE_STRING:
+	case CLIPS::TYPE_INSTANCE_NAME: array_doc->append(value.as_string()); break;
+
+	case CLIPS::TYPE_EXTERNAL_ADDRESS: {
+		auto subb = static_cast<document *>(value.as_address());
+		array_doc->append(subb->view());
+	} break;
+	default:
+		logger_->log_warn("MongoDB",
+		                  "bson-array-append: tried to add unknown type to BSON array field");
+		break;
+	}
 }
 
 

@@ -119,8 +119,8 @@ class LLSFRefBox
 	void         clips_bson_append(void *bson, std::string field_name, CLIPS::Value value);
 	void         clips_bson_append_array(void *bson, std::string field_name, CLIPS::Values values);
 	void         clips_bson_append_time(void *bson, std::string field_name, CLIPS::Values time);
-	CLIPS::Value clips_bson_array_start(void *bson, std::string field_name);
-	void         clips_bson_array_finish(void *barr);
+	CLIPS::Value clips_bson_array_start();
+	void         clips_bson_array_finish(void *bson, std::string field_name, void *array);
 	void         clips_bson_array_append(void *barr, CLIPS::Value value);
 	std::string  clips_bson_tostring(void *bson);
 	void         clips_mongodb_upsert(std::string collection, void *bson, CLIPS::Value query);
