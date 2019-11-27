@@ -18,8 +18,8 @@ jobs:
               git \
               glibmm24-devel \
               gtkmm30-devel \
-              libmodbus-devel \
-              mongodb-devel \
+              make \
+              mongo-cxx-driver-devel \
               ncurses-devel \
               openssh-clients \
               openssl-devel \
