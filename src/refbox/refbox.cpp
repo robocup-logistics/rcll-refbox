@@ -1499,7 +1499,10 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 
 	auto element = doc->view().find(field_name);
 	if (element == doc->view().end()) {
-		logger_->log_error("MongoDB", "mongodb-bson-get: has no field %s", field_name.c_str());
+		logger_->log_error("MongoDB",
+		                   "mongodb-bson-get: cannot get field '%s' from document: %s",
+		                   field_name.c_str(),
+		                   bsoncxx::to_json(doc->view()).c_str());
 		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
 	}
 
@@ -1535,7 +1538,10 @@ LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
 
 	auto element = doc->view().find(field_name);
 	if (element == doc->view().end()) {
-		logger_->log_error("MongoDB", "mongodb-bson-get-array: has no field %s", field_name.c_str());
+		logger_->log_error("MongoDB",
+		                   "mongodb-bson-get-array: cannot get field '%s' from document: %s",
+		                   field_name.c_str(),
+		                   bsoncxx::to_json(doc->view()).c_str());
 		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
 		return rv;
 	}
@@ -1589,7 +1595,10 @@ LLSFRefBox::clips_bson_get_time(void *bson, std::string field_name)
 
 	auto element = doc->view().find(field_name);
 	if (element == doc->view().end()) {
-		logger_->log_error("MongoDB", "mongodb-bson-get-time: has no field %s", field_name.c_str());
+		logger_->log_error("MongoDB",
+		                   "mongodb-bson-get-time: cannot get field '%s' from document: %s",
+		                   field_name.c_str(),
+		                   bsoncxx::to_json(doc->view()).c_str());
 		rv.push_back(CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL));
 		return rv;
 	}
