@@ -4,6 +4,7 @@
  *
  *  Created: Thu Feb 07 11:04:17 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *             2019  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -1585,9 +1586,7 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 	case bsoncxx::type::k_int32: return CLIPS::Value(element->get_int32());
 	case bsoncxx::type::k_int64: return CLIPS::Value(element->get_int64());
 	case bsoncxx::type::k_document: {
-		auto obj_doc = new document();
-		obj_doc->append(bsoncxx::builder::concatenate(element->get_document().view()));
-		return CLIPS::Value(obj_doc);
+		return CLIPS::Value(new bsoncxx::document::value(element->get_document().view()));
 	}
 	default: return CLIPS::Value("INVALID_VALUE_TYPE", CLIPS::TYPE_SYMBOL);
 	}
@@ -1628,16 +1627,18 @@ LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
 
 	for (auto element = array_view.begin(); element != array_view.end(); element++) {
 		switch (element->type()) {
-		case bsoncxx::type::k_double: rv.push_back(CLIPS::Value(element->get_double()));
-		case bsoncxx::type::k_utf8: rv.push_back(CLIPS::Value(element->get_utf8().value.to_string()));
+		case bsoncxx::type::k_double: rv.push_back(CLIPS::Value(element->get_double())); break;
+		case bsoncxx::type::k_utf8:
+			rv.push_back(CLIPS::Value(element->get_utf8().value.to_string()));
+			break;
 		case bsoncxx::type::k_bool:
 			CLIPS::Value(element->get_bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
-		case bsoncxx::type::k_int32: rv.push_back(CLIPS::Value(element->get_int32()));
-		case bsoncxx::type::k_int64: rv.push_back(CLIPS::Value(element->get_int64()));
+			break;
+		case bsoncxx::type::k_int32: rv.push_back(CLIPS::Value(element->get_int32())); break;
+		case bsoncxx::type::k_int64: rv.push_back(CLIPS::Value(element->get_int64())); break;
 		case bsoncxx::type::k_document: {
-			auto obj_doc = new document();
-			obj_doc->append(bsoncxx::builder::concatenate(element->get_document().view()));
-			rv.push_back(CLIPS::Value(obj_doc));
+			rv.push_back(CLIPS::Value(new bsoncxx::document::value(element->get_document().view())));
+			break;
 		}
 		default:
 			rv.clear();
