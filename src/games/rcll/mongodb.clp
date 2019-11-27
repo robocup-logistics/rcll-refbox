@@ -42,7 +42,7 @@
     (bson-append-time ?doc "end-time" ?etime)
   )
 
-  (bind ?points-arr (bson-array-start ?doc "points"))
+  (bind ?points-arr (bson-array-start))
   (bind ?phase-points-doc-cyan (bson-create))
   (bind ?phase-points-doc-magenta (bson-create))
 
@@ -70,14 +70,14 @@
     (bind ?points-magenta (+ ?points-magenta ?phase-points-magenta))
   )
 
-  (bson-array-finish ?points-arr)
+  (bson-array-finish ?doc "points" ?points-arr)
   (bson-append ?doc "phase-points-cyan" ?phase-points-doc-cyan)
   (bson-append ?doc "phase-points-magenta" ?phase-points-doc-magenta)
   (bson-append-array ?doc "total-points" (create$ ?points-cyan ?points-magenta))
   (bson-destroy ?phase-points-doc-cyan)
   (bson-destroy ?phase-points-doc-magenta)
 
-  (bind ?m-arr (bson-array-start ?doc "machines"))
+  (bind ?m-arr (bson-array-start))
   (do-for-all-facts ((?m machine)) TRUE
      (bind ?m-doc (bson-create))
      (bson-append ?m-doc "name" ?m:name)
@@ -95,9 +95,9 @@
      )
      (bson-array-append ?m-arr ?m-doc)
   )
-  (bson-array-finish ?m-arr)
+  (bson-array-finish ?doc "machines" ?m-arr)
 
-  (bind ?o-arr (bson-array-start ?doc "orders"))
+  (bind ?o-arr (bson-array-start))
   (do-for-all-facts ((?o order)) TRUE
      (bind ?o-doc (bson-create))
      (bson-append ?o-doc "id" ?o:id)
@@ -200,7 +200,7 @@
 
   (bson-append-array ?doc "timestamp" ?time)
   (bson-append-time  ?doc "time" ?time)
-  (bind ?m-arr (bson-array-start ?doc "machines"))
+  (bind ?m-arr (bson-array-start))
 	
 	(do-for-all-facts ((?m machine)) TRUE
     (bind ?m-doc (bson-create))
@@ -211,7 +211,7 @@
 		(bson-destroy ?m-doc)
   )
 
-	(bson-array-finish ?m-arr)
+	(bson-array-finish ?doc "machines" ?m-arr)
   (mongodb-upsert "llsfrb.machine_zones" ?doc
   		  (str-cat "{\"timestamp\": [" (nth$ 1 ?time) ", " (nth$ 2 ?time) "]}"))
   (bson-destroy ?doc)
