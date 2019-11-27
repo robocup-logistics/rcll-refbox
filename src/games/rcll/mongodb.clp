@@ -238,7 +238,7 @@
 		;(bind ?qs (str-cat "{\"time\": ISODate(\"" (mongodb-time-as-ms ?stime) "\"}"))
 		(bind ?qs (str-cat "{}"))
 		(bind ?query (bson-parse ?qs))
-		(bind ?sort  (bson-parse "{time: -1}"))
+		(bind ?sort  (bson-parse "{\"time\": -1}"))
 		(bind ?cursor (mongodb-query-sort "machine_zones" ?query ?sort))
 		(bind ?doc (mongodb-cursor-next ?cursor))
 		(if (neq ?doc FALSE) then
