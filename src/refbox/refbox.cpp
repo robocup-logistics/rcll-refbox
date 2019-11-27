@@ -1456,10 +1456,7 @@ LLSFRefBox::clips_mongodb_update(std::string collection, void *bson, CLIPS::Valu
 		return;
 	}
 
-	document update_doc{};
-	update_doc.append(kvp("$set", doc->view()));
-
-	mongodb_update(collection, update_doc.view(), query, false);
+	mongodb_update(collection, doc->view(), query, false);
 }
 
 void
