@@ -21,7 +21,7 @@ jobs:
               glibmm24-devel \
               gtkmm30-devel \
               make \
-              mongodb-devel \
+              mongo-cxx-driver-devel \
               ncurses-devel \
               openssh-clients \
               openssl-devel \
