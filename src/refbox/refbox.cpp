@@ -1402,21 +1402,22 @@ LLSFRefBox::mongodb_update(std::string &                  collection,
 	}
 
 	try {
-		bsoncxx::document::view query_view;
+		document update_doc{};
+		update_doc.append(kvp("$set", bsoncxx::builder::concatenate(doc)));
 		if (query.type() == CLIPS::TYPE_STRING) {
-			query_view = bsoncxx::from_json(query.as_string());
+			auto query_doc = bsoncxx::from_json(query.as_string());
+			database_[collection].update_one(query_doc.view(),
+			                                 update_doc.view(),
+			                                 mongocxx::options::update().upsert(upsert));
 		} else if (query.type() == CLIPS::TYPE_EXTERNAL_ADDRESS) {
-			query_view = static_cast<document *>(query.as_address())->view();
+			auto query_doc = static_cast<document *>(query.as_address());
+			database_[collection].update_one(query_doc->view(),
+			                                 update_doc.view(),
+			                                 mongocxx::options::update().upsert(upsert));
 		} else {
 			logger_->log_warn("MongoDB", "Invalid query, must be string or BSON document");
 			return;
 		}
-
-		document update_doc{};
-		update_doc.append(kvp("$set", bsoncxx::builder::concatenate(doc)));
-		database_[collection].update_one(query_view,
-		                                 update_doc.view(),
-		                                 mongocxx::options::update().upsert(upsert));
 	} catch (bsoncxx::exception &e) {
 		logger_->log_warn("MongoDB", "Compiling query failed: %s", e.what());
 	} catch (mongocxx::operation_exception &e) {
