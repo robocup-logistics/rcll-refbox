@@ -1533,9 +1533,9 @@ LLSFRefBox::clips_mongodb_cursor_next(void *cursor)
 	if (it == (*c)->end()) {
 		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
 	}
-	auto doc = new document();
-	doc->append(bsoncxx::builder::concatenate(*it));
-	return CLIPS::Value(doc);
+	document doc{};
+	doc.append(bsoncxx::builder::concatenate(*it));
+	return CLIPS::Value(new bsoncxx::document::value(doc.extract()));
 }
 
 CLIPS::Values
