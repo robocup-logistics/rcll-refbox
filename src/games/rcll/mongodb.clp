@@ -112,11 +112,11 @@
      (bson-append ?o-doc "activate-at" ?o:activate-at)
      (bson-array-append ?o-arr ?o-doc)
   )
-  (bson-array-finish ?o-arr)
+  (bson-array-finish ?doc "orders" ?o-arr)
 
   ;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 
-  (mongodb-upsert "llsfrb.game_report" ?doc
+  (mongodb-upsert "game_report" ?doc
   		  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "]}"))
   (bson-destroy ?doc)
 )
@@ -174,7 +174,7 @@
   (bson-append ?client-doc "client-id" ?client-id)
   (bson-append ?client-doc "host" ?host)
   (bson-append ?client-doc "port" ?port)
-  (mongodb-insert "llsfrb.clients" ?client-doc)
+  (mongodb-insert "clients" ?client-doc)
   (bson-destroy ?client-doc)
 )
 
@@ -189,7 +189,7 @@
   (bson-append-time ?update-query "session" ?*START-TIME*)
   (bson-append ?update-query "client-id" ?client-id)
 
-  (mongodb-update "llsfrb.clients" ?client-update-doc ?update-query)
+  (mongodb-update "clients" ?client-update-doc ?update-query)
   (bson-destroy ?client-update-doc)
   (bson-destroy ?update-query)
 )
@@ -212,7 +212,7 @@
   )
 
 	(bson-array-finish ?doc "machines" ?m-arr)
-  (mongodb-upsert "llsfrb.machine_zones" ?doc
+  (mongodb-upsert "machine_zones" ?doc
   		  (str-cat "{\"timestamp\": [" (nth$ 1 ?time) ", " (nth$ 2 ?time) "]}"))
   (bson-destroy ?doc)
 
@@ -223,7 +223,7 @@
   ;(bind ?t-query (bson-parse "{\"end-time\": { \"$exists\": 1 }}"))
   (bind ?t-query (bson-parse "{}"))
   (bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
-	(bind ?t-cursor (mongodb-query-sort "llsfrb.game_report" ?t-query ?t-sort))
+	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
   (bind ?t-doc (mongodb-cursor-next ?t-cursor))
   (if (neq ?t-doc FALSE) then
 	  (bind ?stime (bson-get-time ?t-doc "start-time"))
@@ -239,7 +239,7 @@
 		(bind ?qs (str-cat "{}"))
 		(bind ?query (bson-parse ?qs))
 		(bind ?sort  (bson-parse "{time: -1}"))
-		(bind ?cursor (mongodb-query-sort "llsfrb.machine_zones" ?query ?sort))
+		(bind ?cursor (mongodb-query-sort "machine_zones" ?query ?sort))
 		(bind ?doc (mongodb-cursor-next ?cursor))
 		(if (neq ?doc FALSE) then
 		 then
@@ -256,14 +256,14 @@
 				(bson-destroy ?m-p)
       )
      else
-	    (printout error "Empty result in mongoDB from llsfrb.machine_zones" crlf)
+	    (printout error "Empty result in mongoDB from machine_zones" crlf)
     )
     (bson-destroy ?doc)
     (mongodb-cursor-destroy ?cursor)
 	  (bson-destroy ?query)
 	  (bson-destroy ?sort)
    else
-	  (printout error "Empty result in mongoDB from llsfrb.game_report" crlf)
+	  (printout error "Empty result in mongoDB from game_report" crlf)
     
   )
   (mongodb-cursor-destroy ?t-cursor)
