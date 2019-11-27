@@ -62,7 +62,7 @@
         else (bind ?phase-points-magenta (+ ?phase-points-magenta ?p:points))
       )
       (bson-array-append ?points-arr ?point-doc)
-      (bson-destroy ?point-doc)
+      (bson-builder-destroy ?point-doc)
     )
     (bson-append ?phase-points-doc-cyan ?phase ?phase-points-cyan)
     (bson-append ?phase-points-doc-magenta ?phase ?phase-points-magenta)
@@ -74,8 +74,8 @@
   (bson-append ?doc "phase-points-cyan" ?phase-points-doc-cyan)
   (bson-append ?doc "phase-points-magenta" ?phase-points-doc-magenta)
   (bson-append-array ?doc "total-points" (create$ ?points-cyan ?points-magenta))
-  (bson-destroy ?phase-points-doc-cyan)
-  (bson-destroy ?phase-points-doc-magenta)
+  (bson-builder-destroy ?phase-points-doc-cyan)
+  (bson-builder-destroy ?phase-points-doc-magenta)
 
   (bind ?m-arr (bson-array-start))
   (do-for-all-facts ((?m machine)) TRUE
@@ -118,7 +118,7 @@
 
   (mongodb-upsert "game_report" ?doc
   		  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "]}"))
-  (bson-destroy ?doc)
+  (bson-builder-destroy ?doc)
 )
 
 (defrule mongodb-game-report-begin
@@ -175,7 +175,7 @@
   (bson-append ?client-doc "host" ?host)
   (bson-append ?client-doc "port" ?port)
   (mongodb-insert "clients" ?client-doc)
-  (bson-destroy ?client-doc)
+  (bson-builder-destroy ?client-doc)
 )
 
 (defrule mongodb-net-client-disconnected
@@ -190,8 +190,8 @@
   (bson-append ?update-query "client-id" ?client-id)
 
   (mongodb-update "clients" ?client-update-doc ?update-query)
-  (bson-destroy ?client-update-doc)
-  (bson-destroy ?update-query)
+  (bson-builder-destroy ?client-update-doc)
+  (bson-builder-destroy ?update-query)
 )
 
 
@@ -208,13 +208,13 @@
 		(bson-append ?m-doc "zone" ?m:zone)
 		(bson-append ?m-doc "rotation" ?m:rotation)
 		(bson-array-append ?m-arr ?m-doc)
-		(bson-destroy ?m-doc)
+		(bson-builder-destroy ?m-doc)
   )
 
 	(bson-array-finish ?doc "machines" ?m-arr)
   (mongodb-upsert "machine_zones" ?doc
   		  (str-cat "{\"timestamp\": [" (nth$ 1 ?time) ", " (nth$ 2 ?time) "]}"))
-  (bson-destroy ?doc)
+  (bson-builder-destroy ?doc)
 
 )
 
@@ -260,15 +260,15 @@
     )
     (bson-destroy ?doc)
     (mongodb-cursor-destroy ?cursor)
-	  (bson-destroy ?query)
-	  (bson-destroy ?sort)
+	  (bson-builder-destroy ?query)
+	  (bson-builder-destroy ?sort)
    else
 	  (printout error "Empty result in mongoDB from game_report" crlf)
     
   )
   (mongodb-cursor-destroy ?t-cursor)
-	(bson-destroy ?t-query)
-	(bson-destroy ?t-sort)
+	(bson-builder-destroy ?t-query)
+	(bson-builder-destroy ?t-sort)
 )
 
 (defrule mongodb-store-machine-zones
