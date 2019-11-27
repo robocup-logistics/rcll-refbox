@@ -4,6 +4,7 @@
  *
  *  Created: Thu Feb 07 11:02:51 2013
  *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *             2019  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -115,6 +116,7 @@ class LLSFRefBox
 #ifdef HAVE_MONGODB
 	CLIPS::Value clips_bson_create();
 	CLIPS::Value clips_bson_parse(std::string document);
+	void         clips_bson_builder_destroy(void *bson);
 	void         clips_bson_destroy(void *bson);
 	void         clips_bson_append(void *bson, std::string field_name, CLIPS::Value value);
 	void         clips_bson_append_array(void *bson, std::string field_name, CLIPS::Values values);

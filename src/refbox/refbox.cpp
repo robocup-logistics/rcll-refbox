@@ -1042,6 +1042,9 @@ LLSFRefBox::setup_clips_mongodb()
 	clips_->add_function("bson-parse",
 	                     sigc::slot<CLIPS::Value, std::string>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_bson_parse)));
+	clips_->add_function("bson-builder-destroy",
+	                     sigc::slot<void, void *>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_bson_builder_destroy)));
 	clips_->add_function("bson-destroy",
 	                     sigc::slot<void, void *>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_bson_destroy)));
@@ -1146,9 +1149,16 @@ LLSFRefBox::clips_bson_parse(std::string document)
 }
 
 void
-LLSFRefBox::clips_bson_destroy(void *bson)
+LLSFRefBox::clips_bson_builder_destroy(void *bson)
 {
 	auto b = static_cast<bsoncxx::builder::basic::document *>(bson);
+	delete b;
+}
+
+void
+LLSFRefBox::clips_bson_destroy(void *bson)
+{
+	auto b = static_cast<bsoncxx::document::value *>(bson);
 	delete b;
 }
 
