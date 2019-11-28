@@ -24,29 +24,31 @@
 #ifndef __NETCOMM_UTILS_NTOH64_H_
 #define __NETCOMM_UTILS_NTOH64_H_
 
-#include <stdint.h>
 #include <arpa/inet.h>
 
-#define __ntoh64(x) (((uint64_t)(ntohl((uint32_t)(((uint64_t)x << 32) >> 32))) << 32) | \
-		       (uint32_t)ntohl(((uint32_t)((uint64_t)x >> 32))))
+#include <stdint.h>
+
+#define __ntoh64(x)                                                 \
+	(((uint64_t)(ntohl((uint32_t)(((uint64_t)x << 32) >> 32))) << 32) \
+	 | (uint32_t)ntohl(((uint32_t)((uint64_t)x >> 32))))
 
 #define __hton64(x) ntohll(x)
 
 #ifdef __OPTIMIZE__
-#  define ntoh64(x) __ntoh64(x)
-#  define hton64(x) __ntoh64(x)
+#	define ntoh64(x) __ntoh64(x)
+#	define hton64(x) __ntoh64(x)
 #else
 
 inline uint64_t
 ntoh64(uint64_t x)
 {
-  return __ntoh64(x);
+	return __ntoh64(x);
 }
 
 inline uint64_t
 hton64(uint64_t x)
 {
-  return __ntoh64(x);
+	return __ntoh64(x);
 }
 
 #endif // __OPTIMIZE__

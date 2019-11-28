@@ -36,12 +36,11 @@
 
 #include "order.h"
 
-#include <cstring>
-#include <unistd.h>
-
-#include <cursesp.h>
-
 #include "colors.h"
+
+#include <cstring>
+#include <cursesp.h>
+#include <unistd.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -49,87 +48,94 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellOrder::LLSFRefBoxShellOrder(int begin_y, int begin_x)
-  : NCursesPanel(1, 27, begin_y, begin_x),
-    id_(0), product_(llsf_msgs::Order::P1), quantity_requested_(0),
-    quantity_delivered_(0), delivery_period_begin_(0), delivery_period_end_(0),
-    delivery_gate_(llsf_msgs::Order::ANY), game_time_(0.)
+: NCursesPanel(1, 27, begin_y, begin_x),
+  id_(0),
+  product_(llsf_msgs::Order::P1),
+  quantity_requested_(0),
+  quantity_delivered_(0),
+  delivery_period_begin_(0),
+  delivery_period_end_(0),
+  delivery_gate_(llsf_msgs::Order::ANY),
+  game_time_(0.)
 {
 }
-
 
 LLSFRefBoxShellOrder::~LLSFRefBoxShellOrder()
 {
 }
 
-
 void
-LLSFRefBoxShellOrder::update(unsigned int id, llsf_msgs::Order::ProductType product,
-			     unsigned int quantity_requested,
-			     unsigned int quantity_delivered,
-			     unsigned int delivery_period_begin,
-			     unsigned int delivery_period_end,
-			     llsf_msgs::Order::DeliveryGate delivery_gate)
+LLSFRefBoxShellOrder::update(unsigned int                   id,
+                             llsf_msgs::Order::ProductType  product,
+                             unsigned int                   quantity_requested,
+                             unsigned int                   quantity_delivered,
+                             unsigned int                   delivery_period_begin,
+                             unsigned int                   delivery_period_end,
+                             llsf_msgs::Order::DeliveryGate delivery_gate)
 {
-  id_ = id;
-  product_ = product;
-  quantity_requested_ = quantity_requested;
-  quantity_delivered_ = quantity_delivered;
-  delivery_period_begin_ = delivery_period_begin;
-  delivery_period_end_ = delivery_period_end;
-  delivery_gate_ = delivery_gate;
+	id_                    = id;
+	product_               = product;
+	quantity_requested_    = quantity_requested;
+	quantity_delivered_    = quantity_delivered;
+	delivery_period_begin_ = delivery_period_begin;
+	delivery_period_end_   = delivery_period_end;
+	delivery_gate_         = delivery_gate;
 }
-
 
 void
 LLSFRefBoxShellOrder::set_gametime(unsigned int game_time)
 {
-  game_time_ = game_time;
-  refresh();
+	game_time_ = game_time;
+	refresh();
 }
-
 
 void
 LLSFRefBoxShellOrder::reset()
 {
-  id_ = 0;
-  product_ = llsf_msgs::Order::P1;
-  quantity_requested_ = 0;
-  quantity_delivered_ = 0;
-  delivery_period_begin_ = 0;
-  delivery_period_end_ = 0;
-  delivery_gate_ = llsf_msgs::Order::ANY;
-  refresh();
+	id_                    = 0;
+	product_               = llsf_msgs::Order::P1;
+	quantity_requested_    = 0;
+	quantity_delivered_    = 0;
+	delivery_period_begin_ = 0;
+	delivery_period_end_   = 0;
+	delivery_gate_         = llsf_msgs::Order::ANY;
+	refresh();
 }
 
 int
 LLSFRefBoxShellOrder::refresh()
 {
-  standend();
-  erase();
-  bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
+	standend();
+	erase();
+	bkgd(' ' | COLOR_PAIR(COLOR_DEFAULT));
 
-  if (id_ != 0) {
-    unsigned int begin_min = delivery_period_begin_ / 60;
-    unsigned int begin_sec = delivery_period_begin_ - begin_min * 60;
-    unsigned int end_min = delivery_period_end_ / 60;
-    unsigned int end_sec = delivery_period_end_ - end_min * 60;
+	if (id_ != 0) {
+		unsigned int begin_min = delivery_period_begin_ / 60;
+		unsigned int begin_sec = delivery_period_begin_ - begin_min * 60;
+		unsigned int end_min   = delivery_period_end_ / 60;
+		unsigned int end_sec   = delivery_period_end_ - end_min * 60;
 
-    attron(A_BOLD);
-    printw("%u.", id_);
-    attroff(A_BOLD);
+		attron(A_BOLD);
+		printw("%u.", id_);
+		attroff(A_BOLD);
 
-    if (game_time_ >= delivery_period_begin_ && game_time_ <= delivery_period_end_) {
-      attron(A_BOLD);
-    }
-    printw(0, 3, "%u/%u %s %02u:%02u-%02u:%02u %s",
-	   quantity_delivered_, quantity_requested_,
-	   llsf_msgs::Order::ProductType_Name(product_).c_str(),
-	   begin_min, begin_sec, end_min, end_sec,
-	   llsf_msgs::Order::DeliveryGate_Name(delivery_gate_).c_str());
-  }
+		if (game_time_ >= delivery_period_begin_ && game_time_ <= delivery_period_end_) {
+			attron(A_BOLD);
+		}
+		printw(0,
+		       3,
+		       "%u/%u %s %02u:%02u-%02u:%02u %s",
+		       quantity_delivered_,
+		       quantity_requested_,
+		       llsf_msgs::Order::ProductType_Name(product_).c_str(),
+		       begin_min,
+		       begin_sec,
+		       end_min,
+		       end_sec,
+		       llsf_msgs::Order::DeliveryGate_Name(delivery_gate_).c_str());
+	}
 
-  return NCursesPanel::refresh();
+	return NCursesPanel::refresh();
 }
-
 
 } // end of namespace llsfrb_shell

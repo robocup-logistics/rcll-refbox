@@ -21,40 +21,40 @@
  *  Read the full text in the LICENSE.GPL_WRE file in the doc directory.
  */
 
+#include <core/exceptions/system.h>
 #include <netcomm/socket/socket.h>
 
-#include <core/exceptions/system.h>
-
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#	define _GNU_SOURCE
 #endif
 
-#include <errno.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <netdb.h>
-#include <unistd.h>
+#include <sys/types.h>
+
+#include <errno.h>
 #include <fcntl.h>
-#include <string.h>
+#include <netdb.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 // include <linux/in.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/ip.h> 
-#include <poll.h>
+#include <netinet/ip.h>
 
 #include <cstdio>
+#include <poll.h>
 
 // Until this is integrated from linux/in.h to netinet/in.h
 #ifdef __linux__
-#  ifndef IP_MTU
-#    define IP_MTU 14
-#  endif
-#endif  // __linux__
+#	ifndef IP_MTU
+#		define IP_MTU 14
+#	endif
+#endif // __linux__
 #ifdef __FreeBSD__
-#  include <net/if.h>
-#  include <sys/ioctl.h>
+#	include <net/if.h>
+#	include <sys/ioctl.h>
 #endif
 
 namespace fawkes {
@@ -69,11 +69,10 @@ namespace fawkes {
 inline double
 time_diff_sec(const timeval &a, const timeval &b)
 {
-  //double required if we do not want to loose the usecs
-  double res = a.tv_sec  - b.tv_sec + (a.tv_usec - b.tv_usec) / 1000000.0;
-  return res;
+	//double required if we do not want to loose the usecs
+	double res = a.tv_sec - b.tv_sec + (a.tv_usec - b.tv_usec) / 1000000.0;
+	return res;
 }
-
 
 /** @class SocketException netcomm/socket/socket.h
  * Socket exception.
@@ -85,21 +84,17 @@ time_diff_sec(const timeval &a, const timeval &b)
 /** Constructor.
  * @param msg reason that caused the exception.
  */
-SocketException::SocketException(const char *msg)
-  : Exception("%s", msg)
+SocketException::SocketException(const char *msg) : Exception("%s", msg)
 {
 }
-
 
 /** Constructor.
  * @param msg reason of the exception
  * @param _errno error number (errno returned by a syscall)
  */
-SocketException::SocketException(const char *msg, int _errno)
-  : Exception(_errno, "%s", msg)
+SocketException::SocketException(const char *msg, int _errno) : Exception(_errno, "%s", msg)
 {
 }
-
 
 /** @class Socket netcomm/socket/socket.h
  * Socket base class.
@@ -125,17 +120,16 @@ SocketException::SocketException(const char *msg, int _errno)
  * length in bytes of client address.
  */
 
-
 /** Data can be read. */
-const short Socket::POLL_IN    = POLLIN;
+const short Socket::POLL_IN = POLLIN;
 
 /** Writing will not block. */
-const short Socket::POLL_OUT   = POLLOUT;
+const short Socket::POLL_OUT = POLLOUT;
 
 /** There is urgent data to read (e.g., out-of-band data on TCP socket;
  * pseudo-terminal master in packet mode has seen state  change  in slave).
  */
-const short Socket::POLL_PRI   = POLLPRI;
+const short Socket::POLL_PRI = POLLPRI;
 
 /** Stream  socket  peer closed connection, or shut down writing half of
  * connection.  The _GNU_SOURCE feature test macro must be defined
@@ -148,14 +142,13 @@ const short Socket::POLL_RDHUP = 0;
 #endif
 
 /** Error condition. */
-const short Socket::POLL_ERR   = POLLERR;
+const short Socket::POLL_ERR = POLLERR;
 
 /** Hang up. */
-const short Socket::POLL_HUP   = POLLHUP;
+const short Socket::POLL_HUP = POLLHUP;
 
 /** Invalid request. */
-const short Socket::POLL_NVAL  = POLLNVAL;
-
+const short Socket::POLL_NVAL = POLLNVAL;
 
 /**  Constructor similar to syscall.
  * This creates a new socket. This is a plain pass-through constructor
@@ -170,22 +163,21 @@ const short Socket::POLL_NVAL  = POLLNVAL;
  */
 Socket::Socket(int domain, int type, int protocol, float timeout)
 {
-  this->timeout = timeout;
-  if ( (sock_fd = socket(domain, type, protocol)) == -1 ) {
-    throw SocketException("Could not open socket", errno);
-  }
+	this->timeout = timeout;
+	if ((sock_fd = socket(domain, type, protocol)) == -1) {
+		throw SocketException("Could not open socket", errno);
+	}
 
-  if (timeout > 0.f) {
-    // set to non-blocking
-    if ( fcntl(sock_fd, F_SETFL, O_NONBLOCK) == -1 ) {
-      throw SocketException("Could not set socket to non-blocking", errno);
-    }
-  }
+	if (timeout > 0.f) {
+		// set to non-blocking
+		if (fcntl(sock_fd, F_SETFL, O_NONBLOCK) == -1) {
+			throw SocketException("Could not set socket to non-blocking", errno);
+		}
+	}
 
-  client_addr = NULL;
-  client_addr_len = 0;
+	client_addr     = NULL;
+	client_addr_len = 0;
 }
-
 
 /** Constructor.
  * Plain constructor. The socket will not be opened. This may only be called by
@@ -194,52 +186,48 @@ Socket::Socket(int domain, int type, int protocol, float timeout)
  */
 Socket::Socket()
 {
-  client_addr = NULL;
-  client_addr_len = 0;
-  timeout = 0.f;
-  sock_fd = -1;
+	client_addr     = NULL;
+	client_addr_len = 0;
+	timeout         = 0.f;
+	sock_fd         = -1;
 }
-
 
 /** Copy constructor.
  * @param socket socket to copy
  */
 Socket::Socket(Socket &socket)
 {
-  if ( socket.client_addr != NULL ) {
-    client_addr = (struct ::sockaddr_in *)malloc(socket.client_addr_len);
-    client_addr_len = socket.client_addr_len;
-    memcpy(client_addr, socket.client_addr, client_addr_len);
-  } else {
-    client_addr = NULL;
-    client_addr_len = 0;
-  }    
-  timeout = socket.timeout;
-  sock_fd = socket.sock_fd;
+	if (socket.client_addr != NULL) {
+		client_addr     = (struct ::sockaddr_in *)malloc(socket.client_addr_len);
+		client_addr_len = socket.client_addr_len;
+		memcpy(client_addr, socket.client_addr, client_addr_len);
+	} else {
+		client_addr     = NULL;
+		client_addr_len = 0;
+	}
+	timeout = socket.timeout;
+	sock_fd = socket.sock_fd;
 }
-
 
 /** Destructor. */
 Socket::~Socket()
 {
-  close();
-  if ( client_addr != NULL ) {
-    free(client_addr);
-    client_addr = NULL;
-  }
+	close();
+	if (client_addr != NULL) {
+		free(client_addr);
+		client_addr = NULL;
+	}
 }
-
 
 /** Close socket. */
 void
 Socket::close()
 {
-  if ( sock_fd != -1 ) {
-    ::close(sock_fd);
-    sock_fd = -1;
-  }
+	if (sock_fd != -1) {
+		::close(sock_fd);
+		sock_fd = -1;
+	}
 }
-
 
 /** Connect socket.
  * If called for a stream socket this will connect to the remote address. If
@@ -252,27 +240,26 @@ Socket::close()
 void
 Socket::connect(struct sockaddr *addr_port, unsigned int struct_size)
 {
-  if ( sock_fd == -1 )  throw SocketException("Trying to connect invalid socket");
+	if (sock_fd == -1)
+		throw SocketException("Trying to connect invalid socket");
 
-  if (timeout == 0.f) {
-    if ( ::connect(sock_fd, addr_port, struct_size) < 0 ) {
-      throw SocketException("Could not connect", errno);
-    }
-  } else {
-    struct timeval start, now;
-    gettimeofday(&start, NULL);
-    do {
-      if ( ::connect(sock_fd, addr_port, struct_size) < 0 ) {
-	if ( (errno != EINPROGRESS) &&
-	     (errno != EALREADY) ) {
-	  throw SocketException("Could not connect", errno);
+	if (timeout == 0.f) {
+		if (::connect(sock_fd, addr_port, struct_size) < 0) {
+			throw SocketException("Could not connect", errno);
+		}
+	} else {
+		struct timeval start, now;
+		gettimeofday(&start, NULL);
+		do {
+			if (::connect(sock_fd, addr_port, struct_size) < 0) {
+				if ((errno != EINPROGRESS) && (errno != EALREADY)) {
+					throw SocketException("Could not connect", errno);
+				}
+			}
+			gettimeofday(&now, NULL);
+		} while (time_diff_sec(now, start) < timeout);
 	}
-      }
-      gettimeofday(&now, NULL);
-    } while (time_diff_sec(now, start) < timeout);
-  }
 }
-
 
 /** Connect socket.
  * If called for a stream socket this will connect to the remote address. If
@@ -285,25 +272,24 @@ Socket::connect(struct sockaddr *addr_port, unsigned int struct_size)
 void
 Socket::connect(const char *hostname, unsigned short int port)
 {
-  if ( sock_fd == -1 )  throw SocketException("Trying to connect invalid socket");
+	if (sock_fd == -1)
+		throw SocketException("Trying to connect invalid socket");
 
-  struct hostent* h;
-  struct ::sockaddr_in host;
+	struct hostent *     h;
+	struct ::sockaddr_in host;
 
+	h = gethostbyname(hostname);
+	if (!h) {
+		throw SocketException("Cannot lookup hostname", h_errno);
+	}
 
-  h = gethostbyname(hostname);
-  if ( ! h ) {
-    throw SocketException("Cannot lookup hostname", h_errno);
-  }
+	memset(&host, 0, sizeof(host));
+	host.sin_family = AF_INET;
+	memcpy((char *)&host.sin_addr.s_addr, h->h_addr, h->h_length);
+	host.sin_port = htons(port);
 
-  memset(&host, 0, sizeof(host));
-  host.sin_family = AF_INET;
-  memcpy((char *)&host.sin_addr.s_addr, h->h_addr, h->h_length);
-  host.sin_port = htons(port);
-
-  connect((struct sockaddr *)&host, sizeof(host));
+	connect((struct sockaddr *)&host, sizeof(host));
 }
-
 
 /** Bind socket.
  * Can only be called on stream sockets.
@@ -313,22 +299,21 @@ Socket::connect(const char *hostname, unsigned short int port)
 void
 Socket::bind(const unsigned short int port)
 {
-  struct ::sockaddr_in host;
+	struct ::sockaddr_in host;
 
-  host.sin_family = AF_INET;
-  host.sin_addr.s_addr = INADDR_ANY;
-  host.sin_port = htons(port);
+	host.sin_family      = AF_INET;
+	host.sin_addr.s_addr = INADDR_ANY;
+	host.sin_port        = htons(port);
 
-  int reuse = 1;
-  if ( setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
-    throw SocketException("Could not set SO_REUSEADDR", errno);
-  }
+	int reuse = 1;
+	if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
+		throw SocketException("Could not set SO_REUSEADDR", errno);
+	}
 
-  if (::bind(sock_fd, (struct sockaddr *) &host, sizeof(host)) < 0) {
-    throw SocketException("Could not bind to port", errno);
-  }
+	if (::bind(sock_fd, (struct sockaddr *)&host, sizeof(host)) < 0) {
+		throw SocketException("Could not bind to port", errno);
+	}
 }
-
 
 /** Bind socket to a specific address.
  * @param port port to bind
@@ -338,28 +323,27 @@ Socket::bind(const unsigned short int port)
 void
 Socket::bind(const unsigned short int port, const char *hostname)
 {
-  struct hostent* h;
-  struct ::sockaddr_in host;
+	struct hostent *     h;
+	struct ::sockaddr_in host;
 
-  h = gethostbyname(hostname);
-  if ( ! h ) {
-    throw SocketException("Cannot lookup hostname", h_errno);
-  }
+	h = gethostbyname(hostname);
+	if (!h) {
+		throw SocketException("Cannot lookup hostname", h_errno);
+	}
 
-  memset(&host, 0, sizeof(host));
-  host.sin_family = AF_INET;
-  memcpy(&host.sin_addr.s_addr, h->h_addr, h->h_length);
-  host.sin_port = htons(port);
+	memset(&host, 0, sizeof(host));
+	host.sin_family = AF_INET;
+	memcpy(&host.sin_addr.s_addr, h->h_addr, h->h_length);
+	host.sin_port = htons(port);
 
-  host.sin_family = AF_INET;
-  host.sin_addr.s_addr = INADDR_ANY;
-  host.sin_port = htons(port);
+	host.sin_family      = AF_INET;
+	host.sin_addr.s_addr = INADDR_ANY;
+	host.sin_port        = htons(port);
 
-  if (::bind(sock_fd, (struct sockaddr *) &host, sizeof(host)) < 0) {
-    throw SocketException("Could not bind to port", errno);
-  }
+	if (::bind(sock_fd, (struct sockaddr *)&host, sizeof(host)) < 0) {
+		throw SocketException("Could not bind to port", errno);
+	}
 }
-
 
 /** Listen on socket.
  * This waits for new connections on a bound socket. The backlog is the maximum
@@ -372,11 +356,10 @@ Socket::bind(const unsigned short int port, const char *hostname)
 void
 Socket::listen(int backlog)
 {
-  if ( ::listen(sock_fd, backlog) ) {
-    throw SocketException("Cannot listen on socket", errno);
-  }
+	if (::listen(sock_fd, backlog)) {
+		throw SocketException("Cannot listen on socket", errno);
+	}
 }
-
 
 /** Accept connection.
  * Accepts a connection waiting in the queue.
@@ -386,38 +369,38 @@ Socket::listen(int backlog)
 Socket *
 Socket::accept()
 {
-  struct ::sockaddr_in  tmp_client_addr;
-  unsigned int  tmp_client_addr_len = sizeof(struct ::sockaddr_in);
+	struct ::sockaddr_in tmp_client_addr;
+	unsigned int         tmp_client_addr_len = sizeof(struct ::sockaddr_in);
 
-  int a_sock_fd = -1;
+	int a_sock_fd = -1;
 
-  a_sock_fd = ::accept(sock_fd, (sockaddr *)&tmp_client_addr, &tmp_client_addr_len);
-  if ( a_sock_fd == -1 ) {
-    if (errno != EWOULDBLOCK) {
-      throw SocketException("Could not accept connection", errno);
-    } else {
-      return NULL;
-    }
-  }
+	a_sock_fd = ::accept(sock_fd, (sockaddr *)&tmp_client_addr, &tmp_client_addr_len);
+	if (a_sock_fd == -1) {
+		if (errno != EWOULDBLOCK) {
+			throw SocketException("Could not accept connection", errno);
+		} else {
+			return NULL;
+		}
+	}
 
-  // Does not work, evaluated at compile time, thus need clone()
-  //__typeof(this) s = new __typeof(*this);
-  //s->timeout = timeout;
+	// Does not work, evaluated at compile time, thus need clone()
+	//__typeof(this) s = new __typeof(*this);
+	//s->timeout = timeout;
 
-  Socket *s = clone();
-  s->sock_fd = a_sock_fd;
+	Socket *s  = clone();
+	s->sock_fd = a_sock_fd;
 
-  if ( s->client_addr != NULL ) {
-    free(s->client_addr);
-  }
-  struct ::sockaddr_in  *tmp_client_addr_alloc = (struct ::sockaddr_in *)malloc(sizeof(struct ::sockaddr_in));
-  memcpy(tmp_client_addr_alloc, &tmp_client_addr, sizeof(struct ::sockaddr_in));
-  s->client_addr = tmp_client_addr_alloc;
-  s->client_addr_len = tmp_client_addr_len;
+	if (s->client_addr != NULL) {
+		free(s->client_addr);
+	}
+	struct ::sockaddr_in *tmp_client_addr_alloc =
+	  (struct ::sockaddr_in *)malloc(sizeof(struct ::sockaddr_in));
+	memcpy(tmp_client_addr_alloc, &tmp_client_addr, sizeof(struct ::sockaddr_in));
+	s->client_addr     = tmp_client_addr_alloc;
+	s->client_addr_len = tmp_client_addr_len;
 
-  return s;
+	return s;
 }
-
 
 /** Check if data is available.
  * Use this to check if data is available on the socket for reading.
@@ -426,25 +409,25 @@ Socket::accept()
 bool
 Socket::available()
 {
-  if (sock_fd == -1) return false;
+	if (sock_fd == -1)
+		return false;
 
-  fd_set rfds;
-  struct timeval tv;
-  int retval = 1;
+	fd_set         rfds;
+	struct timeval tv;
+	int            retval = 1;
 
-  FD_ZERO(&rfds);
-  FD_SET(sock_fd, &rfds);
-  tv.tv_sec = 0;
-  tv.tv_usec = 0;
+	FD_ZERO(&rfds);
+	FD_SET(sock_fd, &rfds);
+	tv.tv_sec  = 0;
+	tv.tv_usec = 0;
 
-  retval = select(sock_fd + 1, &rfds, NULL, NULL, &tv);
-  if ( retval < 0 ) {
-    perror("select() failed");
-  }
+	retval = select(sock_fd + 1, &rfds, NULL, NULL, &tv);
+	if (retval < 0) {
+		perror("select() failed");
+	}
 
-  return (retval > 0);
+	return (retval > 0);
 }
-
 
 /** Wait for some event on socket.
  * @param timeout timeout in miliseconds to wait. A negative value means to
@@ -467,25 +450,24 @@ Socket::available()
 short
 Socket::poll(int timeout, short what)
 {
-  if ( sock_fd == -1 ) {
-    return POLL_ERR;
-  }
+	if (sock_fd == -1) {
+		return POLL_ERR;
+	}
 
-  struct pollfd pfd;
-  pfd.fd = sock_fd;
-  pfd.events = what;
-  pfd.revents = 0;
-  if ( ::poll(&pfd, 1, timeout) == -1 ) {
-    if ( errno == EINTR ) {
-      throw InterruptedException();
-    } else {
-      throw SocketException("poll() failed", errno);
-    }
-  } else {
-    return pfd.revents;
-  }
+	struct pollfd pfd;
+	pfd.fd      = sock_fd;
+	pfd.events  = what;
+	pfd.revents = 0;
+	if (::poll(&pfd, 1, timeout) == -1) {
+		if (errno == EINTR) {
+			throw InterruptedException();
+		} else {
+			throw SocketException("poll() failed", errno);
+		}
+	} else {
+		return pfd.revents;
+	}
 }
-
 
 /** Write to the socket.
  * Write to the socket. This method can only be used on streams.
@@ -496,35 +478,34 @@ Socket::poll(int timeout, short what)
 void
 Socket::write(const void *buf, size_t count)
 {
-  int retval = 0;
-  unsigned int bytes_written = 0;
-  struct timeval start, now;
+	int            retval        = 0;
+	unsigned int   bytes_written = 0;
+	struct timeval start, now;
 
-  gettimeofday(&start, NULL);
+	gettimeofday(&start, NULL);
 
-  do {
-    retval = ::write(sock_fd, (char *)buf + bytes_written, count - bytes_written);
-    if (retval == -1) {
-      if (errno != EAGAIN) {
-	throw SocketException("Could not write data", errno);
-      } else {
-	// just to meet loop condition
-	retval = 0;
-      }
-    } else {
-      bytes_written += retval;
-      // reset timeout
-      gettimeofday(&start, NULL);
-    }
-    gettimeofday(&now, NULL);
-    usleep(0);
-  } while ((bytes_written < count) && (time_diff_sec(now, start) < timeout) );
+	do {
+		retval = ::write(sock_fd, (char *)buf + bytes_written, count - bytes_written);
+		if (retval == -1) {
+			if (errno != EAGAIN) {
+				throw SocketException("Could not write data", errno);
+			} else {
+				// just to meet loop condition
+				retval = 0;
+			}
+		} else {
+			bytes_written += retval;
+			// reset timeout
+			gettimeofday(&start, NULL);
+		}
+		gettimeofday(&now, NULL);
+		usleep(0);
+	} while ((bytes_written < count) && (time_diff_sec(now, start) < timeout));
 
-  if ( bytes_written < count) {
-    throw SocketException("Write timeout");
-  }
+	if (bytes_written < count) {
+		throw SocketException("Write timeout");
+	}
 }
-
 
 /** Read from socket.
  * Read from the socket. This method can only be used on streams.
@@ -540,76 +521,75 @@ Socket::write(const void *buf, size_t count)
 size_t
 Socket::read(void *buf, size_t count, bool read_all)
 {
-  int retval = 0;
-  unsigned int bytes_read = 0;
+	int          retval     = 0;
+	unsigned int bytes_read = 0;
 
-  if ( timeout > 0 ) {
-    struct timeval start, now;
+	if (timeout > 0) {
+		struct timeval start, now;
 
-    gettimeofday(&start, NULL);
+		gettimeofday(&start, NULL);
 
-    if ( read_all ) {
-      do {
-	retval = ::read(sock_fd, (char *)buf + bytes_read, count - bytes_read);
-	if (retval == -1) {
-	  if (errno != EAGAIN) {
-	    throw SocketException("Could not read data", errno);
-	  } else {
-	    // just to meet loop condition
-	    retval = 0;
-	  }
+		if (read_all) {
+			do {
+				retval = ::read(sock_fd, (char *)buf + bytes_read, count - bytes_read);
+				if (retval == -1) {
+					if (errno != EAGAIN) {
+						throw SocketException("Could not read data", errno);
+					} else {
+						// just to meet loop condition
+						retval = 0;
+					}
+				} else {
+					bytes_read += retval;
+					// reset timeout
+					gettimeofday(&start, NULL);
+				}
+				gettimeofday(&now, NULL);
+				usleep(0);
+			} while ((bytes_read < count) && (time_diff_sec(now, start) < timeout));
+		} else {
+			do {
+				retval = ::read(sock_fd, (char *)buf, count);
+				if ((retval == -1) && (errno != EAGAIN)) {
+					throw SocketException("Could not read data", errno);
+				} else {
+					bytes_read = retval;
+				}
+				usleep(0);
+			} while (retval < 0);
+		}
 	} else {
-	  bytes_read += retval;
-	  // reset timeout
-	  gettimeofday(&start, NULL);
+		if (read_all) {
+			do {
+				retval = ::read(sock_fd, (char *)buf + bytes_read, count - bytes_read);
+				if (retval == -1) {
+					throw SocketException("Could not read data", errno);
+				} else if (retval == 0) {
+					throw SocketException("Could not read any data");
+				} else {
+					bytes_read += retval;
+				}
+				usleep(0);
+			} while (bytes_read < count);
+		} else {
+			do {
+				retval = ::read(sock_fd, (char *)buf, count);
+				if ((retval == -1) && (errno != EAGAIN)) {
+					throw SocketException("Could not read data", errno);
+				} else {
+					bytes_read = retval;
+				}
+				usleep(0);
+			} while (retval < 0);
+		}
 	}
-	gettimeofday(&now, NULL);
-	usleep(0);
-      } while ((bytes_read < count) && (time_diff_sec(now, start) < timeout) );
-    } else {
-      do {
-	retval = ::read(sock_fd, (char *)buf, count);
-	if ( (retval == -1) && (errno != EAGAIN) ) {
-	  throw SocketException("Could not read data", errno);
-	} else {
-	  bytes_read = retval;
-	}
-	usleep(0);
-      } while (retval < 0);
-    }
-  } else {
-    if ( read_all ) {
-      do {
-	retval = ::read(sock_fd, (char *)buf + bytes_read, count - bytes_read);
-	if (retval == -1) {
-	  throw SocketException("Could not read data", errno);
-	} else if (retval == 0) {
-	  throw SocketException("Could not read any data");
-	} else {
-	  bytes_read += retval;
-	}
-	usleep(0);
-      } while (bytes_read < count);
-    } else {
-      do {
-	retval = ::read(sock_fd, (char *)buf, count);
-	if ( (retval == -1) && (errno != EAGAIN) ) {
-	  throw SocketException("Could not read data", errno);
-	} else {
-	  bytes_read = retval;
-	}
-	usleep(0);
-      } while (retval < 0);
-    }
-  }
 
-  if ( read_all && (bytes_read < count)) {
-    throw SocketException("Read timeout");
-  }
+	if (read_all && (bytes_read < count)) {
+		throw SocketException("Read timeout");
+	}
 
-  return bytes_read;
+	return bytes_read;
 }
-
 
 /** Write to the socket.
  * Write to the socket. This method can be used on streams or on datagram
@@ -623,13 +603,12 @@ Socket::read(void *buf, size_t count, bool read_all)
 void
 Socket::send(void *buf, size_t buf_len)
 {
-  try {
-    write(buf,  buf_len);
-  } catch (SocketException &e) {
-    throw;
-  }
+	try {
+		write(buf, buf_len);
+	} catch (SocketException &e) {
+		throw;
+	}
 }
-
 
 /** Read from socket.
  * Read from the socket. This method can only be used on streams. Usage of
@@ -643,15 +622,14 @@ Socket::send(void *buf, size_t buf_len)
 size_t
 Socket::recv(void *buf, size_t buf_len)
 {
-  ssize_t rv;
-  if ( (rv = ::recv(sock_fd, buf, buf_len, 0)) == -1 ) {
-    throw SocketException("recv() failed", errno);
-  } else if ( rv == 0 ) {
-    throw SocketException("Other side closed the connection");
-  }
-  return rv;
+	ssize_t rv;
+	if ((rv = ::recv(sock_fd, buf, buf_len, 0)) == -1) {
+		throw SocketException("recv() failed", errno);
+	} else if (rv == 0) {
+		throw SocketException("Other side closed the connection");
+	}
+	return rv;
 }
-
 
 /** Send message.
  * @param buf buffer with data to send
@@ -660,39 +638,37 @@ Socket::recv(void *buf, size_t buf_len)
  * @param addr_len length of address
  */
 void
-Socket::send(void *buf, size_t buf_len,
-	     const struct sockaddr *addr, socklen_t addr_len)
+Socket::send(void *buf, size_t buf_len, const struct sockaddr *addr, socklen_t addr_len)
 {
-  int retval = 0;
-  unsigned int bytes_written = 0;
-  struct timeval start, now;
+	int            retval        = 0;
+	unsigned int   bytes_written = 0;
+	struct timeval start, now;
 
-  gettimeofday(&start, NULL);
+	gettimeofday(&start, NULL);
 
-  do {
-    retval = ::sendto(sock_fd, (char *)buf + bytes_written, buf_len - bytes_written, 0,
-		      addr, addr_len);
-    if (retval == -1) {
-      if (errno != EAGAIN) {
-	throw SocketException("Could not read data", errno);
-      } else {
-	// just to meet loop condition
-	retval = 0;
-      }
-    } else {
-      bytes_written += retval;
-      // reset timeout
-      gettimeofday(&start, NULL);
-    }
-    gettimeofday(&now, NULL);
-    usleep(0);
-  } while ((bytes_written < buf_len) && (time_diff_sec(now, start) < timeout) );
+	do {
+		retval =
+		  ::sendto(sock_fd, (char *)buf + bytes_written, buf_len - bytes_written, 0, addr, addr_len);
+		if (retval == -1) {
+			if (errno != EAGAIN) {
+				throw SocketException("Could not read data", errno);
+			} else {
+				// just to meet loop condition
+				retval = 0;
+			}
+		} else {
+			bytes_written += retval;
+			// reset timeout
+			gettimeofday(&start, NULL);
+		}
+		gettimeofday(&now, NULL);
+		usleep(0);
+	} while ((bytes_written < buf_len) && (time_diff_sec(now, start) < timeout));
 
-  if ( bytes_written < buf_len) {
-    throw SocketException("Write timeout");
-  }
+	if (bytes_written < buf_len) {
+		throw SocketException("Write timeout");
+	}
 }
-
 
 /** Receive data.
  * This will use recvfrom() to read data from the socket and returns the
@@ -706,20 +682,18 @@ Socket::send(void *buf, size_t buf_len,
  * @return number of bytes received
  */
 size_t
-Socket::recv(void *buf, size_t buf_len,
-	     struct sockaddr *addr, socklen_t *addr_len)
+Socket::recv(void *buf, size_t buf_len, struct sockaddr *addr, socklen_t *addr_len)
 {
-  ssize_t rv = 0;
+	ssize_t rv = 0;
 
-  if ( (rv = ::recvfrom(sock_fd, buf, buf_len, 0, addr, addr_len)) == -1) {
-    throw SocketException("recvfrom() failed", errno);
-  } else if ( rv == 0 ) {
-    throw SocketException("Peer has closed the connection");
-  } else {
-    return rv;
-  }
+	if ((rv = ::recvfrom(sock_fd, buf, buf_len, 0, addr, addr_len)) == -1) {
+		throw SocketException("recvfrom() failed", errno);
+	} else if (rv == 0) {
+		throw SocketException("Peer has closed the connection");
+	} else {
+		return rv;
+	}
 }
-
 
 /** Is socket listening for connections?
  * @return true if socket is listening for incoming connections, false otherwise
@@ -727,16 +701,16 @@ Socket::recv(void *buf, size_t buf_len,
 bool
 Socket::listening()
 {
-  if ( sock_fd == -1 ) return false;
+	if (sock_fd == -1)
+		return false;
 
-  int i = 0;
-  unsigned int len = sizeof(i);
-  if ( getsockopt(sock_fd, SOL_SOCKET, SO_ACCEPTCONN, &i, &len) == -1 ) {
-    throw SocketException("Socket::listening(): getsockopt failed", errno);
-  }
-  return ( i == 1 );
+	int          i   = 0;
+	unsigned int len = sizeof(i);
+	if (getsockopt(sock_fd, SOL_SOCKET, SO_ACCEPTCONN, &i, &len) == -1) {
+		throw SocketException("Socket::listening(): getsockopt failed", errno);
+	}
+	return (i == 1);
 }
-
 
 /** Maximum Transfer Unit (MTU) of socket.
  * Note that this can only be retrieved of connected sockets!
@@ -745,26 +719,27 @@ Socket::listening()
 unsigned int
 Socket::mtu()
 {
-  int m = 0;
+	int m = 0;
 
-  if ( sock_fd == -1 ) throw SocketException("Cannot get MTU of disconnected socket");
+	if (sock_fd == -1)
+		throw SocketException("Cannot get MTU of disconnected socket");
 
 #ifdef __linux__
-  unsigned int len = sizeof(m);
-  if ( getsockopt(sock_fd, IPPROTO_IP, IP_MTU, &m, &len) == -1 ) {
-    throw SocketException("Socket::mtu(): getsockopt failed", errno);
-  }
+	unsigned int len = sizeof(m);
+	if (getsockopt(sock_fd, IPPROTO_IP, IP_MTU, &m, &len) == -1) {
+		throw SocketException("Socket::mtu(): getsockopt failed", errno);
+	}
 
-  if ( m < 0 ) {
-    throw SocketException("MTU < 0");
-  }
+	if (m < 0) {
+		throw SocketException("MTU < 0");
+	}
 #elif defined __FreeBSD__
-  struct ifreq ifr;
-  if (ioctl(sock_fd, SIOCGIFMTU, &ifr) != -1)
-    m = ifr.ifr_mtu;
+	struct ifreq ifr;
+	if (ioctl(sock_fd, SIOCGIFMTU, &ifr) != -1)
+		m = ifr.ifr_mtu;
 #endif
 
-  return m;
+	return m;
 }
 
 } // end namespace fawkes

@@ -23,8 +23,8 @@
 
 #include "base_station.h"
 #include "cap_station.h"
-#include "ring_station.h"
 #include "delivery_station.h"
+#include "ring_station.h"
 #include "storage_station.h"
 
 #endif /* !__MPS_COMM_MACHINES__ */

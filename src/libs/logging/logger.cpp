@@ -225,15 +225,13 @@ namespace llsfrb {
  */
 Logger::Logger(LogLevel log_level)
 {
-  this->log_level = log_level;
+	this->log_level = log_level;
 }
-
 
 /** Virtual empty destructor. */
 Logger::~Logger()
 {
 }
-
 
 /** Sets the log level.
  * The log level determines the minimum log level. If a message is logged that
@@ -243,9 +241,8 @@ Logger::~Logger()
 void
 Logger::set_loglevel(LogLevel level)
 {
-  log_level = level;
+	log_level = level;
 }
-
 
 /** Get log level.
  * @return current log level.
@@ -253,9 +250,8 @@ Logger::set_loglevel(LogLevel level)
 Logger::LogLevel
 Logger::loglevel()
 {
-  return log_level;
+	return log_level;
 }
-
 
 /** Log message for given log level.
  * @param level log level
@@ -265,21 +261,18 @@ Logger::loglevel()
  * @param va variadic argument list
  */
 void
-Logger::vlog(LogLevel level,
-	     const char *component, const char *format, va_list va)
+Logger::vlog(LogLevel level, const char *component, const char *format, va_list va)
 {
-  if ( log_level <= level ) {
-    switch (level) {
-    case LL_DEBUG:  vlog_debug(component, format, va);  break;
-    case LL_INFO:   vlog_info(component, format, va);   break;
-    case LL_WARN:   vlog_warn(component, format, va);   break;
-    case LL_ERROR:  vlog_error(component, format, va);  break;
-    default: break;
-    }
-  }
+	if (log_level <= level) {
+		switch (level) {
+		case LL_DEBUG: vlog_debug(component, format, va); break;
+		case LL_INFO: vlog_info(component, format, va); break;
+		case LL_WARN: vlog_warn(component, format, va); break;
+		case LL_ERROR: vlog_error(component, format, va); break;
+		default: break;
+		}
+	}
 }
-
-
 
 /** Log message for given log level and time.
  * @param level log level
@@ -290,20 +283,22 @@ Logger::vlog(LogLevel level,
  * @param va variadic argument list
  */
 void
-Logger::vtlog(LogLevel level, struct timeval *t,
-	      const char *component, const char *format, va_list va)
+Logger::vtlog(LogLevel        level,
+              struct timeval *t,
+              const char *    component,
+              const char *    format,
+              va_list         va)
 {
-  if ( log_level <= level ) {
-    switch (level) {
-    case LL_DEBUG:  vtlog_debug(t, component, format, va);  break;
-    case LL_INFO:   vtlog_info(t, component, format, va);   break;
-    case LL_WARN:   vtlog_warn(t, component, format, va);   break;
-    case LL_ERROR:  vtlog_error(t, component, format, va);  break;
-    default: break;
-    }
-  }
+	if (log_level <= level) {
+		switch (level) {
+		case LL_DEBUG: vtlog_debug(t, component, format, va); break;
+		case LL_INFO: vtlog_info(t, component, format, va); break;
+		case LL_WARN: vtlog_warn(t, component, format, va); break;
+		case LL_ERROR: vtlog_error(t, component, format, va); break;
+		default: break;
+		}
+	}
 }
-
 
 /** Log message of given log level.
  * @param level log level
@@ -314,14 +309,13 @@ Logger::vtlog(LogLevel level, struct timeval *t,
 void
 Logger::log(LogLevel level, const char *component, const char *format, ...)
 {
-  if ( log_level <= level ) {
-    va_list va;
-    va_start(va, format);
-    vlog(level, component, format, va);
-    va_end(va);
-  }
+	if (log_level <= level) {
+		va_list va;
+		va_start(va, format);
+		vlog(level, component, format, va);
+		va_end(va);
+	}
 }
-
 
 /** Log exception for given log level.
  * @param level log level
@@ -331,18 +325,16 @@ Logger::log(LogLevel level, const char *component, const char *format, ...)
 void
 Logger::log(LogLevel level, const char *component, fawkes::Exception &e)
 {
-  if ( log_level <= level ) {
-    switch (level) {
-    case LL_DEBUG:  log_debug(component, e);  break;
-    case LL_INFO:   log_info(component, e);   break;
-    case LL_WARN:   log_warn(component, e);   break;
-    case LL_ERROR:  log_error(component, e);  break;
-    default: break;
-    }
-  }
+	if (log_level <= level) {
+		switch (level) {
+		case LL_DEBUG: log_debug(component, e); break;
+		case LL_INFO: log_info(component, e); break;
+		case LL_WARN: log_warn(component, e); break;
+		case LL_ERROR: log_error(component, e); break;
+		default: break;
+		}
+	}
 }
-
-
 
 /** Log message of given log level and time.
  * @param t time
@@ -352,17 +344,15 @@ Logger::log(LogLevel level, const char *component, fawkes::Exception &e)
  * tokens.
  */
 void
-Logger::tlog(LogLevel level, struct timeval *t,
-	     const char *component, const char *format, ...)
+Logger::tlog(LogLevel level, struct timeval *t, const char *component, const char *format, ...)
 {
-  if ( log_level <= level ) {
-    va_list va;
-    va_start(va, format);
-    vtlog(level, t, component, format, va);
-    va_end(va);
-  }
+	if (log_level <= level) {
+		va_list va;
+		va_start(va, format);
+		vtlog(level, t, component, format, va);
+		va_end(va);
+	}
 }
-
 
 /** Log exception for given log level.
  * @param t time
@@ -373,16 +363,15 @@ Logger::tlog(LogLevel level, struct timeval *t,
 void
 Logger::tlog(LogLevel level, struct timeval *t, const char *component, fawkes::Exception &e)
 {
-  if ( log_level <= level ) {
-    switch (level) {
-    case LL_DEBUG:  tlog_debug(t, component, e);  break;
-    case LL_INFO:   tlog_info(t, component, e);   break;
-    case LL_WARN:   tlog_warn(t, component, e);   break;
-    case LL_ERROR:  tlog_error(t, component, e);  break;
-    default: break;
-    }
-  }
+	if (log_level <= level) {
+		switch (level) {
+		case LL_DEBUG: tlog_debug(t, component, e); break;
+		case LL_INFO: tlog_info(t, component, e); break;
+		case LL_WARN: tlog_warn(t, component, e); break;
+		case LL_ERROR: tlog_error(t, component, e); break;
+		default: break;
+		}
+	}
 }
-
 
 } // end namespace llsfrb

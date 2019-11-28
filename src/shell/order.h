@@ -37,59 +37,59 @@
 #ifndef __LLSF_REFBOX_SHELL_ORDER_H_
 #define __LLSF_REFBOX_SHELL_ORDER_H_
 
-#include <cstddef>
-#include <cursesp.h>
-
 #include <msgs/OrderInfo.pb.h>
 
-#include <vector>
+#include <cstddef>
+#include <cursesp.h>
 #include <map>
+#include <vector>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
 
-
 class LLSFRefBoxShellOrder : public NCursesPanel
 {
- public:
-  LLSFRefBoxShellOrder(int begin_y, int begin_x);
-  ~LLSFRefBoxShellOrder();
+public:
+	LLSFRefBoxShellOrder(int begin_y, int begin_x);
+	~LLSFRefBoxShellOrder();
 
-  void update(unsigned int id, llsf_msgs::Order::Complexity complexity,
-	      bool competitive,
-	      llsf_msgs::BaseColor base_color,
-	      std::vector<llsf_msgs::RingColor> &ring_colors,
-	      llsf_msgs::CapColor  cap_color,
-	      unsigned int quantity_requested, unsigned int quantity_delivered_cyan,
-	      unsigned int quantity_delivered_magenta,
-	      unsigned int delivery_period_begin, unsigned int delivery_period_end,
-	      unsigned int delivery_gate);
-  void set_gametime(unsigned int game_time);
+	void update(unsigned int                       id,
+	            llsf_msgs::Order::Complexity       complexity,
+	            bool                               competitive,
+	            llsf_msgs::BaseColor               base_color,
+	            std::vector<llsf_msgs::RingColor> &ring_colors,
+	            llsf_msgs::CapColor                cap_color,
+	            unsigned int                       quantity_requested,
+	            unsigned int                       quantity_delivered_cyan,
+	            unsigned int                       quantity_delivered_magenta,
+	            unsigned int                       delivery_period_begin,
+	            unsigned int                       delivery_period_end,
+	            unsigned int                       delivery_gate);
+	void set_gametime(unsigned int game_time);
 
-  void reset();
+	void reset();
 
-  int refresh();
+	int refresh();
 
- private:
-  unsigned int id_;
-  llsf_msgs::Order::Complexity complexity_;
-  bool competitive_;
-  llsf_msgs::BaseColor base_color_;
-  std::vector<llsf_msgs::RingColor> ring_colors_;
-  llsf_msgs::CapColor  cap_color_;
-  unsigned int quantity_requested_;
-  unsigned int quantity_delivered_cyan_;
-  unsigned int quantity_delivered_magenta_;
-  unsigned int delivery_period_begin_;
-  unsigned int delivery_period_end_;
-  unsigned int delivery_gate_;
+private:
+	unsigned int                      id_;
+	llsf_msgs::Order::Complexity      complexity_;
+	bool                              competitive_;
+	llsf_msgs::BaseColor              base_color_;
+	std::vector<llsf_msgs::RingColor> ring_colors_;
+	llsf_msgs::CapColor               cap_color_;
+	unsigned int                      quantity_requested_;
+	unsigned int                      quantity_delivered_cyan_;
+	unsigned int                      quantity_delivered_magenta_;
+	unsigned int                      delivery_period_begin_;
+	unsigned int                      delivery_period_end_;
+	unsigned int                      delivery_gate_;
 
-  unsigned int game_time_;
+	unsigned int game_time_;
 };
 
-
-} // end of namespace llsfrb
+} // namespace llsfrb_shell
 
 #endif

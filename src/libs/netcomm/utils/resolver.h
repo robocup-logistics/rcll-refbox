@@ -26,12 +26,11 @@
 
 #include <core/utils/lock_hashmap.h>
 #include <core/utils/lock_map.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <utils/misc/string_compare.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <cstddef>
-
 #include <ctime>
 #include <string>
 #include <utility>
@@ -47,52 +46,54 @@ class HostInfo;
 
 class NetworkNameResolver
 {
- friend class NetworkNameResolverThread;
+	friend class NetworkNameResolverThread;
 
- public:
-  NetworkNameResolver(AvahiThread *avahi_thread = NULL);
-  ~NetworkNameResolver();
+public:
+	NetworkNameResolver(AvahiThread *avahi_thread = NULL);
+	~NetworkNameResolver();
 
-  bool resolve_name(const char *name, struct sockaddr **addr, socklen_t *addrlen);
-  bool resolve_name_blocking(const char *name, struct sockaddr **addr, socklen_t *addrlen);
-  bool resolve_address(struct sockaddr *addr, socklen_t addr_len, std::string &name);
+	bool resolve_name(const char *name, struct sockaddr **addr, socklen_t *addrlen);
+	bool resolve_name_blocking(const char *name, struct sockaddr **addr, socklen_t *addrlen);
+	bool resolve_address(struct sockaddr *addr, socklen_t addr_len, std::string &name);
 
-  void flush_cache();
-  void set_cache_timeout(unsigned int sec);
-  unsigned int cache_timeout();
+	void         flush_cache();
+	void         set_cache_timeout(unsigned int sec);
+	unsigned int cache_timeout();
 
-  const char * hostname();
-  const char * short_hostname();
+	const char *hostname();
+	const char *short_hostname();
 
- private:
-  void name_resolved(char *name, struct sockaddr *addr, socklen_t addrlen);
-  void addr_resolved(struct sockaddr *addr, socklen_t addrlen, char *name, bool namefound);
-  void name_resolution_failed(char *name);
-  void address_resolution_failed(struct sockaddr *addr, socklen_t addrlen);
+private:
+	void name_resolved(char *name, struct sockaddr *addr, socklen_t addrlen);
+	void addr_resolved(struct sockaddr *addr, socklen_t addrlen, char *name, bool namefound);
+	void name_resolution_failed(char *name);
+	void address_resolution_failed(struct sockaddr *addr, socklen_t addrlen);
 
- private:
-  NetworkNameResolverThread *resolver_thread;
-  HostInfo *__host_info;
-  unsigned int __cache_timeout;
+private:
+	NetworkNameResolverThread *resolver_thread;
+	HostInfo *                 __host_info;
+	unsigned int               __cache_timeout;
 
-  LockHashMap<uint32_t, std::pair<char *, time_t> >       addr2name_cache;
-  LockHashMap<char *,
-    std::pair<struct sockaddr *, time_t>,
+	LockHashMap<uint32_t, std::pair<char *, time_t>> addr2name_cache;
+	LockHashMap<char *,
+	            std::pair<struct sockaddr *, time_t>,
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
-             std::tr1::hash<char *>,
+	            std::tr1::hash<char *>,
 #else
-             __gnu_cxx::hash<char *>,
+	            __gnu_cxx::hash<char *>,
 #endif
-             StringEquality >                             name2addr_cache;
+	            StringEquality>
+	  name2addr_cache;
 
-  LockHashMap<uint32_t, std::pair<char *, time_t> >::iterator  a2ncit;
-  LockHashMap<char *, std::pair<struct sockaddr *, time_t>,
+	LockHashMap<uint32_t, std::pair<char *, time_t>>::iterator a2ncit;
+	LockHashMap<char *,
+	            std::pair<struct sockaddr *, time_t>,
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
-    std::tr1::hash<char *>,
+	            std::tr1::hash<char *>,
 #else
-    __gnu_cxx::hash<char *>,
+	            __gnu_cxx::hash<char *>,
 #endif
-    StringEquality >::iterator                                 n2acit;
+	            StringEquality>::iterator n2acit;
 };
 
 } // end namespace fawkes

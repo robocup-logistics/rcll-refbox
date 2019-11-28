@@ -33,26 +33,30 @@ class NetworkIncomingConnectionHandler;
 
 class NetworkAcceptorThread : public Thread
 {
- public:
-  NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
-			unsigned short int port,
-			const char *thread_name = "NetworkAcceptorThread");
-  NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
-			StreamSocket *socket,
-			const char *thread_name = "NetworkAcceptorThread");
-  ~NetworkAcceptorThread();
+public:
+	NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
+	                      unsigned short int                port,
+	                      const char *                      thread_name = "NetworkAcceptorThread");
+	NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
+	                      StreamSocket *                    socket,
+	                      const char *                      thread_name = "NetworkAcceptorThread");
+	~NetworkAcceptorThread();
 
-  virtual void loop();
+	virtual void loop();
 
- /** Stub to see name in backtrace for easier debugging. @see Thread::run() */
- protected: virtual void run() { Thread::run(); }
+	/** Stub to see name in backtrace for easier debugging. @see Thread::run() */
+protected:
+	virtual void
+	run()
+	{
+		Thread::run();
+	}
 
- private:
-  unsigned short int        __port;
-  StreamSocket             *__socket;
+private:
+	unsigned short int __port;
+	StreamSocket *     __socket;
 
-  NetworkIncomingConnectionHandler *__handler;
-
+	NetworkIncomingConnectionHandler *__handler;
 };
 
 } // end namespace fawkes

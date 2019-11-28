@@ -3,7 +3,7 @@ version: 2
 jobs:
   build_fedora:
     docker:
-      - image: fedora:29
+      - image: fedora:30
     steps:
       - run:
           name: Install dependencies
@@ -11,13 +11,16 @@ jobs:
             dnf install -y --nodocs \
               avahi-devel \
               boost-devel \
+              clang \
               clips-devel \
               clipsmm-devel \
+              findutils \
               gcc-c++ \
               gecode-devel \
               git \
               glibmm24-devel \
               gtkmm30-devel \
+              make \
               mongodb-devel \
               ncurses-devel \
               openssh-clients \
@@ -25,7 +28,8 @@ jobs:
               protobuf-compiler \
               protobuf-devel \
               which \
-              yaml-cpp-devel
+              yaml-cpp-devel \
+              yamllint
       - run:
           name: Install freeopcua from COPR
           command: >
@@ -33,7 +37,8 @@ jobs:
             dnf -y copr enable thofmann/freeopcua &&
             dnf install -y --nodocs freeopcua-devel
       - checkout
-      - run: make all FAIL_ON_WARNING=1
+      - run: make quick-check
+      - run: make all FAIL_ON_WARNING=0
   build_ubuntu:
     docker:
       - image: ubuntu:bionic

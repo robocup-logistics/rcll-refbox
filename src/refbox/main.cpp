@@ -36,10 +36,10 @@
 
 #include "refbox.h"
 
-#include <termios.h>
 #include <clipsmm.h>
+#include <termios.h>
 #ifdef HAVE_MONGODB_VERSION_H
-#  include <mongo/client/init.h>
+#	include <mongo/client/init.h>
 #endif
 
 using namespace llsfrb;
@@ -47,22 +47,22 @@ using namespace llsfrb;
 int
 main(int argc, char **argv)
 {
-  // Disable annoying display of ^C on Ctrl-C
-  struct termios term;
-  tcgetattr(0 , &term);
-  term.c_lflag &= ~ECHO ;
-  tcsetattr(0 , TCSANOW, &term);
+	// Disable annoying display of ^C on Ctrl-C
+	struct termios term;
+	tcgetattr(0, &term);
+	term.c_lflag &= ~ECHO;
+	tcsetattr(0, TCSANOW, &term);
 
-  CLIPS::init();
+	CLIPS::init();
 #ifdef HAVE_MONGODB_VERSION_H
-  mongo::client::initialize();
+	mongo::client::initialize();
 #endif
-  LLSFRefBox llsfrb(argc, argv);
-  int rv = llsfrb.run();
+	LLSFRefBox llsfrb(argc, argv);
+	int        rv = llsfrb.run();
 
-  // restore terminal
-  term.c_lflag |= ECHO ;
-  tcsetattr(0 , TCSANOW, &term);
+	// restore terminal
+	term.c_lflag |= ECHO;
+	tcsetattr(0, TCSANOW, &term);
 
-  return rv;
+	return rv;
 }

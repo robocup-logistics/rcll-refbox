@@ -27,62 +27,64 @@
 #include <logging/logger.h>
 
 namespace protobuf_comm {
-  class ProtobufStreamServer;
+class ProtobufStreamServer;
 }
 
 namespace llsfrb {
 
 class NetworkLogger : public Logger
 {
- public:
-  NetworkLogger(protobuf_comm::ProtobufStreamServer *server, LogLevel log_level = LL_DEBUG);
-  virtual ~NetworkLogger();
+public:
+	NetworkLogger(protobuf_comm::ProtobufStreamServer *server, LogLevel log_level = LL_DEBUG);
+	virtual ~NetworkLogger();
 
-  virtual void log_debug(const char *component, const char *format, ...);
-  virtual void log_info(const char *component, const char *format, ...);
-  virtual void log_warn(const char *component, const char *format, ...);
-  virtual void log_error(const char *component, const char *format, ...);
+	virtual void log_debug(const char *component, const char *format, ...);
+	virtual void log_info(const char *component, const char *format, ...);
+	virtual void log_warn(const char *component, const char *format, ...);
+	virtual void log_error(const char *component, const char *format, ...);
 
-  virtual void log_debug(const char *component, fawkes::Exception &e);
-  virtual void log_info(const char *component, fawkes::Exception &e);
-  virtual void log_warn(const char *component, fawkes::Exception &e);
-  virtual void log_error(const char *component, fawkes::Exception &e);
+	virtual void log_debug(const char *component, fawkes::Exception &e);
+	virtual void log_info(const char *component, fawkes::Exception &e);
+	virtual void log_warn(const char *component, fawkes::Exception &e);
+	virtual void log_error(const char *component, fawkes::Exception &e);
 
-  virtual void vlog_debug(const char *component, const char *format, va_list va);
-  virtual void vlog_info(const char *component, const char *format, va_list va);
-  virtual void vlog_warn(const char *component, const char *format, va_list va);
-  virtual void vlog_error(const char *component, const char *format, va_list va);
+	virtual void vlog_debug(const char *component, const char *format, va_list va);
+	virtual void vlog_info(const char *component, const char *format, va_list va);
+	virtual void vlog_warn(const char *component, const char *format, va_list va);
+	virtual void vlog_error(const char *component, const char *format, va_list va);
 
-  virtual void tlog_debug(struct timeval *t, const char *component, const char *format, ...);
-  virtual void tlog_info(struct timeval *t, const char *component, const char *format, ...);
-  virtual void tlog_warn(struct timeval *t, const char *component, const char *format, ...);
-  virtual void tlog_error(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_debug(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_info(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_warn(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_error(struct timeval *t, const char *component, const char *format, ...);
 
-  virtual void tlog_debug(struct timeval *t, const char *component, fawkes::Exception &e);
-  virtual void tlog_info(struct timeval *t, const char *component, fawkes::Exception &e);
-  virtual void tlog_warn(struct timeval *t, const char *component, fawkes::Exception &e);
-  virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_debug(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_info(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_warn(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
 
-  virtual void vtlog_debug(struct timeval *t, const char *component,
-			   const char *format, va_list va);
-  virtual void vtlog_info(struct timeval *t, const char *component,
-			  const char *format, va_list va);
-  virtual void vtlog_warn(struct timeval *t, const char *component,
-			  const char *format, va_list va);
-  virtual void vtlog_error(struct timeval *t, const char *component,
-			   const char *format, va_list va);
+	virtual void
+	             vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
+	virtual void vtlog_info(struct timeval *t, const char *component, const char *format, va_list va);
+	virtual void vtlog_warn(struct timeval *t, const char *component, const char *format, va_list va);
+	virtual void
+	vtlog_error(struct timeval *t, const char *component, const char *format, va_list va);
 
- private:
-  void send_message(Logger::LogLevel level, struct timeval *t,
-		    const char *component, bool is_exception,
-		    const char *format, va_list va);
-  void send_message(Logger::LogLevel level, struct timeval *t,
-		    const char *component, bool is_exception, const char *message);
+private:
+	void send_message(Logger::LogLevel level,
+	                  struct timeval * t,
+	                  const char *     component,
+	                  bool             is_exception,
+	                  const char *     format,
+	                  va_list          va);
+	void send_message(Logger::LogLevel level,
+	                  struct timeval * t,
+	                  const char *     component,
+	                  bool             is_exception,
+	                  const char *     message);
 
-  protobuf_comm::ProtobufStreamServer  *pb_server_;
+	protobuf_comm::ProtobufStreamServer *pb_server_;
 };
-
-
 
 } // end namespace llsfrb
 

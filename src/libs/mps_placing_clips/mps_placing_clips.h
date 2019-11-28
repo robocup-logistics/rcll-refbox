@@ -38,13 +38,13 @@
 #ifndef __MPS_PLACING_CLIPS_H_
 #define __MPS_PLACING_CLIPS_H_
 
+#include <core/threading/mutex.h>
+
+#include <clipsmm.h>
 #include <list>
 #include <map>
 #include <memory>
 #include <thread>
-#include <clipsmm.h>
-
-#include <core/threading/mutex.h>
 
 class MPSPlacing;
 
@@ -55,34 +55,34 @@ namespace mps_placing_clips {
 
 class MPSPlacingGenerator
 {
- public:
-  MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex &env_mutex);
-  ~MPSPlacingGenerator();
+public:
+	MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex &env_mutex);
+	~MPSPlacingGenerator();
 
-  void generate_start();
-  void generate_abort();
-  CLIPS::Value generate_running();
-  CLIPS::Value field_layout_generated();
-  CLIPS::Values get_generated_field();
+	void          generate_start();
+	void          generate_abort();
+	CLIPS::Value  generate_running();
+	CLIPS::Value  field_layout_generated();
+	CLIPS::Values get_generated_field();
 
- private:
-  void          setup_clips();
-  CLIPS::Environment   *clips_;
-  fawkes::Mutex        &clips_mutex_;
+private:
+	void                setup_clips();
+	CLIPS::Environment *clips_;
+	fawkes::Mutex &     clips_mutex_;
 
-  void generator_thread();
+	void generator_thread();
 
-  std::shared_ptr<std::thread> generator_thread_;
-  std::shared_ptr<MPSPlacing> generator_;
-  bool is_generation_running_;
-  bool is_field_generated_;
+	std::shared_ptr<std::thread> generator_thread_;
+	std::shared_ptr<MPSPlacing>  generator_;
+	bool                         is_generation_running_;
+	bool                         is_field_generated_;
 
-  fawkes::Mutex map_mutex_;
+	fawkes::Mutex map_mutex_;
 
-  std::list<std::string>  functions_;
-  CLIPS::Fact::pointer    avail_fact_;
+	std::list<std::string> functions_;
+	CLIPS::Fact::pointer   avail_fact_;
 };
 
-} // end namespace protobuf_clips
+} // namespace mps_placing_clips
 
 #endif

@@ -19,7 +19,6 @@ llsfrb:
 
   mps:
     enable: true
-    # type: 1(incoming station), 2(singel p&p), 3(double p&p), 4(delivery station)
     stations:
       C-BS:
         active: true
@@ -79,7 +78,7 @@ llsfrb:
         active: true
         host: !ipv4 192.168.2.32
         port: !tcp-port 4840
-        type: CS  
+        type: CS
         connection: mockup
       M-RS1:
         active: true
@@ -119,32 +118,32 @@ llsfrb:
                     game-update-gametime-points, game-update-last-time,
                     net-send-beacon, net-send-GameState, net-send-OrderInfo,
                     net-send-MachineInfo, net-send-RobotInfo,
-                    exploration-send-MachineReportInfo, net-broadcast-MachineInfo,
-                    net-send-VersionInfo]
+                    exploration-send-MachineReportInfo,
+                    net-broadcast-MachineInfo, net-send-VersionInfo]
 
   comm:
     protobuf-dirs: ["@SHAREDIR@/msgs"]
 
     server-port: !tcp-port 4444
-    
+
     public-peer:
-      #host: !ipv4 192.168.122.255
+      # host: !ipv4 192.168.122.255
       host: !ipv4 127.0.0.1
-      #port: !udp-port 4444
+      # port: !udp-port 4444
       send-port: !udp-port 4444
       recv-port: !udp-port 4445
 
     cyan-peer:
-      #host: !ipv4 192.168.122.255
+      # host: !ipv4 192.168.122.255
       host: !ipv4 127.0.0.1
-      #port: !udp-port 4441
+      # port: !udp-port 4441
       send-port: !udp-port 4441
       recv-port: !udp-port 4446
 
     magenta-peer:
-      #host: !ipv4 192.168.122.255
+      # host: !ipv4 192.168.122.255
       host: !ipv4 127.0.0.1
-      #port: !udp-port 4442
+      # port: !udp-port 4442
       send-port: !udp-port 4442
       recv-port: !udp-port 4447
 
@@ -160,7 +159,7 @@ llsfrb:
     teams: [Carologistics]
     crypto-keys:
       Carologistics: randomkey
-    # whenever a random field should be generated or not (e.g. used from mongodb)
+    # set to true to generate a random field at startup
     random-field: true
 
   shell:
@@ -168,18 +167,18 @@ llsfrb:
     refbox-port: 4444
 
   workpiece-tracking:
-   enable: false
-   fail-safe: true
-   broadcast: false
+    enable: false
+    fail-safe: true
+    broadcast: false
 
-  #A requested delivery in the real world needs to be confirmed 'manually' by
+  # A requested delivery in the real world needs to be confirmed 'manually' by
   # the referee before scoring. In simulation this might be tedious and
   # unnecessary. 'Automatic' confirmation grants all delivery requests.
   auto-confirm-delivery: true
 
   simulation:
     enable: false
-    # synchronize refbox time with the time of a simulation 
+    # synchronize refbox time with the time of a simulation
     time-sync:
       enable: true
       # estimate time by using the last given simulation time speed

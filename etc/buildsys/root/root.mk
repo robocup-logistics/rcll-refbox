@@ -21,7 +21,9 @@ ifndef __buildsys_root_root_mk_
 __buildsys_parts_root_mk_ := 1
 
 include $(BUILDSYSDIR)/root/docs.mk
+include $(BUILDSYSDIR)/root/yamllint.mk
 include $(BUILDSYSDIR)/root/check.mk
+include $(BUILDSYSDIR)/root/format.mk
 include $(BUILDSYSDIR)/root/btmgmt.mk
 include $(BUILDSYSDIR)/root/uncolored.mk
 

@@ -37,12 +37,12 @@
 #define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 #include "robot.h"
+
 #include "colors.h"
 
-#include <cursesp.h>
-
-#include <boost/format.hpp>
 #include <boost/date_time.hpp>
+#include <boost/format.hpp>
+#include <cursesp.h>
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
@@ -50,110 +50,108 @@ namespace llsfrb_shell {
 #endif
 
 LLSFRefBoxShellRobot::LLSFRefBoxShellRobot(int begin_y, int begin_x)
-  : NCursesPanel(2, 24, begin_y, begin_x)
+: NCursesPanel(2, 24, begin_y, begin_x)
 {
 }
 
-
 void
-LLSFRefBoxShellRobot::update(unsigned int number, std::string name,
-			     std::string team, std::string host,
-			     llsf_msgs::RobotState state, float maintenance_time_remaining,
-			     unsigned int maintenance_cycles)
+LLSFRefBoxShellRobot::update(unsigned int          number,
+                             std::string           name,
+                             std::string           team,
+                             std::string           host,
+                             llsf_msgs::RobotState state,
+                             float                 maintenance_time_remaining,
+                             unsigned int          maintenance_cycles)
 {
-  number_ = number;
-  name_   = name;
-  team_   = team;
-  host_   = host;
-  state_  = state;
-  maintenance_time_remaining_ = maintenance_time_remaining;
-  maintenance_cycles_         = maintenance_cycles;
+	number_                     = number;
+	name_                       = name;
+	team_                       = team;
+	host_                       = host;
+	state_                      = state;
+	maintenance_time_remaining_ = maintenance_time_remaining;
+	maintenance_cycles_         = maintenance_cycles;
 }
 
 void
 LLSFRefBoxShellRobot::set_last_seen(boost::posix_time::ptime &last_seen)
 {
-  last_seen_ = last_seen;
+	last_seen_ = last_seen;
 }
 
 void
 LLSFRefBoxShellRobot::reset()
 {
-  number_ = 0;
-  name_ = team_ = host_ = "";
-  refresh();
+	number_ = 0;
+	name_ = team_ = host_ = "";
+	refresh();
 }
-
 
 int
 LLSFRefBoxShellRobot::refresh()
 {
-  standend();
-  if (name_ != "") {
+	standend();
+	if (name_ != "") {
+		boost::posix_time::ptime         now(boost::posix_time::microsec_clock::universal_time());
+		boost::posix_time::time_duration td         = now - last_seen_;
+		long                             td_seconds = td.total_seconds();
 
-    boost::posix_time::ptime now(boost::posix_time::microsec_clock::universal_time());
-    boost::posix_time::time_duration td = now - last_seen_;
-    long td_seconds = td.total_seconds();
+		std::string line_1 =
+		  boost::str(boost::format("%u %s (%s)") % number_ % name_ % team_).substr(0, width());
+		;
+		for (int i = line_1.length(); i < width(); ++i) {
+			line_1 += " ";
+		}
 
-    std::string line_1 =
-      boost::str(boost::format("%u %s (%s)") % number_ % name_ % team_).substr(0, width());;
-    for (int i = line_1.length(); i < width(); ++i) {
-      line_1 += " ";
-    }
+		erase();
 
-    erase();
+		if (td_seconds >= 10) {
+			attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED));
+		} else if (td_seconds >= 5) {
+			attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+		} else {
+			attron(' ' | COLOR_PAIR(COLOR_DEFAULT));
+		}
+		attron(A_BOLD);
+		printw(0, 0, "%s", line_1.c_str());
+		attroff(A_BOLD);
+		standend();
 
-    if (td_seconds >= 10) {
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
-    } else if (td_seconds >= 5) {
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
-    } else {
-      attron(' '|COLOR_PAIR(COLOR_DEFAULT));
-    }
-    attron(A_BOLD);
-    printw(0, 0, "%s", line_1.c_str());
-    attroff(A_BOLD);
-    standend();
+		addstr(1, 0, host_.c_str());
+		attron(A_BOLD);
+		if (state_ == llsf_msgs::MAINTENANCE) {
+			if (maintenance_time_remaining_ < 1) {
+				if ((-(int)truncf(maintenance_time_remaining_) % 2) == 0) {
+					attron(' ' | COLOR_PAIR(COLOR_RED_ON_BACK));
+				} else {
+					attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED));
+				}
+			} else if (maintenance_time_remaining_ < 16) {
+				attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED));
+			} else if (maintenance_time_remaining_ < 31) {
+				attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+			}
+			printw(1, width() - 10, "%3is", (int)truncf(maintenance_time_remaining_));
+			attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
+		} else if (state_ == llsf_msgs::DISQUALIFIED) {
+			attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED));
+		}
+		printw(1, width() - 5, "%s", RobotState_Name(state_).substr(0, 3).c_str());
+		standend();
 
-    addstr(1, 0, host_.c_str());
-    attron(A_BOLD);
-    if (state_ == llsf_msgs::MAINTENANCE) {
-      if (maintenance_time_remaining_ < 1) {
-	if ((-(int)truncf(maintenance_time_remaining_) % 2) == 0) {
-	  attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
+		if (maintenance_cycles_ > 0) {
+			attron(A_BOLD);
+			attron(' ' | COLOR_PAIR(COLOR_RED_ON_BACK));
+			//mvwaddwstr(w, 1, width() - 1, L"\u26a0");
+			printw(1, width() - 1, "!");
+			standend();
+		}
+
 	} else {
-	  attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
+		bkgd(' ' | COLOR_PAIR(COLOR_DEFAULT));
+		erase();
 	}
-      } else if (maintenance_time_remaining_ < 16) {
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
-      } else if (maintenance_time_remaining_ < 31) {
-	attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
-      }
-      printw(1, width() - 10, "%3is", (int)truncf(maintenance_time_remaining_));
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_YELLOW));
-    } else if (state_ == llsf_msgs::DISQUALIFIED) {
-      attron(' '|COLOR_PAIR(COLOR_WHITE_ON_RED));
-    }
-    printw(1, width() - 5, "%s", RobotState_Name(state_).substr(0,3).c_str());
-    standend();
 
-    if (maintenance_cycles_ > 0) {
-      attron(A_BOLD);
-      attron(' '|COLOR_PAIR(COLOR_RED_ON_BACK));
-      //mvwaddwstr(w, 1, width() - 1, L"\u26a0");
-      printw(1, width() - 1, "!");
-      standend();
-    }
-
-  } else {
-    bkgd(' '|COLOR_PAIR(COLOR_DEFAULT));
-    erase();
-  }
-
-  return NCursesPanel::refresh();
+	return NCursesPanel::refresh();
 }
-
-
-
 
 } // end of namespace llsfrb_shell

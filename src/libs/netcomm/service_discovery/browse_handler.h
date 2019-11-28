@@ -24,12 +24,12 @@
 #ifndef __NETCOMM_SERVICE_DISCOVERY_BROWSE_HANDLER_H_
 #define __NETCOMM_SERVICE_DISCOVERY_BROWSE_HANDLER_H_
 
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <stdint.h>
+#include <sys/types.h>
 
-#include <string>
 #include <list>
+#include <stdint.h>
+#include <string>
 
 namespace fawkes {
 
@@ -45,31 +45,29 @@ namespace fawkes {
  */
 class ServiceBrowseHandler
 {
- public:
-  /** Virtual destructor */
-  virtual ~ServiceBrowseHandler() {};
+public:
+	/** Virtual destructor */
+	virtual ~ServiceBrowseHandler(){};
 
-  /** All results have been retrieved.
+	/** All results have been retrieved.
    * If you read the DNS-SD specs you will see that there is no explicit
    * "not existent" or "end of records" message - it cannot be. But after
    * some time it is assumed that there are no more records. If that is
    * the case this method is called.
    */
-  virtual void all_for_now()                                  = 0;
+	virtual void all_for_now() = 0;
 
-  /** Cache exhausted. */
-  virtual void cache_exhausted()                              = 0;
+	/** Cache exhausted. */
+	virtual void cache_exhausted() = 0;
 
-  /** Failed to browse for a given service.
+	/** Failed to browse for a given service.
    * @param name name of the service
    * @param type type of the service
    * @param domain domain of the service
    */
-  virtual void browse_failed(const char *name,
-			     const char *type,
-			     const char *domain)              = 0;
+	virtual void browse_failed(const char *name, const char *type, const char *domain) = 0;
 
-  /** A service has been announced on the network.
+	/** A service has been announced on the network.
    * @param name name of the service
    * @param type type of the service
    * @param domain domain of the service
@@ -80,26 +78,22 @@ class ServiceBrowseHandler
    * @param txt list of txt records.
    * @param flags extra flags, see Avahi documentation
    */
-  virtual void service_added(const char *name,
-			     const char *type,
-			     const char *domain,
-			     const char *host_name,
-			     const struct sockaddr *addr,
-			     const socklen_t addr_size,
-			     uint16_t port,
-			     std::list<std::string> &txt,
-			     int flags
-			     )                                = 0;
+	virtual void service_added(const char *            name,
+	                           const char *            type,
+	                           const char *            domain,
+	                           const char *            host_name,
+	                           const struct sockaddr * addr,
+	                           const socklen_t         addr_size,
+	                           uint16_t                port,
+	                           std::list<std::string> &txt,
+	                           int                     flags) = 0;
 
-  /** A service has been removed from the network.
+	/** A service has been removed from the network.
    * @param name name of the service
    * @param type type of the service
    * @param domain domain of the service
    */
-  virtual void service_removed(const char *name,
-			       const char *type,
-			       const char *domain)            = 0;
-
+	virtual void service_removed(const char *name, const char *type, const char *domain) = 0;
 };
 
 } // end namespace fawkes

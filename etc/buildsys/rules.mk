@@ -250,6 +250,11 @@ $(LIBDIR)/%.so: $$(OBJS_$$(call nametr,$$*))
 	ln -fs $(@F).$(SOVER_$(call nametr,$*)) $@.$(firstword $(call split,.,$(SOVER_$(call nametr,$*)))); \
 	)
 
+### Include formatting targets
+ifneq ($(subst $(abspath $(TOP_BASEDIR)),,$(PWD)),)
+  include $(BUILDSYSDIR)/format.mk
+endif
+
 ### Check if there are special additions
 ifneq ($(wildcard $(BUILDSYSDIR)/btypes/rules_$(BUILD_TYPE).mk),)
   include $(BUILDSYSDIR)/btypes/rules_$(BUILD_TYPE).mk

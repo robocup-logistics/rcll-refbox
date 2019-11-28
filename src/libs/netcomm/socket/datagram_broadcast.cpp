@@ -22,14 +22,14 @@
  *  Read the full text in the LICENSE.GPL_WRE file in the doc directory.
  */
 
-#include <netcomm/socket/datagram_broadcast.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netcomm/socket/datagram_broadcast.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include <cerrno>
 
 namespace fawkes {
 
@@ -48,20 +48,20 @@ namespace fawkes {
  * @param timeout timeout, if 0 all operationsare blocking, otherwise it
  * is tried for timeout seconds.
  */
-BroadcastDatagramSocket::BroadcastDatagramSocket(const char *broadcast_addr_s,
-						 unsigned short port,
-						 float timeout)
-  : Socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, timeout)
+BroadcastDatagramSocket::BroadcastDatagramSocket(const char *   broadcast_addr_s,
+                                                 unsigned short port,
+                                                 float          timeout)
+: Socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, timeout)
 {
-  broadcast_addr = (struct ::sockaddr_in *)malloc(sizeof(struct ::sockaddr_in));
+	broadcast_addr = (struct ::sockaddr_in *)malloc(sizeof(struct ::sockaddr_in));
 
-  struct in_addr a;
-  if ( inet_aton(broadcast_addr_s, &a) == -1 ) {
-    throw SocketException("Invalid address given");
-  }
-  broadcast_addr->sin_family = AF_INET;
-  broadcast_addr->sin_addr.s_addr = a.s_addr;
-  broadcast_addr->sin_port = htons(port);
+	struct in_addr a;
+	if (inet_aton(broadcast_addr_s, &a) == -1) {
+		throw SocketException("Invalid address given");
+	}
+	broadcast_addr->sin_family      = AF_INET;
+	broadcast_addr->sin_addr.s_addr = a.s_addr;
+	broadcast_addr->sin_port        = htons(port);
 
 #if 0
   //set_ttl(1);
@@ -69,24 +69,21 @@ BroadcastDatagramSocket::BroadcastDatagramSocket(const char *broadcast_addr_s,
 #endif
 }
 
-
 /** Destructor. */
 BroadcastDatagramSocket::~BroadcastDatagramSocket()
 {
-  free(broadcast_addr);
+	free(broadcast_addr);
 }
-
 
 /** Copy constructor.
  * @param datagram_socket socket to copy.
  */
 BroadcastDatagramSocket::BroadcastDatagramSocket(BroadcastDatagramSocket &datagram_socket)
-  : Socket(datagram_socket)
+: Socket(datagram_socket)
 {
-  broadcast_addr = (struct ::sockaddr_in *)malloc(sizeof(struct ::sockaddr_in));
-  memcpy(broadcast_addr, datagram_socket.broadcast_addr, sizeof(struct ::sockaddr_in));
+	broadcast_addr = (struct ::sockaddr_in *)malloc(sizeof(struct ::sockaddr_in));
+	memcpy(broadcast_addr, datagram_socket.broadcast_addr, sizeof(struct ::sockaddr_in));
 }
-
 
 /** Bind socket.
  * This will make the socket listen for incoming traffic.
@@ -94,26 +91,25 @@ BroadcastDatagramSocket::BroadcastDatagramSocket(BroadcastDatagramSocket &datagr
 void
 BroadcastDatagramSocket::bind()
 {
-  int broadcast = 1;
-  if ( setsockopt(sock_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) == -1) {
-    throw SocketException("Could not set SO_BROADCAST", errno);
-  }
+	int broadcast = 1;
+	if (setsockopt(sock_fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) == -1) {
+		throw SocketException("Could not set SO_BROADCAST", errno);
+	}
 
-  int reuse = 1;
-  if ( setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
-    throw SocketException("Could not set SO_REUSEADDR", errno);
-  }
+	int reuse = 1;
+	if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
+		throw SocketException("Could not set SO_REUSEADDR", errno);
+	}
 
-  struct ::sockaddr_in local;
-  local.sin_family = AF_INET;
-  local.sin_addr.s_addr = INADDR_ANY;
-  local.sin_port = broadcast_addr->sin_port;
+	struct ::sockaddr_in local;
+	local.sin_family      = AF_INET;
+	local.sin_addr.s_addr = INADDR_ANY;
+	local.sin_port        = broadcast_addr->sin_port;
 
-  if (::bind(sock_fd, (struct ::sockaddr *) &local, sizeof(local)) < 0) {
-    throw SocketException("Could not bind to port", errno);
-  }
+	if (::bind(sock_fd, (struct ::sockaddr *)&local, sizeof(local)) < 0) {
+		throw SocketException("Could not bind to port", errno);
+	}
 }
-
 
 /** Clone socket.
  * @return a copied instance of BroadcastDatagramSocket.
@@ -121,9 +117,8 @@ BroadcastDatagramSocket::bind()
 Socket *
 BroadcastDatagramSocket::clone()
 {
-  return new BroadcastDatagramSocket(*this);
+	return new BroadcastDatagramSocket(*this);
 }
-
 
 /** Send data.
  * This will send the given data to the broadcast address specified
@@ -134,12 +129,12 @@ BroadcastDatagramSocket::clone()
 void
 BroadcastDatagramSocket::send(void *buf, unsigned int buf_len)
 {
-  try {
-    Socket::send(buf, buf_len, (struct ::sockaddr *)broadcast_addr, sizeof(struct ::sockaddr_in));
-  } catch (SocketException &e) {
-    e.append("BroadcastDatagramSocket::send(void*, unsigned int) failed");
-    throw;
-  }
+	try {
+		Socket::send(buf, buf_len, (struct ::sockaddr *)broadcast_addr, sizeof(struct ::sockaddr_in));
+	} catch (SocketException &e) {
+		e.append("BroadcastDatagramSocket::send(void*, unsigned int) failed");
+		throw;
+	}
 }
 
 } // end namespace fawkes
