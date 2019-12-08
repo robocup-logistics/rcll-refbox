@@ -254,11 +254,11 @@
 					(modify ?m (zone ?m-zone) (rotation (integer (eval ?m-rotation))))
 			  )
 				(bson-destroy ?m-p)
-      )
+			)
+			(bson-destroy ?doc)
      else
 	    (printout error "Empty result in mongoDB from machine_zones" crlf)
     )
-    (bson-destroy ?doc)
     (mongodb-cursor-destroy ?cursor)
 	  (bson-builder-destroy ?query)
 	  (bson-builder-destroy ?sort)
