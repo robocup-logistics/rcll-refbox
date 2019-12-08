@@ -31,14 +31,9 @@
   =>
   (bind ?down-time (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
   (printout t "Machine " ?name " down for " ?down-time " sec" crlf)
-  (if (eq ?state PROCESSING)
-   then
-    (modify ?mf (state DOWN) (prev-state ?state)
-            (proc-start (+ ?proc-start ?down-time))
-            (wait-for-product-since (+ ?wait-since ?down-time)))
-   else
-    (modify ?mf (state DOWN) (prev-state ?state))
-  )
+  (modify ?mf (state DOWN) (prev-state ?state)
+              (proc-start (+ ?proc-start ?down-time))
+              (wait-for-product-since (+ ?wait-since ?down-time)))
 )
 
 (defrule production-machine-up
