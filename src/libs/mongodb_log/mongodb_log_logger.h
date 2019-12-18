@@ -26,6 +26,8 @@
 #include <core/exception.h>
 #include <logging/logger.h>
 
+#include <mongocxx/client.hpp>
+#include <mongocxx/uri.hpp>
 #include <string>
 
 namespace fawkes {
@@ -86,9 +88,9 @@ private:
 	tlog_insert_message(LogLevel ll, struct timeval *t, const char *component, fawkes::Exception &);
 
 private:
-	std::string          collection_;
 	fawkes::Mutex *      mutex_;
-	mongo::DBClientBase *mongodb_;
+	mongocxx::client     client_;
+	mongocxx::collection collection_;
 };
 
 #endif

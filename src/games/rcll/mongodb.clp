@@ -42,7 +42,7 @@
     (bson-append-time ?doc "end-time" ?etime)
   )
 
-  (bind ?points-arr (bson-array-start ?doc "points"))
+  (bind ?points-arr (bson-array-start))
   (bind ?phase-points-doc-cyan (bson-create))
   (bind ?phase-points-doc-magenta (bson-create))
 
@@ -62,7 +62,7 @@
         else (bind ?phase-points-magenta (+ ?phase-points-magenta ?p:points))
       )
       (bson-array-append ?points-arr ?point-doc)
-      (bson-destroy ?point-doc)
+      (bson-builder-destroy ?point-doc)
     )
     (bson-append ?phase-points-doc-cyan ?phase ?phase-points-cyan)
     (bson-append ?phase-points-doc-magenta ?phase ?phase-points-magenta)
@@ -70,14 +70,14 @@
     (bind ?points-magenta (+ ?points-magenta ?phase-points-magenta))
   )
 
-  (bson-array-finish ?points-arr)
+  (bson-array-finish ?doc "points" ?points-arr)
   (bson-append ?doc "phase-points-cyan" ?phase-points-doc-cyan)
   (bson-append ?doc "phase-points-magenta" ?phase-points-doc-magenta)
   (bson-append-array ?doc "total-points" (create$ ?points-cyan ?points-magenta))
-  (bson-destroy ?phase-points-doc-cyan)
-  (bson-destroy ?phase-points-doc-magenta)
+  (bson-builder-destroy ?phase-points-doc-cyan)
+  (bson-builder-destroy ?phase-points-doc-magenta)
 
-  (bind ?m-arr (bson-array-start ?doc "machines"))
+  (bind ?m-arr (bson-array-start))
   (do-for-all-facts ((?m machine)) TRUE
      (bind ?m-doc (bson-create))
      (bson-append ?m-doc "name" ?m:name)
@@ -95,9 +95,9 @@
      )
      (bson-array-append ?m-arr ?m-doc)
   )
-  (bson-array-finish ?m-arr)
+  (bson-array-finish ?doc "machines" ?m-arr)
 
-  (bind ?o-arr (bson-array-start ?doc "orders"))
+  (bind ?o-arr (bson-array-start))
   (do-for-all-facts ((?o order)) TRUE
      (bind ?o-doc (bson-create))
      (bson-append ?o-doc "id" ?o:id)
@@ -112,13 +112,13 @@
      (bson-append ?o-doc "activate-at" ?o:activate-at)
      (bson-array-append ?o-arr ?o-doc)
   )
-  (bson-array-finish ?o-arr)
+  (bson-array-finish ?doc "orders" ?o-arr)
 
   ;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 
-  (mongodb-upsert "llsfrb.game_report" ?doc
+  (mongodb-upsert "game_report" ?doc
   		  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "]}"))
-  (bson-destroy ?doc)
+  (bson-builder-destroy ?doc)
 )
 
 (defrule mongodb-game-report-begin
@@ -174,8 +174,8 @@
   (bson-append ?client-doc "client-id" ?client-id)
   (bson-append ?client-doc "host" ?host)
   (bson-append ?client-doc "port" ?port)
-  (mongodb-insert "llsfrb.clients" ?client-doc)
-  (bson-destroy ?client-doc)
+  (mongodb-insert "clients" ?client-doc)
+  (bson-builder-destroy ?client-doc)
 )
 
 (defrule mongodb-net-client-disconnected
@@ -189,9 +189,9 @@
   (bson-append-time ?update-query "session" ?*START-TIME*)
   (bson-append ?update-query "client-id" ?client-id)
 
-  (mongodb-update "llsfrb.clients" ?client-update-doc ?update-query)
-  (bson-destroy ?client-update-doc)
-  (bson-destroy ?update-query)
+  (mongodb-update "clients" ?client-update-doc ?update-query)
+  (bson-builder-destroy ?client-update-doc)
+  (bson-builder-destroy ?update-query)
 )
 
 
@@ -200,7 +200,7 @@
 
   (bson-append-array ?doc "timestamp" ?time)
   (bson-append-time  ?doc "time" ?time)
-  (bind ?m-arr (bson-array-start ?doc "machines"))
+  (bind ?m-arr (bson-array-start))
 	
 	(do-for-all-facts ((?m machine)) TRUE
     (bind ?m-doc (bson-create))
@@ -208,13 +208,13 @@
 		(bson-append ?m-doc "zone" ?m:zone)
 		(bson-append ?m-doc "rotation" ?m:rotation)
 		(bson-array-append ?m-arr ?m-doc)
-		(bson-destroy ?m-doc)
+		(bson-builder-destroy ?m-doc)
   )
 
-	(bson-array-finish ?m-arr)
-  (mongodb-upsert "llsfrb.machine_zones" ?doc
+	(bson-array-finish ?doc "machines" ?m-arr)
+  (mongodb-upsert "machine_zones" ?doc
   		  (str-cat "{\"timestamp\": [" (nth$ 1 ?time) ", " (nth$ 2 ?time) "]}"))
-  (bson-destroy ?doc)
+  (bson-builder-destroy ?doc)
 
 )
 
@@ -223,13 +223,12 @@
   ;(bind ?t-query (bson-parse "{\"end-time\": { \"$exists\": 1 }}"))
   (bind ?t-query (bson-parse "{}"))
   (bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
-	(bind ?t-cursor (mongodb-query-sort "llsfrb.game_report" ?t-query ?t-sort))
-	(if (mongodb-cursor-more ?t-cursor)
-   then
-    (bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
+  (bind ?t-doc (mongodb-cursor-next ?t-cursor))
+  (if (neq ?t-doc FALSE) then
 	  (bind ?stime (bson-get-time ?t-doc "start-time"))
+    (bson-destroy ?t-doc)
 ;	  (bind ?etime (bson-get-time ?t-doc "end-time"))
-		(bson-destroy ?t-doc)
 
 	  ; retrieve machine config
 ;		(bind ?qs (str-cat "{\"$and\": [{time: { \"$gte\": { \"$date\": "
@@ -239,11 +238,11 @@
 		;(bind ?qs (str-cat "{\"time\": ISODate(\"" (mongodb-time-as-ms ?stime) "\"}"))
 		(bind ?qs (str-cat "{}"))
 		(bind ?query (bson-parse ?qs))
-		(bind ?sort  (bson-parse "{time: -1}"))
-		(bind ?cursor (mongodb-query-sort "llsfrb.machine_zones" ?query ?sort))
-		(if (mongodb-cursor-more ?cursor)
+		(bind ?sort  (bson-parse "{\"time\": -1}"))
+		(bind ?cursor (mongodb-query-sort "machine_zones" ?query ?sort))
+		(bind ?doc (mongodb-cursor-next ?cursor))
+		(if (neq ?doc FALSE) then
 		 then
-		  (bind ?doc (mongodb-cursor-next ?cursor))
 			(bind ?fn (bson-field-names ?doc))
 			(bind ?m-arr (bson-get-array ?doc "machines"))
 			(foreach ?m-p ?m-arr
@@ -255,21 +254,21 @@
 					(modify ?m (zone ?m-zone) (rotation (integer (eval ?m-rotation))))
 			  )
 				(bson-destroy ?m-p)
-      )
-		  (bson-destroy ?doc)
+			)
+			(bson-destroy ?doc)
      else
-	    (printout error "Empty result in mongoDB from llsfrb.machine_zones" crlf)
+	    (printout error "Empty result in mongoDB from machine_zones" crlf)
     )
     (mongodb-cursor-destroy ?cursor)
-	  (bson-destroy ?query)
-	  (bson-destroy ?sort)
+	  (bson-builder-destroy ?query)
+	  (bson-builder-destroy ?sort)
    else
-	  (printout error "Empty result in mongoDB from llsfrb.game_report" crlf)
+	  (printout error "Empty result in mongoDB from game_report" crlf)
     
   )
   (mongodb-cursor-destroy ?t-cursor)
-	(bson-destroy ?t-query)
-	(bson-destroy ?t-sort)
+	(bson-builder-destroy ?t-query)
+	(bson-builder-destroy ?t-sort)
 )
 
 (defrule mongodb-store-machine-zones

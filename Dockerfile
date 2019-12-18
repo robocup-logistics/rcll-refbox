@@ -8,7 +8,7 @@
 #   (at your option) any later version.
 #
 
-FROM fedora:29 as buildenv
+FROM fedora:30 as buildenv
 RUN dnf install -y --nodocs \
       avahi-devel \
       boost-devel \
@@ -19,7 +19,8 @@ RUN dnf install -y --nodocs \
       git \
       glibmm24-devel \
       gtkmm30-devel \
-      mongodb-devel \
+      make \
+      mongo-cxx-driver-devel \
       ncurses-devel \
       openssh-clients \
       openssl-devel \
@@ -44,7 +45,7 @@ RUN shopt -s globstar; \
     /usr/lib/rpm/rpmdeps -P lib/** bin/** > provides.txt && \
     /usr/lib/rpm/rpmdeps -R lib/** bin/** | grep -v -f provides.txt > requires.txt
 
-FROM fedora:29
+FROM fedora:30
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games

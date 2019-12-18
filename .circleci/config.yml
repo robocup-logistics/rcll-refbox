@@ -21,7 +21,7 @@ jobs:
               glibmm24-devel \
               gtkmm30-devel \
               make \
-              mongodb-devel \
+              mongo-cxx-driver-devel \
               ncurses-devel \
               openssh-clients \
               openssl-devel \
@@ -38,7 +38,7 @@ jobs:
             dnf install -y --nodocs freeopcua-devel
       - checkout
       - run: make quick-check
-      - run: make all FAIL_ON_WARNING=0
+      - run: make all FAIL_ON_WARNING=1
   build_ubuntu:
     docker:
       - image: ubuntu:bionic
