@@ -25,18 +25,15 @@
 (defrule production-machine-down
   (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
   ?mf <- (machine (name ?name) (mtype ?mtype)
-		  (state ?state&~DOWN) (proc-start ?proc-start)
-		  (down-period $?dp&:(<= (nth$ 1 ?dp) ?gt)&:(>= (nth$ 2 ?dp) ?gt)))
+                  (state ?state&~DOWN) (proc-start ?proc-start)
+                  (wait-for-product-since ?wait-since)
+                  (down-period $?dp&:(<= (nth$ 1 ?dp) ?gt)&:(>= (nth$ 2 ?dp) ?gt)))
   =>
   (bind ?down-time (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
   (printout t "Machine " ?name " down for " ?down-time " sec" crlf)
-  (if (eq ?state PROCESSING)
-   then
-    (modify ?mf (state DOWN) (prev-state ?state)
-	    (proc-start (+ ?proc-start ?down-time)))
-   else
-    (modify ?mf (state DOWN) (prev-state ?state))
-  )
+  (modify ?mf (state DOWN) (prev-state ?state)
+              (proc-start (+ ?proc-start ?down-time))
+              (wait-for-product-since (+ ?wait-since ?down-time)))
 )
 
 (defrule production-machine-up
@@ -49,157 +46,145 @@
 )
 
 (defrule production-machine-prepare
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?pf <- (protobuf-msg (type "llsf_msgs.PrepareMachine") (ptr ?p)
-		       (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
-  (network-peer (id ?cid) (group ?group))
-  =>
-  (retract ?pf)
-  (bind ?mname (sym-cat (pb-field-value ?p "machine")))
-  (bind ?team (sym-cat (pb-field-value ?p "team_color")))
-  (if (and (eq ?ct PEER) (neq ?team ?group))
-   then
-    ; message received for a team over the wrong channel, deny
-    (assert (attention-message (team ?group)
-	      (text (str-cat "Invalid prepare for team " ?team " of team " ?group))))
-   else
-    (if (not (any-factp ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))))
-     then
-      (assert (attention-message (team ?team)
-		(text (str-cat "Prepare received for invalid machine " ?mname))))
-     else
-      (printout t "Received prepare for " ?mname crlf)
-      (do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
-        (if (eq ?m:state IDLE) then
-	  (printout t ?mname " is IDLE, processing prepare" crlf)
-	  (switch ?m:mtype
-            (case BS then
-	      (if (pb-has-field ?p "instruction_bs")
-	       then
-	        (bind ?prepmsg (pb-field-value ?p "instruction_bs"))
-		(bind ?side (sym-cat (pb-field-value ?prepmsg "side")))
-		(bind ?color (sym-cat (pb-field-value ?prepmsg "color")))
-		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
-	        (modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color) (wait-for-product-since ?gt))
-               else
-		(modify ?m (state BROKEN)
-			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
-	      )
-            )
-            (case DS then
-	      (if (pb-has-field ?p "instruction_ds")
-	       then
-	        (bind ?prepmsg (pb-field-value ?p "instruction_ds"))
-		(bind ?order-id (pb-field-value ?prepmsg "order_id"))
-		(if (any-factp ((?order order)) (eq ?order:id ?order-id))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?pf <- (protobuf-msg (type "llsf_msgs.PrepareMachine") (ptr ?p)
+	       (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
+	(network-peer (id ?cid) (group ?group))
+	=>
+	(retract ?pf)
+	(bind ?mname (sym-cat (pb-field-value ?p "machine")))
+	(bind ?team (sym-cat (pb-field-value ?p "team_color")))
+	(if (and (eq ?ct PEER) (neq ?team ?group))
+	 then
+		; message received for a team over the wrong channel, deny
+		(assert (attention-message (team ?group)
+		        (text (str-cat "Invalid prepare for team " ?team " of team " ?group))))
+	 else
+		(if (not (any-factp ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))))
 		 then
-			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
-			(modify ?m (state PREPARED) (ds-order ?order-id)
-                           (wait-for-product-since ?gt))
-		else
-			(modify ?m (state BROKEN)
-			  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
+			(assert (attention-message (team ?team)
+			        (text (str-cat "Prepare received for invalid machine " ?mname))))
+		 else
+		 	(printout t "Received prepare for " ?mname crlf)
+		 	(do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
+				(if (eq ?m:state IDLE) then
+					(printout t ?mname " is IDLE, processing prepare" crlf)
+					(switch ?m:mtype
+					 (case BS then
+						(if (pb-has-field ?p "instruction_bs")
+						 then
+							(bind ?prepmsg (pb-field-value ?p "instruction_bs"))
+							(bind ?side (sym-cat (pb-field-value ?prepmsg "side")))
+							(bind ?color (sym-cat (pb-field-value ?prepmsg "color")))
+							(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
+							(modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color) (wait-for-product-since ?gt))
+						 else
+							(modify ?m (state BROKEN)
+							(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+						))
+					 (case DS then
+						(if (pb-has-field ?p "instruction_ds")
+						 then
+							(bind ?prepmsg (pb-field-value ?p "instruction_ds"))
+							(bind ?order-id (pb-field-value ?prepmsg "order_id"))
+							(if (any-factp ((?order order)) (eq ?order:id ?order-id))
+							 then
+								(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
+								(modify ?m (state PREPARED) (ds-order ?order-id)
+							                       (wait-for-product-since ?gt))
+							 else
+								(modify ?m (state BROKEN)
+								  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
+							)
+						 else
+							(modify ?m (state BROKEN)
+							           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+					 ))
+					 (case SS then
+						(if (pb-has-field ?p "instruction_ss")
+						 then
+							(bind ?prepmsg (pb-field-value ?p "instruction_ss"))
+							(bind ?operation (sym-cat (pb-field-value ?prepmsg "operation")))
+							(if (eq ?operation RETRIEVE)
+							 then
+								(if ?m:ss-holding
+								 then
+									(printout t "Prepared " ?mname crlf)
+									(modify ?m (state PREPARED) (ss-operation ?operation) (wait-for-product-since ?gt))
+								 else
+									(modify ?m (state BROKEN)
+									           (broken-reason (str-cat "Prepare received for " ?mname ", but station is empty")))
+								)
+							 else
+								(if (eq ?operation STORE)
+								 then
+									(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation")))
+								 else
+								 	(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation " ?operation)))
+								)
+							)
+						 else
+							(modify ?m (state BROKEN)
+							           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+					 ))
+					 (case RS then
+						(if (pb-has-field ?p "instruction_rs")
+						 then
+							(bind ?prepmsg (pb-field-value ?p "instruction_rs"))
+							(bind ?ring-color (sym-cat (pb-field-value ?prepmsg "ring_color")))
+							(if (member$ ?ring-color ?m:rs-ring-colors)
+							 then
+								(printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
+								(modify ?m (state PREPARED) (rs-ring-color ?ring-color)
+								           (wait-for-product-since ?gt))
+							 else
+								(modify ?m (state BROKEN)
+								           (broken-reason (str-cat "Prepare received for " ?mname " for invalid ring color (" ?ring-color ")")))
+							)
+						 else
+							(modify ?m (state BROKEN)
+							(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+					 ))
+					 (case CS then
+						(if (pb-has-field ?p "instruction_cs")
+						 then
+							(bind ?prepmsg (pb-field-value ?p "instruction_cs"))
+							(bind ?cs-op (sym-cat (pb-field-value ?prepmsg "operation")))
+							(switch ?cs-op
+					
+							 (case RETRIEVE_CAP then
+								(if (not ?m:cs-retrieved)
+								 then
+									(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
+									(modify ?m (state PREPARED) (cs-operation ?cs-op)
+									           (wait-for-product-since ?gt))
+								 else
+									(modify ?m (state BROKEN)
+									           (broken-reason (str-cat "Prepare received for " ?mname ": "
+									                                   "cannot retrieve while already holding")))
+							 ))
+							 (case MOUNT_CAP then
+								(if ?m:cs-retrieved
+								 then
+									(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
+									(modify ?m (state PREPARED) (cs-operation ?cs-op)
+									           (wait-for-product-since ?gt))
+								 else
+									(modify ?m (state BROKEN)
+									           (broken-reason (str-cat "Prepare received for " ?mname
+									                                   ": cannot mount without cap")))
+							)))
+						 else
+							(modify ?m (state BROKEN)
+							           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+					)))
+				 else
+					(if (eq ?m:state READY-AT-OUTPUT) then
+						(modify ?m (state BROKEN)))
+				)
+			)
 		)
-               else
-		(modify ?m (state BROKEN)
-			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
-	      )
-            )
-            (case SS then
-	      (if (pb-has-field ?p "instruction_ss")
-	       then
-	        (bind ?prepmsg (pb-field-value ?p "instruction_ss"))
-	        (bind ?operation (sym-cat (pb-field-value ?prepmsg "operation")))
-                (if (eq ?operation RETRIEVE)
-                 then
-                  (if ?m:ss-holding
-                   then
-                    (printout t "Prepared " ?mname crlf)
-                    (modify ?m (state PREPARED) (ss-operation ?operation) (wait-for-product-since ?gt))
-                   else
-                    (modify ?m (state BROKEN)
-                               (broken-reason
-                                 (str-cat "Prepare received for " ?mname ", but station is empty")))
-                  )
-                 else
-                  (if (eq ?operation STORE)
-                   then
-                     (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation")))
-                   else
-                     (modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation " ?operation)))
-                  )
-                )
-               else
-		(modify ?m (state BROKEN)
-			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
-	      )
-            )
-            (case RS then
-	      (if (pb-has-field ?p "instruction_rs")
-	       then
-	        (bind ?prepmsg (pb-field-value ?p "instruction_rs"))
-		(bind ?ring-color (sym-cat (pb-field-value ?prepmsg "ring_color")))
-		(if (member$ ?ring-color ?m:rs-ring-colors)
-		 then
-		  (printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
-	          (modify ?m (state PREPARED) (rs-ring-color ?ring-color)
-                             (wait-for-product-since ?gt))
-                 else
-		  (modify ?m (state BROKEN)
-			  (broken-reason (str-cat "Prepare received for " ?mname
-						  " for invalid ring color (" ?ring-color ")")))
-                )
-               else
-		(modify ?m (state BROKEN)
-			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
-              )
-            )
-            (case CS then
-	      (if (pb-has-field ?p "instruction_cs")
-	       then
-	        (bind ?prepmsg (pb-field-value ?p "instruction_cs"))
-		(bind ?cs-op (sym-cat (pb-field-value ?prepmsg "operation")))
-		(switch ?cs-op
-
-		  (case RETRIEVE_CAP then
-		    (if (not ?m:cs-retrieved)
-		     then
- 		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
-                                  (wait-for-product-since ?gt))
-                     else
-		      (modify ?m (state BROKEN)
-			      (broken-reason (str-cat "Prepare received for " ?mname ": "
-						      "cannot retrieve while already holding")))
-                    )
-                  )
-		  (case MOUNT_CAP then
-		    (if ?m:cs-retrieved
-		     then
- 		      (printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-	              (modify ?m (state PREPARED) (cs-operation ?cs-op)
-                                  (wait-for-product-since ?gt))
-                     else
-		      (modify ?m (state BROKEN)
-			      (broken-reason (str-cat "Prepare received for " ?mname
-						      ": cannot mount without cap")))
-                    )
-		  )
-                )
-               else
-		(modify ?m (state BROKEN)
-			(broken-reason (str-cat "Prepare received for " ?mname " without data")))
-	      )
-            )
-          )
-        else
-          (if (eq ?m:state READY-AT-OUTPUT) then
-            (modify ?m (state BROKEN))
-          )
-        )
-      )
-    )
-  )
+	)
 )
 
 (defrule production-machine-reset-by-team
