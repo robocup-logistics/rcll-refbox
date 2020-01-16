@@ -153,7 +153,7 @@
   
 =>
 
-  (printout warn "INFO: Resceived order information from client " ?cid crlf)
+  (printout warn "INFO: Received order information from client " ?cid crlf)
   
   ;-- insert orders from message
   (bind ?recv-resp (pb-create "llsf_msgs.Order"))
