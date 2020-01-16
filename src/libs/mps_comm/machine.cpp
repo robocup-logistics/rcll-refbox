@@ -267,15 +267,14 @@ Machine::reset_light()
 void
 Machine::initLogger()
 {
-	if (LOG_PATH.empty() || LOG_PATH.length() < 1) /* stdout redirected logging ... */
+	if (LOG_PATH.empty() || LOG_PATH.length() < 1) {
+		// stdout redirected logging
 		logger = spdlog::stdout_logger_mt(name_);
-	else /* ... or logging to file */
+		logger->set_level(spdlog::level::warn);
+	} else /* ... or logging to file */ {
 		logger = spdlog::basic_logger_mt(name_, LOG_PATH);
-
+	}
 	logger->info("\n\n\nNew logging session started");
-
-	if (false) /* more information needed in log? */
-		logger->set_level(spdlog::level::debug);
 }
 
 bool
