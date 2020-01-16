@@ -96,6 +96,12 @@ public:
 	// Sends reset light command
 	void reset_light();
 
+	std::string
+	name() const
+	{
+		return name_;
+	}
+
 	// abstract methods
 
 	// Reset: send the reset command (which is different for each machine type)
