@@ -366,6 +366,10 @@ LLSFRefBox::~LLSFRefBox()
 
 	mps_placing_generator_.reset();
 
+	for (auto &[name, mps] : mps_) {
+		delete mps;
+	}
+
 	delete pb_comm_;
 	delete config_;
 	delete clips_;

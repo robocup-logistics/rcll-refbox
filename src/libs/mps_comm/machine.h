@@ -140,6 +140,7 @@ protected:
 	void heartbeat();
 
 	std::vector<Callback> callbacks_;
+	bool                  connected_ = false;
 
 	// OPC UA related variables
 

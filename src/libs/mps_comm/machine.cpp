@@ -280,12 +280,14 @@ Machine::initLogger()
 bool
 Machine::reconnect(const char *ip, unsigned short port, bool simulation)
 {
+	disconnect();
 	try {
 		OpcUa::EndpointDescription *endpoint = OpcUtils::getEndpoint(ip, port);
 		logger->info("Connecting to: {}", endpoint->EndpointUrl);
 
 		client = new OpcUa::UaClient(logger);
 		client->Connect(*endpoint);
+		connected_ = true;
 	} catch (const std::exception &exc) {
 		logger->error("OPC UA connection error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
 		return false;
@@ -313,28 +315,35 @@ Machine::reconnect(const char *ip, unsigned short port, bool simulation)
 bool
 Machine::disconnect()
 {
+	if (!connected_) {
+		return true;
+	}
 	cancelAllSubscriptions(true);
 
 	logger->info("Disconnecting");
 	try {
 		client->Disconnect();
 		logger->flush();
+		connected_ = false;
 		return true;
 	} catch (...) {
 		try {
 			client->Abort();
 			logger->flush();
+			connected_ = false;
 			return true;
 		} catch (...) {
 			try {
 				delete client;
 				client = nullptr;
 				logger->flush();
+				connected_ = false;
 				return true;
 			} catch (...) {
 			}
 		}
 	}
+	connected_ = false;
 	return false;
 }
 
