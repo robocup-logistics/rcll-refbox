@@ -23,7 +23,7 @@ include $(BUILDCONFDIR)/mps_comm/mps_comm.mk
 include $(BUILDCONFDIR)/mongodb_log/mongodb.mk
 include $(BUILDCONFDIR)/netcomm/netcomm.mk
 
-CFLAGS += $(CFLAGS_CPP11) -Wno-deprecated-declarations
+CFLAGS += -Wno-deprecated-declarations
 
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
@@ -32,11 +32,12 @@ LIBS_llsf_refbox = stdc++ llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
 		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips mps_comm llsf_mps_placing_clips
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_MPS_COMM)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
+ifeq ($(HAVE_CPP17)$(HAVE_PROTOBUF)$(HAVE_MPS_COMM)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),11111)
   OBJS_all =	$(OBJS_llsf_refbox)
   BINS_all =	$(BINDIR)/llsf-refbox
 
-  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_MPS_COMM) $(CFLAGS_CLIPS) $(CFLAGS_MONGODB) \
+  CFLAGS  += $(CFLAGS_CPP17) $(CFLAGS_PROTOBUF) $(CFLAGS_MPS_COMM) $(CFLAGS_CLIPS) \
+	     $(CFLAGS_MONGODB) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_MPS_COMM) $(LDFLAGS_CLIPS) $(LDFLAGS_MONGODB) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
@@ -53,6 +54,9 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_MPS_COMM)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
     WARN_TARGETS += warning_mongodb
   endif
 else
+  ifneq ($(HAVE_CPP17),1)
+    WARN_TARGETS += warning_cpp17
+  endif
   ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
   endif
@@ -74,6 +78,8 @@ endif
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
 .PHONY: $(WARN_TARGETS)
+warning_cpp17:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (C++17 not supported)"
 warning_libmps_comm:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (libmps_comm not available)"
 warning_protobuf:
