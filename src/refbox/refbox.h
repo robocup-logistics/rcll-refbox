@@ -43,13 +43,14 @@
 #include <core/threading/thread_list.h>
 #include <google/protobuf/message.h>
 #include <logging/logger.h>
-#include <mps_comm/mps_refbox_interface.h>
+#include <mps_comm/machine.h>
 #include <protobuf_comm/server.h>
 #include <utils/llsf/machines.h>
 
 #include <boost/asio.hpp>
 #include <clipsmm.h>
 #include <future>
+#include <unordered_map>
 
 namespace mps_placing_clips {
 class MPSPlacingGenerator;
@@ -222,7 +223,7 @@ private: // members
 	mongocxx::database  database_;
 #endif
 
-	MPSRefboxInterface *mps_;
+	std::unordered_map<std::string, mps_comm::Machine *> mps_;
 };
 
 } // end of namespace llsfrb
