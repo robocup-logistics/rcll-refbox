@@ -215,12 +215,11 @@ private:
 	std::map<std::string, std::string> query_args_;
 };
 
-class Logger;
 
 class WebviewRestApi
 {
 public:
-	WebviewRestApi(const std::string &name, fawkes::Logger *logger);
+	WebviewRestApi(const std::string &name, llsfrb::Logger *logger);
 
 	/** REST API call handler function type. */
 	typedef std::function<std::unique_ptr<WebReply>(std::string, WebviewRestParams &)> Handler;
@@ -384,7 +383,7 @@ public:
 
 private:
 	std::string                             name_;
-	fawkes::Logger *                        logger_;
+	llsfrb::Logger *                        logger_;
 	bool                                    pretty_json_;
 	std::shared_ptr<WebviewRouter<Handler>> router_;
 };

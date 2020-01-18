@@ -30,9 +30,12 @@
 
 struct MHD_Daemon;
 
+namespace llsfrb{
+class Logger;
+}
+
 namespace fawkes {
 
-class Logger;
 class Time;
 class WebRequestDispatcher;
 class WebUserVerifier;
@@ -43,7 +46,7 @@ class WebRequestManager;
 class WebServer
 {
 public:
-	WebServer(unsigned short int port, WebRequestDispatcher *dispatcher, fawkes::Logger *logger = 0);
+	WebServer(unsigned short int port, WebRequestDispatcher *dispatcher, llsfrb::Logger *logger = 0);
 	~WebServer();
 
 	WebServer &setup_tls(const char *key_pem_filepath,
@@ -70,7 +73,7 @@ private:
 	struct MHD_Daemon *   daemon_;
 	WebRequestDispatcher *dispatcher_;
 	WebRequestManager *   request_manager_;
-	fawkes::Logger *      logger_;
+	llsfrb::Logger *      logger_;
 
 	unsigned short int port_;
 

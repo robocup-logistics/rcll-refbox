@@ -23,6 +23,8 @@
 #include <webview/rest_api.h>
 #include <webview/router.h>
 
+using namespace llsfrb;
+
 namespace fawkes {
 
 /** @class WebviewRestApi <webview/rest_api.h>
@@ -38,7 +40,7 @@ namespace fawkes {
  * The API's name will be part of the URL, e.g., '/api/[COMPONENT-NAME]/...'.
  * @param logger logger for informative output
  */
-WebviewRestApi::WebviewRestApi(const std::string &name, fawkes::Logger *logger)
+WebviewRestApi::WebviewRestApi(const std::string &name, llsfrb::Logger *logger)
 : name_(name),
   logger_(logger),
   pretty_json_(false),
