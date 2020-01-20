@@ -1,9 +1,10 @@
 
 /***************************************************************************
- *  webview_thread.cpp - Thread that handles web interface requests
+ *  webview_server.cpp - Thread that handles web interface requests
  *
  *  Created: Mon Oct 13 17:51:31 2008 (I5 Developer's Day)
  *  Copyright  2006-2018  Tim Niemueller [www.niemueller.de]
+ *             2020       Mostafa Gomaa  [gomaa@kbsg.rwth-aachen.de]
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -19,7 +20,7 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "webview_thread.h"
+#include "webview_server.h"
 
 #include "rest_processor.h"
 #include "service_browse_handler.h"
@@ -39,7 +40,7 @@
 
 using namespace fawkes;
 
-/** @class WebviewThread "webview_thread.h"
+/** @class WebviewServer "webview_Server.h"
  * Webview Thread.
  * This thread runs the HTTP server and handles requests via the
  * WebRequestDispatcher.
@@ -51,8 +52,8 @@ using namespace fawkes;
  * wait-for-wakeup mode, falso to run request processing in this
  * thread.
  */
-WebviewThread::WebviewThread(bool enable_tp)
-: Thread("WebviewThread", enable_tp ? Thread::OPMODE_WAITFORWAKEUP : Thread::OPMODE_CONTINUOUS)
+WebviewServer::WebviewServer(bool enable_tp)
+: Thread("WebviewServer", enable_tp ? Thread::OPMODE_WAITFORWAKEUP : Thread::OPMODE_CONTINUOUS)
 {
 	cfg_use_thread_pool_ = enable_tp;
 
@@ -60,12 +61,12 @@ WebviewThread::WebviewThread(bool enable_tp)
 		set_prepfin_conc_loop(true);
 }
 
-WebviewThread::~WebviewThread()
+WebviewServer::~WebviewServer()
 {
 }
 
 void
-WebviewThread::init()
+WebviewServer::init()
 {
 	cfg_port_ = config->get_uint("/webview/port");
 
@@ -230,7 +231,7 @@ WebviewThread::init()
 		for (const auto &u : cfg_explicit_404_) {
 			webview_url_manager->add_handler(WebRequest::METHOD_GET,
 			                                 u,
-			                                 std::bind(&WebviewThread::produce_404, this),
+			                                 std::bind(&WebviewServer::produce_404, this),
 			                                 10000);
 		}
 	} catch (Exception &e) {
@@ -245,7 +246,7 @@ WebviewThread::init()
 		afs = "IPv6";
 	}
 	webserver_->start();
-	logger->log_info("WebviewThread",
+	logger_->log_info("WebviewServer",
 	                 "Listening for HTTP%s connections on port %u (%s)",
 	                 cfg_use_tls_ ? "S" : "",
 	                 cfg_port_,
@@ -256,7 +257,7 @@ WebviewThread::init()
 }
 
 void
-WebviewThread::finalize()
+WebviewServer::finalize()
 {
 	try {
 		service_publisher->unpublish_service(webview_service_);
@@ -277,20 +278,19 @@ WebviewThread::finalize()
 	delete service_browse_handler_;
 
 	delete dispatcher_;
-	delete static_processor_;
 	delete rest_processor_;
 	dispatcher_ = NULL;
 }
 
 void
-WebviewThread::loop()
+WebviewServer::loop()
 {
 	if (!cfg_use_thread_pool_)
 		webserver_->process();
 }
 
 void
-WebviewThread::tls_create(const char *tls_key_file, const char *tls_cert_file)
+WebviewServer::tls_create(const char *tls_key_file, const char *tls_cert_file)
 {
 	logger->log_info(name(),
 	                 "Creating TLS key and certificate. "
@@ -318,7 +318,7 @@ WebviewThread::tls_create(const char *tls_key_file, const char *tls_cert_file)
 }
 
 WebReply *
-WebviewThread::produce_404()
+WebviewServer::produce_404()
 {
 	return new StaticWebReply(WebReply::HTTP_NOT_FOUND, "Not found\n");
 }
