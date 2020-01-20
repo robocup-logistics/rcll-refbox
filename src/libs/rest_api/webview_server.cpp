@@ -33,15 +33,25 @@
 #include <utils/misc/string_conversions.h>
 #include <utils/system/file.h>
 #include <utils/system/hostinfo.h>
+#include <config/config.h>
+#include <logging/logger.h>
+
 #include <webview/page_reply.h>
 #include <webview/request_dispatcher.h>
 #include <webview/server.h>
 #include <webview/url_manager.h>
+#include <webview/nav_manager.h>
+#include <webview/request_manager.h>
+#include <webview/rest_api_manager.h>
+
+#include <netcomm/service_discovery/service_browser.h>
+#include <netcomm/service_discovery/service_publisher.h>
+
 
 using namespace fawkes;
 
-/** @class WebviewServer "webview_Server.h"
- * Webview Thread.
+/** @class WebviewServer "webview_server.h"
+ * Webview Server.
  * This thread runs the HTTP server and handles requests via the
  * WebRequestDispatcher.
  * @author Tim Niemueller
@@ -52,13 +62,30 @@ using namespace fawkes;
  * wait-for-wakeup mode, falso to run request processing in this
  * thread.
  */
-WebviewServer::WebviewServer(bool enable_tp)
-: Thread("WebviewServer", enable_tp ? Thread::OPMODE_WAITFORWAKEUP : Thread::OPMODE_CONTINUOUS)
+namespace llsfrb{
+
+WebviewServer::WebviewServer(bool enable_tp,
+                             fawkes::NetworkNameResolver *nnresolver,
+                             fawkes::ServicePublisher    *service_publisher,
+                             fawkes::ServiceBrowser      *service_browser,
+                             Configuration               *config,
+                             Logger * logger)
+: fawkes::Thread("WebviewServer", Thread::OPMODE_CONTINUOUS)
 {
 	cfg_use_thread_pool_ = enable_tp;
 
 	if (!enable_tp)
 		set_prepfin_conc_loop(true);
+
+	nnresolver_ = nnresolver;
+	service_publisher_ = service_publisher;
+	service_browser_   = service_browser;
+	config_ = config;
+	logger_ =logger;
+
+	url_manager_       = new WebUrlManager();
+	request_manager_   = new WebRequestManager();
+	rest_api_manager_  = new WebviewRestApiManager();
 }
 
 WebviewServer::~WebviewServer()
@@ -68,9 +95,9 @@ WebviewServer::~WebviewServer()
 void
 WebviewServer::init()
 {
-	cfg_port_ = config->get_uint("/webview/port");
+	cfg_port_ = config_->get_uint("/webview/port");
 
-	WebReply::set_caching_default(config->get_bool("/webview/client_side_caching"));
+	WebReply::set_caching_default(config_->get_bool("/webview/client_side_caching"));
 
 	webview_service_        = NULL;
 	service_browse_handler_ = NULL;
@@ -78,26 +105,26 @@ WebviewServer::init()
 
 	cfg_use_tls_ = false;
 	try {
-		cfg_use_tls_ = config->get_bool("/webview/tls/enable");
+		cfg_use_tls_ = config_->get_bool("/webview/tls/enable");
 	} catch (Exception &e) {
 	}
 
-	cfg_use_ipv4_ = config->get_bool("/network/ipv4/enable");
-	cfg_use_ipv6_ = config->get_bool("/network/ipv6/enable");
+	cfg_use_ipv4_ = config_->get_bool("/network/ipv4/enable");
+	cfg_use_ipv6_ = config_->get_bool("/network/ipv6/enable");
 
 	if (cfg_use_tls_) {
 		cfg_tls_create_ = false;
 		try {
-			cfg_tls_create_ = config->get_bool("/webview/tls/create");
+			cfg_tls_create_ = config_->get_bool("/webview/tls/create");
 		} catch (Exception &e) {
 		}
 
-		cfg_tls_key_  = config->get_string("/webview/tls/key-file");
-		cfg_tls_cert_ = config->get_string("/webview/tls/cert-file");
+		cfg_tls_key_  = config_->get_string("/webview/tls/key-file");
+		cfg_tls_cert_ = config_->get_string("/webview/tls/cert-file");
 
 		try {
-			cfg_tls_cipher_suite_ = config->get_string("/webview/tls/cipher-suite");
-			logger->log_debug(name(), "Using cipher suite %s", cfg_tls_cipher_suite_.c_str());
+			cfg_tls_cipher_suite_ = config_->get_string("/webview/tls/cipher-suite");
+			logger_->log_debug(name(), "Using cipher suite %s", cfg_tls_cipher_suite_.c_str());
 		} catch (Exception &e) {
 		}
 
@@ -107,7 +134,7 @@ WebviewServer::init()
 		if (cfg_tls_cert_[0] != '/')
 			cfg_tls_cert_ = std::string(CONFDIR "/") + cfg_tls_cert_;
 
-		logger->log_debug(name(),
+		logger_->log_debug(name(),
 		                  "Key file: %s  Cert file: %s",
 		                  cfg_tls_key_.c_str(),
 		                  cfg_tls_cert_.c_str());
@@ -132,39 +159,39 @@ WebviewServer::init()
 	}
 
 	if (cfg_use_thread_pool_) {
-		cfg_num_threads_ = config->get_uint("/webview/thread-pool/num-threads");
+		cfg_num_threads_ = config_->get_uint("/webview/thread-pool/num-threads");
 	}
 
 	cfg_use_basic_auth_ = false;
 	try {
-		cfg_use_basic_auth_ = config->get_bool("/webview/use_basic_auth");
+		cfg_use_basic_auth_ = config_->get_bool("/webview/use_basic_auth");
 	} catch (Exception &e) {
 	}
 	cfg_basic_auth_realm_ = "Fawkes Webview";
 	try {
-		cfg_basic_auth_realm_ = config->get_bool("/webview/basic_auth_realm");
+		cfg_basic_auth_realm_ = config_->get_bool("/webview/basic_auth_realm");
 	} catch (Exception &e) {
 	}
 
 	cfg_access_log_ = "";
 	try {
-		cfg_access_log_ = config->get_string("/webview/access_log");
+		cfg_access_log_ = config_->get_string("/webview/access_log");
 	} catch (Exception &e) {
 	}
 
 	bool cfg_cors_allow_all = false;
 	try {
-		cfg_cors_allow_all = config->get_bool("/webview/cors/allow/all");
+		cfg_cors_allow_all = config_->get_bool("/webview/cors/allow/all");
 	} catch (Exception &e) {
 	}
 	std::vector<std::string> cfg_cors_origins;
 	try {
-		cfg_cors_origins = config->get_strings("/webview/cors/allow/origins");
+		cfg_cors_origins = config_->get_strings("/webview/cors/allow/origins");
 	} catch (Exception &e) {
 	}
 	unsigned int cfg_cors_max_age = 0;
 	try {
-		cfg_cors_max_age = config->get_uint("/webview/cors/max-age");
+		cfg_cors_max_age = config_->get_uint("/webview/cors/max-age");
 	} catch (Exception &e) {
 	}
 
@@ -174,12 +201,12 @@ WebviewServer::init()
 	                          FAWKES_VERSION_MAJOR,
 	                          FAWKES_VERSION_MINOR,
 	                          FAWKES_VERSION_MICRO);
-	service_browse_handler_ = new WebviewServiceBrowseHandler(logger, webview_service_);
+	service_browse_handler_ = new WebviewServiceBrowseHandler(logger_, webview_service_);
 
-	dispatcher_ = new WebRequestDispatcher(webview_url_manager);
+	dispatcher_ = new WebRequestDispatcher(url_manager_);
 
 	try {
-		webserver_ = new WebServer(cfg_port_, dispatcher_, logger);
+		webserver_ = new WebServer(cfg_port_, dispatcher_, logger_);
 
 		(*webserver_)
 		  .setup_ipv(cfg_use_ipv4_, cfg_use_ipv6_)
@@ -196,13 +223,13 @@ WebviewServer::init()
 		}
 
 		if (cfg_use_basic_auth_) {
-			user_verifier_ = new WebviewUserVerifier(config, logger);
+			user_verifier_ = new WebviewUserVerifier(config_, logger_);
 			webserver_->setup_basic_auth(cfg_basic_auth_realm_.c_str(), user_verifier_);
 		}
-		webserver_->setup_request_manager(webview_request_manager);
+		webserver_->setup_request_manager(request_manager_);
 
 		if (cfg_access_log_ != "") {
-			logger->log_debug(name(), "Setting up access log %s", cfg_access_log_.c_str());
+			logger_->log_debug(name(), "Setting up access log %s", cfg_access_log_.c_str());
 			webserver_->setup_access_log(cfg_access_log_.c_str());
 		}
 	} catch (Exception &e) {
@@ -212,24 +239,24 @@ WebviewServer::init()
 		throw;
 	}
 	// get all directories for the static processor
-	std::vector<std::string> static_dirs = config->get_strings("/webview/htdocs/dirs");
+	std::vector<std::string> static_dirs = config_->get_strings("/webview/htdocs/dirs");
 	std::string              catchall_file;
 	try {
-		catchall_file = config->get_string("/webview/htdocs/catchall-file");
+		catchall_file = config_->get_string("/webview/htdocs/catchall-file");
 	} catch (Exception &e) {
 	};
-	std::string mime_file       = config->get_string("/webview/htdocs/mime-file");
+	std::string mime_file       = config_->get_string("/webview/htdocs/mime-file");
 	static_dirs                 = StringConversions::resolve_paths(static_dirs);
 	std::string static_base_url = catchall_file.empty() ? "/static/" : "/";
 	static_processor_           = new WebviewStaticRequestProcessor(
-    webview_url_manager, static_base_url, static_dirs, catchall_file, mime_file, logger);
+		   url_manager_, static_base_url, static_dirs, catchall_file, mime_file, logger_);
 	rest_processor_ =
-	  new WebviewRESTRequestProcessor(webview_url_manager, webview_rest_api_manager, logger);
+	  new WebviewRESTRequestProcessor(url_manager_, rest_api_manager_, logger_);
 
 	try {
-		cfg_explicit_404_ = config->get_strings("/webview/explicit-404");
+		cfg_explicit_404_ = config_->get_strings("/webview/explicit-404");
 		for (const auto &u : cfg_explicit_404_) {
-			webview_url_manager->add_handler(WebRequest::METHOD_GET,
+			url_manager_->add_handler(WebRequest::METHOD_GET,
 			                                 u,
 			                                 std::bind(&WebviewServer::produce_404, this),
 			                                 10000);
@@ -252,24 +279,24 @@ WebviewServer::init()
 	                 cfg_port_,
 	                 afs.c_str());
 
-	service_publisher->publish_service(webview_service_);
-	service_browser->watch_service("_http._tcp", service_browse_handler_);
+	service_publisher_->publish_service(webview_service_);
+	service_browser_->watch_service("_http._tcp", service_browse_handler_);
 }
 
 void
 WebviewServer::finalize()
 {
 	try {
-		service_publisher->unpublish_service(webview_service_);
+		service_publisher_->unpublish_service(webview_service_);
 	} catch (Exception &e) {
 	} // ignored, can happen if avahi-daemon not running
 	try {
-		service_browser->unwatch_service("_http._tcp", service_browse_handler_);
+		service_browser_->unwatch_service("_http._tcp", service_browse_handler_);
 	} catch (Exception &e) {
 	} // ignored, can happen if avahi-daemon not running
 
 	for (const auto &u : cfg_explicit_404_) {
-		webview_url_manager->remove_handler(WebRequest::METHOD_GET, u);
+		url_manager_->remove_handler(WebRequest::METHOD_GET, u);
 	}
 
 	delete webserver_;
@@ -280,6 +307,10 @@ WebviewServer::finalize()
 	delete dispatcher_;
 	delete rest_processor_;
 	dispatcher_ = NULL;
+
+	delete url_manager_;
+	delete request_manager_;
+	delete rest_api_manager_;
 }
 
 void
@@ -292,7 +323,7 @@ WebviewServer::loop()
 void
 WebviewServer::tls_create(const char *tls_key_file, const char *tls_cert_file)
 {
-	logger->log_info(name(),
+	logger_->log_info(name(),
 	                 "Creating TLS key and certificate. "
 	                 "This may take a while...");
 	HostInfo h;
@@ -321,4 +352,6 @@ WebReply *
 WebviewServer::produce_404()
 {
 	return new StaticWebReply(WebReply::HTTP_NOT_FOUND, "Not found\n");
+}
+
 }

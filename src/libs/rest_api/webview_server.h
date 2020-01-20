@@ -22,18 +22,28 @@
 #ifndef _PLUGINS_WEBVIEW_WEBVIEW_THREAD_H_
 #define _PLUGINS_WEBVIEW_WEBVIEW_THREAD_H_
 
-#include <aspect/configurable.h>
-#include <aspect/logging.h>
-#include <aspect/network.h>
-#include <aspect/webview.h>
 #include <core/threading/thread.h>
-#include <logging/cache.h>
+#include <functional>
+#include <string>
+#include <vector>
+
 
 namespace fawkes {
 class NetworkService;
 class WebServer;
 class WebRequestDispatcher;
 class WebReply;
+
+// from fawkes::WebviewAspect
+class WebUrlManager;
+class WebNavManager;
+class WebRequestManager;
+class WebviewRestApiManager;
+
+//from fawkes::NetworkAspect
+class NetworkNameResolver;
+class ServicePublisher;
+class ServiceBrowser;
 } // namespace fawkes
 
 namespace llsfrb {
@@ -41,15 +51,18 @@ class WebviewStaticRequestProcessor;
 class WebviewRESTRequestProcessor;
 class WebviewServiceBrowseHandler;
 class WebviewUserVerifier;
+class Configuration;
+class Logger;
 
-class WebviewServer : public fawkes::Thread,
-                      public fawkes::LoggingAspect,
-                      public fawkes::ConfigurableAspect,
-                      public fawkes::NetworkAspect,
-                      public fawkes::WebviewAspect
+class WebviewServer : public fawkes::Thread
 {
 public:
-	WebviewServer(bool enable_tp);
+	WebviewServer(bool enable_tp
+		   ,fawkes::NetworkNameResolver *nnresolver
+		   ,fawkes::ServicePublisher         *service_publisher
+		   ,fawkes::ServiceBrowser           *service_browser
+		   ,Configuration                    *config
+		   ,Logger                           *logger);
 	~WebviewServer();
 
 	virtual void init();
@@ -93,7 +106,20 @@ private:
 	std::vector<std::string> cfg_explicit_404_;
 
 	fawkes::NetworkService *webview_service_;
+
+	//From fawkes::WebviewAspect
+	fawkes::WebUrlManager        *url_manager_;
+	fawkes::WebRequestManager    *request_manager_;
+	fawkes::WebviewRestApiManager *rest_api_manager_;
+
+	//From fawkes::NetworkAspect
+	fawkes::NetworkNameResolver  *nnresolver_;
+	fawkes::ServicePublisher     *service_publisher_;
+	fawkes::ServiceBrowser       *service_browser_;
+
+	Configuration                * config_;
+	Logger                       * logger_;
 };
-} // namespace fawkes
+} // namespace llsfrb
 
 #endif
