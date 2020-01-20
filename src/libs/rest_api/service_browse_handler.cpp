@@ -81,7 +81,6 @@ WebviewServiceBrowseHandler::service_added(const char *            name,
                                            const char *            type,
                                            const char *            domain,
                                            const char *            host_name,
-                                           const char *            interface,
                                            const struct sockaddr * addr,
                                            const socklen_t         addr_size,
                                            uint16_t                port,
@@ -98,7 +97,7 @@ WebviewServiceBrowseHandler::service_added(const char *            name,
 		if (eqind != std::string::npos) {
 			std::string key = i->substr(0, eqind);
 			std::string val = i->substr(eqind + 1);
-			if (key == "fawkesver") {
+			if (key == "refboxver") {
 				NetworkService *s =
 				  new NetworkService(name, type, domain, host_name, port, addr, addr_size, txt);
 

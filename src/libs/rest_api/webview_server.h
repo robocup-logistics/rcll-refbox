@@ -36,20 +36,21 @@ class WebRequestDispatcher;
 class WebReply;
 } // namespace fawkes
 
+namespace llsfrb {
 class WebviewStaticRequestProcessor;
 class WebviewRESTRequestProcessor;
 class WebviewServiceBrowseHandler;
 class WebviewUserVerifier;
 
-class WebviewThread : public fawkes::Thread,
+class WebviewServer : public fawkes::Thread,
                       public fawkes::LoggingAspect,
                       public fawkes::ConfigurableAspect,
                       public fawkes::NetworkAspect,
                       public fawkes::WebviewAspect
 {
 public:
-	WebviewThread(bool enable_tp);
-	~WebviewThread();
+	WebviewServer(bool enable_tp);
+	~WebviewServer();
 
 	virtual void init();
 	virtual void finalize();
@@ -93,5 +94,6 @@ private:
 
 	fawkes::NetworkService *webview_service_;
 };
+} // namespace llsfrb
 
 #endif
