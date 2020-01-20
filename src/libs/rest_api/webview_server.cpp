@@ -19,12 +19,11 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "webview_thread.h"
-
 #include "rest_processor.h"
 #include "service_browse_handler.h"
 #include "static_processor.h"
 #include "user_verifier.h"
+#include "webview_thread.h"
 
 #include <core/exceptions/system.h>
 #include <core/version.h>
