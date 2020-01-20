@@ -29,14 +29,13 @@
 #include <map>
 #include <string>
 
-namespace fawkes {
+namespace llsfrb {
 class Logger;
-}
 
 class WebviewServiceBrowseHandler : public fawkes::ServiceBrowseHandler
 {
 public:
-	WebviewServiceBrowseHandler(fawkes::Logger *logger, fawkes::NetworkService *webview_service);
+	WebviewServiceBrowseHandler(Logger *logger, fawkes::NetworkService *webview_service);
 	~WebviewServiceBrowseHandler();
 
 	virtual void all_for_now();
@@ -62,9 +61,10 @@ public:
 	ServiceList &service_list();
 
 private:
-	fawkes::Logger *        logger_;
+	Logger *        logger_;
 	fawkes::NetworkService *webview_service_;
 	ServiceList             service_list_;
 };
 
+}
 #endif

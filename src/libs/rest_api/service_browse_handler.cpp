@@ -39,8 +39,11 @@ using namespace fawkes;
  * @param webview_service service of our own service as it was announced on the
  * network, used to filter it out from the list of services.
  */
-WebviewServiceBrowseHandler::WebviewServiceBrowseHandler(fawkes::Logger *        logger,
+namespace llsfrb{
+
+WebviewServiceBrowseHandler::WebviewServiceBrowseHandler(Logger *        logger,
                                                          fawkes::NetworkService *webview_service)
+
 {
 	logger_          = logger;
 	webview_service_ = webview_service;
@@ -57,20 +60,20 @@ WebviewServiceBrowseHandler::~WebviewServiceBrowseHandler()
 void
 WebviewServiceBrowseHandler::all_for_now()
 {
-	//logger_->log_debug("WebviewServiceBrowseHandler", "All for now");
+	logger_->log_debug("WebviewServiceBrowseHandler", "All for now");
 }
 
 void
 WebviewServiceBrowseHandler::cache_exhausted()
 {
-	//logger_->log_debug("WebviewServiceBrowseHandler", "Cache exhausted");
+	logger_->log_debug("WebviewServiceBrowseHandler", "Cache exhausted");
 }
 
 void
 WebviewServiceBrowseHandler::browse_failed(const char *name, const char *type, const char *domain)
 {
 	logger_->log_warn(
-	  "WebviewServiceBrowseHandler", "Browsing for %s.%s in domain %s failed", name, type, domain);
+	 "WebviewServiceBrowseHandler", "Browsing for %s.%s in domain %s failed", name, type, domain);
 }
 
 void
@@ -133,4 +136,6 @@ WebviewServiceBrowseHandler::ServiceList &
 WebviewServiceBrowseHandler::service_list()
 {
 	return service_list_;
+}
+
 }

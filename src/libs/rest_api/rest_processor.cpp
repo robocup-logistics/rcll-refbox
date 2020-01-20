@@ -47,9 +47,12 @@ using namespace fawkes;
  * @param api_mgr REST API manager to check for available APIs
  * @param logger logger
  */
+
+namespace llsfrb{
+
 WebviewRESTRequestProcessor::WebviewRESTRequestProcessor(fawkes::WebUrlManager *        url_manager,
                                                          fawkes::WebviewRestApiManager *api_mgr,
-                                                         fawkes::Logger *               logger)
+                                                         Logger *               logger)
 : url_mgr_(url_manager),
   api_mgr_(api_mgr),
   logger_(logger),
@@ -110,3 +113,5 @@ WebviewRESTRequestProcessor::process_request(const fawkes::WebRequest *request)
 		                     "REST API '" + rest_api + "': " + e.what_no_backtrace() + "\n"));
 	}
 }
+
+} //end namespace llsfrb

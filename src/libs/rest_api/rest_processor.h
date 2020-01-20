@@ -27,19 +27,25 @@
 
 #include <vector>
 
+namespace llsfrb{
+class Logger;
+}
+
 namespace fawkes {
 class WebUrlManager;
 class WebviewRestApiManager;
-class Logger;
 class WebReply;
 } // namespace fawkes
+
+namespace llsfrb{
+class Logger;
 
 class WebviewRESTRequestProcessor
 {
 public:
 	WebviewRESTRequestProcessor(fawkes::WebUrlManager *        url_manager,
 	                            fawkes::WebviewRestApiManager *api_mgr,
-	                            fawkes::Logger *               logger);
+	                            llsfrb::Logger *               logger);
 	~WebviewRESTRequestProcessor();
 
 private:
@@ -48,9 +54,9 @@ private:
 private:
 	fawkes::WebUrlManager *        url_mgr_;
 	fawkes::WebviewRestApiManager *api_mgr_;
-	fawkes::Logger *               logger_;
+	llsfrb::Logger *               logger_;
 
 	std::vector<fawkes::WebRequest::Method> methods_;
 };
-
+}
 #endif
