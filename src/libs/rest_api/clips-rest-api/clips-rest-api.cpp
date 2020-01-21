@@ -32,8 +32,13 @@ using namespace fawkes;
  * @author Tim Niemueller
  */
 
+
+namespace llsfrb {
 /** Constructor. */
-ClipsRestApi::ClipsRestApi() : Thread("ClipsRestApi", Thread::OPMODE_WAITFORWAKEUP)
+ClipsRestApi::ClipsRestApi(WebviewRestApiManageri *webview_rest_api_manager, Logger *logger)
+	: Thread("ClipsRestApi", Thread::OPMODE_WAITFORWAKEUP)
+	, webview_rest_api_manager_(webview_rest_api_manager)
+	, logger_(logger)
 {
 }
 
@@ -45,7 +50,7 @@ ClipsRestApi::~ClipsRestApi()
 void
 ClipsRestApi::init()
 {
-	rest_api_ = new WebviewRestApi("clips", logger);
+	rest_api_ = new WebviewRestApi("clips", logger_);
 	rest_api_->add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
 	                                               "/{env}/facts",
 	                                               std::bind(&ClipsRestApi::cb_get_facts,
@@ -53,13 +58,13 @@ ClipsRestApi::init()
 	                                                         std::placeholders::_1));
 	rest_api_->add_handler<WebviewRestArray<Environment>>(
 	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
-	webview_rest_api_manager->register_api(rest_api_);
+	webview_rest_api_manager_->register_api(rest_api_);
 }
 
 void
 ClipsRestApi::finalize()
 {
-	webview_rest_api_manager->unregister_api(rest_api_);
+	webview_rest_api_manager_->unregister_api(rest_api_);
 	delete rest_api_;
 }
 
@@ -216,4 +221,6 @@ ClipsRestApi::cb_list_environments()
 	}
 
 	return rv;
+}
+
 }
