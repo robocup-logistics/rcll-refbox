@@ -46,6 +46,7 @@
 #include <logging/file.h>
 #include <logging/multi.h>
 #include <logging/network.h>
+#include <mps_comm/machine_factory.h>
 #include <mps_comm/stations.h>
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
@@ -200,10 +201,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 					} // ignored, assume enabled
 
 					if (active) {
-						mps_comm::Machine *mps;
-						std::string        mpstype = config_->get_string((cfg_prefix + "type").c_str());
-						std::string        mpsip   = config_->get_string((cfg_prefix + "host").c_str());
-						unsigned int       port    = config_->get_uint((cfg_prefix + "port").c_str());
+						std::string  mpstype = config_->get_string((cfg_prefix + "type").c_str());
+						std::string  mpsip   = config_->get_string((cfg_prefix + "host").c_str());
+						unsigned int port    = config_->get_uint((cfg_prefix + "port").c_str());
 
 						std::string connection_string = "plc";
 						try {
@@ -217,37 +217,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 						} catch (Exception &e) {
 						}
 
-						Machine::ConnectionMode connection_mode;
-						if (connection_string == "plc") {
-							connection_mode = Machine::PLC;
-						} else if (connection_string == "simulation") {
-							connection_mode = Machine::SIMULATION;
-						} else if (connection_string == "mockup") {
-							connection_mode = Machine::MOCKUP;
-						} else {
-							throw Exception("Unexpected config value for key '%s': '%s'",
-							                (cfg_prefix + "connection").c_str(),
-							                connection_string.c_str());
-						}
-
-						if (mpstype == "BS") {
-							logger_->log_info("RefBox", "Adding BS %s:%u", mpsip.c_str(), port);
-							mps = new BaseStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "CS") {
-							logger_->log_info("RefBox", "Adding CS %s:%u", mpsip.c_str(), port, cfg_name.c_str());
-							mps = new CapStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "RS") {
-							logger_->log_info("RefBox", "Adding RS %s:%u", mpsip.c_str(), port);
-							mps = new RingStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "DS") {
-							logger_->log_info("RefBox", "Adding DS %s:%u", mpsip.c_str(), port);
-							mps = new DeliveryStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "SS") {
-							logger_->log_info("RefBox", "Adding SS %s:%u", mpsip.c_str(), port);
-							mps = new StorageStation(cfg_name, mpsip, port, connection_mode);
-						} else {
-							throw fawkes::Exception("this type wont match");
-						}
+						MachineFactory mps_factory;
+						Machine *      mps =
+						  mps_factory.create_machine(cfg_name, mpstype, mpsip, port, connection_string);
 						mps_[cfg_name] = mps;
 						mps_configs.insert(cfg_name);
 						mps_connections[mps->name()] =
