@@ -16,10 +16,7 @@
 BASEDIR = ../../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
-include $(BUILDSYSDIR)/utils.mk
 include $(LIBSRCDIR)/webview/webview.mk
-include $(BUILDCONFDIR)/tf/tf.mk
-include $(BUILDSYSDIR)/fvconf.mk
 include $(BUILDSYSDIR)/boost.mk
 
 ifneq ($(PKGCONFIG),)
@@ -33,15 +30,14 @@ endif
 REQ_BOOST_LIBS = filesystem
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_webview = m fawkescore fawkesutils fawkesaspects fawkesblackboard \
-               fawkesinterface fawkeswebview fawkesplugin fawkesnetcomm \
-               fawkeslogging
-OBJS_webview = webview_plugin.o webview_thread.o \
+LIBS_libllsfrbrestapi= stdc++ llsfrbcore llsfrbutils llsfrbwebview llsfrbnetcomm  \
+               llsfrblogging
+OBJS_libllsfrbrestapi = webview_server.o \
                service_browse_handler.o user_verifier.o \
-               static_processor.o rest_processor.o
+               rest_processor.o
 
-OBJS_all    = $(OBJS_webview)
-PLUGINS_all = $(PLUGINDIR)/webview.so
+OBJS_all    = $(OBJS_libllsfrbrestapi)
+LIBS_all = $(LIBDIR)/libllsfrbrestapi.so
 
 ifeq ($(HAVE_BOOST_LIBS)$(HAVE_LIBMICROHTTPD),11)
   PLUGINS_build = $(PLUGINS_all)
@@ -62,33 +58,13 @@ ifeq ($(HAVE_BOOST_LIBS)$(HAVE_LIBMICROHTTPD),11)
     CFLAGS  += -DHAVE_REST_APIS $(CFLAGS_CPP17)  $(CFLAGS_RAPIDJSON)
     LDFLAGS += $(LDFLAGS_CPP17) $(LDFLAGS_RAPIDJSON)
 
-    OBJS_webview += blackboard-rest-api/blackboard-rest-api.o \
-                    backendinfo-rest-api/backendinfo-rest-api.o \
-                    plugin-rest-api/plugin-rest-api.o \
-                    config-rest-api/config-rest-api.o \
-                   $(patsubst %.cpp,%.o,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*-rest-api/model/*.cpp))))
-
-    ifeq ($(HAVE_TF),1)
-      OBJS_webview += tf-rest-api/tf-rest-api.o
-      LIBS_webview += fawkestf
-      CFLAGS  += $(CFLAGS_TF)
-      LDFLAGS += $(LDFLAGS_TF)
-    else
-      WARN_TARGETS += warning_tf
-    endif
-
-    ifeq ($(HAVE_JPEG),1)
-      CFLAGS += -DHAVE_JPEG
-      LIBS_webview += m fvutils fvcams
-      OBJS_webview += image-rest-api/image-rest-api.o \
-                      image-rest-api/mjpeg_reply.o \
-                      image-rest-api/jpeg_stream_producer.o
-    else
-      WARN_TARGETS = warning_jpeg
-    endif
-
   else
-    WARN_TARGETS += warning_rapidjson
+    ifneq ($(HAVE_CPP17),1)
+       WARN_TARGETS += warning_cpp17
+    endif
+    ifneq ($(HAVE_RAPIDJSON),1)
+      WARN_TARGETS += warning_rapidjson
+    endif
   endif
 
 else
