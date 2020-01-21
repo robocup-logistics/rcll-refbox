@@ -51,6 +51,7 @@
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
+#include <rest_api/webview_server.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -82,6 +83,10 @@ namespace stdfs = std::filesystem;
 #ifdef HAVE_AVAHI
 #	include <netcomm/dns-sd/avahi_thread.h>
 #	include <netcomm/utils/resolver.h>
+#	include <netcomm/service_discovery/service.h>
+#else
+#	include <netcomm/service_discovery/dummy_service_browser.h>
+#	include <netcomm/service_discovery/dummy_service_publisher.h>
 #endif
 
 #include <memory>
@@ -339,6 +344,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 #ifdef HAVE_AVAHI
 	unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
+	service_publisher_       = &avahi_thread_;
+	service_browser_         = &avahi_thread_;
 	avahi_thread_.start();
 	nnresolver_     = std::make_unique<fawkes::NetworkNameResolver>(&avahi_thread_);
 	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver_.get(),
@@ -346,13 +353,30 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	                                                           "_refbox._tcp",
 	                                                           refbox_port);
 	avahi_thread_.publish_service(refbox_service_.get());
+#else
+	service_publisher_ = std::make_unique<fawkes::DummyServicePublisher>();
+	service_browser_   = std::make_unique<fawkes::DummyServiceBrowser>();
+	nnresolver_        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
+
+	try {
+		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(
+		  false, nnresolver_.get(), service_publisher_, service_browser_, config_.get(), logger_.get());
+		rest_api_thread_->init();
+		rest_api_thread_->start();
+		logger_->log_info("RefBox", " RESTapi server started ");
+	} catch (Exception &e) {
+		logger_->log_info("RefBox", "Could not start RESTapi");
+	}
 }
 
 /** Destructor. */
 LLSFRefBox::~LLSFRefBox()
 {
 	timer_.cancel();
+
+	rest_api_thread_->cancel();
+	rest_api_thread_->join();
 
 #ifdef HAVE_AVAHI
 	avahi_thread_.cancel();
@@ -1657,7 +1681,7 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::error,
 	                               boost::asio::placeholders::signal_number));
 #else
-	g_refbox = this;
+	g_refbox          = this;
 	signal(SIGINT, llsfrb::handle_signal);
 #endif
 

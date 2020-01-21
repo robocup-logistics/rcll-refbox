@@ -70,6 +70,7 @@ namespace fawkes {
 class AvahiThread;
 class NetworkNameResolver;
 class ServicePublisher;
+class ServiceBrowser;
 } // namespace fawkes
 #endif
 
@@ -86,6 +87,7 @@ namespace llsfrb {
 
 class Configuration;
 class MultiLogger;
+class WebviewServer;
 
 class LLSFRefBox
 {
@@ -216,10 +218,14 @@ private: // members
 	llsf_utils::MachineAssignment cfg_machine_assignment_;
 
 #ifdef HAVE_AVAHI
-	fawkes::AvahiThread                          avahi_thread_;
-	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
-	std::unique_ptr<fawkes::NetworkService>      refbox_service_;
+	fawkes::AvahiThread                     avahi_thread_;
+	std::unique_ptr<fawkes::NetworkService> refbox_service_;
 #endif
+	std::unique_ptr<WebviewServer> rest_api_thread_;
+
+	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
+	fawkes::ServicePublisher *                   service_publisher_;
+	fawkes::ServiceBrowser *                     service_browser_;
 
 #ifdef HAVE_MONGODB
 	bool                                cfg_mongodb_enabled_;
