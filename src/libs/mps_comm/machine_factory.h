@@ -22,6 +22,7 @@
 
 #include "stations.h"
 
+#include <memory>
 #include <string>
 
 namespace llsfrb {
@@ -30,11 +31,11 @@ class MachineFactory
 {
 public:
 	MachineFactory() = default;
-	Machine *create_machine(std::string  name,
-	                        std::string  type,
-	                        std::string  ip,
-	                        unsigned int port,
-	                        std::string  connection_mode);
+	std::unique_ptr<Machine> create_machine(std::string  name,
+	                                        std::string  type,
+	                                        std::string  ip,
+	                                        unsigned int port,
+	                                        std::string  connection_mode);
 };
 } // namespace mps_comm
 } // namespace llsfrb

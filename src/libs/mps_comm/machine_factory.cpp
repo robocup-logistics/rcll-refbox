@@ -24,7 +24,7 @@
 
 namespace llsfrb {
 namespace mps_comm {
-Machine *
+std::unique_ptr<Machine>
 MachineFactory::create_machine(std::string  name,
                                std::string  type,
                                std::string  ip,
@@ -45,15 +45,15 @@ MachineFactory::create_machine(std::string  name,
 	}
 
 	if (type == "BS") {
-		return new BaseStation(name, ip, port, mode);
+		return std::make_unique<BaseStation>(name, ip, port, mode);
 	} else if (type == "CS") {
-		return new CapStation(name, ip, port, mode);
+		return std::make_unique<CapStation>(name, ip, port, mode);
 	} else if (type == "RS") {
-		return new RingStation(name, ip, port, mode);
+		return std::make_unique<RingStation>(name, ip, port, mode);
 	} else if (type == "DS") {
-		return new DeliveryStation(name, ip, port, mode);
+		return std::make_unique<DeliveryStation>(name, ip, port, mode);
 	} else if (type == "SS") {
-		return new StorageStation(name, ip, port, mode);
+		return std::make_unique<StorageStation>(name, ip, port, mode);
 	} else {
 		throw fawkes::Exception("Unexpected machine type '%s' for machine '%s'",
 		                        type.c_str(),
