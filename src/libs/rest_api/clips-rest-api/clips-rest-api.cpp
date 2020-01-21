@@ -32,9 +32,15 @@ using namespace fawkes;
  * @author Tim Niemueller
  */
 
+namespace llsfrb {
 /** Constructor. */
-ClipsRestApi::ClipsRestApi() : Thread("ClipsRestApi", Thread::OPMODE_WAITFORWAKEUP)
+ClipsRestApi::ClipsRestApi(fawkes::LockPtr<CLIPS::Environment> &env,
+                           fawkes::WebviewRestApiManager *      webview_rest_api_manager,
+                           Logger *                             logger)
+: fawkes::Thread("ClipsRestApi", Thread::OPMODE_CONTINUOUS), env_(env)
 {
+	webview_rest_api_manager_ = webview_rest_api_manager;
+	logger_                   = logger;
 }
 
 /** Destructor. */
@@ -45,7 +51,7 @@ ClipsRestApi::~ClipsRestApi()
 void
 ClipsRestApi::init()
 {
-	rest_api_ = new WebviewRestApi("clips", logger);
+	rest_api_ = new WebviewRestApi("clips", logger_);
 	rest_api_->add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
 	                                               "/{env}/facts",
 	                                               std::bind(&ClipsRestApi::cb_get_facts,
@@ -53,13 +59,13 @@ ClipsRestApi::init()
 	                                                         std::placeholders::_1));
 	rest_api_->add_handler<WebviewRestArray<Environment>>(
 	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
-	webview_rest_api_manager->register_api(rest_api_);
+	webview_rest_api_manager_->register_api(rest_api_);
 }
 
 void
 ClipsRestApi::finalize()
 {
-	webview_rest_api_manager->unregister_api(rest_api_);
+	webview_rest_api_manager_->unregister_api(rest_api_);
 	delete rest_api_;
 }
 
@@ -124,9 +130,9 @@ ClipsRestApi::loop()
 // }
 
 Fact
-ClipsRestApi::gen_fact(LockPtr<CLIPS::Environment> &clips,
-                       CLIPS::Fact::pointer &       fact,
-                       bool                         formatted)
+ClipsRestApi::gen_fact(fawkes::LockPtr<CLIPS::Environment> &clips,
+                       CLIPS::Fact::pointer &               fact,
+                       bool                                 formatted)
 {
 	Fact retf;
 	retf.set_kind("Fact");
@@ -178,21 +184,21 @@ ClipsRestApi::cb_get_facts(WebviewRestParams &params)
 
 	WebviewRestArray<Fact> rv;
 
-	MutexLocker                                        lock(clips_env_mgr.objmutex_ptr());
-	std::map<std::string, LockPtr<CLIPS::Environment>> envs = clips_env_mgr->environments();
-	if (envs.find(params.path_arg("env")) == envs.end()) {
-		throw WebviewRestException(WebReply::HTTP_NOT_FOUND,
-		                           "Environment '%s' is unknown",
-		                           params.path_arg("env").c_str());
-	}
+	//MutexLocker                                        lock(clips_env_mgr.objmutex_ptr());
+	//std::map<std::string, LockPtr<CLIPS::Environment>> envs = clips_env_mgr->environments();
+	//if (envs.find(params.path_arg("env")) == envs.end()) {
+	//	throw WebviewRestException(WebReply::HTTP_NOT_FOUND,
+	//	                           "Environment '%s' is unknown",
+	//	                           params.path_arg("env").c_str());
+	//}
 
-	auto        clips = envs[params.path_arg("env")];
-	MutexLocker clips_lock(clips.objmutex_ptr());
+	//auto        clips = envs[params.path_arg("env")];
+	MutexLocker env_lock(env_.objmutex_ptr());
 
-	CLIPS::Fact::pointer fact = clips->get_facts();
+	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
 		CLIPS::Template::pointer tmpl = fact->get_template();
-		rv.push_back(std::move(gen_fact(clips, fact, formatted)));
+		rv.push_back(std::move(gen_fact(env_, fact, formatted)));
 		fact = fact->next();
 	}
 
@@ -204,16 +210,18 @@ ClipsRestApi::cb_list_environments()
 {
 	WebviewRestArray<Environment> rv;
 
-	MutexLocker                                        lock(clips_env_mgr.objmutex_ptr());
-	std::map<std::string, LockPtr<CLIPS::Environment>> envs = clips_env_mgr->environments();
+	//MutexLocker                                        lock(clips_env_mgr.objmutex_ptr());
+	//std::map<std::string, LockPtr<CLIPS::Environment>> envs = clips_env_mgr->environments();
 
-	for (const auto &e : envs) {
-		Environment env;
-		env.set_kind("Environment");
-		env.set_apiVersion(Environment::api_version());
-		env.set_name(e.first);
-		rv.push_back(std::move(env));
-	}
+	//for (const auto &e : envs) {
+	Environment env;
+	env.set_kind("Environment");
+	env.set_apiVersion(Environment::api_version());
+	env.set_name("CLIPS Envirnment");
+	rv.push_back(std::move(env));
+	//}
 
 	return rv;
 }
+
+} // namespace llsfrb

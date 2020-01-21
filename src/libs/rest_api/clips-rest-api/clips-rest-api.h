@@ -24,26 +24,28 @@
 #include "model/Environment.h"
 #include "model/Fact.h"
 
-#include <aspect/logging.h>
-#include <aspect/webview.h>
-#include <clipsmm/fact.h>
 #include <core/threading/thread.h>
 #include <core/utils/lockptr.h>
-#include <plugins/clips/aspect/clips_manager.h>
 #include <webview/rest_api.h>
 #include <webview/rest_array.h>
 
-namespace CLIPS {
-class Environment;
-}
+#include <clipsmm.h>
 
-class ClipsRestApi : public fawkes::Thread,
-                     public fawkes::LoggingAspect,
-                     public fawkes::WebviewAspect,
-                     public fawkes::CLIPSManagerAspect
+namespace fawkes {
+//from fawkes::WebviewAspect
+class WebviewRestApiManager;
+} // namespace fawkes
+
+namespace llsfrb {
+
+class Logger;
+
+class ClipsRestApi : public fawkes::Thread
 {
 public:
-	ClipsRestApi();
+	ClipsRestApi(fawkes::LockPtr<CLIPS::Environment> &env,
+	             fawkes::WebviewRestApiManager *      webview_rest_api_manager,
+	             Logger *                             logger);
 	~ClipsRestApi();
 
 	virtual void init();
@@ -58,5 +60,9 @@ private:
 	gen_fact(fawkes::LockPtr<CLIPS::Environment> &clips, CLIPS::Fact::pointer &fact, bool formatted);
 
 private:
-	fawkes::WebviewRestApi *rest_api_;
+	fawkes::WebviewRestApiManager *      webview_rest_api_manager_;
+	fawkes::WebviewRestApi *             rest_api_;
+	fawkes::LockPtr<CLIPS::Environment> &env_;
+	Logger *                             logger_;
 };
+} //end namespace llsfrb
