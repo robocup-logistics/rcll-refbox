@@ -21,10 +21,10 @@
 #ifndef __MPS_COMM_MACHINES__
 #define __MPS_COMM_MACHINES__
 
-#include "base_station.h"
-#include "cap_station.h"
-#include "delivery_station.h"
-#include "ring_station.h"
-#include "storage_station.h"
+#include "opcua/base_station.h"
+#include "opcua/cap_station.h"
+#include "opcua/delivery_station.h"
+#include "opcua/ring_station.h"
+#include "opcua/storage_station.h"
 
 #endif /* !__MPS_COMM_MACHINES__ */
