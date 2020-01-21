@@ -24,7 +24,6 @@
 
 #include "rest_processor.h"
 #include "service_browse_handler.h"
-#include "static_processor.h"
 #include "user_verifier.h"
 
 #include <core/exceptions/system.h>
@@ -103,6 +102,11 @@ WebviewServer::init()
 	service_browse_handler_ = NULL;
 	dispatcher_             = NULL;
 
+	cfg_use_ipv4_ = true;
+	cfg_use_ipv6_ = false;
+
+
+	/*
 	cfg_use_tls_ = false;
 	try {
 		cfg_use_tls_ = config_->get_bool("/webview/tls/enable");
@@ -167,7 +171,7 @@ WebviewServer::init()
 		cfg_use_basic_auth_ = config_->get_bool("/webview/use_basic_auth");
 	} catch (Exception &e) {
 	}
-	cfg_basic_auth_realm_ = "Fawkes Webview";
+	cfg_basic_auth_realm_ = "Refbox webview";
 	try {
 		cfg_basic_auth_realm_ = config_->get_bool("/webview/basic_auth_realm");
 	} catch (Exception &e) {
@@ -178,6 +182,7 @@ WebviewServer::init()
 		cfg_access_log_ = config_->get_string("/webview/access_log");
 	} catch (Exception &e) {
 	}
+	*/
 
 	bool cfg_cors_allow_all = false;
 	try {
@@ -196,11 +201,11 @@ WebviewServer::init()
 	}
 
 	webview_service_ =
-	  new NetworkService(nnresolver, "Fawkes Webview on %h", "_http._tcp", cfg_port_);
-	webview_service_->add_txt("fawkesver=%u.%u.%u",
-	                          FAWKES_VERSION_MAJOR,
-	                          FAWKES_VERSION_MINOR,
-	                          FAWKES_VERSION_MICRO);
+	  new NetworkService(nnresolver_, "Refbox Webview on %h", "_http._tcp", cfg_port_);
+	webview_service_->add_txt("refboxver=%u.%u.%u",
+	                          0,
+	                          0,
+	                          0);
 	service_browse_handler_ = new WebviewServiceBrowseHandler(logger_, webview_service_);
 
 	dispatcher_ = new WebRequestDispatcher(url_manager_);
@@ -212,6 +217,7 @@ WebviewServer::init()
 		  .setup_ipv(cfg_use_ipv4_, cfg_use_ipv6_)
 		  .setup_cors(cfg_cors_allow_all, std::move(cfg_cors_origins), cfg_cors_max_age);
 
+		/*
 		if (cfg_use_tls_) {
 			webserver_->setup_tls(cfg_tls_key_.c_str(),
 			                      cfg_tls_cert_.c_str(),
@@ -226,30 +232,23 @@ WebviewServer::init()
 			user_verifier_ = new WebviewUserVerifier(config_, logger_);
 			webserver_->setup_basic_auth(cfg_basic_auth_realm_.c_str(), user_verifier_);
 		}
+          */
+
 		webserver_->setup_request_manager(request_manager_);
 
+	    /*
 		if (cfg_access_log_ != "") {
 			logger_->log_debug(name(), "Setting up access log %s", cfg_access_log_.c_str());
 			webserver_->setup_access_log(cfg_access_log_.c_str());
 		}
+		*/
+
 	} catch (Exception &e) {
 		delete webview_service_;
 		delete service_browse_handler_;
 		delete dispatcher_;
 		throw;
 	}
-	// get all directories for the static processor
-	std::vector<std::string> static_dirs = config_->get_strings("/webview/htdocs/dirs");
-	std::string              catchall_file;
-	try {
-		catchall_file = config_->get_string("/webview/htdocs/catchall-file");
-	} catch (Exception &e) {
-	};
-	std::string mime_file       = config_->get_string("/webview/htdocs/mime-file");
-	static_dirs                 = StringConversions::resolve_paths(static_dirs);
-	std::string static_base_url = catchall_file.empty() ? "/static/" : "/";
-	static_processor_           = new WebviewStaticRequestProcessor(
-		   url_manager_, static_base_url, static_dirs, catchall_file, mime_file, logger_);
 	rest_processor_ =
 	  new WebviewRESTRequestProcessor(url_manager_, rest_api_manager_, logger_);
 
@@ -274,8 +273,7 @@ WebviewServer::init()
 	}
 	webserver_->start();
 	logger_->log_info("WebviewServer",
-	                 "Listening for HTTP%s connections on port %u (%s)",
-	                 cfg_use_tls_ ? "S" : "",
+	                 "Listening for HTTP connections on port %u (%s)",
 	                 cfg_port_,
 	                 afs.c_str());
 
