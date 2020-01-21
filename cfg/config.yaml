@@ -211,3 +211,55 @@ llsfrb:
 
   webshop:
     enable: false
+
+webview:
+  # TCP port for Webview HTTP requests; TCP port
+  port: !tcp-port 8088
+
+  # True to allow client side caching. Typically you want this disabled
+  # to force proper reloads each time with fresh data.
+  client_side_caching: true
+
+  cors:
+    allow:
+      # Allow all access, sets header to '*'
+      all: true
+      # Allow access only from specific domains
+      # origins: ["http://localhost:4200"]
+
+    # time to allow clients to cache our response
+    max-age: 86400
+
+  # libmicrohttpd thread pool settings
+  # Using a thread pool allows for the concurrent processing of
+  # incoming requests and should generally be enabled.
+  thread-pool:
+    enable: false
+    num-threads: 8
+
+  # Use basic authentication?
+  use_basic_auth: false
+
+  # Access log filename
+  # access_log: access_log
+
+  # Example user, delete or change password!
+  # Use !cleartext! prefix if you really want to use a clear text password
+  # (discouraged). Note that the password is only compared to the suffix.
+  # If you have a system that supports APR use
+  #   htpasswd -nB USERNAME
+  # to generate an appropriate password string and copy and paste the part
+  # after the colon and after the colon only.
+  users:
+    fawkes: "!cleartext!fawkes"
+
+  # For the given URLs, a handler will be configured that captures
+  # requests if no other handler is registered, i.e., the actual
+  # plugin handling these requests has not been loaded.
+  # If this is not a user-facing page, but rather an endpoint ingested
+  # by some program, this may provide better feedback.
+  # For user pages, with the appropriate catchall above, we always
+  # serve the UI and it will do something useful.
+  explicit-404:
+    - /metrics
+    - /xmlrpc
