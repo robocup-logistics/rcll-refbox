@@ -17,6 +17,7 @@ BASEDIR = ../../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BASEDIR)/etc/buildsys/gcc.mk
+include $(BUILDSYSDIR)/clips.mk
 include $(LIBSRCDIR)/webview/webview.mk
 include $(BUILDSYSDIR)/boost.mk
 
@@ -33,7 +34,7 @@ endif
 REQ_BOOST_LIBS = filesystem
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_libllsfrbrestapi= stdc++ llsfrbcore llsfrbutils llsfrbwebview llsfrbnetcomm  \
+LIBS_libllsfrbrestapi= stdc++ llsfrbcore llsfrbutils llsfrbwebview llsfrbnetcomm llsfrb_clips_rest_api \
                llsfrblogging
 OBJS_libllsfrbrestapi = webview_server.o \
                service_browse_handler.o user_verifier.o \
@@ -43,7 +44,7 @@ OBJS_all    = $(OBJS_libllsfrbrestapi)
 LIBS_all = $(LIBDIR)/libllsfrbrestapi.so
 
 ifeq ($(HAVE_BOOST_LIBS)$(HAVE_LIBMICROHTTPD),11)
-  PLUGINS_build = $(PLUGINS_all)
+  LIBS_build = $(LIBS_all)
 
   CFLAGS  += $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS += $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
@@ -69,6 +70,14 @@ ifeq ($(HAVE_BOOST_LIBS)$(HAVE_LIBMICROHTTPD),11)
       WARN_TARGETS += warning_rapidjson
     endif
   endif
+
+ifeq ($(HAVE_CLIPS),1)
+  CFLAGS  += $(CFLAGS_CLIPS)
+  LDFLAGS += $(LDFLAGS_CLIPS)
+
+else
+    WARN_TARGETS = warning_clips
+endif
 
 else
   ifneq ($(HAVE_LIBMICROHTTPD),1)
