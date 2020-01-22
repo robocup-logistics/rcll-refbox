@@ -22,10 +22,10 @@
 
 #include "webview_server.h"
 
+#include "clips-rest-api/clips-rest-api.h"
 #include "rest_processor.h"
 #include "service_browse_handler.h"
 #include "user_verifier.h"
-#include "webview_thread.h"
 
 #include <config/config.h>
 #include <core/exceptions/system.h>
@@ -44,6 +44,8 @@
 #include <webview/rest_api_manager.h>
 #include <webview/server.h>
 #include <webview/url_manager.h>
+
+#include <clipsmm.h>
 
 using namespace fawkes;
 
@@ -65,6 +67,8 @@ WebviewServer::WebviewServer(bool                         enable_tp,
                              fawkes::NetworkNameResolver *nnresolver,
                              fawkes::ServicePublisher *   service_publisher,
                              fawkes::ServiceBrowser *     service_browser,
+                             fawkes::Mutex &              clips_mutex,
+                             CLIPS::Environment *         env,
                              Configuration *              config,
                              Logger *                     logger)
 : fawkes::Thread("WebviewServer", Thread::OPMODE_CONTINUOUS)
@@ -83,6 +87,7 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 	url_manager_      = new WebUrlManager();
 	request_manager_  = new WebRequestManager();
 	rest_api_manager_ = new WebviewRestApiManager();
+	clips_rest_api_   = new ClipsRestApi(env, clips_mutex, rest_api_manager_, logger_);
 }
 
 WebviewServer::~WebviewServer()
@@ -272,11 +277,19 @@ WebviewServer::init()
 
 	service_publisher_->publish_service(webview_service_);
 	service_browser_->watch_service("_http._tcp", service_browse_handler_);
+
+	//Clips Rest api
+	clips_rest_api_->init();
+	clips_rest_api_->start();
 }
 
 void
 WebviewServer::finalize()
 {
+	clips_rest_api_->cancel();
+	clips_rest_api_->join();
+	delete clips_rest_api_;
+
 	try {
 		service_publisher_->unpublish_service(webview_service_);
 	} catch (Exception &e) {
