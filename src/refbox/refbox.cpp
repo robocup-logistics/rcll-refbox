@@ -354,7 +354,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 #endif
 
   try{
-    rest_api_thread_ = new WebviewServer(false, nnresolver_, service_publisher_, service_browser_, config_,logger_);
+    rest_api_thread_ = new WebviewServer(false,
+		  nnresolver_,
+		  service_publisher_,
+		  service_browser_,
+		  clips_mutex_,
+		  clips_,
+		  config_,logger_);
     rest_api_thread_ -> init();
     rest_api_thread_ -> start();
       logger_->log_info("RefBox", " RESTapi server started ");
