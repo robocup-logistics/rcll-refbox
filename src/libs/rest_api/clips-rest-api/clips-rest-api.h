@@ -43,9 +43,10 @@ class Logger;
 class ClipsRestApi : public fawkes::Thread
 {
 public:
-	ClipsRestApi(fawkes::LockPtr<CLIPS::Environment> &env,
-	             fawkes::WebviewRestApiManager *      webview_rest_api_manager,
-	             Logger *                             logger);
+	ClipsRestApi(CLIPS::Environment *           env,
+	             fawkes::Mutex &                env_mutex,
+	             fawkes::WebviewRestApiManager *webview_rest_api_manager,
+	             Logger *                       logger);
 	~ClipsRestApi();
 
 	virtual void init();
@@ -56,13 +57,15 @@ private:
 	WebviewRestArray<Environment> cb_list_environments();
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
 
-	Fact
-	gen_fact(fawkes::LockPtr<CLIPS::Environment> &clips, CLIPS::Fact::pointer &fact, bool formatted);
+	Fact gen_fact(CLIPS::Environment *clips, CLIPS::Fact::pointer &fact, bool formatted);
 
 private:
-	fawkes::WebviewRestApiManager *      webview_rest_api_manager_;
-	fawkes::WebviewRestApi *             rest_api_;
-	fawkes::LockPtr<CLIPS::Environment> &env_;
-	Logger *                             logger_;
+	fawkes::WebviewRestApiManager *webview_rest_api_manager_;
+	fawkes::WebviewRestApi *       rest_api_;
+	CLIPS::Environment *           env_;
+
+	fawkes::Mutex &env_mutex_;
+
+	Logger *logger_;
 };
 } //end namespace llsfrb

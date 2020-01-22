@@ -34,10 +34,11 @@ using namespace fawkes;
 
 namespace llsfrb {
 /** Constructor. */
-ClipsRestApi::ClipsRestApi(fawkes::LockPtr<CLIPS::Environment> &env,
-                           fawkes::WebviewRestApiManager *      webview_rest_api_manager,
-                           Logger *                             logger)
-: fawkes::Thread("ClipsRestApi", Thread::OPMODE_CONTINUOUS), env_(env)
+ClipsRestApi::ClipsRestApi(CLIPS::Environment *           env,
+                           fawkes::Mutex &                env_mutex,
+                           fawkes::WebviewRestApiManager *webview_rest_api_manager,
+                           Logger *                       logger)
+: fawkes::Thread("ClipsRestApi", Thread::OPMODE_CONTINUOUS), env_(env), env_mutex_(env_mutex)
 {
 	webview_rest_api_manager_ = webview_rest_api_manager;
 	logger_                   = logger;
@@ -130,9 +131,7 @@ ClipsRestApi::loop()
 // }
 
 Fact
-ClipsRestApi::gen_fact(fawkes::LockPtr<CLIPS::Environment> &clips,
-                       CLIPS::Fact::pointer &               fact,
-                       bool                                 formatted)
+ClipsRestApi::gen_fact(CLIPS::Environment *clips, CLIPS::Fact::pointer &fact, bool formatted)
 {
 	Fact retf;
 	retf.set_kind("Fact");
@@ -193,7 +192,7 @@ ClipsRestApi::cb_get_facts(WebviewRestParams &params)
 	//}
 
 	//auto        clips = envs[params.path_arg("env")];
-	MutexLocker env_lock(env_.objmutex_ptr());
+	MutexLocker lock(&env_mutex_);
 
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
