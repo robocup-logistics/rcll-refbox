@@ -24,7 +24,7 @@
 #include "rest_processor.h"
 #include "service_browse_handler.h"
 #include "user_verifier.h"
-#include "clips-rest-api/clips-rest-api.h"
+#include "clips_rest_api/clips-rest-api.h"
 
 #include <core/exceptions/system.h>
 #include <core/version.h>

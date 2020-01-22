@@ -13,7 +13,7 @@
 #
 #*****************************************************************************
 
-BASEDIR = ../../../..
+BASEDIR = ../../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/clips.mk
@@ -29,7 +29,7 @@ LIBS_all = $(LIBDIR)/libllsfrb_clips_rest_api.$(SOEXT)
 
 ifeq ($(HAVE_CPP17)$(HAVE_WEBVIEW)$(HAVE_CLIPS)$(HAVE_RAPIDJSON),1111)
   CFLAGS  += $(CFLAGS_WEBVIEW)  $(CFLAGS_CLIPS)  $(CFLAGS_RAPIDJSON)  $(CFLAGS_CPP17)
-  LDFLAGS += $(LDFLAGS_WEBVIEW) $(LDFLAGS_CLIPS) $(LDFLAGS_RAPIDJSON) 
+  LDFLAGS += $(LDFLAGS_WEBVIEW) $(LDFLAGS_CLIPS) $(LDFLAGS_RAPIDJSON)
 
   LIBS_build = $(LIBS_all)
 
