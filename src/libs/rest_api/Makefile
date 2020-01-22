@@ -16,8 +16,11 @@
 BASEDIR = ../../..
 
 include $(BASEDIR)/etc/buildsys/config.mk
+include $(BASEDIR)/etc/buildsys/gcc.mk
 include $(LIBSRCDIR)/webview/webview.mk
 include $(BUILDSYSDIR)/boost.mk
+
+SUBDIRS = clips-rest-api
 
 ifneq ($(PKGCONFIG),)
   HAVE_APR_UTIL = $(if $(shell $(PKGCONFIG) --exists 'apr-util-1'; echo $${?/1/}),1,0)
