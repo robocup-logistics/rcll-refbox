@@ -45,7 +45,8 @@ class Logger;
 class ClipsRestApi : public fawkes::Thread
 {
 public:
-	ClipsRestApi(fawkes::LockPtr<CLIPS::Environment> &env,
+	ClipsRestApi(CLIPS::Environment *env,
+		   fawkes::Mutex &env_mutex,
 		   fawkes::WebviewRestApiManager *webview_rest_api_manager,
 		   Logger *logger);
 	~ClipsRestApi();
@@ -59,13 +60,17 @@ private:
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
 
 	Fact
-	gen_fact(fawkes::LockPtr<CLIPS::Environment> &clips,
+	gen_fact(CLIPS::Environment *clips,
 		   CLIPS::Fact::pointer &fact, bool formatted);
 
 private:
 	fawkes::WebviewRestApiManager  *webview_rest_api_manager_;
 	fawkes::WebviewRestApi         *rest_api_;
-	fawkes::LockPtr<CLIPS::Environment> &env_;
+	CLIPS::Environment             *env_;
+
+	fawkes::Mutex                  &env_mutex_;
+	
+	
 	Logger 			           *logger_;
 
 
