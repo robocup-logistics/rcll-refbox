@@ -21,8 +21,6 @@ include $(BUILDSYSDIR)/clips.mk
 include $(LIBSRCDIR)/webview/webview.mk
 include $(BUILDSYSDIR)/boost.mk
 
-SUBDIRS = clips-rest-api
-
 ifneq ($(PKGCONFIG),)
   HAVE_APR_UTIL = $(if $(shell $(PKGCONFIG) --exists 'apr-util-1'; echo $${?/1/}),1,0)
   ifeq ($(HAVE_APR_UTIL),1)
