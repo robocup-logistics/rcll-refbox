@@ -1,7 +1,7 @@
 /***************************************************************************
- *  machine_factory.h - Create MPS machine instances
+ *  machine.cpp - Abstract MPS machine interface
  *
- *  Created: Tue 21 Jan 2020 12:53:24 CET 12:53
+ *  Created: Thu 23 Jan 2020 15:53:04 CET 15:53
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -18,25 +18,4 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#pragma once
-
-#include "opcua/machine.h"
-#include "stations.h"
-
-#include <memory>
-#include <string>
-
-namespace llsfrb {
-namespace mps_comm {
-class MachineFactory
-{
-public:
-	MachineFactory() = default;
-	std::unique_ptr<OpcUaMachine> create_machine(std::string  name,
-	                                             std::string  type,
-	                                             std::string  ip,
-	                                             unsigned int port,
-	                                             std::string  connection_mode);
-};
-} // namespace mps_comm
-} // namespace llsfrb
+#include "machine.h"

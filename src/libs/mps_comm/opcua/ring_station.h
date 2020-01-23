@@ -22,38 +22,28 @@
 // The ring station mounts rings on bases
 #pragma once
 
+#include "../ring_station.h"
 #include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-class OpcUaRingStation : public OpcUaMachine
+class OpcUaRingStation : public virtual OpcUaMachine, public virtual RingStation
 {
 	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
 
 public:
 	OpcUaRingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~OpcUaRingStation();
 
 	// Send command to get a ring
 	// void getRing();
 	// Check, if the cap is ready for take away
-	// deprecated
-	void band_on_until_in();
-	void band_on_until_mid();
-	void band_on_until_out();
-	bool ring_ready();
+	bool ring_ready() override;
 
-	void mount_ring(unsigned int feeder);
+	void mount_ring(unsigned int feeder) override;
 
 	// identify: tell PLC, which machine it is running on
-	virtual void identify();
+	virtual void identify() override;
 };
 
 } // namespace mps_comm

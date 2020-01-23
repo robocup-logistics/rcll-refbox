@@ -32,30 +32,9 @@ OpcUaBaseStation::OpcUaBaseStation(std::string    name,
                                    std::string    ip,
                                    unsigned short port,
                                    ConnectionMode mode)
-: OpcUaMachine(name, Station::STATION_BASE, ip, port, mode)
+: Machine(name), OpcUaMachine(Station::STATION_BASE, ip, port, mode)
 {
-}
-
-OpcUaBaseStation::~OpcUaBaseStation()
-{
-}
-
-void
-OpcUaBaseStation::band_on_until_in()
-{
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
-}
-
-void
-OpcUaBaseStation::band_on_until_mid()
-{
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
-}
-
-void
-OpcUaBaseStation::band_on_until_out()
-{
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
+	std::cout << "Initialize BS with name " << name << std::endl;
 }
 
 void

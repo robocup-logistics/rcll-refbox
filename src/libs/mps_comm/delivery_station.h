@@ -1,7 +1,7 @@
 /***************************************************************************
- *  machine_factory.h - Create MPS machine instances
+ *  delivery_station.h - Abstract delivery station interface
  *
- *  Created: Tue 21 Jan 2020 12:53:24 CET 12:53
+ *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,23 +20,15 @@
 
 #pragma once
 
-#include "opcua/machine.h"
-#include "stations.h"
-
-#include <memory>
-#include <string>
+#include "machine.h"
 
 namespace llsfrb {
 namespace mps_comm {
-class MachineFactory
+
+class DeliveryStation : public virtual Machine
 {
 public:
-	MachineFactory() = default;
-	std::unique_ptr<OpcUaMachine> create_machine(std::string  name,
-	                                             std::string  type,
-	                                             std::string  ip,
-	                                             unsigned int port,
-	                                             std::string  connection_mode);
+	virtual void deliver_product(int slot) = 0;
 };
 } // namespace mps_comm
 } // namespace llsfrb

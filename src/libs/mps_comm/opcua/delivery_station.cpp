@@ -38,7 +38,7 @@ OpcUaDeliveryStation::OpcUaDeliveryStation(std::string    name,
                                            std::string    ip,
                                            unsigned short port,
                                            ConnectionMode mode)
-: OpcUaMachine(name, Station::STATION_DELIVERY, ip, port, mode)
+: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, mode)
 {
 }
 

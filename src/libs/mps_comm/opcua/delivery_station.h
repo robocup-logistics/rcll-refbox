@@ -22,18 +22,13 @@
 // This file implements the delivery station
 #pragma once
 
+#include "../delivery_station.h"
 #include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-class OpcUaDeliveryStation : public OpcUaMachine
+class OpcUaDeliveryStation : public virtual OpcUaMachine, public virtual DeliveryStation
 {
 public:
 	OpcUaDeliveryStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);

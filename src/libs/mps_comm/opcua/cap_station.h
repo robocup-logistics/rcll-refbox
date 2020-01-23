@@ -23,6 +23,7 @@
 // A cap station can be used, to mount caps on top of things.
 #pragma once
 
+#include "../cap_station.h"
 #include "machine.h"
 
 namespace llsfrb {
@@ -34,25 +35,25 @@ namespace mps_comm {
 }
 #endif
 
-class OpcUaCapStation : public OpcUaMachine
+class OpcUaCapStation : public virtual OpcUaMachine, public virtual CapStation
 {
 public:
 	OpcUaCapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
 
+	virtual ~OpcUaCapStation();
+
 	// -----------------
 	// deprecated methods
-	void band_on_until_in();
-	void band_on_until_mid();
-	void band_on_until_out();
-	void retrieve_cap();
-	void mount_cap();
+	void band_on_until_in() override;
+	void band_on_until_mid() override;
+	void band_on_until_out() override;
+	void retrieve_cap() override;
+	void mount_cap() override;
 	// end of deprecated
 	// ----------------
 
-	virtual ~OpcUaCapStation();
-
 	// Tell plc, which machine I am
-	virtual void identify();
+	virtual void identify() override;
 };
 
 } // namespace mps_comm

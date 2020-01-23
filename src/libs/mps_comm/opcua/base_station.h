@@ -23,22 +23,18 @@
 // At a base station a robot can pick up a base
 #pragma once
 
+#include "../base_station.h"
 #include "machine.h"
 
 namespace llsfrb {
 namespace mps_comm {
 
-class OpcUaBaseStation : public OpcUaMachine
+class OpcUaBaseStation : public virtual OpcUaMachine, public virtual BaseStation
 {
 public:
 	OpcUaBaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~OpcUaBaseStation();
 
 	// ----------------------------
-	// deprecated commands start
-	void band_on_until_in();
-	void band_on_until_mid();
-	void band_on_until_out();
 	// Send command to get a cap of given color
 	// and on given side
 	void get_base(llsf_msgs::BaseColor slot);

@@ -24,7 +24,7 @@
 
 namespace llsfrb {
 namespace mps_comm {
-std::unique_ptr<Machine>
+std::unique_ptr<OpcUaMachine>
 MachineFactory::create_machine(std::string  name,
                                std::string  type,
                                std::string  ip,

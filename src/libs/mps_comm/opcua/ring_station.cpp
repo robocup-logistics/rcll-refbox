@@ -26,13 +26,7 @@
 #include <iostream>
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
 const std::vector<OpcUtils::MPSRegister>
   OpcUaRingStation::SUB_REGISTERS({OpcUtils::MPSRegister::SLIDECOUNT_IN,
@@ -47,37 +41,9 @@ OpcUaRingStation::OpcUaRingStation(std::string    name,
                                    std::string    ip,
                                    unsigned short port,
                                    ConnectionMode mode)
-: OpcUaMachine(name, Station::STATION_RING, ip, port, mode)
+: Machine(name), OpcUaMachine(Station::STATION_RING, ip, port, mode)
 {
 }
-
-OpcUaRingStation::~OpcUaRingStation()
-{
-}
-
-void
-OpcUaRingStation::band_on_until_in()
-{
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
-}
-
-void
-OpcUaRingStation::band_on_until_mid()
-{
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
-}
-
-void
-OpcUaRingStation::band_on_until_out()
-{
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
-}
-
-/*void OpcUaRingStation::getRing() {
-  lock_guard<mutex> g(lock_);
-  sendCommand(RING_STATION_CMD | GET_RING_CMD);
-  waitForReady();
-}*/
 
 // Need information on how to access this
 bool

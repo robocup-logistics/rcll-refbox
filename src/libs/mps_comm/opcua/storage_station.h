@@ -24,25 +24,19 @@
 // It will not work as intended, because protocols do not match yet.
 #pragma once
 
+#include "../storage_station.h"
 #include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-class OpcUaStorageStation : public OpcUaMachine
+class OpcUaStorageStation : public virtual OpcUaMachine, public virtual StorageStation
 {
 public:
 	OpcUaStorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~OpcUaStorageStation();
 
 	// identify: tell the PLC, which machine it is controlling
-	virtual void identify();
+	virtual void identify() override;
 };
 
 } // namespace mps_comm

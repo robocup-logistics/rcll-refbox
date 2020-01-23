@@ -45,15 +45,14 @@ enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
 
 enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
-class OpcUaMachine : public Machine
+class OpcUaMachine : public virtual Machine
 {
 	typedef std::
 	  tuple<SubscriptionClient::ReturnValueCallback, OpcUtils::MPSRegister, OpcUtils::ReturnValue *>
 	    Callback;
 
 public:
-	OpcUaMachine(std::string        name,
-	             unsigned short int machine_type,
+	OpcUaMachine(unsigned short int machine_type,
 	             std::string        ip,
 	             unsigned short     port,
 	             ConnectionMode = PLC);
@@ -89,6 +88,9 @@ public:
 
 	// Reset: send the reset command (which is different for each machine type)
 	void reset() override;
+	void band_on_until_in() override;
+	void band_on_until_mid() override;
+	void band_on_until_out() override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify() = 0;
 
@@ -98,7 +100,6 @@ public:
 	bool       abort_operation_;
 
 protected:
-	const std::string name_;
 	// machine type
 	const unsigned short int machine_type_;
 	std::string              ip_;

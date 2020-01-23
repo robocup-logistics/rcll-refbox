@@ -1,7 +1,7 @@
 /***************************************************************************
- *  machine_factory.h - Create MPS machine instances
+ *  base_station.h - Abstract base station interface
  *
- *  Created: Tue 21 Jan 2020 12:53:24 CET 12:53
+ *  Created: Thu 23 Jan 2020 16:37:30 CET 16:37
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,23 +20,19 @@
 
 #pragma once
 
-#include "opcua/machine.h"
-#include "stations.h"
-
-#include <memory>
-#include <string>
+#include "machine.h"
+#include "msgs/ProductColor.pb.h"
 
 namespace llsfrb {
 namespace mps_comm {
-class MachineFactory
+
+class BaseStation : public virtual Machine
 {
 public:
-	MachineFactory() = default;
-	std::unique_ptr<OpcUaMachine> create_machine(std::string  name,
-	                                             std::string  type,
-	                                             std::string  ip,
-	                                             unsigned int port,
-	                                             std::string  connection_mode);
+	virtual void get_base(llsf_msgs::BaseColor slot) = 0;
+	virtual bool base_ready()                        = 0;
+	virtual bool is_empty()                          = 0;
 };
+
 } // namespace mps_comm
 } // namespace llsfrb

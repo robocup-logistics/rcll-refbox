@@ -22,8 +22,8 @@
 #include "machine.h"
 
 #include "../exceptions.h"
-#include "mps_io_mapping.h"
 #include "../time_utils.h"
+#include "mps_io_mapping.h"
 
 #include <chrono>
 #include <iostream>
@@ -54,13 +54,11 @@ const std::string OpcUaMachine::LOG_PATH =
 constexpr std::chrono::seconds OpcUaMachine::mock_busy_duration_;
 constexpr std::chrono::seconds OpcUaMachine::mock_ready_duration_;
 
-OpcUaMachine::OpcUaMachine(std::string        name,
-                           unsigned short int machine_type,
+OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
                            std::string        ip,
                            unsigned short     port,
                            ConnectionMode     connection_mode)
-: Machine(name),
-  abort_operation_(false),
+: abort_operation_(false),
   machine_type_(machine_type),
   ip_(ip),
   port_(port),
@@ -68,6 +66,7 @@ OpcUaMachine::OpcUaMachine(std::string        name,
   shutdown_(false),
   heartbeat_active_(false)
 {
+	std::cout << "OpcUaMachine: name is " << name_ << std::endl;
 	initLogger();
 	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
 }
@@ -478,5 +477,24 @@ OpcUaMachine::register_callback(Callback callback, bool simulation)
 	SubscriptionClient *sub = subscribe(std::get<1>(callback), std::get<2>(callback), simulation);
 	sub->add_callback(std::get<0>(callback));
 }
+
+void
+OpcUaMachine::band_on_until_in()
+{
+	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
+}
+
+void
+OpcUaMachine::band_on_until_mid()
+{
+	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
+}
+
+void
+OpcUaMachine::band_on_until_out()
+{
+	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
+}
+
 } // namespace mps_comm
 } // namespace llsfrb
