@@ -33,13 +33,13 @@ namespace mps_comm {
 }
 #endif
 
-class RingStation : public Machine
+class OpcUaRingStation : public OpcUaMachine
 {
 	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
 
 public:
-	RingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~RingStation();
+	OpcUaRingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	virtual ~OpcUaRingStation();
 
 	// Send command to get a ring
 	// void getRing();

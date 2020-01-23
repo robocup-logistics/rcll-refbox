@@ -26,19 +26,13 @@
 #include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-class BaseStation : public Machine
+class OpcUaBaseStation : public OpcUaMachine
 {
 public:
-	BaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~BaseStation();
+	OpcUaBaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	virtual ~OpcUaBaseStation();
 
 	// ----------------------------
 	// deprecated commands start

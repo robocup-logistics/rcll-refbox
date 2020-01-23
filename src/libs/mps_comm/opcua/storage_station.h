@@ -35,11 +35,11 @@ namespace mps_comm {
 }
 #endif
 
-class StorageStation : public Machine
+class OpcUaStorageStation : public OpcUaMachine
 {
 public:
-	StorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~StorageStation();
+	OpcUaStorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	virtual ~OpcUaStorageStation();
 
 	// identify: tell the PLC, which machine it is controlling
 	virtual void identify();

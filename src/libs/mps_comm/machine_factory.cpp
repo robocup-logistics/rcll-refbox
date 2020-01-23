@@ -31,13 +31,13 @@ MachineFactory::create_machine(std::string  name,
                                unsigned int port,
                                std::string  connection_mode)
 {
-	Machine::ConnectionMode mode;
+	OpcUaMachine::ConnectionMode mode;
 	if (connection_mode == "plc") {
-		mode = Machine::PLC;
+		mode = OpcUaMachine::PLC;
 	} else if (connection_mode == "simulation") {
-		mode = Machine::SIMULATION;
+		mode = OpcUaMachine::SIMULATION;
 	} else if (connection_mode == "mockup") {
-		mode = Machine::MOCKUP;
+		mode = OpcUaMachine::MOCKUP;
 	} else {
 		throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
 		                        connection_mode.c_str(),
@@ -45,15 +45,15 @@ MachineFactory::create_machine(std::string  name,
 	}
 
 	if (type == "BS") {
-		return std::make_unique<BaseStation>(name, ip, port, mode);
+		return std::make_unique<OpcUaBaseStation>(name, ip, port, mode);
 	} else if (type == "CS") {
-		return std::make_unique<CapStation>(name, ip, port, mode);
+		return std::make_unique<OpcUaCapStation>(name, ip, port, mode);
 	} else if (type == "RS") {
-		return std::make_unique<RingStation>(name, ip, port, mode);
+		return std::make_unique<OpcUaRingStation>(name, ip, port, mode);
 	} else if (type == "DS") {
-		return std::make_unique<DeliveryStation>(name, ip, port, mode);
+		return std::make_unique<OpcUaDeliveryStation>(name, ip, port, mode);
 	} else if (type == "SS") {
-		return std::make_unique<StorageStation>(name, ip, port, mode);
+		return std::make_unique<OpcUaStorageStation>(name, ip, port, mode);
 	} else {
 		throw fawkes::Exception("Unexpected machine type '%s' for machine '%s'",
 		                        type.c_str(),

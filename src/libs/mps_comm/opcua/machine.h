@@ -21,6 +21,9 @@
 
 // Abstract base class for the stations
 #pragma once
+
+#include "../machine.h"
+
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -36,38 +39,26 @@
 #include "subscription_client.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
 enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
 
 enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
-class Machine
+class OpcUaMachine : public Machine
 {
 	typedef std::
 	  tuple<SubscriptionClient::ReturnValueCallback, OpcUtils::MPSRegister, OpcUtils::ReturnValue *>
 	    Callback;
 
 public:
-	enum ConnectionMode {
-		MOCKUP,
-		SIMULATION,
-		PLC,
-	};
+	OpcUaMachine(std::string        name,
+	             unsigned short int machine_type,
+	             std::string        ip,
+	             unsigned short     port,
+	             ConnectionMode = PLC);
 
-	Machine(std::string        name,
-	        unsigned short int machine_type,
-	        std::string        ip,
-	        unsigned short     port,
-	        ConnectionMode = PLC);
-
-	virtual ~Machine();
+	~OpcUaMachine() override;
 
 	// This method will send a command to the machine
 	// A Command consist of
@@ -89,23 +80,15 @@ public:
 	// color: 1 - 3, state 0 - 2
 	void set_light(llsf_msgs::LightColor color,
 	               llsf_msgs::LightState state = llsf_msgs::ON,
-	               unsigned short        time  = 0);
+	               unsigned short        time  = 0) override;
 
-	void conveyor_move(ConveyorDirection direction, MPSSensor sensor);
+	void conveyor_move(ConveyorDirection direction, MPSSensor sensor) override;
 
 	// Sends reset light command
-	void reset_light();
-
-	std::string
-	name() const
-	{
-		return name_;
-	}
-
-	// abstract methods
+	void reset_light() override;
 
 	// Reset: send the reset command (which is different for each machine type)
-	void reset();
+	void reset() override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify() = 0;
 

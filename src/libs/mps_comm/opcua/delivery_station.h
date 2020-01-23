@@ -33,11 +33,11 @@ namespace mps_comm {
 }
 #endif
 
-class DeliveryStation : public Machine
+class OpcUaDeliveryStation : public OpcUaMachine
 {
 public:
-	DeliveryStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~DeliveryStation();
+	OpcUaDeliveryStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	virtual ~OpcUaDeliveryStation();
 
 	// Send command to deliver a product
 	// slot is between 1 and 3

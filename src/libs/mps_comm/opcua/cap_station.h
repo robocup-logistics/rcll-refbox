@@ -34,10 +34,10 @@ namespace mps_comm {
 }
 #endif
 
-class CapStation : public Machine
+class OpcUaCapStation : public OpcUaMachine
 {
 public:
-	CapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	OpcUaCapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
 
 	// -----------------
 	// deprecated methods
@@ -49,7 +49,7 @@ public:
 	// end of deprecated
 	// ----------------
 
-	virtual ~CapStation();
+	virtual ~OpcUaCapStation();
 
 	// Tell plc, which machine I am
 	virtual void identify();

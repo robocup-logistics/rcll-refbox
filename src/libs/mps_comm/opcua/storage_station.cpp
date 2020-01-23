@@ -34,20 +34,20 @@ namespace mps_comm {
 }
 #endif
 
-StorageStation::StorageStation(std::string    name,
-                               std::string    ip,
-                               unsigned short port,
-                               ConnectionMode mode)
-: Machine(name, Station::STATION_STORAGE, ip, port, mode)
+OpcUaStorageStation::OpcUaStorageStation(std::string    name,
+                                         std::string    ip,
+                                         unsigned short port,
+                                         ConnectionMode mode)
+: OpcUaMachine(name, Station::STATION_STORAGE, ip, port, mode)
 {
 }
 
-StorageStation::~StorageStation()
+OpcUaStorageStation::~OpcUaStorageStation()
 {
 }
 
 void
-StorageStation::identify()
+OpcUaStorageStation::identify()
 {
 	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_SS);
 }

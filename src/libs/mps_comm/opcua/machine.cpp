@@ -42,25 +42,25 @@ namespace mps_comm {
 #endif
 
 const std::vector<OpcUtils::MPSRegister>
-                  Machine::SUB_REGISTERS({OpcUtils::MPSRegister::BARCODE_IN,
-                          OpcUtils::MPSRegister::ERROR_IN,
-                          OpcUtils::MPSRegister::STATUS_BUSY_IN,
-                          OpcUtils::MPSRegister::STATUS_ENABLE_IN,
-                          OpcUtils::MPSRegister::STATUS_ERROR_IN,
-                          OpcUtils::MPSRegister::STATUS_READY_IN});
-const std::string Machine::LOG_PATH =
+                  OpcUaMachine::SUB_REGISTERS({OpcUtils::MPSRegister::BARCODE_IN,
+                               OpcUtils::MPSRegister::ERROR_IN,
+                               OpcUtils::MPSRegister::STATUS_BUSY_IN,
+                               OpcUtils::MPSRegister::STATUS_ENABLE_IN,
+                               OpcUtils::MPSRegister::STATUS_ERROR_IN,
+                               OpcUtils::MPSRegister::STATUS_READY_IN});
+const std::string OpcUaMachine::LOG_PATH =
   ""; /* TODO add log path if needed; if empty -> log is redirected to stdout */
 
-constexpr std::chrono::seconds Machine::mock_busy_duration_;
-constexpr std::chrono::seconds Machine::mock_ready_duration_;
+constexpr std::chrono::seconds OpcUaMachine::mock_busy_duration_;
+constexpr std::chrono::seconds OpcUaMachine::mock_ready_duration_;
 
-Machine::Machine(std::string        name,
-                 unsigned short int machine_type,
-                 std::string        ip,
-                 unsigned short     port,
-                 ConnectionMode     connection_mode)
-: abort_operation_(false),
-  name_(name),
+OpcUaMachine::OpcUaMachine(std::string        name,
+                           unsigned short int machine_type,
+                           std::string        ip,
+                           unsigned short     port,
+                           ConnectionMode     connection_mode)
+: Machine(name),
+  abort_operation_(false),
   machine_type_(machine_type),
   ip_(ip),
   port_(port),
@@ -69,11 +69,11 @@ Machine::Machine(std::string        name,
   heartbeat_active_(false)
 {
 	initLogger();
-	worker_thread_ = std::thread(&Machine::dispatch_command_queue, this);
+	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
 }
 
 void
-Machine::dispatch_command_queue()
+OpcUaMachine::dispatch_command_queue()
 {
 	std::unique_lock<std::mutex> lock(command_queue_mutex_);
 	// Always process the queue before shutdown
@@ -91,7 +91,7 @@ Machine::dispatch_command_queue()
 }
 
 void
-Machine::heartbeat()
+OpcUaMachine::heartbeat()
 {
 	heartbeat_active_ = true;
 	while (!shutdown_) {
@@ -102,7 +102,7 @@ Machine::heartbeat()
 }
 
 void
-Machine::mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret)
+OpcUaMachine::mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret)
 {
 	for (auto &cb : callbacks_) {
 		if (std::get<1>(cb) == reg) {
@@ -113,7 +113,7 @@ Machine::mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret)
 }
 
 void
-Machine::mock_callback(OpcUtils::MPSRegister reg, bool ret)
+OpcUaMachine::mock_callback(OpcUtils::MPSRegister reg, bool ret)
 {
 	OpcUtils::ReturnValue ret_val;
 	ret_val.bool_s = ret;
@@ -121,12 +121,12 @@ Machine::mock_callback(OpcUtils::MPSRegister reg, bool ret)
 }
 
 void
-Machine::send_command(unsigned short command,
-                      unsigned short payload1,
-                      unsigned short payload2,
-                      int            timeout,
-                      unsigned char  status,
-                      unsigned char  error)
+OpcUaMachine::send_command(unsigned short command,
+                           unsigned short payload1,
+                           unsigned short payload2,
+                           int            timeout,
+                           unsigned char  status,
+                           unsigned char  error)
 {
 	std::function<void(void)> call = [this, command, payload1, payload2, status, error] {
 		std::unique_lock<std::mutex> lock(command_mutex_);
@@ -182,13 +182,13 @@ Machine::send_command(unsigned short command,
 }
 
 void
-Machine::reset()
+OpcUaMachine::reset()
 {
 	send_command(machine_type_ | Command::COMMAND_RESET);
 }
 
 bool
-Machine::connect_PLC()
+OpcUaMachine::connect_PLC()
 {
 	if (connection_mode_ == MOCKUP) {
 		return true;
@@ -203,12 +203,12 @@ Machine::connect_PLC()
 		register_callback(cb, simulation);
 	}
 	if (!heartbeat_active_) {
-		heartbeat_thread_ = std::thread(&Machine::heartbeat, this);
+		heartbeat_thread_ = std::thread(&OpcUaMachine::heartbeat, this);
 	}
 	return true;
 }
 
-Machine::~Machine()
+OpcUaMachine::~OpcUaMachine()
 {
 	shutdown_ = true;
 	queue_condition_.notify_all();
@@ -222,7 +222,9 @@ Machine::~Machine()
 }
 
 void
-Machine::set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state, unsigned short time)
+OpcUaMachine::set_light(llsf_msgs::LightColor color,
+                        llsf_msgs::LightState state,
+                        unsigned short        time)
 {
 	LightColor m_color;
 	switch (color) {
@@ -250,7 +252,7 @@ Machine::set_light(llsf_msgs::LightColor color, llsf_msgs::LightState state, uns
 }
 
 void
-Machine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
+OpcUaMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 {
 	send_command(Command::COMMAND_MOVE_CONVEYOR + machine_type_,
 	             sensor,
@@ -259,13 +261,13 @@ Machine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 }
 
 void
-Machine::reset_light()
+OpcUaMachine::reset_light()
 {
 	set_light(llsf_msgs::LightColor::RED, llsf_msgs::OFF);
 }
 
 void
-Machine::initLogger()
+OpcUaMachine::initLogger()
 {
 	if (LOG_PATH.empty() || LOG_PATH.length() < 1) {
 		// stdout redirected logging
@@ -278,7 +280,7 @@ Machine::initLogger()
 }
 
 bool
-Machine::reconnect(const char *ip, unsigned short port, bool simulation)
+OpcUaMachine::reconnect(const char *ip, unsigned short port, bool simulation)
 {
 	disconnect();
 	try {
@@ -313,7 +315,7 @@ Machine::reconnect(const char *ip, unsigned short port, bool simulation)
 }
 
 bool
-Machine::disconnect()
+OpcUaMachine::disconnect()
 {
 	if (!connected_) {
 		return true;
@@ -348,7 +350,7 @@ Machine::disconnect()
 }
 
 void
-Machine::subscribeAll(bool simulation)
+OpcUaMachine::subscribeAll(bool simulation)
 {
 	for (int i = OpcUtils::MPSRegister::ACTION_ID_IN; i != OpcUtils::MPSRegister::STATUS_READY_BASIC;
 	     i++)
@@ -356,16 +358,16 @@ Machine::subscribeAll(bool simulation)
 }
 
 void
-Machine::subscribe(std::vector<OpcUtils::MPSRegister> registers,
-                   OpcUtils::ReturnValue *            retVals,
-                   bool                               simulation)
+OpcUaMachine::subscribe(std::vector<OpcUtils::MPSRegister> registers,
+                        OpcUtils::ReturnValue *            retVals,
+                        bool                               simulation)
 {
 	for (OpcUtils::MPSRegister reg : registers)
 		subscribe(reg, retVals == nullptr ? nullptr : &retVals[reg], simulation);
 }
 
 SubscriptionClient *
-Machine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *retVal, bool simulation)
+OpcUaMachine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *retVal, bool simulation)
 {
 	auto it = subscriptions.end();
 	if ((it = subscriptions.find(reg)) != subscriptions.end())
@@ -387,7 +389,7 @@ Machine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *retVal, boo
 }
 
 void
-Machine::cancelAllSubscriptions(bool log)
+OpcUaMachine::cancelAllSubscriptions(bool log)
 {
 	if (log)
 		printFinalSubscribtions();
@@ -405,7 +407,7 @@ Machine::cancelAllSubscriptions(bool log)
 }
 
 SubscriptionClient::map::iterator
-Machine::cancelSubscription(OpcUtils::MPSRegister reg, bool log)
+OpcUaMachine::cancelSubscription(OpcUtils::MPSRegister reg, bool log)
 {
 	auto it = subscriptions.find(reg);
 	if (it != subscriptions.end()) {
@@ -423,7 +425,7 @@ Machine::cancelSubscription(OpcUtils::MPSRegister reg, bool log)
 }
 
 OpcUtils::ReturnValue *
-Machine::getReturnValue(OpcUtils::MPSRegister reg)
+OpcUaMachine::getReturnValue(OpcUtils::MPSRegister reg)
 {
 	if (subscriptions.size() == 0)
 		return &outs[reg];
@@ -436,7 +438,7 @@ Machine::getReturnValue(OpcUtils::MPSRegister reg)
 }
 
 bool
-Machine::setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg)
+OpcUaMachine::setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg)
 {
 	SubscriptionClient::map::iterator it = subscriptions.find(reg);
 	if (it != subscriptions.end())
@@ -445,7 +447,7 @@ Machine::setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister re
 }
 
 void
-Machine::printFinalSubscribtions()
+OpcUaMachine::printFinalSubscribtions()
 {
 	if (subscriptions.size() > 0)
 		logger->info("Final values of subscribed registers:");
@@ -456,10 +458,10 @@ Machine::printFinalSubscribtions()
 }
 
 void
-Machine::addCallback(SubscriptionClient::ReturnValueCallback callback,
-                     OpcUtils::MPSRegister                   reg,
-                     OpcUtils::ReturnValue *                 retVal,
-                     bool                                    simulation)
+OpcUaMachine::addCallback(SubscriptionClient::ReturnValueCallback callback,
+                          OpcUtils::MPSRegister                   reg,
+                          OpcUtils::ReturnValue *                 retVal,
+                          bool                                    simulation)
 {
 	Callback cb = std::make_tuple(callback, reg, retVal);
 	callbacks_.push_back(cb);
@@ -467,7 +469,7 @@ Machine::addCallback(SubscriptionClient::ReturnValueCallback callback,
 }
 
 void
-Machine::register_callback(Callback callback, bool simulation)
+OpcUaMachine::register_callback(Callback callback, bool simulation)
 {
 	if (connection_mode_ == MOCKUP) {
 		return;

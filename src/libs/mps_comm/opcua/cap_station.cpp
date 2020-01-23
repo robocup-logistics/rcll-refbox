@@ -34,17 +34,20 @@ namespace mps_comm {
 }
 #endif
 
-CapStation::CapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode)
-: Machine(name, Station::STATION_CAP, ip, port, mode)
+OpcUaCapStation::OpcUaCapStation(std::string    name,
+                                 std::string    ip,
+                                 unsigned short port,
+                                 ConnectionMode mode)
+: OpcUaMachine(name, Station::STATION_CAP, ip, port, mode)
 {
 }
 
-CapStation::~CapStation()
+OpcUaCapStation::~OpcUaCapStation()
 {
 }
 
 void
-CapStation::band_on_until_in()
+OpcUaCapStation::band_on_until_in()
 {
 	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
 	             Operation::OPERATION_BAND_IN,
@@ -52,7 +55,7 @@ CapStation::band_on_until_in()
 }
 
 void
-CapStation::band_on_until_mid()
+OpcUaCapStation::band_on_until_mid()
 {
 	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
 	             Operation::OPERATION_BAND_MID,
@@ -60,7 +63,7 @@ CapStation::band_on_until_mid()
 }
 
 void
-CapStation::band_on_until_out()
+OpcUaCapStation::band_on_until_out()
 {
 	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
 	             Operation::OPERATION_BAND_OUT,
@@ -68,19 +71,19 @@ CapStation::band_on_until_out()
 }
 
 void
-CapStation::retrieve_cap()
+OpcUaCapStation::retrieve_cap()
 {
 	send_command(Operation::OPERATION_CAP_ACTION + machine_type_, Operation::OPERATION_CAP_RETRIEVE);
 }
 
 void
-CapStation::mount_cap()
+OpcUaCapStation::mount_cap()
 {
 	send_command(Operation::OPERATION_CAP_ACTION + machine_type_, Operation::OPERATION_CAP_MOUNT);
 }
 
 void
-CapStation::identify()
+OpcUaCapStation::identify()
 {
 	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_CS);
 }

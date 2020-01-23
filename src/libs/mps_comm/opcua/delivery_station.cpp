@@ -34,26 +34,26 @@ namespace mps_comm {
 }
 #endif
 
-DeliveryStation::DeliveryStation(std::string    name,
-                                 std::string    ip,
-                                 unsigned short port,
-                                 ConnectionMode mode)
-: Machine(name, Station::STATION_DELIVERY, ip, port, mode)
+OpcUaDeliveryStation::OpcUaDeliveryStation(std::string    name,
+                                           std::string    ip,
+                                           unsigned short port,
+                                           ConnectionMode mode)
+: OpcUaMachine(name, Station::STATION_DELIVERY, ip, port, mode)
 {
 }
 
-DeliveryStation::~DeliveryStation()
+OpcUaDeliveryStation::~OpcUaDeliveryStation()
 {
 }
 
 void
-DeliveryStation::deliver_product(int slot)
+OpcUaDeliveryStation::deliver_product(int slot)
 {
 	send_command(machine_type_ | Operation::OPERATION_DELIVER, slot);
 }
 
 void
-DeliveryStation::identify()
+OpcUaDeliveryStation::identify()
 {
 	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
 }

@@ -35,42 +35,45 @@ namespace mps_comm {
 #endif
 
 const std::vector<OpcUtils::MPSRegister>
-  RingStation::SUB_REGISTERS({OpcUtils::MPSRegister::SLIDECOUNT_IN,
-                              OpcUtils::MPSRegister::BARCODE_IN,
-                              OpcUtils::MPSRegister::ERROR_IN,
-                              OpcUtils::MPSRegister::STATUS_BUSY_IN,
-                              OpcUtils::MPSRegister::STATUS_ENABLE_IN,
-                              OpcUtils::MPSRegister::STATUS_ERROR_IN,
-                              OpcUtils::MPSRegister::STATUS_READY_IN});
+  OpcUaRingStation::SUB_REGISTERS({OpcUtils::MPSRegister::SLIDECOUNT_IN,
+                                   OpcUtils::MPSRegister::BARCODE_IN,
+                                   OpcUtils::MPSRegister::ERROR_IN,
+                                   OpcUtils::MPSRegister::STATUS_BUSY_IN,
+                                   OpcUtils::MPSRegister::STATUS_ENABLE_IN,
+                                   OpcUtils::MPSRegister::STATUS_ERROR_IN,
+                                   OpcUtils::MPSRegister::STATUS_READY_IN});
 
-RingStation::RingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode)
-: Machine(name, Station::STATION_RING, ip, port, mode)
+OpcUaRingStation::OpcUaRingStation(std::string    name,
+                                   std::string    ip,
+                                   unsigned short port,
+                                   ConnectionMode mode)
+: OpcUaMachine(name, Station::STATION_RING, ip, port, mode)
 {
 }
 
-RingStation::~RingStation()
+OpcUaRingStation::~OpcUaRingStation()
 {
 }
 
 void
-RingStation::band_on_until_in()
+OpcUaRingStation::band_on_until_in()
 {
 	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
 }
 
 void
-RingStation::band_on_until_mid()
+OpcUaRingStation::band_on_until_mid()
 {
 	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
 }
 
 void
-RingStation::band_on_until_out()
+OpcUaRingStation::band_on_until_out()
 {
 	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
 }
 
-/*void RingStation::getRing() {
+/*void OpcUaRingStation::getRing() {
   lock_guard<mutex> g(lock_);
   sendCommand(RING_STATION_CMD | GET_RING_CMD);
   waitForReady();
@@ -78,20 +81,20 @@ RingStation::band_on_until_out()
 
 // Need information on how to access this
 bool
-RingStation::ring_ready()
+OpcUaRingStation::ring_ready()
 {
 	std::cout << "Not implemented yet!" << std::endl;
 	return true;
 }
 
 void
-RingStation::identify()
+OpcUaRingStation::identify()
 {
 	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_RS);
 }
 
 void
-RingStation::mount_ring(unsigned int feeder)
+OpcUaRingStation::mount_ring(unsigned int feeder)
 {
 	send_command(Operation::OPERATION_MOUNT_RING + machine_type_, feeder);
 }
