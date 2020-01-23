@@ -715,8 +715,8 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 		return;
 	}
 	auto fut = std::async(std::launch::async, [this, station, machine] {
-		station->conveyor_move(llsfrb::mps_comm::ConveyorDirection::FORWARD,
-		                       llsfrb::mps_comm::MPSSensor::OUTPUT);
+		station->conveyor_move(llsfrb::mps_comm::Machine::ConveyorDirection::FORWARD,
+		                       llsfrb::mps_comm::Machine::MPSSensor::OUTPUT);
 		MutexLocker lock(&clips_mutex_);
 		clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine.c_str());
 		return true;
@@ -731,7 +731,7 @@ LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color)
 	logger_->log_info("MPS", "Dispense %s: %s", machine.c_str(), color.c_str());
 	BaseStation *station;
 	try {
-		station = static_cast<BaseStation *>(mps_.at(machine).get());
+		station = dynamic_cast<BaseStation *>(mps_.at(machine).get());
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
@@ -756,7 +756,7 @@ LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
 	logger_->log_info("MPS", "Processing on %s: slide %d", machine.c_str(), slide);
 	DeliveryStation *station;
 	try {
-		station = static_cast<DeliveryStation *>(mps_.at(machine).get());
+		station = dynamic_cast<DeliveryStation *>(mps_.at(machine).get());
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
@@ -770,7 +770,7 @@ LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
 	logger_->log_info("MPS", "Mount ring on %s: slide %d", machine.c_str(), slide);
 	RingStation *station;
 	try {
-		station = static_cast<RingStation *>(mps_.at(machine).get());
+		station = dynamic_cast<RingStation *>(mps_.at(machine).get());
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
@@ -790,22 +790,22 @@ LLSFRefBox::clips_mps_move_conveyor(std::string machine,
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
-	MPSSensor goal;
+	Machine::MPSSensor goal;
 	if (goal_position == "INPUT") {
-		goal = INPUT;
+		goal = Machine::MPSSensor::INPUT;
 	} else if (goal_position == "MIDDLE") {
-		goal = MIDDLE;
+		goal = Machine::MPSSensor::MIDDLE;
 	} else if (goal_position == "OUTPUT") {
-		goal = OUTPUT;
+		goal = Machine::MPSSensor::OUTPUT;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor position %s", goal_position.c_str());
 		return;
 	}
-	ConveyorDirection direction;
+	Machine::ConveyorDirection direction;
 	if (conveyor_direction == "FORWARD") {
-		direction = FORWARD;
+		direction = Machine::ConveyorDirection::FORWARD;
 	} else if (conveyor_direction == "BACKWARD") {
-		direction = BACKWARD;
+		direction = Machine::ConveyorDirection::BACKWARD;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor direction %s", conveyor_direction.c_str());
 		return;
@@ -818,7 +818,7 @@ LLSFRefBox::clips_mps_cs_retrieve_cap(std::string machine)
 {
 	CapStation *station;
 	try {
-		station = static_cast<CapStation *>(mps_.at(machine).get());
+		station = dynamic_cast<CapStation *>(mps_.at(machine).get());
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
@@ -831,7 +831,7 @@ LLSFRefBox::clips_mps_cs_mount_cap(std::string machine)
 {
 	CapStation *station;
 	try {
-		station = static_cast<CapStation *>(mps_.at(machine).get());
+		station = dynamic_cast<CapStation *>(mps_.at(machine).get());
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
@@ -849,7 +849,7 @@ LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
 	}
 	CapStation *station;
 	try {
-		station = static_cast<CapStation *>(mps_.at(machine).get());
+		station = dynamic_cast<CapStation *>(mps_.at(machine).get());
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
