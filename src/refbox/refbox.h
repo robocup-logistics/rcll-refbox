@@ -43,7 +43,7 @@
 #include <core/threading/thread_list.h>
 #include <google/protobuf/message.h>
 #include <logging/logger.h>
-#include <mps_comm/machine.h>
+#include <mps_comm/opcua/machine.h>
 #include <protobuf_comm/server.h>
 #include <utils/llsf/machines.h>
 
