@@ -23,6 +23,7 @@
 
 #include "model/Environment.h"
 #include "model/Fact.h"
+#include "model/Machine.h"
 
 #include <core/threading/thread.h>
 #include <core/utils/lockptr.h>
@@ -54,10 +55,24 @@ public:
 	virtual void finalize();
 
 private:
+	typedef std::map<std::string, CLIPS::Fact::pointer> MachineMap;
+
+	struct FactCollection
+	{
+		std::string                                 name;
+		std::map<std::string, CLIPS::Fact::pointer> FactMap;
+	};
+
+private:
 	WebviewRestArray<Environment> cb_list_environments();
+	WebviewRestArray<Machine>     cb_list_machines();
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
 
 	Fact gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
+
+	Machine gen_machine(CLIPS::Fact::pointer &fact);
+
+	void gen_machines_precompute(MachineMap &machines);
 
 private:
 	fawkes::WebviewRestApiManager *webview_rest_api_manager_;
@@ -65,7 +80,6 @@ private:
 	CLIPS::Environment *           env_;
 
 	fawkes::Mutex &env_mutex_;
-
-	Logger *logger_;
+	Logger *       logger_;
 };
 } //end namespace llsfrb
