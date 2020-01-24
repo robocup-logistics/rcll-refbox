@@ -29,5 +29,6 @@ protobuf_clips: protobuf_comm
 mongodb_log: logging
 clips_rest_api: webview
 rest_api: webview clips_rest_api
+webview: core logging utils
 
 include $(BUILDSYSDIR)/base.mk
