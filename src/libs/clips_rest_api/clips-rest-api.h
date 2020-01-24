@@ -57,7 +57,7 @@ private:
 	WebviewRestArray<Environment> cb_list_environments();
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
 
-	Fact gen_fact(CLIPS::Environment *clips, CLIPS::Fact::pointer &fact, bool formatted);
+	Fact gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
 
 private:
 	fawkes::WebviewRestApiManager *webview_rest_api_manager_;

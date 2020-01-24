@@ -54,7 +54,7 @@ ClipsRestApi::init()
 {
 	rest_api_ = new WebviewRestApi("clips", logger_);
 	rest_api_->add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
-	                                               "/{env}/facts",
+	                                               "/facts",
 	                                               std::bind(&ClipsRestApi::cb_get_facts,
 	                                                         this,
 	                                                         std::placeholders::_1));
@@ -133,7 +133,7 @@ get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
 }
 
 Fact
-ClipsRestApi::gen_fact(CLIPS::Environment *clips, CLIPS::Fact::pointer &fact, bool formatted)
+ClipsRestApi::gen_fact(CLIPS::Fact::pointer &fact, bool formatted)
 {
 	Fact retf;
 	retf.set_kind("Fact");
@@ -185,21 +185,11 @@ ClipsRestApi::cb_get_facts(WebviewRestParams &params)
 
 	WebviewRestArray<Fact> rv;
 
-	//MutexLocker                                        lock(clips_env_mgr.objmutex_ptr());
-	//std::map<std::string, LockPtr<CLIPS::Environment>> envs = clips_env_mgr->environments();
-	//if (envs.find(params.path_arg("env")) == envs.end()) {
-	//	throw WebviewRestException(WebReply::HTTP_NOT_FOUND,
-	//	                           "Environment '%s' is unknown",
-	//	                           params.path_arg("env").c_str());
-	//}
-
-	//auto        clips = envs[params.path_arg("env")];
-	MutexLocker lock(&env_mutex_);
-
+	MutexLocker          lock(&env_mutex_);
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
 		CLIPS::Template::pointer tmpl = fact->get_template();
-		rv.push_back(std::move(gen_fact(env_, fact, formatted)));
+		rv.push_back(std::move(gen_fact(fact, formatted)));
 		fact = fact->next();
 	}
 
@@ -211,16 +201,11 @@ ClipsRestApi::cb_list_environments()
 {
 	WebviewRestArray<Environment> rv;
 
-	//MutexLocker                                        lock(clips_env_mgr.objmutex_ptr());
-	//std::map<std::string, LockPtr<CLIPS::Environment>> envs = clips_env_mgr->environments();
-
-	//for (const auto &e : envs) {
 	Environment env;
 	env.set_kind("Environment");
 	env.set_apiVersion(Environment::api_version());
-	env.set_name("CLIPS Envirnment");
+	env.set_name("Refbox Game CLIPS Environment");
 	rv.push_back(std::move(env));
-	//}
 
 	return rv;
 }
