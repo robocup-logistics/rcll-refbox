@@ -85,36 +85,36 @@ ClipsRestApi::loop()
  * @param slot_name name of field to retrieve
  * @return template-specific return value
  */
-// template <typename T>
-// T get_value(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
-// {
-// 	CLIPS::Values v = fact->slot_value(slot_name);
-// 	if (v.empty()) {
-// 		throw Exception("No value for slot '%s'", slot_name.c_str());
-// 	}
-// 	if (v[0].type() == CLIPS::TYPE_SYMBOL && v[0].as_string() == "nil") {
-// 		return T();
-// 	}
-// 	return v[0];
-// }
+template <typename T>
+T get_value(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
+{
+	CLIPS::Values v = fact->slot_value(slot_name);
+	if (v.empty()) {
+	    throw Exception("No value for slot '%s'", slot_name.c_str());
+	}
+	if (v[0].type() == CLIPS::TYPE_SYMBOL && v[0].as_string() == "nil") {
+	    return T();
+	}
+	return v[0];
+}
 
 /** Specialization for bool.
  * @param fact pointer to CLIPS fact
  * @param slot_name name of field to retrieve
  * @return boolean value
  */
-// template <>
-// bool get_value(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
-// {
-// 	CLIPS::Values v = fact->slot_value(slot_name);
-// 	if (v.empty()) {
-// 		throw Exception("No value for slot '%s'", slot_name.c_str());
-// 	}
-// 	if (v[0].type() != CLIPS::TYPE_SYMBOL) {
-// 		throw Exception("Value for slot '%s' is not a boolean", slot_name.c_str());
-// 	}
-// 	return (v[0].as_string() == "TRUE");
-// }
+template <>
+bool get_value(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
+{
+    CLIPS::Values v = fact->slot_value(slot_name);
+    if (v.empty()) {
+	   throw Exception("No value for slot '%s'", slot_name.c_str());
+    }
+    if (v[0].type() != CLIPS::TYPE_SYMBOL) {
+	   throw Exception("Value for slot '%s' is not a boolean", slot_name.c_str());
+    }
+    return (v[0].as_string() == "TRUE");
+}
 
 /** Get value array.
  * This is not a template because the overly verbose operator API
@@ -124,16 +124,19 @@ ClipsRestApi::loop()
  * @param slot_name name of field to retrieve
  * @return vector of strings from multislot
  */
-// static std::vector<std::string>
-// get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
-// {
-// 	CLIPS::Values v = fact->slot_value(slot_name);
-// 	std::vector<std::string> rv(v.size());
-// 	for (size_t i = 0; i < v.size(); ++i) {
-// 		rv[i] = static_cast<std::string&>(v[i]);
-// 	}
-// 	return rv;
-// }
+static std::vector<std::string>
+get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
+{
+    CLIPS::Values v = fact->slot_value(slot_name);
+    std::vector<std::string> rv(v.size());
+    for (size_t i = 0; i < v.size(); ++i) {
+	   rv[i] = static_cast<std::string&>(v[i]);
+    }
+    return rv;
+}
+
+
+
 
 Fact
 ClipsRestApi::gen_fact(CLIPS::Environment *clips,
