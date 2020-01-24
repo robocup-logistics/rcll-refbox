@@ -65,6 +65,8 @@ ClipsRestApi::init()
 	                                                         std::placeholders::_1));
 	rest_api_->add_handler<WebviewRestArray<Environment>>(
 	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
+	rest_api_->add_handler<WebviewRestArray<Machine>>(
+	  WebRequest::METHOD_GET, "/machines", std::bind(&ClipsRestApi::cb_list_machines, this));
 	webview_rest_api_manager_->register_api(rest_api_);
 }
 
@@ -156,9 +158,9 @@ ClipsRestApi::gen_fact(CLIPS::Fact::pointer &       fact,
 	if (formatted) {
 		char tmp[16384];
 		tmp[16383] = 0;
-		OpenStringDestination(clips->cobj(), (char *)"ProcPPForm", tmp, 16383);
-		PrintFact(clips->cobj(), (char *)"ProcPPForm", (struct fact *)fact->cobj(), FALSE, FALSE);
-		CloseStringDestination(clips->cobj(), (char *)"ProcPPForm");
+		OpenStringDestination(env_->cobj(), (char *)"ProcPPForm", tmp, 16383);
+		PrintFact(env_->cobj(), (char *)"ProcPPForm", (struct fact *)fact->cobj(), FALSE, FALSE);
+		CloseStringDestination(env_->cobj(), (char *)"ProcPPForm");
 		retf.set_formatted(tmp);
 	} else {
 		std::vector<std::string> slots = fact->slot_names();
@@ -184,6 +186,8 @@ ClipsRestApi::gen_fact(CLIPS::Fact::pointer &       fact,
 
 	return retf;
 }
+
+
 
 WebviewRestArray<Fact>
 ClipsRestApi::cb_get_facts(WebviewRestParams &params)
@@ -217,4 +221,53 @@ ClipsRestApi::cb_list_environments()
 	return rv;
 }
 
+Machine
+ClipsRestApi::gen_machine(CLIPS::Fact::pointer &fact)
+{
+	Machine m;
+	m.set_name(get_value<std::string>(fact, "name"));
+	m.set_team(get_value<std::string>(fact, "team"));
+	m.set_mtype(get_value<std::string>(fact, "mtype"));
+	m.set_actual_lights(get_values(fact, "actual-lights"));
+	m.set_state(get_value<std::string>(fact, "state"));
+	m.set_zone(get_value<std::string>(fact, "zone"));
+	m.set_rotation(get_value<int64_t>(fact, "rotation"));
+	m.set_bases_added(get_value<int64_t>(fact, "bases-added"));
+	m.set_bases_used(get_value<int64_t>(fact, "bases-used"));
+	m.set_bs_side(get_value<std::string>(fact, "bs-side"));
+	m.set_bs_color(get_value<std::string>(fact, "bs-color"));
+	m.set_ds_order(get_value<int64_t>(fact, "ds-order"));
+	m.set_rs_ring_color(get_value<std::string>(fact, "rs-ring-color"));
+	m.set_cs_operation(get_value<std::string>(fact, "cs-operation"));
+	m.set_cs_retrieved(get_value<bool>(fact, "cs-retrieved"));
+	return m;
 }
+
+void
+ClipsRestApi::gen_machines_precompute(MachineMap & machines)
+{
+    CLIPS::Fact::pointer fact =  env_->get_facts();
+    while(fact) {
+	   CLIPS::Template::pointer tmpl = fact->get_template();
+	   if(tmpl->name() == "machine")
+	   machines[get_value<std::string>(fact,  "name")] = fact;
+	   fact = fact->next();
+    }
+}
+
+WebviewRestArray<Machine>
+ClipsRestApi::cb_list_machines()
+{
+     MutexLocker lock(&env_mutex_);
+	WebviewRestArray<Machine> rv;
+
+	std::map<std::string, CLIPS::Fact::pointer> machines;
+	gen_machines_precompute(machines);
+
+	for (auto &mi : machines )
+	rv.push_back(std::move(gen_machine(mi.second)));
+	return rv;
+}
+
+
+} //end namespace llsfrb
