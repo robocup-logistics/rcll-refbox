@@ -52,7 +52,9 @@ ClipsRestApi::~ClipsRestApi()
 void
 ClipsRestApi::init()
 {
+	logger_->log_info("ClipsRestApi", "Initializing thread");
 	rest_api_ = new WebviewRestApi("clips", logger_);
+
 	rest_api_->add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
 	                                               "/facts",
 	                                               std::bind(&ClipsRestApi::cb_get_facts,

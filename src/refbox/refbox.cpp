@@ -373,7 +373,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		logger_->log_info("RefBox", " RESTapi server started ");
 	} catch (Exception &e) {
 		logger_->log_info("RefBox", "Could not start RESTapi");
+		logger_->log_error("Exception: ", e.what());
 	}
+	logger_->log_info("RefBox", "Could not start rest-api");
 }
 
 /** Destructor. */
