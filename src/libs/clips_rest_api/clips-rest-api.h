@@ -23,6 +23,7 @@
 
 #include "model/Environment.h"
 #include "model/Machine.h"
+#include "model/Order.h"
 #include "model/Fact.h"
 
 #include <clipsmm.h>
@@ -58,23 +59,28 @@ public:
 
 private:
 	typedef std::map<std::string, CLIPS::Fact::pointer> MachineMap;
+	typedef std::map<int64_t, CLIPS::Fact::pointer> OrderMap;
 
-	struct FactCollection{
-	  std::string name;
-	  std::map<std::string, CLIPS::Fact::pointer> FactMap;
+	struct FactMap{
+	  std::string temp_name;
+	  std::map<std::string, CLIPS::Fact::pointer> map;
 	};
 
 private:
 	WebviewRestArray<Environment> cb_list_environments();
 	WebviewRestArray<Machine>     cb_list_machines();
+	WebviewRestArray<Order>       cb_list_orders();
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
 
 	Fact
 	gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
 	Machine
 	gen_machine(CLIPS::Fact::pointer &fact);
+	Order
+	gen_order(CLIPS::Fact::pointer &fact);
 
 	void gen_machines_precompute(MachineMap & machines);
+	void gen_orders_precompute(OrderMap & orders);
 
 
 private:

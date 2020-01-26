@@ -67,7 +67,11 @@ ClipsRestApi::init()
 	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
 	rest_api_->add_handler<WebviewRestArray<Machine>>(
 	  WebRequest::METHOD_GET, "/machines", std::bind(&ClipsRestApi::cb_list_machines, this));
-	webview_rest_api_manager_->register_api(rest_api_);
+	rest_api_->add_handler<WebviewRestArray<Order>>(
+	  WebRequest::METHOD_GET, "/orders", std::bind(&ClipsRestApi::cb_list_orders, this));
+
+   webview_rest_api_manager_->register_api(rest_api_);
+
 }
 
 void
@@ -266,6 +270,52 @@ ClipsRestApi::cb_list_machines()
 
 	for (auto &mi : machines )
 	rv.push_back(std::move(gen_machine(mi.second)));
+	return rv;
+}
+
+Order
+ClipsRestApi::gen_order(CLIPS::Fact::pointer &fact)
+{
+	Order o;
+	o.set_kind("Order");
+	o.set_apiVersion(Environment::api_version());
+	o.set_id(get_value<int64_t>(fact, "id"));
+	o.set_complexity(get_value<std::string>(fact, "complexity"));
+	o.set_competitive(get_value<bool>(fact, "competitive"));
+	o.set_base_color(get_value<std::string>(fact, "base-color"));
+	o.set_cap_color(get_value<std::string>(fact, "cap-color"));
+	o.set_ring_colors(get_values(fact, "ring-colors"));
+	o.set_quantity_requested(get_value<int64_t>(fact, "quantity-requested"));
+	o.set_quantity_delivered(get_values(fact, "quantity-delivered"));
+	o.set_delivery_period(get_values(fact, "delivery-period"));
+	o.set_delivery_gate(get_value<int64_t>(fact, "delivery-gate"));
+	o.set_active(get_value<bool>(fact, "active"));
+	return o;
+}
+
+void
+ClipsRestApi::gen_orders_precompute(OrderMap & orders)
+{
+    CLIPS::Fact::pointer fact =  env_->get_facts();
+    while(fact) {
+	   CLIPS::Template::pointer tmpl = fact->get_template();
+	   if(tmpl->name() == "order")
+	   orders[get_value<int64_t>(fact,  "id")] = fact;
+	   fact = fact->next();
+    }
+}
+
+WebviewRestArray<Order>
+ClipsRestApi::cb_list_orders()
+{
+     MutexLocker lock(&env_mutex_);
+	WebviewRestArray<Order> rv;
+
+	std::map<int64_t, CLIPS::Fact::pointer> orders;
+	gen_orders_precompute(orders);
+
+	for (auto &oi : orders )
+	rv.push_back(std::move(gen_order(oi.second)));
 	return rv;
 }
 
