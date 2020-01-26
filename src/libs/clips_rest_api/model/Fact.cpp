@@ -130,7 +130,7 @@ Fact::from_json_value(const rapidjson::Value &d)
 	if (d.HasMember("slots") && d["slots"].IsArray()) {
 		const rapidjson::Value &a = d["slots"];
 		slots_                    = std::vector<std::shared_ptr<SlotValue>>{};
-		;
+
 		slots_.reserve(a.Size());
 		for (auto &v : a.GetArray()) {
 			std::shared_ptr<SlotValue> nv{new SlotValue()};
@@ -144,21 +144,25 @@ void
 Fact::validate(bool subcall) const
 {
 	std::vector<std::string> missing;
-	if (!kind_)
+	if (!kind_) {
 		missing.push_back("kind");
-	if (!apiVersion_)
+	}
+	if (!apiVersion_) {
 		missing.push_back("apiVersion");
-	if (!index_)
+	}
+	if (!index_) {
 		missing.push_back("index");
-	if (!template_name_)
+	}
+	if (!template_name_) {
 		missing.push_back("template_name");
+	}
 
 	if (!missing.empty()) {
 		if (subcall) {
 			throw missing;
 		} else {
 			std::ostringstream s;
-			s << "Fact is missing field" << ((missing.size() > 0) ? "s" : "") << ": ";
+			s << "Fact  is missing field" << ((missing.size() > 0) ? "s" : "") << ": ";
 			for (std::vector<std::string>::size_type i = 0; i < missing.size(); ++i) {
 				s << missing[i];
 				if (i < (missing.size() - 1)) {

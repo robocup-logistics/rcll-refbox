@@ -26,7 +26,6 @@
 
 /** Fact representation for JSON transfer. */
 class Fact
-
 {
 public:
 	/** Constructor. */

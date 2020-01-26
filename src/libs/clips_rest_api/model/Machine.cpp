@@ -261,12 +261,15 @@ Machine::validate(bool subcall) const
 		if (subcall) {
 			throw missing;
 		} else {
-			std::string s =
-			  std::accumulate(std::next(missing.begin()),
-			                  missing.end(),
-			                  missing.front(),
-			                  [](std::string &s, const std::string &n) { return s + ", " + n; });
-			throw std::runtime_error("Machine is missing " + s);
+			std::ostringstream s;
+			s << "Machine  is missing field" << ((missing.size() > 0) ? "s" : "") << ": ";
+			for (std::vector<std::string>::size_type i = 0; i < missing.size(); ++i) {
+				s << missing[i];
+				if (i < (missing.size() - 1)) {
+					s << ", ";
+				}
+			}
+			throw std::runtime_error(s.str());
 		}
 	}
 }

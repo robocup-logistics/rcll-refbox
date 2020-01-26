@@ -114,7 +114,7 @@ SlotValue::from_json_value(const rapidjson::Value &d)
 	if (d.HasMember("values") && d["values"].IsArray()) {
 		const rapidjson::Value &a = d["values"];
 		values_                   = std::vector<std::string>{};
-		;
+
 		values_.reserve(a.Size());
 		for (auto &v : a.GetArray()) {
 			values_.push_back(v.GetString());
@@ -126,17 +126,19 @@ void
 SlotValue::validate(bool subcall) const
 {
 	std::vector<std::string> missing;
-	if (!name_)
+	if (!name_) {
 		missing.push_back("name");
-	if (!is_multifield_)
+	}
+	if (!is_multifield_) {
 		missing.push_back("is-multifield");
+	}
 
 	if (!missing.empty()) {
 		if (subcall) {
 			throw missing;
 		} else {
 			std::ostringstream s;
-			s << "SlotValue is missing field" << ((missing.size() > 0) ? "s" : "") << ": ";
+			s << "SlotValue  is missing field" << ((missing.size() > 0) ? "s" : "") << ": ";
 			for (std::vector<std::string>::size_type i = 0; i < missing.size(); ++i) {
 				s << missing[i];
 				if (i < (missing.size() - 1)) {
