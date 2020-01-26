@@ -108,6 +108,32 @@ paths:
                 items:
                   $ref: '#/components/schemas/Machine'
 
+
+  /orders/:
+    get:
+      tags:
+      - public
+      summary: list all orders
+      operationId: list_orders
+      description: |
+        List all order facts.
+      parameters:
+        - name: pretty
+          in: query
+          description: Request pretty printed reply.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: list orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+
 components:
   schemas:
     SlotValue:
@@ -246,6 +272,69 @@ components:
         cs-retrieved:
            type: boolean
 
+
+    Order:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - id
+        - complexity
+        - competitive
+        - base-color
+        - ring-colors
+        - cap-color
+        - quantity-requested
+        - quantity-delivered
+        - delivery-period
+        - delivery-gate
+        - active
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        id:
+          type: integer
+          format: int64
+        complexity:
+          type: string
+          format: symbol
+          enum: ["C0", "C1", "C2" , "C3"]
+        competitive:
+          type: boolean
+        base-color:
+          type: string
+          format: symbol
+          enum: ["BASE_SILVER" , "BASE_BLACK", "BASE_RED"]
+        ring-colors:
+          type: array
+          items:
+            type: string
+            formate: symbol
+            enum: ["RING_BLUE", "RING_GREEN", "RING_YELLOW", "RING_ORANGE"]
+        cap-color:
+          type: string
+          format: symbol
+          enum: ["CAP_GREY" , "CAP_BLACK"]
+        quantity-requested:
+           type: integer
+           format: int64
+        quantity-delivered:
+          type: array
+          items:
+            type: string
+            format: symbol
+        delivery-period:
+          type: array
+          items:
+            type: string
+            format: symbol
+        delivery-gate:
+          type: integer
+          format: int64
+        active:
+          type: boolean
 
 
 
