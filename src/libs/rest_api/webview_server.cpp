@@ -98,6 +98,9 @@ WebviewServer::~WebviewServer()
 void
 WebviewServer::init()
 {
+	logger_->log_info("WebviewServer", "Initializing thread");
+
+
 	cfg_port_ = config_->get_uint("/webview/port");
 
 	WebReply::set_caching_default(config_->get_bool("/webview/client_side_caching"));
@@ -284,9 +287,14 @@ WebviewServer::init()
 	service_publisher_->publish_service(webview_service_);
 	service_browser_->watch_service("_http._tcp", service_browse_handler_);
 
-	//Clips Rest api
-	clips_rest_api_->init();
-	clips_rest_api_->start();
+	try{
+	  //Clips Rest api
+	  clips_rest_api_->init();
+	  clips_rest_api_->start();
+	} catch (Exception &e) {
+	    throw;
+	}
+
 }
 
 void
