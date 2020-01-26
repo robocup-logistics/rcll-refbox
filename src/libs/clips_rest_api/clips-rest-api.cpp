@@ -55,18 +55,20 @@ ClipsRestApi::init()
 	logger_->log_info("ClipsRestApi", "Initializing thread");
 	rest_api_ = new WebviewRestApi("clips", logger_);
 
+	rest_api_->add_handler<WebviewRestArray<Environment>>(
+	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
 	rest_api_->add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
 	                                               "/facts",
 	                                               std::bind(&ClipsRestApi::cb_get_facts,
 	                                                         this,
 	                                                         std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<Environment>>(
-	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
 	rest_api_->add_handler<WebviewRestArray<Machine>>(
-	  WebRequest::METHOD_GET, "/machines", std::bind(&ClipsRestApi::cb_list_machines, this));
+	  WebRequest::METHOD_GET, "/machines", std::bind(&ClipsRestApi::cb_get_machines, this));
 	rest_api_->add_handler<WebviewRestArray<Order>>(WebRequest::METHOD_GET,
 	                                                "/orders",
-	                                                std::bind(&ClipsRestApi::cb_list_orders, this));
+	                                                std::bind(&ClipsRestApi::cb_get_orders, this));
+
+	webview_rest_api_manager_->register_api(rest_api_);
 
 	webview_rest_api_manager_->register_api(rest_api_);
 }
@@ -147,6 +149,19 @@ get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
 	return rv;
 }
 
+template <typename T>
+void
+ClipsRestApi::gen_precompute_factmap(FactMap<T> &fm)
+{
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		CLIPS::Template::pointer tmpl = fact->get_template();
+		if (tmpl->name() == fm.template_name)
+			fm.fact_by_id[get_value<T>(fact, fm.id_slot_name)] = fact;
+		fact = fact->next();
+	}
+}
+
 Fact
 ClipsRestApi::gen_fact(CLIPS::Fact::pointer &fact, bool formatted)
 {
@@ -193,38 +208,6 @@ ClipsRestApi::gen_fact(CLIPS::Fact::pointer &fact, bool formatted)
 	return retf;
 }
 
-WebviewRestArray<Fact>
-ClipsRestApi::cb_get_facts(WebviewRestParams &params)
-{
-	bool formatted = (params.query_arg("formatted") == "true");
-
-	WebviewRestArray<Fact> rv;
-
-	MutexLocker          lock(&env_mutex_);
-	CLIPS::Fact::pointer fact = env_->get_facts();
-	while (fact) {
-		CLIPS::Template::pointer tmpl = fact->get_template();
-		rv.push_back(std::move(gen_fact(fact, formatted)));
-		fact = fact->next();
-	}
-
-	return rv;
-}
-
-WebviewRestArray<Environment>
-ClipsRestApi::cb_list_environments()
-{
-	WebviewRestArray<Environment> rv;
-
-	Environment env;
-	env.set_kind("Environment");
-	env.set_apiVersion(Environment::api_version());
-	env.set_name("Refbox Game CLIPS Environment");
-	rv.push_back(std::move(env));
-
-	return rv;
-}
-
 Machine
 ClipsRestApi::gen_machine(CLIPS::Fact::pointer &fact)
 {
@@ -247,32 +230,6 @@ ClipsRestApi::gen_machine(CLIPS::Fact::pointer &fact)
 	return m;
 }
 
-void
-ClipsRestApi::gen_machines_precompute(MachineMap &machines)
-{
-	CLIPS::Fact::pointer fact = env_->get_facts();
-	while (fact) {
-		CLIPS::Template::pointer tmpl = fact->get_template();
-		if (tmpl->name() == "machine")
-			machines[get_value<std::string>(fact, "name")] = fact;
-		fact = fact->next();
-	}
-}
-
-WebviewRestArray<Machine>
-ClipsRestApi::cb_list_machines()
-{
-	MutexLocker               lock(&env_mutex_);
-	WebviewRestArray<Machine> rv;
-
-	std::map<std::string, CLIPS::Fact::pointer> machines;
-	gen_machines_precompute(machines);
-
-	for (auto &mi : machines)
-		rv.push_back(std::move(gen_machine(mi.second)));
-	return rv;
-}
-
 Order
 ClipsRestApi::gen_order(CLIPS::Fact::pointer &fact)
 {
@@ -293,28 +250,66 @@ ClipsRestApi::gen_order(CLIPS::Fact::pointer &fact)
 	return o;
 }
 
-void
-ClipsRestApi::gen_orders_precompute(OrderMap &orders)
+WebviewRestArray<Environment>
+ClipsRestApi::cb_list_environments()
 {
+	WebviewRestArray<Environment> rv;
+
+	Environment env;
+	env.set_kind("Environment");
+	env.set_apiVersion(Environment::api_version());
+	env.set_name("Refbox Game CLIPS Environment");
+	rv.push_back(std::move(env));
+
+	return rv;
+}
+
+WebviewRestArray<Fact>
+ClipsRestApi::cb_get_facts(WebviewRestParams &params)
+{
+	bool formatted = (params.query_arg("formatted") == "true");
+
+	WebviewRestArray<Fact> rv;
+
+	MutexLocker          lock(&env_mutex_);
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
 		CLIPS::Template::pointer tmpl = fact->get_template();
-		if (tmpl->name() == "order")
-			orders[get_value<int64_t>(fact, "id")] = fact;
+		rv.push_back(std::move(gen_fact(fact, formatted)));
 		fact = fact->next();
 	}
+
+	return rv;
+}
+
+WebviewRestArray<Machine>
+ClipsRestApi::cb_get_machines()
+{
+	MutexLocker               lock(&env_mutex_);
+	WebviewRestArray<Machine> rv;
+
+	FactMap<std::string> machines;
+	machines.template_name = "machine";
+	machines.id_slot_name  = "name";
+	gen_precompute_factmap(machines);
+
+	for (auto &mi : machines.fact_by_id)
+		rv.push_back(std::move(gen_machine(mi.second)));
+	return rv;
 }
 
 WebviewRestArray<Order>
-ClipsRestApi::cb_list_orders()
+ClipsRestApi::cb_get_orders()
 {
 	MutexLocker             lock(&env_mutex_);
 	WebviewRestArray<Order> rv;
 
-	std::map<int64_t, CLIPS::Fact::pointer> orders;
-	gen_orders_precompute(orders);
+	FactMap<int64_t> orders;
+	orders.template_name = "order";
+	orders.id_slot_name  = "id";
+	gen_precompute_factmap(orders);
 
-	for (auto &oi : orders)
+	for (auto &oi : orders.fact_by_id)
 		rv.push_back(std::move(gen_order(oi.second)));
 	return rv;
 }

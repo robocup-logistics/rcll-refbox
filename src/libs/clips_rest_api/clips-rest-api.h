@@ -56,28 +56,26 @@ public:
 	virtual void finalize();
 
 private:
-	typedef std::map<std::string, CLIPS::Fact::pointer> MachineMap;
-	typedef std::map<int64_t, CLIPS::Fact::pointer>     OrderMap;
-
+	template <typename T>
 	struct FactMap
 	{
-		std::string                                 temp_name;
-		std::map<std::string, CLIPS::Fact::pointer> map;
+		std::string                       template_name;
+		std::string                       id_slot_name;
+		std::map<T, CLIPS::Fact::pointer> fact_by_id;
 	};
 
 private:
+	template <typename T>
+	void gen_precompute_factmap(FactMap<T> &fm);
+
 	WebviewRestArray<Environment> cb_list_environments();
-	WebviewRestArray<Machine>     cb_list_machines();
-	WebviewRestArray<Order>       cb_list_orders();
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
+	WebviewRestArray<Machine>     cb_get_machines();
+	WebviewRestArray<Order>       cb_get_orders();
 
 	Fact    gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
 	Machine gen_machine(CLIPS::Fact::pointer &fact);
 	Order   gen_order(CLIPS::Fact::pointer &fact);
-
-	void gen_machines_precompute(MachineMap &machines);
-	void gen_orders_precompute(OrderMap &orders);
-	void gen_machines_precompute(MachineMap &machines);
 
 private:
 	fawkes::WebviewRestApiManager *webview_rest_api_manager_;
