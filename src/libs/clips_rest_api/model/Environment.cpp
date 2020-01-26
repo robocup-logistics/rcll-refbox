@@ -109,19 +109,22 @@ void
 Environment::validate(bool subcall) const
 {
 	std::vector<std::string> missing;
-	if (!kind_)
+	if (!kind_) {
 		missing.push_back("kind");
-	if (!apiVersion_)
+	}
+	if (!apiVersion_) {
 		missing.push_back("apiVersion");
-	if (!name_)
+	}
+	if (!name_) {
 		missing.push_back("name");
+	}
 
 	if (!missing.empty()) {
 		if (subcall) {
 			throw missing;
 		} else {
 			std::ostringstream s;
-			s << "Environment is missing field" << ((missing.size() > 0) ? "s" : "") << ": ";
+			s << "Environment  is missing field" << ((missing.size() > 0) ? "s" : "") << ": ";
 			for (std::vector<std::string>::size_type i = 0; i < missing.size(); ++i) {
 				s << missing[i];
 				if (i < (missing.size() - 1)) {
