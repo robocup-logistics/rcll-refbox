@@ -272,6 +272,72 @@ components:
         cs-retrieved:
            type: boolean
 
+    Robot:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - number
+        - state
+        - team
+        - team-color
+        - name
+        - host
+        - port
+        - last-seen
+        - has-pose
+        - pose
+        - maintenance-start-time
+        - maintenance-cycles
+        - maintenance-warning-sent
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        number:
+          type: integer
+          format: int64
+        state:
+          type: string
+          format: symbol
+          enum: ["ACTIVE", "MAINTENANCE", "DISQUALIFIED"]
+        team:
+          type: string
+          format: symbol
+        team-color:
+          type: string
+          format: symbol
+          enum: ["CYAN" , "MAGENTA"]
+        name:
+          type: string
+          format: symbol
+        host:
+          type: string
+          format: symbol
+        port:
+          type: integer
+          format: int64
+        last-seen:
+          type: array
+          items:
+            type: string
+            formate: symbol
+        has-pose:
+          type: boolean
+        pose:
+          type: array
+          items:
+            type: string
+            format: symbol
+        maintenance-start-time:
+          type: number
+          format: float
+        maintenance-cycles:
+          type: integer
+          format: int64
+        maintenance-warning-sent:
+          type: boolean
 
     Order:
       type: object

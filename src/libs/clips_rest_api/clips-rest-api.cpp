@@ -85,6 +85,9 @@ ClipsRestApi::init()
 	rest_api_->add_handler<WebviewRestArray<Order>>(
 	  WebRequest::METHOD_GET, "/orders",
 	  std::bind(&ClipsRestApi::cb_get_orders,this, std::placeholders::_1));
+	rest_api_->add_handler<WebviewRestArray<Robot>>(
+	  WebRequest::METHOD_GET, "/robots",
+	  std::bind(&ClipsRestApi::cb_get_robots,this, std::placeholders::_1));
 
 
    webview_rest_api_manager_->register_api(rest_api_);
@@ -212,6 +215,7 @@ ClipsRestApi::gen_fact(CLIPS::Fact::pointer &       fact,
 	return retf;
 }
 
+
 Machine
 ClipsRestApi::gen_machine(CLIPS::Fact::pointer &fact)
 {
@@ -251,6 +255,28 @@ ClipsRestApi::gen_order(CLIPS::Fact::pointer &fact)
 	o.set_delivery_period(get_values(fact, "delivery-period"));
 	o.set_delivery_gate(get_value<int64_t>(fact, "delivery-gate"));
 	o.set_active(get_value<bool>(fact, "active"));
+	return o;
+}
+
+Robot
+ClipsRestApi::gen_robot(CLIPS::Fact::pointer &fact)
+{
+	Robot o;
+	o.set_kind("Robot");
+	o.set_apiVersion(Environment::api_version());
+	o.set_number(get_value<int64_t>(fact, "number"));
+	o.set_state(get_value<std::string>(fact, "state"));
+	o.set_team(get_value<std::string>(fact, "team"));
+	o.set_team_color(get_value<std::string>(fact, "team-color"));
+	o.set_name(get_value<std::string>(fact, "name"));
+	o.set_host(get_value<std::string>(fact, "host"));
+	o.set_port(get_value<int64_t>(fact, "port"));
+	o.set_last_seen(get_values(fact, "last-seen"));
+	o.set_has_pose(get_value<bool>(fact, "has-pose"));
+	o.set_pose(get_values(fact, "pose"));
+	o.set_maintenance_start_time(get_value<int64_t>(fact, "maintenance-start-time"));
+	o.set_maintenance_cycles(get_value<int64_t>(fact, "maintenance-cycles"));
+	o.set_maintenance_warning_sent(get_value<bool>(fact, "maintenance-warning-sent"));
 	return o;
 }
 
@@ -343,6 +369,21 @@ ClipsRestApi::cb_get_orders(WebviewRestParams &params)
 	while(fact) {
 	    if (match(fact, "order" , params))
 			rv.push_back(std::move(gen_order(fact)));
+		fact = fact->next();
+	}
+	return rv;
+}
+
+WebviewRestArray<Robot>
+ClipsRestApi::cb_get_robots(WebviewRestParams &params)
+{
+	MutexLocker lock(&env_mutex_);
+	WebviewRestArray<Robot> rv;
+
+	CLIPS::Fact::pointer fact =  env_->get_facts();
+	while(fact) {
+	    if (match(fact, "robot" , params))
+			rv.push_back(std::move(gen_robot(fact)));
 		fact = fact->next();
 	}
 	return rv;
