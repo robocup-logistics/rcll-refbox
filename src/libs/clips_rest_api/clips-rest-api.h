@@ -70,6 +70,8 @@ private:
 
 	WebviewRestArray<Environment> cb_list_environments();
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
+	WebviewRestArray<Fact>        cb_get_fact_tmpls(fawkes::WebviewRestParams &params);
+	WebviewRestArray<Fact>        cb_get_fact_tmpls_by_slots(fawkes::WebviewRestParams &params);
 	WebviewRestArray<Machine>     cb_get_machines();
 	WebviewRestArray<Order>       cb_get_orders();
 
