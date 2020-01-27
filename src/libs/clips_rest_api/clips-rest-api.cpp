@@ -88,6 +88,10 @@ ClipsRestApi::init()
 	rest_api_->add_handler<WebviewRestArray<Robot>>(
 	  WebRequest::METHOD_GET, "/robots",
 	  std::bind(&ClipsRestApi::cb_get_robots,this, std::placeholders::_1));
+	rest_api_->add_handler<WebviewRestArray<GameState>>(
+	  WebRequest::METHOD_GET, "/gamestate",
+	  std::bind(&ClipsRestApi::cb_get_game_state,this, std::placeholders::_1));
+
 
 
    webview_rest_api_manager_->register_api(rest_api_);
@@ -280,6 +284,21 @@ ClipsRestApi::gen_robot(CLIPS::Fact::pointer &fact)
 	return o;
 }
 
+GameState
+ClipsRestApi::gen_game_state(CLIPS::Fact::pointer &fact)
+{
+	GameState o;
+	o.set_kind("GameState");
+	o.set_apiVersion(Environment::api_version());
+	o.set_state(get_value<std::string>(fact, "state"));
+	o.set_phase(get_value<std::string>(fact, "phase"));
+	o.set_game_time(get_value<float>(fact, "game-time"));
+	o.set_points(get_values(fact, "points"));
+	o.set_teams(get_values(fact, "teams"));
+	o.set_over_time(get_value<bool>(fact, "over-time"));
+	return o;
+}
+
 bool
 ClipsRestApi::match(CLIPS::Fact::pointer  & fact,
 	   std::string                       tmpl_name,
@@ -389,6 +408,21 @@ ClipsRestApi::cb_get_robots(WebviewRestParams &params)
 	return rv;
 }
 
+WebviewRestArray<GameState>
+ClipsRestApi::cb_get_game_state(WebviewRestParams &params)
+{
+	MutexLocker lock(&env_mutex_);
+	WebviewRestArray<GameState> rv;
+
+	CLIPS::Fact::pointer fact =  env_->get_facts();
+	while(fact) {
+	    if (match(fact, "gamestate" , params))
+			rv.push_back(std::move(gen_game_state(fact)));
+		fact = fact->next();
+	}
+	return rv;
+}
+
 WebviewRestArray<Fact>
 ClipsRestApi::cb_get_facts_by_tmpl_and_slots(WebviewRestParams &params)
 {
@@ -398,6 +432,7 @@ ClipsRestApi::cb_get_facts_by_tmpl_and_slots(WebviewRestParams &params)
 
 	MutexLocker lock(&env_mutex_);
 	CLIPS::Fact::pointer fact = env_->get_facts();
+
 	while (fact) {
 	    if (match(fact, params.path_arg("tmpl-name") , params))
 			rv.push_back(std::move(gen_fact(fact, formatted)));
