@@ -91,10 +91,15 @@ ClipsRestApi::init()
 	                                                          this,
 	                                                          std::placeholders::_1));
 	rest_api_->add_handler<WebviewRestArray<GameState>>(WebRequest::METHOD_GET,
-	                                                    "/gamestate",
+	                                                    "/game-state",
 	                                                    std::bind(&ClipsRestApi::cb_get_game_state,
 	                                                              this,
 	                                                              std::placeholders::_1));
+	rest_api_->add_handler<WebviewRestArray<RingSpec>>(WebRequest::METHOD_GET,
+	                                                   "/ring-spec",
+	                                                   std::bind(&ClipsRestApi::cb_get_ring_spec,
+	                                                             this,
+	                                                             std::placeholders::_1));
 
 	webview_rest_api_manager_->register_api(rest_api_);
 }
@@ -300,6 +305,17 @@ ClipsRestApi::gen_game_state(CLIPS::Fact::pointer &fact)
 	return o;
 }
 
+RingSpec
+ClipsRestApi::gen_ring_spec(CLIPS::Fact::pointer &fact)
+{
+	RingSpec o;
+	o.set_kind("RingSpec");
+	o.set_apiVersion(Environment::api_version());
+	o.set_color(get_value<std::string>(fact, "color"));
+	o.set_req_bases(get_value<int64_t>(fact, "req-bases"));
+	return o;
+}
+
 bool
 ClipsRestApi::match(CLIPS::Fact::pointer &fact, std::string tmpl_name, WebviewRestParams &params)
 
@@ -416,6 +432,21 @@ ClipsRestApi::cb_get_game_state(WebviewRestParams &params)
 	while (fact) {
 		if (match(fact, "gamestate", params))
 			rv.push_back(std::move(gen_game_state(fact)));
+		fact = fact->next();
+	}
+	return rv;
+}
+
+WebviewRestArray<RingSpec>
+ClipsRestApi::cb_get_ring_spec(WebviewRestParams &params)
+{
+	MutexLocker                lock(&env_mutex_);
+	WebviewRestArray<RingSpec> rv;
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "ring-spec", params))
+			rv.push_back(std::move(gen_ring_spec(fact)));
 		fact = fact->next();
 	}
 	return rv;

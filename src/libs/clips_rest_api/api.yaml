@@ -402,6 +402,25 @@ components:
         active:
           type: boolean
 
+    RingSpec:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - color
+        - req-bases
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        color:
+          type: string
+          format: symbol
+          enum: ["RING_BLUE" , "RING_GREEN", "RING_YELLOW", "RING_ORANGE"]
+        req-bases:
+          type: integer
+          format: int64
 
     GameState:
       type: object
