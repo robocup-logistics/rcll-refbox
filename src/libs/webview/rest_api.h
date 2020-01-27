@@ -196,6 +196,18 @@ public:
 		pretty_json_ = pretty;
 	}
 
+	std::map<std::string, std::string>
+	get_path_args()
+	{
+		return path_args_;
+	}
+
+	std::map<std::string, std::string>
+	get_query_args()
+	{
+		return query_args_;
+	}
+
 private:
 	void
 	set_path_args(std::map<std::string, std::string> &&args)
