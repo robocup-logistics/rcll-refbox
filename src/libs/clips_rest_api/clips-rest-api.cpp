@@ -356,15 +356,18 @@ ClipsRestApi::cb_get_fact_tmpls_by_slots(WebviewRestParams &params)
 			bool                     match = true;
 			std::vector<std::string> slots = fact->slot_names();
 			for (auto &si : params.get_query_args()) {
-				if (std::find(slots.begin(), slots.end(), si.first) != slots.end()) {
-					logger_->log_warn("ClipsRestApi",
-					                  "No slot named %s for template %s",
-					                  si.first,
-					                  tmpl->name());
-					match = false;
+				if (std::find(slots.begin(), slots.end(), si.first) == slots.end()) {
+					throw Exception("No slot named %s for template %s",
+					                si.first.c_str(),
+					                tmpl->name().c_str());
 				} else {
 					std::vector<std::string> v = get_values(fact, si.first);
-					if (v[0] != si.second) // for now only single values are allowed as param
+					// for now only single values are allowed as param
+					if (v.size() > 1 || v.size() < 0)
+						throw Exception("Slot %s for template %s is multifield or has no value",
+						                si.first.c_str(),
+						                tmpl->name().c_str());
+					if (v[0] != si.second)
 						match = false;
 				}
 			}
