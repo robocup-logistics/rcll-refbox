@@ -22,7 +22,7 @@
 #pragma once
 
 #include "model/Environment.h"
-#include "model/Fact.h"
+#include "model/GameState.h"
 #include "model/Machine.h"
 #include "model/Order.h"
 #include "model/Robot.h"
@@ -63,13 +63,15 @@ private:
 	WebviewRestArray<Machine>     cb_get_machines(fawkes::WebviewRestParams &params);
 	WebviewRestArray<Order>       cb_get_orders(fawkes::WebviewRestParams &params);
 	WebviewRestArray<Robot>       cb_get_robots(fawkes::WebviewRestParams &params);
+	WebviewRestArray<GameState>   cb_get_game_state(fawkes::WebviewRestParams &params);
 	template <typename T>
 	WebviewRestArray<T> cb_get_tmpl(fawkes::WebviewRestParams &params, std::string tmpl_name);
 
-	Fact    gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
-	Machine gen_machine(CLIPS::Fact::pointer &fact);
-	Order   gen_order(CLIPS::Fact::pointer &fact);
-	Robot   gen_robot(CLIPS::Fact::pointer &fact);
+	Fact      gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
+	Machine   gen_machine(CLIPS::Fact::pointer &fact);
+	Order     gen_order(CLIPS::Fact::pointer &fact);
+	Robot     gen_robot(CLIPS::Fact::pointer &fact);
+	GameState gen_game_state(CLIPS::Fact::pointer &fact);
 
 	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name, fawkes::WebviewRestParams &params);
 

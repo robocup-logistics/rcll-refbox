@@ -403,5 +403,44 @@ components:
           type: boolean
 
 
+    GameState:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - state
+        - phase
+        - game-time
+        - points
+        - teams
+        - over-time
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        state:
+          type: string
+          format: symbol
+          enum: ["INIT" , "WAIT_START", "RUNNING", "PAUSED"]
+        phase:
+          type: string
+          format: symbole
+          enum: ["PRE_GAME","SETUP","EXPLORATION","PRODUCTION","POST_GAME","OPEN_CHALLENGE", "NAVIGATION_CHALLENGE", "WHACK_A_MOLE_CHALLENGE"]
+        game-time:
+          type: number
+          format: float
+        points:
+          type: array
+          items:
+            type: string
+            formate: symbol
+        teams:
+          type: array
+          items:
+            type: string
+            formate: symbol
+        over-time:
+          type: boolean
 
 
