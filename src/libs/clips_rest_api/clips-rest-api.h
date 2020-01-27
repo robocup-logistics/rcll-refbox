@@ -25,6 +25,7 @@
 #include "model/Fact.h"
 #include "model/Machine.h"
 #include "model/Order.h"
+#include "model/Robot.h"
 
 #include <core/threading/thread.h>
 #include <core/utils/lockptr.h>
@@ -61,12 +62,14 @@ private:
 	WebviewRestArray<Fact>        cb_get_facts_by_tmpl_and_slots(fawkes::WebviewRestParams &params);
 	WebviewRestArray<Machine>     cb_get_machines(fawkes::WebviewRestParams &params);
 	WebviewRestArray<Order>       cb_get_orders(fawkes::WebviewRestParams &params);
+	WebviewRestArray<Robot>       cb_get_robots(fawkes::WebviewRestParams &params);
 	template <typename T>
 	WebviewRestArray<T> cb_get_tmpl(fawkes::WebviewRestParams &params, std::string tmpl_name);
 
 	Fact    gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
 	Machine gen_machine(CLIPS::Fact::pointer &fact);
 	Order   gen_order(CLIPS::Fact::pointer &fact);
+	Robot   gen_robot(CLIPS::Fact::pointer &fact);
 
 	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name, fawkes::WebviewRestParams &params);
 
