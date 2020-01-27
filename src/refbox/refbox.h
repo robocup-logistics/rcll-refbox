@@ -200,11 +200,11 @@ private: // members
 	Logger::LogLevel                                        log_level_;
 	std::shared_ptr<mps_placing_clips::MPSPlacingGenerator> mps_placing_generator_;
 
-	fawkes::Mutex                                                       clips_mutex_;
-	std::unique_ptr<CLIPS::Environment>                                 clips_;
+	fawkes::Mutex                                                            clips_mutex_;
+	std::unique_ptr<CLIPS::Environment>                                      clips_;
 	std::unordered_map<std::string, std::unique_ptr<mps_comm::OpcUaMachine>> mps_;
-	std::unique_ptr<protobuf_clips::ClipsProtobufCommunicator>          pb_comm_;
-	std::map<long int, CLIPS::Fact::pointer>                            clips_msg_facts_;
+	std::unique_ptr<protobuf_clips::ClipsProtobufCommunicator>               pb_comm_;
+	std::map<long int, CLIPS::Fact::pointer>                                 clips_msg_facts_;
 
 	std::map<std::string, std::future<bool>> mutex_futures_;
 

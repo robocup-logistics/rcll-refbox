@@ -178,7 +178,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 #else
 			std::auto_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
 #endif
-			std::unordered_map<std::string, std::future<bool>> mps_connections;
 			while (i->next()) {
 				std::string cfg_name = std::string(i->path()).substr(prefix.length());
 				cfg_name             = cfg_name.substr(0, cfg_name.find("/"));
@@ -217,21 +216,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 						  mps_factory.create_machine(cfg_name, mpstype, mpsip, port, connection_string);
 						mps_[cfg_name] = std::move(mps);
 						mps_configs.insert(cfg_name);
-						mps_connections[cfg_name] = std::async(std::launch::async, [this, cfg_name] {
-							return mps_[cfg_name]->connect_PLC();
-						});
 					} else {
 						ignored_mps_configs.insert(cfg_name);
 					}
-				}
-			}
-			for (auto &[name, fut] : mps_connections) {
-				fut.wait();
-				if (fut.get()) {
-					logger_->log_info("RefBox", "Connected to %s", name.c_str());
-				} else {
-					logger_->log_error("RefBox", "Failed to connect to %s", name.c_str());
-					throw Exception("Failed to connect to %s", name.c_str());
 				}
 			}
 			logger_->log_info("RefBox", "Connected to all machines");
