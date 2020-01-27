@@ -72,9 +72,6 @@ public:
 	                  unsigned char  status   = 1,
 	                  unsigned char  error    = 0);
 
-	// Create a OPC connection to a machine
-	bool connect_PLC();
-
 	// Set the light of specified color to specified state
 	// color: 1 - 3, state 0 - 2
 	void set_light(llsf_msgs::LightColor color,
@@ -100,6 +97,7 @@ public:
 	bool       abort_operation_;
 
 protected:
+	void connect();
 	// machine type
 	const unsigned short int machine_type_;
 	std::string              ip_;
@@ -125,6 +123,7 @@ protected:
 
 	std::vector<Callback> callbacks_;
 	bool                  connected_ = false;
+	bool                  simulation_;
 
 	// OPC UA related variables
 
@@ -153,9 +152,9 @@ protected:
 	// OPC UA related methods
 
 	// Connect to OPC UA Server using IP and PORT
-	bool reconnect(const char *ip, unsigned short port, bool simulation = false);
+	bool reconnect();
 	// Disconnect from OPC UA Server
-	bool disconnect();
+	void disconnect();
 	// Initialize logger; If LOG_PATH is empty, the logs are redirected to std::cout, else they are saved to the in LOG_PATH specified file
 	void initLogger();
 	// Helper function to set OPC UA Node value correctly

@@ -64,10 +64,12 @@ OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
   port_(port),
   connection_mode_(connection_mode),
   shutdown_(false),
-  heartbeat_active_(false)
+  heartbeat_active_(false),
+  simulation_(connection_mode == SIMULATION)
 {
 	std::cout << "OpcUaMachine: name is " << name_ << std::endl;
 	initLogger();
+	connect();
 	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
 }
 
@@ -168,7 +170,7 @@ OpcUaMachine::send_command(unsigned short command,
 			} catch (std::exception &e) {
 				logger->warn("Failed to send command to {}, reconnecting", name_);
 				subscriptions.clear();
-				connect_PLC();
+				connect();
 				success = false;
 			}
 		} while (!success);
@@ -186,25 +188,22 @@ OpcUaMachine::reset()
 	send_command(machine_type_ | Command::COMMAND_RESET);
 }
 
-bool
-OpcUaMachine::connect_PLC()
+void
+OpcUaMachine::connect()
 {
 	if (connection_mode_ == MOCKUP) {
-		return true;
+		return;
 	}
-	bool simulation = (connection_mode_ == SIMULATION);
-	if (!reconnect(ip_.c_str(), port_, simulation))
-		return false;
+	while (!reconnect()) {}
 
-	subscribe(SUB_REGISTERS, outs, simulation);
+	subscribe(SUB_REGISTERS, outs, simulation_);
 	identify();
 	for (auto &cb : callbacks_) {
-		register_callback(cb, simulation);
+		register_callback(cb, simulation_);
 	}
 	if (!heartbeat_active_) {
 		heartbeat_thread_ = std::thread(&OpcUaMachine::heartbeat, this);
 	}
-	return true;
 }
 
 OpcUaMachine::~OpcUaMachine()
@@ -279,11 +278,11 @@ OpcUaMachine::initLogger()
 }
 
 bool
-OpcUaMachine::reconnect(const char *ip, unsigned short port, bool simulation)
+OpcUaMachine::reconnect()
 {
 	disconnect();
 	try {
-		OpcUa::EndpointDescription *endpoint = OpcUtils::getEndpoint(ip, port);
+		OpcUa::EndpointDescription *endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
 		logger->info("Connecting to: {}", endpoint->EndpointUrl);
 
 		client = new OpcUa::UaClient(logger);
@@ -298,11 +297,11 @@ OpcUaMachine::reconnect(const char *ip, unsigned short port, bool simulation)
 	}
 
 	try {
-		nodeBasic = OpcUtils::getBasicNode(client, simulation);
-		nodeIn    = OpcUtils::getInNode(client, simulation);
+		nodeBasic = OpcUtils::getBasicNode(client, simulation_);
+		nodeIn    = OpcUtils::getInNode(client, simulation_);
 
 		for (int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
-			registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i, simulation);
+			registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i, simulation_);
 	} catch (const std::exception &exc) {
 		logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
 		return false;
@@ -313,39 +312,44 @@ OpcUaMachine::reconnect(const char *ip, unsigned short port, bool simulation)
 	return true;
 }
 
-bool
+void
 OpcUaMachine::disconnect()
 {
 	if (!connected_) {
-		return true;
+		return;
 	}
-	cancelAllSubscriptions(true);
+	try {
+		cancelAllSubscriptions(true);
+	} catch (std::exception &e) {
+		logger->warn("Error while cancelling subscriptions: {}", e.what());
+	}
+	subscriptions.clear();
 
 	logger->info("Disconnecting");
 	try {
 		client->Disconnect();
 		logger->flush();
 		connected_ = false;
-		return true;
+		return;
 	} catch (...) {
 		try {
 			client->Abort();
 			logger->flush();
 			connected_ = false;
-			return true;
+			return;
 		} catch (...) {
 			try {
 				delete client;
 				client = nullptr;
 				logger->flush();
 				connected_ = false;
-				return true;
+				return;
 			} catch (...) {
 			}
 		}
 	}
 	connected_ = false;
-	return false;
+	return;
 }
 
 void
