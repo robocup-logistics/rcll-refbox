@@ -164,6 +164,17 @@ public:
 		}
 	}
 
+	std::string
+	consum_query_arg(const std::string &what)
+	{
+		if (query_args_.find(what) != query_args_.end()) {
+		     std::string value = query_args_[what];
+			query_args_.erase(what);
+			return value;
+		} else {
+			return "";
+		}
+	}
 	/** Check if query argument is set.
 	 * Retrieves a named query argument that was passed in the
 	 * URL, e.g., retrieve "pretty" for "?pretty".
@@ -196,14 +207,14 @@ public:
 		pretty_json_ = pretty;
 	}
 
-     std::map<std::string, std::string>
-	get_path_args()
+     const std::map<std::string, std::string>
+	get_path_args() const
 	{
 	    return  path_args_;
 	}
 
-	std::map<std::string, std::string>
-	get_query_args()
+	const std::map<std::string, std::string>
+	get_query_args() const
 	{
 	    return query_args_;
 	}
