@@ -108,13 +108,10 @@ protected:
 	std::condition_variable queue_condition_;
 	std::queue<Instruction> command_queue_;
 	std::thread             worker_thread_;
-	std::thread             heartbeat_thread_;
-	std::atomic<bool>       heartbeat_active_;
 	void                    register_callback(Callback, bool simulation = false);
 	void                    mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
 	void                    mock_callback(OpcUtils::MPSRegister reg, bool ret);
 	void                    dispatch_command_queue();
-	void                    heartbeat();
 
 	std::vector<Callback> callbacks_;
 	bool                  connected_ = false;

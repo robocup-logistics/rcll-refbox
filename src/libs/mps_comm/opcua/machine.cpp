@@ -64,7 +64,6 @@ OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
   port_(port),
   connection_mode_(connection_mode),
   shutdown_(false),
-  heartbeat_active_(false),
   simulation_(connection_mode == SIMULATION)
 {
 	initLogger();
@@ -87,20 +86,17 @@ OpcUaMachine::dispatch_command_queue()
 			std::this_thread::sleep_for(std::chrono::milliseconds(40));
 			lock.lock();
 		} else {
-			queue_condition_.wait(lock);
+			if (!queue_condition_.wait_for(lock, std::chrono::seconds(1), [&] {
+				    return !command_queue_.empty();
+			    })) {
+				// there was no instruction in the queue, send heartbeat to ensure the
+				// connection is healthy and reconnect if it is not
+				while (!send_instruction(std::make_tuple(COMMAND_NOTHING, 0, 0, 1, 0, 0))) {
+					reconnect();
+				}
+			}
 		}
 	}
-}
-
-void
-OpcUaMachine::heartbeat()
-{
-	heartbeat_active_ = true;
-	while (!shutdown_) {
-		enqueue_instruction(COMMAND_NOTHING, 0, 0, 1);
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
-	heartbeat_active_ = false;
 }
 
 void
@@ -190,9 +186,6 @@ OpcUaMachine::connect()
 	for (auto &cb : callbacks_) {
 		register_callback(cb, simulation_);
 	}
-	if (!heartbeat_active_) {
-		heartbeat_thread_ = std::thread(&OpcUaMachine::heartbeat, this);
-	}
 }
 
 OpcUaMachine::~OpcUaMachine()
@@ -201,9 +194,6 @@ OpcUaMachine::~OpcUaMachine()
 	queue_condition_.notify_all();
 	if (worker_thread_.joinable()) {
 		worker_thread_.join();
-	}
-	if (heartbeat_thread_.joinable()) {
-		heartbeat_thread_.join();
 	}
 	disconnect();
 }
