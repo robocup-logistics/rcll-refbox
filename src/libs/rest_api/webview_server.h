@@ -4,6 +4,7 @@
  *
  *  Created: Mon Oct 13 17:49:52 2008 (I5 Developer's Day)
  *  Copyright  2006-2018  Tim Niemueller [www.niemueller.de]
+ *             2020       Mostafa Gomaa  [mostafa.go@gmail.com]
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify

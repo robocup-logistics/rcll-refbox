@@ -4,6 +4,7 @@
  *
  *  Created: Fri Mar 16 12:02:53 2018
  *  Copyright  2006-2018  Tim Niemueller [www.niemueller.de]
+ *             2020       Mostafa Gomaa  [mostafa.go@gmail.com]
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
