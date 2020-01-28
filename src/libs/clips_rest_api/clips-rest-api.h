@@ -64,6 +64,9 @@ private:
 	WebviewRestArray<Fact>        cb_get_facts_by_tmpl_and_slots(fawkes::WebviewRestParams &params);
 	WebviewRestArray<Machine>     cb_get_machines(fawkes::WebviewRestParams &params);
 	WebviewRestArray<Order>       cb_get_orders(fawkes::WebviewRestParams &params);
+	template <typename T>
+	WebviewRestArray<T>           cb_get_tmpl(fawkes::WebviewRestParams &params, std::string tmpl_name);
+
 
 	Fact           gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
 	Machine        gen_machine(CLIPS::Fact::pointer &fact);
