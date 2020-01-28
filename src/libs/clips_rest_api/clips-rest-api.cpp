@@ -25,6 +25,7 @@
 #include <core/threading/mutex_locker.h>
 #include <webview/rest_api_manager.h>
 
+#include <type_traits>
 using namespace fawkes;
 
 /** @class ClipsRestApi "clips-rest-api.h"
@@ -67,6 +68,13 @@ ClipsRestApi::init()
 	  "/facts/{tmpl-name}",
 	  std::bind(&ClipsRestApi::cb_get_facts_by_tmpl_and_slots, this, std::placeholders::_1));
 
+	//	rest_api_->add_handler<WebviewRestArray<Machine>>(
+	//	  WebRequest::METHOD_GET, "/machines",
+	//	  std::bind(&ClipsRestApi::cb_get_tmpl<Machine>,this, std::placeholders::_1,"machine"));
+	//	rest_api_->add_handler<WebviewRestArray<Order>>(
+	//	  WebRequest::METHOD_GET, "/orders",
+	//	  std::bind(&ClipsRestApi::cb_get_tmpl<Order>,this, std::placeholders::_1,"order"));
+
 	rest_api_->add_handler<WebviewRestArray<Machine>>(WebRequest::METHOD_GET,
 	                                                  "/machines",
 	                                                  std::bind(&ClipsRestApi::cb_get_machines,
@@ -77,8 +85,6 @@ ClipsRestApi::init()
 	                                                std::bind(&ClipsRestApi::cb_get_orders,
 	                                                          this,
 	                                                          std::placeholders::_1));
-
-	webview_rest_api_manager_->register_api(rest_api_);
 
 	webview_rest_api_manager_->register_api(rest_api_);
 }
@@ -353,6 +359,27 @@ ClipsRestApi::cb_get_facts_by_tmpl_and_slots(WebviewRestParams &params)
 		fact = fact->next();
 	}
 	return rv;
+}
+
+template <typename T>
+WebviewRestArray<T>
+ClipsRestApi::cb_get_tmpl(WebviewRestParams &params, std::string tmpl_name)
+{
+	//	MutexLocker lock(&env_mutex_);
+	//	WebviewRestArray<T> rv;
+	//
+	//	CLIPS::Fact::pointer fact =  env_->get_facts();
+	//	while(fact) {
+	//		 CLIPS::Template::pointer tmpl = fact->get_template();
+	//		 if(tmpl->name() == tmpl_name)
+	//			 if(std::is_same<T, Machine>::value)
+	//			 rv.push_back(std::move(gen_machine(fact)));
+	//             if(std::is_same<T, Order>::value)
+	//			 rv.push_back(std::move(gen_order(fact)));
+	//		 fact = fact->next();
+	//    }
+	//
+	//	return rv;
 }
 
 } //end namespace llsfrb
