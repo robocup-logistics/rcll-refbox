@@ -49,43 +49,45 @@ OpcUaCapStation::~OpcUaCapStation()
 void
 OpcUaCapStation::band_on_until_in()
 {
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
-	             Operation::OPERATION_BAND_IN,
-	             ConveyorDirection::BACKWARD);
+	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
+	                    Operation::OPERATION_BAND_IN,
+	                    ConveyorDirection::BACKWARD);
 }
 
 void
 OpcUaCapStation::band_on_until_mid()
 {
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
-	             Operation::OPERATION_BAND_MID,
-	             ConveyorDirection::FORWARD);
+	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
+	                    Operation::OPERATION_BAND_MID,
+	                    ConveyorDirection::FORWARD);
 }
 
 void
 OpcUaCapStation::band_on_until_out()
 {
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
-	             Operation::OPERATION_BAND_OUT,
-	             ConveyorDirection::FORWARD);
+	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
+	                    Operation::OPERATION_BAND_OUT,
+	                    ConveyorDirection::FORWARD);
 }
 
 void
 OpcUaCapStation::retrieve_cap()
 {
-	send_command(Operation::OPERATION_CAP_ACTION + machine_type_, Operation::OPERATION_CAP_RETRIEVE);
+	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
+	                    Operation::OPERATION_CAP_RETRIEVE);
 }
 
 void
 OpcUaCapStation::mount_cap()
 {
-	send_command(Operation::OPERATION_CAP_ACTION + machine_type_, Operation::OPERATION_CAP_MOUNT);
+	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
+	                    Operation::OPERATION_CAP_MOUNT);
 }
 
 void
 OpcUaCapStation::identify()
 {
-	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_CS);
+	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_CS);
 }
 
 } // namespace mps_comm

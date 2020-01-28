@@ -47,9 +47,10 @@ enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
 class OpcUaMachine : public virtual Machine
 {
-	typedef std::
-	  tuple<SubscriptionClient::ReturnValueCallback, OpcUtils::MPSRegister, OpcUtils::ReturnValue *>
-	    Callback;
+	using Callback = std::
+	  tuple<SubscriptionClient::ReturnValueCallback, OpcUtils::MPSRegister, OpcUtils::ReturnValue *>;
+	using Instruction =
+	  std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
 
 public:
 	OpcUaMachine(unsigned short int machine_type,
@@ -58,19 +59,6 @@ public:
 	             ConnectionMode = PLC);
 
 	~OpcUaMachine() override;
-
-	// This method will send a command to the machine
-	// A Command consist of
-	//   *) command word
-	//   *) payload1
-	//   *) payload2
-	//   *) status flag (shall be 1 = BUSY)
-	void send_command(unsigned short command,
-	                  unsigned short payload1 = 0,
-	                  unsigned short payload2 = 0,
-	                  int            timeout  = 0,
-	                  unsigned char  status   = 1,
-	                  unsigned char  error    = 0);
 
 	// Set the light of specified color to specified state
 	// color: 1 - 3, state 0 - 2
@@ -98,6 +86,13 @@ public:
 
 protected:
 	void connect();
+	bool send_instruction(const Instruction &instruction);
+	void enqueue_instruction(unsigned short command,
+	                         unsigned short payload1 = 0,
+	                         unsigned short payload2 = 0,
+	                         int            timeout  = 0,
+	                         unsigned char  status   = 1,
+	                         unsigned char  error    = 0);
 	// machine type
 	const unsigned short int machine_type_;
 	std::string              ip_;
@@ -107,19 +102,19 @@ protected:
 	static constexpr std::chrono::seconds mock_busy_duration_{3};
 	static constexpr std::chrono::seconds mock_ready_duration_{5};
 
-	std::atomic<bool>                     shutdown_;
-	std::mutex                            command_queue_mutex_;
-	std::mutex                            command_mutex_;
-	std::condition_variable               queue_condition_;
-	std::queue<std::function<void(void)>> command_queue_;
-	std::thread                           worker_thread_;
-	std::thread                           heartbeat_thread_;
-	std::atomic<bool>                     heartbeat_active_;
-	void                                  register_callback(Callback, bool simulation = false);
-	void mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
-	void mock_callback(OpcUtils::MPSRegister reg, bool ret);
-	void dispatch_command_queue();
-	void heartbeat();
+	std::atomic<bool>       shutdown_;
+	std::mutex              command_queue_mutex_;
+	std::mutex              command_mutex_;
+	std::condition_variable queue_condition_;
+	std::queue<Instruction> command_queue_;
+	std::thread             worker_thread_;
+	std::thread             heartbeat_thread_;
+	std::atomic<bool>       heartbeat_active_;
+	void                    register_callback(Callback, bool simulation = false);
+	void                    mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
+	void                    mock_callback(OpcUtils::MPSRegister reg, bool ret);
+	void                    dispatch_command_queue();
+	void                    heartbeat();
 
 	std::vector<Callback> callbacks_;
 	bool                  connected_ = false;

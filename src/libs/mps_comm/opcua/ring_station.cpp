@@ -56,13 +56,13 @@ OpcUaRingStation::ring_ready()
 void
 OpcUaRingStation::identify()
 {
-	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_RS);
+	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_RS);
 }
 
 void
 OpcUaRingStation::mount_ring(unsigned int feeder)
 {
-	send_command(Operation::OPERATION_MOUNT_RING + machine_type_, feeder);
+	enqueue_instruction(Operation::OPERATION_MOUNT_RING + machine_type_, feeder);
 }
 
 } // namespace mps_comm

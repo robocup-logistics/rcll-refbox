@@ -45,7 +45,7 @@ OpcUaStorageStation::OpcUaStorageStation(std::string    name,
 void
 OpcUaStorageStation::identify()
 {
-	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_SS);
+	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_SS);
 }
 
 } // namespace mps_comm

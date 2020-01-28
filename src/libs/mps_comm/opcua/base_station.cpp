@@ -50,7 +50,7 @@ OpcUaBaseStation::get_base(llsf_msgs::BaseColor color)
 	default: std::cout << "Error in RefBox, NOT implemented base color" << std::endl; return;
 	}
 
-	send_command(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
+	enqueue_instruction(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
 }
 
 // Need information on how to access this
@@ -72,7 +72,7 @@ OpcUaBaseStation::is_empty()
 void
 OpcUaBaseStation::identify()
 {
-	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_BS);
+	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_BS);
 }
 
 } // namespace mps_comm

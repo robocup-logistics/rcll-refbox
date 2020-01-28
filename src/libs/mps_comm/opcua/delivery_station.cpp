@@ -49,13 +49,13 @@ OpcUaDeliveryStation::~OpcUaDeliveryStation()
 void
 OpcUaDeliveryStation::deliver_product(int slot)
 {
-	send_command(machine_type_ | Operation::OPERATION_DELIVER, slot);
+	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
 }
 
 void
 OpcUaDeliveryStation::identify()
 {
-	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
+	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
 }
 
 } // namespace mps_comm

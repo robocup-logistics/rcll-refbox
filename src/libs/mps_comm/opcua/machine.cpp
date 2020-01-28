@@ -67,7 +67,6 @@ OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
   heartbeat_active_(false),
   simulation_(connection_mode == SIMULATION)
 {
-	std::cout << "OpcUaMachine: name is " << name_ << std::endl;
 	initLogger();
 	connect();
 	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
@@ -77,16 +76,18 @@ void
 OpcUaMachine::dispatch_command_queue()
 {
 	std::unique_lock<std::mutex> lock(command_queue_mutex_);
-	// Always process the queue before shutdown
-	while (!shutdown_ || !command_queue_.empty()) {
-		queue_condition_.wait(lock, [this] { return !command_queue_.empty() || shutdown_; });
+	while (!shutdown_) {
 		if (!command_queue_.empty()) {
-			auto command = command_queue_.front();
+			auto instruction = command_queue_.front();
 			command_queue_.pop();
 			lock.unlock();
-			command();
+			while (!send_instruction(instruction)) {
+				reconnect();
+			};
 			std::this_thread::sleep_for(std::chrono::milliseconds(40));
 			lock.lock();
+		} else {
+			queue_condition_.wait(lock);
 		}
 	}
 }
@@ -96,7 +97,7 @@ OpcUaMachine::heartbeat()
 {
 	heartbeat_active_ = true;
 	while (!shutdown_) {
-		send_command(COMMAND_NOTHING, 0, 0, 1);
+		enqueue_instruction(COMMAND_NOTHING, 0, 0, 1);
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 	heartbeat_active_ = false;
@@ -122,70 +123,58 @@ OpcUaMachine::mock_callback(OpcUtils::MPSRegister reg, bool ret)
 }
 
 void
-OpcUaMachine::send_command(unsigned short command,
-                           unsigned short payload1,
-                           unsigned short payload2,
-                           int            timeout,
-                           unsigned char  status,
-                           unsigned char  error)
+OpcUaMachine::enqueue_instruction(unsigned short command,
+                                  unsigned short payload1,
+                                  unsigned short payload2,
+                                  int            timeout,
+                                  unsigned char  status,
+                                  unsigned char  error)
 {
-	std::function<void(void)> call = [this, command, payload1, payload2, status, error] {
-		std::unique_lock<std::mutex> lock(command_mutex_);
-		bool                         success;
-		do {
-			try {
-				if (command > 100) {
-					logger->info("Sending command: {} {} {} {}", command, payload1, payload2, status);
-				}
-				if (connection_mode_ == MOCKUP) {
-					if (command > 100) {
-						mock_callback(OpcUtils::MPSRegister::STATUS_BUSY_IN, true);
-						std::this_thread::sleep_for(mock_busy_duration_);
-						mock_callback(OpcUtils::MPSRegister::STATUS_BUSY_IN, false);
-						mock_callback(OpcUtils::MPSRegister::STATUS_READY_IN, true);
-						std::this_thread::sleep_for(mock_ready_duration_);
-						mock_callback(OpcUtils::MPSRegister::STATUS_READY_IN, false);
-					}
-					return;
-				}
-				OpcUtils::MPSRegister registerOffset;
-				if (command < Station::STATION_BASE)
-					registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
-				else
-					registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
+	std::lock_guard<std::mutex> lg(command_queue_mutex_);
+	command_queue_.push(std::make_tuple(command, payload1, payload2, timeout, status, error));
+}
 
-				bool                  statusBit = (bool)(status & Status::STATUS_BUSY);
-				OpcUtils::MPSRegister reg;
-				reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
-				setNodeValue(registerNodes[reg], (uint16_t)command, reg);
-				reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-				setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
-				reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-				setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
-				reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
-				setNodeValue(registerNodes[reg], statusBit, reg);
-				reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
-				setNodeValue(registerNodes[reg], (uint8_t)error, reg);
-				success = true;
-			} catch (std::exception &e) {
-				logger->warn("Failed to send command to {}, reconnecting", name_);
-				subscriptions.clear();
-				connect();
-				success = false;
-			}
-		} while (!success);
-	};
-	std::unique_lock<std::mutex> lock(command_queue_mutex_);
-	command_queue_.push(call);
-	lock.unlock();
-	queue_condition_.notify_one();
-	return;
+bool
+OpcUaMachine::send_instruction(const Instruction &instruction)
+
+{
+	const unsigned short command  = std::get<0>(instruction);
+	const unsigned short payload1 = std::get<1>(instruction);
+	const unsigned short payload2 = std::get<2>(instruction);
+	//const int            timeout  = std::get<3>(instruction);
+	const unsigned char status = std::get<4>(instruction);
+	const unsigned char error  = std::get<5>(instruction);
+	try {
+		OpcUtils::MPSRegister registerOffset;
+		if (command < Station::STATION_BASE)
+			registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
+		else
+			registerOffset = OpcUtils::MPSRegister::ACTION_ID_IN;
+
+		bool                  statusBit = (bool)(status & Status::STATUS_BUSY);
+		OpcUtils::MPSRegister reg;
+		reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
+		setNodeValue(registerNodes[reg], (uint16_t)command, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+		setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
+		setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
+		setNodeValue(registerNodes[reg], statusBit, reg);
+		reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
+		setNodeValue(registerNodes[reg], (uint8_t)error, reg);
+	} catch (std::exception &e) {
+		logger->warn("Error while sending command: {}", e.what());
+		return false;
+	}
+
+	return true;
 }
 
 void
 OpcUaMachine::reset()
 {
-	send_command(machine_type_ | Command::COMMAND_RESET);
+	enqueue_instruction(machine_type_ | Command::COMMAND_RESET);
 }
 
 void
@@ -246,16 +235,16 @@ OpcUaMachine::set_light(llsf_msgs::LightColor color,
 		plc_state = LightState::LIGHT_STATE_OFF;
 		// TODO error
 	}
-	send_command(m_color, plc_state, time);
+	enqueue_instruction(m_color, plc_state, time);
 }
 
 void
 OpcUaMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 {
-	send_command(Command::COMMAND_MOVE_CONVEYOR + machine_type_,
-	             sensor,
-	             direction,
-	             Timeout::TIMEOUT_BAND);
+	enqueue_instruction(Command::COMMAND_MOVE_CONVEYOR + machine_type_,
+	                    sensor,
+	                    direction,
+	                    Timeout::TIMEOUT_BAND);
 }
 
 void
@@ -485,19 +474,22 @@ OpcUaMachine::register_callback(Callback callback, bool simulation)
 void
 OpcUaMachine::band_on_until_in()
 {
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_IN);
+	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
+	                    Operation::OPERATION_BAND_IN);
 }
 
 void
 OpcUaMachine::band_on_until_mid()
 {
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_MID);
+	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
+	                    Operation::OPERATION_BAND_MID);
 }
 
 void
 OpcUaMachine::band_on_until_out()
 {
-	send_command(Operation::OPERATION_BAND_ON_UNTIL + machine_type_, Operation::OPERATION_BAND_OUT);
+	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
+	                    Operation::OPERATION_BAND_OUT);
 }
 
 } // namespace mps_comm
