@@ -70,7 +70,13 @@
 #ifdef HAVE_AVAHI
 #  include <netcomm/dns-sd/avahi_thread.h>
 #  include <netcomm/utils/resolver.h>
+#  include <netcomm/service_discovery/service.h>
+#else
+#  include <netcomm/service_discovery/dummy_service_browser.h>
+#  include <netcomm/service_discovery/dummy_service_publisher.h>
 #endif
+
+#include <rest_api/webview_server.h>
 
 #include <string>
 
@@ -98,7 +104,7 @@ static void handle_signal(int signum)
 /** @class LLSFRefBox "refbox.h"
  * LLSF referee box main application.
  * @author Tim Niemueller
- */ 
+ */
 
 /** Constructor.
  * @param argc number of arguments passed
@@ -108,7 +114,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
   : clips_mutex_(fawkes::Mutex::RECURSIVE), timer_(io_service_)
 {
   pb_comm_ = NULL;
-  
+
   config_ = new YamlConfiguration(CONFDIR);
   config_->load("config.yaml");
 
@@ -197,7 +203,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
       std::set<std::string> mps_configs;
       std::set<std::string> ignored_mps_configs;
-      
+
 #if __cplusplus >= 201103L
       std::unique_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
 #else
@@ -223,7 +229,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 	  if (active) {
 
- 	    std::string mpstype = config_->get_string((cfg_prefix + "type").c_str());  
+ 	    std::string mpstype = config_->get_string((cfg_prefix + "type").c_str());
 	    std::string mpsip = config_->get_string((cfg_prefix + "host").c_str());
 	    unsigned int port = config_->get_uint((cfg_prefix + "port").c_str());
 
@@ -261,7 +267,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
     throw;
   }
 
-  
+
   clips_ = new CLIPS::Environment();
   setup_protobuf_comm();
   setup_clips();
@@ -289,7 +295,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
     mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
 
-    
+
     mongo::DBClientConnection *conn =
       new mongo::DBClientConnection(/* auto reconnect */ true);
     mongodb_ = conn;
@@ -312,7 +318,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
       .connect(boost::bind(&LLSFRefBox::handle_client_sent_msg, this, _1, _2, _3));
     pb_comm_->signal_peer_sent()
       .connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _2));
-
   }
 #endif
 
@@ -334,13 +339,35 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 #ifdef HAVE_AVAHI
   unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
   avahi_thread_ = new fawkes::AvahiThread();
+  service_publisher_ = avahi_thread_;
+  service_browser_   = avahi_thread_;
   avahi_thread_->start();
   nnresolver_   = new fawkes::NetworkNameResolver(avahi_thread_);
   fawkes::NetworkService *refbox_service =
     new fawkes::NetworkService(nnresolver_, "RefBox on %h", "_refbox._tcp", refbox_port);
   avahi_thread_->publish_service(refbox_service);
   delete refbox_service;
+#else
+	service_publisher_ = new DummyServicePublisher();
+	service_browser_   = new DummyServiceBrowser();
+	nnresolver_        = new NetworkNameResolver();
 #endif
+
+  try{
+    rest_api_thread_ = new WebviewServer(false,
+		  nnresolver_,
+		  service_publisher_,
+		  service_browser_,
+		  clips_mutex_,
+		  clips_,
+		  config_,logger_);
+    rest_api_thread_ -> init();
+    rest_api_thread_ -> start();
+      logger_->log_info("RefBox", " rest-api server started ");
+   } catch(Exception &e){
+      logger_->log_info("RefBox", "Could not start rest-api");
+      logger_->log_error("Exception: ", e.what() );
+   }
 
 }
 
@@ -349,12 +376,18 @@ LLSFRefBox::~LLSFRefBox()
 {
   timer_.cancel();
 
+  rest_api_thread_->cancel();
+  rest_api_thread_->join();
+  delete rest_api_thread_;
+
 #ifdef HAVE_AVAHI
   avahi_thread_->cancel();
   avahi_thread_->join();
   delete avahi_thread_;
-  delete nnresolver_;
 #endif
+  delete nnresolver_;
+  delete service_publisher_;
+  delete service_browser_;
 
   //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
   {
@@ -399,7 +432,7 @@ LLSFRefBox::setup_protobuf_comm()
 	  if ((pos = proto_dirs[i].find("@CONFDIR@")) != std::string::npos) {
 	    proto_dirs[i].replace(pos, 9, CONFDIR);
 	  }
-	
+
 	  if (proto_dirs[i][proto_dirs.size()-1] != '/') {
 	    proto_dirs[i] += "/";
 	  }
@@ -499,7 +532,7 @@ LLSFRefBox::start_clips()
   if (!clips_->batch_evaluate(cfg_clips_dir_ + "init.clp")) {
     logger_->log_warn("RefBox", "Failed to initialize CLIPS environment, batch file failed.");
     throw fawkes::Exception("Failed to initialize CLIPS environment, batch file failed.");
-  }  
+  }
 
   clips_->assert_fact("(init)");
   clips_->refresh_agenda();
@@ -1117,7 +1150,7 @@ LLSFRefBox::clips_bson_append_array(void *bson,
       case CLIPS::TYPE_INTEGER:
 	ab.append(value.as_integer());
 	break;
-      
+
       case CLIPS::TYPE_SYMBOL:
       case CLIPS::TYPE_STRING:
       case CLIPS::TYPE_INSTANCE_NAME:
@@ -1131,7 +1164,7 @@ LLSFRefBox::clips_bson_append_array(void *bson,
 	  ab.append(subb->asTempObj());
 	}
 	break;
-      
+
       default:
 	logger_->log_warn("MongoDB", "Tried to add unknown type to BSON array field %s",
 			  field_name.c_str());
@@ -1546,7 +1579,7 @@ LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
 		}
 	}
 	return rv;
-	
+
 }
 
 

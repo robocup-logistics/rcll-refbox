@@ -68,6 +68,7 @@ namespace fawkes {
   class AvahiThread;
   class NetworkNameResolver;
   class ServicePublisher;
+  class ServiceBrowser;
 }
 #endif
 
@@ -87,6 +88,7 @@ namespace llsfrb {
 
 class Configuration;
 class MultiLogger;
+class WebviewServer;
 
 class LLSFRefBox
 {
@@ -204,8 +206,13 @@ class LLSFRefBox
 
 #ifdef HAVE_AVAHI
   fawkes::AvahiThread          *avahi_thread_;
-  fawkes::NetworkNameResolver  *nnresolver_;
 #endif
+  WebviewServer                *rest_api_thread_;
+
+  fawkes::NetworkNameResolver  *nnresolver_;
+  fawkes::ServicePublisher     *service_publisher_;
+  fawkes::ServiceBrowser       *service_browser_;
+
 
 #ifdef HAVE_MONGODB
   bool                cfg_mongodb_enabled_;
