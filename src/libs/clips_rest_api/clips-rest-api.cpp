@@ -67,18 +67,16 @@ ClipsRestApi::init()
 	rest_api_->add_handler<WebviewRestArray<Fact>>(
 	  WebRequest::METHOD_GET, "/facts",
 	  std::bind(&ClipsRestApi::cb_get_facts,this, std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<Machine>>(
-	  WebRequest::METHOD_GET, "/machines",
-	  std::bind(&ClipsRestApi::cb_get_machines, this));
-	rest_api_->add_handler<WebviewRestArray<Order>>(
-	  WebRequest::METHOD_GET, "/orders",
-	  std::bind(&ClipsRestApi::cb_get_orders, this));
 	rest_api_->add_handler<WebviewRestArray<Fact>>(
 	  WebRequest::METHOD_GET, "/facts/{tmpl-name}",
-	  std::bind(&ClipsRestApi::cb_get_fact_tmpls,this, std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<Fact>>(
-	  WebRequest::METHOD_GET, "/facts/{tmpl-name}/slots",
-	  std::bind(&ClipsRestApi::cb_get_fact_tmpls_by_slots,this, std::placeholders::_1));
+	  std::bind(&ClipsRestApi::cb_get_facts_by_tmpl_and_slots,this, std::placeholders::_1));
+
+	rest_api_->add_handler<WebviewRestArray<Machine>>(
+	  WebRequest::METHOD_GET, "/machines",
+	  std::bind(&ClipsRestApi::cb_get_machines,this, std::placeholders::_1));
+	rest_api_->add_handler<WebviewRestArray<Order>>(
+	  WebRequest::METHOD_GET, "/orders",
+	  std::bind(&ClipsRestApi::cb_get_orders,this, std::placeholders::_1));
 
 
    webview_rest_api_manager_->register_api(rest_api_);
@@ -158,20 +156,6 @@ get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
 	}
 	return rv;
 }
-
-template <typename T>
-void
-ClipsRestApi::gen_precompute_factmap(FactMap<T> &fm)
-{
-    CLIPS::Fact::pointer fact =  env_->get_facts();
-    while(fact) {
-	   CLIPS::Template::pointer tmpl = fact->get_template();
-	   if(tmpl->name() == fm.template_name )
-	   fm.fact_by_id[get_value<T>(fact,  fm.id_slot_name)] = fact;
-	   fact = fact->next();
-    }
-}
-
 
 Fact
 ClipsRestApi::gen_fact(CLIPS::Fact::pointer &       fact,
@@ -262,6 +246,38 @@ ClipsRestApi::gen_order(CLIPS::Fact::pointer &fact)
 	return o;
 }
 
+bool
+ClipsRestApi::match(CLIPS::Fact::pointer  & fact,
+	   std::string                       tmpl_name,
+	   WebviewRestParams &params)
+
+{
+     std::map<std::string,std::string> slots_to_match = params.get_query_args();
+	CLIPS::Template::pointer tmpl = fact->get_template();
+	if (tmpl->name() != tmpl_name) return false;
+	if (slots_to_match.size() == 0) return true;
+
+	std::vector<std::string> slots = fact -> slot_names();
+	for (auto &si : slots_to_match)
+	{
+		if (std::find(slots.begin(),slots.end(), si.first) == slots.end())
+			throw Exception("No slot named %s for template %s",
+					si.first.c_str(),
+					tmpl->name().c_str());
+		else
+		{
+			std::vector<std::string> v = get_values(fact, si.first);
+			// for now only single values are allowed as param
+			if(v.size() > 1)
+				throw Exception("Slot %s for template %s is multifield (not supported)",
+							si.first.c_str(),
+							tmpl->name().c_str());
+
+		    if(v.size() > 0 &&  v[0] != si.second) return false;
+		}
+	}
+	return true;
+}
 
 WebviewRestArray<Environment>
 ClipsRestApi::cb_list_environments()
@@ -287,7 +303,6 @@ ClipsRestApi::cb_get_facts(WebviewRestParams &params)
 	MutexLocker lock(&env_mutex_);
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
-		CLIPS::Template::pointer tmpl = fact->get_template();
 		rv.push_back(std::move(gen_fact(fact, formatted)));
 		fact = fact->next();
 	}
@@ -296,96 +311,53 @@ ClipsRestApi::cb_get_facts(WebviewRestParams &params)
 }
 
 WebviewRestArray<Machine>
-ClipsRestApi::cb_get_machines()
+ClipsRestApi::cb_get_machines(WebviewRestParams &params)
 {
-     MutexLocker lock(&env_mutex_);
+	MutexLocker lock(&env_mutex_);
 	WebviewRestArray<Machine> rv;
 
-	FactMap<std::string> machines;
-	machines.template_name = "machine";
-	machines.id_slot_name = "name" ;
-	gen_precompute_factmap(machines);
-
-	for (auto &mi : machines.fact_by_id )
-	rv.push_back(std::move(gen_machine(mi.second)));
+	CLIPS::Fact::pointer fact =  env_->get_facts();
+	while(fact) {
+	    if (match(fact, "machine" , params))
+			rv.push_back(std::move(gen_machine(fact)));
+		fact = fact->next();
+	}
 	return rv;
 }
 
 WebviewRestArray<Order>
-ClipsRestApi::cb_get_orders()
+ClipsRestApi::cb_get_orders(WebviewRestParams &params)
 {
-     MutexLocker lock(&env_mutex_);
+	MutexLocker lock(&env_mutex_);
 	WebviewRestArray<Order> rv;
 
-	FactMap<int64_t> orders;
-	orders.template_name = "order";
-	orders.id_slot_name = "id" ;
-	gen_precompute_factmap(orders);
-
-	for (auto &oi : orders.fact_by_id )
-	rv.push_back(std::move(gen_order(oi.second)));
+	CLIPS::Fact::pointer fact =  env_->get_facts();
+	while(fact) {
+	    if (match(fact, "order" , params))
+			rv.push_back(std::move(gen_order(fact)));
+		fact = fact->next();
+	}
 	return rv;
 }
 
 WebviewRestArray<Fact>
-ClipsRestApi::cb_get_fact_tmpls(WebviewRestParams &params)
+ClipsRestApi::cb_get_facts_by_tmpl_and_slots(WebviewRestParams &params)
 {
-	bool formatted = (params.query_arg("formatted") == "true");
+	bool formatted = (params.consum_query_arg("formatted") == "true");
 
 	WebviewRestArray<Fact> rv;
 
 	MutexLocker lock(&env_mutex_);
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
-		CLIPS::Template::pointer tmpl = fact->get_template();
-	     if(tmpl->name() == params.path_arg("tmpl-name"))
+	    if (match(fact, params.path_arg("tmpl-name") , params))
 			rv.push_back(std::move(gen_fact(fact, formatted)));
 		fact = fact->next();
 	}
 	return rv;
 }
 
-WebviewRestArray<Fact>
-ClipsRestApi::cb_get_fact_tmpls_by_slots(WebviewRestParams &params)
-{
-	bool formatted = (params.query_arg("formatted") == "true");
 
-	WebviewRestArray<Fact> rv;
-
-	MutexLocker lock(&env_mutex_);
-	CLIPS::Fact::pointer fact = env_->get_facts();
-	while (fact) {
-		CLIPS::Template::pointer tmpl = fact->get_template();
-		if(tmpl->name() == params.path_arg("tmpl-name"))
-		{
-			bool match = true;
-			std::vector<std::string> slots = fact -> slot_names();
-			for (auto &si : params.get_query_args())
-			{
-				if ( std::find(slots.begin(),slots.end(), si.first) == slots.end() )
-				{
-	                   throw Exception("No slot named %s for template %s",
-						  si.first.c_str(),
-						  tmpl->name().c_str());
-				}
-				else
-				{
-					std::vector<std::string> v = get_values(fact, si.first);
-					// for now only single values are allowed as param
-					if(v.size() > 1 || v.size() < 0)
-					    throw Exception("Slot %s for template %s is multifield or has no value",
-						  si.first.c_str(),
-						  tmpl->name().c_str());
-					 if(v[0] != si.second)
-						match = false;
-				}
-			}
-		if (match)
-		rv.push_back(std::move(gen_fact(fact, formatted)));
-		}
-		fact = fact->next();
-	}
-	return rv;
 }
 
 

@@ -58,29 +58,21 @@ public:
 	virtual void finalize();
 
 private:
-	template <typename T>
-	struct FactMap{
-	  std::string template_name;
-	  std::string id_slot_name;
-	  std::map<T, CLIPS::Fact::pointer> fact_by_id;
-	};
-
-private:
-
-	template <typename T>
-	void gen_precompute_factmap(FactMap<T> &fm);
 
 	WebviewRestArray<Environment> cb_list_environments();
 	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Fact>        cb_get_fact_tmpls(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Fact>        cb_get_fact_tmpls_by_slots(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Machine>     cb_get_machines();
-	WebviewRestArray<Order>       cb_get_orders();
+	WebviewRestArray<Fact>        cb_get_facts_by_tmpl_and_slots(fawkes::WebviewRestParams &params);
+	WebviewRestArray<Machine>     cb_get_machines(fawkes::WebviewRestParams &params);
+	WebviewRestArray<Order>       cb_get_orders(fawkes::WebviewRestParams &params);
 
 	Fact           gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
 	Machine        gen_machine(CLIPS::Fact::pointer &fact);
 	Order          gen_order(CLIPS::Fact::pointer &fact);
 
+	bool
+	match(CLIPS::Fact::pointer           & fact,
+	   std::string                       tmpl_name,
+	   fawkes::WebviewRestParams &params);
 
 
 private:
