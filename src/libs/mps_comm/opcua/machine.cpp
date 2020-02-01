@@ -100,25 +100,6 @@ OpcUaMachine::dispatch_command_queue()
 }
 
 void
-OpcUaMachine::mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret)
-{
-	for (auto &cb : callbacks_) {
-		if (std::get<1>(cb) == reg) {
-			SubscriptionClient::ReturnValueCallback fct = std::get<0>(cb);
-			fct(ret);
-		}
-	}
-}
-
-void
-OpcUaMachine::mock_callback(OpcUtils::MPSRegister reg, bool ret)
-{
-	OpcUtils::ReturnValue ret_val;
-	ret_val.bool_s = ret;
-	return mock_callback(reg, &ret_val);
-}
-
-void
 OpcUaMachine::enqueue_instruction(unsigned short command,
                                   unsigned short payload1,
                                   unsigned short payload2,
@@ -183,9 +164,9 @@ OpcUaMachine::connect()
 
 	subscribe(SUB_REGISTERS, outs, simulation_);
 	identify();
-	for (auto &cb : callbacks_) {
-		register_callback(cb, simulation_);
-	}
+	register_busy_callback();
+	register_ready_callback();
+	register_barcode_callback();
 }
 
 OpcUaMachine::~OpcUaMachine()
@@ -440,29 +421,64 @@ OpcUaMachine::printFinalSubscribtions()
 }
 
 void
-OpcUaMachine::addCallback(SubscriptionClient::ReturnValueCallback callback,
-                          OpcUtils::MPSRegister                   reg,
-                          OpcUtils::ReturnValue *                 retVal,
-                          bool                                    simulation)
+OpcUaMachine::register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
+                                    OpcUtils::MPSRegister                   reg,
+                                    OpcUtils::ReturnValue *                 retVal)
 {
-	Callback cb = std::make_tuple(callback, reg, retVal);
-	callbacks_.push_back(cb);
-	register_callback(cb);
+	logger->info("Registering callback");
+	SubscriptionClient *sub = subscribe(reg, retVal, simulation_);
+	sub->add_callback(callback);
 }
 
 void
-OpcUaMachine::register_callback(Callback callback, bool simulation)
+OpcUaMachine::register_busy_callback()
 {
-	if (connection_mode_ == MOCKUP) {
-		return;
+	if (connected_ && callback_busy_) {
+		register_opc_callback(callback_busy_, OpcUtils::MPSRegister::STATUS_BUSY_IN, nullptr);
 	}
-	logger->info("Registering callback");
-	SubscriptionClient *sub = subscribe(std::get<1>(callback), std::get<2>(callback), simulation);
-	sub->add_callback(std::get<0>(callback));
+};
+
+void
+OpcUaMachine::register_busy_callback(std::function<void(bool)> callback)
+{
+	if (callback) {
+		callback_busy_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->bool_s); };
+		register_busy_callback();
+	}
 }
 
+void
+OpcUaMachine::register_ready_callback()
+{
+	if (connected_ && callback_ready_) {
+		register_opc_callback(callback_ready_, OpcUtils::MPSRegister::STATUS_READY_IN, nullptr);
+	}
+}
 
+  void OpcUaMachine::register_ready_callback(std::function<void(bool)> callback)
+	{
+	  if (callback) {
+		  callback_ready_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->bool_s); };
+		  register_ready_callback();
+	  }
+  }
 
+  void
+  OpcUaMachine::register_barcode_callback()
+  {
+	  if (connected_ && callback_barcode_) {
+		  register_opc_callback(callback_barcode_, OpcUtils::MPSRegister::BARCODE_IN, nullptr);
+	  }
+  }
+
+  void
+  OpcUaMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
+  {
+	  if (callback) {
+		  callback_barcode_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->uint32_s); };
+		  register_barcode_callback();
+	  }
+  }
 
 } // namespace mps_comm
 } // namespace llsfrb

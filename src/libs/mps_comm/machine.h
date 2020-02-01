@@ -22,6 +22,7 @@
 
 #include "msgs/MachineDescription.pb.h"
 
+#include <functional>
 #include <string>
 
 namespace llsfrb {
@@ -49,6 +50,9 @@ public:
 	virtual void conveyor_move(ConveyorDirection direction, MPSSensor sensor) = 0;
 	virtual void reset_light()                                                = 0;
 	virtual void reset()                                                      = 0;
+	virtual void register_busy_callback(std::function<void(bool)>)                    = 0;
+	virtual void register_ready_callback(std::function<void(bool)>)                   = 0;
+	virtual void register_barcode_callback(std::function<void(unsigned long)>)        = 0;
 	virtual std::string
 	name() const
 	{

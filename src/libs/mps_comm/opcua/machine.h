@@ -73,6 +73,9 @@ public:
 
 	// Reset: send the reset command (which is different for each machine type)
 	void reset() override;
+	void register_busy_callback(std::function<void(bool)>) override;
+	void register_ready_callback(std::function<void(bool)>) override;
+	void register_barcode_callback(std::function<void(unsigned long)>) override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify() = 0;
 
@@ -90,6 +93,9 @@ protected:
 	                         int            timeout  = 0,
 	                         unsigned char  status   = 1,
 	                         unsigned char  error    = 0);
+	void register_ready_callback();
+	void register_busy_callback();
+	void register_barcode_callback();
 	// machine type
 	const unsigned short int machine_type_;
 	std::string              ip_;
@@ -105,14 +111,17 @@ protected:
 	std::condition_variable queue_condition_;
 	std::queue<Instruction> command_queue_;
 	std::thread             worker_thread_;
-	void                    register_callback(Callback, bool simulation = false);
-	void                    mock_callback(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *ret);
-	void                    mock_callback(OpcUtils::MPSRegister reg, bool ret);
+	void                    register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
+	                                              OpcUtils::MPSRegister                   reg,
+	                                              OpcUtils::ReturnValue *                 retVal);
 	void                    dispatch_command_queue();
 
 	std::vector<Callback> callbacks_;
 	bool                  connected_ = false;
 	bool                  simulation_;
+	SubscriptionClient::ReturnValueCallback callback_ready_;
+	SubscriptionClient::ReturnValueCallback callback_busy_;
+	SubscriptionClient::ReturnValueCallback callback_barcode_;
 
 	// OPC UA related variables
 
@@ -168,11 +177,13 @@ protected:
 	// Print the final subscription values
 	void printFinalSubscribtions();
 
+	/*
 public:
 	void addCallback(SubscriptionClient::ReturnValueCallback callback,
 	                 OpcUtils::MPSRegister,
 	                 OpcUtils::ReturnValue *retVal     = nullptr,
 	                 bool                   simulation = false);
+  */
 };
 
 } // namespace mps_comm
