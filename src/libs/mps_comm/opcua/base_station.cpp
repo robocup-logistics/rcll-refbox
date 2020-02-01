@@ -21,6 +21,7 @@
 
 #include "base_station.h"
 
+#include "core/exception.h"
 #include "mps_io_mapping.h"
 
 #include <iostream>
@@ -46,7 +47,7 @@ OpcUaBaseStation::get_base(llsf_msgs::BaseColor color)
 	case llsf_msgs::BASE_RED: color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_RED; break;
 	case llsf_msgs::BASE_BLACK: color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_BLACK; break;
 	case llsf_msgs::BASE_SILVER: color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_SILVER; break;
-	default: std::cout << "Error in RefBox, NOT implemented base color" << std::endl; return;
+	default: throw fawkes::Exception("Unexpected base color (%lu)", color);
 	}
 
 	enqueue_instruction(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
