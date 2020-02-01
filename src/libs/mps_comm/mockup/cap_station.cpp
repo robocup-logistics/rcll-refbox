@@ -1,7 +1,7 @@
 /***************************************************************************
- *  stations.h - All mockup MPS stations
+ *  cap_station.cpp - 
  *
- *  Created: Sat 01 Feb 2020 12:44:12 CET 12:44
+ *  Created: Sat 01 Feb 2020 17:57:56 CET 17:57
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -18,7 +18,36 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#pragma once
-
-#include "base_station.h"
 #include "cap_station.h"
+
+namespace llsfrb {
+namespace mps_comm {
+
+MockupCapStation::MockupCapStation(std::string name) : Machine(name)
+{
+}
+
+void
+MockupCapStation::retrieve_cap()
+{
+	cap_op();
+}
+
+void
+MockupCapStation::mount_cap()
+{
+	cap_op();
+}
+
+void
+MockupCapStation::cap_op()
+{
+	callback_busy_(true);
+	std::lock_guard<std::mutex> lg(queue_mutex_);
+	queue_.push(std::make_tuple([this] { callback_busy_(false); },
+	                            std::chrono::system_clock::now() + std::chrono::seconds(3)));
+	queue_condition_.notify_one();
+}
+
+} // namespace mps_comm
+} // namespace llsfrb

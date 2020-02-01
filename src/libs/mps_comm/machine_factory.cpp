@@ -69,6 +69,8 @@ MachineFactory::create_machine(std::string  name,
 	} else if (connection_mode == "mockup") {
 		if (type == "BS") {
 			return std::make_unique<MockupBaseStation>(name);
+		} else if (type == "CS") {
+			return std::make_unique<MockupCapStation>(name);
 		} else {
 			throw fawkes::Exception(
 			  "Unexpected machine type '%s' for machine '%s' and connection mode '%s'",

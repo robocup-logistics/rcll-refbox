@@ -1,7 +1,7 @@
 /***************************************************************************
- *  stations.h - All mockup MPS stations
+ *  cap_station.h - Mockup cap station
  *
- *  Created: Sat 01 Feb 2020 12:44:12 CET 12:44
+ *  Created: Sat 01 Feb 2020 17:57:55 CET 17:57
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,5 +20,22 @@
 
 #pragma once
 
-#include "base_station.h"
-#include "cap_station.h"
+#include "../cap_station.h"
+#include "machine.h"
+
+namespace llsfrb {
+namespace mps_comm {
+class MockupCapStation : public virtual MockupMachine, public virtual CapStation
+{
+public:
+	MockupCapStation(std::string name);
+	void retrieve_cap() override;
+	void mount_cap() override;
+	void identify() override{};
+
+private:
+	void cap_op();
+};
+
+} // namespace mps_comm
+} // namespace llsfrb
