@@ -44,9 +44,6 @@ public:
 
 	// -----------------
 	// deprecated methods
-	void band_on_until_in() override;
-	void band_on_until_mid() override;
-	void band_on_until_out() override;
 	void retrieve_cap() override;
 	void mount_cap() override;
 	// end of deprecated

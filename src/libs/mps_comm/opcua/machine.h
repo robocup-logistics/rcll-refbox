@@ -73,9 +73,6 @@ public:
 
 	// Reset: send the reset command (which is different for each machine type)
 	void reset() override;
-	void band_on_until_in() override;
-	void band_on_until_mid() override;
-	void band_on_until_out() override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify() = 0;
 

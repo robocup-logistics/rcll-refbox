@@ -461,26 +461,8 @@ OpcUaMachine::register_callback(Callback callback, bool simulation)
 	sub->add_callback(std::get<0>(callback));
 }
 
-void
-OpcUaMachine::band_on_until_in()
-{
-	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
-	                    Operation::OPERATION_BAND_IN);
-}
 
-void
-OpcUaMachine::band_on_until_mid()
-{
-	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
-	                    Operation::OPERATION_BAND_MID);
-}
 
-void
-OpcUaMachine::band_on_until_out()
-{
-	enqueue_instruction(Operation::OPERATION_BAND_ON_UNTIL + machine_type_,
-	                    Operation::OPERATION_BAND_OUT);
-}
 
 } // namespace mps_comm
 } // namespace llsfrb

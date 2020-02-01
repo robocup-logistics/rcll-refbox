@@ -49,9 +49,6 @@ public:
 	virtual void conveyor_move(ConveyorDirection direction, MPSSensor sensor) = 0;
 	virtual void reset_light()                                                = 0;
 	virtual void reset()                                                      = 0;
-	virtual void band_on_until_in()                                           = 0;
-	virtual void band_on_until_mid()                                          = 0;
-	virtual void band_on_until_out()                                          = 0;
 	virtual std::string
 	name() const
 	{
