@@ -46,13 +46,13 @@ public:
 
 	virtual void set_light(llsf_msgs::LightColor color,
 	                       llsf_msgs::LightState state = llsf_msgs::ON,
-	                       unsigned short        time  = 0)                           = 0;
-	virtual void conveyor_move(ConveyorDirection direction, MPSSensor sensor) = 0;
-	virtual void reset_light()                                                = 0;
-	virtual void reset()                                                      = 0;
-	virtual void register_busy_callback(std::function<void(bool)>)                    = 0;
-	virtual void register_ready_callback(std::function<void(bool)>)                   = 0;
-	virtual void register_barcode_callback(std::function<void(unsigned long)>)        = 0;
+	                       unsigned short        time  = 0)                            = 0;
+	virtual void conveyor_move(ConveyorDirection direction, MPSSensor sensor)  = 0;
+	virtual void reset_light()                                                 = 0;
+	virtual void reset()                                                       = 0;
+	virtual void register_busy_callback(std::function<void(bool)>)             = 0;
+	virtual void register_ready_callback(std::function<void(bool)>)            = 0;
+	virtual void register_barcode_callback(std::function<void(unsigned long)>) = 0;
 	virtual std::string
 	name() const
 	{

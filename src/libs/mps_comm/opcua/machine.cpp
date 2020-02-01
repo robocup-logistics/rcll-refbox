@@ -455,30 +455,31 @@ OpcUaMachine::register_ready_callback()
 	}
 }
 
-  void OpcUaMachine::register_ready_callback(std::function<void(bool)> callback)
-	{
-	  if (callback) {
-		  callback_ready_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->bool_s); };
-		  register_ready_callback();
-	  }
-  }
+void
+OpcUaMachine::register_ready_callback(std::function<void(bool)> callback)
+{
+	if (callback) {
+		callback_ready_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->bool_s); };
+		register_ready_callback();
+	}
+}
 
-  void
-  OpcUaMachine::register_barcode_callback()
-  {
-	  if (connected_ && callback_barcode_) {
-		  register_opc_callback(callback_barcode_, OpcUtils::MPSRegister::BARCODE_IN, nullptr);
-	  }
-  }
+void
+OpcUaMachine::register_barcode_callback()
+{
+	if (connected_ && callback_barcode_) {
+		register_opc_callback(callback_barcode_, OpcUtils::MPSRegister::BARCODE_IN, nullptr);
+	}
+}
 
-  void
-  OpcUaMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
-  {
-	  if (callback) {
-		  callback_barcode_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->uint32_s); };
-		  register_barcode_callback();
-	  }
-  }
+void
+OpcUaMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
+{
+	if (callback) {
+		callback_barcode_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->uint32_s); };
+		register_barcode_callback();
+	}
+}
 
 } // namespace mps_comm
 } // namespace llsfrb

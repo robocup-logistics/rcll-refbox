@@ -166,6 +166,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	                  "Using %s machine assignment",
 	                  (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
 
+	clips_ = std::make_unique<CLIPS::Environment>();
+	setup_protobuf_comm();
+	setup_clips();
+
 	try {
 		if (config_->get_bool("/llsfrb/mps/enable")) {
 			std::string prefix = "/llsfrb/mps/stations/";
@@ -214,6 +218,37 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 						MachineFactory mps_factory;
 						auto           mps =
 						  mps_factory.create_machine(cfg_name, mpstype, mpsip, port, connection_string);
+						mps->register_ready_callback([this, cfg_name](bool ready) {
+							fawkes::MutexLocker clips_lock(&clips_mutex_);
+							clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
+							                      cfg_name.c_str(),
+							                      ready ? "TRUE" : "FALSE");
+						});
+						mps->register_busy_callback([this, cfg_name](bool busy) {
+							fawkes::MutexLocker clips_lock(&clips_mutex_);
+							clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
+							                      cfg_name.c_str(),
+							                      busy ? "TRUE" : "FALSE");
+						});
+						mps->register_barcode_callback([this, cfg_name](unsigned long barcode) {
+							fawkes::MutexLocker clips_lock(&clips_mutex_);
+							clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)",
+							                      cfg_name.c_str(),
+							                      barcode);
+						});
+						// TODO proper MPS type check
+						//if (mps.first == "C-RS1" || mps.first == "C-RS2" || mps.first == "M-RS1"
+						//    || mps.first == "M-RS2") {
+						//	mps.second->addCallback(
+						//	  [this, &mps](OpcUtils::ReturnValue *ret) {
+						//		  fawkes::MutexLocker clips_lock(&clips_mutex_);
+						//		  clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
+						//		                        mps.first.c_str(),
+						//		                        // TODO right type?
+						//		                        ret->uint16_s);
+						//	  },
+						//	  OpcUtils::MPSRegister::SLIDECOUNT_IN);
+						//}
 						mps_[cfg_name] = std::move(mps);
 						mps_configs.insert(cfg_name);
 					} else {
@@ -226,10 +261,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	} catch (Exception &e) {
 		throw;
 	}
-
-	clips_ = std::make_unique<CLIPS::Environment>();
-	setup_protobuf_comm();
-	setup_clips();
 
 	mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
 	  new mps_placing_clips::MPSPlacingGenerator(clips_.get(), clips_mutex_));
@@ -458,60 +489,6 @@ LLSFRefBox::setup_clips()
 		clips_->add_function("mps-deliver",
 		                     sigc::slot<void, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
-
-		for (auto &mps : mps_) {
-			mps.second->addCallback(
-			  [this, &mps](OpcUtils::ReturnValue *ret) {
-				  std::string ready;
-				  if (ret->bool_s) {
-					  ready = "TRUE";
-				  } else {
-					  ready = "FALSE";
-				  }
-				  fawkes::MutexLocker clips_lock(&clips_mutex_);
-				  clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
-				                        mps.first.c_str(),
-				                        ready.c_str());
-			  },
-			  OpcUtils::MPSRegister::STATUS_READY_IN,
-			  nullptr);
-			mps.second->addCallback(
-			  [this, &mps](OpcUtils::ReturnValue *ret) {
-				  std::string busy;
-				  if (ret->bool_s) {
-					  busy = "TRUE";
-				  } else {
-					  busy = "FALSE";
-				  }
-				  fawkes::MutexLocker clips_lock(&clips_mutex_);
-				  clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
-				                        mps.first.c_str(),
-				                        busy.c_str());
-			  },
-			  OpcUtils::MPSRegister::STATUS_BUSY_IN,
-			  nullptr);
-			mps.second->addCallback(
-			  [this, &mps](OpcUtils::ReturnValue *ret) {
-				  fawkes::MutexLocker clips_lock(&clips_mutex_);
-				  clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)",
-				                        mps.first.c_str(),
-				                        ret->uint32_s);
-			  },
-			  OpcUtils::MPSRegister::BARCODE_IN);
-			// TODO proper MPS type check
-			if (mps.first == "C-RS1" || mps.first == "C-RS2" || mps.first == "M-RS1"
-			    || mps.first == "M-RS2") {
-				mps.second->addCallback(
-				  [this, &mps](OpcUtils::ReturnValue *ret) {
-					  fawkes::MutexLocker clips_lock(&clips_mutex_);
-					  clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
-					                        mps.first.c_str(),
-					                        // TODO right type?
-					                        ret->uint16_s);
-				  },
-				  OpcUtils::MPSRegister::SLIDECOUNT_IN);
-			}
-		}
 	}
 
 	clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
