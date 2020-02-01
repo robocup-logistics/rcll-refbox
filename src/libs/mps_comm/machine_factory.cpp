@@ -20,6 +20,7 @@
 
 #include "machine_factory.h"
 
+#include "mockup/stations.h"
 #include "opcua/stations.h"
 
 #include <core/exception.h>
@@ -65,10 +66,21 @@ MachineFactory::create_machine(std::string  name,
 		}
 		mps->connect();
 		return std::move(mps);
+	} else if (connection_mode == "mockup") {
+		if (type == "BS") {
+			return std::make_unique<MockupBaseStation>(name);
+		} else {
+			throw fawkes::Exception(
+			  "Unexpected machine type '%s' for machine '%s' and connection mode '%s'",
+			  type.c_str(),
+			  name.c_str(),
+			  connection_mode.c_str());
+		}
+	} else {
+		throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
+		                        connection_mode.c_str(),
+		                        name.c_str());
 	}
-	throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
-	                        connection_mode.c_str(),
-	                        name.c_str());
 }
 } // namespace mps_comm
 } // namespace llsfrb
