@@ -34,19 +34,10 @@ class OpcUaBaseStation : public virtual OpcUaMachine, public virtual BaseStation
 public:
 	OpcUaBaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
 
-	// ----------------------------
-	// Send command to get a cap of given color
-	// and on given side
-	void get_base(llsf_msgs::BaseColor slot);
-	// Check, if the cap is ready for take away
-	bool base_ready();
-	// Check, if the last cap was taken -> new order can be processed
-	bool is_empty();
-	// deprecated commands end
-	// -----------------------------
+	void get_base(llsf_msgs::BaseColor slot) override;
 
 	// Tell the PLC, which machine it is
-	virtual void identify();
+	void identify() override;
 };
 
 } // namespace mps_comm

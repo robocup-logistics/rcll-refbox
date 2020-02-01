@@ -53,22 +53,6 @@ OpcUaBaseStation::get_base(llsf_msgs::BaseColor color)
 	enqueue_instruction(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
 }
 
-// Need information on how to access this
-bool
-OpcUaBaseStation::base_ready()
-{
-	std::cout << "Not implemented yet!" << std::endl;
-	return true;
-}
-
-// Need information on how to access this
-bool
-OpcUaBaseStation::is_empty()
-{
-	std::cout << "Not implemented yet!" << std::endl;
-	return false;
-}
-
 void
 OpcUaBaseStation::identify()
 {

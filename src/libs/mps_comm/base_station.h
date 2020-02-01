@@ -30,8 +30,6 @@ class BaseStation : public virtual Machine
 {
 public:
 	virtual void get_base(llsf_msgs::BaseColor slot) = 0;
-	virtual bool base_ready()                        = 0;
-	virtual bool is_empty()                          = 0;
 };
 
 } // namespace mps_comm
