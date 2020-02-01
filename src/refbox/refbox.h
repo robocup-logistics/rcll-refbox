@@ -155,7 +155,6 @@ private: // methods
 
 	void clips_mps_bs_dispense(std::string machine, std::string color);
 	void clips_mps_rs_mount_ring(std::string machine, int slide);
-	void clips_mps_cs_process(std::string machine, std::string operation);
 	void clips_mps_ds_process(std::string machine, int slide);
 	void clips_mps_set_light(std::string machine, std::string light, std::string state);
 	void clips_mps_set_lights(std::string machine,

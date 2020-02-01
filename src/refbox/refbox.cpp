@@ -449,9 +449,6 @@ LLSFRefBox::setup_clips()
 		clips_->add_function("mps-rs-mount-ring",
 		                     sigc::slot<void, std::string, int>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
-		clips_->add_function("mps-cs-process",
-		                     sigc::slot<void, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
 		clips_->add_function("mps-reset",
 		                     sigc::slot<void, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
@@ -824,44 +821,6 @@ LLSFRefBox::clips_mps_cs_mount_cap(std::string machine)
 		return;
 	}
 	station->mount_cap();
-}
-
-void
-LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
-{
-	logger_->log_info("MPS", "%s on %s", operation.c_str(), machine.c_str());
-	if (operation != "RETRIEVE_CAP" && operation != "MOUNT_CAP") {
-		logger_->log_error("MPS", "Invalid operation '%s' on %s", operation.c_str(), machine.c_str());
-		return;
-	}
-	CapStation *station;
-	try {
-		station = dynamic_cast<CapStation *>(mps_.at(machine).get());
-	} catch (std::out_of_range &e) {
-		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
-		return;
-	}
-	if (!mutex_future_ready(machine)) {
-		return;
-	}
-	auto fut = std::async(std::launch::async, [this, station, machine, operation] {
-		MutexLocker lock(&clips_mutex_, false);
-		station->band_on_until_mid();
-		lock.relock();
-		clips_->assert_fact_f("(mps-feedback %s %s AVAILABLE)", machine.c_str(), operation.c_str());
-		lock.unlock();
-		if (operation == "RETRIEVE_CAP") {
-			station->retrieve_cap();
-		} else if (operation == "MOUNT_CAP") {
-			station->mount_cap();
-		}
-		station->band_on_until_out();
-		lock.relock();
-		clips_->assert_fact_f("(mps-feedback %s %s DONE)", machine.c_str(), operation.c_str());
-		return true;
-	});
-
-	mutex_futures_[machine] = std::move(fut);
 }
 
 void
