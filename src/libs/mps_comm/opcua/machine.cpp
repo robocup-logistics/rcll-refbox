@@ -67,7 +67,6 @@ OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
   simulation_(connection_mode == SIMULATION)
 {
 	initLogger();
-	connect();
 	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
 }
 
@@ -171,7 +170,9 @@ OpcUaMachine::connect()
 
 OpcUaMachine::~OpcUaMachine()
 {
+	std::unique_lock<std::mutex> lock(command_queue_mutex_);
 	shutdown_ = true;
+	lock.unlock();
 	queue_condition_.notify_all();
 	if (worker_thread_.joinable()) {
 		worker_thread_.join();

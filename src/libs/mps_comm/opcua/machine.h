@@ -45,12 +45,16 @@ enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
 
 enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
+class MachineFactory;
+
 class OpcUaMachine : public virtual Machine
 {
 	using Callback = std::
 	  tuple<SubscriptionClient::ReturnValueCallback, OpcUtils::MPSRegister, OpcUtils::ReturnValue *>;
 	using Instruction =
 	  std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
+
+	friend class MachineFactory;
 
 public:
 	OpcUaMachine(unsigned short int machine_type,
@@ -105,7 +109,7 @@ protected:
 	static constexpr std::chrono::seconds mock_busy_duration_{3};
 	static constexpr std::chrono::seconds mock_ready_duration_{5};
 
-	std::atomic<bool>       shutdown_;
+	bool                    shutdown_;
 	std::mutex              command_queue_mutex_;
 	std::mutex              command_mutex_;
 	std::condition_variable queue_condition_;
@@ -116,9 +120,9 @@ protected:
 	                                              OpcUtils::ReturnValue *                 retVal);
 	void                    dispatch_command_queue();
 
-	std::vector<Callback> callbacks_;
-	bool                  connected_ = false;
-	bool                  simulation_;
+	std::vector<Callback>                   callbacks_;
+	bool                                    connected_ = false;
+	bool                                    simulation_;
 	SubscriptionClient::ReturnValueCallback callback_ready_;
 	SubscriptionClient::ReturnValueCallback callback_busy_;
 	SubscriptionClient::ReturnValueCallback callback_barcode_;

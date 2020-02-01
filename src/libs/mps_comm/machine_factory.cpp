@@ -20,6 +20,8 @@
 
 #include "machine_factory.h"
 
+#include "opcua/machine.h"
+
 #include <core/exception.h>
 
 namespace llsfrb {
@@ -44,21 +46,29 @@ MachineFactory::create_machine(std::string  name,
 		                        name.c_str());
 	}
 
-	if (type == "BS") {
-		return std::make_unique<OpcUaBaseStation>(name, ip, port, mode);
-	} else if (type == "CS") {
-		return std::make_unique<OpcUaCapStation>(name, ip, port, mode);
-	} else if (type == "RS") {
-		return std::make_unique<OpcUaRingStation>(name, ip, port, mode);
-	} else if (type == "DS") {
-		return std::make_unique<OpcUaDeliveryStation>(name, ip, port, mode);
-	} else if (type == "SS") {
-		return std::make_unique<OpcUaStorageStation>(name, ip, port, mode);
-	} else {
-		throw fawkes::Exception("Unexpected machine type '%s' for machine '%s'",
-		                        type.c_str(),
-		                        name.c_str());
+	if (connection_mode == "plc") {
+		std::unique_ptr<OpcUaMachine> mps;
+		if (type == "BS") {
+			mps = std::make_unique<OpcUaBaseStation>(name, ip, port, mode);
+		} else if (type == "CS") {
+			mps = std::make_unique<OpcUaCapStation>(name, ip, port, mode);
+		} else if (type == "RS") {
+			mps = std::make_unique<OpcUaRingStation>(name, ip, port, mode);
+		} else if (type == "DS") {
+			mps = std::make_unique<OpcUaDeliveryStation>(name, ip, port, mode);
+		} else if (type == "SS") {
+			mps = std::make_unique<OpcUaStorageStation>(name, ip, port, mode);
+		} else {
+			throw fawkes::Exception("Unexpected machine type '%s' for machine '%s'",
+			                        type.c_str(),
+			                        name.c_str());
+		}
+		mps->connect();
+		return std::move(mps);
 	}
+	throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
+	                        connection_mode.c_str(),
+	                        name.c_str());
 }
 } // namespace mps_comm
 } // namespace llsfrb

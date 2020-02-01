@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "machine.h"
 #include "opcua/machine.h"
 #include "stations.h"
 
