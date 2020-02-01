@@ -35,11 +35,6 @@ class OpcUaRingStation : public virtual OpcUaMachine, public virtual RingStation
 public:
 	OpcUaRingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
 
-	// Send command to get a ring
-	// void getRing();
-	// Check, if the cap is ready for take away
-	bool ring_ready() override;
-
 	void mount_ring(unsigned int feeder) override;
 
 	// identify: tell PLC, which machine it is running on

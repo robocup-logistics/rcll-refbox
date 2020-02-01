@@ -45,14 +45,6 @@ OpcUaRingStation::OpcUaRingStation(std::string    name,
 {
 }
 
-// Need information on how to access this
-bool
-OpcUaRingStation::ring_ready()
-{
-	std::cout << "Not implemented yet!" << std::endl;
-	return true;
-}
-
 void
 OpcUaRingStation::identify()
 {

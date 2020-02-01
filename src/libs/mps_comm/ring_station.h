@@ -28,7 +28,6 @@ namespace mps_comm {
 class RingStation : public virtual Machine
 {
 public:
-	virtual bool ring_ready()                    = 0;
 	virtual void mount_ring(unsigned int feeder) = 0;
 };
 } // namespace mps_comm
