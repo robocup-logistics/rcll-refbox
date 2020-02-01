@@ -1,7 +1,7 @@
 /***************************************************************************
- *  stations.h - All mockup MPS stations
+ *  ring_station.cpp - Mockup ring station
  *
- *  Created: Sat 01 Feb 2020 12:44:12 CET 12:44
+ *  Created: Sat 01 Feb 2020 18:24:25 CET 18:24
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -18,9 +18,24 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#pragma once
-
-#include "base_station.h"
-#include "cap_station.h"
-#include "delivery_station.h"
 #include "ring_station.h"
+
+namespace llsfrb {
+namespace mps_comm {
+
+MockupRingStation::MockupRingStation(std::string name) : Machine(name)
+{
+}
+
+void
+MockupRingStation::mount_ring(unsigned int feeder)
+{
+	callback_busy_(true);
+	std::lock_guard<std::mutex> lg(queue_mutex_);
+	queue_.push(std::make_tuple([this] { callback_busy_(false); },
+	                            std::chrono::system_clock::now() + std::chrono::seconds(3)));
+	queue_condition_.notify_one();
+}
+
+} // namespace mps_comm
+} // namespace llsfrb

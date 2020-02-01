@@ -1,7 +1,7 @@
 /***************************************************************************
- *  stations.h - All mockup MPS stations
+ *  ring_station.h - Mockup ring station
  *
- *  Created: Sat 01 Feb 2020 12:44:12 CET 12:44
+ *  Created: Sat 01 Feb 2020 18:23:59 CET 18:23
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,7 +20,19 @@
 
 #pragma once
 
-#include "base_station.h"
-#include "cap_station.h"
-#include "delivery_station.h"
-#include "ring_station.h"
+#include "../ring_station.h"
+#include "machine.h"
+
+namespace llsfrb {
+namespace mps_comm {
+
+class MockupRingStation : public virtual MockupMachine, public virtual RingStation
+{
+public:
+	MockupRingStation(std::string name);
+	void mount_ring(unsigned int feeder) override;
+	void identify() override{};
+};
+
+} // namespace mps_comm
+} // namespace llsfrb
