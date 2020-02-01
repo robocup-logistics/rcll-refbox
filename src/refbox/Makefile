@@ -36,9 +36,8 @@ ifeq ($(HAVE_CPP17)$(HAVE_PROTOBUF)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   BINS_all =	$(BINDIR)/llsf-refbox
 
   CFLAGS  += $(CFLAGS_CPP17) $(CFLAGS_PROTOBUF) $(CFLAGS_CLIPS) \
-	     $(CFLAGS_MONGODB) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_CLIPS) $(LDFLAGS_MONGODB) \
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_CLIPS) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   #MANPAGES_all =  $(MANDIR)/man1/llsf-refbox.1
 
@@ -48,6 +47,8 @@ ifeq ($(HAVE_CPP17)$(HAVE_PROTOBUF)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   endif
 
   ifeq ($(HAVE_MONGODB),1)
+    CFLAGS += $(CFLAGS_MONGODB)
+    LDFLAGS += $(LDFLAGS_MONGODB)
     LIBS_llsf_refbox += llsf_mongodb_log
   else
     WARN_TARGETS += warning_mongodb
@@ -65,10 +66,9 @@ else
   ifneq ($(HAVE_BOOST_LIBS),1)
     WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
   endif
-endif
-
-ifneq ($(HAVE_MONGODB),1)
-  WARN_TARGETS += warning_mongodb
+  ifneq ($(HAVE_MONGODB),1)
+    WARN_TARGETS += warning_mongodb
+  endif
 endif
 
 ifeq ($(OBJSSUBMAKE),1)
