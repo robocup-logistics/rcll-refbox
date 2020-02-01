@@ -1,7 +1,7 @@
 /***************************************************************************
- *  stations.h - All mockup MPS stations
+ *  storage_station.cpp - Mockup for storage station
  *
- *  Created: Sat 01 Feb 2020 12:44:12 CET 12:44
+ *  Created: Sat 01 Feb 2020 18:41:45 CET 18:41
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -18,10 +18,14 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#pragma once
-
-#include "base_station.h"
-#include "cap_station.h"
-#include "delivery_station.h"
-#include "ring_station.h"
 #include "storage_station.h"
+
+namespace llsfrb {
+namespace mps_comm {
+
+MockupStorageStation::MockupStorageStation(std::string name) : Machine(name)
+{
+}
+
+} // namespace mps_comm
+} // namespace llsfrb

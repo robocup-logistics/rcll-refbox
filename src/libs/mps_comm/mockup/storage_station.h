@@ -1,7 +1,7 @@
 /***************************************************************************
- *  stations.h - All mockup MPS stations
+ *  storage_station.h - Mockup for storage station
  *
- *  Created: Sat 01 Feb 2020 12:44:12 CET 12:44
+ *  Created: Sat 01 Feb 2020 18:41:45 CET 18:41
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,8 +20,17 @@
 
 #pragma once
 
-#include "base_station.h"
-#include "cap_station.h"
-#include "delivery_station.h"
-#include "ring_station.h"
-#include "storage_station.h"
+#include "../storage_station.h"
+#include "machine.h"
+
+namespace llsfrb {
+namespace mps_comm {
+
+class MockupStorageStation : public virtual MockupMachine, public virtual StorageStation
+{
+public:
+	MockupStorageStation(std::string name);
+	void identify() override{};
+};
+} // namespace mps_comm
+} // namespace llsfrb

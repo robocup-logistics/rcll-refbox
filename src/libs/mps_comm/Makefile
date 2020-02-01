@@ -21,7 +21,7 @@ include $(BUILDSYSDIR)/boost.mk
 
 LIBS_libmps_comm = stdc++ m llsfrbcore pthread
 OBJS_libmps_comm = opcua/opc_utils.o opcua/machine.o opcua/base_station.o opcua/cap_station.o opcua/delivery_station.o opcua/ring_station.o opcua/storage_station.o time_utils.o machine_factory.o \
-                   mockup/machine.o mockup/base_station.o mockup/cap_station.o mockup/delivery_station.o mockup/ring_station.o
+                   mockup/machine.o mockup/base_station.o mockup/cap_station.o mockup/delivery_station.o mockup/ring_station.o mockup/storage_station.o
 HDRS_libmps_comm = subscription_client.h opc_utils.h machine.h base_station.h cap_station.h delivery_station.h ring_station.h storage_station.h time_utils.h mps_io_mapping.h timeouts.h machine_factory.h
 
 OBJS_all = $(OBJS_libmps_comm)
