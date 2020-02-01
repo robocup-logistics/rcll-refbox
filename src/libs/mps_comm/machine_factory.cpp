@@ -38,14 +38,12 @@ MachineFactory::create_machine(std::string  name,
                                std::string  connection_mode)
 {
 #ifdef HAVE_FREEOPCUA
-	if (connection_mode == "plc") {
+	if (connection_mode == "plc" || connection_mode == "plc_simulation") {
 		OpcUaMachine::ConnectionMode mode;
 		if (connection_mode == "plc") {
 			mode = OpcUaMachine::PLC;
-		} else if (connection_mode == "simulation") {
+		} else if (connection_mode == "plc_simulation") {
 			mode = OpcUaMachine::SIMULATION;
-		} else if (connection_mode == "mockup") {
-			mode = OpcUaMachine::MOCKUP;
 		} else {
 			throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
 			                        connection_mode.c_str(),
