@@ -163,9 +163,7 @@ OpcUaMachine::connect()
 
 	subscribe(SUB_REGISTERS, outs, simulation_);
 	identify();
-	register_busy_callback();
-	register_ready_callback();
-	register_barcode_callback();
+	update_callbacks();
 }
 
 OpcUaMachine::~OpcUaMachine()
@@ -432,54 +430,53 @@ OpcUaMachine::register_opc_callback(SubscriptionClient::ReturnValueCallback call
 }
 
 void
-OpcUaMachine::register_busy_callback()
+OpcUaMachine::update_callbacks()
 {
-	if (connected_ && callback_busy_) {
-		register_opc_callback(callback_busy_, OpcUtils::MPSRegister::STATUS_BUSY_IN, nullptr);
+	if (!connected_) {
+		return;
 	}
-};
+	for (const auto &cb : callbacks_) {
+		register_opc_callback(cb.second, cb.first, nullptr);
+	}
+}
 
 void
 OpcUaMachine::register_busy_callback(std::function<void(bool)> callback)
 {
 	if (callback) {
-		callback_busy_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->bool_s); };
-		register_busy_callback();
+		callbacks_[OpcUtils::MPSRegister::STATUS_BUSY_IN] = [=](OpcUtils::ReturnValue *ret) {
+			callback(ret->bool_s);
+		};
+	} else {
+		callbacks_.erase(OpcUtils::MPSRegister::STATUS_BUSY_IN);
 	}
-}
-
-void
-OpcUaMachine::register_ready_callback()
-{
-	if (connected_ && callback_ready_) {
-		register_opc_callback(callback_ready_, OpcUtils::MPSRegister::STATUS_READY_IN, nullptr);
-	}
+	update_callbacks();
 }
 
 void
 OpcUaMachine::register_ready_callback(std::function<void(bool)> callback)
 {
 	if (callback) {
-		callback_ready_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->bool_s); };
-		register_ready_callback();
+		callbacks_[OpcUtils::MPSRegister::STATUS_READY_IN] = [=](OpcUtils::ReturnValue *ret) {
+			callback(ret->bool_s);
+		};
+	} else {
+		callbacks_.erase(OpcUtils::MPSRegister::STATUS_READY_IN);
 	}
-}
-
-void
-OpcUaMachine::register_barcode_callback()
-{
-	if (connected_ && callback_barcode_) {
-		register_opc_callback(callback_barcode_, OpcUtils::MPSRegister::BARCODE_IN, nullptr);
-	}
+	update_callbacks();
 }
 
 void
 OpcUaMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
 	if (callback) {
-		callback_barcode_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->uint32_s); };
-		register_barcode_callback();
+		callbacks_[OpcUtils::MPSRegister::BARCODE_IN] = [=](OpcUtils::ReturnValue *ret) {
+			callback(ret->bool_s);
+		};
+	} else {
+		callbacks_.erase(OpcUtils::MPSRegister::BARCODE_IN);
 	}
+	update_callbacks();
 }
 
 } // namespace mps_comm

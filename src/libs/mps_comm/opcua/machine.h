@@ -30,6 +30,7 @@
 #include <queue>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 //#include <msgs/MachineInstructions.pb.h>
@@ -49,8 +50,6 @@ class MachineFactory;
 
 class OpcUaMachine : public virtual Machine
 {
-	using Callback = std::
-	  tuple<SubscriptionClient::ReturnValueCallback, OpcUtils::MPSRegister, OpcUtils::ReturnValue *>;
 	using Instruction =
 	  std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
 
@@ -97,9 +96,7 @@ protected:
 	                         int            timeout  = 0,
 	                         unsigned char  status   = 1,
 	                         unsigned char  error    = 0);
-	void register_ready_callback();
-	void register_busy_callback();
-	void register_barcode_callback();
+	void update_callbacks();
 	// machine type
 	const unsigned short int machine_type_;
 	std::string              ip_;
@@ -120,9 +117,9 @@ protected:
 	                                              OpcUtils::ReturnValue *                 retVal);
 	void                    dispatch_command_queue();
 
-	std::vector<Callback>                   callbacks_;
-	bool                                    connected_ = false;
-	bool                                    simulation_;
+	bool connected_ = false;
+	bool simulation_;
+	std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
 	SubscriptionClient::ReturnValueCallback callback_ready_;
 	SubscriptionClient::ReturnValueCallback callback_busy_;
 	SubscriptionClient::ReturnValueCallback callback_barcode_;
