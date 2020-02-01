@@ -37,7 +37,11 @@
 #include "refbox.h"
 
 #include <clipsmm.h>
-#include <mongocxx/instance.hpp>
+
+#ifdef HAVE_MONGODB
+#	include <mongocxx/instance.hpp>
+#endif
+
 #include <termios.h>
 
 using namespace llsfrb;
