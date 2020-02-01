@@ -1,7 +1,7 @@
 /***************************************************************************
- *  stations.h - All mockup MPS stations
+ *  delivery_station.cpp - Mockup delivery station
  *
- *  Created: Sat 01 Feb 2020 12:44:12 CET 12:44
+ *  Created: Sat 01 Feb 2020 18:12:57 CET 18:12
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -18,8 +18,25 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#pragma once
-
-#include "base_station.h"
-#include "cap_station.h"
 #include "delivery_station.h"
+
+namespace llsfrb {
+namespace mps_comm {
+
+MockupDeliveryStation::MockupDeliveryStation(std::string name) : Machine(name)
+{
+}
+
+void
+MockupDeliveryStation::deliver_product(int slot)
+{
+	assert(slot == 1 || slot == 2 || slot == 3);
+	callback_busy_(true);
+	std::lock_guard<std::mutex> lg(queue_mutex_);
+	queue_.push(std::make_tuple([this] { callback_busy_(false); },
+	                            std::chrono::system_clock::now() + std::chrono::seconds(4 + slot)));
+	queue_condition_.notify_one();
+}
+
+} // namespace mps_comm
+} // namespace llsfrb
