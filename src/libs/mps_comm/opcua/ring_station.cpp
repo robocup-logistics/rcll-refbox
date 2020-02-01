@@ -57,5 +57,13 @@ OpcUaRingStation::mount_ring(unsigned int feeder)
 	enqueue_instruction(Operation::OPERATION_MOUNT_RING + machine_type_, feeder);
 }
 
+void
+OpcUaRingStation::register_slide_callback(std::function<void(unsigned int)> callback)
+{
+	if (callback) {
+		callback_slide_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->uint16_s); };
+	}
+}
+
 } // namespace mps_comm
 } // namespace llsfrb

@@ -28,7 +28,8 @@ namespace mps_comm {
 class RingStation : public virtual Machine
 {
 public:
-	virtual void mount_ring(unsigned int feeder) = 0;
+	virtual void mount_ring(unsigned int feeder)                            = 0;
+	virtual void register_slide_callback(std::function<void(unsigned int)>) = 0;
 };
 } // namespace mps_comm
 } // namespace llsfrb

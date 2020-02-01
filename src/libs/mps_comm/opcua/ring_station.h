@@ -36,9 +36,13 @@ public:
 	OpcUaRingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
 
 	void mount_ring(unsigned int feeder) override;
+	void register_slide_callback(std::function<void(unsigned int)>) override;
 
 	// identify: tell PLC, which machine it is running on
 	virtual void identify() override;
+
+protected:
+	SubscriptionClient::ReturnValueCallback callback_slide_;
 };
 
 } // namespace mps_comm
