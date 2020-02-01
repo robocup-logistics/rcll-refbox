@@ -21,7 +21,10 @@
 #include "machine_factory.h"
 
 #include "mockup/stations.h"
-#include "opcua/stations.h"
+
+#ifdef HAVE_FREEOPCUA
+#	include "opcua/stations.h"
+#endif
 
 #include <core/exception.h>
 
@@ -34,20 +37,20 @@ MachineFactory::create_machine(std::string  name,
                                unsigned int port,
                                std::string  connection_mode)
 {
-	OpcUaMachine::ConnectionMode mode;
+#ifdef HAVE_FREEOPCUA
 	if (connection_mode == "plc") {
-		mode = OpcUaMachine::PLC;
-	} else if (connection_mode == "simulation") {
-		mode = OpcUaMachine::SIMULATION;
-	} else if (connection_mode == "mockup") {
-		mode = OpcUaMachine::MOCKUP;
-	} else {
-		throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
-		                        connection_mode.c_str(),
-		                        name.c_str());
-	}
-
-	if (connection_mode == "plc") {
+		OpcUaMachine::ConnectionMode mode;
+		if (connection_mode == "plc") {
+			mode = OpcUaMachine::PLC;
+		} else if (connection_mode == "simulation") {
+			mode = OpcUaMachine::SIMULATION;
+		} else if (connection_mode == "mockup") {
+			mode = OpcUaMachine::MOCKUP;
+		} else {
+			throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
+			                        connection_mode.c_str(),
+			                        name.c_str());
+		}
 		std::unique_ptr<OpcUaMachine> mps;
 		if (type == "BS") {
 			mps = std::make_unique<OpcUaBaseStation>(name, ip, port, mode);
@@ -66,7 +69,9 @@ MachineFactory::create_machine(std::string  name,
 		}
 		mps->connect();
 		return std::move(mps);
-	} else if (connection_mode == "mockup") {
+	}
+#endif
+	if (connection_mode == "mockup") {
 		if (type == "BS") {
 			return std::make_unique<MockupBaseStation>(name);
 		} else if (type == "CS") {

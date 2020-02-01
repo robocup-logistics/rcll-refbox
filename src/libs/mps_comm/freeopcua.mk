@@ -19,7 +19,6 @@ ifneq ($(PKGCONFIG),)
 endif
 
 ifeq ($(HAVE_FREEOPCUA),1)
-  HAVE_MPS_COMM    = 1
-  CFLAGS_MPS_COMM  = $(shell $(PKGCONFIG) --cflags $(FREEOPCUA_COMPONENTS)) $(CFLAGS_CPP11)
-  LDFLAGS_MPS_COMM = $(shell $(PKGCONFIG) --libs $(FREEOPCUA_COMPONENTS)) -lmbedtls
+  CFLAGS_FREEOPCUA  = $(shell $(PKGCONFIG) --cflags $(FREEOPCUA_COMPONENTS)) $(CFLAGS_CPP11)
+  LDFLAGS_FREEOPCUA = $(shell $(PKGCONFIG) --libs $(FREEOPCUA_COMPONENTS)) -lmbedtls
 endif
