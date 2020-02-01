@@ -236,19 +236,18 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 							                      cfg_name.c_str(),
 							                      barcode);
 						});
-						// TODO proper MPS type check
-						//if (mps.first == "C-RS1" || mps.first == "C-RS2" || mps.first == "M-RS1"
-						//    || mps.first == "M-RS2") {
-						//	mps.second->addCallback(
-						//	  [this, &mps](OpcUtils::ReturnValue *ret) {
-						//		  fawkes::MutexLocker clips_lock(&clips_mutex_);
-						//		  clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
-						//		                        mps.first.c_str(),
-						//		                        // TODO right type?
-						//		                        ret->uint16_s);
-						//	  },
-						//	  OpcUtils::MPSRegister::SLIDECOUNT_IN);
-						//}
+						if (mpstype == "RS") {
+							RingStation *rs = dynamic_cast<RingStation *>(mps.get());
+							if (!rs) {
+								throw Exception("Expected MPS %s to be of type RingStation", cfg_name.c_str());
+							}
+							rs->register_slide_callback([this, cfg_name](unsigned int counter) {
+								fawkes::MutexLocker clips_lock(&clips_mutex_);
+								clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
+								                      cfg_name.c_str(),
+								                      counter);
+							});
+						}
 						mps_[cfg_name] = std::move(mps);
 						mps_configs.insert(cfg_name);
 					} else {
