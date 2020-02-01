@@ -34,7 +34,6 @@ OpcUaBaseStation::OpcUaBaseStation(std::string    name,
                                    ConnectionMode mode)
 : Machine(name), OpcUaMachine(Station::STATION_BASE, ip, port, mode)
 {
-	std::cout << "Initialize BS with name " << name << std::endl;
 }
 
 void

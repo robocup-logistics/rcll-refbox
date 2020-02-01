@@ -24,7 +24,6 @@ namespace llsfrb {
 namespace mps_comm {
 MockupBaseStation::MockupBaseStation(std::string name) : Machine(name)
 {
-	std::cout << "Initialize BS with name " << name << std::endl;
 }
 
 void
