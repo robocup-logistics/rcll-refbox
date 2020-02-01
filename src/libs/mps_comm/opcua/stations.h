@@ -1,7 +1,7 @@
 /***************************************************************************
- *  machine_factory.h - Create MPS machine instances
+ *  stations.h - All OPC-UA MPS stations
  *
- *  Created: Tue 21 Jan 2020 12:53:24 CET 12:53
+ *  Created: Sat 01 Feb 2020 12:41:11 CET 12:41
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,22 +20,8 @@
 
 #pragma once
 
-#include "machine.h"
-
-#include <memory>
-#include <string>
-
-namespace llsfrb {
-namespace mps_comm {
-class MachineFactory
-{
-public:
-	MachineFactory() = default;
-	std::unique_ptr<Machine> create_machine(std::string  name,
-	                                        std::string  type,
-	                                        std::string  ip,
-	                                        unsigned int port,
-	                                        std::string  connection_mode);
-};
-} // namespace mps_comm
-} // namespace llsfrb
+#include "base_station.h"
+#include "cap_station.h"
+#include "delivery_station.h"
+#include "ring_station.h"
+#include "storage_station.h"

@@ -20,7 +20,7 @@
 
 #include "machine_factory.h"
 
-#include "opcua/machine.h"
+#include "opcua/stations.h"
 
 #include <core/exception.h>
 
