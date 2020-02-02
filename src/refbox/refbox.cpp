@@ -75,6 +75,7 @@
 #	include <netcomm/utils/resolver.h>
 #endif
 
+#include <memory>
 #include <string>
 
 using namespace protobuf_comm;
