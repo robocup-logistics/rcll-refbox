@@ -23,7 +23,7 @@
 namespace llsfrb {
 namespace mps_comm {
 
-MockupStorageStation::MockupStorageStation(std::string name) : Machine(name)
+MockupStorageStation::MockupStorageStation(const std::string &name) : Machine(name)
 {
 }
 

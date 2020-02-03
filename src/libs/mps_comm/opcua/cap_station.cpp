@@ -34,10 +34,10 @@ namespace mps_comm {
 }
 #endif
 
-OpcUaCapStation::OpcUaCapStation(std::string    name,
-                                 std::string    ip,
-                                 unsigned short port,
-                                 ConnectionMode mode)
+OpcUaCapStation::OpcUaCapStation(const std::string &name,
+                                 const std::string &ip,
+                                 unsigned short     port,
+                                 ConnectionMode     mode)
 : Machine(name), OpcUaMachine(Station::STATION_CAP, ip, port, mode)
 {
 }

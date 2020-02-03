@@ -23,7 +23,7 @@
 namespace llsfrb {
 namespace mps_comm {
 
-MockupCapStation::MockupCapStation(std::string name) : Machine(name)
+MockupCapStation::MockupCapStation(const std::string &name) : Machine(name)
 {
 }
 

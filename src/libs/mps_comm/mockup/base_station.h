@@ -28,7 +28,7 @@ namespace mps_comm {
 class MockupBaseStation : public virtual MockupMachine, public virtual BaseStation
 {
 public:
-	MockupBaseStation(std::string name);
+	MockupBaseStation(const std::string &name);
 	void get_base(llsf_msgs::BaseColor slot) override;
 	void identify() override{};
 };

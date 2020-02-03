@@ -31,11 +31,11 @@
 namespace llsfrb {
 namespace mps_comm {
 std::unique_ptr<Machine>
-MachineFactory::create_machine(std::string  name,
-                               std::string  type,
-                               std::string  ip,
-                               unsigned int port,
-                               std::string  connection_mode)
+MachineFactory::create_machine(const std::string &name,
+                               const std::string &type,
+                               const std::string &ip,
+                               unsigned int       port,
+                               const std::string &connection_mode)
 {
 #ifdef HAVE_FREEOPCUA
 	if (connection_mode == "plc" || connection_mode == "plc_simulation") {

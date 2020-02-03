@@ -34,10 +34,10 @@ namespace mps_comm {
 }
 #endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(std::string    name,
-                                           std::string    ip,
-                                           unsigned short port,
-                                           ConnectionMode mode)
+OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
+                                           const std::string &ip,
+                                           unsigned short     port,
+                                           ConnectionMode     mode)
 : Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, mode)
 {
 }

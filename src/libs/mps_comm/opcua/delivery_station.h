@@ -31,7 +31,10 @@ namespace mps_comm {
 class OpcUaDeliveryStation : public virtual OpcUaMachine, public virtual DeliveryStation
 {
 public:
-	OpcUaDeliveryStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	OpcUaDeliveryStation(const std::string &name,
+	                     const std::string &ip,
+	                     unsigned short     port,
+	                     ConnectionMode     mode);
 	virtual ~OpcUaDeliveryStation();
 
 	// Send command to deliver a product

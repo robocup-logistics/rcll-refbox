@@ -23,7 +23,7 @@
 namespace llsfrb {
 namespace mps_comm {
 
-MockupDeliveryStation::MockupDeliveryStation(std::string name) : Machine(name)
+MockupDeliveryStation::MockupDeliveryStation(const std::string &name) : Machine(name)
 {
 }
 

@@ -32,7 +32,10 @@ namespace mps_comm {
 class OpcUaBaseStation : public virtual OpcUaMachine, public virtual BaseStation
 {
 public:
-	OpcUaBaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	OpcUaBaseStation(const std::string &name,
+	                 const std::string &ip,
+	                 unsigned short     port,
+	                 ConnectionMode     mode);
 
 	void get_base(llsf_msgs::BaseColor slot) override;
 

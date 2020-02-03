@@ -33,7 +33,10 @@ namespace mps_comm {
 class OpcUaStorageStation : public virtual OpcUaMachine, public virtual StorageStation
 {
 public:
-	OpcUaStorageStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	OpcUaStorageStation(const std::string &name,
+	                    const std::string &ip,
+	                    unsigned short     port,
+	                    ConnectionMode     mode);
 
 	// identify: tell the PLC, which machine it is controlling
 	virtual void identify() override;

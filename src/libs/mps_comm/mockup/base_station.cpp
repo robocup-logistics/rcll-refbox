@@ -22,7 +22,7 @@
 
 namespace llsfrb {
 namespace mps_comm {
-MockupBaseStation::MockupBaseStation(std::string name) : Machine(name)
+MockupBaseStation::MockupBaseStation(const std::string &name) : Machine(name)
 {
 }
 

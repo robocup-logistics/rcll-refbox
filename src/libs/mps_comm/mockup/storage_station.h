@@ -29,7 +29,7 @@ namespace mps_comm {
 class MockupStorageStation : public virtual MockupMachine, public virtual StorageStation
 {
 public:
-	MockupStorageStation(std::string name);
+	MockupStorageStation(const std::string &name);
 	void identify() override{};
 };
 } // namespace mps_comm

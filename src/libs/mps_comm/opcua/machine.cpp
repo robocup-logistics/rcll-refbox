@@ -55,7 +55,7 @@ constexpr std::chrono::seconds OpcUaMachine::mock_busy_duration_;
 constexpr std::chrono::seconds OpcUaMachine::mock_ready_duration_;
 
 OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
-                           std::string        ip,
+                           const std::string &ip,
                            unsigned short     port,
                            ConnectionMode     connection_mode)
 : abort_operation_(false),

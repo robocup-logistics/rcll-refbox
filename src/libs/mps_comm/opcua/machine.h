@@ -57,7 +57,7 @@ class OpcUaMachine : public virtual Machine
 
 public:
 	OpcUaMachine(unsigned short int machine_type,
-	             std::string        ip,
+	             const std::string &ip,
 	             unsigned short     port,
 	             ConnectionMode = PLC);
 
@@ -99,7 +99,7 @@ protected:
 	void update_callbacks();
 	// machine type
 	const unsigned short int machine_type_;
-	std::string              ip_;
+	const std::string &      ip_;
 	unsigned short           port_;
 
 	const ConnectionMode                  connection_mode_;

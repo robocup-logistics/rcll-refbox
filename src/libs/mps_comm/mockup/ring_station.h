@@ -29,7 +29,7 @@ namespace mps_comm {
 class MockupRingStation : public virtual MockupMachine, public virtual RingStation
 {
 public:
-	MockupRingStation(std::string name);
+	MockupRingStation(const std::string &name);
 	void mount_ring(unsigned int feeder) override;
 	void register_slide_callback(std::function<void(unsigned int)> callback) override{};
 	void identify() override{};

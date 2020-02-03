@@ -38,7 +38,10 @@ namespace mps_comm {
 class OpcUaCapStation : public virtual OpcUaMachine, public virtual CapStation
 {
 public:
-	OpcUaCapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	OpcUaCapStation(const std::string &name,
+	                const std::string &ip,
+	                unsigned short     port,
+	                ConnectionMode     mode);
 
 	virtual ~OpcUaCapStation();
 

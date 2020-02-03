@@ -23,7 +23,7 @@
 namespace llsfrb {
 namespace mps_comm {
 
-MockupRingStation::MockupRingStation(std::string name) : Machine(name)
+MockupRingStation::MockupRingStation(const std::string &name) : Machine(name)
 {
 }
 

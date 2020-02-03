@@ -29,10 +29,10 @@
 namespace llsfrb {
 namespace mps_comm {
 
-OpcUaBaseStation::OpcUaBaseStation(std::string    name,
-                                   std::string    ip,
-                                   unsigned short port,
-                                   ConnectionMode mode)
+OpcUaBaseStation::OpcUaBaseStation(const std::string &name,
+                                   const std::string &ip,
+                                   unsigned short     port,
+                                   ConnectionMode     mode)
 : Machine(name), OpcUaMachine(Station::STATION_BASE, ip, port, mode)
 {
 }

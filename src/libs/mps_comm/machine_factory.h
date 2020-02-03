@@ -31,11 +31,11 @@ class MachineFactory
 {
 public:
 	MachineFactory() = default;
-	std::unique_ptr<Machine> create_machine(std::string  name,
-	                                        std::string  type,
-	                                        std::string  ip,
-	                                        unsigned int port,
-	                                        std::string  connection_mode);
+	std::unique_ptr<Machine> create_machine(const std::string &name,
+	                                        const std::string &type,
+	                                        const std::string &ip,
+	                                        unsigned int       port,
+	                                        const std::string &connection_mode);
 };
 } // namespace mps_comm
 } // namespace llsfrb

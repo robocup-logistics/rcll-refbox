@@ -33,7 +33,10 @@ class OpcUaRingStation : public virtual OpcUaMachine, public virtual RingStation
 	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
 
 public:
-	OpcUaRingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
+	OpcUaRingStation(const std::string &name,
+	                 const std::string &ip,
+	                 unsigned short     port,
+	                 ConnectionMode     mode);
 
 	void mount_ring(unsigned int feeder) override;
 	void register_slide_callback(std::function<void(unsigned int)>) override;

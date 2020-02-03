@@ -37,10 +37,10 @@ const std::vector<OpcUtils::MPSRegister>
                                    OpcUtils::MPSRegister::STATUS_ERROR_IN,
                                    OpcUtils::MPSRegister::STATUS_READY_IN});
 
-OpcUaRingStation::OpcUaRingStation(std::string    name,
-                                   std::string    ip,
-                                   unsigned short port,
-                                   ConnectionMode mode)
+OpcUaRingStation::OpcUaRingStation(const std::string &name,
+                                   const std::string &ip,
+                                   unsigned short     port,
+                                   ConnectionMode     mode)
 : Machine(name), OpcUaMachine(Station::STATION_RING, ip, port, mode)
 {
 }

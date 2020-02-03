@@ -28,7 +28,7 @@ namespace mps_comm {
 class MockupCapStation : public virtual MockupMachine, public virtual CapStation
 {
 public:
-	MockupCapStation(std::string name);
+	MockupCapStation(const std::string &name);
 	void retrieve_cap() override;
 	void mount_cap() override;
 	void identify() override{};
