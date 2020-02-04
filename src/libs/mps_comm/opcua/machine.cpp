@@ -241,11 +241,11 @@ OpcUaMachine::reconnect()
 {
 	disconnect();
 	try {
-		OpcUa::EndpointDescription *endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
-		logger->info("Connecting to: {}", endpoint->EndpointUrl);
+		OpcUa::EndpointDescription endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
+		logger->info("Connecting to: {}", endpoint.EndpointUrl);
 
 		client = std::make_unique<OpcUa::UaClient>(logger);
-		client->Connect(*endpoint);
+		client->Connect(endpoint);
 		connected_ = true;
 	} catch (const std::exception &exc) {
 		logger->error("OPC UA connection error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);

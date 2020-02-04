@@ -391,14 +391,14 @@ OpcUtils::setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::ReturnValue *
 
 // Get functions
 
-OpcUa::EndpointDescription *
+OpcUa::EndpointDescription
 OpcUtils::getEndpoint(const char *ip, unsigned short port)
 {
-	OpcUa::EndpointDescription *endpoint = new OpcUa::EndpointDescription();
-	endpoint->EndpointUrl =
+	OpcUa::EndpointDescription endpoint;
+	endpoint.EndpointUrl =
 	  std::string("opc.tcp://") + ip + std::string(":") + std::to_string(port) + std::string("/");
 	/* // if connection requires user and password:
-  endpoint->EndpointUrl = std::string("opc.tcp://") + this->user + ":" + this->password + std::string("@") + this->ip + ":" + std::to_string(this->port) + std::string("/");*/
+  endpoint.EndpointUrl = std::string("opc.tcp://") + this->user + ":" + this->password + std::string("@") + this->ip + ":" + std::to_string(this->port) + std::string("/");*/
 	return endpoint;
 }
 
