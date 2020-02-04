@@ -35,7 +35,8 @@ public:
 	OpcUaBaseStation(const std::string &name,
 	                 const std::string &ip,
 	                 unsigned short     port,
-	                 ConnectionMode     mode);
+	                 const std::string &log_path = "",
+	                 ConnectionMode     mode     = PLC);
 
 	void get_base(llsf_msgs::BaseColor slot) override;
 

@@ -55,7 +55,8 @@ public:
 	OpcUaMachine(unsigned short int machine_type,
 	             const std::string &ip,
 	             unsigned short     port,
-	             ConnectionMode = PLC);
+	             const std::string &log_path = "",
+	             ConnectionMode              = PLC);
 
 	~OpcUaMachine() override;
 
@@ -99,7 +100,7 @@ protected:
 	void disconnect();
 	// Initialize logger; If LOG_PATH is empty, the logs are redirected to
 	// std::cout, else they are saved to the in LOG_PATH specified file
-	void initLogger();
+	void initLogger(const std::string &log_path);
 	// Helper function to set OPC UA Node value correctly
 	bool setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg);
 	// Helper function to get ReturnValue correctly

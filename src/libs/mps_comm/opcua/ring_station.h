@@ -36,7 +36,8 @@ public:
 	OpcUaRingStation(const std::string &name,
 	                 const std::string &ip,
 	                 unsigned short     port,
-	                 ConnectionMode     mode);
+	                 const std::string &log_path = "",
+	                 ConnectionMode     mode     = PLC);
 
 	void mount_ring(unsigned int feeder) override;
 	void register_slide_callback(std::function<void(unsigned int)>) override;

@@ -36,7 +36,8 @@ public:
 	OpcUaStorageStation(const std::string &name,
 	                    const std::string &ip,
 	                    unsigned short     port,
-	                    ConnectionMode     mode);
+	                    const std::string &log_path = "",
+	                    ConnectionMode     mode     = PLC);
 
 	// identify: tell the PLC, which machine it is controlling
 	virtual void identify() override;

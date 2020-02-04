@@ -37,8 +37,9 @@ namespace mps_comm {
 OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
                                            const std::string &ip,
                                            unsigned short     port,
+                                           const std::string &log_path,
                                            ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, mode)
+: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
 {
 }
 

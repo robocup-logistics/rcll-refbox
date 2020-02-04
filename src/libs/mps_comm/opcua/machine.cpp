@@ -54,6 +54,7 @@ const std::string OpcUaMachine::LOG_PATH =
 OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
                            const std::string &ip,
                            unsigned short     port,
+                           const std::string &log_path,
                            ConnectionMode     connection_mode)
 : machine_type_(machine_type),
   ip_(ip),
@@ -63,7 +64,7 @@ OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
   connected_(false),
   simulation_(connection_mode == SIMULATION)
 {
-	initLogger();
+	initLogger(log_path);
 	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
 }
 
@@ -221,9 +222,9 @@ OpcUaMachine::reset_light()
 }
 
 void
-OpcUaMachine::initLogger()
+OpcUaMachine::initLogger(const std::string &log_path)
 {
-	if (LOG_PATH.empty() || LOG_PATH.length() < 1) {
+	if (log_path.empty()) {
 		// stdout redirected logging
 		logger = spdlog::stdout_logger_mt(name_);
 		logger->set_level(spdlog::level::warn);

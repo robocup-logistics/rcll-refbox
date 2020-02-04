@@ -34,7 +34,8 @@ public:
 	OpcUaDeliveryStation(const std::string &name,
 	                     const std::string &ip,
 	                     unsigned short     port,
-	                     ConnectionMode     mode);
+	                     const std::string &log_path = "",
+	                     ConnectionMode     mode     = PLC);
 	virtual ~OpcUaDeliveryStation();
 
 	// Send command to deliver a product

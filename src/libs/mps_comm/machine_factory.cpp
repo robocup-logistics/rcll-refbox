@@ -51,15 +51,15 @@ MachineFactory::create_machine(const std::string &name,
 		}
 		std::unique_ptr<OpcUaMachine> mps;
 		if (type == "BS") {
-			mps = std::make_unique<OpcUaBaseStation>(name, ip, port, mode);
+			mps = std::make_unique<OpcUaBaseStation>(name, ip, port, "", mode);
 		} else if (type == "CS") {
-			mps = std::make_unique<OpcUaCapStation>(name, ip, port, mode);
+			mps = std::make_unique<OpcUaCapStation>(name, ip, port, "", mode);
 		} else if (type == "RS") {
-			mps = std::make_unique<OpcUaRingStation>(name, ip, port, mode);
+			mps = std::make_unique<OpcUaRingStation>(name, ip, port, "", mode);
 		} else if (type == "DS") {
-			mps = std::make_unique<OpcUaDeliveryStation>(name, ip, port, mode);
+			mps = std::make_unique<OpcUaDeliveryStation>(name, ip, port, "", mode);
 		} else if (type == "SS") {
-			mps = std::make_unique<OpcUaStorageStation>(name, ip, port, mode);
+			mps = std::make_unique<OpcUaStorageStation>(name, ip, port, "", mode);
 		} else {
 			throw fawkes::Exception("Unexpected machine type '%s' for machine '%s'",
 			                        type.c_str(),

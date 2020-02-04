@@ -41,7 +41,8 @@ public:
 	OpcUaCapStation(const std::string &name,
 	                const std::string &ip,
 	                unsigned short     port,
-	                ConnectionMode     mode);
+	                const std::string &log_path = "",
+	                ConnectionMode     mode     = PLC);
 
 	virtual ~OpcUaCapStation();
 
