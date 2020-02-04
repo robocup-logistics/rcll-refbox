@@ -23,6 +23,8 @@
 #pragma once
 
 #include "../machine.h"
+#include "opc_utils.h"
+#include "subscription_client.h"
 
 #include <chrono>
 #include <condition_variable>
@@ -32,12 +34,6 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-
-//#include <msgs/MachineInstructions.pb.h>
-/* REMOVE */
-#include "msgs/MachineInstructions.pb.h"
-#include "opc_utils.h"
-#include "subscription_client.h"
 
 namespace llsfrb {
 namespace mps_comm {

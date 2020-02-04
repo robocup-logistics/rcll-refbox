@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "msgs/MachineDescription.pb.h"
+#include <msgs/MachineDescription.pb.h>
 
 #include <functional>
 #include <string>

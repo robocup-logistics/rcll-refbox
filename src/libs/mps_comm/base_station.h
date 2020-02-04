@@ -21,7 +21,8 @@
 #pragma once
 
 #include "machine.h"
-#include "msgs/ProductColor.pb.h"
+
+#include <msgs/ProductColor.pb.h>
 
 namespace llsfrb {
 namespace mps_comm {
