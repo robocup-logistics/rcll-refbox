@@ -259,7 +259,7 @@ OpcUaMachine::reconnect()
 		nodeBasic = OpcUtils::getBasicNode(client.get(), simulation_);
 		nodeIn    = OpcUtils::getInNode(client.get(), simulation_);
 
-		for (int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
+		for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
 			registerNodes[i] = OpcUtils::getNode(client.get(), (OpcUtils::MPSRegister)i, simulation_);
 	} catch (const std::exception &exc) {
 		logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
@@ -312,8 +312,7 @@ OpcUaMachine::disconnect()
 void
 OpcUaMachine::subscribeAll(bool simulation)
 {
-	for (int i = OpcUtils::MPSRegister::ACTION_ID_IN; i != OpcUtils::MPSRegister::STATUS_READY_BASIC;
-	     i++)
+	for (int i = OpcUtils::MPSRegister::ACTION_ID_IN; i < OpcUtils::MPSRegister::LAST; i++)
 		subscribe(static_cast<OpcUtils::MPSRegister>(i), simulation);
 }
 
@@ -405,7 +404,7 @@ OpcUaMachine::printFinalSubscribtions()
 {
 	if (subscriptions.size() > 0)
 		logger->info("Final values of subscribed registers:");
-	for (int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
+	for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
 		OpcUtils::logReturnValue(getReturnValue((OpcUtils::MPSRegister)i),
 		                         logger,
 		                         (OpcUtils::MPSRegister)i);

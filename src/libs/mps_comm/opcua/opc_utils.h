@@ -118,7 +118,8 @@ public:
 		STATUS_BUSY_BASIC,
 		STATUS_ENABLE_BASIC,
 		STATUS_ERROR_BASIC,
-		STATUS_READY_BASIC
+		STATUS_READY_BASIC,
+		LAST, // must be the last in the list
 	};
 	// MPS Register addition operator overload
 	friend MPSRegister operator+(const MPSRegister a, const MPSRegister b);

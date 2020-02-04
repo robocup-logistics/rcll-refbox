@@ -132,7 +132,7 @@ protected:
 	// OPC UA Client pointer
 	std::unique_ptr<OpcUa::UaClient> client;
 	// OPC UA Nodes for each subscribable MPSRegister
-	OpcUa::Node registerNodes[OpcUtils::MPSRegister::STATUS_READY_BASIC];
+	OpcUa::Node registerNodes[OpcUtils::MPSRegister::LAST];
 	// OPC UA Input Register for station Jobs
 	OpcUa::Node nodeIn;
 	// OPC UA Input Register for Basic Jobs
