@@ -35,7 +35,8 @@ public:
 	                                        const std::string &type,
 	                                        const std::string &ip,
 	                                        unsigned int       port,
-	                                        const std::string &connection_mode);
+	                                        const std::string &log_path        = "",
+	                                        const std::string &connection_mode = "plc");
 };
 } // namespace mps_comm
 } // namespace llsfrb
