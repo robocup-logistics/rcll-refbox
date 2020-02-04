@@ -113,8 +113,7 @@ protected:
 	std::queue<Instruction> command_queue_;
 	std::thread             worker_thread_;
 	void                    register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
-	                                              OpcUtils::MPSRegister                   reg,
-	                                              OpcUtils::ReturnValue *                 retVal);
+	                                              OpcUtils::MPSRegister                   reg);
 	void                    dispatch_command_queue();
 
 	bool connected_ = false;
@@ -144,12 +143,8 @@ protected:
 	OpcUa::Node nodeBasic;
 	// All subscriptions to MPSRegisters in form map<MPSRegister, Subscription>
 	SubscriptionClient::map subscriptions;
-	// Return values from MPS after subscribtion; If passed as argument to function subscribe, the SubscriptionClient internal ReturnValue is overridden
-	OpcUtils::ReturnValue *outs =
-	  new OpcUtils::ReturnValue[OpcUtils::MPSRegister::STATUS_READY_BASIC]();
 
 	// OPC UA related methods
-
 	// Connect to OPC UA Server using IP and PORT
 	bool reconnect();
 	// Disconnect from OPC UA Server
@@ -162,13 +157,9 @@ protected:
 	OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
 
 	// Subscribe to a specified MPSRegister; If ReturnValue is set, the SubscriptionClient internal ReturnValue is overridden
-	SubscriptionClient *subscribe(OpcUtils::MPSRegister  reg,
-	                              OpcUtils::ReturnValue *retVal     = nullptr,
-	                              bool                   simulation = false);
+	SubscriptionClient *subscribe(OpcUtils::MPSRegister reg, bool simulation = false);
 	// Subscribe to multiple specified MPSRegisters; If ReturnValues are set, the SubscriptionClients internal ReturnValues are overridden
-	void subscribe(std::vector<OpcUtils::MPSRegister> registers,
-	               OpcUtils::ReturnValue *            retVals    = nullptr,
-	               bool                               simulation = false);
+	void subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simulation = false);
 	// Subscribe to all existing MPSRegisters
 	void subscribeAll(bool simulation = false);
 	// Cancel a subscription given a specific MPSRegister; If default argument is true, final subscription value will be printed before deleting

@@ -161,7 +161,7 @@ OpcUaMachine::connect()
 	}
 	while (!reconnect()) {}
 
-	subscribe(SUB_REGISTERS, outs, simulation_);
+	subscribe(SUB_REGISTERS, simulation_);
 	identify();
 	update_callbacks();
 }
@@ -314,26 +314,24 @@ OpcUaMachine::subscribeAll(bool simulation)
 {
 	for (int i = OpcUtils::MPSRegister::ACTION_ID_IN; i != OpcUtils::MPSRegister::STATUS_READY_BASIC;
 	     i++)
-		subscribe(static_cast<OpcUtils::MPSRegister>(i), nullptr, simulation);
+		subscribe(static_cast<OpcUtils::MPSRegister>(i), simulation);
 }
 
 void
-OpcUaMachine::subscribe(std::vector<OpcUtils::MPSRegister> registers,
-                        OpcUtils::ReturnValue *            retVals,
-                        bool                               simulation)
+OpcUaMachine::subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simulation)
 {
 	for (OpcUtils::MPSRegister reg : registers)
-		subscribe(reg, retVals == nullptr ? nullptr : &retVals[reg], simulation);
+		subscribe(reg, simulation);
 }
 
 SubscriptionClient *
-OpcUaMachine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *retVal, bool simulation)
+OpcUaMachine::subscribe(OpcUtils::MPSRegister reg, bool simulation)
 {
 	auto it = subscriptions.end();
 	if ((it = subscriptions.find(reg)) != subscriptions.end())
 		return it->second;
 	OpcUa::Node         node = OpcUtils::getNode(client.get(), reg, simulation);
-	SubscriptionClient *sub  = new SubscriptionClient(logger, retVal);
+	SubscriptionClient *sub  = new SubscriptionClient(logger);
 	sub->reg                 = reg;
 	sub->node                = node;
 
@@ -387,13 +385,9 @@ OpcUaMachine::cancelSubscription(OpcUtils::MPSRegister reg, bool log)
 OpcUtils::ReturnValue *
 OpcUaMachine::getReturnValue(OpcUtils::MPSRegister reg)
 {
-	if (subscriptions.size() == 0)
-		return &outs[reg];
-	else {
-		auto it = subscriptions.find(reg);
-		if (it != subscriptions.end())
-			return it->second->mpsValue;
-	}
+	auto it = subscriptions.find(reg);
+	if (it != subscriptions.end())
+		return it->second->mpsValue;
 	return nullptr;
 }
 
@@ -419,11 +413,10 @@ OpcUaMachine::printFinalSubscribtions()
 
 void
 OpcUaMachine::register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
-                                    OpcUtils::MPSRegister                   reg,
-                                    OpcUtils::ReturnValue *                 retVal)
+                                    OpcUtils::MPSRegister                   reg)
 {
 	logger->info("Registering callback");
-	SubscriptionClient *sub = subscribe(reg, retVal, simulation_);
+	SubscriptionClient *sub = subscribe(reg, simulation_);
 	sub->add_callback(callback);
 }
 
@@ -434,7 +427,7 @@ OpcUaMachine::update_callbacks()
 		return;
 	}
 	for (const auto &cb : callbacks_) {
-		register_opc_callback(cb.second, cb.first, nullptr);
+		register_opc_callback(cb.second, cb.first);
 	}
 }
 
