@@ -135,7 +135,7 @@ protected:
 	// OPC UA logger
 	std::shared_ptr<spdlog::logger> logger;
 	// OPC UA Client pointer
-	OpcUa::UaClient *client;
+	std::unique_ptr<OpcUa::UaClient> client;
 	// OPC UA Nodes for each subscribable MPSRegister
 	OpcUa::Node registerNodes[OpcUtils::MPSRegister::STATUS_READY_BASIC];
 	// OPC UA Input Register for station Jobs

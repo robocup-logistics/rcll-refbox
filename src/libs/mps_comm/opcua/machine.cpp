@@ -244,7 +244,7 @@ OpcUaMachine::reconnect()
 		OpcUa::EndpointDescription *endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
 		logger->info("Connecting to: {}", endpoint->EndpointUrl);
 
-		client = new OpcUa::UaClient(logger);
+		client = std::make_unique<OpcUa::UaClient>(logger);
 		client->Connect(*endpoint);
 		connected_ = true;
 	} catch (const std::exception &exc) {
@@ -256,11 +256,11 @@ OpcUaMachine::reconnect()
 	}
 
 	try {
-		nodeBasic = OpcUtils::getBasicNode(client, simulation_);
-		nodeIn    = OpcUtils::getInNode(client, simulation_);
+		nodeBasic = OpcUtils::getBasicNode(client.get(), simulation_);
+		nodeIn    = OpcUtils::getInNode(client.get(), simulation_);
 
 		for (int i = 0; i < OpcUtils::MPSRegister::STATUS_READY_BASIC; i++)
-			registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i, simulation_);
+			registerNodes[i] = OpcUtils::getNode(client.get(), (OpcUtils::MPSRegister)i, simulation_);
 	} catch (const std::exception &exc) {
 		logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
 		return false;
@@ -298,8 +298,6 @@ OpcUaMachine::disconnect()
 			return;
 		} catch (...) {
 			try {
-				delete client;
-				client = nullptr;
 				logger->flush();
 				connected_ = false;
 				return;
@@ -334,7 +332,7 @@ OpcUaMachine::subscribe(OpcUtils::MPSRegister reg, OpcUtils::ReturnValue *retVal
 	auto it = subscriptions.end();
 	if ((it = subscriptions.find(reg)) != subscriptions.end())
 		return it->second;
-	OpcUa::Node         node = OpcUtils::getNode(client, reg, simulation);
+	OpcUa::Node         node = OpcUtils::getNode(client.get(), reg, simulation);
 	SubscriptionClient *sub  = new SubscriptionClient(logger, retVal);
 	sub->reg                 = reg;
 	sub->node                = node;
