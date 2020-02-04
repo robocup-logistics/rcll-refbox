@@ -115,9 +115,6 @@ protected:
 	bool connected_ = false;
 	bool simulation_;
 	std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
-	SubscriptionClient::ReturnValueCallback callback_ready_;
-	SubscriptionClient::ReturnValueCallback callback_busy_;
-	SubscriptionClient::ReturnValueCallback callback_barcode_;
 
 	// OPC UA related variables
 
@@ -165,13 +162,6 @@ protected:
 	// Print the final subscription values
 	void printFinalSubscribtions();
 
-	/*
-public:
-	void addCallback(SubscriptionClient::ReturnValueCallback callback,
-	                 OpcUtils::MPSRegister,
-	                 OpcUtils::ReturnValue *retVal     = nullptr,
-	                 bool                   simulation = false);
-  */
 };
 
 } // namespace mps_comm
