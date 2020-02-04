@@ -212,9 +212,24 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 						} catch (Exception &e) {
 						}
 
+						std::string log_path = "";
+						try {
+							log_path = config_->get_string("/llsfrb/mps/log_dir");
+						} catch (Exception &e) {
+						}
+
+						if (log_path != "") {
+							std::string log_suffix = cfg_name + ".log";
+							try {
+								log_suffix = config_->get_string((cfg_prefix + "/log_file").c_str());
+							} catch (Exception &e) {
+							}
+							log_path += "/" + log_suffix;
+						}
+
 						MachineFactory mps_factory;
-						auto           mps =
-						  mps_factory.create_machine(cfg_name, mpstype, mpsip, port, connection_string);
+						auto           mps = mps_factory.create_machine(
+              cfg_name, mpstype, mpsip, port, log_path, connection_string);
 						mps->register_ready_callback([this, cfg_name](bool ready) {
 							fawkes::MutexLocker clips_lock(&clips_mutex_);
 							clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
