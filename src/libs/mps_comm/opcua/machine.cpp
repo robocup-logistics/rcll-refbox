@@ -51,19 +51,16 @@ const std::vector<OpcUtils::MPSRegister>
 const std::string OpcUaMachine::LOG_PATH =
   ""; /* TODO add log path if needed; if empty -> log is redirected to stdout */
 
-constexpr std::chrono::seconds OpcUaMachine::mock_busy_duration_;
-constexpr std::chrono::seconds OpcUaMachine::mock_ready_duration_;
-
 OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
                            const std::string &ip,
                            unsigned short     port,
                            ConnectionMode     connection_mode)
-: abort_operation_(false),
-  machine_type_(machine_type),
+: machine_type_(machine_type),
   ip_(ip),
   port_(port),
   connection_mode_(connection_mode),
   shutdown_(false),
+  connected_(false),
   simulation_(connection_mode == SIMULATION)
 {
 	initLogger();

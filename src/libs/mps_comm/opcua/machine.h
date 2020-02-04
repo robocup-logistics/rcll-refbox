@@ -78,29 +78,55 @@ public:
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify() = 0;
 
-	// when abort_operation_ is set, the current command is aborted.
-	// lock_ protects just this one boolean
-	std::mutex lock_;
-	bool       abort_operation_;
-
 protected:
 	void connect();
-	bool send_instruction(const Instruction &instruction);
 	void enqueue_instruction(unsigned short command,
 	                         unsigned short payload1 = 0,
 	                         unsigned short payload2 = 0,
 	                         int            timeout  = 0,
 	                         unsigned char  status   = 1,
 	                         unsigned char  error    = 0);
+	bool send_instruction(const Instruction &instruction);
+	void dispatch_command_queue();
 	void update_callbacks();
-	// machine type
+	void register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
+	                           OpcUtils::MPSRegister                   reg);
+
+	// OPC UA related methods
+	// Connect to OPC UA Server using IP and PORT
+	bool reconnect();
+	// Disconnect from OPC UA Server
+	void disconnect();
+	// Initialize logger; If LOG_PATH is empty, the logs are redirected to
+	// std::cout, else they are saved to the in LOG_PATH specified file
+	void initLogger();
+	// Helper function to set OPC UA Node value correctly
+	bool setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg);
+	// Helper function to get ReturnValue correctly
+	OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
+
+	// Subscribe to a specified MPSRegister; If ReturnValue is set, the
+	// SubscriptionClient internal ReturnValue is overridden
+	SubscriptionClient *subscribe(OpcUtils::MPSRegister reg, bool simulation = false);
+	// Subscribe to multiple specified MPSRegisters; If ReturnValues are set, the
+	// SubscriptionClients internal ReturnValues are overridden
+	void subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simulation = false);
+	// Subscribe to all existing MPSRegisters
+	void subscribeAll(bool simulation = false);
+	// Cancel a subscription given a specific MPSRegister; If default argument is
+	// true, final subscription value will be printed before deleting
+	SubscriptionClient::map::iterator cancelSubscription(OpcUtils::MPSRegister reg, bool log = false);
+	// Cancel all existing subscriptions; If default argument is true, final
+	// subscription values will be printed before deleting
+	void cancelAllSubscriptions(bool log = false);
+	// Print the final subscription values
+	void printFinalSubscribtions();
+
 	const unsigned short int machine_type_;
 	const std::string &      ip_;
 	unsigned short           port_;
 
-	const ConnectionMode                  connection_mode_;
-	static constexpr std::chrono::seconds mock_busy_duration_{3};
-	static constexpr std::chrono::seconds mock_ready_duration_{5};
+	const ConnectionMode connection_mode_;
 
 	bool                    shutdown_;
 	std::mutex              command_queue_mutex_;
@@ -108,12 +134,10 @@ protected:
 	std::condition_variable queue_condition_;
 	std::queue<Instruction> command_queue_;
 	std::thread             worker_thread_;
-	void                    register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
-	                                              OpcUtils::MPSRegister                   reg);
-	void                    dispatch_command_queue();
 
-	bool connected_ = false;
+	bool connected_;
 	bool simulation_;
+
 	std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
 
 	// OPC UA related variables
@@ -136,32 +160,6 @@ protected:
 	OpcUa::Node nodeBasic;
 	// All subscriptions to MPSRegisters in form map<MPSRegister, Subscription>
 	SubscriptionClient::map subscriptions;
-
-	// OPC UA related methods
-	// Connect to OPC UA Server using IP and PORT
-	bool reconnect();
-	// Disconnect from OPC UA Server
-	void disconnect();
-	// Initialize logger; If LOG_PATH is empty, the logs are redirected to std::cout, else they are saved to the in LOG_PATH specified file
-	void initLogger();
-	// Helper function to set OPC UA Node value correctly
-	bool setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg);
-	// Helper function to get ReturnValue correctly
-	OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
-
-	// Subscribe to a specified MPSRegister; If ReturnValue is set, the SubscriptionClient internal ReturnValue is overridden
-	SubscriptionClient *subscribe(OpcUtils::MPSRegister reg, bool simulation = false);
-	// Subscribe to multiple specified MPSRegisters; If ReturnValues are set, the SubscriptionClients internal ReturnValues are overridden
-	void subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simulation = false);
-	// Subscribe to all existing MPSRegisters
-	void subscribeAll(bool simulation = false);
-	// Cancel a subscription given a specific MPSRegister; If default argument is true, final subscription value will be printed before deleting
-	SubscriptionClient::map::iterator cancelSubscription(OpcUtils::MPSRegister reg, bool log = false);
-	// Cancel all existing subscriptions; If default argument is true, final subscription values will be printed before deleting
-	void cancelAllSubscriptions(bool log = false);
-	// Print the final subscription values
-	void printFinalSubscribtions();
-
 };
 
 } // namespace mps_comm
