@@ -55,6 +55,7 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <cstdlib>
+#include <filesystem>
 #include <memory>
 #include <unordered_map>
 #if BOOST_ASIO_VERSION < 100601
@@ -219,6 +220,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 						}
 
 						if (log_path != "") {
+							std::filesystem::create_directory(log_path);
 							std::string log_suffix = cfg_name + ".log";
 							try {
 								log_suffix = config_->get_string((cfg_prefix + "/log_file").c_str());
