@@ -124,7 +124,7 @@ protected:
 	void printFinalSubscribtions();
 
 	const unsigned short int machine_type_;
-	const std::string &      ip_;
+	const std::string        ip_;
 	unsigned short           port_;
 
 	const ConnectionMode connection_mode_;
