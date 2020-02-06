@@ -98,8 +98,8 @@ protected:
 	bool reconnect();
 	// Disconnect from OPC UA Server
 	void disconnect();
-	// Initialize logger; If LOG_PATH is empty, the logs are redirected to
-	// std::cout, else they are saved to the in LOG_PATH specified file
+	// Initialize logger; If log_path is empty, the logs are redirected to
+	// std::cout, else they are saved to the in log_path specified file
 	void initLogger(const std::string &log_path);
 	// Helper function to set OPC UA Node value correctly
 	bool setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg);
@@ -146,8 +146,6 @@ protected:
 	/* OVERRIDE */
 	// OVERRIDE: static vector containing the MPSRegisters to automatically subscribe; This should be overwritten if needed
 	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
-	// OVERRIDE: static string containing the log file path; If this variable is not overwritten, logging is redirected to std::cout
-	static const std::string LOG_PATH;
 
 	// OPC UA logger
 	std::shared_ptr<spdlog::logger> logger;

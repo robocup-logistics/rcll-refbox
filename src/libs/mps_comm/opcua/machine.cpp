@@ -42,14 +42,12 @@ namespace mps_comm {
 #endif
 
 const std::vector<OpcUtils::MPSRegister>
-                  OpcUaMachine::SUB_REGISTERS({OpcUtils::MPSRegister::BARCODE_IN,
+  OpcUaMachine::SUB_REGISTERS({OpcUtils::MPSRegister::BARCODE_IN,
                                OpcUtils::MPSRegister::ERROR_IN,
                                OpcUtils::MPSRegister::STATUS_BUSY_IN,
                                OpcUtils::MPSRegister::STATUS_ENABLE_IN,
                                OpcUtils::MPSRegister::STATUS_ERROR_IN,
                                OpcUtils::MPSRegister::STATUS_READY_IN});
-const std::string OpcUaMachine::LOG_PATH =
-  ""; /* TODO add log path if needed; if empty -> log is redirected to stdout */
 
 OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
                            const std::string &ip,
@@ -229,7 +227,8 @@ OpcUaMachine::initLogger(const std::string &log_path)
 		logger = spdlog::stdout_logger_mt(name_);
 		logger->set_level(spdlog::level::warn);
 	} else /* ... or logging to file */ {
-		logger = spdlog::basic_logger_mt(name_, LOG_PATH);
+		logger = spdlog::basic_logger_mt(name_, log_path);
+		logger->set_level(spdlog::level::info);
 	}
 	logger->info("\n\n\nNew logging session started");
 }
