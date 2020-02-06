@@ -114,9 +114,11 @@ OpcUaMachine::send_instruction(const Instruction &instruction)
 	const unsigned short command  = std::get<0>(instruction);
 	const unsigned short payload1 = std::get<1>(instruction);
 	const unsigned short payload2 = std::get<2>(instruction);
-	//const int            timeout  = std::get<3>(instruction);
-	const unsigned char status = std::get<4>(instruction);
-	const unsigned char error  = std::get<5>(instruction);
+	const int            timeout  = std::get<3>(instruction);
+	const unsigned char  status   = std::get<4>(instruction);
+	const unsigned char  error    = std::get<5>(instruction);
+	logger->info(
+	  "Sending instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 	try {
 		OpcUtils::MPSRegister registerOffset;
 		if (command < Station::STATION_BASE)
