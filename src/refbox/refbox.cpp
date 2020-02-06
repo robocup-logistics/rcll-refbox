@@ -214,7 +214,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 						std::string log_path = "";
 						try {
-							log_path = config_->get_string("/llsfrb/mps/log_dir");
+							log_path = config_->get_string("/llsfrb/log/mps_dir");
 						} catch (Exception &e) {
 						}
 
