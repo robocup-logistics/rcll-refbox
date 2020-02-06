@@ -86,9 +86,11 @@ OpcUaMachine::dispatch_command_queue()
 			    })) {
 				// there was no instruction in the queue, send heartbeat to ensure the
 				// connection is healthy and reconnect if it is not
+				lock.unlock();
 				while (!send_instruction(std::make_tuple(COMMAND_NOTHING, 0, 0, 1, 0, 0))) {
 					reconnect();
 				}
+				lock.lock();
 			}
 		}
 	}
