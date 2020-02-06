@@ -78,7 +78,6 @@ OpcUaMachine::dispatch_command_queue()
 			while (!send_instruction(instruction)) {
 				reconnect();
 			};
-			std::this_thread::sleep_for(std::chrono::milliseconds(40));
 			lock.lock();
 		} else {
 			if (!queue_condition_.wait_for(lock, std::chrono::seconds(1), [&] {
@@ -142,6 +141,7 @@ OpcUaMachine::send_instruction(const Instruction &instruction)
 		return false;
 	}
 
+	std::this_thread::sleep_for(std::chrono::milliseconds(40));
 	return true;
 }
 
