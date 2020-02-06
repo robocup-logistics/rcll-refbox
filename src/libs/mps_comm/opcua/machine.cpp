@@ -284,25 +284,34 @@ OpcUaMachine::disconnect()
 	logger->info("Disconnecting");
 	try {
 		client->Disconnect();
+		logger->info("Disconnected");
 		logger->flush();
 		connected_ = false;
+		client.reset();
 		return;
-	} catch (...) {
+	} catch (std::exception &e) {
+		logger->warn("Failed to disconnect: {}", e.what());
 		try {
+			logger->info("Aborting the connection");
 			client->Abort();
+			logger->info("Aborted the connection");
 			logger->flush();
 			connected_ = false;
+			client.reset();
 			return;
-		} catch (...) {
+		} catch (std::exception &e) {
+			logger->warn("Failed to abort: {}", e.what());
 			try {
 				logger->flush();
 				connected_ = false;
+				client.reset();
 				return;
 			} catch (...) {
 			}
 		}
 	}
 	connected_ = false;
+	client.reset();
 	return;
 }
 
