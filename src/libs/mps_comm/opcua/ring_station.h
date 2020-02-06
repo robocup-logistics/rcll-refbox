@@ -42,9 +42,6 @@ public:
 	void mount_ring(unsigned int feeder) override;
 	void register_slide_callback(std::function<void(unsigned int)>) override;
 
-	// identify: tell PLC, which machine it is running on
-	virtual void identify() override;
-
 protected:
 	SubscriptionClient::ReturnValueCallback callback_slide_;
 };

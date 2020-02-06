@@ -47,12 +47,6 @@ OpcUaRingStation::OpcUaRingStation(const std::string &name,
 }
 
 void
-OpcUaRingStation::identify()
-{
-	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_RS);
-}
-
-void
 OpcUaRingStation::mount_ring(unsigned int feeder)
 {
 	enqueue_instruction(Operation::OPERATION_MOUNT_RING + machine_type_, feeder);

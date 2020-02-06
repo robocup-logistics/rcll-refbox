@@ -61,11 +61,5 @@ OpcUaCapStation::mount_cap()
 	                    Operation::OPERATION_CAP_MOUNT);
 }
 
-void
-OpcUaCapStation::identify()
-{
-	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_CS);
-}
-
 } // namespace mps_comm
 } // namespace llsfrb

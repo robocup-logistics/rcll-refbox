@@ -49,7 +49,7 @@ const std::vector<OpcUtils::MPSRegister>
                                OpcUtils::MPSRegister::STATUS_ERROR_IN,
                                OpcUtils::MPSRegister::STATUS_READY_IN});
 
-OpcUaMachine::OpcUaMachine(unsigned short int machine_type,
+OpcUaMachine::OpcUaMachine(Station            machine_type,
                            const std::string &ip,
                            unsigned short     port,
                            const std::string &log_path,
@@ -464,6 +464,13 @@ OpcUaMachine::register_barcode_callback(std::function<void(unsigned long)> callb
 		callbacks_.erase(OpcUtils::MPSRegister::BARCODE_IN);
 	}
 	update_callbacks();
+}
+
+void
+OpcUaMachine::identify()
+{
+	send_instruction(
+	  std::make_tuple(Command::COMMAND_SET_TYPE, get_type_from_station(machine_type_), 0, 0, 1, 0));
 }
 
 } // namespace mps_comm

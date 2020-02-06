@@ -53,11 +53,5 @@ OpcUaDeliveryStation::deliver_product(int slot)
 	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
 }
 
-void
-OpcUaDeliveryStation::identify()
-{
-	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
-}
-
 } // namespace mps_comm
 } // namespace llsfrb

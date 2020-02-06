@@ -46,15 +46,8 @@ public:
 
 	virtual ~OpcUaCapStation();
 
-	// -----------------
-	// deprecated methods
 	void retrieve_cap() override;
 	void mount_cap() override;
-	// end of deprecated
-	// ----------------
-
-	// Tell plc, which machine I am
-	virtual void identify() override;
 };
 
 } // namespace mps_comm

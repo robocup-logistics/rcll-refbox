@@ -38,9 +38,6 @@ public:
 	                    unsigned short     port,
 	                    const std::string &log_path = "",
 	                    ConnectionMode     mode     = PLC);
-
-	// identify: tell the PLC, which machine it is controlling
-	virtual void identify() override;
 };
 
 } // namespace mps_comm

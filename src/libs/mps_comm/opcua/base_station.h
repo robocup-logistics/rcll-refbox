@@ -39,9 +39,6 @@ public:
 	                 ConnectionMode     mode     = PLC);
 
 	void get_base(llsf_msgs::BaseColor slot) override;
-
-	// Tell the PLC, which machine it is
-	void identify() override;
 };
 
 } // namespace mps_comm

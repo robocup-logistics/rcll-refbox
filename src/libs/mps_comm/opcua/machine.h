@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../machine.h"
+#include "mps_io_mapping.h"
 #include "opc_utils.h"
 #include "subscription_client.h"
 
@@ -52,7 +53,7 @@ class OpcUaMachine : public virtual Machine
 	friend class MachineFactory;
 
 public:
-	OpcUaMachine(unsigned short int machine_type,
+	OpcUaMachine(Station            machine_type,
 	             const std::string &ip,
 	             unsigned short     port,
 	             const std::string &log_path = "",
@@ -77,7 +78,7 @@ public:
 	void register_ready_callback(std::function<void(bool)>) override;
 	void register_barcode_callback(std::function<void(unsigned long)>) override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
-	virtual void identify() = 0;
+	virtual void identify();
 
 protected:
 	void connect();
@@ -123,9 +124,9 @@ protected:
 	// Print the final subscription values
 	void printFinalSubscribtions();
 
-	const unsigned short int machine_type_;
-	const std::string        ip_;
-	unsigned short           port_;
+	const Station     machine_type_;
+	const std::string ip_;
+	unsigned short    port_;
 
 	const ConnectionMode connection_mode_;
 

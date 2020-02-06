@@ -54,11 +54,5 @@ OpcUaBaseStation::get_base(llsf_msgs::BaseColor color)
 	enqueue_instruction(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
 }
 
-void
-OpcUaBaseStation::identify()
-{
-	enqueue_instruction(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_BS);
-}
-
 } // namespace mps_comm
 } // namespace llsfrb
