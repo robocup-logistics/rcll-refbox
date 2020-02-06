@@ -224,6 +224,7 @@ OpcUaMachine::initLogger(const std::string &log_path)
 		logger->set_level(spdlog::level::warn);
 	} else /* ... or logging to file */ {
 		logger = spdlog::basic_logger_mt(name_, log_path);
+		logger->flush_on(spdlog::level::info);
 		logger->set_level(spdlog::level::info);
 	}
 	logger->info("\n\n\nNew logging session started");
