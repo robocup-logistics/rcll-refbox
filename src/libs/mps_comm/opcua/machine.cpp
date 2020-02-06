@@ -156,10 +156,6 @@ OpcUaMachine::connect()
 		return;
 	}
 	while (!reconnect()) {}
-
-	subscribe(SUB_REGISTERS, simulation_);
-	identify();
-	update_callbacks();
 }
 
 OpcUaMachine::~OpcUaMachine()
@@ -265,6 +261,10 @@ OpcUaMachine::reconnect()
 		logger->error("Unknown error.");
 		return false;
 	}
+
+	subscribe(SUB_REGISTERS, simulation_);
+	identify();
+	update_callbacks();
 	return true;
 }
 
