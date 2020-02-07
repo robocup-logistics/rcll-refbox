@@ -182,7 +182,7 @@
             )
     )
     
-    (printout warn "INFO: Append " ?quantity "x of product " ?id " to external order " ?eid crlf)
+    (printout warn "INFO: Append " ?quantity "x product/s from external order: "?eid" to order: "?id crlf)
   )
   
   ;-- remember orders and orderer (client)
@@ -199,9 +199,9 @@
 )
 
 (defrule custom-product-delivered
-  ?pf <- (product-processed (game-time ?gt) (team ?team) (order ?order) (confirmed TRUE)
+  ?pf <- (product-processed (game-time ?gt) (team ?team) (order ?id) (confirmed TRUE)
                             (workpiece ?wp-id) (mtype DS) (scored FALSE))
-  ?of <- (order (id ?order))
+  ?of <- (order (id ?id))
   ?roi <- (orderer-client-response-product-info 
             (extern-id ?eid) 
             (product-id ?id)
@@ -221,12 +221,12 @@
             (quantity ?updquant)
             (last-delivered ?gt)
   )
-  (printout warn "Delivered 1 product of " ?id " (" ?updquant " remaining)" crlf)
+  (printout warn "Delivered 1 product of order:" ?id " (" ?updquant " remaining)" crlf)
 )
 
 (defrule custom-all-of-product-delivered
-  ?pf <- (product-processed (order ?order&~0))
-  ?of <- (order (id ?order))
+  ?pf <- (product-processed (order ?id&~0))
+  ?of <- (order (id ?id))
   ?roi <- (orderer-client-response-product-info 
             (extern-id ?eid) 
             (product-id ?id)
@@ -243,7 +243,7 @@
   ;-- remove response order info
   (retract ?roi)
   (modify ?ri (product-count ?updcnt))
-  (printout warn "Delivered all products of " ?id " from " ?eid " (" ?updcnt " prod. remaining)" crlf)
+  (printout warn "Delivered all products of order:" ?id " from: " ?eid " (" ?updcnt " prod. remaining)" crlf)
 )
 
 (defrule custom-order-complete
@@ -258,7 +258,7 @@
   ;-- forget order and orderer
   (retract ?ri)
 
-  (printout warn "INFO: Responded to completed order " ?eid ", ordered by " ?cid crlf)
+  (printout warn "INFO: Responded to completed external order " ?eid ", ordered by " ?cid crlf)
 
   ;-- compose message to inform controller about delivery
   (bind ?delivery-msg (pb-create "llsf_msgs.SetOrderDelivered"))
