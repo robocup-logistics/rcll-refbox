@@ -27,7 +27,7 @@ CFLAGS += -Wno-deprecated-declarations
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_llsf_refbox = stdc++ llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
+LIBS_llsf_refbox = stdc++ stdc++fs llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
 		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips mps_comm llsf_mps_placing_clips
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
