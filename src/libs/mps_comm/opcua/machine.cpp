@@ -27,6 +27,8 @@
 
 #include <chrono>
 #include <iostream>
+#include <pthread.h>
+#include <signal.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -69,6 +71,10 @@ OpcUaMachine::OpcUaMachine(Station            machine_type,
 void
 OpcUaMachine::dispatch_command_queue()
 {
+	sigset_t signal_set;
+	sigemptyset(&signal_set);
+	sigaddset(&signal_set, SIGPIPE);
+	pthread_sigmask(SIG_BLOCK, &signal_set, NULL);
 	std::unique_lock<std::mutex> lock(command_queue_mutex_);
 	while (!shutdown_) {
 		if (!command_queue_.empty()) {
