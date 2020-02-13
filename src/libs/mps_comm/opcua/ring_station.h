@@ -41,9 +41,6 @@ public:
 
 	void mount_ring(unsigned int feeder) override;
 	void register_slide_callback(std::function<void(unsigned int)>) override;
-
-protected:
-	SubscriptionClient::ReturnValueCallback callback_slide_;
 };
 
 } // namespace mps_comm

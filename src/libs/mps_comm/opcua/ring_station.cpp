@@ -56,8 +56,11 @@ void
 OpcUaRingStation::register_slide_callback(std::function<void(unsigned int)> callback)
 {
 	if (callback) {
-		callback_slide_ = [=](OpcUtils::ReturnValue *ret) { callback(ret->uint16_s); };
+		callbacks_[OpcUtils::MPSRegister::SLIDECOUNT_IN] = [=](OpcUtils::ReturnValue *ret) {
+			callback(ret->uint16_s);
+		};
 	}
+	update_callbacks();
 }
 
 } // namespace mps_comm
