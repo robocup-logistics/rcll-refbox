@@ -1637,12 +1637,8 @@ LLSFRefBox::handle_timer(const boost::system::error_code &error)
 void
 LLSFRefBox::handle_signal(const boost::system::error_code &error, int signum)
 {
-	if (signum == SIGPIPE) {
-		logger_->log_warn("RefBox", "Caught signal SIGPIPE, ignoring");
-	} else {
-		timer_.cancel();
-		io_service_.stop();
-	}
+	timer_.cancel();
+	io_service_.stop();
 }
 
 /** Run the application.
@@ -1653,7 +1649,7 @@ LLSFRefBox::run()
 {
 #if BOOST_ASIO_VERSION >= 100601
 	// Construct a signal set registered for process termination.
-	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM, SIGPIPE);
+	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
 
 	// Start an asynchronous wait for one of the signals to occur.
 	signals.async_wait(boost::bind(&LLSFRefBox::handle_signal,
