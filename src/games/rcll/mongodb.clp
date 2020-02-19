@@ -207,6 +207,9 @@
 		(bson-append ?m-doc "name" ?m:name)
 		(bson-append ?m-doc "zone" ?m:zone)
 		(bson-append ?m-doc "rotation" ?m:rotation)
+		(if (eq ?m:mtype RS) then
+			(bson-append-array ?m-doc "rs-ring-colors" ?m:rs-ring-colors)
+		)
 		(bson-array-append ?m-arr ?m-doc)
 		(bson-builder-destroy ?m-doc)
   )
