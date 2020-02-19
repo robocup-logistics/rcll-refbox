@@ -143,6 +143,18 @@
 				(modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
 			)
 	  )
+
+    ; Randomize ring colors per machine
+    (do-for-fact ((?m-cyan machine) (?m-magenta machine))
+                 (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
+      (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+      (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+    )
+    (do-for-fact ((?m-cyan machine) (?m-magenta machine))
+                 (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
+      (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+      (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+    )
   )
 
   ; assign random down times
@@ -168,20 +180,6 @@
 
       (modify ?c (down-period ?start-time ?end-time))
     )
-  )
-
-  ; Randomize ring colors per machine
-  (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-    (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
-
-    (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
-    (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
-  )
-  (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-    (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
-
-    (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
-    (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
   )
 
   (assert (machines-initialized))
