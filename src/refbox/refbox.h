@@ -43,13 +43,20 @@
 #include <core/threading/thread_list.h>
 #include <google/protobuf/message.h>
 #include <logging/logger.h>
-#include <mps_comm/mps_refbox_interface.h>
+#include <mps_comm/machine.h>
 #include <protobuf_comm/server.h>
 #include <utils/llsf/machines.h>
 
 #include <boost/asio.hpp>
 #include <clipsmm.h>
 #include <future>
+#include <memory>
+#include <unordered_map>
+
+#ifdef HAVE_AVAHI
+#	include <netcomm/dns-sd/avahi_thread.h>
+#	include <netcomm/utils/resolver.h>
+#endif
 
 namespace mps_placing_clips {
 class MPSPlacingGenerator;
@@ -148,7 +155,6 @@ private: // methods
 
 	void clips_mps_bs_dispense(std::string machine, std::string color);
 	void clips_mps_rs_mount_ring(std::string machine, int slide);
-	void clips_mps_cs_process(std::string machine, std::string operation);
 	void clips_mps_ds_process(std::string machine, int slide);
 	void clips_mps_set_light(std::string machine, std::string light, std::string state);
 	void clips_mps_set_lights(std::string machine,
@@ -187,17 +193,17 @@ private: // methods
 #endif
 
 private: // members
-	Configuration *                                         config_;
-	Logger *                                                logger_;
-	MultiLogger *                                           clips_logger_;
+	std::unique_ptr<Configuration>                          config_;
+	std::unique_ptr<MultiLogger>                            logger_;
+	std::unique_ptr<MultiLogger>                            clips_logger_;
 	Logger::LogLevel                                        log_level_;
-	protobuf_clips::ClipsProtobufCommunicator *             pb_comm_;
 	std::shared_ptr<mps_placing_clips::MPSPlacingGenerator> mps_placing_generator_;
 
-	CLIPS::Environment *clips_;
-	//std::recursive_mutex                      clips_mutex_;
-	fawkes::Mutex                            clips_mutex_;
-	std::map<long int, CLIPS::Fact::pointer> clips_msg_facts_;
+	fawkes::Mutex                                                       clips_mutex_;
+	std::unique_ptr<CLIPS::Environment>                                 clips_;
+	std::unordered_map<std::string, std::unique_ptr<mps_comm::Machine>> mps_;
+	std::unique_ptr<protobuf_clips::ClipsProtobufCommunicator>          pb_comm_;
+	std::map<long int, CLIPS::Fact::pointer>                            clips_msg_facts_;
 
 	std::map<std::string, std::future<bool>> mutex_futures_;
 
@@ -210,19 +216,18 @@ private: // members
 	llsf_utils::MachineAssignment cfg_machine_assignment_;
 
 #ifdef HAVE_AVAHI
-	fawkes::AvahiThread *        avahi_thread_;
-	fawkes::NetworkNameResolver *nnresolver_;
+	fawkes::AvahiThread                          avahi_thread_;
+	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
+	std::unique_ptr<fawkes::NetworkService>      refbox_service_;
 #endif
 
 #ifdef HAVE_MONGODB
-	bool                cfg_mongodb_enabled_;
-	std::string         cfg_mongodb_hostport_;
-	MongoDBLogProtobuf *mongodb_protobuf_;
-	mongocxx::client    client_;
-	mongocxx::database  database_;
+	bool                                cfg_mongodb_enabled_;
+	std::string                         cfg_mongodb_hostport_;
+	std::unique_ptr<MongoDBLogProtobuf> mongodb_protobuf_;
+	mongocxx::client                    client_;
+	mongocxx::database                  database_;
 #endif
-
-	MPSRefboxInterface *mps_;
 };
 
 } // end of namespace llsfrb

@@ -1,7 +1,7 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  machine_factory.h - Create MPS machine instances
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
+ *  Created: Tue 21 Jan 2020 12:53:24 CET 12:53
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -22,13 +22,21 @@
 
 #include "machine.h"
 
+#include <memory>
+#include <string>
+
 namespace llsfrb {
 namespace mps_comm {
-
-class DeliveryStation : public virtual Machine
+class MachineFactory
 {
 public:
-	virtual void deliver_product(int slot) = 0;
+	MachineFactory() = default;
+	std::unique_ptr<Machine> create_machine(const std::string &name,
+	                                        const std::string &type,
+	                                        const std::string &ip,
+	                                        unsigned int       port,
+	                                        const std::string &log_path        = "",
+	                                        const std::string &connection_mode = "plc");
 };
 } // namespace mps_comm
 } // namespace llsfrb

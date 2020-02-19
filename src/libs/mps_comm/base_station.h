@@ -1,9 +1,8 @@
 /***************************************************************************
- *  base_station.h - OPC-UA communication with the BS
+ *  base_station.h - Abstract base station interface
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 23 Jan 2020 16:37:30 CET 16:37
+ *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -19,44 +18,19 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// This file contains the BaseStation class.
-// At a base station a robot can pick up a base
 #pragma once
 
 #include "machine.h"
 
-namespace llsfrb {
-#if 0
-}
-#endif
-namespace mps_comm {
-#if 0
-}
-#endif
+#include <msgs/ProductColor.pb.h>
 
-class BaseStation : public Machine
+namespace llsfrb {
+namespace mps_comm {
+
+class BaseStation : public virtual Machine
 {
 public:
-	BaseStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~BaseStation();
-
-	// ----------------------------
-	// deprecated commands start
-	void band_on_until_in();
-	void band_on_until_mid();
-	void band_on_until_out();
-	// Send command to get a cap of given color
-	// and on given side
-	void get_base(llsf_msgs::BaseColor slot);
-	// Check, if the cap is ready for take away
-	bool base_ready();
-	// Check, if the last cap was taken -> new order can be processed
-	bool is_empty();
-	// deprecated commands end
-	// -----------------------------
-
-	// Tell the PLC, which machine it is
-	virtual void identify();
+	virtual void get_base(llsf_msgs::BaseColor slot) = 0;
 };
 
 } // namespace mps_comm

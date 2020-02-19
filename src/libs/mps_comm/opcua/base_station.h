@@ -1,8 +1,9 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  base_station.h - OPC-UA communication with the BS
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
- *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
+ *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
+ *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -18,17 +19,27 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
+// This file contains the BaseStation class.
+// At a base station a robot can pick up a base
 #pragma once
 
+#include "../base_station.h"
 #include "machine.h"
 
 namespace llsfrb {
 namespace mps_comm {
 
-class DeliveryStation : public virtual Machine
+class OpcUaBaseStation : public virtual OpcUaMachine, public virtual BaseStation
 {
 public:
-	virtual void deliver_product(int slot) = 0;
+	OpcUaBaseStation(const std::string &name,
+	                 const std::string &ip,
+	                 unsigned short     port,
+	                 const std::string &log_path = "",
+	                 ConnectionMode     mode     = PLC);
+
+	void get_base(llsf_msgs::BaseColor slot) override;
 };
+
 } // namespace mps_comm
 } // namespace llsfrb

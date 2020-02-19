@@ -1,7 +1,7 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  delivery_station.cpp - Mockup delivery station
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
+ *  Created: Sat 01 Feb 2020 18:12:57 CET 18:12
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -18,17 +18,25 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#pragma once
-
-#include "machine.h"
+#include "delivery_station.h"
 
 namespace llsfrb {
 namespace mps_comm {
 
-class DeliveryStation : public virtual Machine
+MockupDeliveryStation::MockupDeliveryStation(const std::string &name) : Machine(name)
 {
-public:
-	virtual void deliver_product(int slot) = 0;
-};
+}
+
+void
+MockupDeliveryStation::deliver_product(int slot)
+{
+	assert(slot == 1 || slot == 2 || slot == 3);
+	callback_busy_(true);
+	std::lock_guard<std::mutex> lg(queue_mutex_);
+	queue_.push(std::make_tuple([this] { callback_busy_(false); },
+	                            std::chrono::system_clock::now() + std::chrono::seconds(4 + slot)));
+	queue_condition_.notify_one();
+}
+
 } // namespace mps_comm
 } // namespace llsfrb

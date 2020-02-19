@@ -46,13 +46,26 @@
 #include <logging/file.h>
 #include <logging/multi.h>
 #include <logging/network.h>
-#include <mps_comm/base_station.h>
+#include <mps_comm/machine_factory.h>
+#include <mps_comm/stations.h>
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <cstdlib>
+
+#if __GNUC__ && __GNUC__ < 8
+#	include <experimental/filesystem>
+namespace stdfs = std::experimental::filesystem;
+#else
+#	include <filesystem>
+namespace stdfs = std::filesystem;
+#endif
+
+#include <memory>
+#include <unordered_map>
 #if BOOST_ASIO_VERSION < 100601
 #	include <csignal>
 #endif
@@ -71,11 +84,14 @@
 #	include <netcomm/utils/resolver.h>
 #endif
 
+#include <memory>
 #include <string>
 
 using namespace protobuf_comm;
 using namespace protobuf_clips;
 using namespace llsf_utils;
+using namespace fawkes;
+using namespace llsfrb::mps_comm;
 
 #ifdef HAVE_MONGODB
 using bsoncxx::builder::basic::document;
@@ -113,17 +129,12 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 {
 	pb_comm_ = NULL;
 
-	config_ = new YamlConfiguration(CONFDIR);
+	config_ = std::make_unique<YamlConfiguration>(CONFDIR);
 	config_->load("config.yaml");
 
 	cfg_clips_dir_ = std::string(SHAREDIR) + "/games/rcll/";
 
-	try {
-		cfg_timer_interval_ = config_->get_uint("/llsfrb/clips/timer-interval");
-	} catch (fawkes::Exception &e) {
-		delete config_;
-		throw;
-	}
+	cfg_timer_interval_ = config_->get_uint("/llsfrb/clips/timer-interval");
 
 	log_level_ = Logger::LL_INFO;
 	try {
@@ -140,14 +151,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
 
-	MultiLogger *mlogger = new MultiLogger();
-	mlogger->add_logger(new ConsoleLogger(log_level_));
+	logger_ = std::make_unique<MultiLogger>();
+	logger_->add_logger(new ConsoleLogger(log_level_));
 	try {
 		std::string logfile = config_->get_string("/llsfrb/log/general");
-		mlogger->add_logger(new FileLogger(logfile.c_str(), log_level_));
+		logger_->add_logger(new FileLogger(logfile.c_str(), log_level_));
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
-	logger_ = mlogger;
 
 	cfg_machine_assignment_ = ASSIGNMENT_2014;
 	try {
@@ -166,21 +176,18 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	                  "Using %s machine assignment",
 	                  (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
 
-	try {
-		mps_ = NULL;
-		if (config_->get_bool("/llsfrb/mps/enable")) {
-			mps_ = new MPSRefboxInterface("MPSInterface");
+	clips_ = std::make_unique<CLIPS::Environment>();
+	setup_protobuf_comm();
+	setup_clips();
 
+	try {
+		if (config_->get_bool("/llsfrb/mps/enable")) {
 			std::string prefix = "/llsfrb/mps/stations/";
 
 			std::set<std::string> mps_configs;
 			std::set<std::string> ignored_mps_configs;
 
-#if __cplusplus >= 201103L
 			std::unique_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
-#else
-			std::auto_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
-#endif
 			while (i->next()) {
 				std::string cfg_name = std::string(i->path()).substr(prefix.length());
 				cfg_name             = cfg_name.substr(0, cfg_name.find("/"));
@@ -198,10 +205,9 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 					} // ignored, assume enabled
 
 					if (active) {
-						mps_comm::Machine *mps;
-						std::string        mpstype = config_->get_string((cfg_prefix + "type").c_str());
-						std::string        mpsip   = config_->get_string((cfg_prefix + "host").c_str());
-						unsigned int       port    = config_->get_uint((cfg_prefix + "port").c_str());
+						std::string  mpstype = config_->get_string((cfg_prefix + "type").c_str());
+						std::string  mpsip   = config_->get_string((cfg_prefix + "host").c_str());
+						unsigned int port    = config_->get_uint((cfg_prefix + "port").c_str());
 
 						std::string connection_string = "plc";
 						try {
@@ -215,58 +221,72 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 						} catch (Exception &e) {
 						}
 
-						Machine::ConnectionMode connection_mode;
-						if (connection_string == "plc") {
-							connection_mode = Machine::PLC;
-						} else if (connection_string == "simulation") {
-							connection_mode = Machine::SIMULATION;
-						} else if (connection_string == "mockup") {
-							connection_mode = Machine::MOCKUP;
-						} else {
-							throw Exception("Unexpected config value for key '%s': '%s'",
-							                (cfg_prefix + "connection").c_str(),
-							                connection_string.c_str());
+						std::string log_path = "";
+						try {
+							log_path = config_->get_string("/llsfrb/log/mps_dir");
+						} catch (Exception &e) {
 						}
 
-						if (mpstype == "BS") {
-							logger_->log_info("RefBox", "Adding BS %s:%u", mpsip.c_str(), port);
-							mps = new BaseStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "CS") {
-							logger_->log_info("RefBox", "Adding CS %s:%u", mpsip.c_str(), port, cfg_name.c_str());
-							mps = new CapStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "RS") {
-							logger_->log_info("RefBox", "Adding RS %s:%u", mpsip.c_str(), port);
-							mps = new RingStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "DS") {
-							logger_->log_info("RefBox", "Adding DS %s:%u", mpsip.c_str(), port);
-							mps = new DeliveryStation(cfg_name, mpsip, port, connection_mode);
-						} else if (mpstype == "SS") {
-							logger_->log_info("RefBox", "Adding SS %s:%u", mpsip.c_str(), port);
-							mps = new StorageStation(cfg_name, mpsip, port, connection_mode);
-						} else {
-							throw fawkes::Exception("this type wont match");
+						if (log_path != "") {
+							stdfs::create_directory(log_path);
+							std::string log_suffix = cfg_name + ".log";
+							try {
+								log_suffix = config_->get_string((cfg_prefix + "/log_file").c_str());
+							} catch (Exception &e) {
+							}
+							log_path += "/" + log_suffix;
 						}
-						mps->connect_PLC();
-						mps_->insertMachine(cfg_name, mps);
+
+						MachineFactory mps_factory;
+						auto           mps = mps_factory.create_machine(
+              cfg_name, mpstype, mpsip, port, log_path, connection_string);
+						mps->register_ready_callback([this, cfg_name](bool ready) {
+							fawkes::MutexLocker clips_lock(&clips_mutex_);
+							clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
+							                      cfg_name.c_str(),
+							                      ready ? "TRUE" : "FALSE");
+						});
+						mps->register_busy_callback([this, cfg_name](bool busy) {
+							fawkes::MutexLocker clips_lock(&clips_mutex_);
+							clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
+							                      cfg_name.c_str(),
+							                      busy ? "TRUE" : "FALSE");
+						});
+						mps->register_barcode_callback([this, cfg_name](unsigned long barcode) {
+							fawkes::MutexLocker clips_lock(&clips_mutex_);
+							clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)",
+							                      cfg_name.c_str(),
+							                      barcode);
+						});
+						if (mpstype == "RS") {
+							RingStation *rs = dynamic_cast<RingStation *>(mps.get());
+							if (!rs) {
+								throw Exception("Expected MPS %s to be of type RingStation", cfg_name.c_str());
+							}
+							rs->register_slide_callback([this, cfg_name](unsigned int counter) {
+								fawkes::MutexLocker clips_lock(&clips_mutex_);
+								clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
+								                      cfg_name.c_str(),
+								                      counter);
+							});
+						}
+						mps_[cfg_name] = std::move(mps);
 						mps_configs.insert(cfg_name);
 					} else {
 						ignored_mps_configs.insert(cfg_name);
 					}
 				}
 			}
+			logger_->log_info("RefBox", "Connected to all machines");
 		}
 	} catch (Exception &e) {
 		throw;
 	}
 
-	clips_ = new CLIPS::Environment();
-	setup_protobuf_comm();
-	setup_clips();
-
 	mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
-	  new mps_placing_clips::MPSPlacingGenerator(clips_, clips_mutex_));
+	  new mps_placing_clips::MPSPlacingGenerator(clips_.get(), clips_mutex_));
 
-	mlogger->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
+	logger_->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 
 #ifdef HAVE_MONGODB
 	cfg_mongodb_enabled_ = false;
@@ -280,11 +300,11 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		std::string mdb_text_log  = config_->get_string("/llsfrb/mongodb/collections/text-log");
 		std::string mdb_clips_log = config_->get_string("/llsfrb/mongodb/collections/clips-log");
 		std::string mdb_protobuf  = config_->get_string("/llsfrb/mongodb/collections/protobuf");
-		mlogger->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_text_log));
+		clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_text_log));
 
 		clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_clips_log));
 
-		mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
+		mongodb_protobuf_ = std::make_unique<MongoDBLogProtobuf>(cfg_mongodb_hostport_, mdb_protobuf);
 
 		client_   = mongocxx::client{mongocxx::uri{"mongodb://" + cfg_mongodb_hostport_}};
 		database_ = client_["rcll"];
@@ -319,13 +339,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 #ifdef HAVE_AVAHI
 	unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
-	avahi_thread_            = new fawkes::AvahiThread();
-	avahi_thread_->start();
-	nnresolver_ = new fawkes::NetworkNameResolver(avahi_thread_);
-	fawkes::NetworkService *refbox_service =
-	  new fawkes::NetworkService(nnresolver_, "RefBox on %h", "_refbox._tcp", refbox_port);
-	avahi_thread_->publish_service(refbox_service);
-	delete refbox_service;
+	avahi_thread_.start();
+	nnresolver_     = std::make_unique<fawkes::NetworkNameResolver>(&avahi_thread_);
+	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver_.get(),
+	                                                           "RefBox on %h",
+	                                                           "_refbox._tcp",
+	                                                           refbox_port);
+	avahi_thread_.publish_service(refbox_service_.get());
 #endif
 }
 
@@ -335,10 +355,8 @@ LLSFRefBox::~LLSFRefBox()
 	timer_.cancel();
 
 #ifdef HAVE_AVAHI
-	avahi_thread_->cancel();
-	avahi_thread_->join();
-	delete avahi_thread_;
-	delete nnresolver_;
+	avahi_thread_.cancel();
+	avahi_thread_.join();
 #endif
 
 	//std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
@@ -353,12 +371,6 @@ LLSFRefBox::~LLSFRefBox()
 
 	mps_placing_generator_.reset();
 
-	delete pb_comm_;
-	delete config_;
-	delete clips_;
-	delete logger_;
-	delete clips_logger_;
-
 	// Delete all global objects allocated by libprotobuf
 	google::protobuf::ShutdownProtobufLibrary();
 }
@@ -366,57 +378,50 @@ LLSFRefBox::~LLSFRefBox()
 void
 LLSFRefBox::setup_protobuf_comm()
 {
+	std::vector<std::string> proto_dirs;
 	try {
-		std::vector<std::string> proto_dirs;
-		try {
-			proto_dirs = config_->get_strings("/llsfrb/comm/protobuf-dirs");
-			if (proto_dirs.size() > 0) {
-				for (size_t i = 0; i < proto_dirs.size(); ++i) {
-					std::string::size_type pos;
-					if ((pos = proto_dirs[i].find("@BASEDIR@")) != std::string::npos) {
-						proto_dirs[i].replace(pos, 9, BASEDIR);
-					}
-					if ((pos = proto_dirs[i].find("@RESDIR@")) != std::string::npos) {
-						proto_dirs[i].replace(pos, 8, RESDIR);
-					}
-					if ((pos = proto_dirs[i].find("@CONFDIR@")) != std::string::npos) {
-						proto_dirs[i].replace(pos, 9, CONFDIR);
-					}
-					if ((pos = proto_dirs[i].find("@SHAREDIR@")) != std::string::npos) {
-						proto_dirs[i].replace(pos, 10, SHAREDIR);
-					}
-
-					if (proto_dirs[i][proto_dirs.size() - 1] != '/') {
-						proto_dirs[i] += "/";
-					}
-					//logger_->log_warn("RefBox", "DIR: %s", proto_dirs[i].c_str());
+		proto_dirs = config_->get_strings("/llsfrb/comm/protobuf-dirs");
+		if (proto_dirs.size() > 0) {
+			for (size_t i = 0; i < proto_dirs.size(); ++i) {
+				std::string::size_type pos;
+				if ((pos = proto_dirs[i].find("@BASEDIR@")) != std::string::npos) {
+					proto_dirs[i].replace(pos, 9, BASEDIR);
 				}
+				if ((pos = proto_dirs[i].find("@RESDIR@")) != std::string::npos) {
+					proto_dirs[i].replace(pos, 8, RESDIR);
+				}
+				if ((pos = proto_dirs[i].find("@CONFDIR@")) != std::string::npos) {
+					proto_dirs[i].replace(pos, 9, CONFDIR);
+				}
+				if ((pos = proto_dirs[i].find("@SHAREDIR@")) != std::string::npos) {
+					proto_dirs[i].replace(pos, 10, SHAREDIR);
+				}
+
+				if (proto_dirs[i][proto_dirs.size() - 1] != '/') {
+					proto_dirs[i] += "/";
+				}
+				//logger_->log_warn("RefBox", "DIR: %s", proto_dirs[i].c_str());
 			}
-		} catch (fawkes::Exception &e) {
-		} // ignore, use default
-
-		if (proto_dirs.empty()) {
-			pb_comm_ = new ClipsProtobufCommunicator(clips_, clips_mutex_);
-		} else {
-			pb_comm_ = new ClipsProtobufCommunicator(clips_, clips_mutex_, proto_dirs);
 		}
+	} catch (fawkes::Exception &e) {
+	} // ignore, use default
 
-		pb_comm_->enable_server(config_->get_uint("/llsfrb/comm/server-port"));
+	if (proto_dirs.empty()) {
+		pb_comm_ = std::make_unique<ClipsProtobufCommunicator>(clips_.get(), clips_mutex_);
+	} else {
+		pb_comm_ = std::make_unique<ClipsProtobufCommunicator>(clips_.get(), clips_mutex_, proto_dirs);
+	}
 
-		MessageRegister &mr_server = pb_comm_->message_register();
-		if (!mr_server.load_failures().empty()) {
-			MessageRegister::LoadFailMap::const_iterator e      = mr_server.load_failures().begin();
-			std::string                                  errstr = e->first + " (" + e->second + ")";
-			for (++e; e != mr_server.load_failures().end(); ++e) {
-				errstr += std::string(", ") + e->first + " (" + e->second + ")";
-			}
-			logger_->log_warn("RefBox", "Failed to load some message types: %s", errstr.c_str());
+	pb_comm_->enable_server(config_->get_uint("/llsfrb/comm/server-port"));
+
+	MessageRegister &mr_server = pb_comm_->message_register();
+	if (!mr_server.load_failures().empty()) {
+		MessageRegister::LoadFailMap::const_iterator e      = mr_server.load_failures().begin();
+		std::string                                  errstr = e->first + " (" + e->second + ")";
+		for (++e; e != mr_server.load_failures().end(); ++e) {
+			errstr += std::string(", ") + e->first + " (" + e->second + ")";
 		}
-
-	} catch (std::runtime_error &e) {
-		delete config_;
-		delete pb_comm_;
-		throw;
+		logger_->log_warn("RefBox", "Failed to load some message types: %s", errstr.c_str());
 	}
 }
 
@@ -426,15 +431,13 @@ LLSFRefBox::setup_clips()
 	fawkes::MutexLocker lock(&clips_mutex_);
 
 	logger_->log_info("RefBox", "Creating CLIPS environment");
-	MultiLogger *mlogger = new MultiLogger();
-	mlogger->add_logger(new ConsoleLogger(log_level_));
+	clips_logger_ = std::make_unique<MultiLogger>();
+	clips_logger_->add_logger(new ConsoleLogger(log_level_));
 	try {
 		std::string logfile = config_->get_string("/llsfrb/log/clips");
-		mlogger->add_logger(new FileLogger(logfile.c_str(), Logger::LL_DEBUG));
+		clips_logger_->add_logger(new FileLogger(logfile.c_str(), Logger::LL_DEBUG));
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
-
-	clips_logger_ = mlogger;
 
 	bool simulation = false;
 	try {
@@ -442,7 +445,7 @@ LLSFRefBox::setup_clips()
 	} catch (Exception &e) {
 	} // ignore, use default
 
-	init_clips_logger(clips_->cobj(), logger_, clips_logger_);
+	init_clips_logger(clips_->cobj(), logger_.get(), clips_logger_.get());
 
 	std::string defglobal_ver =
 	  boost::str(boost::format("(defglobal\n"
@@ -469,7 +472,7 @@ LLSFRefBox::setup_clips()
 	                     sigc::slot<CLIPS::Value, std::string>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_bool)));
 
-	if (mps_ && !simulation) {
+	if (!simulation) {
 		clips_->add_function("mps-move-conveyor",
 		                     sigc::slot<void, std::string, std::string, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_move_conveyor)));
@@ -498,9 +501,6 @@ LLSFRefBox::setup_clips()
 		clips_->add_function("mps-rs-mount-ring",
 		                     sigc::slot<void, std::string, int>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
-		clips_->add_function("mps-cs-process",
-		                     sigc::slot<void, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_process)));
 		clips_->add_function("mps-reset",
 		                     sigc::slot<void, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
@@ -510,60 +510,6 @@ LLSFRefBox::setup_clips()
 		clips_->add_function("mps-deliver",
 		                     sigc::slot<void, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
-
-		for (auto &mps : mps_->mpses_) {
-			mps.second->addCallback(
-			  [this, mps](OpcUtils::ReturnValue *ret) {
-				  std::string ready;
-				  if (ret->bool_s) {
-					  ready = "TRUE";
-				  } else {
-					  ready = "FALSE";
-				  }
-				  fawkes::MutexLocker clips_lock(&clips_mutex_);
-				  clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
-				                        mps.first.c_str(),
-				                        ready.c_str());
-			  },
-			  OpcUtils::MPSRegister::STATUS_READY_IN,
-			  nullptr);
-			mps.second->addCallback(
-			  [this, mps](OpcUtils::ReturnValue *ret) {
-				  std::string busy;
-				  if (ret->bool_s) {
-					  busy = "TRUE";
-				  } else {
-					  busy = "FALSE";
-				  }
-				  fawkes::MutexLocker clips_lock(&clips_mutex_);
-				  clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
-				                        mps.first.c_str(),
-				                        busy.c_str());
-			  },
-			  OpcUtils::MPSRegister::STATUS_BUSY_IN,
-			  nullptr);
-			mps.second->addCallback(
-			  [this, mps](OpcUtils::ReturnValue *ret) {
-				  fawkes::MutexLocker clips_lock(&clips_mutex_);
-				  clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)",
-				                        mps.first.c_str(),
-				                        ret->uint32_s);
-			  },
-			  OpcUtils::MPSRegister::BARCODE_IN);
-			// TODO proper MPS type check
-			if (mps.first == "C-RS1" || mps.first == "C-RS2" || mps.first == "M-RS1"
-			    || mps.first == "M-RS2") {
-				mps.second->addCallback(
-				  [this, mps](OpcUtils::ReturnValue *ret) {
-					  fawkes::MutexLocker clips_lock(&clips_mutex_);
-					  clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
-					                        mps.first.c_str(),
-					                        // TODO right type?
-					                        ret->uint16_s);
-				  },
-				  OpcUtils::MPSRegister::SLIDECOUNT_IN);
-			}
-		}
 	}
 
 	clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
@@ -709,24 +655,22 @@ LLSFRefBox::clips_mps_reset(std::string machine)
 {
 	logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
 
-	if (!mps_)
-		return;
 	Machine *station;
-	station = mps_->get_station(machine, station);
-	if (station) {
-		if (!mutex_future_ready(machine)) {
-			return;
-		}
-		auto fut = std::async(std::launch::async, [station, machine] {
-			station->reset();
-			return true;
-		});
-
-		mutex_futures_[machine] = std::move(fut);
-	} else {
+	try {
+		station = mps_.at(machine).get();
+	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
+	if (!mutex_future_ready(machine)) {
+		return;
+	}
+	auto fut = std::async(std::launch::async, [station, machine] {
+		station->reset();
+		return true;
+	});
+
+	mutex_futures_[machine] = std::move(fut);
 }
 
 void
@@ -742,40 +686,36 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 {
 	logger_->log_info("MPS", "Delivering on %s", machine.c_str());
 
-	if (!mps_)
-		return;
 	Machine *station;
-	station = mps_->get_station(machine, station);
-	if (station) {
-		if (!mutex_future_ready(machine)) {
-			return;
-		}
-		auto fut = std::async(std::launch::async, [this, station, machine] {
-			station->conveyor_move(llsfrb::mps_comm::ConveyorDirection::FORWARD,
-			                       llsfrb::mps_comm::MPSSensor::OUTPUT);
-			MutexLocker lock(&clips_mutex_);
-			clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine.c_str());
-			return true;
-		});
-
-		mutex_futures_[machine] = std::move(fut);
-	} else {
+	try {
+		station = mps_.at(machine).get();
+	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
+	if (!mutex_future_ready(machine)) {
+		return;
+	}
+	auto fut = std::async(std::launch::async, [this, station, machine] {
+		station->conveyor_move(llsfrb::mps_comm::Machine::ConveyorDirection::FORWARD,
+		                       llsfrb::mps_comm::Machine::MPSSensor::OUTPUT);
+		MutexLocker lock(&clips_mutex_);
+		clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine.c_str());
+		return true;
+	});
+
+	mutex_futures_[machine] = std::move(fut);
 }
 
 void
 LLSFRefBox::clips_mps_bs_dispense(std::string machine, std::string color)
 {
 	logger_->log_info("MPS", "Dispense %s: %s", machine.c_str(), color.c_str());
-	if (!mps_) {
-		logger_->log_error("MPS", "MPS stations are not initialized");
-		return;
-	}
-	BaseStation *station = mps_->get_station(machine, station);
-	if (!station) {
-		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+	BaseStation *station;
+	try {
+		station = dynamic_cast<BaseStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
 	llsf_msgs::BaseColor color_id;
@@ -796,13 +736,11 @@ void
 LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
 {
 	logger_->log_info("MPS", "Processing on %s: slide %d", machine.c_str(), slide);
-	if (!mps_) {
-		logger_->log_error("MPS", "MPS stations are not initialized");
-		return;
-	}
-	DeliveryStation *station = mps_->get_station(machine, station);
-	if (!station) {
-		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+	DeliveryStation *station;
+	try {
+		station = dynamic_cast<DeliveryStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
 	station->deliver_product(slide);
@@ -812,13 +750,11 @@ void
 LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
 {
 	logger_->log_info("MPS", "Mount ring on %s: slide %d", machine.c_str(), slide);
-	if (!mps_) {
-		logger_->log_error("MPS", "MPS stations are not initialized");
-		return;
-	}
-	RingStation *station = mps_->get_station(machine, station);
-	if (!station) {
-		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+	RingStation *station;
+	try {
+		station = dynamic_cast<RingStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
 	station->mount_ring(slide);
@@ -829,31 +765,29 @@ LLSFRefBox::clips_mps_move_conveyor(std::string machine,
                                     std::string goal_position,
                                     std::string conveyor_direction /*= "FORWARD"*/)
 {
-	if (!mps_) {
-		logger_->log_error("MPS", "MPS stations are not initialized");
+	Machine *station;
+	try {
+		station = mps_.at(machine).get();
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
-	Machine *station = mps_->get_station(machine, station);
-	if (!station) {
-		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
-		return;
-	}
-	MPSSensor goal;
+	Machine::MPSSensor goal;
 	if (goal_position == "INPUT") {
-		goal = INPUT;
+		goal = Machine::MPSSensor::INPUT;
 	} else if (goal_position == "MIDDLE") {
-		goal = MIDDLE;
+		goal = Machine::MPSSensor::MIDDLE;
 	} else if (goal_position == "OUTPUT") {
-		goal = OUTPUT;
+		goal = Machine::MPSSensor::OUTPUT;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor position %s", goal_position.c_str());
 		return;
 	}
-	ConveyorDirection direction;
+	Machine::ConveyorDirection direction;
 	if (conveyor_direction == "FORWARD") {
-		direction = FORWARD;
+		direction = Machine::ConveyorDirection::FORWARD;
 	} else if (conveyor_direction == "BACKWARD") {
-		direction = BACKWARD;
+		direction = Machine::ConveyorDirection::BACKWARD;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor direction %s", conveyor_direction.c_str());
 		return;
@@ -864,13 +798,11 @@ LLSFRefBox::clips_mps_move_conveyor(std::string machine,
 void
 LLSFRefBox::clips_mps_cs_retrieve_cap(std::string machine)
 {
-	if (!mps_) {
-		logger_->log_error("MPS", "MPS stations are not initialized");
-		return;
-	}
-	CapStation *station = mps_->get_station(machine, station);
-	if (!station) {
-		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
+	CapStation *station;
+	try {
+		station = dynamic_cast<CapStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
 	station->retrieve_cap();
@@ -879,56 +811,14 @@ LLSFRefBox::clips_mps_cs_retrieve_cap(std::string machine)
 void
 LLSFRefBox::clips_mps_cs_mount_cap(std::string machine)
 {
-	if (!mps_) {
-		logger_->log_error("MPS", "MPS stations are not initialized");
-		return;
-	}
-	CapStation *station = mps_->get_station(machine, station);
-	if (!station) {
-		logger_->log_error("MPS", "Failed to access MPS %s", machine.c_str());
-		return;
-	}
-	station->mount_cap();
-}
-
-void
-LLSFRefBox::clips_mps_cs_process(std::string machine, std::string operation)
-{
-	logger_->log_info("MPS", "%s on %s", operation.c_str(), machine.c_str());
-	if (operation != "RETRIEVE_CAP" && operation != "MOUNT_CAP") {
-		logger_->log_error("MPS", "Invalid operation '%s' on %s", operation.c_str(), machine.c_str());
-		return;
-	}
-	if (!mps_)
-		return;
 	CapStation *station;
-	station = mps_->get_station(machine, station);
-	if (station) {
-		if (!mutex_future_ready(machine)) {
-			return;
-		}
-		auto fut = std::async(std::launch::async, [this, station, machine, operation] {
-			MutexLocker lock(&clips_mutex_, false);
-			station->band_on_until_mid();
-			lock.relock();
-			clips_->assert_fact_f("(mps-feedback %s %s AVAILABLE)", machine.c_str(), operation.c_str());
-			lock.unlock();
-			if (operation == "RETRIEVE_CAP") {
-				station->retrieve_cap();
-			} else if (operation == "MOUNT_CAP") {
-				station->mount_cap();
-			}
-			station->band_on_until_out();
-			lock.relock();
-			clips_->assert_fact_f("(mps-feedback %s %s DONE)", machine.c_str(), operation.c_str());
-			return true;
-		});
-
-		mutex_futures_[machine] = std::move(fut);
-	} else {
+	try {
+		station = dynamic_cast<CapStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
+	station->mount_cap();
 }
 
 void
@@ -937,44 +827,41 @@ LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::str
 	//logger_->log_info("MPS", "Set light %s: %s to %s",
 	//		    machine.c_str(), color.c_str(), state.c_str());
 
-	if (!mps_)
-		return;
 	Machine *station;
-	station = mps_->get_station(machine, station);
-	if (station) {
-		llsf_msgs::LightColor color_id;
-		if (color == "RED") {
-			color_id = llsf_msgs::LightColor::RED;
-		} else if (color == "YELLOW") {
-			color_id = llsf_msgs::LightColor::YELLOW;
-		} else if (color == "GREEN") {
-			color_id = llsf_msgs::LightColor::GREEN;
-		} else {
-			logger_->log_error("MPS", "Invalid color %s", color.c_str());
-			return;
-		}
-
-		llsf_msgs::LightState state_id;
-		if (state == "ON") {
-			state_id = llsf_msgs::LightState::ON;
-		} else if (state == "BLINK") {
-			state_id = llsf_msgs::LightState::BLINK;
-		} else if (state == "OFF") {
-			state_id = llsf_msgs::LightState::OFF;
-		} else {
-			logger_->log_error("MPS", "Invalid state %s", state.c_str());
-			return;
-		}
-
-		//printf("Set light %i %i %i\n", color_id, state_id, blink_id);
-		// TODO time?
-		int time = 0;
-		station->set_light(color_id, state_id, time);
-
-	} else {
-		//logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+	try {
+		station = mps_.at(machine).get();
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
+	llsf_msgs::LightColor color_id;
+	if (color == "RED") {
+		color_id = llsf_msgs::LightColor::RED;
+	} else if (color == "YELLOW") {
+		color_id = llsf_msgs::LightColor::YELLOW;
+	} else if (color == "GREEN") {
+		color_id = llsf_msgs::LightColor::GREEN;
+	} else {
+		logger_->log_error("MPS", "Invalid color %s", color.c_str());
+		return;
+	}
+
+	llsf_msgs::LightState state_id;
+	if (state == "ON") {
+		state_id = llsf_msgs::LightState::ON;
+	} else if (state == "BLINK") {
+		state_id = llsf_msgs::LightState::BLINK;
+	} else if (state == "OFF") {
+		state_id = llsf_msgs::LightState::OFF;
+	} else {
+		logger_->log_error("MPS", "Invalid state %s", state.c_str());
+		return;
+	}
+
+	//printf("Set light %i %i %i\n", color_id, state_id, blink_id);
+	// TODO time?
+	int time = 0;
+	station->set_light(color_id, state_id, time);
 }
 
 void
@@ -991,12 +878,14 @@ LLSFRefBox::clips_mps_set_lights(std::string machine,
 void
 LLSFRefBox::clips_mps_reset_lights(std::string machine)
 {
-	if (!mps_)
+	Machine *station;
+	try {
+		station = mps_.at(machine).get();
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
-	Machine *station = mps_->get_station(machine, station);
-	if (station) {
-		station->reset_light();
 	}
+	station->reset_light();
 }
 
 #ifdef HAVE_MONGODB
@@ -1725,32 +1614,10 @@ LLSFRefBox::handle_timer(const boost::system::error_code &error)
     */
 
 		//sps_read_rfids();
-		if (mps_)
-			mps_->process();
 
 		{
 			//std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
 			fawkes::MutexLocker lock(&clips_mutex_);
-
-			if (mps_) {
-				std::map<std::string, std::string> machine_states = mps_->get_states();
-				for (const auto &ms : machine_states) {
-					//printf("Asserting (machine-mps-state (name %s) (state %s) (num-bases %u))\n",
-					//       ms.first.c_str(), ms.second.c_str(), 0);
-					std::string  type      = ms.first.substr(2, 2);
-					unsigned int num_bases = 0;
-					// TODO get RS base count
-					//if (type == "RS") {
-					//  RingStation *station;
-					//  station = mps_->get_station(ms.first, station);
-					//  if (station)  num_bases = station->getCountSlide();
-					//}
-					clips_->assert_fact_f("(machine-mps-state (name %s) (state %s) (num-bases %u))",
-					                      ms.first.c_str(),
-					                      ms.second.c_str(),
-					                      num_bases);
-				}
-			}
 
 			clips_->assert_fact("(time (now))");
 			clips_->refresh_agenda();

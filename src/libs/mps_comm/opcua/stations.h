@@ -1,7 +1,7 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  stations.h - All OPC-UA MPS stations
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
+ *  Created: Sat 01 Feb 2020 12:41:11 CET 12:41
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,15 +20,8 @@
 
 #pragma once
 
-#include "machine.h"
-
-namespace llsfrb {
-namespace mps_comm {
-
-class DeliveryStation : public virtual Machine
-{
-public:
-	virtual void deliver_product(int slot) = 0;
-};
-} // namespace mps_comm
-} // namespace llsfrb
+#include "base_station.h"
+#include "cap_station.h"
+#include "delivery_station.h"
+#include "ring_station.h"
+#include "storage_station.h"

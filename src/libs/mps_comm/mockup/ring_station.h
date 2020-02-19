@@ -1,7 +1,7 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  ring_station.h - Mockup ring station
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
+ *  Created: Sat 01 Feb 2020 18:23:59 CET 18:23
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,15 +20,20 @@
 
 #pragma once
 
+#include "../ring_station.h"
 #include "machine.h"
 
 namespace llsfrb {
 namespace mps_comm {
 
-class DeliveryStation : public virtual Machine
+class MockupRingStation : public virtual MockupMachine, public virtual RingStation
 {
 public:
-	virtual void deliver_product(int slot) = 0;
+	MockupRingStation(const std::string &name);
+	void mount_ring(unsigned int feeder) override;
+	void register_slide_callback(std::function<void(unsigned int)> callback) override{};
+	void identify() override{};
 };
+
 } // namespace mps_comm
 } // namespace llsfrb

@@ -1,7 +1,7 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  base_station.h - Mockup communication with the base station
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
+ *  Created: Mon 27 Jan 2020 21:20:40 CET 21:20
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,15 +20,17 @@
 
 #pragma once
 
+#include "../base_station.h"
 #include "machine.h"
 
 namespace llsfrb {
 namespace mps_comm {
-
-class DeliveryStation : public virtual Machine
+class MockupBaseStation : public virtual MockupMachine, public virtual BaseStation
 {
 public:
-	virtual void deliver_product(int slot) = 0;
+	MockupBaseStation(const std::string &name);
+	void get_base(llsf_msgs::BaseColor slot) override;
+	void identify() override{};
 };
 } // namespace mps_comm
 } // namespace llsfrb

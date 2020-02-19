@@ -1,8 +1,9 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  storage_station.cpp - OPC-UA communication with the SS
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
- *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
+ *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
+ *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -18,17 +19,29 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#pragma once
+#include "storage_station.h"
 
-#include "machine.h"
+#include "mps_io_mapping.h"
+
+#include <iostream>
 
 namespace llsfrb {
+#if 0
+}
+#endif
 namespace mps_comm {
+#if 0
+}
+#endif
 
-class DeliveryStation : public virtual Machine
+OpcUaStorageStation::OpcUaStorageStation(const std::string &name,
+                                         const std::string &ip,
+                                         unsigned short     port,
+                                         const std::string &log_path,
+                                         ConnectionMode     mode)
+: Machine(name), OpcUaMachine(Station::STATION_STORAGE, ip, port, log_path, mode)
 {
-public:
-	virtual void deliver_product(int slot) = 0;
-};
+}
+
 } // namespace mps_comm
 } // namespace llsfrb

@@ -18,13 +18,9 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#ifndef __MPS_COMM_MACHINES__
-#define __MPS_COMM_MACHINES__
-
+#pragma once
 #include "base_station.h"
 #include "cap_station.h"
 #include "delivery_station.h"
 #include "ring_station.h"
 #include "storage_station.h"
-
-#endif /* !__MPS_COMM_MACHINES__ */

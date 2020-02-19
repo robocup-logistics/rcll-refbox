@@ -16,6 +16,7 @@ llsfrb:
     general: refbox.log
     clips: clips.log
     game: game.log
+    mps_dir: mps
 
   mps:
     enable: true

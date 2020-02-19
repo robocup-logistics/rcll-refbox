@@ -23,14 +23,10 @@
 // They are related to the communication to the PLC.
 #pragma once
 
+#include "core/exception.h"
+
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
 // Base commands for mps_comm communication:
 // Each machine type has a base prefix.
@@ -51,6 +47,19 @@ enum StationType {
 	STATION_TYPE_DS = 4,
 	STATION_TYPE_SS = 5,
 };
+
+constexpr StationType
+get_type_from_station(const Station &station)
+{
+	switch (station) {
+	case STATION_BASE: return STATION_TYPE_BS;
+	case STATION_RING: return STATION_TYPE_RS;
+	case STATION_CAP: return STATION_TYPE_CS;
+	case STATION_DELIVERY: return STATION_TYPE_DS;
+	case STATION_STORAGE: return STATION_TYPE_SS;
+	default: throw fawkes::Exception("Unknown machine type: %hi", station);
+	}
+}
 
 // payload for light command
 enum LightState {

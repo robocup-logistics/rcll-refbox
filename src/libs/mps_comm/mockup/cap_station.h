@@ -1,7 +1,7 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  cap_station.h - Mockup cap station
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
+ *  Created: Sat 01 Feb 2020 17:57:55 CET 17:57
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,15 +20,22 @@
 
 #pragma once
 
+#include "../cap_station.h"
 #include "machine.h"
 
 namespace llsfrb {
 namespace mps_comm {
-
-class DeliveryStation : public virtual Machine
+class MockupCapStation : public virtual MockupMachine, public virtual CapStation
 {
 public:
-	virtual void deliver_product(int slot) = 0;
+	MockupCapStation(const std::string &name);
+	void retrieve_cap() override;
+	void mount_cap() override;
+	void identify() override{};
+
+private:
+	void cap_op();
 };
+
 } // namespace mps_comm
 } // namespace llsfrb

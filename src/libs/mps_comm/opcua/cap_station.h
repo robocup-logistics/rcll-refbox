@@ -1,5 +1,5 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  cap_station.h - OPC-UA communication with the CS
  *
  *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
  *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
@@ -19,11 +19,12 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "delivery_station.h"
+// This file contains the implementation of a cap station.
+// A cap station can be used, to mount caps on top of things.
+#pragma once
 
-#include "mps_io_mapping.h"
-
-#include <iostream>
+#include "../cap_station.h"
+#include "machine.h"
 
 namespace llsfrb {
 #if 0
@@ -34,29 +35,20 @@ namespace mps_comm {
 }
 #endif
 
-DeliveryStation::DeliveryStation(std::string    name,
-                                 std::string    ip,
-                                 unsigned short port,
-                                 ConnectionMode mode)
-: Machine(name, Station::STATION_DELIVERY, ip, port, mode)
+class OpcUaCapStation : public virtual OpcUaMachine, public virtual CapStation
 {
-}
+public:
+	OpcUaCapStation(const std::string &name,
+	                const std::string &ip,
+	                unsigned short     port,
+	                const std::string &log_path = "",
+	                ConnectionMode     mode     = PLC);
 
-DeliveryStation::~DeliveryStation()
-{
-}
+	virtual ~OpcUaCapStation();
 
-void
-DeliveryStation::deliver_product(int slot)
-{
-	send_command(machine_type_ | Operation::OPERATION_DELIVER, slot);
-}
-
-void
-DeliveryStation::identify()
-{
-	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_DS);
-}
+	void retrieve_cap() override;
+	void mount_cap() override;
+};
 
 } // namespace mps_comm
 } // namespace llsfrb

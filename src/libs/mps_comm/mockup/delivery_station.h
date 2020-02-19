@@ -1,7 +1,7 @@
 /***************************************************************************
- *  delivery_station.h - Abstract delivery station interface
+ *  delivery_station.h - Mockup delivery station
  *
- *  Created: Thu 23 Jan 2020 17:13:12 CET 17:13
+ *  Created: Sat 01 Feb 2020 18:12:41 CET 18:12
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
@@ -20,15 +20,19 @@
 
 #pragma once
 
+#include "../delivery_station.h"
 #include "machine.h"
 
 namespace llsfrb {
 namespace mps_comm {
 
-class DeliveryStation : public virtual Machine
+class MockupDeliveryStation : public virtual MockupMachine, public virtual DeliveryStation
 {
 public:
-	virtual void deliver_product(int slot) = 0;
+	MockupDeliveryStation(const std::string &name);
+	void deliver_product(int slot) override;
+	void identify() override{};
 };
+
 } // namespace mps_comm
 } // namespace llsfrb

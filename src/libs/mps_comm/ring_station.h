@@ -1,9 +1,8 @@
 /***************************************************************************
- *  ring_station.h - OPC-UA communication with the RS
+ *  ring_station.h - Abstract ring station interface
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 23 Jan 2020 17:10:26 CET 17:10
+ *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -19,42 +18,18 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// The ring station mounts rings on bases
 #pragma once
 
 #include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-class RingStation : public Machine
+class RingStation : public virtual Machine
 {
-	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
-
 public:
-	RingStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-	virtual ~RingStation();
-
-	// Send command to get a ring
-	// void getRing();
-	// Check, if the cap is ready for take away
-	// deprecated
-	void band_on_until_in();
-	void band_on_until_mid();
-	void band_on_until_out();
-	bool ring_ready();
-
-	void mount_ring(unsigned int feeder);
-
-	// identify: tell PLC, which machine it is running on
-	virtual void identify();
+	virtual void mount_ring(unsigned int feeder)                            = 0;
+	virtual void register_slide_callback(std::function<void(unsigned int)>) = 0;
 };
-
 } // namespace mps_comm
 } // namespace llsfrb

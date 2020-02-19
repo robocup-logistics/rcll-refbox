@@ -1,9 +1,8 @@
 /***************************************************************************
- *  storage_station.cpp - OPC-UA communication with the SS
+ *  storage_station.cpp - Mockup for storage station
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Sat 01 Feb 2020 18:41:45 CET 18:41
+ *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -21,35 +20,11 @@
 
 #include "storage_station.h"
 
-#include "mps_io_mapping.h"
-
-#include <iostream>
-
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-StorageStation::StorageStation(std::string    name,
-                               std::string    ip,
-                               unsigned short port,
-                               ConnectionMode mode)
-: Machine(name, Station::STATION_STORAGE, ip, port, mode)
+MockupStorageStation::MockupStorageStation(const std::string &name) : Machine(name)
 {
-}
-
-StorageStation::~StorageStation()
-{
-}
-
-void
-StorageStation::identify()
-{
-	send_command(Command::COMMAND_SET_TYPE, StationType::STATION_TYPE_SS);
 }
 
 } // namespace mps_comm

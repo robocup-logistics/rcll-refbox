@@ -1,9 +1,8 @@
 /***************************************************************************
- *  cap_station.h - OPC-UA communication with the CS
+ *  cap_station.h - Abstract cap station interface
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 23 Jan 2020 17:05:21 CET 17:05
+ *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -19,41 +18,17 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// This file contains the implementation of a cap station.
-// A cap station can be used, to mount caps on top of things.
 #pragma once
-
 #include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-class CapStation : public Machine
+class CapStation : public virtual Machine
 {
 public:
-	CapStation(std::string name, std::string ip, unsigned short port, ConnectionMode mode);
-
-	// -----------------
-	// deprecated methods
-	void band_on_until_in();
-	void band_on_until_mid();
-	void band_on_until_out();
-	void retrieve_cap();
-	void mount_cap();
-	// end of deprecated
-	// ----------------
-
-	virtual ~CapStation();
-
-	// Tell plc, which machine I am
-	virtual void identify();
+	virtual void retrieve_cap() = 0;
+	virtual void mount_cap()    = 0;
 };
-
 } // namespace mps_comm
 } // namespace llsfrb
