@@ -74,7 +74,7 @@
 	(return (if (eq ?prefix "C") then CYAN else MAGENTA))
 )
 
-(deffunction machine-init-randomize (?ring-colors)
+(deffunction machine-init-randomize ()
   ; reset machines
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
@@ -143,6 +143,23 @@
 				(modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
 			)
 	  )
+		; Randomize ring colors per machine
+		(bind ?ring-colors (create$))
+		(do-for-all-facts ((?rs ring-spec)) TRUE
+			(bind ?ring-colors (append$ ?ring-colors ?rs:color))
+		)
+		(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+			(and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
+
+			(modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+			(modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+		)
+		(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+			(and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
+
+			(modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+			(modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+		)
   )
 
   ; assign random down times
@@ -170,19 +187,6 @@
     )
   )
 
-  ; Randomize ring colors per machine
-  (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-    (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
-
-    (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
-    (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
-  )
-  (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-    (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
-
-    (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
-    (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
-  )
 
   (assert (machines-initialized))
 )

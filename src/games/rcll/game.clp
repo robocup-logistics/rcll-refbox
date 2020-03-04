@@ -79,7 +79,7 @@
 	(bind ?c3-counter 0)
   ; machine assignment if not already done
   (if (not (any-factp ((?mi machines-initialized)) TRUE))
-			then (machine-init-randomize ?ring-colors))
+			then (machine-init-randomize))
 
   ; reset orders, assign random times
   (delayed-do-for-all-facts ((?order order)) TRUE
