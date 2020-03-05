@@ -25,19 +25,8 @@
 #define __CONFIG_YAML_H_
 
 #include <config/config.h>
-
-#ifdef HAVE_FAM
-#	include <utils/system/fam.h>
-#endif
-
 #include <yaml-cpp/yaml.h>
-#ifdef USE_REGEX_CPP
-// we do not use it atm because it does not work as epxect atm,
-// cf. https://bugzilla.redhat.com/show_bug.cgi?id=718711
-#	include <regex>
-#else
-#	include <regex.h>
-#endif
+
 #include <memory>
 #include <queue>
 #include <string>
@@ -48,10 +37,6 @@ namespace llsfrb {
 class YamlConfigurationNode;
 
 class YamlConfiguration : public Configuration
-#ifdef HAVE_FAM
-,
-                          public FamListener
-#endif
 {
 public:
 	YamlConfiguration();
@@ -124,16 +109,12 @@ public:
 
 	virtual void try_dump();
 
-#ifdef HAVE_FAM
-	virtual void fam_event(const char *filename, unsigned int mask);
-#endif
-
 public:
 	class YamlValueIterator : public Configuration::ValueIterator
 	{
 	public:
 		YamlValueIterator();
-		YamlValueIterator(std::map<std::string, YamlConfigurationNode *> &nodes);
+		YamlValueIterator(std::map<std::string, std::shared_ptr<YamlConfigurationNode>> &nodes);
 
 		virtual ~YamlValueIterator()
 		{
@@ -169,9 +150,9 @@ public:
 		virtual bool is_default() const;
 
 	private:
-		bool                                                     first_;
-		std::map<std::string, YamlConfigurationNode *>           nodes_;
-		std::map<std::string, YamlConfigurationNode *>::iterator current_;
+		bool                                                                    first_;
+		std::map<std::string, std::shared_ptr<YamlConfigurationNode>>           nodes_;
+		std::map<std::string, std::shared_ptr<YamlConfigurationNode>>::iterator current_;
 	};
 
 private:
@@ -190,50 +171,39 @@ private:
 	};
 	/// @endcond
 
-	YamlConfigurationNode *query(const char *path) const;
+	std::shared_ptr<YamlConfigurationNode> query(const char *path) const;
 	void
-	                       read_meta_doc(YAML::Node &doc, std::queue<LoadQueueEntry> &load_queue, std::string &host_file);
-	void                   read_config_doc(const YAML::Node &doc, YamlConfigurationNode *&node);
-	YamlConfigurationNode *read_yaml_file(std::string                 filename,
-	                                      bool                        ignore_missing,
-	                                      std::queue<LoadQueueEntry> &load_queue,
-	                                      std::string &               host_file);
-	void                   read_yaml_config(std::string             filename,
-	                                        std::string &           host_file,
-	                                        YamlConfigurationNode *&root,
-	                                        YamlConfigurationNode *&host_root,
-	                                        std::list<std::string> &files,
-	                                        std::list<std::string> &dirs);
-	void                   write_host_file();
+	                                       read_meta_doc(YAML::Node &doc, std::queue<LoadQueueEntry> &load_queue, std::string &host_file);
+	std::shared_ptr<YamlConfigurationNode> read_config_doc(const YAML::Node &doc);
+	std::shared_ptr<YamlConfigurationNode> read_yaml_file(std::string                 filename,
+	                                                      bool                        ignore_missing,
+	                                                      std::queue<LoadQueueEntry> &load_queue,
+	                                                      std::string &               host_file);
+	void                                   read_yaml_config(std::string                             filename,
+	                                                        std::string &                           host_file,
+	                                                        std::shared_ptr<YamlConfigurationNode> &root,
+	                                                        std::shared_ptr<YamlConfigurationNode> &host_root,
+	                                                        std::list<std::string> &                files,
+	                                                        std::list<std::string> &                dirs);
+	void                                   write_host_file();
 
 	std::string config_file_;
 	std::string host_file_;
 
-	YamlConfigurationNode *root_;
-	YamlConfigurationNode *host_root_;
+	std::shared_ptr<YamlConfigurationNode> root_;
+	std::shared_ptr<YamlConfigurationNode> host_root_;
+
+	bool   write_pending_;
+  fawkes::Mutex *write_pending_mutex_;
 
 private:
-	fawkes::Mutex *mutex;
-
-#ifdef USE_REGEX_CPP
-	std::regex __yaml_regex;
-	std::regex __url_regex;
-	std::regex __frame_regex;
-#else
-	regex_t __yaml_regex;
-	regex_t __url_regex;
-	regex_t __frame_regex;
-#endif
+  fawkes::Mutex *mutex;
 
 	typedef std::map<std::string, YAML::Node *> DocMap;
-	mutable DocMap                              __documents;
+	mutable DocMap                              documents_;
 
-	char *__sysconfdir;
-	char *__userconfdir;
-
-#ifdef HAVE_FAM
-	FamThread *fam_thread_;
-#endif
+	char *sysconfdir_;
+	char *userconfdir_;
 };
 
 } // end namespace llsfrb
