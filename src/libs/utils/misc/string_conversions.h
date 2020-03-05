@@ -21,10 +21,11 @@
  *  Read the full text in the LICENSE.GPL_WRE file in the doc directory.
  */
 
-#ifndef __UTILS_MISC_STRINGTOOLS_H_
-#define __UTILS_MISC_STRINGTOOLS_H_
+#ifndef _UTILS_MISC_STRINGTOOLS_H_
+#define _UTILS_MISC_STRINGTOOLS_H_
 
 #include <string>
+#include <vector>
 
 namespace fawkes {
 
@@ -40,20 +41,26 @@ public:
 	static std::string to_string(float f);
 	static std::string to_string(double d);
 	static std::string to_string(bool b);
+
+	/** No-op conversion of string.
+   * @param s value to convert
+   * @return string the very same string
+   */
 	static std::string
-	to_string(std::string &s)
+	to_string(const std::string &s)
 	{
 		return s;
 	}
 
 	static unsigned int to_uint(std::string s);
 	static int          to_int(std::string s);
+	static long         to_long(std::string s);
 	static float        to_float(std::string s);
 	static double       to_double(std::string s);
 	static bool         to_bool(std::string s);
 
 	static void        trim_inplace(std::string &s);
-	static std::string trim(std::string &s);
+	static std::string trim(const std::string &s);
 
 private:
 	// may not be instantiated!
