@@ -30,17 +30,13 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <map>
 
 namespace fawkes {
 
 /** @class StringConversions <utils/misc/string_conversions.h>
  * Utility class that holds string methods.
  * @author Tim Niemueller
- *
- * @fn static std::string StringConversions::to_string(std::string &s)
- * No-op conversion of string.
- * @param s value to convert
- * @return string the very same string
  */
 
 /** Convert string to all-uppercase string.
@@ -190,6 +186,16 @@ StringConversions::to_int(std::string s)
 	return atoi(s.c_str());
 }
 
+/** Convert string to a long int value
+ * @param s string to convert
+ * @return value as represented by string
+ */
+long
+StringConversions::to_long(std::string s)
+{
+	return atol(s.c_str());
+}
+
 /** Convert string to a float value
  * @param s string to convert
  * @return value as represented by string
@@ -243,7 +249,7 @@ StringConversions::trim_inplace(std::string &s)
  * @return trimmed string
  */
 std::string
-StringConversions::trim(std::string &s)
+StringConversions::trim(const std::string &s)
 {
 	std::string::size_type p1 = s.find_first_not_of(' ');
 	std::string::size_type p2 = s.find_last_not_of(' ');
