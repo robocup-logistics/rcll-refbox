@@ -593,7 +593,6 @@ CouldNotOpenConfigException::CouldNotOpenConfigException(const char *format, ...
  *
  */
 
-
 float
 Configuration::get_float_or_default(const char *path, const float &default_val)
 {

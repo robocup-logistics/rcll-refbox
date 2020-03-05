@@ -351,7 +351,6 @@ YamlConfiguration::~YamlConfiguration()
 		write_host_file();
 	}
 
-
 	if (sysconfdir_)
 		free(sysconfdir_);
 	if (userconfdir_)
@@ -387,10 +386,10 @@ YamlConfiguration::load(const char *file_path)
 		}
 		if (filename == "") {
 			throw fawkes::Exception("YamlConfig: cannot find configuration file %s/%s or %s/%s",
-			                userconfdir_,
-			                file_path,
-			                sysconfdir_,
-			                file_path);
+			                        userconfdir_,
+			                        file_path,
+			                        sysconfdir_,
+			                        file_path);
 		}
 	}
 
@@ -504,7 +503,6 @@ YamlConfiguration::read_yaml_config(std::string                             file
 	}
 }
 
-
 /** Create absolute config path.
  * If the @p path starts with / it is considered to be absolute. Otherwise
  * it is prefixed with the config directory.
@@ -576,7 +574,9 @@ YamlConfiguration::read_meta_doc(YAML::Node &                doc,
 				if ((stat(dirname.c_str(), &dir_stat) != 0)) {
 					if (ignore_missing)
 						continue;
-					throw fawkes::Exception(errno, "YamlConfig: Failed to stat directory %s", dirname.c_str());
+					throw fawkes::Exception(errno,
+					                        "YamlConfig: Failed to stat directory %s",
+					                        dirname.c_str());
 				}
 
 				if (!S_ISDIR(dir_stat.st_mode)) {
@@ -585,7 +585,9 @@ YamlConfiguration::read_meta_doc(YAML::Node &                doc,
 
 				DIR *d = opendir(dirname.c_str());
 				if (!d) {
-					throw fawkes::Exception(errno, "YamlConfig: failed to open directory %s", dirname.c_str());
+					throw fawkes::Exception(errno,
+					                        "YamlConfig: failed to open directory %s",
+					                        dirname.c_str());
 				}
 
 				load_queue.push(LoadQueueEntry(dirname, ignore_missing, true));

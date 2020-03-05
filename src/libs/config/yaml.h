@@ -193,11 +193,11 @@ private:
 	std::shared_ptr<YamlConfigurationNode> root_;
 	std::shared_ptr<YamlConfigurationNode> host_root_;
 
-	bool   write_pending_;
-  fawkes::Mutex *write_pending_mutex_;
+	bool           write_pending_;
+	fawkes::Mutex *write_pending_mutex_;
 
 private:
-  fawkes::Mutex *mutex;
+	fawkes::Mutex *mutex;
 
 	typedef std::map<std::string, YAML::Node *> DocMap;
 	mutable DocMap                              documents_;

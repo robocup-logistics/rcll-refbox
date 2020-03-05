@@ -454,13 +454,13 @@ public:
 		if (add_to->is_scalar()) {
 			if (!n->is_scalar()) {
 				throw fawkes::Exception("YamlConfig: cannot overwrite scalar value %s with non-scalar",
-				                add_to->name().c_str());
+				                        add_to->name().c_str());
 			}
 			add_to->set_scalar(n->get_scalar());
 		} else if (add_to->is_list()) {
 			if (!n->is_list()) {
 				throw fawkes::Exception("YamlConfig: cannot overwrite list value %s with non-list",
-				                add_to->name().c_str());
+				                        add_to->name().c_str());
 			}
 			if (is_type<unsigned int>()) {
 				try {
@@ -488,8 +488,9 @@ public:
 			}
 		} else if (add_to->get_type() == Type::SEQUENCE_MAP) {
 			if (n->get_type() != Type::SEQUENCE_MAP) {
-				throw fawkes::Exception("YamlConfig: cannot overwrite sequence map value %s with non-sequence-map",
-				                add_to->name().c_str());
+				throw fawkes::Exception(
+				  "YamlConfig: cannot overwrite sequence map value %s with non-sequence-map",
+				  add_to->name().c_str());
 			}
 			add_to->children_.clear();
 			for (auto i = n->begin(); i != n->end(); ++i) {
@@ -702,7 +703,8 @@ public:
 	set_value(T t)
 	{
 		if (has_children()) {
-			throw fawkes::Exception("YamlConfig: cannot set value on non-leaf path node %s", name_.c_str());
+			throw fawkes::Exception("YamlConfig: cannot set value on non-leaf path node %s",
+			                        name_.c_str());
 		}
 		set_scalar(fawkes::StringConversions::to_string(t));
 	}
@@ -718,7 +720,8 @@ public:
 	set_list(const std::vector<T> &t)
 	{
 		if (has_children()) {
-			throw fawkes::Exception("YamlConfig: cannot set value on non-leaf path node %s", name_.c_str());
+			throw fawkes::Exception("YamlConfig: cannot set value on non-leaf path node %s",
+			                        name_.c_str());
 		}
 		std::vector<std::string>           v;
 		typename std::vector<T>::size_type N = t.size();
@@ -833,8 +836,8 @@ public:
 		if (n.Type() != YAML::NodeType::Sequence) {
 #ifdef HAVE_YAMLCPP_NODE_MARK
 			throw fawkes::Exception("Cannot initialize list from non-sequence (line %i, column %i)",
-			                n.Mark().line,
-			                n.Mark().column);
+			                        n.Mark().line,
+			                        n.Mark().column);
 #else
 			throw fawkes::Exception("Cannot initialize list from non-sequence");
 #endif
@@ -856,8 +859,8 @@ public:
 			} else {
 #ifdef HAVE_YAMLCPP_NODE_MARK
 				throw fawkes::Exception("Sequence neither of type scalar nor map (line %i, column %i)",
-				                n.Mark().line,
-				                n.Mark().column);
+				                        n.Mark().line,
+				                        n.Mark().column);
 #else
 				throw fawkes::Exception("Sequence neither of type scalar nor map");
 #endif
@@ -1097,17 +1100,17 @@ private:
 			}
 			if (p <= 0 || p >= 65535) {
 				throw fawkes::Exception("YamlConfig: Invalid TCP/UDP port number "
-				                "(%u out of allowed range)",
-				                p);
+				                        "(%u out of allowed range)",
+				                        p);
 			}
 		} else if (node.Tag() == "tag:fawkesrobotics.org,cfg/url") {
 			std::string scalar = node.Scalar();
 			if (!regex_match(scalar, yaml_utils::url_regex)) {
 #ifdef HAVE_YAMLCPP_NODE_MARK
 				throw fawkes::Exception("YamlConfig (line %d, column %d): %s is not a valid URL",
-				                node.Mark().line,
-				                node.Mark().column,
-				                scalar.c_str());
+				                        node.Mark().line,
+				                        node.Mark().column,
+				                        scalar.c_str());
 #else
 				throw fawkes::Exception("YamlConfig: %s is not a valid URL", scalar.c_str());
 #endif
@@ -1117,9 +1120,9 @@ private:
 			if (!regex_match(scalar, yaml_utils::frame_regex)) {
 #ifdef HAVE_YAMLCPP_NODE_MARK
 				throw fawkes::Exception("YamlConfig (line %d, column %d): %s is not a valid frame ID",
-				                node.Mark().line,
-				                node.Mark().column,
-				                scalar.c_str());
+				                        node.Mark().line,
+				                        node.Mark().column,
+				                        scalar.c_str());
 #else
 				throw fawkes::Exception("YamlConfig: %s is not a valid frame ID", scalar.c_str());
 #endif
@@ -1138,6 +1141,6 @@ private:
 
 /// @endcond
 
-} // end namespace llsfb
+} // namespace llsfrb
 
 #endif
