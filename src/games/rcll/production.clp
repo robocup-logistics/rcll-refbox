@@ -291,10 +291,34 @@
 		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
 	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
+	(confval (path "/llsfrb/simulation/disable-base-payment-check")
+				(type STRING) (is-list TRUE)
+				(list-value $?disabled&:(not (member$ (str-cat ?n) ?disabled))))
   =>
   (modify ?m (state BROKEN)
 	  (broken-reason (str-cat ?n ": insufficient bases ("
 				  (- ?ba ?bu) " < " ?req-bases ")")))
+)
+
+(defrule production-rs-ignore-insufficient-bases
+  "The RS has been prepared but it does not have sufficient additional material.
+   However, slide payment checks are disabled so is assumed that rings were
+   payed beforehand, but no mps feedback was received. Hence, simulate the
+   feedback once."
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?m <- (machine (name ?n) (mtype RS) (state PREPARED)
+				(mps-base-counter ?mps-counter)
+		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
+  (ring-spec (color ?ring-color)
+	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
+  (not (mps-status-feedback ?n SLIDE-COUNTER ?))
+	(confval (path "/llsfrb/simulation/disable-base-payment-check")
+			(type STRING) (is-list TRUE)
+			(list-value $?disabled&:(member$ (str-cat ?n) ?disabled)))
+  =>
+  (printout warn "Simulating "(str-cat ?n) " base payment feedback. "
+									"Please verify that the payment was actually made" crlf)
+  (assert (mps-status-feedback ?n SLIDE-COUNTER (+ 1 ?mps-counter)))]
 )
 
 (defrule production-rs-move-to-mid
