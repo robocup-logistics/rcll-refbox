@@ -462,4 +462,35 @@ components:
         over-time:
           type: boolean
 
-
+    Points:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - points
+        - phase
+        - team
+        - game-time
+        - reason
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        points:
+          type: integer
+          format: int64
+        phase:
+          type: string
+          format: symbole
+          enum: ["EXPLORATION","PRODUCTION","POST_GAME", "WHACK_A_MOLE_CHALLENGE"]
+        team:
+          type: string
+          formate: symbol
+          enum: ["CYAN", "MAGENTA"]
+        game-time:
+          type: number
+          format: float
+        reason:
+          type: string
+          format: symbol
