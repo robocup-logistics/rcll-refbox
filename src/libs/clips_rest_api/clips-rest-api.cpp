@@ -101,6 +101,11 @@ ClipsRestApi::init()
 	                                                   std::bind(&ClipsRestApi::cb_get_ring_spec,
 	                                                             this,
 	                                                             std::placeholders::_1));
+	rest_api_->add_handler<WebviewRestArray<Points>>(WebRequest::METHOD_GET,
+	                                                 "/points",
+	                                                 std::bind(&ClipsRestApi::cb_get_points,
+	                                                           this,
+	                                                           std::placeholders::_1));
 
 	webview_rest_api_manager_->register_api(rest_api_);
 }
@@ -317,6 +322,20 @@ ClipsRestApi::gen_ring_spec(CLIPS::Fact::pointer &fact)
 	return o;
 }
 
+Points
+ClipsRestApi::gen_points(CLIPS::Fact::pointer &fact)
+{
+	Points o;
+	o.set_kind("Points");
+	o.set_apiVersion(Environment::api_version());
+	o.set_points(get_value<int64_t>(fact, "points"));
+	o.set_team(get_value<std::string>(fact, "team"));
+	o.set_game_time(get_value<float>(fact, "game-time"));
+	o.set_phase(get_value<std::string>(fact, "phase"));
+	o.set_reason(get_value<std::string>(fact, "reason"));
+	return o;
+}
+
 bool
 ClipsRestApi::match(CLIPS::Fact::pointer &fact, std::string tmpl_name, WebviewRestParams &params)
 
@@ -448,6 +467,21 @@ ClipsRestApi::cb_get_ring_spec(WebviewRestParams &params)
 	while (fact) {
 		if (match(fact, "ring-spec", params))
 			rv.push_back(std::move(gen_ring_spec(fact)));
+		fact = fact->next();
+	}
+	return rv;
+}
+
+WebviewRestArray<Points>
+ClipsRestApi::cb_get_points(fawkes::WebviewRestParams &params)
+{
+	MutexLocker              lock(&env_mutex_);
+	WebviewRestArray<Points> rv;
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "points", params))
+			rv.push_back(std::move(gen_points(fact)));
 		fact = fact->next();
 	}
 	return rv;

@@ -23,9 +23,11 @@
 #pragma once
 
 #include "model/Environment.h"
+#include "model/Fact.h"
 #include "model/GameState.h"
 #include "model/Machine.h"
 #include "model/Order.h"
+#include "model/Points.h"
 #include "model/RingSpec.h"
 #include "model/Robot.h"
 
@@ -67,6 +69,7 @@ private:
 	WebviewRestArray<Robot>       cb_get_robots(fawkes::WebviewRestParams &params);
 	WebviewRestArray<GameState>   cb_get_game_state(fawkes::WebviewRestParams &params);
 	WebviewRestArray<RingSpec>    cb_get_ring_spec(fawkes::WebviewRestParams &params);
+	WebviewRestArray<Points>      cb_get_points(fawkes::WebviewRestParams &params);
 	template <typename T>
 	WebviewRestArray<T> cb_get_tmpl(fawkes::WebviewRestParams &params, std::string tmpl_name);
 
@@ -76,6 +79,7 @@ private:
 	Robot     gen_robot(CLIPS::Fact::pointer &fact);
 	GameState gen_game_state(CLIPS::Fact::pointer &fact);
 	RingSpec  gen_ring_spec(CLIPS::Fact::pointer &fact);
+	Points    gen_points(CLIPS::Fact::pointer &fact);
 
 	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name, fawkes::WebviewRestParams &params);
 
