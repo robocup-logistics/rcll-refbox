@@ -315,6 +315,7 @@
 	(confval (path "/llsfrb/simulation/disable-base-payment-check")
 			(type STRING) (is-list TRUE)
 			(list-value $?disabled&:(member$ (str-cat ?n) ?disabled)))
+	(not (mps-add-base-on-slide ?n))
   =>
   (printout warn "Simulating "(str-cat ?n) " base payment feedback. "
 									"Please verify that the payment was actually made" crlf)
@@ -378,6 +379,7 @@
 	?m <- (machine (name ?n) (state ?state) (mtype RS) (team ?team)
 	               (bases-used ?bases-used) (bases-added ?old-num-bases))
 	?fb <- (mps-add-base-on-slide ?n)
+  (not (points (game-time ?gt)))
 	=>
 	(retract ?fb)
 	(if (neq ?state BROKEN)
