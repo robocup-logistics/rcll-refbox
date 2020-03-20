@@ -33,6 +33,7 @@
 #include <netcomm/service_discovery/service_publisher.h>
 #include <netinet/in.h>
 
+#include <chrono>
 #include <string>
 #include <utility>
 
@@ -181,9 +182,10 @@ private:
 	bool do_erase_browsers;
 	bool do_reset_groups;
 
-	AvahiSimplePoll *simple_poll;
-	AvahiClient *    client;
-	AvahiClientState client_state;
+	AvahiSimplePoll *                 simple_poll;
+	AvahiClient *                     client;
+	AvahiClientState                  client_state;
+	const static std::chrono::seconds wait_on_init_failure;
 
 	WaitCondition *init_wc;
 
