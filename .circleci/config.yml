@@ -3,7 +3,7 @@ version: 2
 jobs:
   build_fedora:
     docker:
-      - image: fedora:30
+      - image: fedora:31
     steps:
       - run:
           name: Install dependencies
