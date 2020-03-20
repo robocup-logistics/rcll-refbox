@@ -149,9 +149,10 @@ handle_message(uint16_t                                   component_id,
 		current_game_state_ = g;
 	}
 	std::shared_ptr<RobotInfo> ri;
-	if ((ri = std::dynamic_pointer_cast<RobotInfo>(msg)) && wait_state_) {
+	if ((ri = std::dynamic_pointer_cast<RobotInfo>(msg))) {
 		current_robot_info_ = ri;
 	}
+
 	if (wait_state_ && current_game_state_ && current_robot_info_) {
 		bool matches = true;
 		if (msg_team_cyan_ && msg_team_cyan_->team_name() != current_game_state_->team_cyan()) {
