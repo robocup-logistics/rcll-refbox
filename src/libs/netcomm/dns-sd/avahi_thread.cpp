@@ -43,6 +43,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 
 namespace fawkes {
 
@@ -54,6 +55,9 @@ namespace fawkes {
  * @ingroup NetComm
  * @author Tim Niemueller
  */
+
+/** Time to wait if creating an avahi client fails. **/
+const std::chrono::seconds AvahiThread::wait_on_init_failure{5};
 
 /** Constructor. */
 AvahiThread::AvahiThread() : Thread("AvahiThread")
@@ -146,6 +150,10 @@ AvahiThread::loop()
 		need_recover = false;
 
 		avahi_simple_poll_iterate(simple_poll, -1);
+	} else {
+		// We failed to create a client, e.g., because the daemon is not running.
+		// Wait for a while and try again.
+		std::this_thread::sleep_for(wait_on_init_failure);
 	}
 }
 
