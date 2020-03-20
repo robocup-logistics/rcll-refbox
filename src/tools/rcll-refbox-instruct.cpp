@@ -38,6 +38,7 @@
 
 #include <msgs/GameInfo.pb.h>
 #include <msgs/GameState.pb.h>
+#include <msgs/RobotInfo.pb.h>
 #include <msgs/VersionInfo.pb.h>
 #include <protobuf_comm/client.h>
 #include <utils/system/argparser.h>
@@ -63,6 +64,11 @@ static unsigned short int   port_   = 4444;
 llsf_msgs::SetTeamName * msg_team_cyan_ = NULL, *msg_team_magenta_ = NULL;
 llsf_msgs::SetGamePhase *msg_phase_ = NULL;
 llsf_msgs::SetGameState *msg_state_ = NULL;
+
+std::shared_ptr<llsf_msgs::GameState> current_game_state_ = nullptr;
+std::shared_ptr<llsf_msgs::RobotInfo> current_robot_info_ = nullptr;
+
+int num_bots_ = -1;
 
 boost::posix_time::ptime start_time_(boost::posix_time::second_clock::universal_time());
 
@@ -139,18 +145,29 @@ handle_message(uint16_t                                   component_id,
 	}
 
 	std::shared_ptr<GameState> g;
-	if ((g = std::dynamic_pointer_cast<GameState>(msg)) && wait_state_) {
+	if ((g = std::dynamic_pointer_cast<GameState>(msg))) {
+		current_game_state_ = g;
+	}
+	std::shared_ptr<RobotInfo> ri;
+	if ((ri = std::dynamic_pointer_cast<RobotInfo>(msg)) && wait_state_) {
+		current_robot_info_ = ri;
+	}
+	if (wait_state_ && current_game_state_ && current_robot_info_) {
 		bool matches = true;
-		if (msg_team_cyan_ && msg_team_cyan_->team_name() != g->team_cyan()) {
+		if (msg_team_cyan_ && msg_team_cyan_->team_name() != current_game_state_->team_cyan()) {
 			matches = false;
 		}
-		if (msg_team_magenta_ && msg_team_magenta_->team_name() != g->team_magenta()) {
+		if (msg_team_magenta_
+		    && msg_team_magenta_->team_name() != current_game_state_->team_magenta()) {
 			matches = false;
 		}
-		if (msg_phase_ && msg_phase_->phase() != g->phase()) {
+		if (msg_phase_ && msg_phase_->phase() != current_game_state_->phase()) {
 			matches = false;
 		}
-		if (msg_state_ && msg_state_->state() != g->state()) {
+		if (msg_state_ && msg_state_->state() != current_game_state_->state()) {
+			matches = false;
+		}
+		if (num_bots_ > 0 && current_robot_info_->robots_size() < num_bots_) {
 			matches = false;
 		}
 		if (matches) {
@@ -183,10 +200,13 @@ usage(const char *progname)
 
 	printf(" -c <team name>   Set name of Cyan team\n"
 	       " -m <team name>   Set name of Magenta team\n"
+	       " -n <number>      Wait for the given number of robots\n"
+	       "                  (only useful in conjunction with -W)\n"
 	       " -r <remote>      Connect to given host\n"
 	       "                  remote is of the form: host[:port]\n"
 	       " -w[T]            Wait for refbox startup, optionally wait at most T seconds\n"
-	       " -W[T]            Wait for given phase/state/teams, optionally wait at most T seconds\n"
+	       " -W[T]            Wait for given phase/state/teams/robots,\n"
+	       "                  optionally wait at most T seconds\n"
 	       " -h               Show this help message\n");
 }
 
@@ -195,7 +215,7 @@ main(int argc, char **argv)
 {
 	client_ = new ProtobufStreamClient();
 
-	ArgumentParser argp(argc, argv, "hw::W::s:p:c:m:r:");
+	ArgumentParser argp(argc, argv, "hw::W::s:p:c:m:r:n:");
 
 	if (argp.has_arg("h")) {
 		usage(argv[0]);
@@ -257,10 +277,18 @@ main(int argc, char **argv)
 		msg_team_magenta_->set_team_name(argp.arg("m"));
 		msg_team_magenta_->set_team_color(llsf_msgs::MAGENTA);
 	}
+	if (argp.has_arg("n")) {
+		if (!argp.has_arg("W")) {
+			usage(argv[0]);
+			exit(2);
+		}
+		num_bots_ = atoi(argp.arg("n"));
+	}
 
 	MessageRegister &message_register = client_->message_register();
 	message_register.add_message_type<VersionInfo>();
 	message_register.add_message_type<GameState>();
+	message_register.add_message_type<RobotInfo>();
 
 	client_->signal_received().connect(handle_message);
 	/*
