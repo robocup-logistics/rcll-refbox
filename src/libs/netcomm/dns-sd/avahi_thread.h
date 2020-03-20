@@ -97,8 +97,8 @@ private:
 	                            AvahiLookupResultFlags flags,
 	                            void *                 instance);
 
-	static void resolve_callback(AvahiServiceResolver *r,
-	                             AVAHI_GCC_UNUSED AvahiIfIndex interface,
+	static void resolve_callback(AvahiServiceResolver *         r,
+	                             AVAHI_GCC_UNUSED AvahiIfIndex  interface,
 	                             AVAHI_GCC_UNUSED AvahiProtocol protocol,
 	                             AvahiResolverEvent             event,
 	                             const char *                   name,

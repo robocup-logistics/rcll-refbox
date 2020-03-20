@@ -754,8 +754,8 @@ AvahiThread::browse_callback(AvahiServiceBrowser *  b,
  * the search
  */
 void
-AvahiThread::resolve_callback(AvahiServiceResolver *r,
-                              AVAHI_GCC_UNUSED AvahiIfIndex interface,
+AvahiThread::resolve_callback(AvahiServiceResolver *         r,
+                              AVAHI_GCC_UNUSED AvahiIfIndex  interface,
                               AVAHI_GCC_UNUSED AvahiProtocol protocol,
                               AvahiResolverEvent             event,
                               const char *                   name,
