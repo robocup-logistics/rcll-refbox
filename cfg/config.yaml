@@ -193,8 +193,8 @@ llsfrb:
     #
     # To register a machine for this behavior, enter its full mane, e.g., to
     # add all ring stations simply use:
-    # disable-base-payment-check: [C-RS1, C-RS2, M-RS1, M-RS2]
-    disable-base-payment-check: []
+    disable-base-payment-check: [C-RS1, C-RS2, M-RS1, M-RS2]
+    # disable-base-payment-check: []
 
     # synchronize refbox time with the time of a simulation
     time-sync:
