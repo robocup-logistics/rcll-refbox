@@ -350,6 +350,12 @@
   (delayed-do-for-all-facts ((?machine machine)) TRUE
     (modify ?machine (desired-lights RED-BLINK))
   )
+  (do-for-all-facts ((?cfg confval) (?m machine))
+      (and (eq ?cfg:path "/llsfrb/simulation/disable-base-payment-check")
+					 (eq ?m:mtype RS)
+					 (member$ (str-cat ?m:name) ?cfg:list-value))
+    (printout warn "Please add points for remaining bases in slide of "
+                   (str-cat ?m:name) " manually." crlf))
   (if (any-factp ((?pd referee-confirmation)) TRUE) then
     (assert (attention-message (text "Game ended, please confirm deliveries!")))
     (assert (postgame-for-unconfirmed-deliveries))

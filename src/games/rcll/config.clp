@@ -15,6 +15,26 @@
   (multislot list-value)
 )
 
+(defrule config-print-disabled-slide-counter-checks
+  (confval (path "/llsfrb/simulation/disable-base-payment-check")
+					 (is-list TRUE) (list-value $?disabled-machines))
+	=>
+  (do-for-all-facts ((?m machine))
+      (and (eq ?m:mtype RS)
+					 (member$ (str-cat ?m:name) ?disabled-machines))
+    (printout warn "Slide counter check for "
+                   (str-cat ?m:name) " disabled, by config" crlf))
+)
+
+(defrule config-print-invalid-slide-counter-check-option
+  (confval (path "/llsfrb/simulation/disable-base-payment-check")
+					 (is-list TRUE) (list-value $? ?m $?))
+	(not (machine (name ?machine&:(eq ?machine (sym-cat ?m))) (mtype RS)))
+	=>
+  (printout warn "Disabling of slide counter check on machine " ?m " failed. "
+                 "Reason: " ?m " is not a ring station" crlf)
+)
+
 ;(defrule print-confval
 ;  (confval (path ?p) (type ?t) (value ?v) (is-list ?is-list) (list-value $?lv))
 ;  =>

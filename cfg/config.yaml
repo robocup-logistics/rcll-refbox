@@ -179,6 +179,23 @@ llsfrb:
 
   simulation:
     enable: false
+
+    # Disable in case machine feedback from the slides is unavailable (e.g.,
+    # if one ring station is unresponsive)
+    #
+    # Slide counters of ring stations listed here will increment the slide
+    # counter whenever a payment is due.
+    #
+    # This also implicates for all listed machines that:
+    #   1. Rings can be mounted without payment and the refbox awards additional
+    #      points as if the payment was actually made
+    #   2. Points for payments are only given, if they are used afterwards.
+    #
+    # To register a machine for this behavior, enter its full mane, e.g., to
+    # add all ring stations simply use:
+    disable-base-payment-check: [C-RS1, C-RS2, M-RS1, M-RS2]
+    # disable-base-payment-check: []
+
     # synchronize refbox time with the time of a simulation
     time-sync:
       enable: true
