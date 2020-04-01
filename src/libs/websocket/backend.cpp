@@ -31,39 +31,48 @@ namespace llsfrb::websocket
 /**
  * @brief Construct a new Backend::Backend object
  * 
- *  Construct a new Backend object, the () operator of which can be used to launch the backend. 
+ *  Construct a new Backend object with assigned data and server.
  * 
  * @param data_ data object to be used by the backend
  */
-Backend::Backend(Data *data_) : data_(data_), server_(Server(data_))
+Backend::Backend()
 {
+    server_ = Server(&data_);
+}
+
+/**
+ * @brief Launches (web-)socket server thread and backend thread.
+ * 
+ */
+void Backend::start() {
+    // launch server thread
+    server_t_ = std::thread(&Server::operator(), server_);
+    // launch backend thread
+    backend_t_ = std::thread(&Backend::operator(), this);
 }
 
 /**
  * @brief Operator runs the backend in the current thread
  * 
- *  This operator runs the webfrontend backend, launches the webserver and works 
+ *  This operator runs the webfrontend backend; works 
  *  through the message queue. 
  * 
  */
-void Backend::operator()() const
+void Backend::operator()()
 {
-    // launch server thread
-    std::thread server_t(server_);
-
     // message queue handler -> consumer
     std::cout << "Starting Message Thread" << std::endl;
     bool msgs_running = true;
     while (msgs_running)
     {
         // block until new message available
-        data_->log_wait();
+        data_.log_wait();
 
         // notified -> get current value from the queue
-        std::string log = data_->log_pop();
+        std::string log = data_.log_pop();
         // send to clients
         //std::cout << log << std::endl;
-        data_->clients_send_all(log);
+        data_.clients_send_all(log);
     }
 }
 

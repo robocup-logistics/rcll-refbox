@@ -30,6 +30,7 @@ class Server
 {
 public:
     Server(Data *fbd_ptr);
+    Server();
 
     void operator()();
 

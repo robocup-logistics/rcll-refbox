@@ -22,6 +22,7 @@
 #define _PLUGINS_WEBSOCKET_BACKEND_H_
 
 #include "data.h"
+#include "server.h"
 
 namespace llsfrb::websocket
 {
@@ -29,14 +30,16 @@ namespace llsfrb::websocket
 class Backend
 {
 public:
-  Backend(Data* data);
+  Backend();
 
-  void operator()() const;
+  void operator()();
+  void start();
 
 private:
-  Data* data_;
+  Data data_;
   Server server_;
   std::thread backend_t_;
+  std::thread server_t_;
 };
 
 } // namespace llsfrb::websocket

@@ -48,6 +48,10 @@ Server::Server(Data *fbd_ptr)
     fbd = fbd_ptr;
 }
 
+Server::Server()
+{
+}
+
 /**
  * @brief Runs the Socket/Websocket Server
  *  This operator runs the socket or websocket server (currently based on WS_MODE predef).
