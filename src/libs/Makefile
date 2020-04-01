@@ -18,7 +18,7 @@ BASEDIR = ../..
 include $(BASEDIR)/etc/buildsys/config.mk
 
 SUBDIRS = core utils config logging netcomm protobuf_comm protobuf_clips \
-	  mongodb_log mps_comm mps_placing_clips  webview  rest-api
+	  mongodb_log mps_comm mps_placing_clips  webview  rest-api websocket
 
 # Explicit dependencies, this is needed to have make bail out if there is any
 # error. This is also necessary for working parallel build (i.e. for dual core)
