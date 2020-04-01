@@ -29,12 +29,14 @@ namespace llsfrb::websocket
 class Backend
 {
 public:
-  Backend(Data *fbd);
+  Backend(Data* data);
 
   void operator()() const;
 
 private:
-  Data *fbd;
+  Data* data_;
+  Server server_;
+  std::thread backend_t_;
 };
 
 } // namespace llsfrb::websocket
