@@ -61,7 +61,7 @@ void Backend::start() {
 void Backend::operator()()
 {
     // message queue handler -> consumer
-    std::cout << "Starting Message Thread" << std::endl;
+    //std::cout << "Starting Message Thread" << std::endl;
     bool msgs_running = true;
     while (msgs_running)
     {

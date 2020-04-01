@@ -61,8 +61,7 @@ Server::Server()
  */
 void Server::operator()()
 {
-    std::cout << "Starting Server Thread" << std::endl;
-
+    //std::cout << "Starting Server Thread" << std::endl;
     // listen for new connection
     boost::asio::io_service io_service;
     tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), 1234));
@@ -90,7 +89,7 @@ void Server::operator()()
             fbd->clients_add(fbc);
         }
 
-        std::cout << "new client connected" << std::endl;
+        //std::cout << "new client connected" << std::endl;
     }
 }
 

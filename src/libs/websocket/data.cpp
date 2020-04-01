@@ -137,7 +137,7 @@ void Data::clients_send_all(std::string msg)
         }
         else
         {
-            std::cout << "client disconnected" << std::endl;
+            //std::cout << "client disconnected" << std::endl;
         }
     }
     clients = unfailed_clients;
