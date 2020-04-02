@@ -133,6 +133,14 @@ Machine::to_json_value(rapidjson::Document &d, rapidjson::Value &v) const
 		v_rs_ring_color.SetString(*rs_ring_color_, allocator);
 		v.AddMember("rs-ring-color", v_rs_ring_color, allocator);
 	}
+	rapidjson::Value v_rs_ring_colors(rapidjson::kArrayType);
+	v_rs_ring_colors.Reserve(rs_ring_colors_.size(), allocator);
+	for (const auto &e : rs_ring_colors_) {
+		rapidjson::Value v;
+		v.SetString(e, allocator);
+		v_rs_ring_colors.PushBack(v, allocator);
+	}
+	v.AddMember("rs-ring-colors", v_rs_ring_colors, allocator);
 	if (cs_operation_) {
 		rapidjson::Value v_cs_operation;
 		v_cs_operation.SetString(*cs_operation_, allocator);
@@ -201,6 +209,15 @@ Machine::from_json_value(const rapidjson::Value &d)
 	}
 	if (d.HasMember("rs-ring-color") && d["rs-ring-color"].IsString()) {
 		rs_ring_color_ = d["rs-ring-color"].GetString();
+	}
+	if (d.HasMember("rs-ring-colors") && d["rs-ring-colors"].IsArray()) {
+		const rapidjson::Value &a = d["rs-ring-colors"];
+		rs_ring_colors_           = std::vector<std::string>{};
+
+		rs_ring_colors_.reserve(a.Size());
+		for (auto &v : a.GetArray()) {
+			rs_ring_colors_.push_back(v.GetString());
+		}
 	}
 	if (d.HasMember("cs-operation") && d["cs-operation"].IsString()) {
 		cs_operation_ = d["cs-operation"].GetString();
