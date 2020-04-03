@@ -46,6 +46,7 @@
 #include <mps_comm/machine.h>
 #include <protobuf_comm/server.h>
 #include <utils/llsf/machines.h>
+#include <websocket/backend.h>
 
 #include <boost/asio.hpp>
 #include <clipsmm.h>
@@ -211,6 +212,8 @@ private: // members
 	unsigned int                  cfg_timer_interval_;
 	std::string                   cfg_clips_dir_;
 	llsf_utils::MachineAssignment cfg_machine_assignment_;
+
+	websocket::Backend *backend_;
 
 #ifdef HAVE_AVAHI
 	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;

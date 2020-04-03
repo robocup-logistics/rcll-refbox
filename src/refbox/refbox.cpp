@@ -47,6 +47,7 @@
 #include <logging/file.h>
 #include <logging/multi.h>
 #include <logging/network.h>
+#include <logging/websocket.h>
 #include <mps_comm/machine_factory.h>
 #include <mps_comm/stations.h>
 #include <mps_placing_clips/mps_placing_clips.h>
@@ -54,6 +55,7 @@
 #include <protobuf_comm/peer.h>
 #include <rest-api/webview_server.h>
 #include <webview/rest_api_manager.h>
+#include <websocket/backend.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -166,6 +168,12 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		logger_->add_logger(new FileLogger(logfile.c_str(), log_level_));
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
+
+	//launch websocket backend and add websocket logger
+	backend_ = new websocket::Backend(logger_.get());
+	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
+	                config_->get_bool("/llsfrb/websocket/ws-mode"));
+	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
 
 	cfg_machine_assignment_ = ASSIGNMENT_2014;
 	try {
