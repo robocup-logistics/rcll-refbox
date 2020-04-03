@@ -29,13 +29,16 @@ namespace llsfrb::websocket
 class Server
 {
 public:
-    Server(Data *fbd_ptr);
+    Server(Data *data_);
     Server();
 
     void operator()();
+    void configure(uint port, bool ws_mode);
 
 private:
-    Data *fbd;
+    Data *data_;
+    uint port_ = 1234;
+    bool ws_mode_ = true;
 };
 
 } // namespace llsfrb::websocket

@@ -43,8 +43,12 @@ Backend::Backend()
 /**
  * @brief Launches (web-)socket server thread and backend thread.
  * 
+ * @param port tcp port of the websocket server
+ * @param ws_mode true if websocket only mode is activated
  */
-void Backend::start() {
+void Backend::start(uint port, bool ws_mode) {
+    //configure server
+    server_.configure(port, ws_mode);
     // launch server thread
     server_t_ = std::thread(&Server::operator(), server_);
     // launch backend thread

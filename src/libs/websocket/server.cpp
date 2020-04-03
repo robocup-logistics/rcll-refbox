@@ -31,8 +31,6 @@
 
 using boost::asio::ip::tcp;
 
-#define WS_MODE true
-
 namespace llsfrb::websocket
 {
 
@@ -41,11 +39,10 @@ namespace llsfrb::websocket
  * 
  *  Constructs a new Server object and assigns the used backend data pointer.
  * 
- * @param fbd_ptr pointer to Data object that is used for this session
+ * @param data_ptr pointer to Data object that is used for this session
  */
-Server::Server(Data *fbd_ptr)
+Server::Server(Data *data_) : data_(data_)
 {
-    fbd = fbd_ptr;
 }
 
 Server::Server()
@@ -64,7 +61,7 @@ void Server::operator()()
     //std::cout << "Starting Server Thread" << std::endl;
     // listen for new connection
     boost::asio::io_service io_service;
-    tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), 1234));
+    tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), port_));
 
     // acceptor loop
     while (true)
@@ -72,25 +69,37 @@ void Server::operator()()
         std::shared_ptr<tcp::socket> socket(new tcp::socket(io_service));
         acceptor_.accept(*socket);
 
-        if (WS_MODE)
+        if (ws_mode_)
         {
             // websocket approach
             std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket(
                 new boost::beast::websocket::stream<tcp::socket>(std::move(*socket)));
-            std::shared_ptr<Client> fbc(
+            std::shared_ptr<Client> client(
                 new ClientWS(web_socket));
-            fbd->clients_add(fbc);
+            data_->clients_add(client);
         }
         else
         {
             // socket approach
-            std::shared_ptr<Client> fbc(
+            std::shared_ptr<Client> client(
                 new ClientS(socket));
-            fbd->clients_add(fbc);
+            data_->clients_add(client);
         }
 
         //std::cout << "new client connected" << std::endl;
     }
+}
+
+/**
+ * @brief Configure the servers port and mode prior to start. 
+ * 
+ * @param port port on which the server runs on
+ * @param ws_mode true if websocket only mode
+ */
+void Server::configure(uint port, bool ws_mode = true)
+{
+    port_ = port;
+    ws_mode_ = ws_mode;
 }
 
 } // namespace llsfrb::websocket

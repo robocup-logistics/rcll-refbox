@@ -212,6 +212,11 @@ llsfrb:
   webshop:
     enable: false
 
+  websocket:
+    ws-mode: true #true if accepting websocket clients, not tcp socket clients
+    port: 1234 #tcp port under wihc it will be accessible
+
+
 webview:
   # TCP port for Webview HTTP requests; TCP port
   port: !tcp-port 8088
