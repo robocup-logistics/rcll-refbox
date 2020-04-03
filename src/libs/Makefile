@@ -25,7 +25,7 @@ SUBDIRS = core utils config logging netcomm protobuf_comm protobuf_clips \
 netcomm config mongodb_log: core utils
 utils mps_placing_clips: core
 mps_comm: core config
-logging: core protobuf_comm
+logging: core protobuf_comm websocket
 protobuf_clips: protobuf_comm
 mongodb_log: logging
 rest-api: webview
