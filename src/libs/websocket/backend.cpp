@@ -76,4 +76,17 @@ void Backend::operator()()
     }
 }
 
+/**
+ * @brief Returns the address of the data pointer used by the backend.
+ * 
+ *  This method returns the address of the data pointer created by the backend,
+ *  thus it can be used for communication with the connected clients. 
+ * 
+ * @return Data* 
+ */
+Data* Backend::get_data() {
+    return &(data_);
+}
+
+
 } // namespace llsfrb::websocket

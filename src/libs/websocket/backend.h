@@ -34,6 +34,7 @@ public:
 
   void operator()();
   void start();
+  Data* get_data();
 
 private:
   Data data_;
