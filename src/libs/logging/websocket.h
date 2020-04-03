@@ -30,15 +30,15 @@
 #include <websocket/data.h>
 #include <boost/format.hpp>
 
-namespace llsfrb {
-
+namespace llsfrb
+{
 
 class Mutex;
 
 class WebsocketLogger : public Logger
 {
- public:
-  WebsocketLogger(websocket::Data* data_, LogLevel log_level = LL_DEBUG);
+public:
+  WebsocketLogger(websocket::Data *data_, LogLevel log_level = LL_DEBUG);
   virtual ~WebsocketLogger();
 
   virtual void log_debug(const char *component, const char *format, ...);
@@ -67,26 +67,26 @@ class WebsocketLogger : public Logger
   virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
 
   virtual void vtlog_debug(struct timeval *t, const char *component,
-			   const char *format, va_list va);
+                           const char *format, va_list va);
   virtual void vtlog_info(struct timeval *t, const char *component,
-			  const char *format, va_list va);
+                          const char *format, va_list va);
   virtual void vtlog_warn(struct timeval *t, const char *component,
-			  const char *format, va_list va);
+                          const char *format, va_list va);
   virtual void vtlog_error(struct timeval *t, const char *component,
-			   const char *format, va_list va);
+                           const char *format, va_list va);
 
-
- private:
-  struct ::tm   *now_s;
+private:
+  struct ::tm *now_s;
   fawkes::Mutex *mutex;
-  websocket::Data* data_;
+  websocket::Data *data_;
   boost::format fmt_time;
   std::string formatter(const char *format, va_list va);
   std::string formatter(const char *format, const char *text);
-  void build_document(rapidjson::Document* d, const char *component, std::string level, std::string time, std::string message, bool exception = false);
-  void build_document(rapidjson::Document* d, const char *component, std::string level, std::string time, rapidjson::Value& messages, bool exception = false);
+  void build_document(rapidjson::Document *d, const char *component, std::string level,
+                      std::string time, std::string message, bool exception = false);
+  void build_document(rapidjson::Document *d, const char *component, std::string level,
+                      std::string time, rapidjson::Value &messages, bool exception = false);
 };
-
 
 } // end namespace llsfrb
 
