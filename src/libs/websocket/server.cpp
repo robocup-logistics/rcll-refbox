@@ -40,8 +40,9 @@ namespace llsfrb::websocket
  *  Constructs a new Server object and assigns the used backend data pointer.
  * 
  * @param data_ptr pointer to Data object that is used for this session
+ * @param logger_ logger used by the backend
  */
-Server::Server(Data *data_) : data_(data_)
+Server::Server(Data *data_, Logger *logger_) : data_(data_), logger_(logger_)
 {
 }
 
@@ -58,7 +59,6 @@ Server::Server()
  */
 void Server::operator()()
 {
-    //std::cout << "Starting Server Thread" << std::endl;
     // listen for new connection
     boost::asio::io_service io_service;
     tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), port_));
@@ -75,18 +75,18 @@ void Server::operator()()
             std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket(
                 new boost::beast::websocket::stream<tcp::socket>(std::move(*socket)));
             std::shared_ptr<Client> client(
-                new ClientWS(web_socket));
+                new ClientWS(web_socket, logger_));
             data_->clients_add(client);
         }
         else
         {
             // socket approach
             std::shared_ptr<Client> client(
-                new ClientS(socket));
+                new ClientS(socket, logger_));
             data_->clients_add(client);
         }
 
-        //std::cout << "new client connected" << std::endl;
+        logger_->log_info("Websocket", "new client connected");
     }
 }
 

@@ -34,6 +34,15 @@ namespace llsfrb::websocket
 {
 
 /**
+ * @brief Construct a new Data:: Data object
+ * 
+ * @param logger_ logger to be used
+ */
+Data::Data(Logger *logger_) : logger_(logger_)
+{
+}
+
+/**
  * @brief get first element from log queue
  * 
  *  This thread-safe function returns the first element from the log message queue and removes it.
@@ -137,7 +146,7 @@ void Data::clients_send_all(std::string msg)
         }
         else
         {
-            //std::cout << "client disconnected" << std::endl;
+            logger_->log_info("Websocket", "client disconnected");
         }
     }
     clients = unfailed_clients;

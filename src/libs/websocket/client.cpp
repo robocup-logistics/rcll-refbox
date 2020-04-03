@@ -42,7 +42,8 @@ namespace llsfrb::websocket
  * 
  * @param socket Established WebSocket socket shared pointer user for this client
  */
-ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket) : socket(socket)
+ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket, Logger *logger_)
+    : socket(socket), logger_(logger_)
 {
     socket->accept();
 }
@@ -55,6 +56,7 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
  * @param msg 
  * @return true send successful
  * @return false send unsuccessful (connection probably broken)
+ * @param logger_ Logger instance to be used 
  */
 bool ClientWS::send(std::string msg)
 {
@@ -64,7 +66,6 @@ bool ClientWS::send(std::string msg)
     socket->write(boost::asio::buffer(msg + "\n"), error);
     if (error && error != boost::asio::error::eof)
     {
-        //std::cout << "send failed: " << error.message() << std::endl;
         return false;
     }
 
@@ -93,8 +94,9 @@ std::string ClientWS::read()
  * @brief Construct a new ClientS::ClientS object
  * 
  * @param socket TCP socket over which client communication happens
+ * @param logger_ Logger instance to be used 
  */
-ClientS::ClientS(std::shared_ptr<tcp::socket> socket) : socket(socket) {}
+ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger_) : socket(socket), logger_(logger_) {}
 
 /**
  * @brief Send string message to client 
@@ -113,7 +115,6 @@ bool ClientS::send(std::string msg)
     boost::asio::write(*socket, boost::asio::buffer(msg + "\n"), error);
     if (error && error != boost::asio::error::eof)
     {
-        //std::cout << "send failed: " << error.message() << std::endl;
         return false;
     }
     return true;

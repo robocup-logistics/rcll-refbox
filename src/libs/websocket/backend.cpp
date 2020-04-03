@@ -33,11 +33,12 @@ namespace llsfrb::websocket
  * 
  *  Construct a new Backend object with assigned data and server.
  * 
- * @param data_ data object to be used by the backend
+ * @param logger_ logger used by the backend
  */
-Backend::Backend()
+Backend::Backend(Logger *logger_) : logger_(logger_)
 {
-    server_ = Server(&data_);
+    data_ = new Data(logger_);
+    server_ = Server(data_, logger_);
 }
 
 /**
@@ -46,13 +47,16 @@ Backend::Backend()
  * @param port tcp port of the websocket server
  * @param ws_mode true if websocket only mode is activated
  */
-void Backend::start(uint port, bool ws_mode) {
+void Backend::start(uint port, bool ws_mode)
+{
     //configure server
     server_.configure(port, ws_mode);
     // launch server thread
     server_t_ = std::thread(&Server::operator(), server_);
+    logger_->log_info("Websocket", "(web-)socket-server started");
     // launch backend thread
     backend_t_ = std::thread(&Backend::operator(), this);
+    logger_->log_info("Websocket", "backend started");
 }
 
 /**
@@ -65,18 +69,16 @@ void Backend::start(uint port, bool ws_mode) {
 void Backend::operator()()
 {
     // message queue handler -> consumer
-    //std::cout << "Starting Message Thread" << std::endl;
     bool msgs_running = true;
     while (msgs_running)
     {
         // block until new message available
-        data_.log_wait();
+        data_->log_wait();
 
         // notified -> get current value from the queue
-        std::string log = data_.log_pop();
+        std::string log = data_->log_pop();
         // send to clients
-        //std::cout << log << std::endl;
-        data_.clients_send_all(log);
+        data_->clients_send_all(log);
     }
 }
 
@@ -88,9 +90,9 @@ void Backend::operator()()
  * 
  * @return Data* 
  */
-Data* Backend::get_data() {
-    return &(data_);
+Data *Backend::get_data()
+{
+    return data_;
 }
-
 
 } // namespace llsfrb::websocket

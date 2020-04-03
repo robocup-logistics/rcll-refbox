@@ -23,6 +23,7 @@
 
 #include "data.h"
 #include "server.h"
+#include "logging/logger.h"
 
 namespace llsfrb::websocket
 {
@@ -30,14 +31,15 @@ namespace llsfrb::websocket
 class Backend
 {
 public:
-  Backend();
+  Backend(Logger *logger_);
 
   void operator()();
   void start(uint port, bool ws_mode = true);
-  Data* get_data();
+  Data *get_data();
 
 private:
-  Data data_;
+  Logger *logger_;
+  Data *data_;
   Server server_;
   std::thread backend_t_;
   std::thread server_t_;

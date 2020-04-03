@@ -29,6 +29,7 @@
 #include <rapidjson/document.h>
 
 #include "client.h"
+#include "logging/logger.h"
 
 namespace llsfrb::websocket
 {
@@ -36,6 +37,7 @@ namespace llsfrb::websocket
 class Data
 {
 public:
+    Data(Logger *logger_);
     std::string log_pop();
     void log_push(std::string log);
     void log_push(rapidjson::Document &d);
@@ -46,6 +48,7 @@ public:
     void clients_send_all(rapidjson::Document &d);
 
 private:
+    Logger *logger_;
     std::mutex log_mu;
     std::mutex cli_mu;
     std::condition_variable log_cv;

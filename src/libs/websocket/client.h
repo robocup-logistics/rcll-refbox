@@ -29,6 +29,8 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio.hpp>
 
+#include "logging/logger.h"
+
 namespace llsfrb::websocket
 {
 class Client
@@ -45,25 +47,27 @@ protected:
 class ClientWS : public Client
 {
 public:
-  ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket);
+  ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket, Logger *logger_);
 
   bool send(std::string msg);
   std::string read();
 
 private:
   std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket;
+  Logger *logger_;
 };
 
 class ClientS : public Client
 {
 public:
-  ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket);
+  ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_);
 
   bool send(std::string msg);
   std::string read();
 
 private:
   std::shared_ptr<boost::asio::ip::tcp::socket> socket;
+  Logger *logger_;
 };
 } // namespace llsfrb::websocket
 #endif

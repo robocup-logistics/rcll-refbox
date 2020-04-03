@@ -22,6 +22,7 @@
 #define _PLUGINS_WEBSOCKET_SERVER_H_
 
 #include "data.h"
+#include "logging/logger.h"
 
 namespace llsfrb::websocket
 {
@@ -29,7 +30,7 @@ namespace llsfrb::websocket
 class Server
 {
 public:
-    Server(Data *data_);
+    Server(Data *data_, Logger *logger_);
     Server();
 
     void operator()();
@@ -37,6 +38,7 @@ public:
 
 private:
     Data *data_;
+    Logger *logger_;
     uint port_ = 1234;
     bool ws_mode_ = true;
 };
