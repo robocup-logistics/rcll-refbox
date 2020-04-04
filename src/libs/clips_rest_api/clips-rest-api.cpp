@@ -241,7 +241,7 @@ ClipsRestApi::gen_machine(CLIPS::Fact::pointer &fact)
 	m.set_bs_color(get_value<std::string>(fact, "bs-color"));
 	m.set_ds_order(get_value<int64_t>(fact, "ds-order"));
 	m.set_rs_ring_color(get_value<std::string>(fact, "rs-ring-color"));
-	m.set_rs_ring_colors(get_values(fact, "rs-ring-color"));
+	m.set_rs_ring_colors(get_values(fact, "rs-ring-colors"));
 	m.set_cs_operation(get_value<std::string>(fact, "cs-operation"));
 	m.set_cs_retrieved(get_value<bool>(fact, "cs-retrieved"));
 	return m;
