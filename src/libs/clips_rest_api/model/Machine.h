@@ -324,6 +324,41 @@ public:
 	{
 		rs_ring_color_ = rs_ring_color;
 	}
+	/** Get rs-ring-colors value.
+   * @return rs-ring-colors value
+   */
+	std::vector<std::string>
+	rs_ring_colors() const
+	{
+		return rs_ring_colors_;
+	}
+
+	/** Set rs-ring-colors value.
+	 * @param rs_ring_colors new value
+	 */
+	void
+	set_rs_ring_colors(const std::vector<std::string> &rs_ring_colors)
+	{
+		rs_ring_colors_ = rs_ring_colors;
+	}
+	/** Add element to rs-ring-colors array.
+	 * @param rs_ring_colors new value
+	 */
+	void
+	addto_rs_ring_colors(const std::string &&rs_ring_colors)
+	{
+		rs_ring_colors_.push_back(std::move(rs_ring_colors));
+	}
+
+	/** Add element to rs-ring-colors array.
+	 * The move-semantics version (std::move) should be preferred.
+	 * @param rs_ring_colors new value
+	 */
+	void
+	addto_rs_ring_colors(const std::string &rs_ring_colors)
+	{
+		rs_ring_colors_.push_back(rs_ring_colors);
+	}
 	/** Get cs-operation value.
    * @return cs-operation value
    */
@@ -373,6 +408,7 @@ private:
 	std::optional<std::string> bs_color_;
 	std::optional<int64_t>     ds_order_;
 	std::optional<std::string> rs_ring_color_;
+	std::vector<std::string>   rs_ring_colors_;
 	std::optional<std::string> cs_operation_;
 	std::optional<bool>        cs_retrieved_;
 };

@@ -214,6 +214,7 @@ components:
         - bs-color
         - ds-order
         - rs-ring-color
+        - rs-ring-colors
         - cs-operation
         - cs-retrieved
       properties:
@@ -265,6 +266,11 @@ components:
           type: string
           formate: symbol
           enum: ["RING_BLUE" , "RING_GREEN","RING_YELLOW","RING_ORANGE","RING_YELLOW"]
+        rs-ring-colors:
+          type: array
+          items:
+            type: string
+            enum: ["RING_BLUE" , "RING_GREEN","RING_YELLOW","RING_ORANGE","RING_YELLOW"]
         cs-operation:
           type: string
           formate: symbol
