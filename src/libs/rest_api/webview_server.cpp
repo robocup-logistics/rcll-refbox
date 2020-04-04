@@ -109,84 +109,6 @@ WebviewServer::init()
 	cfg_use_ipv4_ = true;
 	cfg_use_ipv6_ = false;
 
-	/*
-	cfg_use_tls_ = false;
-	try {
-		cfg_use_tls_ = config_->get_bool("/webview/tls/enable");
-	} catch (Exception &e) {
-	}
-
-	cfg_use_ipv4_ = config_->get_bool("/network/ipv4/enable");
-	cfg_use_ipv6_ = config_->get_bool("/network/ipv6/enable");
-
-	if (cfg_use_tls_) {
-		cfg_tls_create_ = false;
-		try {
-			cfg_tls_create_ = config_->get_bool("/webview/tls/create");
-		} catch (Exception &e) {
-		}
-
-		cfg_tls_key_  = config_->get_string("/webview/tls/key-file");
-		cfg_tls_cert_ = config_->get_string("/webview/tls/cert-file");
-
-		try {
-			cfg_tls_cipher_suite_ = config_->get_string("/webview/tls/cipher-suite");
-			logger_->log_debug(name(), "Using cipher suite %s", cfg_tls_cipher_suite_.c_str());
-		} catch (Exception &e) {
-		}
-
-		if (cfg_tls_key_[0] != '/')
-			cfg_tls_key_ = std::string(CONFDIR "/") + cfg_tls_key_;
-
-		if (cfg_tls_cert_[0] != '/')
-			cfg_tls_cert_ = std::string(CONFDIR "/") + cfg_tls_cert_;
-
-		logger_->log_debug(name(),
-		                   "Key file: %s  Cert file: %s",
-		                   cfg_tls_key_.c_str(),
-		                   cfg_tls_cert_.c_str());
-
-		if (!File::exists(cfg_tls_key_.c_str())) {
-			if (File::exists(cfg_tls_cert_.c_str())) {
-				throw Exception("Key file %s does not exist, but certificate file %s "
-				                "does",
-				                cfg_tls_key_.c_str(),
-				                cfg_tls_cert_.c_str());
-			} else if (cfg_tls_create_) {
-				tls_create(cfg_tls_key_.c_str(), cfg_tls_cert_.c_str());
-			} else {
-				throw Exception("Key file %s does not exist", cfg_tls_key_.c_str());
-			}
-		} else if (!File::exists(cfg_tls_cert_.c_str())) {
-			throw Exception("Certificate file %s does not exist, but key file %s "
-			                "does",
-			                cfg_tls_key_.c_str(),
-			                cfg_tls_cert_.c_str());
-		}
-	}
-
-	if (cfg_use_thread_pool_) {
-		cfg_num_threads_ = config_->get_uint("/webview/thread-pool/num-threads");
-	}
-
-	cfg_use_basic_auth_ = false;
-	try {
-		cfg_use_basic_auth_ = config_->get_bool("/webview/use_basic_auth");
-	} catch (Exception &e) {
-	}
-	cfg_basic_auth_realm_ = "Refbox webview";
-	try {
-		cfg_basic_auth_realm_ = config_->get_bool("/webview/basic_auth_realm");
-	} catch (Exception &e) {
-	}
-
-	cfg_access_log_ = "";
-	try {
-		cfg_access_log_ = config_->get_string("/webview/access_log");
-	} catch (Exception &e) {
-	}
-	*/
-
 	bool cfg_cors_allow_all = false;
 	try {
 		cfg_cors_allow_all = config_->get_bool("/webview/cors/allow/all");
@@ -217,31 +139,7 @@ WebviewServer::init()
 		  .setup_ipv(cfg_use_ipv4_, cfg_use_ipv6_)
 		  .setup_cors(cfg_cors_allow_all, std::move(cfg_cors_origins), cfg_cors_max_age);
 
-		/*
-		if (cfg_use_tls_) {
-			webserver_->setup_tls(cfg_tls_key_.c_str(),
-			                      cfg_tls_cert_.c_str(),
-			                      cfg_tls_cipher_suite_.empty() ? NULL : cfg_tls_cipher_suite_.c_str());
-		}
-
-		if (cfg_use_thread_pool_) {
-			webserver_->setup_thread_pool(cfg_num_threads_);
-		}
-
-		if (cfg_use_basic_auth_) {
-			user_verifier_ = new WebviewUserVerifier(config_, logger_);
-			webserver_->setup_basic_auth(cfg_basic_auth_realm_.c_str(), user_verifier_);
-		}
-          */
-
 		webserver_->setup_request_manager(request_manager_);
-
-		/*
-		if (cfg_access_log_ != "") {
-			logger_->log_debug(name(), "Setting up access log %s", cfg_access_log_.c_str());
-			webserver_->setup_access_log(cfg_access_log_.c_str());
-		}
-		*/
 
 	} catch (Exception &e) {
 		delete webview_service_;

@@ -102,16 +102,7 @@ private:
 	unsigned int             cfg_port_;
 	bool                     cfg_use_ipv4_;
 	bool                     cfg_use_ipv6_;
-	bool                     cfg_use_tls_;
-	bool                     cfg_tls_create_;
-	std::string              cfg_tls_key_;
-	std::string              cfg_tls_cert_;
-	std::string              cfg_tls_cipher_suite_;
-	bool                     cfg_use_basic_auth_;
-	std::string              cfg_basic_auth_realm_;
-	std::string              cfg_access_log_;
 	bool                     cfg_use_thread_pool_;
-	unsigned int             cfg_num_threads_;
 	std::vector<std::string> cfg_explicit_404_;
 
 	fawkes::NetworkService *webview_service_;

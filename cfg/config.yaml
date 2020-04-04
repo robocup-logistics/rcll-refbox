@@ -237,22 +237,6 @@ webview:
     enable: false
     num-threads: 8
 
-  # Use basic authentication?
-  use_basic_auth: false
-
-  # Access log filename
-  # access_log: access_log
-
-  # Example user, delete or change password!
-  # Use !cleartext! prefix if you really want to use a clear text password
-  # (discouraged). Note that the password is only compared to the suffix.
-  # If you have a system that supports APR use
-  #   htpasswd -nB USERNAME
-  # to generate an appropriate password string and copy and paste the part
-  # after the colon and after the colon only.
-  users:
-    fawkes: "!cleartext!fawkes"
-
   # For the given URLs, a handler will be configured that captures
   # requests if no other handler is registered, i.e., the actual
   # plugin handling these requests has not been loaded.
