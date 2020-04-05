@@ -9,6 +9,7 @@ jobs:
           name: Install dependencies
           command: |
             dnf install -y --nodocs \
+              apr-util-devel \
               avahi-devel \
               boost-devel \
               clang \
@@ -21,6 +22,7 @@ jobs:
               git \
               glibmm24-devel \
               gtkmm30-devel \
+              libmicrohttpd-devel \
               make \
               mongo-cxx-driver-devel \
               ncurses-devel \
@@ -28,6 +30,7 @@ jobs:
               openssl-devel \
               protobuf-compiler \
               protobuf-devel \
+              rapidjson-devel \
               which \
               yaml-cpp-devel \
               yamllint
@@ -49,12 +52,14 @@ jobs:
               libboost-all-dev \
               clips \
               git \
+              libaprutil1-dev \
               libavahi-client-dev \
               libclips-dev \
               libclipsmm-dev \
               libgecode-dev \
               libglibmm-2.4-dev \
               libgtkmm-3.0-dev \
+              libmicrohttpd-dev \
               libmongoclient-dev \
               libncurses5-dev \
               libncursesw5-dev \
@@ -62,7 +67,8 @@ jobs:
               libprotoc-dev \
               libssl-dev \
               libyaml-cpp-dev \
-              protobuf-compiler
+              protobuf-compiler \
+              rapidjson-dev
       - checkout
       - run: make all FAIL_ON_WARNING=0
 workflows:
