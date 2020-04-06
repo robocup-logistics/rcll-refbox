@@ -19,10 +19,11 @@
   (not (sim-time-initialized))
   (confval (path "/llsfrb/simulation/time-sync/estimate-time") (type BOOL) (value ?time-estimate-enable))
   (confval (path "/llsfrb/simulation/time-sync/enable") (type BOOL) (value ?time-sync-enable))
+  (confval (path "/llsfrb/simulation/speedup") (type UINT|FLOAT|INT) (value ?speedup))
   =>
   (assert (sim-time-initialized)
 	  (sim-time (enabled ?time-sync-enable) (estimate ?time-estimate-enable)
-		    (now (create$ 0 0)))
+              (speedup ?speedup) (now (create$ 0 0)))
   )
 )
 
