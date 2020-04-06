@@ -213,11 +213,12 @@
 		   (real-time-factor ?rtf) (last-recv-time $?lrt))
   (or (sim-time (enabled false))
       (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
+  (confval (path "/llsfrb/simulation/speedup") (type UINT|FLOAT|INT) (value ?speedup))
   =>
   (bind ?points-cyan (game-calc-points CYAN))
   (bind ?points-magenta (game-calc-points MAGENTA))
   (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
-  (bind ?timediff (time-diff-sec ?now ?last-time))
+  (bind ?timediff (* (time-diff-sec ?now ?last-time) ?speedup))
   (modify ?gf (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
 	  (last-time ?now) (points ?points-cyan ?points-magenta))
 )
