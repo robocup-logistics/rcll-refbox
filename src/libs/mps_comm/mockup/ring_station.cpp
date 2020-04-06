@@ -20,6 +20,8 @@
 
 #include "ring_station.h"
 
+#include <cmath>
+
 namespace llsfrb {
 namespace mps_comm {
 
@@ -33,7 +35,8 @@ MockupRingStation::mount_ring(unsigned int feeder)
 	callback_busy_(true);
 	std::lock_guard<std::mutex> lg(queue_mutex_);
 	queue_.push(std::make_tuple([this] { callback_busy_(false); },
-	                            std::chrono::system_clock::now() + std::chrono::seconds(3)));
+	                            std::chrono::system_clock::now()
+	                              + std::chrono::seconds((int)std::ceil(3.f / exec_speed_))));
 	queue_condition_.notify_one();
 }
 
