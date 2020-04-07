@@ -49,6 +49,7 @@ public:
 protected:
 	void                    queue_worker();
 	std::mutex              queue_mutex_;
+	float                   exec_speed_;
 	std::condition_variable queue_condition_;
 	std::queue<std::tuple<std::function<void()>, std::chrono::time_point<std::chrono::system_clock>>>
 	                                   queue_;

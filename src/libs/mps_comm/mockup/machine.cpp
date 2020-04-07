@@ -20,6 +20,8 @@
 
 #include "machine.h"
 
+#include <config/yaml.h>
+
 #include <chrono>
 #include <thread>
 
@@ -28,6 +30,9 @@ namespace mps_comm {
 
 MockupMachine::MockupMachine() : shutdown_(false)
 {
+	Configuration *config = new YamlConfiguration(CONFDIR);
+	config->load("config.yaml");
+	exec_speed_    = config->get_float_or_default("llsfrb/simulation/speedup", 1);
 	worker_thread_ = std::thread(&MockupMachine::queue_worker, this);
 }
 
@@ -89,12 +94,21 @@ MockupMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 	callback_busy_(true);
 	std::lock_guard<std::mutex> lg(queue_mutex_);
 	queue_.push(std::make_tuple([this] { callback_busy_(false); },
-	                            std::chrono::system_clock::now() + std::chrono::seconds(4)));
+	                            std::chrono::system_clock::now()
+	                              + std::max(std::chrono::milliseconds(1000),
+	                                         std::chrono::milliseconds(
+	                                           static_cast<int>(4000.f / exec_speed_)))));
 	if (sensor == INPUT || sensor == OUTPUT) {
 		queue_.push(std::make_tuple([this] { callback_ready_(true); },
-		                            std::chrono::system_clock::now() + std::chrono::seconds(4)));
+		                            std::chrono::system_clock::now()
+		                              + std::max(std::chrono::milliseconds(1000),
+		                                         std::chrono::milliseconds(
+		                                           static_cast<int>(4000.f / exec_speed_)))));
 		queue_.push(std::make_tuple([this] { callback_ready_(false); },
-		                            std::chrono::system_clock::now() + std::chrono::seconds(14)));
+		                            std::chrono::system_clock::now()
+		                              + std::max(std::chrono::milliseconds(1000),
+		                                         std::chrono::milliseconds(
+		                                           static_cast<int>(14000.f / exec_speed_)))));
 	}
 	queue_condition_.notify_one();
 }

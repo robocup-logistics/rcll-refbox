@@ -350,6 +350,7 @@
 
 (deftemplate sim-time
   (slot enabled (type SYMBOL) (allowed-values false true) (default false))
+  (slot speedup (type FLOAT) (default 1.0))
   (slot estimate (type SYMBOL) (allowed-values false true) (default false))
   (multislot now (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot last-recv-time (type INTEGER) (cardinality 2 2) (default 0 0))
