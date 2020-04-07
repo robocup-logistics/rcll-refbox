@@ -20,8 +20,6 @@
 
 #include "cap_station.h"
 
-#include <cmath>
-
 namespace llsfrb {
 namespace mps_comm {
 
@@ -48,7 +46,9 @@ MockupCapStation::cap_op()
 	std::lock_guard<std::mutex> lg(queue_mutex_);
 	queue_.push(std::make_tuple([this] { callback_busy_(false); },
 	                            std::chrono::system_clock::now()
-	                              + std::chrono::seconds((int)std::ceil(3.f / exec_speed_))));
+	                              + std::max(std::chrono::milliseconds(1000),
+	                                         std::chrono::milliseconds(
+	                                           static_cast<int>(3000.f / exec_speed_)))));
 	queue_condition_.notify_one();
 }
 

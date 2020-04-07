@@ -23,7 +23,6 @@
 #include <config/yaml.h>
 
 #include <chrono>
-#include <cmath>
 #include <thread>
 
 namespace llsfrb {
@@ -96,14 +95,20 @@ MockupMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 	std::lock_guard<std::mutex> lg(queue_mutex_);
 	queue_.push(std::make_tuple([this] { callback_busy_(false); },
 	                            std::chrono::system_clock::now()
-	                              + std::chrono::seconds((int)std::ceil(4.f / exec_speed_))));
+	                              + std::max(std::chrono::milliseconds(1000),
+	                                         std::chrono::milliseconds(
+	                                           static_cast<int>(4000.f / exec_speed_)))));
 	if (sensor == INPUT || sensor == OUTPUT) {
 		queue_.push(std::make_tuple([this] { callback_ready_(true); },
 		                            std::chrono::system_clock::now()
-		                              + std::chrono::seconds((int)std::ceil(4.f / exec_speed_))));
+		                              + std::max(std::chrono::milliseconds(1000),
+		                                         std::chrono::milliseconds(
+		                                           static_cast<int>(4000.f / exec_speed_)))));
 		queue_.push(std::make_tuple([this] { callback_ready_(false); },
 		                            std::chrono::system_clock::now()
-		                              + std::chrono::seconds((int)std::ceil(14.f / exec_speed_))));
+		                              + std::max(std::chrono::milliseconds(1000),
+		                                         std::chrono::milliseconds(
+		                                           static_cast<int>(14000.f / exec_speed_)))));
 	}
 	queue_condition_.notify_one();
 }

@@ -20,8 +20,6 @@
 
 #include "base_station.h"
 
-#include <cmath>
-
 namespace llsfrb {
 namespace mps_comm {
 MockupBaseStation::MockupBaseStation(const std::string &name) : Machine(name)
@@ -35,7 +33,9 @@ MockupBaseStation::get_base(llsf_msgs::BaseColor color)
 	std::lock_guard<std::mutex> lg(queue_mutex_);
 	queue_.push(std::make_tuple([this] { callback_busy_(false); },
 	                            std::chrono::system_clock::now()
-	                              + std::chrono::seconds((int)std::ceil(1.f / exec_speed_))));
+	                              + std::max(std::chrono::milliseconds(1000),
+	                                         std::chrono::milliseconds(
+	                                           static_cast<int>(1000.f / exec_speed_)))));
 	queue_condition_.notify_one();
 }
 
