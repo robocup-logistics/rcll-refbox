@@ -37,7 +37,7 @@ MockupDeliveryStation::deliver_product(int slot)
 	                            std::chrono::system_clock::now()
 	                              + std::max(std::chrono::milliseconds(2000),
 	                                         std::chrono::milliseconds(
-	                                           static_cast<int>((1 + slot) / exec_speed_)))));
+	                                           static_cast<int>((1 + slot) * 1000 / exec_speed_)))));
 	queue_condition_.notify_one();
 }
 
