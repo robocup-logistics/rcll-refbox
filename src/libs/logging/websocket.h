@@ -26,66 +26,72 @@
 #define __UTILS_LOGGING_WEBSOCKET_H_
 
 #include <logging/logger.h>
-#include <ctime>
 #include <websocket/data.h>
-#include <boost/format.hpp>
 
-namespace llsfrb
-{
+#include <boost/format.hpp>
+#include <ctime>
+
+namespace llsfrb {
 
 class Mutex;
 
 class WebsocketLogger : public Logger
 {
 public:
-  WebsocketLogger(websocket::Data *data_, LogLevel log_level = LL_DEBUG);
-  virtual ~WebsocketLogger();
+	WebsocketLogger(websocket::Data *data_, LogLevel log_level = LL_DEBUG);
+	virtual ~WebsocketLogger();
 
-  virtual void log_debug(const char *component, const char *format, ...);
-  virtual void log_info(const char *component, const char *format, ...);
-  virtual void log_warn(const char *component, const char *format, ...);
-  virtual void log_error(const char *component, const char *format, ...);
+	virtual void log_debug(const char *component, const char *format, ...);
+	virtual void log_info(const char *component, const char *format, ...);
+	virtual void log_warn(const char *component, const char *format, ...);
+	virtual void log_error(const char *component, const char *format, ...);
 
-  virtual void vlog_debug(const char *component, const char *format, va_list va);
-  virtual void vlog_info(const char *component, const char *format, va_list va);
-  virtual void vlog_warn(const char *component, const char *format, va_list va);
-  virtual void vlog_error(const char *component, const char *format, va_list va);
+	virtual void vlog_debug(const char *component, const char *format, va_list va);
+	virtual void vlog_info(const char *component, const char *format, va_list va);
+	virtual void vlog_warn(const char *component, const char *format, va_list va);
+	virtual void vlog_error(const char *component, const char *format, va_list va);
 
-  virtual void log_debug(const char *component, fawkes::Exception &e);
-  virtual void log_info(const char *component, fawkes::Exception &e);
-  virtual void log_warn(const char *component, fawkes::Exception &e);
-  virtual void log_error(const char *component, fawkes::Exception &e);
+	virtual void log_debug(const char *component, fawkes::Exception &e);
+	virtual void log_info(const char *component, fawkes::Exception &e);
+	virtual void log_warn(const char *component, fawkes::Exception &e);
+	virtual void log_error(const char *component, fawkes::Exception &e);
 
-  virtual void tlog_debug(struct timeval *t, const char *component, const char *format, ...);
-  virtual void tlog_info(struct timeval *t, const char *component, const char *format, ...);
-  virtual void tlog_warn(struct timeval *t, const char *component, const char *format, ...);
-  virtual void tlog_error(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_debug(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_info(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_warn(struct timeval *t, const char *component, const char *format, ...);
+	virtual void tlog_error(struct timeval *t, const char *component, const char *format, ...);
 
-  virtual void tlog_debug(struct timeval *t, const char *component, fawkes::Exception &e);
-  virtual void tlog_info(struct timeval *t, const char *component, fawkes::Exception &e);
-  virtual void tlog_warn(struct timeval *t, const char *component, fawkes::Exception &e);
-  virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_debug(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_info(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_warn(struct timeval *t, const char *component, fawkes::Exception &e);
+	virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
 
-  virtual void vtlog_debug(struct timeval *t, const char *component,
-                           const char *format, va_list va);
-  virtual void vtlog_info(struct timeval *t, const char *component,
-                          const char *format, va_list va);
-  virtual void vtlog_warn(struct timeval *t, const char *component,
-                          const char *format, va_list va);
-  virtual void vtlog_error(struct timeval *t, const char *component,
-                           const char *format, va_list va);
+	virtual void
+	             vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
+	virtual void vtlog_info(struct timeval *t, const char *component, const char *format, va_list va);
+	virtual void vtlog_warn(struct timeval *t, const char *component, const char *format, va_list va);
+	virtual void
+	vtlog_error(struct timeval *t, const char *component, const char *format, va_list va);
 
 private:
-  struct ::tm *now_s;
-  fawkes::Mutex *mutex;
-  websocket::Data *data_;
-  boost::format fmt_time;
-  std::string formatter(const char *format, va_list va);
-  std::string formatter(const char *format, const char *text);
-  void build_document(rapidjson::Document *d, const char *component, std::string level,
-                      std::string time, std::string message, bool exception = false);
-  void build_document(rapidjson::Document *d, const char *component, std::string level,
-                      std::string time, rapidjson::Value &messages, bool exception = false);
+	struct ::tm *    now_s;
+	fawkes::Mutex *  mutex;
+	websocket::Data *data_;
+	boost::format    fmt_time;
+	std::string      formatter(const char *format, va_list va);
+	std::string      formatter(const char *format, const char *text);
+	void             build_document(rapidjson::Document *d,
+	                                const char *         component,
+	                                std::string          level,
+	                                std::string          time,
+	                                std::string          message,
+	                                bool                 exception = false);
+	void             build_document(rapidjson::Document *d,
+	                                const char *         component,
+	                                std::string          level,
+	                                std::string          time,
+	                                rapidjson::Value &   messages,
+	                                bool                 exception = false);
 };
 
 } // end namespace llsfrb
