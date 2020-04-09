@@ -18,21 +18,22 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
+#include "server.h"
+
+#include "client.h"
+#include "data.h"
+
+#include <sys/socket.h>
+
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <iostream>
 #include <string>
-#include <sys/socket.h>
-
-#include "server.h"
-#include "client.h"
-#include "data.h"
 
 using boost::asio::ip::tcp;
 
-namespace llsfrb::websocket
-{
+namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new Server::Server object
@@ -57,37 +58,32 @@ Server::Server()
  *  necessary objects required by the backend to work with them. 
  * 
  */
-void Server::operator()()
+void
+Server::operator()()
 {
-    // listen for new connection
-    boost::asio::io_service io_service;
-    tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), port_));
+	// listen for new connection
+	boost::asio::io_service io_service;
+	tcp::acceptor           acceptor_(io_service, tcp::endpoint(tcp::v4(), port_));
 
-    // acceptor loop
-    while (true)
-    {
-        std::shared_ptr<tcp::socket> socket(new tcp::socket(io_service));
-        acceptor_.accept(*socket);
+	// acceptor loop
+	while (true) {
+		std::shared_ptr<tcp::socket> socket(new tcp::socket(io_service));
+		acceptor_.accept(*socket);
 
-        if (ws_mode_)
-        {
-            // websocket approach
-            std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket(
-                new boost::beast::websocket::stream<tcp::socket>(std::move(*socket)));
-            std::shared_ptr<Client> client(
-                new ClientWS(web_socket, logger_));
-            data_->clients_add(client);
-        }
-        else
-        {
-            // socket approach
-            std::shared_ptr<Client> client(
-                new ClientS(socket, logger_));
-            data_->clients_add(client);
-        }
+		if (ws_mode_) {
+			// websocket approach
+			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket(
+			  new boost::beast::websocket::stream<tcp::socket>(std::move(*socket)));
+			std::shared_ptr<Client> client(new ClientWS(web_socket, logger_));
+			data_->clients_add(client);
+		} else {
+			// socket approach
+			std::shared_ptr<Client> client(new ClientS(socket, logger_));
+			data_->clients_add(client);
+		}
 
-        logger_->log_info("Websocket", "new client connected");
-    }
+		logger_->log_info("Websocket", "new client connected");
+	}
 }
 
 /**
@@ -96,10 +92,11 @@ void Server::operator()()
  * @param port port on which the server runs on
  * @param ws_mode true if websocket only mode
  */
-void Server::configure(uint port, bool ws_mode = true)
+void
+Server::configure(uint port, bool ws_mode = true)
 {
-    port_ = port;
-    ws_mode_ = ws_mode;
+	port_    = port;
+	ws_mode_ = ws_mode;
 }
 
 } // namespace llsfrb::websocket

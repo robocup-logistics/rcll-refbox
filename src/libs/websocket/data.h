@@ -21,39 +21,39 @@
 #ifndef _PLUGINS_WEBSOCKET_DATA_H_
 #define _PLUGINS_WEBSOCKET_DATA_H_
 
-#include <string>
-#include <mutex>
-#include <queue>
-#include <vector>
-#include <condition_variable>
-#include <rapidjson/document.h>
-
 #include "client.h"
 #include "logging/logger.h"
 
-namespace llsfrb::websocket
-{
+#include <rapidjson/document.h>
+
+#include <condition_variable>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <vector>
+
+namespace llsfrb::websocket {
 
 class Data
 {
 public:
-    Data(Logger *logger_);
-    std::string log_pop();
-    void log_push(std::string log);
-    void log_push(rapidjson::Document &d);
-    bool log_empty();
-    void log_wait();
-    void clients_add(std::shared_ptr<Client> client);
-    void clients_send_all(std::string msg);
-    void clients_send_all(rapidjson::Document &d);
+	Data(Logger *logger_);
+	std::string log_pop();
+	void        log_push(std::string log);
+	void        log_push(rapidjson::Document &d);
+	bool        log_empty();
+	void        log_wait();
+	void        clients_add(std::shared_ptr<Client> client);
+	void        clients_send_all(std::string msg);
+	void        clients_send_all(rapidjson::Document &d);
 
 private:
-    Logger *logger_;
-    std::mutex log_mu;
-    std::mutex cli_mu;
-    std::condition_variable log_cv;
-    std::queue<std::string> logs;
-    std::vector<std::shared_ptr<Client>> clients;
+	Logger *                             logger_;
+	std::mutex                           log_mu;
+	std::mutex                           cli_mu;
+	std::condition_variable              log_cv;
+	std::queue<std::string>              logs;
+	std::vector<std::shared_ptr<Client>> clients;
 };
 
 } // namespace llsfrb::websocket

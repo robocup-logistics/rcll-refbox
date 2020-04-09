@@ -18,15 +18,15 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
+#include "backend.h"
+
+#include "server.h"
+
 #include <iostream>
 #include <string>
 #include <thread>
 
-#include "server.h"
-#include "backend.h"
-
-namespace llsfrb::websocket
-{
+namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new Backend::Backend object
@@ -37,8 +37,8 @@ namespace llsfrb::websocket
  */
 Backend::Backend(Logger *logger_) : logger_(logger_)
 {
-    data_ = new Data(logger_);
-    server_ = Server(data_, logger_);
+	data_   = new Data(logger_);
+	server_ = Server(data_, logger_);
 }
 
 /**
@@ -47,16 +47,17 @@ Backend::Backend(Logger *logger_) : logger_(logger_)
  * @param port tcp port of the websocket server
  * @param ws_mode true if websocket only mode is activated
  */
-void Backend::start(uint port, bool ws_mode)
+void
+Backend::start(uint port, bool ws_mode)
 {
-    //configure server
-    server_.configure(port, ws_mode);
-    // launch server thread
-    server_t_ = std::thread(&Server::operator(), server_);
-    logger_->log_info("Websocket", "(web-)socket-server started");
-    // launch backend thread
-    backend_t_ = std::thread(&Backend::operator(), this);
-    logger_->log_info("Websocket", "backend started");
+	//configure server
+	server_.configure(port, ws_mode);
+	// launch server thread
+	server_t_ = std::thread(&Server::operator(), server_);
+	logger_->log_info("Websocket", "(web-)socket-server started");
+	// launch backend thread
+	backend_t_ = std::thread(&Backend::operator(), this);
+	logger_->log_info("Websocket", "backend started");
 }
 
 /**
@@ -66,20 +67,20 @@ void Backend::start(uint port, bool ws_mode)
  *  through the message queue. 
  * 
  */
-void Backend::operator()()
+void
+Backend::operator()()
 {
-    // message queue handler -> consumer
-    bool msgs_running = true;
-    while (msgs_running)
-    {
-        // block until new message available
-        data_->log_wait();
+	// message queue handler -> consumer
+	bool msgs_running = true;
+	while (msgs_running) {
+		// block until new message available
+		data_->log_wait();
 
-        // notified -> get current value from the queue
-        std::string log = data_->log_pop();
-        // send to clients
-        data_->clients_send_all(log);
-    }
+		// notified -> get current value from the queue
+		std::string log = data_->log_pop();
+		// send to clients
+		data_->clients_send_all(log);
+	}
 }
 
 /**
@@ -90,9 +91,10 @@ void Backend::operator()()
  * 
  * @return Data* 
  */
-Data *Backend::get_data()
+Data *
+Backend::get_data()
 {
-    return data_;
+	return data_;
 }
 
 } // namespace llsfrb::websocket

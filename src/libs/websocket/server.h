@@ -24,23 +24,22 @@
 #include "data.h"
 #include "logging/logger.h"
 
-namespace llsfrb::websocket
-{
+namespace llsfrb::websocket {
 
 class Server
 {
 public:
-    Server(Data *data_, Logger *logger_);
-    Server();
+	Server(Data *data_, Logger *logger_);
+	Server();
 
-    void operator()();
-    void configure(uint port, bool ws_mode);
+	void operator()();
+	void configure(uint port, bool ws_mode);
 
 private:
-    Data *data_;
-    Logger *logger_;
-    uint port_ = 1234;
-    bool ws_mode_ = true;
+	Data *  data_;
+	Logger *logger_;
+	uint    port_    = 1234;
+	bool    ws_mode_ = true;
 };
 
 } // namespace llsfrb::websocket

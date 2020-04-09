@@ -21,53 +21,54 @@
 #ifndef _PLUGINS_WEBSOCKET_CLIENT_H_
 #define _PLUGINS_WEBSOCKET_CLIENT_H_
 
-#include <iostream>
-#include <sys/socket.h>
-#include <mutex>
-#include <string>
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/asio.hpp>
-
 #include "logging/logger.h"
 
-namespace llsfrb::websocket
-{
+#include <sys/socket.h>
+
+#include <boost/asio.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <iostream>
+#include <mutex>
+#include <string>
+
+namespace llsfrb::websocket {
 class Client
 {
 public:
-  virtual bool send(std::string msg) = 0;
-  virtual std::string read() = 0;
+	virtual bool        send(std::string msg) = 0;
+	virtual std::string read()                = 0;
 
 protected:
-  std::mutex rd_mu;
-  std::mutex wr_mu;
+	std::mutex rd_mu;
+	std::mutex wr_mu;
 };
 
 class ClientWS : public Client
 {
 public:
-  ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket, Logger *logger_);
+	ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket,
+	         Logger *                                                                       logger_);
 
-  bool send(std::string msg);
-  std::string read();
+	bool        send(std::string msg);
+	std::string read();
 
 private:
-  std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket;
-  Logger *logger_;
+	std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket;
+	Logger *                                                                       logger_;
 };
 
 class ClientS : public Client
 {
 public:
-  ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_);
+	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_);
 
-  bool send(std::string msg);
-  std::string read();
+	bool        send(std::string msg);
+	std::string read();
 
 private:
-  std::shared_ptr<boost::asio::ip::tcp::socket> socket;
-  Logger *logger_;
+	std::shared_ptr<boost::asio::ip::tcp::socket> socket;
+	Logger *                                      logger_;
 };
 } // namespace llsfrb::websocket
 #endif

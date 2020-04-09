@@ -20,32 +20,33 @@
 
 #include "client.h"
 
-#include <iostream>
 #include <sys/socket.h>
-#include <mutex>
-#include <string>
-#include <chrono>
-#include <condition_variable>
-#include <boost/beast/core.hpp>
-#include <boost/beast/websocket.hpp>
+
+#include <boost/asio.hpp>
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/strand.hpp>
-#include <boost/asio.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+#include <chrono>
+#include <condition_variable>
+#include <iostream>
+#include <mutex>
+#include <string>
 
 using boost::asio::ip::tcp;
 
-namespace llsfrb::websocket
-{
+namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new ClientWS::ClientWS object
  * 
  * @param socket Established WebSocket socket shared pointer user for this client
  */
-ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket, Logger *logger_)
-    : socket(socket), logger_(logger_)
+ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket,
+                   Logger *                                                      logger_)
+: socket(socket), logger_(logger_)
 {
-    socket->accept();
+	socket->accept();
 }
 
 /**
@@ -58,18 +59,18 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
  * @return false send unsuccessful (connection probably broken)
  * @param logger_ Logger instance to be used 
  */
-bool ClientWS::send(std::string msg)
+bool
+ClientWS::send(std::string msg)
 {
-    const std::lock_guard<std::mutex> lock(wr_mu);
+	const std::lock_guard<std::mutex> lock(wr_mu);
 
-    boost::system::error_code error;
-    socket->write(boost::asio::buffer(msg + "\n"), error);
-    if (error && error != boost::asio::error::eof)
-    {
-        return false;
-    }
+	boost::system::error_code error;
+	socket->write(boost::asio::buffer(msg + "\n"), error);
+	if (error && error != boost::asio::error::eof) {
+		return false;
+	}
 
-    return true;
+	return true;
 }
 
 /**
@@ -79,15 +80,16 @@ bool ClientWS::send(std::string msg)
  * 
  * @return std::string received message
  */
-std::string ClientWS::read()
+std::string
+ClientWS::read()
 {
-    const std::lock_guard<std::mutex> lock(rd_mu);
+	const std::lock_guard<std::mutex> lock(rd_mu);
 
-    boost::asio::streambuf buf;
-    socket->read(buf);
-    std::string data = boost::asio::buffer_cast<const char *>(buf.data());
+	boost::asio::streambuf buf;
+	socket->read(buf);
+	std::string data = boost::asio::buffer_cast<const char *>(buf.data());
 
-    return data;
+	return data;
 }
 
 /**
@@ -96,7 +98,10 @@ std::string ClientWS::read()
  * @param socket TCP socket over which client communication happens
  * @param logger_ Logger instance to be used 
  */
-ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger_) : socket(socket), logger_(logger_) {}
+ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger_)
+: socket(socket), logger_(logger_)
+{
+}
 
 /**
  * @brief Send string message to client 
@@ -107,17 +112,17 @@ ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger_) : socket(
  * @return true send was successful
  * @return false send was unsuccessful
  */
-bool ClientS::send(std::string msg)
+bool
+ClientS::send(std::string msg)
 {
-    const std::lock_guard<std::mutex> lock(wr_mu);
+	const std::lock_guard<std::mutex> lock(wr_mu);
 
-    boost::system::error_code error;
-    boost::asio::write(*socket, boost::asio::buffer(msg + "\n"), error);
-    if (error && error != boost::asio::error::eof)
-    {
-        return false;
-    }
-    return true;
+	boost::system::error_code error;
+	boost::asio::write(*socket, boost::asio::buffer(msg + "\n"), error);
+	if (error && error != boost::asio::error::eof) {
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -127,14 +132,15 @@ bool ClientS::send(std::string msg)
  * 
  * @return std::string received message
  */
-std::string ClientS::read()
+std::string
+ClientS::read()
 {
-    const std::lock_guard<std::mutex> lock(rd_mu);
+	const std::lock_guard<std::mutex> lock(rd_mu);
 
-    boost::asio::streambuf buf;
-    boost::asio::read_until(*socket, buf, "\n");
-    std::string data = boost::asio::buffer_cast<const char *>(buf.data());
+	boost::asio::streambuf buf;
+	boost::asio::read_until(*socket, buf, "\n");
+	std::string data = boost::asio::buffer_cast<const char *>(buf.data());
 
-    return data;
+	return data;
 }
 } // namespace llsfrb::websocket

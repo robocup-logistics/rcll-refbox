@@ -22,27 +22,26 @@
 #define _PLUGINS_WEBSOCKET_BACKEND_H_
 
 #include "data.h"
-#include "server.h"
 #include "logging/logger.h"
+#include "server.h"
 
-namespace llsfrb::websocket
-{
+namespace llsfrb::websocket {
 
 class Backend
 {
 public:
-  Backend(Logger *logger_);
+	Backend(Logger *logger_);
 
-  void operator()();
-  void start(uint port, bool ws_mode = true);
-  Data *get_data();
+	void  operator()();
+	void  start(uint port, bool ws_mode = true);
+	Data *get_data();
 
 private:
-  Logger *logger_;
-  Data *data_;
-  Server server_;
-  std::thread backend_t_;
-  std::thread server_t_;
+	Logger *    logger_;
+	Data *      data_;
+	Server      server_;
+	std::thread backend_t_;
+	std::thread server_t_;
 };
 
 } // namespace llsfrb::websocket

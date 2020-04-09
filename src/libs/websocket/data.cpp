@@ -18,20 +18,20 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include <iostream>
-#include <mutex>
-#include <condition_variable>
+#include "data.h"
+
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+
+#include <condition_variable>
+#include <iostream>
+#include <mutex>
+#include <queue>
 #include <string>
 #include <vector>
-#include <queue>
 
-#include "data.h"
-
-namespace llsfrb::websocket
-{
+namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new Data:: Data object
@@ -49,12 +49,13 @@ Data::Data(Logger *logger_) : logger_(logger_)
  * 
  * @return std::string first element from log queue
  */
-std::string Data::log_pop()
+std::string
+Data::log_pop()
 {
-    const std::lock_guard<std::mutex> lock(log_mu);
-    std::string log = logs.front();
-    logs.pop();
-    return log;
+	const std::lock_guard<std::mutex> lock(log_mu);
+	std::string                       log = logs.front();
+	logs.pop();
+	return log;
 }
 
 /**
@@ -64,11 +65,12 @@ std::string Data::log_pop()
  * 
  * @param log element (std::string) to be added
  */
-void Data::log_push(std::string log)
+void
+Data::log_push(std::string log)
 {
-    const std::lock_guard<std::mutex> lock(log_mu);
-    logs.push(log);
-    log_cv.notify_one();
+	const std::lock_guard<std::mutex> lock(log_mu);
+	logs.push(log);
+	log_cv.notify_one();
 }
 
 /**
@@ -78,15 +80,16 @@ void Data::log_push(std::string log)
  * 
  * @param d element (rapidjson::Document) to be added
  */
-void Data::log_push(rapidjson::Document &d)
+void
+Data::log_push(rapidjson::Document &d)
 {
-    const std::lock_guard<std::mutex> lock(log_mu);
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    d.Accept(writer);
+	const std::lock_guard<std::mutex>          lock(log_mu);
+	rapidjson::StringBuffer                    buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	d.Accept(writer);
 
-    logs.push(buffer.GetString());
-    log_cv.notify_one();
+	logs.push(buffer.GetString());
+	log_cv.notify_one();
 }
 
 /**
@@ -95,19 +98,24 @@ void Data::log_push(rapidjson::Document &d)
  * @return true log queue is empty
  * @return false log queue is not empty
  */
-bool Data::log_empty() { return logs.empty(); }
+bool
+Data::log_empty()
+{
+	return logs.empty();
+}
 
 /**
  * @brief blocks calling thread until log queue is not-empty
  * 
  */
-void Data::log_wait()
+void
+Data::log_wait()
 {
-    std::unique_lock<std::mutex> lock(log_mu);
-    while (log_empty()) //loop to avoid spurious wake-ups
-    {
-        log_cv.wait(lock);
-    }
+	std::unique_lock<std::mutex> lock(log_mu);
+	while (log_empty()) //loop to avoid spurious wake-ups
+	{
+		log_cv.wait(lock);
+	}
 }
 
 /**
@@ -118,10 +126,11 @@ void Data::log_wait()
  * 
  * @param client client to be added
  */
-void Data::clients_add(std::shared_ptr<Client> client)
+void
+Data::clients_add(std::shared_ptr<Client> client)
 {
-    const std::lock_guard<std::mutex> lock(cli_mu);
-    clients.push_back(client);
+	const std::lock_guard<std::mutex> lock(cli_mu);
+	clients.push_back(client);
 }
 
 /**
@@ -132,24 +141,21 @@ void Data::clients_add(std::shared_ptr<Client> client)
  * 
  * @param msg message to be sent
  */
-void Data::clients_send_all(std::string msg)
+void
+Data::clients_send_all(std::string msg)
 {
-    const std::lock_guard<std::mutex> lock(cli_mu);
+	const std::lock_guard<std::mutex> lock(cli_mu);
 
-    std::vector<std::shared_ptr<Client>> unfailed_clients;
+	std::vector<std::shared_ptr<Client>> unfailed_clients;
 
-    for (auto const &client : clients)
-    {
-        if (client->send(msg))
-        {
-            unfailed_clients.push_back(client);
-        }
-        else
-        {
-            logger_->log_info("Websocket", "client disconnected");
-        }
-    }
-    clients = unfailed_clients;
+	for (auto const &client : clients) {
+		if (client->send(msg)) {
+			unfailed_clients.push_back(client);
+		} else {
+			logger_->log_info("Websocket", "client disconnected");
+		}
+	}
+	clients = unfailed_clients;
 }
 
 /**
@@ -159,12 +165,13 @@ void Data::clients_send_all(std::string msg)
  * 
  * @param d JSON document to be sent
  */
-void Data::clients_send_all(rapidjson::Document &d)
+void
+Data::clients_send_all(rapidjson::Document &d)
 {
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    d.Accept(writer);
-    clients_send_all(buffer.GetString());
+	rapidjson::StringBuffer                    buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	d.Accept(writer);
+	clients_send_all(buffer.GetString());
 }
 
 } // namespace llsfrb::websocket
