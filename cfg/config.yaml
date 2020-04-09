@@ -213,8 +213,10 @@ llsfrb:
     enable: false
 
   websocket:
-    ws-mode: true #true if accepting websocket clients, not tcp socket clients
-    port: 1234 #tcp port under wihc it will be accessible
+    # true if accepting websocket clients, not tcp socket clients
+    ws-mode: true
+    # tcp port under wihc it will be accessible
+    port: 1234
 
 
 webview:
