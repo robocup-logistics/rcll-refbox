@@ -29,6 +29,9 @@ RUN dnf install -y --nodocs \
       protobuf-devel \
       which \
       yaml-cpp-devel \
+      libmicrohttpd-devel \
+      rapidjson-devel \
+      apr-util-devel \
     && \
     dnf install -y --nodocs rpm-build && \
     dnf clean all
