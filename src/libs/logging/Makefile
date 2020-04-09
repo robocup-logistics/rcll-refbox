@@ -19,7 +19,7 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 
 
-REQ_BOOST_LIBS = system
+REQ_BOOST_LIBS = system asio beast
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 PRESUBDIRS = llsf_log_msgs
