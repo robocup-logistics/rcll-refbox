@@ -65,14 +65,14 @@ namespace protobuf_clips {
 class ClipsProtobufCommunicator;
 }
 
-#ifdef HAVE_AVAHI
 namespace fawkes {
+#ifdef HAVE_AVAHI
 class AvahiThread;
+#endif
 class NetworkNameResolver;
 class ServicePublisher;
 class ServiceBrowser;
 } // namespace fawkes
-#endif
 
 #ifdef HAVE_MONGODB
 #	include <mongocxx/database.hpp>

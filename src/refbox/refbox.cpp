@@ -87,6 +87,7 @@ namespace stdfs = std::filesystem;
 #else
 #	include <netcomm/service_discovery/dummy_service_browser.h>
 #	include <netcomm/service_discovery/dummy_service_publisher.h>
+#	include <netcomm/utils/resolver.h>
 #endif
 
 #include <memory>
@@ -354,8 +355,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	                                                           refbox_port);
 	avahi_thread_.publish_service(refbox_service_.get());
 #else
-	service_publisher_ = std::make_unique<fawkes::DummyServicePublisher>();
-	service_browser_   = std::make_unique<fawkes::DummyServiceBrowser>();
+	service_publisher_ = new fawkes::DummyServicePublisher();
+	service_browser_   = new fawkes::DummyServiceBrowser();
 	nnresolver_        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
 
@@ -389,6 +390,9 @@ LLSFRefBox::~LLSFRefBox()
 #ifdef HAVE_AVAHI
 	avahi_thread_.cancel();
 	avahi_thread_.join();
+#else
+     delete service_publisher_;
+     delete service_browser_;
 #endif
 
 	//std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
