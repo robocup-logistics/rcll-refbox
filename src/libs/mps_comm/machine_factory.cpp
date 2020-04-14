@@ -70,6 +70,7 @@ MachineFactory::create_machine(const std::string &name,
 		return std::move(mps);
 	}
 #endif
+#ifdef HAVE_MOCKUP
 	if (connection_mode == "mockup") {
 		if (type == "BS") {
 			return std::make_unique<MockupBaseStation>(name);
@@ -88,11 +89,11 @@ MachineFactory::create_machine(const std::string &name,
 			  name.c_str(),
 			  connection_mode.c_str());
 		}
-	} else {
-		throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
-		                        connection_mode.c_str(),
-		                        name.c_str());
 	}
+#endif
+	throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
+	                        connection_mode.c_str(),
+	                        name.c_str());
 }
 } // namespace mps_comm
 } // namespace llsfrb

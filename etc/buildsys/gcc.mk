@@ -62,6 +62,7 @@ ifeq ($(call gcc_atleast_version,6,0),1)
   # Reset flags, also CPP11 to avoid downgrade to C++11.
   CFLAGS_CPP11=
   CFLAGS_CPP14=
+  CFLAGS_CPP17=-std=c++17
 endif
 
 ifeq ($(call gcc_lessthan_version,4,7),1)

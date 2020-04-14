@@ -20,6 +20,10 @@
 
 #include "ring_station.h"
 
+#include "durations.h"
+
+#include <chrono>
+
 namespace llsfrb {
 namespace mps_comm {
 
@@ -34,9 +38,9 @@ MockupRingStation::mount_ring(unsigned int feeder)
 	std::lock_guard<std::mutex> lg(queue_mutex_);
 	queue_.push(std::make_tuple([this] { callback_busy_(false); },
 	                            std::chrono::system_clock::now()
-	                              + std::max(std::chrono::milliseconds(1000),
-	                                         std::chrono::milliseconds(
-	                                           static_cast<int>(3000.f / exec_speed_)))));
+	                              + std::max(min_operation_duration_,
+	                                         std::chrono::round<std::chrono::milliseconds>(
+	                                           duration_ring_mount_ / exec_speed_))));
 	queue_condition_.notify_one();
 }
 

@@ -20,6 +20,8 @@
 
 #include "machine.h"
 
+#include "durations.h"
+
 #include <config/yaml.h>
 
 #include <chrono>
@@ -91,24 +93,27 @@ MockupMachine::queue_worker()
 void
 MockupMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 {
+	using std::chrono::milliseconds;
+	using std::chrono::round;
+	using std::chrono::system_clock;
 	callback_busy_(true);
 	std::lock_guard<std::mutex> lg(queue_mutex_);
-	queue_.push(std::make_tuple([this] { callback_busy_(false); },
-	                            std::chrono::system_clock::now()
-	                              + std::max(std::chrono::milliseconds(1000),
-	                                         std::chrono::milliseconds(
-	                                           static_cast<int>(4000.f / exec_speed_)))));
+	queue_.push(
+	  std::make_tuple([this] { callback_busy_(false); },
+	                  system_clock::now()
+	                    + std::max(min_operation_duration_,
+	                               round<milliseconds>(duration_band_input_to_mid_ / exec_speed_))));
 	if (sensor == INPUT || sensor == OUTPUT) {
 		queue_.push(std::make_tuple([this] { callback_ready_(true); },
-		                            std::chrono::system_clock::now()
-		                              + std::max(std::chrono::milliseconds(1000),
-		                                         std::chrono::milliseconds(
-		                                           static_cast<int>(4000.f / exec_speed_)))));
-		queue_.push(std::make_tuple([this] { callback_ready_(false); },
-		                            std::chrono::system_clock::now()
-		                              + std::max(std::chrono::milliseconds(1000),
-		                                         std::chrono::milliseconds(
-		                                           static_cast<int>(14000.f / exec_speed_)))));
+		                            system_clock::now()
+		                              + std::max(min_operation_duration_,
+		                                         round<milliseconds>(duration_band_mid_to_output_
+		                                                             / exec_speed_))));
+		queue_.push(
+		  std::make_tuple([this] { callback_ready_(false); },
+		                  system_clock::now()
+		                    + std::max(min_operation_duration_,
+		                               round<milliseconds>(duration_ready_at_output_ / exec_speed_))));
 	}
 	queue_condition_.notify_one();
 }
