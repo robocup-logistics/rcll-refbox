@@ -27,7 +27,14 @@ OBJS_opcua = opcua/opc_utils.o opcua/machine.o opcua/base_station.o \
 OBJS_mockup = mockup/machine.o mockup/base_station.o mockup/cap_station.o \
 							mockup/delivery_station.o mockup/ring_station.o \
               mockup/storage_station.o
-OBJS_libmps_comm = time_utils.o machine_factory.o $(OBJS_mockup)
+OBJS_libmps_comm = time_utils.o machine_factory.o
+
+ifeq ($(HAVE_CPP17),1)
+  OBJS_libmps_comm += $(OBJS_mockup)
+  CFLAGS += $(CFLAGS_CPP17) -DHAVE_MOCKUP
+else
+  WARN_TARGETS += warning_cpp17
+endif
 
 ifeq ($(HAVE_FREEOPCUA),1)
   OBJS_libmps_comm += $(OBJS_opcua)
@@ -45,6 +52,8 @@ all: $(WARN_TARGETS)
 .PHONY: $(WARN_TARGETS)
 warning_freeopcua:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No OPC-UA support$(TNORMAL) (freeopcua not found)"
+warning_cpp17:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No Mockup support$(TNORMAL) (C++17 not supported)"
 endif
 
 include $(BUILDSYSDIR)/base.mk
