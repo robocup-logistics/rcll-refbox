@@ -24,7 +24,7 @@ include $(BUILDCONFDIR)/netcomm/netcomm.mk
 
 CFLAGS += -Wno-deprecated-declarations
 
-REQ_BOOST_LIBS = thread asio system signals2
+REQ_BOOST_LIBS = thread asio system signals2 beast
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 LIBS_llsf_refbox = stdc++ stdc++fs llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
