@@ -38,10 +38,16 @@ class Client
 public:
 	virtual bool        send(std::string msg) = 0;
 	virtual std::string read()                = 0;
+	virtual void        close()               = 0;
+	void                receive_thread();
+	void                disconnect();
+	bool                active = true;
 
 protected:
-	std::mutex rd_mu;
-	std::mutex wr_mu;
+	std::mutex  rd_mu;
+	std::mutex  wr_mu;
+	std::thread client_t;
+	Logger *    logger_;
 };
 
 class ClientWS : public Client
@@ -49,26 +55,26 @@ class ClientWS : public Client
 public:
 	ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket,
 	         Logger *                                                                       logger_);
-
+	~ClientWS();
 	bool        send(std::string msg);
 	std::string read();
+	void        close();
 
 private:
 	std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket;
-	Logger *                                                                       logger_;
 };
 
 class ClientS : public Client
 {
 public:
 	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_);
-
+	~ClientS();
 	bool        send(std::string msg);
 	std::string read();
+	void        close();
 
 private:
 	std::shared_ptr<boost::asio::ip::tcp::socket> socket;
-	Logger *                                      logger_;
 };
 } // namespace llsfrb::websocket
 #endif

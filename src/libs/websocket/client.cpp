@@ -20,6 +20,8 @@
 
 #include "client.h"
 
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
 #include <sys/socket.h>
 
 #include <boost/asio.hpp>
@@ -43,10 +45,23 @@ namespace llsfrb::websocket {
  * @param socket Established WebSocket socket shared pointer user for this client
  */
 ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket,
-                   Logger *                                                      logger_)
-: socket(socket), logger_(logger_)
+                   Logger *                                                      logger)
+: socket(socket)
 {
+	logger_ = logger;
 	socket->accept();
+	client_t = std::thread(&Client::receive_thread, this);
+	client_t.detach();
+	logger_->log_info("Websocket", "client receive thread started");
+}
+
+/**
+ * @brief Destroy the ClientWS:: ClientWS object
+ * 
+ */
+ClientWS::~ClientWS()
+{
+	disconnect();
 }
 
 /**
@@ -93,14 +108,35 @@ ClientWS::read()
 }
 
 /**
+ * @brief WebSocket implementation for close
+ * 
+ */
+void
+ClientWS::close()
+{
+	socket->next_layer().close();
+}
+
+/**
  * @brief Construct a new ClientS::ClientS object
  * 
  * @param socket TCP socket over which client communication happens
  * @param logger_ Logger instance to be used 
  */
-ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger_)
-: socket(socket), logger_(logger_)
+ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger) : socket(socket)
 {
+	logger_  = logger;
+	client_t = std::thread(&Client::receive_thread, this);
+	logger_->log_info("Websocket", "TCP-socket client receive thread started");
+}
+
+/**
+ * @brief Destroy the ClientS::ClientS object
+ * 
+ */
+ClientS::~ClientS()
+{
+	disconnect();
 }
 
 /**
@@ -143,4 +179,52 @@ ClientS::read()
 
 	return data;
 }
+
+/**
+ * @brief TCP-Socket implementation for close
+ * 
+ */
+void
+ClientS::close()
+{
+	socket->close();
+}
+
+/**
+ * @brief Handles incoming message requests
+ * 
+ */
+void
+Client::receive_thread()
+{
+	rapidjson::Document msgs;
+
+	while (active) {
+		try {
+			std::string input = read();
+			msgs.Parse(input.c_str());
+			if (!msgs.IsObject()) {
+				logger_->log_error("Websocket", "non JSON message received, won't process");
+			}
+			//logger_->log_warn("Websocket", msgs["message"].GetString());
+		} catch (std::exception &e) {
+			disconnect();
+		}
+	}
+}
+
+/**
+ * @brief Disconnects client by closing connection and stopping receive thread
+ * 
+ */
+void
+Client::disconnect()
+{
+	if (active) {
+		active = false;
+		close();
+		logger_->log_info("Websocket", "client disconnected");
+	}
+}
+
 } // namespace llsfrb::websocket

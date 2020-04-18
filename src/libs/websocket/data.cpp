@@ -149,10 +149,12 @@ Data::clients_send_all(std::string msg)
 	std::vector<std::shared_ptr<Client>> unfailed_clients;
 
 	for (auto const &client : clients) {
-		if (client->send(msg)) {
-			unfailed_clients.push_back(client);
-		} else {
-			logger_->log_info("Websocket", "client disconnected");
+		if (client->active) {
+			if (client->send(msg)) {
+				unfailed_clients.push_back(client);
+			} else {
+				client->disconnect();
+			}
 		}
 	}
 	clients = unfailed_clients;
