@@ -51,7 +51,6 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
 	logger_ = logger;
 	socket->accept();
 	client_t = std::thread(&Client::receive_thread, this);
-	client_t.detach();
 	logger_->log_info("Websocket", "client receive thread started");
 }
 
@@ -62,6 +61,7 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
 ClientWS::~ClientWS()
 {
 	disconnect();
+	client_t.join();
 }
 
 /**
@@ -137,6 +137,7 @@ ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger) : socket(s
 ClientS::~ClientS()
 {
 	disconnect();
+	client_t.join(); 
 }
 
 /**
