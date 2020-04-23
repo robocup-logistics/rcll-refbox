@@ -25,6 +25,9 @@
 #include "../time_utils.h"
 #include "mps_io_mapping.h"
 
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
+
 #include <chrono>
 #include <iostream>
 #include <pthread.h>
