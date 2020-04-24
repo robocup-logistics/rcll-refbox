@@ -137,7 +137,7 @@ ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger) : socket(s
 ClientS::~ClientS()
 {
 	disconnect();
-	client_t.join(); 
+	client_t.join();
 }
 
 /**
