@@ -24,12 +24,17 @@ include $(BUILDCONFDIR)/netcomm/netcomm.mk
 
 CFLAGS += -Wno-deprecated-declarations
 
-REQ_BOOST_LIBS = thread asio system signals2 beast
+REQ_BOOST_LIBS = thread asio system signals2
+OPT_BOOST_LIBS = beast
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
+HAVE_BOOST_LIBS_OPT = $(call boost-have-libs,$(OPT_BOOST_LIBS))
+
 
 LIBS_llsf_refbox = stdc++ stdc++fs llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
 		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips mps_comm \
 		   llsf_mps_placing_clips llsfrbwebview llsfrbrestapi llsfrbwebsocket
+
+LIBS_OPTIONAL = llsfrbwebsocket
 
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
@@ -55,6 +60,12 @@ ifeq ($(HAVE_CPP17)$(HAVE_PROTOBUF)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   else
     WARN_TARGETS += warning_mongodb
   endif
+
+  ifeq ($(HAVE_BOOST_LIBS_OPT),1)
+    CFLAGS += $(call boost-libs-cflags,$(OPT_BOOST_LIBS)) -DHAVE_LIBS_WEBSOCKETS
+    LDFLAGS += $(call boost-libs-ldflags,$(OPT_BOOST_LIBS))
+    LIBS_llsf_refbox += $(LIBS_OPTIONAL)
+  endif
 else
   ifneq ($(HAVE_CPP17),1)
     WARN_TARGETS += warning_cpp17
@@ -71,10 +82,14 @@ else
   ifneq ($(HAVE_MONGODB),1)
     WARN_TARGETS += warning_mongodb
   endif
+  ifneq ($(HAVE_BOOST_LIBS_OPT),1)
+    WARN_TARGETS_BOOST_OPT = $(foreach l,$(OPT_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
+  endif
 endif
 
+
 ifeq ($(OBJSSUBMAKE),1)
-all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
+all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST) $(WARN_TARGETS_BOOST_OPT)
 .PHONY: $(WARN_TARGETS)
 warning_cpp17:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (C++17 not supported)"
@@ -86,6 +101,8 @@ warning_mongodb:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Omitting MongoDB logging support$(TNORMAL) (MongoDB not found)"
 $(WARN_TARGETS_BOOST): warning_boost_%:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_comm library$(TNORMAL) (Boost library $* not found)"
+$(WARN_TARGETS_BOOST_OPT):
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Omitting websocket support$(TNORMAL) (Optional Boost libraries not found: $(OPT_BOOST_LIBS))"
 
 endif
 

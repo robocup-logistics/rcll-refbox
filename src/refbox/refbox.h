@@ -46,7 +46,10 @@
 #include <mps_comm/machine.h>
 #include <protobuf_comm/server.h>
 #include <utils/llsf/machines.h>
-#include <websocket/backend.h>
+
+#ifdef HAVE_LIBS_WEBSOCKETS
+#	include <websocket/backend.h>
+#endif
 
 #include <boost/asio.hpp>
 #include <clipsmm.h>
@@ -213,7 +216,9 @@ private: // members
 	std::string                   cfg_clips_dir_;
 	llsf_utils::MachineAssignment cfg_machine_assignment_;
 
+#ifdef HAVE_LIBS_WEBSOCKETS
 	websocket::Backend *backend_;
+#endif
 
 #ifdef HAVE_AVAHI
 	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;

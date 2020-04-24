@@ -47,7 +47,6 @@
 #include <logging/file.h>
 #include <logging/multi.h>
 #include <logging/network.h>
-#include <logging/websocket.h>
 #include <mps_comm/machine_factory.h>
 #include <mps_comm/stations.h>
 #include <mps_placing_clips/mps_placing_clips.h>
@@ -55,7 +54,12 @@
 #include <protobuf_comm/peer.h>
 #include <rest-api/webview_server.h>
 #include <webview/rest_api_manager.h>
-#include <websocket/backend.h>
+#include <rest_api/webview_server.h>
+
+#ifdef HAVE_LIBS_WEBSOCKETS
+#	include <websocket/backend.h>
+#	include <logging/websocket.h>
+#endif
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -169,11 +173,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
 
+#ifdef HAVE_LIBS_WEBSOCKETS
 	//launch websocket backend and add websocket logger
 	backend_ = new websocket::Backend(logger_.get());
 	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
 	                config_->get_bool("/llsfrb/websocket/ws-mode"));
 	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
+#endif
 
 	cfg_machine_assignment_ = ASSIGNMENT_2014;
 	try {
