@@ -22,7 +22,7 @@ include $(BUILDSYSDIR)/boost.mk
 REQ_BOOST_LIBS = system asio 
 OPT_BOOST_LIBS = beast
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
-HAVE_BOOST_LIB_OPT = $(call boost-have-libs,$(OPT_BOOST_LIBS))
+HAVE_BOOST_LIBS_OPT = $(call boost-have-libs,$(OPT_BOOST_LIBS))
 
 LIBS_OPTIONAL = llsfrbwebsocket
 OBJS_OPTIONAL = websocket.o
@@ -42,7 +42,7 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   OBJS_libllsfrblogging = $(filter-out $(OBJS_OPTIONAL), $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp))))))
   HDRS_libllsfrblogging = $(filter-out $(HDRS_OPTIONAL), $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h)))
 
-  ifeq ($(HAVE_BOOST_LIB_OPT),1)
+  ifeq ($(HAVE_BOOST_LIBS_OPT),1)
     CFLAGS += $(call boost-libs-cflags,$(OPT_BOOST_LIBS)) 
     LDFLAGS += $(call boost-libs-ldflags,$(OPT_BOOST_LIBS)) 
 
@@ -65,7 +65,6 @@ else
 endif
 
 network.o: | $(PRESUBDIRS)
-
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST) $(WARN_TARGETS_BOOST_OPT)
