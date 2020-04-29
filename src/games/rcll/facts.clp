@@ -188,6 +188,8 @@
 
 (deftemplate order
   (slot id (type INTEGER))
+  ; Orders that are not randomized yet are modified by order randomization
+  (slot randomized (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 
   ; Product specification
   (slot complexity (type SYMBOL) (allowed-values C0 C1 C2 C3))

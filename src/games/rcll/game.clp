@@ -21,7 +21,7 @@
 	(bind ?c2-counter 0)
 	(bind ?c3-counter 0)
 	; reset orders, assign random times
-	(delayed-do-for-all-facts ((?order order)) TRUE
+	(delayed-do-for-all-facts ((?order order)) (eq ?order:randomized FALSE)
 		(bind ?offset (nth$ 1 ?optional-offset))
 		(if (eq ?offset nil) then
 			(bind ?offset 0)
@@ -68,7 +68,7 @@
 		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
 		(bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
 
-		(modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
+		(modify ?order (randomized TRUE) (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
 		  (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
 		  (ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
 	)
