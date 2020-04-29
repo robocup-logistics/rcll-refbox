@@ -396,6 +396,7 @@
 )
 
 (defrule game-over
+  (confval (path "/llsfrb/custom-game-length/enable") (type BOOL) (value false))
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
 		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta))
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
@@ -404,6 +405,7 @@
 )
 
 (defrule game-enter-overtime
+  (confval (path "/llsfrb/custom-game-length/enable") (type BOOL) (value false))
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
 		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(= ?p-cyan ?p-magenta))
 		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
@@ -413,6 +415,7 @@
 )
 
 (defrule game-over-after-overtime
+  (confval (path "/llsfrb/custom-game-length/enable") (type BOOL) (value false))
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
 		    (over-time TRUE)
 		    (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
@@ -491,4 +494,57 @@
 	=>
 	(retract ?gr)
 	(game-reset)
+)
+(deftemplate custom-game
+	(slot epoch (type INTEGER) (default 0))
+)
+(defrule game-custom-length-game-init
+	"Play games of custom length"
+	(confval (path "/llsfrb/custom-game-length/enable") (type BOOL) (value true))
+  =>
+  (assert (custom-game-length-epoch 1))
+)
+
+(defrule game-custom-length-game-over
+	"Game of custom length ended"
+	(confval (path "/llsfrb/custom-game-length/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/custom-game-length/length") (value ?gt))
+  ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
+	       (over-time FALSE)
+	       (game-time ?game-time&:(>= ?game-time ?gt)))
+  =>
+  (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED))
+)
+
+(defrule game-custom-length-start-new-epoch
+	" A new epoch starts every ?*PRODUCTION-TIME* seconds and it causes a new
+    batch of orders to be dispatched as well as machine down times to be
+    scheduled.
+  "
+	(confval (path "/llsfrb/custom-game-length/enable") (type BOOL) (value true))
+  ?cg-epoch <- (custom-game-length-epoch ?epoch)
+
+  (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
+	       (game-time ?game-time&:(>= ?game-time (* ?epoch ?*PRODUCTION-TIME*))))
+  =>
+  (retract ?cg-epoch)
+	(bind ?new-epoch (+ 1 ?epoch))
+	(bind ?time-offset (* ?*PRODUCTION-TIME* ?epoch))
+	(bind ?order-offset 1)
+	(assert (custom-game-length-epoch ?new-epoch))
+	(do-for-fact ((?order order))
+		(not (any-factp ((?other-order order))
+				(> ?other-order:id ?order:id)
+			)
+		)
+		(bind ?order-offset (+ 1 ?order:id))
+	)
+	(order-batch ?order-offset ?time-offset)
+	(randomize-down-times ?time-offset)
+	(bind ?ring-colors (create$))
+	(do-for-all-facts ((?rs ring-spec)) TRUE
+	  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
+	)
+	(randomize$ ?ring-colors)
+	(game-randomize-orders ?ring-colors ?time-offset)
 )

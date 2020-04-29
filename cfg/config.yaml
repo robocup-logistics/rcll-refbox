@@ -224,6 +224,10 @@ llsfrb:
       # (helps reducing the amount of messages to send)
       estimate-time: true
 
+  custom-game-length:
+    enable: true
+    length: 2040
+
   webshop:
     enable: false
 
