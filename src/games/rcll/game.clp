@@ -11,12 +11,7 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(deffunction game-randomize-orders ()
-	(bind ?ring-colors (create$))
-	(do-for-all-facts ((?rs ring-spec)) TRUE
-	  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
-	)
-	(bind ?ring-colors (randomize$ ?ring-colors))
+(deffunction game-randomize-orders (?ring-colors $?optional-offset)
 	(bind ?c1-first-ring (subseq$ ?ring-colors 1 1))
 	(bind ?c2-first-ring (subseq$ ?ring-colors 2 2))
 	(bind ?c3-first-ring (subseq$ ?ring-colors 3 3))
@@ -27,18 +22,23 @@
 	(bind ?c3-counter 0)
 	; reset orders, assign random times
 	(delayed-do-for-all-facts ((?order order)) TRUE
+		(bind ?offset (nth$ 1 ?optional-offset))
+		(if (eq ?offset nil) then
+			(bind ?offset 0)
+		)
+		(bind ?max-time (+ ?*PRODUCTION-TIME* ?offset))
 		(bind ?deliver-start (random (nth$ 1 ?order:start-range)
 		                             (nth$ 2 ?order:start-range)))
 		(bind ?deliver-end
 		  (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
 		                            (nth$ 2 ?order:duration-range))))
-		(if (and (> ?deliver-end ?*PRODUCTION-TIME*) (not ?order:allow-overtime))
+		(if (and (> ?deliver-end ?max-time) (not ?order:allow-overtime))
 		 then
 			(printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
-			            (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "
-			            "time shift: " (- ?deliver-end ?*PRODUCTION-TIME*) crlf)
-			(bind ?deliver-start (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)))
-			(bind ?deliver-end ?*PRODUCTION-TIME*)
+			  (- ?deliver-start (- ?deliver-end ?max-time)) "-" ?max-time "), "
+			  "time shift: " (- ?deliver-end ?max-time) crlf)
+			(bind ?deliver-start (- ?deliver-start (- ?deliver-end ?max-time)))
+			(bind ?deliver-end ?max-time)
 		)
 		(bind ?activation-pre-time
 		      (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
@@ -71,21 +71,10 @@
 		(modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
 		  (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
 		  (ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
-		)
+	)
+)
 
-	; Randomize number of required additional bases
-	(bind ?m-add-bases (randomize$ (create$ 1 3)))
-	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 1 ?m-add-bases) ?ring-colors))
-	  (modify ?ring (req-bases 2))
-	)
-	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 2 ?m-add-bases) ?ring-colors))
-	  (modify ?ring (req-bases 1))
-	)
-	(delayed-do-for-all-facts ((?ring ring-spec))
-	  (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
-	  (modify ?ring (req-bases 0))
-	)
-
+(deffunction game-assign-competitive-order ()
 	; Randomly assign an order to be a competitive order
 	(bind ?potential-competitive-orders (create$))
 	(do-for-all-facts ((?order order))
@@ -229,7 +218,12 @@
 	)
 	(if (eq ?orders RANDOM)
 	 then
-		(game-randomize-orders)
+		(bind ?ring-colors (create$))
+		(do-for-all-facts ((?rs ring-spec)) TRUE
+		  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
+		)
+		(game-randomize-orders ?ring-colors)
+		(game-assign-competitive-order)
 	)
 	(if (eq ?s-status RANDOM)
 	 then

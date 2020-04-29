@@ -126,6 +126,18 @@
 )
 
 (deffunction machine-randomize-machine-setup ()
+	; Randomize number of required additional bases
+	(bind ?m-add-bases (randomize$ (create$ 1 3)))
+	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 1 ?m-add-bases) ?ring-colors))
+	  (modify ?ring (req-bases 2))
+	)
+	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 2 ?m-add-bases) ?ring-colors))
+	  (modify ?ring (req-bases 1))
+	)
+	(delayed-do-for-all-facts ((?ring ring-spec))
+	  (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
+	  (modify ?ring (req-bases 0))
+	)
 	; Randomize ring colors per machine
 	(bind ?ring-colors (create$))
 	(do-for-all-facts ((?rs ring-spec)) TRUE
