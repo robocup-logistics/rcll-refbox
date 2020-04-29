@@ -74,6 +74,32 @@
 	(return (if (eq ?prefix "C") then CYAN else MAGENTA))
 )
 
+(deffunction randomize-down-times ($?optional-offset)
+	(bind ?offset (nth$ 1 ?optional-offset))
+	(if (eq ?offset nil) then
+		(bind ?offset 0)
+	)
+	(bind ?candidates (create$))
+	(foreach ?t ?*DOWN-TYPES*
+		(bind ?t-candidates (find-all-facts ((?m machine))
+		      (and (eq ?m:mtype ?t) (eq ?m:team CYAN))))
+	)
+
+	(bind ?candidates (append$ ?candidates (first$ (randomize$ ?t-candidates))))
+	(foreach ?c ?candidates
+		(bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
+		(bind ?start-time (+ ?offset (random 1 (- ?*PRODUCTION-TIME* ?duration))))
+		(bind ?end-time (+ ?start-time ?duration))
+
+		; Copy to magenta machine
+		(do-for-fact ((?m-magenta machine))
+			(eq ?m-magenta:name (machine-magenta-for-cyan (fact-slot-value ?c name)))
+			(modify ?m-magenta (down-period ?start-time ?end-time))
+		)
+		(modify ?c (down-period ?start-time ?end-time))
+	)
+)
+
 (deffunction machine-randomize-positions ()
 	(printout t "Randomizing from scratch" crlf)
 	; reset all zones, since we cannot do partial assignment anymore
@@ -156,27 +182,7 @@
 
 	; assign random down times
 	(if ?*RANDOMIZE-GAME* then
-		(bind ?candidates (create$))
-		(foreach ?t ?*DOWN-TYPES*
-			(bind ?t-candidates (find-all-facts ((?m machine))
-			                      (and (eq ?m:mtype ?t) (eq ?m:team CYAN))))
-
-		  (bind ?candidates (append$ ?candidates (first$ (randomize$ ?t-candidates))))
-		)
-
-		(foreach ?c ?candidates
-			(bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
-			(bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
-			(bind ?end-time (+ ?start-time ?duration))
-
-			; Copy to magenta machine
-			(do-for-fact ((?m-magenta machine))
-			  (eq ?m-magenta:name (machine-magenta-for-cyan (fact-slot-value ?c name)))
-			  (modify ?m-magenta (down-period ?start-time ?end-time))
-			)
-
-		  (modify ?c (down-period ?start-time ?end-time))
-		)
+		(randomize-down-times)
 	)
 )
 
