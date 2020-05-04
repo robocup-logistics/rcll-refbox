@@ -14,6 +14,7 @@ RUN dnf install -y --nodocs \
       boost-devel \
       clips-devel \
       clipsmm-devel \
+      freeopcua-devel \
       gcc-c++ \
       gecode-devel \
       git \
@@ -29,9 +30,6 @@ RUN dnf install -y --nodocs \
       which \
       yaml-cpp-devel \
     && \
-    dnf install -y --nodocs 'dnf-command(copr)' && \
-    dnf -y copr enable thofmann/freeopcua && \
-    dnf install -y --nodocs freeopcua-devel && \
     dnf install -y --nodocs rpm-build && \
     dnf clean all
 COPY . /buildenv/
@@ -53,7 +51,5 @@ COPY --from=buildenv /buildenv/src/msgs/*.proto /usr/local/share/rcll-refbox/msg
 COPY --from=buildenv /buildenv/cfg/* /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
-RUN dnf install -y --nodocs 'dnf-command(copr)' && \
-    dnf -y copr enable thofmann/freeopcua && \
-    dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
+RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
 CMD ["llsf-refbox"]
