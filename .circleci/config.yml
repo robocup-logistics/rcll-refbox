@@ -15,6 +15,7 @@ jobs:
               clips-devel \
               clipsmm-devel \
               findutils \
+              freeopcua-devel \
               gcc-c++ \
               gecode-devel \
               git \
@@ -30,12 +31,6 @@ jobs:
               which \
               yaml-cpp-devel \
               yamllint
-      - run:
-          name: Install freeopcua from COPR
-          command: >
-            dnf install -y --nodocs 'dnf-command(copr)' &&
-            dnf -y copr enable thofmann/freeopcua &&
-            dnf install -y --nodocs freeopcua-devel
       - checkout
       - run: make quick-check
       - run: make all FAIL_ON_WARNING=1
