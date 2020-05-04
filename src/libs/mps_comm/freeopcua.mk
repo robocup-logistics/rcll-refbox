@@ -13,6 +13,8 @@
 #
 #*****************************************************************************
 
+include $(BASEDIR)/src/libs/mps_comm/spdlog.mk
+
 FREEOPCUA_COMPONENTS=libopcuacore libopcuaclient libopcuaprotocol
 ifneq ($(PKGCONFIG),)
   HAVE_FREEOPCUA= $(if $(shell $(PKGCONFIG) --exists $(FREEOPCUA_COMPONENTS); echo $${?/1/}),1,0)
@@ -21,4 +23,17 @@ endif
 ifeq ($(HAVE_FREEOPCUA),1)
   CFLAGS_FREEOPCUA  = $(shell $(PKGCONFIG) --cflags $(FREEOPCUA_COMPONENTS)) $(CFLAGS_CPP11)
   LDFLAGS_FREEOPCUA = $(shell $(PKGCONFIG) --libs $(FREEOPCUA_COMPONENTS)) -lmbedtls
+  # Check if we need to use the system spdlog
+  ifneq ($(filter -DHAVE_SYSTEM_SPDLOG,$(CFLAGS_FREEOPCUA)),)
+    # freeopcua uses the system spdlog, check if it is actually available
+    ifeq ($(HAVE_SPDLOG),1)
+      CFLAGS_FREEOPCUA += $(CFLAGS_SPDLOG)
+      LDFLAGS_FREEOPCUA += $(LDFLAGS_SPDLOG)
+    else
+      HAVE_FREEOPCUA=0
+      WARNING_FREEOPCUA=spdlog[-devel] missing
+    endif
+  endif
+else
+  WARNING_FREEOPCUA=freeopcua[-devel] not found
 endif
