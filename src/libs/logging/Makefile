@@ -17,16 +17,15 @@ BASEDIR = ../../..
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
+include $(BUILDCONFDIR)/websocket/websocket.mk
 
 
 REQ_BOOST_LIBS = system asio 
-OPT_BOOST_LIBS = beast
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 HAVE_BOOST_LIBS_OPT = $(call boost-have-libs,$(OPT_BOOST_LIBS))
 
-LIBS_OPTIONAL = llsfrbwebsocket
-OBJS_OPTIONAL = websocket.o
-HDRS_OPTIONAL = websocket.h
+OBJS_WEBSOCKET = websocket.o
+HDRS_WEBSOCKET = websocket.h
 
 PRESUBDIRS = llsf_log_msgs
 CFLAGS += $(CFLAGS_CPP11)
@@ -39,18 +38,18 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   LIBS_libllsfrblogging = stdc++ llsfrbcore llsf_protobuf_comm llsf_log_msgs 
-  OBJS_libllsfrblogging = $(filter-out $(OBJS_OPTIONAL), $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp))))))
-  HDRS_libllsfrblogging = $(filter-out $(HDRS_OPTIONAL), $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h)))
+  OBJS_libllsfrblogging = $(filter-out $(OBJS_WEBSOCKET), $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp))))))
+  HDRS_libllsfrblogging = $(filter-out $(HDRS_WEBSOCKET), $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h)))
 
-  ifeq ($(HAVE_BOOST_LIBS_OPT),1)
-    CFLAGS += $(call boost-libs-cflags,$(OPT_BOOST_LIBS)) 
-    LDFLAGS += $(call boost-libs-ldflags,$(OPT_BOOST_LIBS)) 
+  ifeq ($(HAVE_WEBSOCKET),1)
+    CFLAGS += $(CFLAGS_WEBSOCKET)
+    LDFLAGS += $(LDFLAGS_WEBSOCKET)
 
-    LIBS_libllsfrblogging += llsfrbwebsocket
-		OBJS_libllsfrblogging += $(OBJS_OPTIONAL)
-		HDRS_libllsfrblogging += $(HDRS_OPTIONAL)
+    LIBS_libllsfrblogging += $(LIBS_WEBSOCKET)
+    OBJS_libllsfrblogging += $(OBJS_WEBSOCKET)
+    HDRS_libllsfrblogging += $(HDRS_WEBSOCKET)
   else
-    WARN_TARGETS_BOOST_OPT = $(foreach l,$(OPT_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
+    WARN_TARGETS_WEBSOCKET = $(foreach l,$(BOOST_LIBS_WEBSOCKET),$(if $(call boost-have-lib,$l),, warning_boost_$l))
   endif
 
   LIBS_all  = $(LIBDIR)/libllsfrblogging.so
@@ -67,11 +66,11 @@ endif
 network.o: | $(PRESUBDIRS)
 
 ifeq ($(OBJSSUBMAKE),1)
-all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST) $(WARN_TARGETS_BOOST_OPT)
+all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST) $(WARN_TARGETS_WEBSOCKET)
 $(WARN_TARGETS_BOOST): warning_boost_%:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build logging library$(TNORMAL) (Boost library $* not found)"
-$(WARN_TARGETS_BOOST_OPT):
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Omitting websocket logging$(TNORMAL) (Optional Boost libraries not available: $(OPT_BOOST_LIBS))"
+$(WARN_TARGETS_WEBSOCKET):
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Omitting websocket logging$(TNORMAL) (Optional Boost libraries not available: $(BOOST_LIBS_WEBSOCKET))"
 endif
 
 include $(BUILDSYSDIR)/base.mk
