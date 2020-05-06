@@ -56,7 +56,7 @@
 #include <webview/rest_api_manager.h>
 #include <rest_api/webview_server.h>
 
-#ifdef HAVE_LIBS_WEBSOCKETS
+#ifdef HAVE_WEBSOCKETS
 #	include <websocket/backend.h>
 #	include <logging/websocket.h>
 #endif
@@ -173,7 +173,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
 
-#ifdef HAVE_LIBS_WEBSOCKETS
+#ifdef HAVE_WEBSOCKETS
 	//launch websocket backend and add websocket logger
 	backend_ = new websocket::Backend(logger_.get());
 	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
