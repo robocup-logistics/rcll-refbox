@@ -176,4 +176,44 @@ Data::clients_send_all(rapidjson::Document &d)
 	clients_send_all(buffer.GetString());
 }
 
+/**
+ * @brief log the facts of the gamestate 
+ * 
+ *  Take the gamestate facts, build a JSON string and push it in the log queue. 
+ * 
+ * @param time 
+ * @param phase 
+ * @param prevphase 
+ * @param team_cyan 
+ * @param team_magenta 
+ */
+void
+Data::log_push_fact_gamestate(std::string time,
+                              std::string state,
+                              std::string phase,
+                              std::string prevphase,
+                              std::string team_cyan,
+                              std::string team_magenta)
+{
+	std::string message = "{\"level\" : \"clips\","
+	                      "\"state\" : \""
+	                      + state
+	                      + "\","
+	                        "\"gamephase\" : \""
+	                      + phase
+	                      + "\","
+	                        "\"prevphase\" : \""
+	                      + prevphase
+	                      + "\","
+	                        "\"gametime\" : \""
+	                      + time
+	                      + "\","
+	                        "\"cyan\" : \""
+	                      + team_cyan
+	                      + "\","
+	                        "\"magenta\" : \""
+	                      + team_magenta + "\"}";
+	log_push(message);
+}
+
 } // namespace llsfrb::websocket

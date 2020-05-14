@@ -46,6 +46,12 @@ public:
 	void        clients_add(std::shared_ptr<Client> client);
 	void        clients_send_all(std::string msg);
 	void        clients_send_all(rapidjson::Document &d);
+	void        log_push_fact_gamestate(std::string time,
+	                                    std::string state,
+	                                    std::string phase,
+	                                    std::string prevphase,
+	                                    std::string team_cyan,
+	                                    std::string team_magenta);
 
 private:
 	Logger *                             logger_;
