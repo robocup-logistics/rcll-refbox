@@ -35,6 +35,13 @@
 (load* (resolve-file globals.clp))
 (load* (resolve-file priorities.clp))
 
+(defrule load-websocket
+  (init) 
+  (have-feature websocket)
+  =>
+  (load* (resolve-file websocket.clp))
+)
+
 (defrule load-config
   (init)
   =>
