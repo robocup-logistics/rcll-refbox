@@ -218,6 +218,7 @@ private: // members
 
 #ifdef HAVE_WEBSOCKETS
 	websocket::Backend *backend_;
+	void                setup_clips_websocket();
 #endif
 
 #ifdef HAVE_AVAHI

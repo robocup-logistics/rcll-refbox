@@ -310,6 +310,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 	logger_->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 
+#ifdef HAVE_WEBSOCKETS
+	setup_clips_websocket();
+#endif
+
 #ifdef HAVE_MONGODB
 	cfg_mongodb_enabled_ = false;
 	try {
@@ -1723,5 +1727,22 @@ LLSFRefBox::run()
 	io_service_.run();
 	return 0;
 }
+
+#ifdef HAVE_WEBSOCKETS
+/** Setup websocket related CLIPS functions. */
+void
+LLSFRefBox::setup_clips_websocket()
+{
+	fawkes::MutexLocker lock(&clips_mutex_);
+
+	clips_->build("(deffacts have-feature-websocket (have-feature websocket))");
+
+	clips_->add_function(
+	  "ws-push-gamestate",
+	  sigc::slot<void, std::string, std::string, std::string, std::string, std::string, std::string>(
+	    sigc::mem_fun(*(backend_->get_data()), &websocket::Data::log_push_fact_gamestate)));
+}
+
+#endif
 
 } // end of namespace llsfrb
