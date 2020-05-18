@@ -32,7 +32,7 @@ endif
 REQ_BOOST_LIBS = filesystem
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_libllsfrbrestapi= stdc++ llsfrbcore llsfrbutils llsfrbwebview llsfrbnetcomm llsfrb_clips_rest_api \
+LIBS_libllsfrbrestapi= stdc++ llsfrbcore llsfrbutils llsfrbwebview llsfrbnetcomm \
                llsfrblogging
 OBJS_libllsfrbrestapi = webview_server.o \
                service_browse_handler.o \

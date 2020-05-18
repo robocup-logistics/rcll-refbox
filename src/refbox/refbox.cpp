@@ -51,7 +51,8 @@
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
-#include <rest_api/webview_server.h>
+#include <rest-api/webview_server.h>
+#include <webview/rest_api_manager.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -360,13 +361,14 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	nnresolver_        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
 
-	try {
+	rest_api_manager_ = new WebviewRestApiManager();
+
+     try {
 		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
 		                                                           nnresolver_.get(),
 		                                                           service_publisher_,
 		                                                           service_browser_,
-		                                                           clips_mutex_,
-		                                                           clips_.get(),
+		                                                           rest_api_manager_,
 		                                                           config_.get(),
 		                                                           logger_.get());
 		rest_api_thread_->init();
@@ -376,6 +378,19 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		logger_->log_info("RefBox", "Could not start RESTapi");
 		logger_->log_error("Exception: ", e.what());
 	}
+
+	try {
+	     clips_rest_api_   = std::make_unique<ClipsRestApi>(clips_.get(),
+                                                            clips_mutex_,
+                                                            rest_api_manager_,
+                                                            logger_.get());
+	     //clips_rest_api_->init();
+		//clips_rest_api_->start();
+	} catch (Exception &e) {
+         throw;
+	}
+
+
 }
 
 /** Destructor. */
@@ -394,7 +409,7 @@ LLSFRefBox::~LLSFRefBox()
      delete service_browser_;
 #endif
 
-	//std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+     //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
 	{
 		fawkes::MutexLocker lock(&clips_mutex_);
 		clips_->assert_fact("(finalize)");

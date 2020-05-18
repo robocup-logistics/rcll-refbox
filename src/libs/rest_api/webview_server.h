@@ -56,7 +56,6 @@ class WebviewStaticRequestProcessor;
 class WebviewRESTRequestProcessor;
 class WebviewServiceBrowseHandler;
 class WebviewUserVerifier;
-class ClipsRestApi;
 class Configuration;
 class Logger;
 
@@ -67,8 +66,7 @@ public:
 	              fawkes::NetworkNameResolver *nnresolver,
 	              fawkes::ServicePublisher *   service_publisher,
 	              fawkes::ServiceBrowser *     service_browser,
-	              fawkes::Mutex &              clips_mutex,
-	              CLIPS::Environment *         env,
+	              fawkes::WebviewRestApiManager *  rest_api_manager,
 	              Configuration *              config,
 	              Logger *                     logger);
 	~WebviewServer();

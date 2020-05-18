@@ -29,7 +29,7 @@ HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 LIBS_llsf_refbox = stdc++ stdc++fs llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
 		   llsfrbutils llsf_protobuf_comm llsf_protobuf_clips mps_comm \
-		   llsf_mps_placing_clips llsfrbrestapi
+		   llsf_mps_placing_clips llsfrbwebview llsfrbrestapi llsfrb_clips_rest_api
 
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
