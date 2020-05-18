@@ -97,10 +97,10 @@ else
 endif
 
 ifeq ($(OBJSSUBMAKE),1)
-  ifneq ($(WARN_TARGETS),)
-all: $(WARN_TARGETS)
-  endif
-.PHONY: warning_libmicrohttpd warning_tf warning_jpeg warning_apr_util warning_cpp11 warning_cpp17 warning_rapidjson $(WARN_TARGETS_BOOST)
+  ifneq ($(WARN_TARGETS)$(WARN_TARGETS_BOOST),)
+all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
+endif
+.PHONY: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
 
 warning_libmicrohttpd:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Omitting webview plugin$(TNORMAL) (libmicrohttpd not installed)"
