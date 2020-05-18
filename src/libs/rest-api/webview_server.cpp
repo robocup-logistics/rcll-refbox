@@ -60,13 +60,13 @@ using namespace fawkes;
  */
 namespace llsfrb {
 
-WebviewServer::WebviewServer(bool                         enable_tp,
-                             fawkes::NetworkNameResolver *nnresolver,
-                             fawkes::ServicePublisher *   service_publisher,
-                             fawkes::ServiceBrowser *     service_browser,
-                             fawkes::WebviewRestApiManager *  rest_api_manager,
-                             Configuration *              config,
-                             Logger *                     logger)
+WebviewServer::WebviewServer(bool                           enable_tp,
+                             fawkes::NetworkNameResolver *  nnresolver,
+                             fawkes::ServicePublisher *     service_publisher,
+                             fawkes::ServiceBrowser *       service_browser,
+                             fawkes::WebviewRestApiManager *rest_api_manager,
+                             Configuration *                config,
+                             Logger *                       logger)
 : fawkes::Thread("WebviewServer", Thread::OPMODE_CONTINUOUS)
 {
 	cfg_use_thread_pool_ = enable_tp;
@@ -81,8 +81,8 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 	config_            = config;
 	logger_            = logger;
 
-	url_manager_      = new WebUrlManager();
-	request_manager_  = new WebRequestManager();
+	webview_url_manager_     = new WebUrlManager();
+	webview_request_manager_ = new WebRequestManager();
 }
 
 WebviewServer::~WebviewServer()
@@ -130,7 +130,7 @@ WebviewServer::init()
 	webview_service_->add_txt("refboxver=%u.%u.%u", 0, 0, 0);
 	service_browse_handler_ = new WebviewServiceBrowseHandler(logger_, webview_service_);
 
-	dispatcher_ = new WebRequestDispatcher(url_manager_);
+	dispatcher_ = new WebRequestDispatcher(webview_url_manager_);
 
 	try {
 		webserver_ = new WebServer(cfg_port_, dispatcher_, logger_);
@@ -144,21 +144,24 @@ WebviewServer::init()
 			webserver_->setup_thread_pool(cfg_num_threads_);
 		}
 
+		webserver_->setup_request_manager(webview_request_manager_);
+
 	} catch (Exception &e) {
 		delete webview_service_;
 		delete service_browse_handler_;
 		delete dispatcher_;
 		throw;
 	}
-	rest_processor_ = new WebviewRESTRequestProcessor(url_manager_, rest_api_manager_, logger_);
+	rest_processor_ =
+	  new WebviewRESTRequestProcessor(webview_url_manager_, rest_api_manager_, logger_);
 
 	try {
 		cfg_explicit_404_ = config_->get_strings("/webview/explicit-404");
 		for (const auto &u : cfg_explicit_404_) {
-			url_manager_->add_handler(WebRequest::METHOD_GET,
-			                          u,
-			                          std::bind(&WebviewServer::produce_404, this),
-			                          10000);
+			webview_url_manager_->add_handler(WebRequest::METHOD_GET,
+			                                  u,
+			                                  std::bind(&WebviewServer::produce_404, this),
+			                                  10000);
 		}
 	} catch (Exception &e) {
 	} // ignored, no explicit 404
@@ -179,13 +182,11 @@ WebviewServer::init()
 
 	service_publisher_->publish_service(webview_service_);
 	service_browser_->watch_service("_http._tcp", service_browse_handler_);
-
 }
 
 void
 WebviewServer::finalize()
 {
-
 	try {
 		service_publisher_->unpublish_service(webview_service_);
 	} catch (Exception &e) {
@@ -196,7 +197,7 @@ WebviewServer::finalize()
 	} // ignored, can happen if avahi-daemon not running
 
 	for (const auto &u : cfg_explicit_404_) {
-		url_manager_->remove_handler(WebRequest::METHOD_GET, u);
+		webview_url_manager_->remove_handler(WebRequest::METHOD_GET, u);
 	}
 
 	delete webserver_;
@@ -208,8 +209,8 @@ WebviewServer::finalize()
 	delete rest_processor_;
 	dispatcher_ = NULL;
 
-	delete url_manager_;
-	delete request_manager_;
+	delete webview_url_manager_;
+	delete webview_request_manager_;
 }
 
 void

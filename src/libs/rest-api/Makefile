@@ -60,6 +60,10 @@ ifeq ($(HAVE_BOOST_LIBS)$(HAVE_LIBMICROHTTPD),11)
     CFLAGS  += -DHAVE_REST_APIS $(CFLAGS_CPP17)  $(CFLAGS_RAPIDJSON)
     LDFLAGS += $(LDFLAGS_CPP17) $(LDFLAGS_RAPIDJSON)
 
+    OBJS_libllsfrbrestapi += clips-rest-api/clips-rest-api.o \
+                   $(patsubst %.cpp,%.o,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*-rest-api/model/*.cpp))))
+
+
   else
     ifneq ($(HAVE_CPP17),1)
        WARN_TARGETS += warning_cpp17

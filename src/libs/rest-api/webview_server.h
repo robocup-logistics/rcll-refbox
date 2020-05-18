@@ -52,10 +52,8 @@ class ServiceBrowser;
 } // namespace fawkes
 
 namespace llsfrb {
-class WebviewStaticRequestProcessor;
 class WebviewRESTRequestProcessor;
 class WebviewServiceBrowseHandler;
-class WebviewUserVerifier;
 class Configuration;
 class Logger;
 
@@ -91,11 +89,8 @@ private:
 	fawkes::WebServer *           webserver_;
 	fawkes::WebRequestDispatcher *dispatcher_;
 
-	WebviewStaticRequestProcessor *static_processor_;
 	WebviewRESTRequestProcessor *  rest_processor_;
 	WebviewServiceBrowseHandler *  service_browse_handler_;
-	WebviewUserVerifier *          user_verifier_;
-	ClipsRestApi *                 clips_rest_api_;
 
 	unsigned int             cfg_port_;
 	bool                     cfg_use_ipv4_;
@@ -107,9 +102,9 @@ private:
 	fawkes::NetworkService *webview_service_;
 
 	//From fawkes::WebviewAspect
-	fawkes::WebUrlManager *        url_manager_;
-	fawkes::WebRequestManager *    request_manager_;
-	fawkes::WebviewRestApiManager *rest_api_manager_;
+	fawkes::WebUrlManager *          webview_url_manager_;
+	fawkes::WebRequestManager *      webview_request_manager_;
+	fawkes::WebviewRestApiManager *  rest_api_manager_;
 
 	//From fawkes::NetworkAspect
 	fawkes::NetworkNameResolver *nnresolver_;

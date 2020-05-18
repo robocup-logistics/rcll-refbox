@@ -38,6 +38,7 @@
 #include "refbox.h"
 
 #include "clips_logger.h"
+#include "rest-api/clips-rest-api/clips-rest-api.h"
 
 #include <config/yaml.h>
 #include <core/threading/mutex.h>
@@ -51,8 +52,8 @@
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
-#include <rest-api/webview_server.h>
 #include <webview/rest_api_manager.h>
+#include <rest-api/webview_server.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
