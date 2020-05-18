@@ -106,8 +106,8 @@ WebviewServer::init()
 	service_browse_handler_ = NULL;
 	dispatcher_             = NULL;
 
-	cfg_use_ipv4_ = true;
-	cfg_use_ipv6_ = false;
+	cfg_use_ipv4_ = config_->get_bool("/webview/network/ipv4/enable");
+	cfg_use_ipv6_ = config_->get_bool("/webview/network/ipv6/enable");
 
 	bool cfg_cors_allow_all = false;
 	try {

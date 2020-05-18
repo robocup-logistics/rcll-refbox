@@ -258,3 +258,18 @@ webview:
   explicit-404:
     - /metrics
     - /xmlrpc
+
+  network:
+
+    # Enable or disable IPv4 or IPv6 server port
+
+    # Set "listen" value to bind to a specific IP address of the
+    # host, rather than to "any" address, example shows how to bind
+    # for connections from the local host only
+    ipv4:
+      enable: true
+      # listen: !ipv4 127.0.0.1
+
+    ipv6:
+      enable: true
+      # listen: !ipv6 "::1"
