@@ -105,7 +105,6 @@ WebviewServiceBrowseHandler::service_added(const char *            name,
 					                   host_name,
 					                   port);
 					service_list_[name] = std::move(s);
-
 				}
 				break;
 			}

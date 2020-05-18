@@ -24,9 +24,6 @@
 
 #include <clips/clips.h>
 #include <core/threading/mutex_locker.h>
-#include <webview/rest_api_manager.h>
-#include <webview/rest_api.h>
-
 
 #include <type_traits>
 using namespace fawkes;
@@ -38,92 +35,57 @@ using namespace fawkes;
 
 namespace llsfrb {
 /** Constructor. */
-ClipsRestApi::ClipsRestApi(CLIPS::Environment *           env,
-                           fawkes::Mutex &                env_mutex,
-                           fawkes::WebviewRestApiManager *webview_rest_api_manager,
-                           Logger *                       logger)
-: fawkes::Thread("ClipsRestApi", Thread::OPMODE_CONTINUOUS), env_(env), env_mutex_(env_mutex)
+ClipsRestApi::ClipsRestApi(CLIPS::Environment *env, fawkes::Mutex &env_mutex, Logger *logger)
+: WebviewRestApi("clips", logger), env_(env), env_mutex_(env_mutex), logger_(logger)
 {
-	webview_rest_api_manager_ = webview_rest_api_manager;
-	logger_                   = logger;
+	add_handler<WebviewRestArray<Environment>>(WebRequest::METHOD_GET,
+	                                           "/",
+	                                           std::bind(&ClipsRestApi::cb_list_environments, this));
+	add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
+	                                    "/facts",
+	                                    std::bind(&ClipsRestApi::cb_get_facts,
+	                                              this,
+	                                              std::placeholders::_1));
+	add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
+	                                    "/facts/{tmpl-name}",
+	                                    std::bind(&ClipsRestApi::cb_get_facts_by_tmpl_and_slots,
+	                                              this,
+	                                              std::placeholders::_1));
 
-	logger_->log_info("ClipsRestApi", "Initializing thread");
-	rest_api_ = std::make_unique<WebviewRestApi>("clips", logger_);
-
-	rest_api_->add_handler<WebviewRestArray<Environment>>(
-	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
-	rest_api_->add_handler<WebviewRestArray<Fact>>(WebRequest::METHOD_GET,
-	                                               "/facts",
-	                                               std::bind(&ClipsRestApi::cb_get_facts,
-	                                                         this,
-	                                                         std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<Fact>>(
-	  WebRequest::METHOD_GET,
-	  "/facts/{tmpl-name}",
-	  std::bind(&ClipsRestApi::cb_get_facts_by_tmpl_and_slots, this, std::placeholders::_1));
-
-	//	rest_api_->add_handler<WebviewRestArray<Machine>>(
-	//	  WebRequest::METHOD_GET, "/machines",
-	//	  std::bind(&ClipsRestApi::cb_get_tmpl<Machine>,this, std::placeholders::_1,"machine"));
-	//	rest_api_->add_handler<WebviewRestArray<Order>>(
-	//	  WebRequest::METHOD_GET, "/orders",
-	//	  std::bind(&ClipsRestApi::cb_get_tmpl<Order>,this, std::placeholders::_1,"order"));
-
-	rest_api_->add_handler<WebviewRestArray<Machine>>(WebRequest::METHOD_GET,
-	                                                  "/machines",
-	                                                  std::bind(&ClipsRestApi::cb_get_machines,
-	                                                            this,
-	                                                            std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<Order>>(WebRequest::METHOD_GET,
-	                                                "/orders",
-	                                                std::bind(&ClipsRestApi::cb_get_orders,
-	                                                          this,
-	                                                          std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<Robot>>(WebRequest::METHOD_GET,
-	                                                "/robots",
-	                                                std::bind(&ClipsRestApi::cb_get_robots,
-	                                                          this,
-	                                                          std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<GameState>>(WebRequest::METHOD_GET,
-	                                                    "/game-state",
-	                                                    std::bind(&ClipsRestApi::cb_get_game_state,
-	                                                              this,
-	                                                              std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<RingSpec>>(WebRequest::METHOD_GET,
-	                                                   "/ring-spec",
-	                                                   std::bind(&ClipsRestApi::cb_get_ring_spec,
-	                                                             this,
-	                                                             std::placeholders::_1));
-	rest_api_->add_handler<WebviewRestArray<Points>>(WebRequest::METHOD_GET,
-	                                                 "/points",
-	                                                 std::bind(&ClipsRestApi::cb_get_points,
-	                                                           this,
-	                                                           std::placeholders::_1));
-
-	webview_rest_api_manager_->register_api(rest_api_.get());
-
-
+	add_handler<WebviewRestArray<Machine>>(WebRequest::METHOD_GET,
+	                                       "/machines",
+	                                       std::bind(&ClipsRestApi::cb_get_machines,
+	                                                 this,
+	                                                 std::placeholders::_1));
+	add_handler<WebviewRestArray<Order>>(WebRequest::METHOD_GET,
+	                                     "/orders",
+	                                     std::bind(&ClipsRestApi::cb_get_orders,
+	                                               this,
+	                                               std::placeholders::_1));
+	add_handler<WebviewRestArray<Robot>>(WebRequest::METHOD_GET,
+	                                     "/robots",
+	                                     std::bind(&ClipsRestApi::cb_get_robots,
+	                                               this,
+	                                               std::placeholders::_1));
+	add_handler<WebviewRestArray<GameState>>(WebRequest::METHOD_GET,
+	                                         "/game-state",
+	                                         std::bind(&ClipsRestApi::cb_get_game_state,
+	                                                   this,
+	                                                   std::placeholders::_1));
+	add_handler<WebviewRestArray<RingSpec>>(WebRequest::METHOD_GET,
+	                                        "/ring-spec",
+	                                        std::bind(&ClipsRestApi::cb_get_ring_spec,
+	                                                  this,
+	                                                  std::placeholders::_1));
+	add_handler<WebviewRestArray<Points>>(WebRequest::METHOD_GET,
+	                                      "/points",
+	                                      std::bind(&ClipsRestApi::cb_get_points,
+	                                                this,
+	                                                std::placeholders::_1));
 }
 
 /** Destructor. */
 ClipsRestApi::~ClipsRestApi()
-{
-	webview_rest_api_manager_->unregister_api(rest_api_.get());
-}
-
-void
-ClipsRestApi::init()
-{
-}
-
-void
-ClipsRestApi::finalize()
-{
-
-}
-
-void
-ClipsRestApi::loop()
 {
 }
 

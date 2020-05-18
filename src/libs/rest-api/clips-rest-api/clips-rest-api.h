@@ -45,24 +45,18 @@ class WebviewRestParams;
 class WebviewRestApi;
 } // namespace fawkes
 
-
 using namespace fawkes;
 namespace llsfrb {
 
 class Logger;
 
-class ClipsRestApi : public fawkes::Thread
+class ClipsRestApi : public WebviewRestApi
 {
 public:
 	ClipsRestApi(CLIPS::Environment *           env,
 	             fawkes::Mutex &                env_mutex,
-	             fawkes::WebviewRestApiManager *webview_rest_api_manager,
 	             Logger *                       logger);
 	~ClipsRestApi();
-
-	virtual void init();
-	virtual void loop();
-	virtual void finalize();
 
 private:
 	fawkes::WebviewRestArray<Environment> cb_list_environments();
@@ -88,8 +82,6 @@ private:
 	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name, fawkes::WebviewRestParams &params);
 
 private:
-	fawkes::WebviewRestApiManager *webview_rest_api_manager_;
-     std::unique_ptr<fawkes::WebviewRestApi>        rest_api_;
 	CLIPS::Environment *           env_;
 
 	fawkes::Mutex &env_mutex_;

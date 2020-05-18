@@ -367,30 +367,20 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
      try {
 		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
 		                                                           nnresolver_.get(),
-		                                                           service_publisher_,
-		                                                           service_browser_,
+		                                                           service_publisher_.get(),
+		                                                           service_browser_.get(),
 		                                                           rest_api_manager_,
 		                                                           config_.get(),
 		                                                           logger_.get());
 		rest_api_thread_->init();
 		rest_api_thread_->start();
-		logger_->log_info("RefBox", " RESTapi server started ");
+
+		clips_rest_api_   = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
+		rest_api_manager_->register_api(clips_rest_api_.get());
 	} catch (Exception &e) {
 		logger_->log_info("RefBox", "Could not start RESTapi");
 		logger_->log_error("Exception: ", e.what());
 	}
-
-	try {
-	     clips_rest_api_   = std::make_unique<ClipsRestApi>(clips_.get(),
-                                                            clips_mutex_,
-                                                            rest_api_manager_.get(),
-                                                            logger_.get());
-	     //clips_rest_api_->init();
-		//clips_rest_api_->start();
-	} catch (Exception &e) {
-         throw;
-	}
-
 
 }
 
@@ -402,6 +392,7 @@ LLSFRefBox::~LLSFRefBox()
 	rest_api_thread_->cancel();
 	rest_api_thread_->join();
 
+	rest_api_manager_->unregister_api(clips_rest_api_.get());
 #ifdef HAVE_AVAHI
 	avahi_thread_.cancel();
 	avahi_thread_.join();
