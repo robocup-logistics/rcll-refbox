@@ -44,16 +44,7 @@ ClipsRestApi::ClipsRestApi(CLIPS::Environment *           env,
 {
 	webview_rest_api_manager_ = webview_rest_api_manager;
 	logger_                   = logger;
-}
 
-/** Destructor. */
-ClipsRestApi::~ClipsRestApi()
-{
-}
-
-void
-ClipsRestApi::init()
-{
 	logger_->log_info("ClipsRestApi", "Initializing thread");
 	rest_api_ = new WebviewRestApi("clips", logger_);
 
@@ -108,13 +99,26 @@ ClipsRestApi::init()
 	                                                           std::placeholders::_1));
 
 	webview_rest_api_manager_->register_api(rest_api_);
+
+
+}
+
+/** Destructor. */
+ClipsRestApi::~ClipsRestApi()
+{
+	webview_rest_api_manager_->unregister_api(rest_api_);
+	delete rest_api_;
+}
+
+void
+ClipsRestApi::init()
+{
 }
 
 void
 ClipsRestApi::finalize()
 {
-	webview_rest_api_manager_->unregister_api(rest_api_);
-	delete rest_api_;
+
 }
 
 void
