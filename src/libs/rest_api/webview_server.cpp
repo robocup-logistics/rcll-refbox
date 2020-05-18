@@ -109,6 +109,10 @@ WebviewServer::init()
 	cfg_use_ipv4_ = config_->get_bool("/webview/network/ipv4/enable");
 	cfg_use_ipv6_ = config_->get_bool("/webview/network/ipv6/enable");
 
+	if (cfg_use_thread_pool_) {
+		cfg_num_threads_ = config_->get_uint("/webview/thread-pool/num-threads");
+	}
+
 	bool cfg_cors_allow_all = false;
 	try {
 		cfg_cors_allow_all = config_->get_bool("/webview/cors/allow/all");
@@ -140,6 +144,9 @@ WebviewServer::init()
 		  .setup_cors(cfg_cors_allow_all, std::move(cfg_cors_origins), cfg_cors_max_age);
 
 		webserver_->setup_request_manager(request_manager_);
+		if (cfg_use_thread_pool_) {
+			webserver_->setup_thread_pool(cfg_num_threads_);
+		}
 
 	} catch (Exception &e) {
 		delete webview_service_;

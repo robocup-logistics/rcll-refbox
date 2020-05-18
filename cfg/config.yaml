@@ -245,7 +245,7 @@ webview:
   # Using a thread pool allows for the concurrent processing of
   # incoming requests and should generally be enabled.
   thread-pool:
-    enable: false
+    enable: true
     num-threads: 8
 
   # For the given URLs, a handler will be configured that captures

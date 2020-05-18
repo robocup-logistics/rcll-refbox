@@ -103,6 +103,7 @@ private:
 	bool                     cfg_use_ipv4_;
 	bool                     cfg_use_ipv6_;
 	bool                     cfg_use_thread_pool_;
+	unsigned int             cfg_num_threads_;
 	std::vector<std::string> cfg_explicit_404_;
 
 	fawkes::NetworkService *webview_service_;
