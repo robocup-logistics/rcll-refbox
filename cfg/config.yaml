@@ -220,6 +220,17 @@ webview:
   # to force proper reloads each time with fresh data.
   client_side_caching: false
 
+
+  # cross-origin resource sharing (CORS)
+  # This concerns requests where the web app does not originate from
+  # the same server as the URL requested. An example is running the
+  # webview frontend locally in development mode or to access multiple
+  # robots from one interface.
+  #
+  # Modern browsers will only process resources if the server allows
+  # access through the Access-Control-Allow-Origin header.
+  # cf https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+  # or https://enable-cors.org/
   cors:
     allow:
       # Allow all access, sets header to '*'
