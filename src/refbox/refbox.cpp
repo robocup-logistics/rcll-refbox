@@ -705,7 +705,7 @@ LLSFRefBox::clips_mps_reset(std::string machine)
 {
 	logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
 
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -736,7 +736,7 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 {
 	logger_->log_info("MPS", "Delivering on %s", machine.c_str());
 
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -815,29 +815,29 @@ LLSFRefBox::clips_mps_move_conveyor(std::string machine,
                                     std::string goal_position,
                                     std::string conveyor_direction /*= "FORWARD"*/)
 {
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
-	Machine::MPSSensor goal;
+	llsfrb::mps_comm::Machine::MPSSensor goal;
 	if (goal_position == "INPUT") {
-		goal = Machine::MPSSensor::INPUT;
+		goal = llsfrb::mps_comm::Machine::MPSSensor::INPUT;
 	} else if (goal_position == "MIDDLE") {
-		goal = Machine::MPSSensor::MIDDLE;
+		goal = llsfrb::mps_comm::Machine::MPSSensor::MIDDLE;
 	} else if (goal_position == "OUTPUT") {
-		goal = Machine::MPSSensor::OUTPUT;
+		goal = llsfrb::mps_comm::Machine::MPSSensor::OUTPUT;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor position %s", goal_position.c_str());
 		return;
 	}
-	Machine::ConveyorDirection direction;
+	llsfrb::mps_comm::Machine::ConveyorDirection direction;
 	if (conveyor_direction == "FORWARD") {
-		direction = Machine::ConveyorDirection::FORWARD;
+		direction = llsfrb::mps_comm::Machine::ConveyorDirection::FORWARD;
 	} else if (conveyor_direction == "BACKWARD") {
-		direction = Machine::ConveyorDirection::BACKWARD;
+		direction = llsfrb::mps_comm::Machine::ConveyorDirection::BACKWARD;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor direction %s", conveyor_direction.c_str());
 		return;
@@ -877,7 +877,7 @@ LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::str
 	//logger_->log_info("MPS", "Set light %s: %s to %s",
 	//		    machine.c_str(), color.c_str(), state.c_str());
 
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -928,7 +928,7 @@ LLSFRefBox::clips_mps_set_lights(std::string machine,
 void
 LLSFRefBox::clips_mps_reset_lights(std::string machine)
 {
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
