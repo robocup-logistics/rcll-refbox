@@ -218,7 +218,7 @@ webview:
 
   # True to allow client side caching. Typically you want this disabled
   # to force proper reloads each time with fresh data.
-  client_side_caching: true
+  client_side_caching: false
 
   cors:
     allow:
