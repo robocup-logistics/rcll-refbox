@@ -223,9 +223,9 @@ private: // members
 	fawkes::AvahiThread                     avahi_thread_;
 	std::unique_ptr<fawkes::NetworkService> refbox_service_;
 #endif
-	fawkes::WebviewRestApiManager *rest_api_manager_;
-	std::unique_ptr<WebviewServer> rest_api_thread_;
-	std::unique_ptr<ClipsRestApi>  clips_rest_api_;
+	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
+	std::unique_ptr<WebviewServer>                 rest_api_thread_;
+	std::unique_ptr<ClipsRestApi>                  clips_rest_api_;
 
 	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
 	fawkes::ServicePublisher *                   service_publisher_;

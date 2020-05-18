@@ -362,7 +362,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	nnresolver_        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
 
-	rest_api_manager_ = new WebviewRestApiManager();
+	rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
 
      try {
 		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
@@ -383,7 +383,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	try {
 	     clips_rest_api_   = std::make_unique<ClipsRestApi>(clips_.get(),
                                                             clips_mutex_,
-                                                            rest_api_manager_,
+                                                            rest_api_manager_.get(),
                                                             logger_.get());
 	     //clips_rest_api_->init();
 		//clips_rest_api_->start();

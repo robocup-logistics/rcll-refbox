@@ -31,6 +31,9 @@
 /** Container to return array via REST.
  * @author Tim Niemueller
  */
+
+namespace fawkes {
+
 template <class M>
 class WebviewRestArray
 {
@@ -138,4 +141,5 @@ private:
 	std::vector<M> items_;
 };
 
+} // namespace fawkes
 #endif

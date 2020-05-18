@@ -31,7 +31,6 @@
 #include "model/RingSpec.h"
 #include "model/Robot.h"
 
-#include <core/threading/thread.h>
 #include <core/utils/lockptr.h>
 #include <webview/rest_api.h>
 #include <webview/rest_array.h>
@@ -41,8 +40,13 @@
 namespace fawkes {
 //from fawkes::WebviewAspect
 class WebviewRestApiManager;
+//class WebviewRestArray;
+class WebviewRestParams;
+class WebviewRestApi;
 } // namespace fawkes
 
+
+using namespace fawkes;
 namespace llsfrb {
 
 class Logger;
@@ -61,17 +65,17 @@ public:
 	virtual void finalize();
 
 private:
-	WebviewRestArray<Environment> cb_list_environments();
-	WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Fact>        cb_get_facts_by_tmpl_and_slots(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Machine>     cb_get_machines(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Order>       cb_get_orders(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Robot>       cb_get_robots(fawkes::WebviewRestParams &params);
-	WebviewRestArray<GameState>   cb_get_game_state(fawkes::WebviewRestParams &params);
-	WebviewRestArray<RingSpec>    cb_get_ring_spec(fawkes::WebviewRestParams &params);
-	WebviewRestArray<Points>      cb_get_points(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<Environment> cb_list_environments();
+	fawkes::WebviewRestArray<Fact>        cb_get_facts(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<Fact> cb_get_facts_by_tmpl_and_slots(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<Machine>   cb_get_machines(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<Order>     cb_get_orders(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<Robot>     cb_get_robots(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<GameState> cb_get_game_state(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<RingSpec>  cb_get_ring_spec(fawkes::WebviewRestParams &params);
+	fawkes::WebviewRestArray<Points>    cb_get_points(fawkes::WebviewRestParams &params);
 	template <typename T>
-	WebviewRestArray<T> cb_get_tmpl(fawkes::WebviewRestParams &params, std::string tmpl_name);
+	fawkes::WebviewRestArray<T> cb_get_tmpl(fawkes::WebviewRestParams &params, std::string tmpl_name);
 
 	Fact      gen_fact(CLIPS::Fact::pointer &fact, bool formatted);
 	Machine   gen_machine(CLIPS::Fact::pointer &fact);
@@ -85,7 +89,7 @@ private:
 
 private:
 	fawkes::WebviewRestApiManager *webview_rest_api_manager_;
-	fawkes::WebviewRestApi *       rest_api_;
+     std::unique_ptr<fawkes::WebviewRestApi>        rest_api_;
 	CLIPS::Environment *           env_;
 
 	fawkes::Mutex &env_mutex_;

@@ -26,9 +26,9 @@
 #include <core/threading/thread.h>
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
-
 namespace CLIPS {
 class Environment;
 }
@@ -64,7 +64,7 @@ public:
 	              fawkes::NetworkNameResolver *nnresolver,
 	              fawkes::ServicePublisher *   service_publisher,
 	              fawkes::ServiceBrowser *     service_browser,
-	              fawkes::WebviewRestApiManager *  rest_api_manager,
+	              std::shared_ptr<fawkes::WebviewRestApiManager>  rest_api_manager,
 	              Configuration *              config,
 	              Logger *                     logger);
 	~WebviewServer();
@@ -99,13 +99,10 @@ private:
 	unsigned int             cfg_num_threads_;
 	std::vector<std::string> cfg_explicit_404_;
 
-	fawkes::NetworkService *webview_service_;
-
 	//From fawkes::WebviewAspect
-	fawkes::WebUrlManager *          webview_url_manager_;
-	fawkes::WebRequestManager *      webview_request_manager_;
-	fawkes::WebviewRestApiManager *  rest_api_manager_;
-
+	std::unique_ptr<fawkes::WebUrlManager>         webview_url_manager_;
+	std::unique_ptr<fawkes::WebRequestManager>     webview_request_manager_;
+	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
 	//From fawkes::NetworkAspect
 	fawkes::NetworkNameResolver *nnresolver_;
 	fawkes::ServicePublisher *   service_publisher_;

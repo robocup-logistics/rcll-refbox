@@ -28,7 +28,9 @@
 #include <netcomm/service_discovery/service.h>
 
 #include <map>
+#include <memory>
 #include <string>
+
 
 namespace llsfrb {
 class Logger;
@@ -56,7 +58,7 @@ public:
 	/** A map of services.
    * Maps service names to NetworkService instances describing the service
    * in more detail. */
-	typedef std::map<std::string, fawkes::NetworkService *> ServiceList;
+	typedef std::map<std::string, std::unique_ptr<fawkes::NetworkService>> ServiceList;
 
 	ServiceList &service_list();
 

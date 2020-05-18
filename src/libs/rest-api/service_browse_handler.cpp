@@ -51,9 +51,6 @@ WebviewServiceBrowseHandler::WebviewServiceBrowseHandler(Logger *               
 
 WebviewServiceBrowseHandler::~WebviewServiceBrowseHandler()
 {
-	for (ServiceList::iterator s = service_list_.begin(); s != service_list_.end(); ++s) {
-		delete s->second;
-	}
 	service_list_.clear();
 }
 
@@ -88,7 +85,6 @@ WebviewServiceBrowseHandler::service_added(const char *            name,
                                            int                     flags)
 {
 	if (service_list_.find(name) != service_list_.end()) {
-		delete service_list_[name];
 		service_list_.erase(name);
 	}
 	// Check for fawkesver txt record
@@ -98,8 +94,8 @@ WebviewServiceBrowseHandler::service_added(const char *            name,
 			std::string key = i->substr(0, eqind);
 			std::string val = i->substr(eqind + 1);
 			if (key == "refboxver") {
-				NetworkService *s =
-				  new NetworkService(name, type, domain, host_name, port, addr, addr_size, txt);
+				std::unique_ptr<NetworkService> s = std::make_unique<NetworkService>(
+				  name, type, domain, host_name, port, addr, addr_size, txt);
 
 				if (!(*s == *webview_service_)) {
 					logger_->log_debug("WebviewServiceBrowseHandler",
@@ -108,9 +104,8 @@ WebviewServiceBrowseHandler::service_added(const char *            name,
 					                   type,
 					                   host_name,
 					                   port);
-					service_list_[name] = s;
-				} else {
-					delete s;
+					service_list_[name] = std::move(s);
+
 				}
 				break;
 			}
@@ -122,7 +117,6 @@ void
 WebviewServiceBrowseHandler::service_removed(const char *name, const char *type, const char *domain)
 {
 	if (service_list_.find(name) != service_list_.end()) {
-		delete service_list_[name];
 		service_list_.erase(name);
 	}
 	logger_->log_debug("WebviewServiceBrowseHandler", "Service %s.%s has been removed", name, type);

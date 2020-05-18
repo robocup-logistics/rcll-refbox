@@ -60,13 +60,13 @@ using namespace fawkes;
  */
 namespace llsfrb {
 
-WebviewServer::WebviewServer(bool                           enable_tp,
-                             fawkes::NetworkNameResolver *  nnresolver,
-                             fawkes::ServicePublisher *     service_publisher,
-                             fawkes::ServiceBrowser *       service_browser,
-                             fawkes::WebviewRestApiManager *rest_api_manager,
-                             Configuration *                config,
-                             Logger *                       logger)
+WebviewServer::WebviewServer(bool                         enable_tp,
+                             fawkes::NetworkNameResolver *nnresolver,
+                             fawkes::ServicePublisher *   service_publisher,
+                             fawkes::ServiceBrowser *     service_browser,
+                             std::shared_ptr<fawkes::WebviewRestApiManager>  rest_api_manager,
+                             Configuration *              config,
+                             Logger *                     logger)
 : fawkes::Thread("WebviewServer", Thread::OPMODE_CONTINUOUS)
 {
 	cfg_use_thread_pool_ = enable_tp;
@@ -74,24 +74,9 @@ WebviewServer::WebviewServer(bool                           enable_tp,
 	if (!enable_tp)
 		set_prepfin_conc_loop(true);
 
-	nnresolver_        = nnresolver;
-	service_publisher_ = service_publisher;
-	service_browser_   = service_browser;
-	rest_api_manager_  = rest_api_manager;
-	config_            = config;
-	logger_            = logger;
+	webview_url_manager_     = std::make_unique<WebUrlManager>();
+	webview_request_manager_ = std::make_unique<WebRequestManager>();
 
-	webview_url_manager_     = new WebUrlManager();
-	webview_request_manager_ = new WebRequestManager();
-}
-
-WebviewServer::~WebviewServer()
-{
-}
-
-void
-WebviewServer::init()
-{
 	logger_->log_info("WebviewServer", "Initializing thread");
 
 	cfg_port_ = config_->get_uint("/webview/port");
@@ -130,7 +115,7 @@ WebviewServer::init()
 	webview_service_->add_txt("refboxver=%u.%u.%u", 0, 0, 0);
 	service_browse_handler_ = new WebviewServiceBrowseHandler(logger_, webview_service_);
 
-	dispatcher_ = new WebRequestDispatcher(webview_url_manager_);
+	dispatcher_ = new WebRequestDispatcher(webview_url_manager_.get());
 
 	try {
 		webserver_ = new WebServer(cfg_port_, dispatcher_, logger_);
@@ -139,12 +124,12 @@ WebviewServer::init()
 		  .setup_ipv(cfg_use_ipv4_, cfg_use_ipv6_)
 		  .setup_cors(cfg_cors_allow_all, std::move(cfg_cors_origins), cfg_cors_max_age);
 
-		webserver_->setup_request_manager(request_manager_);
-		if (cfg_use_thread_pool_) {
+		webserver_->setup_request_manager(webview_request_manager_.get());
+
+          if (cfg_use_thread_pool_) {
 			webserver_->setup_thread_pool(cfg_num_threads_);
 		}
 
-		webserver_->setup_request_manager(webview_request_manager_);
 
 	} catch (Exception &e) {
 		delete webview_service_;
@@ -152,8 +137,7 @@ WebviewServer::init()
 		delete dispatcher_;
 		throw;
 	}
-	rest_processor_ =
-	  new WebviewRESTRequestProcessor(webview_url_manager_, rest_api_manager_, logger_);
+	rest_processor_ = new WebviewRESTRequestProcessor(webview_url_manager_.get(), rest_api_manager_.get(), logger_);
 
 	try {
 		cfg_explicit_404_ = config_->get_strings("/webview/explicit-404");
@@ -209,8 +193,6 @@ WebviewServer::finalize()
 	delete rest_processor_;
 	dispatcher_ = NULL;
 
-	delete webview_url_manager_;
-	delete webview_request_manager_;
 }
 
 void

@@ -25,6 +25,8 @@
 #include <clips/clips.h>
 #include <core/threading/mutex_locker.h>
 #include <webview/rest_api_manager.h>
+#include <webview/rest_api.h>
+
 
 #include <type_traits>
 using namespace fawkes;
@@ -46,7 +48,7 @@ ClipsRestApi::ClipsRestApi(CLIPS::Environment *           env,
 	logger_                   = logger;
 
 	logger_->log_info("ClipsRestApi", "Initializing thread");
-	rest_api_ = new WebviewRestApi("clips", logger_);
+	rest_api_ = std::make_unique<WebviewRestApi>("clips", logger_);
 
 	rest_api_->add_handler<WebviewRestArray<Environment>>(
 	  WebRequest::METHOD_GET, "/", std::bind(&ClipsRestApi::cb_list_environments, this));
@@ -98,7 +100,7 @@ ClipsRestApi::ClipsRestApi(CLIPS::Environment *           env,
 	                                                           this,
 	                                                           std::placeholders::_1));
 
-	webview_rest_api_manager_->register_api(rest_api_);
+	webview_rest_api_manager_->register_api(rest_api_.get());
 
 
 }
@@ -106,8 +108,7 @@ ClipsRestApi::ClipsRestApi(CLIPS::Environment *           env,
 /** Destructor. */
 ClipsRestApi::~ClipsRestApi()
 {
-	webview_rest_api_manager_->unregister_api(rest_api_);
-	delete rest_api_;
+	webview_rest_api_manager_->unregister_api(rest_api_.get());
 }
 
 void
