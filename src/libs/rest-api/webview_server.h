@@ -60,16 +60,17 @@ class Logger;
 class WebviewServer : public fawkes::Thread
 {
 public:
-	WebviewServer(bool                         enable_tp,
-	              fawkes::NetworkNameResolver *nnresolver,
-	              fawkes::ServicePublisher *   service_publisher,
-	              fawkes::ServiceBrowser *     service_browser,
-	              std::shared_ptr<fawkes::WebviewRestApiManager>  rest_api_manager,
-	              Configuration *              config,
-	              Logger *                     logger);
+	WebviewServer(bool                                           enable_tp,
+	              std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager,
+	              std::unique_ptr<fawkes::NetworkNameResolver>   nnresolver,
+	              std::shared_ptr<fawkes::ServicePublisher>      service_publisher,
+	              std::shared_ptr<fawkes::ServiceBrowser>        service_browser,
+	              Configuration *                                config,
+	              Logger *                                       logger);
 	~WebviewServer();
 
 	virtual void loop();
+
 private:
 	void              tls_create(const char *tls_key_file, const char *tls_cert_file);
 	fawkes::WebReply *produce_404();
@@ -86,8 +87,8 @@ private:
 	fawkes::WebServer *           webserver_;
 	fawkes::WebRequestDispatcher *dispatcher_;
 
-	WebviewRESTRequestProcessor *  rest_processor_;
-	WebviewServiceBrowseHandler *  service_browse_handler_;
+	WebviewRESTRequestProcessor *rest_processor_;
+	WebviewServiceBrowseHandler *service_browse_handler_;
 
 	unsigned int             cfg_port_;
 	bool                     cfg_use_ipv4_;
@@ -101,9 +102,9 @@ private:
 	std::unique_ptr<fawkes::WebRequestManager>     webview_request_manager_;
 	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
 	//From fawkes::NetworkAspect
-	fawkes::NetworkNameResolver *nnresolver_;
-	fawkes::ServicePublisher *   service_publisher_;
-	fawkes::ServiceBrowser *     service_browser_;
+	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
+	std::shared_ptr<fawkes::ServicePublisher>    service_publisher_;
+	std::shared_ptr<fawkes::ServiceBrowser>      service_browser_;
 
 	Configuration *config_;
 	Logger *       logger_;

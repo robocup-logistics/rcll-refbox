@@ -31,6 +31,7 @@
 #include <logging/logger.h>
 #include <netcomm/service_discovery/service_browser.h>
 #include <netcomm/service_discovery/service_publisher.h>
+#include <netcomm/utils/resolver.h>
 #include <sys/wait.h>
 #include <utils/misc/string_conversions.h>
 #include <utils/system/file.h>
@@ -39,6 +40,7 @@
 #include <webview/page_reply.h>
 #include <webview/request_dispatcher.h>
 #include <webview/request_manager.h>
+#include <webview/rest_api_manager.h>
 #include <webview/server.h>
 #include <webview/url_manager.h>
 
@@ -60,14 +62,20 @@ using namespace fawkes;
  */
 namespace llsfrb {
 
-WebviewServer::WebviewServer(bool                         enable_tp,
-                             fawkes::NetworkNameResolver *nnresolver,
-                             fawkes::ServicePublisher *   service_publisher,
-                             fawkes::ServiceBrowser *     service_browser,
-                             std::shared_ptr<fawkes::WebviewRestApiManager>  rest_api_manager,
-                             Configuration *              config,
-                             Logger *                     logger)
-: fawkes::Thread("WebviewServer", Thread::OPMODE_CONTINUOUS)
+WebviewServer::WebviewServer(bool                                           enable_tp,
+                             std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager,
+                             std::unique_ptr<fawkes::NetworkNameResolver>   nnresolver,
+                             std::shared_ptr<fawkes::ServicePublisher>      service_publisher,
+                             std::shared_ptr<fawkes::ServiceBrowser>        service_browser,
+                             Configuration *                                config,
+                             Logger *                                       logger)
+: fawkes::Thread("WebviewServer", Thread::OPMODE_CONTINUOUS),
+  rest_api_manager_(rest_api_manager),
+  nnresolver_(std::move(nnresolver)),
+  service_publisher_(service_publisher),
+  service_browser_(service_browser),
+  config_(config),
+  logger_(logger)
 {
 	cfg_use_thread_pool_ = enable_tp;
 
@@ -76,7 +84,6 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 
 	webview_url_manager_     = std::make_unique<WebUrlManager>();
 	webview_request_manager_ = std::make_unique<WebRequestManager>();
-
 
 	logger_->log_info("WebviewServer", "Initializing thread");
 
@@ -112,7 +119,7 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 	}
 
 	webview_service_ =
-	  new NetworkService(nnresolver_, "Refbox Webview on %h", "_http._tcp", cfg_port_);
+	  new NetworkService(nnresolver_.get(), "Refbox Webview on %h", "_http._tcp", cfg_port_);
 	webview_service_->add_txt("refboxver=%u.%u.%u", 0, 0, 0);
 	service_browse_handler_ = new WebviewServiceBrowseHandler(logger_, webview_service_);
 
@@ -127,10 +134,9 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 
 		webserver_->setup_request_manager(webview_request_manager_.get());
 
-          if (cfg_use_thread_pool_) {
+		if (cfg_use_thread_pool_) {
 			webserver_->setup_thread_pool(cfg_num_threads_);
 		}
-
 
 	} catch (Exception &e) {
 		delete webview_service_;
@@ -138,7 +144,8 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 		delete dispatcher_;
 		throw;
 	}
-	rest_processor_ = new WebviewRESTRequestProcessor(webview_url_manager_.get(), rest_api_manager_.get(), logger_);
+	rest_processor_ =
+	  new WebviewRESTRequestProcessor(webview_url_manager_.get(), rest_api_manager_.get(), logger_);
 
 	try {
 		cfg_explicit_404_ = config_->get_strings("/webview/explicit-404");
