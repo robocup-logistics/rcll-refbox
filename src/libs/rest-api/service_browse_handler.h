@@ -31,14 +31,14 @@
 #include <memory>
 #include <string>
 
-
 namespace llsfrb {
 class Logger;
 
 class WebviewServiceBrowseHandler : public fawkes::ServiceBrowseHandler
 {
 public:
-	WebviewServiceBrowseHandler(Logger *logger, fawkes::NetworkService *webview_service);
+	WebviewServiceBrowseHandler(Logger *                                logger,
+	                            std::shared_ptr<fawkes::NetworkService> webview_service);
 	~WebviewServiceBrowseHandler();
 
 	virtual void all_for_now();
@@ -63,9 +63,9 @@ public:
 	ServiceList &service_list();
 
 private:
-	Logger *                logger_;
-	fawkes::NetworkService *webview_service_;
-	ServiceList             service_list_;
+	Logger *                                logger_;
+	std::shared_ptr<fawkes::NetworkService> webview_service_;
+	ServiceList                             service_list_;
 };
 
 } // namespace llsfrb

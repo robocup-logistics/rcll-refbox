@@ -53,9 +53,7 @@ class Logger;
 class ClipsRestApi : public WebviewRestApi
 {
 public:
-	ClipsRestApi(CLIPS::Environment *           env,
-	             fawkes::Mutex &                env_mutex,
-	             Logger *                       logger);
+	ClipsRestApi(CLIPS::Environment *env, fawkes::Mutex &env_mutex, Logger *logger);
 	~ClipsRestApi();
 
 private:
@@ -82,7 +80,7 @@ private:
 	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name, fawkes::WebviewRestParams &params);
 
 private:
-	CLIPS::Environment *           env_;
+	CLIPS::Environment *env_;
 
 	fawkes::Mutex &env_mutex_;
 	Logger *       logger_;

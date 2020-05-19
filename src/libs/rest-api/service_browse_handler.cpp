@@ -41,8 +41,9 @@ using namespace fawkes;
  */
 namespace llsfrb {
 
-WebviewServiceBrowseHandler::WebviewServiceBrowseHandler(Logger *                logger,
-                                                         fawkes::NetworkService *webview_service)
+WebviewServiceBrowseHandler::WebviewServiceBrowseHandler(
+  Logger *                                logger,
+  std::shared_ptr<fawkes::NetworkService> webview_service)
 
 {
 	logger_          = logger;

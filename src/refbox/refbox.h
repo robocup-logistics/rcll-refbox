@@ -53,11 +53,6 @@
 #include <memory>
 #include <unordered_map>
 
-#ifdef HAVE_AVAHI
-#	include <netcomm/dns-sd/avahi_thread.h>
-#	include <netcomm/utils/resolver.h>
-#endif
-
 namespace mps_placing_clips {
 class MPSPlacingGenerator;
 }
@@ -69,9 +64,7 @@ namespace fawkes {
 #ifdef HAVE_AVAHI
 class AvahiThread;
 #endif
-class NetworkNameResolver;
-class ServicePublisher;
-class ServiceBrowser;
+class NetworkService;
 class WebviewRestApiManager;
 } // namespace fawkes
 
@@ -226,10 +219,6 @@ private: // members
 	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
 	std::unique_ptr<WebviewServer>                 rest_api_thread_;
 	std::unique_ptr<ClipsRestApi>                  clips_rest_api_;
-
-	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
-	std::shared_ptr<fawkes::ServicePublisher>    service_publisher_;
-	std::shared_ptr<fawkes::ServiceBrowser>      service_browser_;
 
 #ifdef HAVE_MONGODB
 	bool                                cfg_mongodb_enabled_;

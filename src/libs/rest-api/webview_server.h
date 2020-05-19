@@ -84,11 +84,11 @@ protected:
 	}
 
 private:
-	fawkes::WebServer *           webserver_;
-	fawkes::WebRequestDispatcher *dispatcher_;
-
-	WebviewRESTRequestProcessor *rest_processor_;
-	WebviewServiceBrowseHandler *service_browse_handler_;
+	std::unique_ptr<fawkes::WebServer>            webserver_;
+	std::unique_ptr<fawkes::WebRequestDispatcher> dispatcher_;
+	std::unique_ptr<WebviewRESTRequestProcessor>  rest_processor_;
+	std::unique_ptr<WebviewServiceBrowseHandler>  service_browse_handler_;
+	std::shared_ptr<fawkes::NetworkService>       webview_service_;
 
 	unsigned int             cfg_port_;
 	bool                     cfg_use_ipv4_;

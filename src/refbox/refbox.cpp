@@ -82,14 +82,14 @@ namespace stdfs = std::filesystem;
 #	include <mongodb_log/mongodb_log_logger.h>
 #	include <mongodb_log/mongodb_log_protobuf.h>
 #endif
+
+#include <netcomm/utils/resolver.h>
 #ifdef HAVE_AVAHI
 #	include <netcomm/dns-sd/avahi_thread.h>
-#	include <netcomm/utils/resolver.h>
 #	include <netcomm/service_discovery/service.h>
 #else
 #	include <netcomm/service_discovery/dummy_service_browser.h>
 #	include <netcomm/service_discovery/dummy_service_publisher.h>
-#	include <netcomm/utils/resolver.h>
 #endif
 
 #include <memory>
@@ -345,38 +345,44 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	}
 #endif
 
+	std::shared_ptr<fawkes::ServicePublisher>    service_publisher;
+	std::shared_ptr<fawkes::ServiceBrowser>      service_browser;
+	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver;
+
 #ifdef HAVE_AVAHI
 	unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
 	avahi_thread_            = std::make_shared<AvahiThread>();
-	service_publisher_       = avahi_thread_;
-	service_browser_         = avahi_thread_;
+	service_publisher        = avahi_thread_;
+	service_browser          = avahi_thread_;
 
 	avahi_thread_->start();
-	nnresolver_     = std::make_unique<fawkes::NetworkNameResolver>(avahi_thread_.get());
-	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver_.get(),
+	nnresolver      = std::make_unique<fawkes::NetworkNameResolver>(avahi_thread_.get());
+	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver.get(),
 	                                                           "RefBox on %h",
 	                                                           "_refbox._tcp",
 	                                                           refbox_port);
 	avahi_thread_->publish_service(refbox_service_.get());
 #else
-	service_publisher_ = std::make_shared<fawkes::DummyServicePublisher>();
-	service_browser_   = std::make_shared<fawkes::DummyServiceBrowser>();
-	nnresolver_        = std::make_unique<fawkes::NetworkNameResolver>();
+	service_publisher = std::make_unique<fawkes::DummyServicePublisher>();
+	service_browser   = std::make_unique<fawkes::DummyServiceBrowser>();
+	nnresolver        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
 
 	try {
+		clips_rest_api_ = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
+
 		rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
+		rest_api_manager_->register_api(clips_rest_api_.get());
+
 		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
-		                                                           nnresolver_.get(),
-		                                                           service_publisher_.get(),
-		                                                           service_browser_.get(),
 		                                                           rest_api_manager_,
+		                                                           std::move(nnresolver),
+		                                                           service_publisher,
+		                                                           service_browser,
 		                                                           config_.get(),
 		                                                           logger_.get());
 		rest_api_thread_->start();
 
-		clips_rest_api_ = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
-		rest_api_manager_->register_api(clips_rest_api_.get());
 	} catch (Exception &e) {
 		logger_->log_info("RefBox", "Could not start RESTapi");
 		logger_->log_error("Exception: ", e.what());

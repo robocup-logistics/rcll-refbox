@@ -118,15 +118,18 @@ WebviewServer::WebviewServer(bool                                           enab
 	} catch (Exception &e) {
 	}
 
-	webview_service_ =
-	  new NetworkService(nnresolver_.get(), "Refbox Webview on %h", "_http._tcp", cfg_port_);
+	webview_service_ = std::make_shared<NetworkService>(nnresolver_.get(),
+	                                                    "Refbox Webview on %h",
+	                                                    "_http._tcp",
+	                                                    cfg_port_);
 	webview_service_->add_txt("refboxver=%u.%u.%u", 0, 0, 0);
-	service_browse_handler_ = new WebviewServiceBrowseHandler(logger_, webview_service_);
+	service_browse_handler_ =
+	  std::make_unique<WebviewServiceBrowseHandler>(logger_, webview_service_);
 
-	dispatcher_ = new WebRequestDispatcher(webview_url_manager_.get());
+	dispatcher_ = std::make_unique<WebRequestDispatcher>(webview_url_manager_.get());
 
 	try {
-		webserver_ = new WebServer(cfg_port_, dispatcher_, logger_);
+		webserver_ = std::make_unique<WebServer>(cfg_port_, dispatcher_.get(), logger_);
 
 		(*webserver_)
 		  .setup_ipv(cfg_use_ipv4_, cfg_use_ipv6_)
@@ -139,13 +142,11 @@ WebviewServer::WebviewServer(bool                                           enab
 		}
 
 	} catch (Exception &e) {
-		delete webview_service_;
-		delete service_browse_handler_;
-		delete dispatcher_;
 		throw;
 	}
-	rest_processor_ =
-	  new WebviewRESTRequestProcessor(webview_url_manager_.get(), rest_api_manager_.get(), logger_);
+	rest_processor_ = std::make_unique<WebviewRESTRequestProcessor>(webview_url_manager_.get(),
+	                                                                rest_api_manager_.get(),
+	                                                                logger_);
 
 	try {
 		cfg_explicit_404_ = config_->get_strings("/webview/explicit-404");
@@ -172,18 +173,18 @@ WebviewServer::WebviewServer(bool                                           enab
 	                  cfg_port_,
 	                  afs.c_str());
 
-	service_publisher_->publish_service(webview_service_);
-	service_browser_->watch_service("_http._tcp", service_browse_handler_);
+	service_publisher_->publish_service(webview_service_.get());
+	service_browser_->watch_service("_http._tcp", service_browse_handler_.get());
 }
 
 WebviewServer::~WebviewServer()
 {
 	try {
-		service_publisher_->unpublish_service(webview_service_);
+		service_publisher_->unpublish_service(webview_service_.get());
 	} catch (Exception &e) {
 	} // ignored, can happen if avahi-daemon not running
 	try {
-		service_browser_->unwatch_service("_http._tcp", service_browse_handler_);
+		service_browser_->unwatch_service("_http._tcp", service_browse_handler_.get());
 	} catch (Exception &e) {
 	} // ignored, can happen if avahi-daemon not running
 
@@ -191,13 +192,6 @@ WebviewServer::~WebviewServer()
 		webview_url_manager_->remove_handler(WebRequest::METHOD_GET, u);
 	}
 
-	delete webserver_;
-
-	delete webview_service_;
-	delete service_browse_handler_;
-
-	delete dispatcher_;
-	delete rest_processor_;
 	dispatcher_ = NULL;
 }
 
