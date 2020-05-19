@@ -220,7 +220,7 @@ private: // members
 	llsf_utils::MachineAssignment cfg_machine_assignment_;
 
 #ifdef HAVE_AVAHI
-	fawkes::AvahiThread                     avahi_thread_;
+	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;
 	std::unique_ptr<fawkes::NetworkService> refbox_service_;
 #endif
 	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
@@ -228,8 +228,8 @@ private: // members
 	std::unique_ptr<ClipsRestApi>                  clips_rest_api_;
 
 	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
-	fawkes::ServicePublisher *                   service_publisher_;
-	fawkes::ServiceBrowser *                     service_browser_;
+	std::shared_ptr<fawkes::ServicePublisher>    service_publisher_;
+	std::shared_ptr<fawkes::ServiceBrowser>      service_browser_;
 
 #ifdef HAVE_MONGODB
 	bool                                cfg_mongodb_enabled_;

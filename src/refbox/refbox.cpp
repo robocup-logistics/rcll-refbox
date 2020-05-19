@@ -52,8 +52,8 @@
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
-#include <webview/rest_api_manager.h>
 #include <rest-api/webview_server.h>
+#include <webview/rest_api_manager.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -347,41 +347,41 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 #ifdef HAVE_AVAHI
 	unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
-	service_publisher_       = &avahi_thread_;
-	service_browser_         = &avahi_thread_;
-	avahi_thread_.start();
-	nnresolver_     = std::make_unique<fawkes::NetworkNameResolver>(&avahi_thread_);
+	avahi_thread_            = std::make_shared<AvahiThread>();
+	service_publisher_       = avahi_thread_;
+	service_browser_         = avahi_thread_;
+
+	avahi_thread_->start();
+	nnresolver_     = std::make_unique<fawkes::NetworkNameResolver>(avahi_thread_.get());
 	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver_.get(),
 	                                                           "RefBox on %h",
 	                                                           "_refbox._tcp",
 	                                                           refbox_port);
-	avahi_thread_.publish_service(refbox_service_.get());
+	avahi_thread_->publish_service(refbox_service_.get());
 #else
-	service_publisher_ = new fawkes::DummyServicePublisher();
-	service_browser_   = new fawkes::DummyServiceBrowser();
+	service_publisher_ = std::make_shared<fawkes::DummyServicePublisher>();
+	service_browser_   = std::make_shared<fawkes::DummyServiceBrowser>();
 	nnresolver_        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
 
-	rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
-
-     try {
-		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
-		                                                           nnresolver_.get(),
-		                                                           service_publisher_.get(),
-		                                                           service_browser_.get(),
-		                                                           rest_api_manager_,
-		                                                           config_.get(),
-		                                                           logger_.get());
+	try {
+		rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
+		rest_api_thread_  = std::make_unique<llsfrb::WebviewServer>(false,
+                                                               nnresolver_.get(),
+                                                               service_publisher_.get(),
+                                                               service_browser_.get(),
+                                                               rest_api_manager_,
+                                                               config_.get(),
+                                                               logger_.get());
 		rest_api_thread_->init();
 		rest_api_thread_->start();
 
-		clips_rest_api_   = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
+		clips_rest_api_ = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
 		rest_api_manager_->register_api(clips_rest_api_.get());
 	} catch (Exception &e) {
 		logger_->log_info("RefBox", "Could not start RESTapi");
 		logger_->log_error("Exception: ", e.what());
 	}
-
 }
 
 /** Destructor. */
@@ -394,14 +394,11 @@ LLSFRefBox::~LLSFRefBox()
 
 	rest_api_manager_->unregister_api(clips_rest_api_.get());
 #ifdef HAVE_AVAHI
-	avahi_thread_.cancel();
-	avahi_thread_.join();
-#else
-     delete service_publisher_;
-     delete service_browser_;
+	avahi_thread_->cancel();
+	avahi_thread_->join();
 #endif
 
-     //std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
+	//std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
 	{
 		fawkes::MutexLocker lock(&clips_mutex_);
 		clips_->assert_fact("(finalize)");
