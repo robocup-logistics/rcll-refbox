@@ -366,14 +366,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 	try {
 		rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
-		rest_api_thread_  = std::make_unique<llsfrb::WebviewServer>(false,
-                                                               nnresolver_.get(),
-                                                               service_publisher_.get(),
-                                                               service_browser_.get(),
-                                                               rest_api_manager_,
-                                                               config_.get(),
-                                                               logger_.get());
-		rest_api_thread_->init();
+		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
+		                                                           nnresolver_.get(),
+		                                                           service_publisher_.get(),
+		                                                           service_browser_.get(),
+		                                                           rest_api_manager_,
+		                                                           config_.get(),
+		                                                           logger_.get());
 		rest_api_thread_->start();
 
 		clips_rest_api_ = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());

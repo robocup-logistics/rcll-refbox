@@ -77,6 +77,7 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 	webview_url_manager_     = std::make_unique<WebUrlManager>();
 	webview_request_manager_ = std::make_unique<WebRequestManager>();
 
+
 	logger_->log_info("WebviewServer", "Initializing thread");
 
 	cfg_port_ = config_->get_uint("/webview/port");
@@ -168,8 +169,7 @@ WebviewServer::WebviewServer(bool                         enable_tp,
 	service_browser_->watch_service("_http._tcp", service_browse_handler_);
 }
 
-void
-WebviewServer::finalize()
+WebviewServer::~WebviewServer()
 {
 	try {
 		service_publisher_->unpublish_service(webview_service_);
@@ -192,7 +192,6 @@ WebviewServer::finalize()
 	delete dispatcher_;
 	delete rest_processor_;
 	dispatcher_ = NULL;
-
 }
 
 void

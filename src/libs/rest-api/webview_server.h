@@ -69,10 +69,7 @@ public:
 	              Logger *                     logger);
 	~WebviewServer();
 
-	virtual void init();
-	virtual void finalize();
 	virtual void loop();
-
 private:
 	void              tls_create(const char *tls_key_file, const char *tls_cert_file);
 	fawkes::WebReply *produce_404();
