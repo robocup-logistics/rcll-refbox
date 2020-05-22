@@ -8,8 +8,8 @@
 ;---------------------------------------------------------------------------
 
 (defrule monitor-gamephase                                                     
-    ?gs <- (gamestate (phase ?phase) (state ?state) (game-time ?gt) (teams ?team_cyan ?team_magenta) (prev-phase ?prevphase))             
+    ?gs <- (gamestate (phase ?phase) (state ?state) (game-time ?gt) (teams ?team_cyan ?team_magenta) (prev-phase ?prevphase) (points ?points-cyan ?points-magenta))             
     =>         
     ; whenever the gamestate changes, call signal function to transmit the changes to the connected clients                                                  
-    (ws-push-gamestate (str-cat ?gt) (str-cat ?state) (str-cat ?phase) (str-cat ?prevphase) (str-cat ?team_cyan) (str-cat ?team_magenta))                     
+    (ws-push-gamestate (str-cat ?gt) (str-cat ?state) (str-cat ?phase) (str-cat ?prevphase) (str-cat ?team_cyan) (str-cat ?team_magenta) )                     
 )
