@@ -207,8 +207,18 @@
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (modify ?sf (state (sym-cat (pb-field-value ?p "state"))) (prev-state ?state))
+  (assert (net-SetGameState (sym-cat (pb-field-value ?p "state"))))
 )
+
+(defrule net-proc-SetGameState
+  ?sf <- (gamestate (state ?old-state))
+  ?cmd <- (net-SetGameState ?new-state)
+  =>
+  (retract ?cmd)
+  (printout warn "new state set to the following " ?new-state crlf)
+  (modify ?sf (state ?new-state) (prev-state ?old-state))
+)
+
 
 (defrule net-recv-SetGameState-illegal
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p)
@@ -224,7 +234,15 @@
   ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (modify ?sf (phase (sym-cat (pb-field-value ?p "phase"))) (prev-phase ?phase))
+  (assert (net-SetGamePhase (sym-cat (pb-field-value ?p "phase"))))
+)
+
+(defrule net-proc-SetGamePhase
+  ?sf <- (gamestate (phase ?old-phase))
+  ?cmd <- (net-SetGamePhase ?new-phase)
+  =>
+  (retract ?cmd)
+  (modify ?sf (phase ?new-phase) (prev-phase ?old-phase))
 )
 
 (defrule net-recv-SetGamePhase-illegal
@@ -241,8 +259,17 @@
   ?mf <- (protobuf-msg (type "llsf_msgs.SetTeamName") (ptr ?p) (rcvd-via STREAM))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
+
   (bind ?team-color (sym-cat (pb-field-value ?p "team_color")))
   (bind ?new-team (pb-field-value ?p "team_name"))
+  (assert (net-SetTeamName ?team-color ?new-team))
+)
+
+(defrule net-proc-SetTeamName
+  ?sf <- (gamestate (phase ?phase) (teams $?old-teams))
+  ?cmd <- (net-SetTeamName ?team-color ?new-team)
+  =>
+  (retract ?cmd) ; message will be destroyed after rule completes
   (bind ?new-teams ?old-teams)
   (printout t "Setting team " ?team-color " to " ?new-team crlf)
   (if (eq ?team-color CYAN)
@@ -268,11 +295,20 @@
     then (delayed-do-for-all-facts ((?r robot)) TRUE (retract ?r)))
 )
 
+
 (defrule net-recv-RandomizeField
 	?sf <- (gamestate (phase PRE_GAME|SETUP))
 	?mf <- (protobuf-msg (type "llsf_msgs.RandomizeField") (ptr ?p) (rcvd-via STREAM))
 	=>
 	(retract ?mf)
+	(assert (net-RandomizeField))
+)
+
+(defrule net-proc-RandomizeField
+	?sf <- (gamestate (phase PRE_GAME|SETUP))
+  ?cmd <- (net-RandomizeField)
+  => 
+  (retract ?cmd)
 	(assert (game-reset))
 	(delayed-do-for-all-facts ((?m machine)) TRUE
 	  (modify ?m (zone TBD))
