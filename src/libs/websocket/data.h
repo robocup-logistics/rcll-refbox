@@ -31,8 +31,10 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace llsfrb::websocket {
+class Client; // forward declaration  
 
 class Data
 {

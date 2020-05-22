@@ -74,11 +74,11 @@ Server::operator()()
 			// websocket approach
 			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket(
 			  new boost::beast::websocket::stream<tcp::socket>(std::move(*socket)));
-			std::shared_ptr<Client> client(new ClientWS(web_socket, logger_));
+			std::shared_ptr<Client> client(new ClientWS(web_socket, logger_, data_));
 			data_->clients_add(client);
 		} else {
 			// socket approach
-			std::shared_ptr<Client> client(new ClientS(socket, logger_));
+			std::shared_ptr<Client> client(new ClientS(socket, logger_, data_));
 			data_->clients_add(client);
 		}
 

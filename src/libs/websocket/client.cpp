@@ -45,10 +45,11 @@ namespace llsfrb::websocket {
  * @param socket Established WebSocket socket shared pointer user for this client
  */
 ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket,
-                   Logger *                                                      logger)
+                   Logger *                                                      logger, Data * data)
 : socket(socket)
 {
 	logger_ = logger;
+	data_ = data;
 	socket->accept();
 	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "client receive thread started");
@@ -123,9 +124,10 @@ ClientWS::close()
  * @param socket TCP socket over which client communication happens
  * @param logger_ Logger instance to be used 
  */
-ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger) : socket(socket)
+ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data * data) : socket(socket)
 {
 	logger_  = logger;
+	data_ = data;
 	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "TCP-socket client receive thread started");
 }

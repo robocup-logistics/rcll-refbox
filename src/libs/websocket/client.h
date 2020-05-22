@@ -23,6 +23,8 @@
 
 #include "logging/logger.h"
 
+#include "data.h"
+
 #include <sys/socket.h>
 
 #include <boost/asio.hpp>
@@ -33,6 +35,8 @@
 #include <string>
 
 namespace llsfrb::websocket {
+class Data; // forward declaration  
+ 
 class Client
 {
 public:
@@ -48,13 +52,14 @@ protected:
 	std::mutex  wr_mu;
 	std::thread client_t;
 	Logger *    logger_;
+	Data *      data_;
 };
 
 class ClientWS : public Client
 {
 public:
 	ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket,
-	         Logger *                                                                       logger_);
+	         Logger *                                                                       logger_, Data * data_);
 	~ClientWS();
 	bool        send(std::string msg);
 	std::string read();
@@ -67,7 +72,7 @@ private:
 class ClientS : public Client
 {
 public:
-	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_);
+	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_, Data * data_);
 	~ClientS();
 	bool        send(std::string msg);
 	std::string read();
