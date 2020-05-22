@@ -1745,27 +1745,33 @@ LLSFRefBox::setup_clips_websocket()
 	    sigc::mem_fun(*(backend_->get_data()), &websocket::Data::log_push_fact_gamestate)));
 
 	//define functions that set facts in the CLIPS environment to control the refbox
-	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) { 
+	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
-		clips_->assert_fact_f("(net-SetGameState %s)", state_string.c_str()); 
+		clips_->assert_fact_f("(net-SetGameState %s)", state_string.c_str());
 	};
-	backend_->get_data()->clips_set_gamephase = [this](std::string phase_string) { 
+	backend_->get_data()->clips_set_gamephase = [this](std::string phase_string) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
-		clips_->assert_fact_f("(net-SetGamePhase %s)", phase_string.c_str()); 
+		clips_->assert_fact_f("(net-SetGamePhase %s)", phase_string.c_str());
 	};
 	backend_->get_data()->clips_randomize_field = [this]() {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(net-RandomizeField)");
 	};
-	backend_->get_data()->clips_set_teamname = [this](std::string color_string, std::string name_string) {
+	backend_->get_data()->clips_set_teamname = [this](std::string color_string,
+	                                                  std::string name_string) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(net-SetTeamName %s \"%s\")", color_string.c_str(), name_string.c_str());
 	};
-	backend_->get_data()->clips_confirm_delivery = [this](int delivery_id, bool correctness, int order_id, std::string team_color) {
-		fawkes::MutexLocker clips_lock(&clips_mutex_);
-		clips_->assert_fact_f("(order-ConfirmDelivery %d %s %d %s)", delivery_id, correctness?"TRUE":"FALSE", order_id, team_color.c_str());
-	};
-	backend_->get_data()->clips_set_order_delivered = [this]( std::string team_color, int order_id) {
+	backend_->get_data()->clips_confirm_delivery =
+	  [this](int delivery_id, bool correctness, int order_id, std::string team_color) {
+		  fawkes::MutexLocker clips_lock(&clips_mutex_);
+		  clips_->assert_fact_f("(order-ConfirmDelivery %d %s %d %s)",
+		                        delivery_id,
+		                        correctness ? "TRUE" : "FALSE",
+		                        order_id,
+		                        team_color.c_str());
+	  };
+	backend_->get_data()->clips_set_order_delivered = [this](std::string team_color, int order_id) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(order-SetOrderDelivered %s %d)", team_color.c_str(), order_id);
 	};
@@ -1773,20 +1779,19 @@ LLSFRefBox::setup_clips_websocket()
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(production-MachineAddBase %s)", mname.c_str());
 	};
-	backend_->get_data()->clips_production_set_machine_state = [this]( std::string mname, std::string state) {
+	backend_->get_data()->clips_production_set_machine_state = [this](std::string mname,
+	                                                                  std::string state) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(production-SetMachineState %s %s)", mname.c_str(), state.c_str());
 	};
-	backend_->get_data()->clips_robot_set_robot_maintenance = [this](int robot_number, std::string team_color, bool maintenance) {
-		fawkes::MutexLocker clips_lock(&clips_mutex_);
-		clips_->assert_fact_f("(robot-SetRobotMaintenance %d %s %s)", robot_number, team_color.c_str(), maintenance?"TRUE":"FALSE");
-	};
-
-
-
-
-	
-	
+	backend_->get_data()->clips_robot_set_robot_maintenance =
+	  [this](int robot_number, std::string team_color, bool maintenance) {
+		  fawkes::MutexLocker clips_lock(&clips_mutex_);
+		  clips_->assert_fact_f("(robot-SetRobotMaintenance %d %s %s)",
+		                        robot_number,
+		                        team_color.c_str(),
+		                        maintenance ? "TRUE" : "FALSE");
+	  };
 }
 
 #endif

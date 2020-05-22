@@ -21,9 +21,8 @@
 #ifndef _PLUGINS_WEBSOCKET_CLIENT_H_
 #define _PLUGINS_WEBSOCKET_CLIENT_H_
 
-#include "logging/logger.h"
-
 #include "data.h"
+#include "logging/logger.h"
 
 #include <sys/socket.h>
 
@@ -35,8 +34,8 @@
 #include <string>
 
 namespace llsfrb::websocket {
-class Data; // forward declaration  
- 
+class Data; // forward declaration
+
 class Client
 {
 public:
@@ -59,7 +58,8 @@ class ClientWS : public Client
 {
 public:
 	ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket,
-	         Logger *                                                                       logger_, Data * data_);
+	         Logger *                                                                       logger_,
+	         Data *                                                                         data_);
 	~ClientWS();
 	bool        send(std::string msg);
 	std::string read();
@@ -72,7 +72,7 @@ private:
 class ClientS : public Client
 {
 public:
-	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_, Data * data_);
+	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_, Data *data_);
 	~ClientS();
 	bool        send(std::string msg);
 	std::string read();

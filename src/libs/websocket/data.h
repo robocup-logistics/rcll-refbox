@@ -27,42 +27,42 @@
 #include <rapidjson/document.h>
 
 #include <condition_variable>
+#include <functional>
 #include <mutex>
 #include <queue>
 #include <string>
 #include <vector>
-#include <functional>
 
 namespace llsfrb::websocket {
-class Client; // forward declaration  
+class Client; // forward declaration
 
 class Data
 {
 public:
 	Data(Logger *logger_);
-	std::string log_pop();
-	void        log_push(std::string log);
-	void        log_push(rapidjson::Document &d);
-	bool        log_empty();
-	void        log_wait();
-	void        clients_add(std::shared_ptr<Client> client);
-	void        clients_send_all(std::string msg);
-	void        clients_send_all(rapidjson::Document &d);
-	void        log_push_fact_gamestate(std::string time,
-	                                    std::string state,
-	                                    std::string phase,
-	                                    std::string prevphase,
-	                                    std::string team_cyan,
-	                                    std::string team_magenta);
-	std::function<void(std::string)> clips_set_gamestate;
-	std::function<void(std::string)> clips_set_gamephase;
-	std::function<void()> clips_randomize_field;
-	std::function<void(std::string, std::string)> clips_set_teamname;
+	std::string                                      log_pop();
+	void                                             log_push(std::string log);
+	void                                             log_push(rapidjson::Document &d);
+	bool                                             log_empty();
+	void                                             log_wait();
+	void                                             clients_add(std::shared_ptr<Client> client);
+	void                                             clients_send_all(std::string msg);
+	void                                             clients_send_all(rapidjson::Document &d);
+	void                                             log_push_fact_gamestate(std::string time,
+	                                                                         std::string state,
+	                                                                         std::string phase,
+	                                                                         std::string prevphase,
+	                                                                         std::string team_cyan,
+	                                                                         std::string team_magenta);
+	std::function<void(std::string)>                 clips_set_gamestate;
+	std::function<void(std::string)>                 clips_set_gamephase;
+	std::function<void()>                            clips_randomize_field;
+	std::function<void(std::string, std::string)>    clips_set_teamname;
 	std::function<void(int, bool, int, std::string)> clips_confirm_delivery;
-	std::function<void(std::string, int)> clips_set_order_delivered;
-	std::function<void(std::string)> clips_production_machine_add_base;
-	std::function<void(std::string, std::string)> clips_production_set_machine_state;
-	std::function<void(int, std::string, bool)> clips_robot_set_robot_maintenance;
+	std::function<void(std::string, int)>            clips_set_order_delivered;
+	std::function<void(std::string)>                 clips_production_machine_add_base;
+	std::function<void(std::string, std::string)>    clips_production_set_machine_state;
+	std::function<void(int, std::string, bool)>      clips_robot_set_robot_maintenance;
 
 private:
 	Logger *                             logger_;

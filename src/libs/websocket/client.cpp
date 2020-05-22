@@ -45,11 +45,12 @@ namespace llsfrb::websocket {
  * @param socket Established WebSocket socket shared pointer user for this client
  */
 ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket,
-                   Logger *                                                      logger, Data * data)
+                   Logger *                                                      logger,
+                   Data *                                                        data)
 : socket(socket)
 {
 	logger_ = logger;
-	data_ = data;
+	data_   = data;
 	socket->accept();
 	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "client receive thread started");
@@ -124,10 +125,10 @@ ClientWS::close()
  * @param socket TCP socket over which client communication happens
  * @param logger_ Logger instance to be used 
  */
-ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data * data) : socket(socket)
+ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data *data) : socket(socket)
 {
 	logger_  = logger;
-	data_ = data;
+	data_    = data;
 	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "TCP-socket client receive thread started");
 }
@@ -210,27 +211,32 @@ Client::receive_thread()
 				logger_->log_error("Websocket", "non JSON message received, won't process");
 			}
 
-			//check incoming message type and call corresponding CLIPS function 
-			if(strcmp(msgs["command"].GetString(), "set_gamestate")==0) {
+			//check incoming message type and call corresponding CLIPS function
+			if (strcmp(msgs["command"].GetString(), "set_gamestate") == 0) {
 				data_->clips_set_gamestate(msgs["state"].GetString());
-			}else if(strcmp(msgs["command"].GetString(), "set_gamephase")==0) {
+			} else if (strcmp(msgs["command"].GetString(), "set_gamephase") == 0) {
 				data_->clips_set_gamephase(msgs["phase"].GetString());
-			}else if(strcmp(msgs["command"].GetString(), "randomize_field")==0) {
+			} else if (strcmp(msgs["command"].GetString(), "randomize_field") == 0) {
 				data_->clips_randomize_field();
-			}else if(strcmp(msgs["command"].GetString(), "set_teamname")==0) {
+			} else if (strcmp(msgs["command"].GetString(), "set_teamname") == 0) {
 				data_->clips_set_teamname(msgs["color"].GetString(), msgs["name"].GetString());
-			}else if(strcmp(msgs["command"].GetString(), "confirm_delivery")==0) {
-				data_->clips_confirm_delivery(msgs["delivery_id"].GetInt(), msgs["correctness"].GetBool(), msgs["order_id"].GetInt(), msgs["color"].GetString());
-			}else if(strcmp(msgs["command"].GetString(), "set_order_delivered")==0) {
+			} else if (strcmp(msgs["command"].GetString(), "confirm_delivery") == 0) {
+				data_->clips_confirm_delivery(msgs["delivery_id"].GetInt(),
+				                              msgs["correctness"].GetBool(),
+				                              msgs["order_id"].GetInt(),
+				                              msgs["color"].GetString());
+			} else if (strcmp(msgs["command"].GetString(), "set_order_delivered") == 0) {
 				data_->clips_set_order_delivered(msgs["color"].GetString(), msgs["order_id"].GetInt());
-			}else if(strcmp(msgs["command"].GetString(), "set_machine_state")==0) {
-				data_->clips_production_set_machine_state(msgs["mname"].GetString(), msgs["state"].GetString());
-			}else if(strcmp(msgs["command"].GetString(), "machine_add_base")==0) {
+			} else if (strcmp(msgs["command"].GetString(), "set_machine_state") == 0) {
+				data_->clips_production_set_machine_state(msgs["mname"].GetString(),
+				                                          msgs["state"].GetString());
+			} else if (strcmp(msgs["command"].GetString(), "machine_add_base") == 0) {
 				data_->clips_production_machine_add_base(msgs["mname"].GetString());
-			}else if(strcmp(msgs["command"].GetString(), "set_robot_maintenance")==0) {
-				data_->clips_robot_set_robot_maintenance(msgs["robot_number"].GetInt(), msgs["team_color"].GetString(),  msgs["maintenance"].GetBool());
+			} else if (strcmp(msgs["command"].GetString(), "set_robot_maintenance") == 0) {
+				data_->clips_robot_set_robot_maintenance(msgs["robot_number"].GetInt(),
+				                                         msgs["team_color"].GetString(),
+				                                         msgs["maintenance"].GetBool());
 			}
-
 
 		} catch (std::exception &e) {
 			disconnect();
