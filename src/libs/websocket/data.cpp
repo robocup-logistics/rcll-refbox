@@ -195,25 +195,29 @@ Data::log_push_fact_gamestate(std::string time,
                               std::string team_cyan,
                               std::string team_magenta)
 {
-	std::string message = "{\"level\" : \"clips\",\"type\" : \"gamestate\","
-	                      "\"state\" : \""
-	                      + state
-	                      + "\","
-	                        "\"gamephase\" : \""
-	                      + phase
-	                      + "\","
-	                        "\"prevphase\" : \""
-	                      + prevphase
-	                      + "\","
-	                        "\"gametime\" : \""
-	                      + time
-	                      + "\","
-	                        "\"cyan\" : \""
-	                      + team_cyan
-	                      + "\","
-	                        "\"magenta\" : \""
-	                      + team_magenta + "\"}";
-	log_push(message);
+	rapidjson::Document d;
+	d.SetObject();
+	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	d.AddMember("level", json_string, alloc);
+	json_string.SetString("gamestate", alloc);
+	d.AddMember("type", json_string, alloc);
+	json_string.SetString((state).c_str(), alloc);
+	d.AddMember("state", json_string, alloc);
+	json_string.SetString((phase).c_str(), alloc);
+	d.AddMember("gamephase", json_string, alloc);
+	json_string.SetString((prevphase).c_str(), alloc);
+	d.AddMember("prevphase", json_string, alloc);
+	json_string.SetString((time).c_str(), alloc);
+	d.AddMember("gametime", json_string, alloc);
+	json_string.SetString((team_cyan).c_str(), alloc);
+	d.AddMember("cyan", json_string, alloc);
+	json_string.SetString((team_magenta).c_str(), alloc);
+	d.AddMember("magenta", json_string, alloc);
+
+	log_push(d);
 }
 
 /**
@@ -227,13 +231,21 @@ Data::log_push_fact_gamestate(std::string time,
 void
 Data::log_push_fact_gamepoints(std::string points_cyan, std::string points_magenta)
 {
-	std::string message = "{\"level\" : \"clips\",\"type\" : \"gamepoints\","
-	                      "\"points_cyan\" : \""
-	                      + points_cyan
-	                      + "\","
-	                        "\"points_magenta\" : \""
-	                      + points_magenta + "\"}";
-	log_push(message);
+	rapidjson::Document d;
+	d.SetObject();
+	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	d.AddMember("level", json_string, alloc);
+	json_string.SetString("gamepoints", alloc);
+	d.AddMember("type", json_string, alloc);
+	json_string.SetString((points_cyan).c_str(), alloc);
+	d.AddMember("points_cyan", json_string, alloc);
+	json_string.SetString((points_magenta).c_str(), alloc);
+	d.AddMember("points_magenta", json_string, alloc);
+
+	log_push(d);
 }
 
 /**
@@ -248,16 +260,21 @@ Data::log_push_fact_gamepoints(std::string points_cyan, std::string points_magen
 void
 Data::log_push_attention_message(std::string text, std::string team, std::string time)
 {
-	std::string message = "{\"level\" : \"attention\", "
-	                      "\"text\" : \""
-	                      + text
-	                      + "\","
-	                        "\"team\" : \""
-	                      + team
-	                      + "\","
-	                        "\"time\" : \""
-	                      + time + "\"}";
-	log_push(message);
+	rapidjson::Document d;
+	d.SetObject();
+	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+
+	rapidjson::Value json_string;
+	json_string.SetString("attention", alloc);
+	d.AddMember("level", json_string, alloc);
+	json_string.SetString((text).c_str(), alloc);
+	d.AddMember("text", json_string, alloc);
+	json_string.SetString((team).c_str(), alloc);
+	d.AddMember("team", json_string, alloc);
+	json_string.SetString((time).c_str(), alloc);
+	d.AddMember("time", json_string, alloc);
+
+	log_push(d);
 }
 
 } // namespace llsfrb::websocket
