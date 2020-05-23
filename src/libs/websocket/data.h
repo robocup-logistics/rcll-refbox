@@ -40,20 +40,21 @@ class Data
 {
 public:
 	Data(Logger *logger_);
-	std::string                                      log_pop();
-	void                                             log_push(std::string log);
-	void                                             log_push(rapidjson::Document &d);
-	bool                                             log_empty();
-	void                                             log_wait();
-	void                                             clients_add(std::shared_ptr<Client> client);
-	void                                             clients_send_all(std::string msg);
-	void                                             clients_send_all(rapidjson::Document &d);
-	void                                             log_push_fact_gamestate(std::string time,
-	                                                                         std::string state,
-	                                                                         std::string phase,
-	                                                                         std::string prevphase,
-	                                                                         std::string team_cyan,
-	                                                                         std::string team_magenta);
+	std::string log_pop();
+	void        log_push(std::string log);
+	void        log_push(rapidjson::Document &d);
+	bool        log_empty();
+	void        log_wait();
+	void        clients_add(std::shared_ptr<Client> client);
+	void        clients_send_all(std::string msg);
+	void        clients_send_all(rapidjson::Document &d);
+	void        log_push_fact_gamestate(std::string time,
+	                                    std::string state,
+	                                    std::string phase,
+	                                    std::string prevphase,
+	                                    std::string team_cyan,
+	                                    std::string team_magenta);
+	void        log_push_fact_gamepoints(std::string points_cyan, std::string points_magenta);
 	void        log_push_attention_message(std::string text, std::string team, std::string time);
 
 	std::function<void(std::string)>                 clips_set_gamestate;

@@ -1744,6 +1744,11 @@ LLSFRefBox::setup_clips_websocket()
 	  sigc::slot<void, std::string, std::string, std::string, std::string, std::string, std::string>(
 	    sigc::mem_fun(*(backend_->get_data()), &websocket::Data::log_push_fact_gamestate)));
 
+	clips_->add_function("ws-push-gamepoints",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_fact_gamepoints)));
+
 	clips_->add_function("ws-send-attention-message",
 	                     sigc::slot<void, std::string, std::string, std::string>(
 	                       sigc::mem_fun(*(backend_->get_data()),

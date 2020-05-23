@@ -195,7 +195,7 @@ Data::log_push_fact_gamestate(std::string time,
                               std::string team_cyan,
                               std::string team_magenta)
 {
-	std::string message = "{\"level\" : \"clips\","
+	std::string message = "{\"level\" : \"clips\",\"type\" : \"gamestate\","
 	                      "\"state\" : \""
 	                      + state
 	                      + "\","
@@ -217,6 +217,25 @@ Data::log_push_fact_gamestate(std::string time,
 }
 
 /**
+ * @brief log the points of the teams
+ * 
+ * Called from CLIPS environment when points for the teams get udpated, forward those to the clients 
+ * 
+ * @param points_cyan 
+ * @param points_magenta 
+ */
+void
+Data::log_push_fact_gamepoints(std::string points_cyan, std::string points_magenta)
+{
+	std::string message = "{\"level\" : \"clips\",\"type\" : \"gamepoints\","
+	                      "\"points_cyan\" : \""
+	                      + points_cyan
+	                      + "\","
+	                        "\"points_magenta\" : \""
+	                      + points_magenta + "\"}";
+	log_push(message);
+}
+
 /**
  * @brief log attention message
  * 
