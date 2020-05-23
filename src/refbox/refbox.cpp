@@ -1744,6 +1744,11 @@ LLSFRefBox::setup_clips_websocket()
 	  sigc::slot<void, std::string, std::string, std::string, std::string, std::string, std::string>(
 	    sigc::mem_fun(*(backend_->get_data()), &websocket::Data::log_push_fact_gamestate)));
 
+	clips_->add_function("ws-send-attention-message",
+	                     sigc::slot<void, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_attention_message)));
+
 	//define functions that set facts in the CLIPS environment to control the refbox
 	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);

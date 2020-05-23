@@ -54,6 +54,8 @@ public:
 	                                                                         std::string prevphase,
 	                                                                         std::string team_cyan,
 	                                                                         std::string team_magenta);
+	void        log_push_attention_message(std::string text, std::string team, std::string time);
+
 	std::function<void(std::string)>                 clips_set_gamestate;
 	std::function<void(std::string)>                 clips_set_gamephase;
 	std::function<void()>                            clips_randomize_field;

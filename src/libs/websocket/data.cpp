@@ -216,4 +216,29 @@ Data::log_push_fact_gamestate(std::string time,
 	log_push(message);
 }
 
+/**
+/**
+ * @brief log attention message
+ * 
+ * Called from the CLIPS environment when an attention message is generated, forward that to the clients
+ * 
+ * @param text 
+ * @param team 
+ * @param time 
+ */
+void
+Data::log_push_attention_message(std::string text, std::string team, std::string time)
+{
+	std::string message = "{\"level\" : \"attention\", "
+	                      "\"text\" : \""
+	                      + text
+	                      + "\","
+	                        "\"team\" : \""
+	                      + team
+	                      + "\","
+	                        "\"time\" : \""
+	                      + time + "\"}";
+	log_push(message);
+}
+
 } // namespace llsfrb::websocket
