@@ -16,10 +16,7 @@
 
 SCRIPT_PATH=$(dirname $(readlink -f ${BASH_SOURCE[0]}))
 
-DIFF=diff
-if type -p gdiff >/dev/null; then
-  DIFF=gdiff
-fi
+source $SCRIPT_PATH/env.sh
 
 if [ "${SHOW_PROGRESS:-}" == "no" ]; then
 	SHOW_PROGRESS=

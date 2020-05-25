@@ -1,6 +1,6 @@
-#!/bin/bash
-
-#  Copyright (c) 2018 Tim Niemueller [www.niemueller.de]
+#! /bin/bash
+#
+#  Copyright (c) 2020 Till Hofmann
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,20 +14,32 @@
 #
 #  Read the full text in the LICENSE.GPL file in the doc directory.
 
-SCRIPT_PATH=$(dirname $(readlink -f ${BASH_SOURCE[0]}))
-
-source $SCRIPT_PATH/env.sh
-
-ALL_FILES=$(git ls-files \*.{h,cpp})
-if type -p parallel >/dev/null; then
-	OFFENDING_FILES=$(parallel --will-cite --bar $SCRIPT_PATH/check-file.sh ::: $ALL_FILES)
-else
-	OFFENDING_FILES=$(echo "$ALL_FILES" | xargs -P$(nproc) -n1 $SCRIPT_PATH/check-file.sh)
+DIFF=diff
+if type -p gdiff >/dev/null; then
+  DIFF=gdiff
 fi
 
-if [ "$OFFENDING_FILES" != "" ]; then
-	echo $OFFENDING_FILES
-	exit 1
-else
-	exit 0
+if ! type -p $DIFF >/dev/null ; then
+  echo "Cannot find $DIFF!" >&2;
+  exit 1;
+fi
+
+if ! type -p paste >/dev/null ; then
+  echo "Cannot find paste!" >&2;
+  exit 1;
+fi
+
+if ! type -p xargs >/dev/null ; then
+  echo "Cannot find xargs!" >&2;
+  exit 1;
+fi
+
+if ! type -p sort >/dev/null ; then
+  echo "Cannot find sort!" >&2;
+  exit 1;
+fi
+
+if ! type -p clang-format >/dev/null ; then
+  echo "Cannot find clang-format!" >&2;
+  exit 1;
 fi

@@ -15,6 +15,7 @@ jobs:
               clang \
               clips-devel \
               clipsmm-devel \
+              diffutils \
               findutils \
               freeopcua-devel \
               gcc-c++ \
@@ -51,6 +52,7 @@ jobs:
             apt-get -y install \
               libboost-all-dev \
               clips \
+              diffutils \
               git \
               libaprutil1-dev \
               libavahi-client-dev \
