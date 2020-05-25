@@ -33,13 +33,14 @@ public:
 	Server();
 
 	void operator()();
-	void configure(uint port, bool ws_mode);
+	void configure(uint port, bool ws_mode, bool allow_control_all);
 
 private:
 	Data *  data_;
 	Logger *logger_;
-	uint    port_    = 1234;
-	bool    ws_mode_ = true;
+	uint    port_              = 1234;
+	bool    ws_mode_           = true;
+	bool    allow_control_all_ = false;
 };
 
 } // namespace llsfrb::websocket

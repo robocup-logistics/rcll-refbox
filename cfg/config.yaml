@@ -217,6 +217,8 @@ llsfrb:
     ws-mode: true
     # tcp port under wihc it will be accessible
     port: 1234
+    # allow all connected clients to send control commands to CLIPS env
+    allow-control-all: true
 
 
 webview:

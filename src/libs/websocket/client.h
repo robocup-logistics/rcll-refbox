@@ -52,6 +52,7 @@ protected:
 	std::thread client_t;
 	Logger *    logger_;
 	Data *      data_;
+	bool        can_send_;
 };
 
 class ClientWS : public Client
@@ -59,7 +60,8 @@ class ClientWS : public Client
 public:
 	ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket,
 	         Logger *                                                                       logger_,
-	         Data *                                                                         data_);
+	         Data *                                                                         data_,
+	         bool                                                                           can_send);
 	~ClientWS();
 	bool        send(std::string msg);
 	std::string read();
@@ -72,7 +74,10 @@ private:
 class ClientS : public Client
 {
 public:
-	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket, Logger *logger_, Data *data_);
+	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket,
+	        Logger *                                      logger_,
+	        Data *                                        data_,
+	        bool                                          can_send);
 	~ClientS();
 	bool        send(std::string msg);
 	std::string read();

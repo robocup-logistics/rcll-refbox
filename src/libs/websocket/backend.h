@@ -33,7 +33,7 @@ public:
 	Backend(Logger *logger_);
 
 	void  operator()();
-	void  start(uint port, bool ws_mode = true);
+	void  start(uint port, bool ws_mode = true, bool allow_control_all = false);
 	Data *get_data();
 
 private:

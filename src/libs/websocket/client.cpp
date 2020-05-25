@@ -46,11 +46,13 @@ namespace llsfrb::websocket {
  */
 ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket,
                    Logger *                                                      logger,
-                   Data *                                                        data)
+                   Data *                                                        data,
+                   bool                                                          can_send)
 : socket(socket)
 {
-	logger_ = logger;
-	data_   = data;
+	logger_   = logger;
+	data_     = data;
+	can_send_ = can_send;
 	socket->accept();
 	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "client receive thread started");
@@ -125,11 +127,13 @@ ClientWS::close()
  * @param socket TCP socket over which client communication happens
  * @param logger_ Logger instance to be used 
  */
-ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data *data) : socket(socket)
+ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data *data, bool can_send)
+: socket(socket)
 {
-	logger_  = logger;
-	data_    = data;
-	client_t = std::thread(&Client::receive_thread, this);
+	logger_   = logger;
+	data_     = data;
+	can_send_ = can_send;
+	client_t  = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "TCP-socket client receive thread started");
 }
 
@@ -212,7 +216,9 @@ Client::receive_thread()
 			}
 
 			//check incoming message type and call corresponding CLIPS function
-			if (strcmp(msgs["command"].GetString(), "set_gamestate") == 0) {
+			if (!can_send_) {
+				data_->log_push_attention_message("YOU CAN NOT SEND", "", "");
+			} else if (strcmp(msgs["command"].GetString(), "set_gamestate") == 0) {
 				data_->clips_set_gamestate(msgs["state"].GetString());
 			} else if (strcmp(msgs["command"].GetString(), "set_gamephase") == 0) {
 				data_->clips_set_gamephase(msgs["phase"].GetString());

@@ -70,15 +70,19 @@ Server::operator()()
 		std::shared_ptr<tcp::socket> socket(new tcp::socket(io_service));
 		acceptor_.accept(*socket);
 
+		//client can send control command if allow_control_all_ is set or it is the localhost
+		bool client_can_send =
+		  (allow_control_all_ || (*socket).remote_endpoint().address().to_string() == "127.0.0.1");
+
 		if (ws_mode_) {
 			// websocket approach
 			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket(
 			  new boost::beast::websocket::stream<tcp::socket>(std::move(*socket)));
-			std::shared_ptr<Client> client(new ClientWS(web_socket, logger_, data_));
+			std::shared_ptr<Client> client(new ClientWS(web_socket, logger_, data_, client_can_send));
 			data_->clients_add(client);
 		} else {
 			// socket approach
-			std::shared_ptr<Client> client(new ClientS(socket, logger_, data_));
+			std::shared_ptr<Client> client(new ClientS(socket, logger_, data_, client_can_send));
 			data_->clients_add(client);
 		}
 
@@ -91,12 +95,14 @@ Server::operator()()
  * 
  * @param port port on which the server runs on
  * @param ws_mode true if websocket only mode
+ * @param allow_control_all if true, devices with not local host ip addresses can send control commands
  */
 void
-Server::configure(uint port, bool ws_mode = true)
+Server::configure(uint port, bool ws_mode = true, bool allow_control_all = false)
 {
-	port_    = port;
-	ws_mode_ = ws_mode;
+	port_              = port;
+	ws_mode_           = ws_mode;
+	allow_control_all_ = allow_control_all;
 }
 
 } // namespace llsfrb::websocket

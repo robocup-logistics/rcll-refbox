@@ -46,12 +46,13 @@ Backend::Backend(Logger *logger_) : logger_(logger_)
  * 
  * @param port tcp port of the websocket server
  * @param ws_mode true if websocket only mode is activated
+ * @param allow_control_all if this is set, devices with not local host ip addresses can send control commands
  */
 void
-Backend::start(uint port, bool ws_mode)
+Backend::start(uint port, bool ws_mode, bool allow_control_all)
 {
 	//configure server
-	server_.configure(port, ws_mode);
+	server_.configure(port, ws_mode, allow_control_all);
 	// launch server thread
 	server_t_ = std::thread(&Server::operator(), server_);
 	logger_->log_info("Websocket", "(web-)socket-server started");

@@ -177,7 +177,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	//launch websocket backend and add websocket logger
 	backend_ = new websocket::Backend(logger_.get());
 	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
-	                config_->get_bool("/llsfrb/websocket/ws-mode"));
+	                config_->get_bool("/llsfrb/websocket/ws-mode"),
+	                config_->get_bool("/llsfrb/websocket/allow-control-all"));
 	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
 #endif
 
