@@ -53,11 +53,6 @@
 #include <memory>
 #include <unordered_map>
 
-#ifdef HAVE_AVAHI
-#	include <netcomm/dns-sd/avahi_thread.h>
-#	include <netcomm/utils/resolver.h>
-#endif
-
 namespace mps_placing_clips {
 class MPSPlacingGenerator;
 }
@@ -65,13 +60,13 @@ namespace protobuf_clips {
 class ClipsProtobufCommunicator;
 }
 
-#ifdef HAVE_AVAHI
 namespace fawkes {
+#ifdef HAVE_AVAHI
 class AvahiThread;
-class NetworkNameResolver;
-class ServicePublisher;
-} // namespace fawkes
 #endif
+class NetworkService;
+class WebviewRestApiManager;
+} // namespace fawkes
 
 #ifdef HAVE_MONGODB
 #	include <mongocxx/database.hpp>
@@ -86,6 +81,8 @@ namespace llsfrb {
 
 class Configuration;
 class MultiLogger;
+class WebviewServer;
+class ClipsRestApi;
 
 class LLSFRefBox
 {
@@ -216,10 +213,12 @@ private: // members
 	llsf_utils::MachineAssignment cfg_machine_assignment_;
 
 #ifdef HAVE_AVAHI
-	fawkes::AvahiThread                          avahi_thread_;
-	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver_;
-	std::unique_ptr<fawkes::NetworkService>      refbox_service_;
+	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;
+	std::unique_ptr<fawkes::NetworkService> refbox_service_;
 #endif
+	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
+	std::unique_ptr<WebviewServer>                 rest_api_thread_;
+	std::unique_ptr<ClipsRestApi>                  clips_rest_api_;
 
 #ifdef HAVE_MONGODB
 	bool                                cfg_mongodb_enabled_;

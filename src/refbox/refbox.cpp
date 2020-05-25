@@ -38,6 +38,7 @@
 #include "refbox.h"
 
 #include "clips_logger.h"
+#include "rest-api/clips-rest-api/clips-rest-api.h"
 
 #include <config/yaml.h>
 #include <core/threading/mutex.h>
@@ -51,6 +52,8 @@
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
+#include <rest-api/webview_server.h>
+#include <webview/rest_api_manager.h>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -79,9 +82,14 @@ namespace stdfs = std::filesystem;
 #	include <mongodb_log/mongodb_log_logger.h>
 #	include <mongodb_log/mongodb_log_protobuf.h>
 #endif
+
+#include <netcomm/utils/resolver.h>
 #ifdef HAVE_AVAHI
 #	include <netcomm/dns-sd/avahi_thread.h>
-#	include <netcomm/utils/resolver.h>
+#	include <netcomm/service_discovery/service.h>
+#else
+#	include <netcomm/service_discovery/dummy_service_browser.h>
+#	include <netcomm/service_discovery/dummy_service_publisher.h>
 #endif
 
 #include <memory>
@@ -337,16 +345,48 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	}
 #endif
 
+	std::shared_ptr<fawkes::ServicePublisher>    service_publisher;
+	std::shared_ptr<fawkes::ServiceBrowser>      service_browser;
+	std::unique_ptr<fawkes::NetworkNameResolver> nnresolver;
+
 #ifdef HAVE_AVAHI
 	unsigned int refbox_port = config_->get_uint("/llsfrb/comm/server-port");
-	avahi_thread_.start();
-	nnresolver_     = std::make_unique<fawkes::NetworkNameResolver>(&avahi_thread_);
-	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver_.get(),
+	avahi_thread_            = std::make_shared<AvahiThread>();
+	service_publisher        = avahi_thread_;
+	service_browser          = avahi_thread_;
+
+	avahi_thread_->start();
+	nnresolver      = std::make_unique<fawkes::NetworkNameResolver>(avahi_thread_.get());
+	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver.get(),
 	                                                           "RefBox on %h",
 	                                                           "_refbox._tcp",
 	                                                           refbox_port);
-	avahi_thread_.publish_service(refbox_service_.get());
+	avahi_thread_->publish_service(refbox_service_.get());
+#else
+	service_publisher = std::make_unique<fawkes::DummyServicePublisher>();
+	service_browser   = std::make_unique<fawkes::DummyServiceBrowser>();
+	nnresolver        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
+
+	try {
+		clips_rest_api_ = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
+
+		rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
+		rest_api_manager_->register_api(clips_rest_api_.get());
+
+		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
+		                                                           rest_api_manager_,
+		                                                           std::move(nnresolver),
+		                                                           service_publisher,
+		                                                           service_browser,
+		                                                           config_.get(),
+		                                                           logger_.get());
+		rest_api_thread_->start();
+
+	} catch (Exception &e) {
+		logger_->log_info("RefBox", "Could not start RESTapi");
+		logger_->log_error("Exception: ", e.what());
+	}
 }
 
 /** Destructor. */
@@ -354,9 +394,13 @@ LLSFRefBox::~LLSFRefBox()
 {
 	timer_.cancel();
 
+	rest_api_thread_->cancel();
+	rest_api_thread_->join();
+
+	rest_api_manager_->unregister_api(clips_rest_api_.get());
 #ifdef HAVE_AVAHI
-	avahi_thread_.cancel();
-	avahi_thread_.join();
+	avahi_thread_->cancel();
+	avahi_thread_->join();
 #endif
 
 	//std::lock_guard<std::recursive_mutex> lock(clips_mutex_);
@@ -655,7 +699,7 @@ LLSFRefBox::clips_mps_reset(std::string machine)
 {
 	logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
 
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -686,7 +730,7 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 {
 	logger_->log_info("MPS", "Delivering on %s", machine.c_str());
 
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -765,29 +809,29 @@ LLSFRefBox::clips_mps_move_conveyor(std::string machine,
                                     std::string goal_position,
                                     std::string conveyor_direction /*= "FORWARD"*/)
 {
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
-	Machine::MPSSensor goal;
+	llsfrb::mps_comm::Machine::MPSSensor goal;
 	if (goal_position == "INPUT") {
-		goal = Machine::MPSSensor::INPUT;
+		goal = llsfrb::mps_comm::Machine::MPSSensor::INPUT;
 	} else if (goal_position == "MIDDLE") {
-		goal = Machine::MPSSensor::MIDDLE;
+		goal = llsfrb::mps_comm::Machine::MPSSensor::MIDDLE;
 	} else if (goal_position == "OUTPUT") {
-		goal = Machine::MPSSensor::OUTPUT;
+		goal = llsfrb::mps_comm::Machine::MPSSensor::OUTPUT;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor position %s", goal_position.c_str());
 		return;
 	}
-	Machine::ConveyorDirection direction;
+	llsfrb::mps_comm::Machine::ConveyorDirection direction;
 	if (conveyor_direction == "FORWARD") {
-		direction = Machine::ConveyorDirection::FORWARD;
+		direction = llsfrb::mps_comm::Machine::ConveyorDirection::FORWARD;
 	} else if (conveyor_direction == "BACKWARD") {
-		direction = Machine::ConveyorDirection::BACKWARD;
+		direction = llsfrb::mps_comm::Machine::ConveyorDirection::BACKWARD;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor direction %s", conveyor_direction.c_str());
 		return;
@@ -827,7 +871,7 @@ LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::str
 	//logger_->log_info("MPS", "Set light %s: %s to %s",
 	//		    machine.c_str(), color.c_str(), state.c_str());
 
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -878,7 +922,7 @@ LLSFRefBox::clips_mps_set_lights(std::string machine,
 void
 LLSFRefBox::clips_mps_reset_lights(std::string machine)
 {
-	Machine *station;
+	llsfrb::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -1657,7 +1701,7 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::error,
 	                               boost::asio::placeholders::signal_number));
 #else
-	g_refbox = this;
+	g_refbox          = this;
 	signal(SIGINT, llsfrb::handle_signal);
 #endif
 

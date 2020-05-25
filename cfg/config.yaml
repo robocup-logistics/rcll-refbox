@@ -211,3 +211,65 @@ llsfrb:
 
   webshop:
     enable: false
+
+webview:
+  # TCP port for Webview HTTP requests; TCP port
+  port: !tcp-port 8088
+
+  # True to allow client side caching. Typically you want this disabled
+  # to force proper reloads each time with fresh data.
+  client_side_caching: false
+
+
+  # cross-origin resource sharing (CORS)
+  # This concerns requests where the web app does not originate from
+  # the same server as the URL requested. An example is running the
+  # webview frontend locally in development mode or to access multiple
+  # robots from one interface.
+  #
+  # Modern browsers will only process resources if the server allows
+  # access through the Access-Control-Allow-Origin header.
+  # cf https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+  # or https://enable-cors.org/
+  cors:
+    allow:
+      # Allow all access, sets header to '*'
+      all: true
+      # Allow access only from specific domains
+      # origins: ["http://localhost:4200"]
+
+    # time to allow clients to cache our response
+    max-age: 86400
+
+  # libmicrohttpd thread pool settings
+  # Using a thread pool allows for the concurrent processing of
+  # incoming requests and should generally be enabled.
+  thread-pool:
+    enable: true
+    num-threads: 8
+
+  # For the given URLs, a handler will be configured that captures
+  # requests if no other handler is registered, i.e., the actual
+  # plugin handling these requests has not been loaded.
+  # If this is not a user-facing page, but rather an endpoint ingested
+  # by some program, this may provide better feedback.
+  # For user pages, with the appropriate catchall above, we always
+  # serve the UI and it will do something useful.
+  explicit-404:
+    - /metrics
+    - /xmlrpc
+
+  network:
+
+    # Enable or disable IPv4 or IPv6 server port
+
+    # Set "listen" value to bind to a specific IP address of the
+    # host, rather than to "any" address, example shows how to bind
+    # for connections from the local host only
+    ipv4:
+      enable: true
+      # listen: !ipv4 127.0.0.1
+
+    ipv6:
+      enable: true
+      # listen: !ipv6 "::1"

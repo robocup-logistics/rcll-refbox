@@ -1,0 +1,502 @@
+openapi: 3.0.0
+info:
+  title: Clips
+  version: v1beta1
+  description: |
+    CLIPS REST API.
+    Enables access to CLIPS environments.
+  contact:
+    name:  Tim Niemueller
+    email: niemueller@kbsg.rwth-aachen.de
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+tags:
+  - name: public
+    description: Public API.
+
+paths:
+  /clips/{env}/facts:
+    get:
+      tags:
+      - public
+      summary: get all facts
+      operationId: get_facts
+      description: |
+        List all facts of an environment.
+      parameters:
+        - name: env
+          in: path
+          description: ID of CLIPS environment
+          required: true
+          schema:
+            type: string
+            format: symbol
+        - name: pretty
+          in: query
+          description: Request pretty printed reply.
+          schema:
+            type: boolean
+        - name: formatted
+          in: query
+          description: |
+            Retrieve formatted strings.  If the flag is passed, the
+            `formatted` field of the Fact will contain a formatted
+            string representation suitable for printing. Otherwise the
+            slots field will contain a fact as structures.
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: list of facts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fact'
+        '400':
+          description: bad input parameter
+
+  /clips/:
+    get:
+      tags:
+      - public
+      summary: list all environments
+      operationId: list_environments
+      description: |
+        List all CLIPS environments.
+      parameters:
+        - name: pretty
+          in: query
+          description: Request pretty printed reply.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: list environments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Environment'
+
+  /machines/:
+    get:
+      tags:
+      - public
+      summary: list all machines
+      operationId: list_machines
+      description: |
+        List all machine facts.
+      parameters:
+        - name: pretty
+          in: query
+          description: Request pretty printed reply.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: list machines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Machine'
+
+
+  /orders/:
+    get:
+      tags:
+      - public
+      summary: list all orders
+      operationId: list_orders
+      description: |
+        List all order facts.
+      parameters:
+        - name: pretty
+          in: query
+          description: Request pretty printed reply.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: list orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+
+components:
+  schemas:
+    SlotValue:
+      type: object
+      required:
+        - name
+        - is-multifield
+        - values
+      properties:
+        name:
+          type: string
+          format: symbol
+        type:
+          type: string
+          format: symbol
+          enum: ["FLOAT", "INTEGER", "SYMBOL", "STRING", "EXTERNAL-ADDRESS"]
+        is-multifield:
+          type: boolean
+        values:
+          type: array
+          items:
+            type: string
+
+
+    Fact:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - index
+        - template_name
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        index:
+          type: integer
+          format: int64
+        template_name:
+          type: string
+          format: symbol
+        formatted:
+          type: string
+          format: symbol
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlotValue'
+
+    Environment:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - name
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        name:
+          type: string
+
+    Machine:
+      type: object
+      required:
+        - name
+        - team
+        - mtype
+        - actual-lights
+        - state
+        - zone
+        - rotation
+        - bases-added
+        - bases-used
+        - bs-side
+        - bs-color
+        - ds-order
+        - rs-ring-color
+        - rs-ring-colors
+        - cs-operation
+        - cs-retrieved
+      properties:
+        name:
+          type: string
+          format: symbol
+        team:
+          type: string
+          formate: symbol
+          enum: ["CYAN", "MAGENTA"]
+        mtype:
+          type: string
+          format: symbol
+          enum: [ "C-BS", "C-DS", "C-RS1", "C-RS2", "C-CS1", "C-CS2", "C-SS", "M-BS", "M-DS", "M-RS1", "M-RS2", "M-CS1", "M-CS2" ,"M-SS"]
+        actual-lights:
+          type: array
+          items:
+            type: string
+            enum: ["RED-ON", "RED-BLINK", "YELLOW-ON", "YELLOW-BLINK", "GREEN-ON", "GREEN-BLINK"]
+        state:
+          type: string
+          formate: symbol
+          enum: ["IDLE","BROKEN","PREPARED","PROCESSING", "PROCESSED","READY-AT-OUTPUT","WAIT-IDLE","DOWN"]
+        zone:
+          type: string
+          formate: symbol
+          enum: [ "TBD", "`C_Z18", "C_Z28", "C_Z38", "C_Z48", "C_Z58", "C_Z69", "C_Z78","C_Z17", "C_Z27", "C_Z37", "C_Z47", "C_Z57", "C_Z67", "C_Z77", "C_Z16", "C_Z26", "C_Z36", "C_Z46", "C_Z56", "C_Z66", "C_Z76", "C_Z15", "C_Z25", "C_Z35", "C_Z45", "C_Z55", "C_Z65", "C_Z75", "C_Z14", "C_Z24", "C_Z34", "C_Z44", "C_Z54", "C_Z64", "C_Z74", "C_Z13", "C_Z23", "C_Z33", "C_Z43", "C_Z53", "C_Z63", "C_Z73", "C_Z12", "C_Z22", "C_Z32", "C_Z42", "C_Z52", "C_Z62", "C_Z72", "C_Z11", "C_Z21", "C_Z31", "C_Z41","M_Z18", "M_Z28", "M_Z38", "M_Z48", "M_Z58", "M_Z68", "M_Z78", "M_Z17", "M_Z27", "M_Z37", "M_Z47", "M_Z57", "M_Z67", "M_Z77", "M_Z16", "M_Z26", "M_Z36", "M_Z46", "M_Z56", "M_Z66", "M_Z76", "M_Z15", "M_Z25", "M_Z35", "M_Z45", "M_Z55", "M_Z65", "M_Z75", "M_Z14", "M_Z24", "M_Z34", "M_Z44", "M_Z54", "M_Z64", "M_Z74", "M_Z13", "M_Z23", "M_Z33", "M_Z43", "M_Z53", "M_Z63", "M_Z73", "M_Z12", "M_Z22", "M_Z32", "M_Z42", "M_Z52", "M_Z62", "M_Z72", "M_Z11", "M_Z21", "M_Z31", "M_Z41"]
+        rotation:
+          type: integer
+          format: int64
+        bases-added:
+          type: integer
+          format: int64
+        bases-used:
+          type: integer
+          format: int64
+        bs-side:
+          type: string
+          formate: symbol
+          enum: ["INPUT" , "OUTPUT"]
+        bs-color:
+          type: string
+          formate: symbol
+          enum: ["BASE_RED" , "BASE_BLACK", "BASE_SILVER" ]
+        ds-order:
+          type: integer
+          format: int64
+        rs-ring-color:
+          type: string
+          formate: symbol
+          enum: ["RING_BLUE" , "RING_GREEN","RING_YELLOW","RING_ORANGE","RING_YELLOW"]
+        rs-ring-colors:
+          type: array
+          items:
+            type: string
+            enum: ["RING_BLUE" , "RING_GREEN","RING_YELLOW","RING_ORANGE","RING_YELLOW"]
+        cs-operation:
+          type: string
+          formate: symbol
+          enum: ["RETRIEVE_CAP","MOUNT_CAP"]
+        cs-retrieved:
+           type: boolean
+
+    Robot:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - number
+        - state
+        - team
+        - team-color
+        - name
+        - host
+        - port
+        - last-seen
+        - has-pose
+        - pose
+        - maintenance-start-time
+        - maintenance-cycles
+        - maintenance-warning-sent
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        number:
+          type: integer
+          format: int64
+        state:
+          type: string
+          format: symbol
+          enum: ["ACTIVE", "MAINTENANCE", "DISQUALIFIED"]
+        team:
+          type: string
+          format: symbol
+        team-color:
+          type: string
+          format: symbol
+          enum: ["CYAN" , "MAGENTA"]
+        name:
+          type: string
+          format: symbol
+        host:
+          type: string
+          format: symbol
+        port:
+          type: integer
+          format: int64
+        last-seen:
+          type: array
+          items:
+            type: string
+            formate: symbol
+        has-pose:
+          type: boolean
+        pose:
+          type: array
+          items:
+            type: string
+            format: symbol
+        maintenance-start-time:
+          type: number
+          format: float
+        maintenance-cycles:
+          type: integer
+          format: int64
+        maintenance-warning-sent:
+          type: boolean
+
+    Order:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - id
+        - complexity
+        - competitive
+        - base-color
+        - ring-colors
+        - cap-color
+        - quantity-requested
+        - quantity-delivered
+        - delivery-period
+        - delivery-gate
+        - active
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        id:
+          type: integer
+          format: int64
+        complexity:
+          type: string
+          format: symbol
+          enum: ["C0", "C1", "C2" , "C3"]
+        competitive:
+          type: boolean
+        base-color:
+          type: string
+          format: symbol
+          enum: ["BASE_SILVER" , "BASE_BLACK", "BASE_RED"]
+        ring-colors:
+          type: array
+          items:
+            type: string
+            formate: symbol
+            enum: ["RING_BLUE", "RING_GREEN", "RING_YELLOW", "RING_ORANGE"]
+        cap-color:
+          type: string
+          format: symbol
+          enum: ["CAP_GREY" , "CAP_BLACK"]
+        quantity-requested:
+           type: integer
+           format: int64
+        quantity-delivered:
+          type: array
+          items:
+            type: string
+            format: symbol
+        delivery-period:
+          type: array
+          items:
+            type: string
+            format: symbol
+        delivery-gate:
+          type: integer
+          format: int64
+        active:
+          type: boolean
+
+    RingSpec:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - color
+        - req-bases
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        color:
+          type: string
+          format: symbol
+          enum: ["RING_BLUE" , "RING_GREEN", "RING_YELLOW", "RING_ORANGE"]
+        req-bases:
+          type: integer
+          format: int64
+
+    GameState:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - state
+        - phase
+        - game-time
+        - points
+        - teams
+        - over-time
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        state:
+          type: string
+          format: symbol
+          enum: ["INIT" , "WAIT_START", "RUNNING", "PAUSED"]
+        phase:
+          type: string
+          format: symbole
+          enum: ["PRE_GAME","SETUP","EXPLORATION","PRODUCTION","POST_GAME","OPEN_CHALLENGE", "NAVIGATION_CHALLENGE", "WHACK_A_MOLE_CHALLENGE"]
+        game-time:
+          type: number
+          format: float
+        points:
+          type: array
+          items:
+            type: string
+            formate: symbol
+        teams:
+          type: array
+          items:
+            type: string
+            formate: symbol
+        over-time:
+          type: boolean
+
+    Points:
+      type: object
+      required:
+        - kind
+        - apiVersion
+        - points
+        - phase
+        - team
+        - game-time
+        - reason
+      properties:
+        kind:
+          type: string
+        apiVersion:
+          type: string
+        points:
+          type: integer
+          format: int64
+        phase:
+          type: string
+          format: symbole
+          enum: ["EXPLORATION","PRODUCTION","POST_GAME", "WHACK_A_MOLE_CHALLENGE"]
+        team:
+          type: string
+          formate: symbol
+          enum: ["CYAN", "MAGENTA"]
+        game-time:
+          type: number
+          format: float
+        reason:
+          type: string
+          format: symbol

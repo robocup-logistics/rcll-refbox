@@ -1,0 +1,70 @@
+
+/***************************************************************************
+ *  time.tolua - Time utils - tolua++ template
+ *
+ *  Created: Wed Mar 12 23:31:34 2008
+ *  Copyright  2005-2008  Tim Niemueller [www.niemueller.de]
+ *
+ ****************************************************************************/
+
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Library General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software Foundation,
+ *  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111-1307, USA.
+ */
+
+
+$#include <utils/time/time.h>
+
+typedef struct {
+  long int tv_sec;
+  long int tv_usec;
+} timeval;
+
+namespace fawkes {
+
+class Time
+{
+  Time();
+  Time(long ms);
+  Time(float sec);
+  Time(Clock *clock);
+  Time(const Time &t);
+  Time(long sec, long usec);
+  Time(long sec, long usec, Clock *clock);
+  ~Time();
+
+  float in_sec() const;
+  long  in_msec() const;
+  long  in_usec() const;
+
+  const timeval* get_timeval() const;
+
+  void set_time(const timeval* tv);
+  void set_time(long ms);
+  void set_time(float sec);
+  void set_time(const Time &t);
+
+  void add(float seconds);
+
+  Time & stamp();
+
+  Time   operator+(const Time& t) const;
+  float  operator-(const Time* t) const;
+
+  const char * str();
+  void         str_r(char *s);
+};
+
+}
+
