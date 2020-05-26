@@ -54,7 +54,6 @@
 #include <protobuf_comm/peer.h>
 #include <rest-api/webview_server.h>
 #include <webview/rest_api_manager.h>
-#include <rest_api/webview_server.h>
 
 #ifdef HAVE_WEBSOCKETS
 #	include <websocket/backend.h>
