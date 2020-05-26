@@ -211,40 +211,57 @@ Client::receive_thread()
 		try {
 			std::string input = read();
 			msgs.Parse(input.c_str());
-			if (!msgs.IsObject()) {
-				logger_->log_error("Websocket", "non JSON message received, won't process");
-			}
 
 			//check incoming message type and call corresponding CLIPS function
-			if (!can_send_) {
-				data_->log_push_attention_message("YOU CAN NOT SEND", "", "");
-			} else if (strcmp(msgs["command"].GetString(), "set_gamestate") == 0) {
-				data_->clips_set_gamestate(msgs["state"].GetString());
-			} else if (strcmp(msgs["command"].GetString(), "set_gamephase") == 0) {
-				data_->clips_set_gamephase(msgs["phase"].GetString());
-			} else if (strcmp(msgs["command"].GetString(), "randomize_field") == 0) {
-				data_->clips_randomize_field();
-			} else if (strcmp(msgs["command"].GetString(), "set_teamname") == 0) {
-				data_->clips_set_teamname(msgs["color"].GetString(), msgs["name"].GetString());
-			} else if (strcmp(msgs["command"].GetString(), "confirm_delivery") == 0) {
-				data_->clips_confirm_delivery(msgs["delivery_id"].GetInt(),
-				                              msgs["correctness"].GetBool(),
-				                              msgs["order_id"].GetInt(),
-				                              msgs["color"].GetString());
-			} else if (strcmp(msgs["command"].GetString(), "set_order_delivered") == 0) {
-				data_->clips_set_order_delivered(msgs["color"].GetString(), msgs["order_id"].GetInt());
-			} else if (strcmp(msgs["command"].GetString(), "set_machine_state") == 0) {
-				data_->clips_production_set_machine_state(msgs["mname"].GetString(),
-				                                          msgs["state"].GetString());
-			} else if (strcmp(msgs["command"].GetString(), "machine_add_base") == 0) {
-				data_->clips_production_machine_add_base(msgs["mname"].GetString());
-			} else if (strcmp(msgs["command"].GetString(), "set_robot_maintenance") == 0) {
-				data_->clips_robot_set_robot_maintenance(msgs["robot_number"].GetInt(),
-				                                         msgs["team_color"].GetString(),
-				                                         msgs["maintenance"].GetBool());
+			if (!msgs.IsObject()) {
+				logger_->log_error("Websocket", "non JSON message received, won't process");
+			} else if (!can_send_) {
+				logger_->log_error("Websocket", "non localhost client tried to send command");
+			} else if (msgs.HasMember("command")) {
+				if (strcmp(msgs["command"].GetString(), "set_gamestate") == 0 && msgs.HasMember("state")) {
+					data_->clips_set_gamestate(msgs["state"].GetString());
+				} else if (strcmp(msgs["command"].GetString(), "set_gamephase") == 0
+				           && msgs.HasMember("phase")) {
+					data_->clips_set_gamephase(msgs["phase"].GetString());
+				} else if (strcmp(msgs["command"].GetString(), "randomize_field") == 0) {
+					data_->clips_randomize_field();
+				} else if (strcmp(msgs["command"].GetString(), "set_teamname") == 0
+				           && msgs.HasMember("name") && msgs.HasMember("color")) {
+					data_->clips_set_teamname(msgs["color"].GetString(), msgs["name"].GetString());
+				} else if (strcmp(msgs["command"].GetString(), "confirm_delivery") == 0
+				           && msgs.HasMember("correctness") && msgs.HasMember("order_id")
+				           && msgs.HasMember("color")) {
+					data_->clips_confirm_delivery(msgs["delivery_id"].GetInt(),
+					                              msgs["correctness"].GetBool(),
+					                              msgs["order_id"].GetInt(),
+					                              msgs["color"].GetString());
+				} else if (strcmp(msgs["command"].GetString(), "set_order_delivered") == 0
+				           && msgs.HasMember("color") && msgs.HasMember("order_id")) {
+					data_->clips_set_order_delivered(msgs["color"].GetString(), msgs["order_id"].GetInt());
+				} else if (strcmp(msgs["command"].GetString(), "set_machine_state") == 0
+				           && msgs.HasMember("name") && msgs.HasMember("state")) {
+					data_->clips_production_set_machine_state(msgs["mname"].GetString(),
+					                                          msgs["state"].GetString());
+				} else if (strcmp(msgs["command"].GetString(), "machine_add_base") == 0
+				           && msgs.HasMember("mname")) {
+					data_->clips_production_machine_add_base(msgs["mname"].GetString());
+				} else if (strcmp(msgs["command"].GetString(), "set_robot_maintenance") == 0
+				           && msgs.HasMember("robot_number") && msgs.HasMember("team_color")
+				           && msgs.HasMember("maintenance")) {
+					data_->clips_robot_set_robot_maintenance(msgs["robot_number"].GetInt(),
+					                                         msgs["team_color"].GetString(),
+					                                         msgs["maintenance"].GetBool());
+				} else {
+					logger_->log_error(
+					  "Websocket", "malformed message received, unknown or incomplete fields for command");
+				}
+			} else {
+				logger_->log_error("Websocket", "malformed message received, won't be processed");
 			}
 
 		} catch (std::exception &e) {
+			disconnect();
+		} catch (...) {
 			disconnect();
 		}
 	}
