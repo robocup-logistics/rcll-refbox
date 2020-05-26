@@ -24,6 +24,7 @@
 #include "client.h"
 #include "logging/logger.h"
 
+#define RAPIDJSON_HAS_STDSTRING 1
 #include <rapidjson/document.h>
 
 #include <condition_variable>
