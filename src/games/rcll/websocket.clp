@@ -19,3 +19,10 @@
     =>
     (ws-push-gamepoints (str-cat ?points-cyan) (str-cat ?points-magenta))
 )
+
+(defrule ws-send-attention-message
+     ?msg <- (ws-attention-message ?text ?team ?time-to-show)
+     =>
+     (retract ?msg)
+     (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show))
+)

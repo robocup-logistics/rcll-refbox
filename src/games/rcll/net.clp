@@ -200,7 +200,7 @@
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
 		    (pb-send ?client:id ?attmsg))
   (pb-destroy ?attmsg)
-  (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show))
+  (assert (ws-attention-message ?text ?team ?time-to-show))
 )
 
 (defrule net-recv-SetGameState
