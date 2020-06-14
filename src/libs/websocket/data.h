@@ -70,6 +70,7 @@ public:
 	std::function<void(std::string)>                 clips_production_machine_add_base;
 	std::function<void(std::string, std::string)>    clips_production_set_machine_state;
 	std::function<void(int, std::string, bool)>      clips_robot_set_robot_maintenance;
+	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
 
 private:
 	Logger *                             logger_;

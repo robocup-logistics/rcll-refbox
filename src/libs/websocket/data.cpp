@@ -222,10 +222,86 @@ Data::log_push_fact_gamestate(std::string time,
 	log_push(d);
 }
 
+/** Get a value from a fact.
+ * @param fact pointer to CLIPS fact
+ * @param slot_name name of field to retrieve
+ * @return template-specific return value
+ */
+template <typename T>
+T
+get_value(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
+{
+	CLIPS::Values v = fact->slot_value(slot_name);
+	if (v.empty()) {
+		//throw Exception("No value for slot '%s'", slot_name.c_str());
+	}
+	if (v[0].type() == CLIPS::TYPE_SYMBOL && v[0].as_string() == "nil") {
+		return T();
+	}
+	return v[0];
+}
+
+/** Specialization for bool.
+ * @param fact pointer to CLIPS fact
+ * @param slot_name name of field to retrieve
+ * @return boolean value
+ */
+template <>
+bool
+get_value(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
+{
+	CLIPS::Values v = fact->slot_value(slot_name);
+	if (v.empty()) {
+		//throw Exception("No value for slot '%s'", slot_name.c_str());
+	}
+	if (v[0].type() != CLIPS::TYPE_SYMBOL) {
+		//throw Exception("Value for slot '%s' is not a boolean", slot_name.c_str());
+	}
+	return (v[0].as_string() == "TRUE");
+}
+
+/** Get value array.
+ * This is not a template because the overly verbose operator API
+ * of CLIPS::Value can lead to ambiguous overloads, e.g., resolving
+ * std::string to std::string or const char * operators.
+ * @param fact pointer to CLIPS fact
+ * @param slot_name name of field to retrieve
+ * @return vector of strings from multislot
+ */
+static std::vector<std::string>
+get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
+{
+	CLIPS::Values            v = fact->slot_value(slot_name);
+	std::vector<std::string> rv(v.size());
+	for (size_t i = 0; i < v.size(); ++i) {
+		switch (v[i].type()) {
+		case CLIPS::TYPE_FLOAT: rv[i] = std::to_string(static_cast<double>(v[i])); break;
+		case CLIPS::TYPE_INTEGER: rv[i] = std::to_string(static_cast<long long int>(v[i])); break;
+		case CLIPS::TYPE_SYMBOL:
+		case CLIPS::TYPE_STRING:
+		case CLIPS::TYPE_INSTANCE_NAME: rv[i] = static_cast<std::string &>(v[i]); break;
+		default: rv[i] = "CANNOT-REPRESENT"; break;
+		}
+	}
+	return rv;
+}
+
 /**
- * @brief log the points of the teams
+ * @brief 
  * 
- * Called from CLIPS environment when points for the teams get udpated, forward those to the clients 
+ * @param fact 
+ * @param tmpl_name 
+ * @return true 
+ * @return false 
+ */
+bool
+Data::match(CLIPS::Fact::pointer &fact, std::string tmpl_name)
+{
+	CLIPS::Template::pointer tmpl = fact->get_template();
+	if (tmpl->name() != tmpl_name)
+		return false;
+	return true;
+}
  * 
  * @param points_cyan 
  * @param points_magenta 
