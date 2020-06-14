@@ -172,15 +172,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
 
-#ifdef HAVE_WEBSOCKETS
-	//launch websocket backend and add websocket logger
-	backend_ = new websocket::Backend(logger_.get());
-	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
-	                config_->get_bool("/llsfrb/websocket/ws-mode"),
-	                config_->get_bool("/llsfrb/websocket/allow-control-all"));
-	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
-#endif
-
 	cfg_machine_assignment_ = ASSIGNMENT_2014;
 	try {
 		std::string m_ass_str = config_->get_string("/llsfrb/game/machine-assignment");
@@ -201,6 +192,15 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	clips_ = std::make_unique<CLIPS::Environment>();
 	setup_protobuf_comm();
 	setup_clips();
+
+#ifdef HAVE_WEBSOCKETS
+	//launch websocket backend and add websocket logger
+	backend_ = new websocket::Backend(logger_.get(), clips_.get(), clips_mutex_);
+	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
+	                config_->get_bool("/llsfrb/websocket/ws-mode"),
+	                config_->get_bool("/llsfrb/websocket/allow-control-all"));
+	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
+#endif
 
 	try {
 		if (config_->get_bool("/llsfrb/mps/enable")) {

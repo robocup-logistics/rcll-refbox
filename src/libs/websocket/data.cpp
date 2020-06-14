@@ -20,6 +20,7 @@
 
 #include "data.h"
 
+#include <core/threading/mutex_locker.h>
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -38,7 +39,8 @@ namespace llsfrb::websocket {
  * 
  * @param logger_ logger to be used
  */
-Data::Data(Logger *logger_) : logger_(logger_)
+Data::Data(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
+: logger_(logger_), env_(env_), env_mutex_(env_mutex_)
 {
 }
 

@@ -25,12 +25,15 @@
 #include "logging/logger.h"
 #include "server.h"
 
+#include <clipsmm.h>
+
+using namespace fawkes;
 namespace llsfrb::websocket {
 
 class Backend
 {
 public:
-	Backend(Logger *logger_);
+	Backend(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_);
 
 	void  operator()();
 	void  start(uint port, bool ws_mode = true, bool allow_control_all = false);

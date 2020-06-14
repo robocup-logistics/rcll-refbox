@@ -24,6 +24,8 @@
 #include "client.h"
 #include "logging/logger.h"
 
+#include <clipsmm.h>
+
 #define RAPIDJSON_HAS_STDSTRING 1
 #include <rapidjson/document.h>
 
@@ -34,13 +36,14 @@
 #include <string>
 #include <vector>
 
+using namespace fawkes;
 namespace llsfrb::websocket {
 class Client; // forward declaration
 
 class Data
 {
 public:
-	Data(Logger *logger_);
+	Data(Logger *logger, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_);
 	std::string log_pop();
 	void        log_push(std::string log);
 	void        log_push(rapidjson::Document &d);
@@ -75,6 +78,8 @@ private:
 	std::condition_variable              log_cv;
 	std::queue<std::string>              logs;
 	std::vector<std::shared_ptr<Client>> clients;
+	CLIPS::Environment *                 env_;
+	fawkes::Mutex &                      env_mutex_;
 };
 
 } // namespace llsfrb::websocket

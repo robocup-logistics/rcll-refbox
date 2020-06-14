@@ -18,6 +18,7 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 include $(BUILDCONFDIR)/websocket/websocket.mk
+include $(BUILDSYSDIR)/clips.mk
 
 
 REQ_BOOST_LIBS = system asio 
@@ -42,8 +43,8 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
   HDRS_libllsfrblogging = $(filter-out $(HDRS_WEBSOCKET), $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h)))
 
   ifeq ($(HAVE_WEBSOCKET),1)
-    CFLAGS += $(CFLAGS_WEBSOCKET)
-    LDFLAGS += $(LDFLAGS_WEBSOCKET)
+    CFLAGS += $(CFLAGS_WEBSOCKET) $(CFLAGS_CLIPS)
+    LDFLAGS += $(LDFLAGS_WEBSOCKET) $(LDFLAGS_CLIPS)
 
     LIBS_libllsfrblogging += $(LIBS_WEBSOCKET)
     OBJS_libllsfrblogging += $(OBJS_WEBSOCKET)

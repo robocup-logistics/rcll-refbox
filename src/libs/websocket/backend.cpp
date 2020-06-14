@@ -35,9 +35,10 @@ namespace llsfrb::websocket {
  * 
  * @param logger_ logger used by the backend
  */
-Backend::Backend(Logger *logger_) : logger_(logger_)
+Backend::Backend(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
+: logger_(logger_)
 {
-	data_   = new Data(logger_);
+	data_   = new Data(logger_, env_, env_mutex_);
 	server_ = Server(data_, logger_);
 }
 
