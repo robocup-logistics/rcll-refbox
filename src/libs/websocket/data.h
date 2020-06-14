@@ -52,15 +52,7 @@ public:
 	void        clients_add(std::shared_ptr<Client> client);
 	void        clients_send_all(std::string msg);
 	void        clients_send_all(rapidjson::Document &d);
-	void        log_push_fact_gamestate(std::string time,
-	                                    std::string state,
-	                                    std::string phase,
-	                                    std::string prevphase,
-	                                    std::string team_cyan,
-	                                    std::string team_magenta);
-	void        log_push_fact_gamepoints(std::string points_cyan, std::string points_magenta);
 	void        log_push_attention_message(std::string text, std::string team, std::string time);
-
 	std::function<void(std::string)>                 clips_set_gamestate;
 	std::function<void(std::string)>                 clips_set_gamephase;
 	std::function<void()>                            clips_randomize_field;
@@ -71,6 +63,13 @@ public:
 	std::function<void(std::string, std::string)>    clips_production_set_machine_state;
 	std::function<void(int, std::string, bool)>      clips_robot_set_robot_maintenance;
 	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
+	void log_push_points();
+	void log_push_ring_spec();
+	void log_push_game_state();
+	void log_push_robot_info();
+	void log_push_order_info();
+	void log_push_machine_info();
+	void log_push_workpiece_info();
 
 private:
 	Logger *                             logger_;

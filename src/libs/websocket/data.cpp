@@ -179,45 +179,30 @@ Data::clients_send_all(rapidjson::Document &d)
 }
 
 /**
- * @brief log the facts of the gamestate 
+ * @brief log attention message
  * 
- *  Take the gamestate facts, build a JSON string and push it in the log queue. 
+ * Called from the CLIPS environment when an attention message is generated, forward that to the clients
  * 
+ * @param text 
+ * @param team 
  * @param time 
- * @param phase 
- * @param prevphase 
- * @param team_cyan 
- * @param team_magenta 
  */
 void
-Data::log_push_fact_gamestate(std::string time,
-                              std::string state,
-                              std::string phase,
-                              std::string prevphase,
-                              std::string team_cyan,
-                              std::string team_magenta)
+Data::log_push_attention_message(std::string text, std::string team, std::string time)
 {
 	rapidjson::Document d;
 	d.SetObject();
 	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
 
 	rapidjson::Value json_string;
-	json_string.SetString("clips", alloc);
+	json_string.SetString("attention", alloc);
 	d.AddMember("level", json_string, alloc);
-	json_string.SetString("gamestate", alloc);
-	d.AddMember("type", json_string, alloc);
-	json_string.SetString((state).c_str(), alloc);
-	d.AddMember("state", json_string, alloc);
-	json_string.SetString((phase).c_str(), alloc);
-	d.AddMember("gamephase", json_string, alloc);
-	json_string.SetString((prevphase).c_str(), alloc);
-	d.AddMember("prevphase", json_string, alloc);
+	json_string.SetString((text).c_str(), alloc);
+	d.AddMember("text", json_string, alloc);
+	json_string.SetString((team).c_str(), alloc);
+	d.AddMember("team", json_string, alloc);
 	json_string.SetString((time).c_str(), alloc);
-	d.AddMember("gametime", json_string, alloc);
-	json_string.SetString((team_cyan).c_str(), alloc);
-	d.AddMember("cyan", json_string, alloc);
-	json_string.SetString((team_magenta).c_str(), alloc);
-	d.AddMember("magenta", json_string, alloc);
+	d.AddMember("time", json_string, alloc);
 
 	log_push(d);
 }
@@ -302,57 +287,400 @@ Data::match(CLIPS::Fact::pointer &fact, std::string tmpl_name)
 		return false;
 	return true;
 }
+
+/**
+ * @brief Gets all machine-info facts from CLIPS and pushes them to the send queue
  * 
- * @param points_cyan 
- * @param points_magenta 
  */
 void
-Data::log_push_fact_gamepoints(std::string points_cyan, std::string points_magenta)
+Data::log_push_machine_info()
 {
-	rapidjson::Document d;
-	d.SetObject();
-	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+	MutexLocker          lock(&env_mutex_);
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "machine")) {
+			rapidjson::Document d;
+			d.SetObject();
+			rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+			//generic type information
+			rapidjson::Value json_string;
+			json_string.SetString("clips", alloc);
+			d.AddMember("level", json_string, alloc);
+			json_string.SetString("machine-info", alloc);
+			d.AddMember("type", json_string, alloc);
+			//value fields
+			json_string.SetString((get_value<std::string>(fact, "name")).c_str(), alloc);
+			d.AddMember("name", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+			d.AddMember("team", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "mtype")).c_str(), alloc);
+			d.AddMember("mtype", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+			d.AddMember("state", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "zone")).c_str(), alloc);
+			d.AddMember("zone", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "bs-side")).c_str(), alloc);
+			d.AddMember("bs_side", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "bs-color")).c_str(), alloc);
+			d.AddMember("bs_color", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "rs-ring-color")).c_str(), alloc);
+			d.AddMember("rs_ring_color", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "cs-operation")).c_str(), alloc);
+			d.AddMember("cs_operation", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "rotation")));
+			d.AddMember("rotation", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "bases-added")));
+			d.AddMember("bases_added", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "bases-used")));
+			d.AddMember("bases_used", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "ds-order")));
+			d.AddMember("ds_order", json_string, alloc);
+			json_string.SetBool((get_value<bool>(fact, "cs-retrieved")));
+			d.AddMember("cs_retrieved", json_string, alloc);
 
-	rapidjson::Value json_string;
-	json_string.SetString("clips", alloc);
-	d.AddMember("level", json_string, alloc);
-	json_string.SetString("gamepoints", alloc);
-	d.AddMember("type", json_string, alloc);
-	json_string.SetString((points_cyan).c_str(), alloc);
-	d.AddMember("points_cyan", json_string, alloc);
-	json_string.SetString((points_magenta).c_str(), alloc);
-	d.AddMember("points_magenta", json_string, alloc);
+			rapidjson::Value lights_array(rapidjson::kArrayType);
+			lights_array.Reserve(get_values(fact, "actual-lights").size(), alloc);
+			for (const auto &e : get_values(fact, "actual-lights")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				lights_array.PushBack(v, alloc);
+			}
+			d.AddMember("actual_lights", lights_array, alloc);
 
-	log_push(d);
+			rapidjson::Value ring_array(rapidjson::kArrayType);
+			ring_array.Reserve(get_values(fact, "rs-ring-colors").size(), alloc);
+			for (const auto &e : get_values(fact, "rs-ring-colors")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				ring_array.PushBack(v, alloc);
+			}
+			d.AddMember("rs_ring_colors", ring_array, alloc);
+
+			//send it off bye bye
+			log_push(d);
+		}
+		fact = fact->next();
+	}
 }
 
 /**
- * @brief log attention message
+ * @brief Gets all order-info facts from CLIPS and pushes them to the send queue
  * 
- * Called from the CLIPS environment when an attention message is generated, forward that to the clients
- * 
- * @param text 
- * @param team 
- * @param time 
  */
 void
-Data::log_push_attention_message(std::string text, std::string team, std::string time)
+Data::log_push_order_info()
 {
-	rapidjson::Document d;
-	d.SetObject();
-	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+	MutexLocker lock(&env_mutex_);
 
-	rapidjson::Value json_string;
-	json_string.SetString("attention", alloc);
-	d.AddMember("level", json_string, alloc);
-	json_string.SetString((text).c_str(), alloc);
-	d.AddMember("text", json_string, alloc);
-	json_string.SetString((team).c_str(), alloc);
-	d.AddMember("team", json_string, alloc);
-	json_string.SetString((time).c_str(), alloc);
-	d.AddMember("time", json_string, alloc);
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "order")) {
+			rapidjson::Document d;
+			d.SetObject();
+			rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+			//generic type information
+			rapidjson::Value json_string;
+			json_string.SetString("clips", alloc);
+			d.AddMember("level", json_string, alloc);
+			json_string.SetString("order-info", alloc);
+			d.AddMember("type", json_string, alloc);
+			//value fields
+			json_string.SetString((get_value<std::string>(fact, "complexity")).c_str(), alloc);
+			d.AddMember("complexity", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
+			d.AddMember("base_color", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
+			d.AddMember("cap_color", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "id")));
+			d.AddMember("id", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "quantity-requested")));
+			d.AddMember("quantity_requested", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "delivery-gate")));
+			d.AddMember("delivery_gate", json_string, alloc);
+			json_string.SetBool((get_value<bool>(fact, "competitive")));
+			d.AddMember("competitive", json_string, alloc);
+			json_string.SetBool((get_value<bool>(fact, "active")));
+			d.AddMember("active", json_string, alloc);
 
-	log_push(d);
+			rapidjson::Value delivery_array(rapidjson::kArrayType);
+			delivery_array.Reserve(get_values(fact, "delivery-period").size(), alloc);
+			for (const auto &e : get_values(fact, "delivery-period")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				delivery_array.PushBack(v, alloc);
+			}
+			d.AddMember("delivery_period", delivery_array, alloc);
+
+			rapidjson::Value quantity_array(rapidjson::kArrayType);
+			quantity_array.Reserve(get_values(fact, "quantity-delivered").size(), alloc);
+			for (const auto &e : get_values(fact, "quantity-delivered")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				quantity_array.PushBack(v, alloc);
+			}
+			d.AddMember("quantity_delivered", quantity_array, alloc);
+
+			rapidjson::Value ring_array(rapidjson::kArrayType);
+			ring_array.Reserve(get_values(fact, "ring-colors").size(), alloc);
+			for (const auto &e : get_values(fact, "ring-colors")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				ring_array.PushBack(v, alloc);
+			}
+			d.AddMember("ring_colors", ring_array, alloc);
+
+			//send it off bye bye
+			log_push(d);
+		}
+		fact = fact->next();
+	}
+}
+
+/**
+ * @brief Gets all robot-info facts from CLIPS and pushes them to the send queue
+ * 
+ */
+void
+Data::log_push_robot_info()
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "robot")) {
+			rapidjson::Document d;
+			d.SetObject();
+			rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+			//generic type information
+			rapidjson::Value json_string;
+			json_string.SetString("clips", alloc);
+			d.AddMember("level", json_string, alloc);
+			json_string.SetString("robot-info", alloc);
+			d.AddMember("type", json_string, alloc);
+			//value fields
+			json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+			d.AddMember("state", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+			d.AddMember("team", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "team-color")).c_str(), alloc);
+			d.AddMember("team_color", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "name")).c_str(), alloc);
+			d.AddMember("name", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "host")).c_str(), alloc);
+			d.AddMember("host", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "number")));
+			d.AddMember("number", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "port")));
+			d.AddMember("port", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "maintenance-start-time")));
+			d.AddMember("maintenance_start-time", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "maintenance-cycles")));
+			d.AddMember("maintenance_cylces", json_string, alloc);
+			json_string.SetBool((get_value<bool>(fact, "has-pose")));
+			d.AddMember("has_pose", json_string, alloc);
+			json_string.SetBool((get_value<bool>(fact, "maintenance-warning-sent")));
+			d.AddMember("maintenance_warning_sent", json_string, alloc);
+
+			rapidjson::Value last_seen_array(rapidjson::kArrayType);
+			last_seen_array.Reserve(get_values(fact, "last-seen").size(), alloc);
+			for (const auto &e : get_values(fact, "last-seen")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				last_seen_array.PushBack(v, alloc);
+			}
+			d.AddMember("last_seen", last_seen_array, alloc);
+
+			rapidjson::Value pose_array(rapidjson::kArrayType);
+			pose_array.Reserve(get_values(fact, "pose").size(), alloc);
+			for (const auto &e : get_values(fact, "pose")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				pose_array.PushBack(v, alloc);
+			}
+			d.AddMember("pose", pose_array, alloc);
+
+			//send it off
+			log_push(d);
+		}
+		fact = fact->next();
+	}
+}
+
+/**
+ * @brief Gets all game-state facts from CLIPS and pushes them to the send queue
+ * 
+ */
+void
+Data::log_push_game_state()
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "gamestate")) {
+			rapidjson::Document d;
+			d.SetObject();
+			rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+			//generic type information
+			rapidjson::Value json_string;
+			json_string.SetString("clips", alloc);
+			d.AddMember("level", json_string, alloc);
+			json_string.SetString("gamestate", alloc);
+			d.AddMember("type", json_string, alloc);
+			//value fields
+			json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+			d.AddMember("state", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "phase")).c_str(), alloc);
+			d.AddMember("phase", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "prev-phase")).c_str(), alloc);
+			d.AddMember("prev_phase", json_string, alloc);
+			json_string.SetFloat((get_value<float>(fact, "game-time")));
+			d.AddMember("game_time", json_string, alloc);
+			json_string.SetBool((get_value<bool>(fact, "over-time")));
+			d.AddMember("over_time", json_string, alloc);
+			json_string.SetString((get_values(fact, "teams")[0]).c_str(), alloc);
+			d.AddMember("cyan", json_string, alloc);
+			json_string.SetString((get_values(fact, "teams")[1]).c_str(), alloc);
+			d.AddMember("magenta", json_string, alloc);
+			json_string.SetString((get_values(fact, "points")[0]).c_str(), alloc);
+			d.AddMember("points_cyan", json_string, alloc);
+			json_string.SetString((get_values(fact, "points")[1]).c_str(), alloc);
+			d.AddMember("points_magenta", json_string, alloc);
+
+			//send it off
+			log_push(d);
+		}
+		fact = fact->next();
+	}
+}
+
+/**
+ * @brief Gets all ring-spec facts from CLIPS and pushes them to the send queue
+ * 
+ */
+void
+Data::log_push_ring_spec()
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "ring-spec")) {
+			rapidjson::Document d;
+			d.SetObject();
+			rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+			//generic type information
+			rapidjson::Value json_string;
+			json_string.SetString("clips", alloc);
+			d.AddMember("level", json_string, alloc);
+			json_string.SetString("ring-spec", alloc);
+			d.AddMember("type", json_string, alloc);
+			//value fields
+			json_string.SetString((get_value<std::string>(fact, "color")).c_str(), alloc);
+			d.AddMember("color", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "req-bases")));
+			d.AddMember("req_bases", json_string, alloc);
+
+			//send it off
+			log_push(d);
+		}
+		fact = fact->next();
+	}
+}
+
+/**
+ * @brief Gets all points facts from CLIPS and pushes them to the send queue
+ * 
+ */
+void
+Data::log_push_points()
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "points")) {
+			rapidjson::Document d;
+			d.SetObject();
+			rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+			//generic type information
+			rapidjson::Value json_string;
+			json_string.SetString("clips", alloc);
+			d.AddMember("level", json_string, alloc);
+			json_string.SetString("points", alloc);
+			d.AddMember("type", json_string, alloc);
+			//value fields
+			json_string.SetString((get_value<std::string>(fact, "phase")).c_str(), alloc);
+			d.AddMember("phase", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "reason")).c_str(), alloc);
+			d.AddMember("reason", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+			d.AddMember("team", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(fact, "points")));
+			d.AddMember("points", json_string, alloc);
+			json_string.SetFloat((get_value<float>(fact, "game-time")));
+			d.AddMember("game_time", json_string, alloc);
+
+			//send it off
+			log_push(d);
+		}
+		fact = fact->next();
+	}
+}
+
+/**
+ * @brief Gets all workpiece facts from CLIPS and pushes them to the send queue
+ * 
+ */
+void
+Data::log_push_workpiece_info()
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "workpiece")) {
+			rapidjson::Document d;
+			d.SetObject();
+			rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+			//generic type information
+			rapidjson::Value json_string;
+			json_string.SetString("clips", alloc);
+			d.AddMember("level", json_string, alloc);
+			json_string.SetString("workpiece-info", alloc);
+			d.AddMember("type", json_string, alloc);
+			//value fields
+			json_string.SetString((get_value<std::string>(fact, "at-machine")).c_str(), alloc);
+			d.AddMember("at_machine", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+			d.AddMember("state", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
+			d.AddMember("base_color", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
+			d.AddMember("cap_color", json_string, alloc);
+			json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+			d.AddMember("team", json_string, alloc);
+			json_string.SetFloat((get_value<int64_t>(fact, "id")));
+			d.AddMember("id", json_string, alloc);
+			json_string.SetFloat((get_value<int64_t>(fact, "order")));
+			d.AddMember("order", json_string, alloc);
+			json_string.SetFloat((get_value<float>(fact, "visible")));
+			d.AddMember("visible", json_string, alloc);
+
+			rapidjson::Value rings_array(rapidjson::kArrayType);
+			rings_array.Reserve(get_values(fact, "ring-colors").size(), alloc);
+			for (const auto &e : get_values(fact, "ring-colors")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				rings_array.PushBack(v, alloc);
+			}
+			d.AddMember("ring_colors", rings_array, alloc);
+
+			//send it off
+			log_push(d);
+		}
+		fact = fact->next();
+	}
 }
 
 } // namespace llsfrb::websocket
