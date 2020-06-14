@@ -7,22 +7,66 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(defrule ws-monitor-gamephase                                                     
-    ?gs <- (gamestate (phase ?phase) (state ?state) (game-time ?gt) (teams ?team_cyan ?team_magenta) (prev-phase ?prevphase) (points ?points-cyan ?points-magenta))             
-    =>         
-    ; whenever the gamestate changes, call signal function to transmit the changes to the connected clients                                                  
-    (ws-push-gamestate (str-cat ?gt) (str-cat ?state) (str-cat ?phase) (str-cat ?prevphase) (str-cat ?team_cyan) (str-cat ?team_magenta) )                     
-)
-
-(defrule ws-monitor-gamepoints
-    ?gs <- (gamestate (points ?points-cyan ?points-magenta))
-    =>
-    (ws-push-gamepoints (str-cat ?points-cyan) (str-cat ?points-magenta))
-)
-
 (defrule ws-send-attention-message
      ?msg <- (ws-attention-message ?text ?team ?time-to-show)
      =>
      (retract ?msg)
      (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show))
+)
+
+;; net.clp related functions and rules for websocket communciation
+
+; OrderInfo
+
+(defrule ws-proc-OrderInfo
+     ?msg <- (ws-send-OrderInfo)
+     =>
+     (retract ?msg)
+     (ws-create-OrderInfo)
+)
+
+; WorkpieceInfo
+
+(defrule ws-proc-send-WorkpieceInfo 
+  ?msg <- (ws-send-WorkpieceInfo)
+  =>
+  (retract ?msg)
+  (ws-create-WorkpieceInfo)
+)
+
+; RingInfo
+
+(defrule ws-proc-send-RingInfo
+  ?msg <-(ws-send-RingInfo)
+  =>
+  (retract ?msg)
+  (ws-create-RingInfo)
+)
+
+; MachineInfo
+
+(defrule ws-proc-send-MachineInfo
+  ?msg <- (ws-send-MachineInfo)
+  =>
+  (retract ?msg)
+  (ws-create-MachineInfo)
+)
+
+; RobotInfo
+
+(defrule ws-proc-send-RobotInfo
+  ?msg <- (ws-send-RobotInfo)
+  =>
+  (retract ?msg)
+  (ws-create-RobotInfo)
+)
+
+; GameState
+
+(defrule ws-proc-send-GameState
+  ;?msg <- (ws-send-GameState)
+  ?gs <- (gamestate (game-time ?gt))
+  =>
+  ;(retract ?msg)
+  (ws-create-GameState)  
 )
