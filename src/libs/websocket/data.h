@@ -28,6 +28,7 @@
 
 #define RAPIDJSON_HAS_STDSTRING 1
 #include <rapidjson/document.h>
+#include <rapidjson/schema.h>
 
 #include <condition_variable>
 #include <functional>
@@ -70,6 +71,7 @@ public:
 	void log_push_order_info();
 	void log_push_machine_info();
 	void log_push_workpiece_info();
+	std::map<std::string, rapidjson::SchemaDocument *> command_schema_map;
 
 private:
 	Logger *                             logger_;
@@ -80,6 +82,7 @@ private:
 	std::vector<std::shared_ptr<Client>> clients;
 	CLIPS::Environment *                 env_;
 	fawkes::Mutex &                      env_mutex_;
+	rapidjson::SchemaDocument *          load_schema(std::string path);
 };
 
 } // namespace llsfrb::websocket

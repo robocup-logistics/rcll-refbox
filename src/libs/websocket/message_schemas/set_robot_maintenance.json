@@ -1,0 +1,65 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "command": "set_robot_maintenance",
+            "robot_number": 1,
+            "team_color": "MAGENTA",
+            "maintenance": true
+        }
+    ],
+    "required": [
+        "command",
+        "robot_number",
+        "team_color",
+        "maintenance"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "title": "The command schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "set_robot_maintenance"
+            ]
+        },
+        "robot_number": {
+            "$id": "#/properties/robot_number",
+            "type": "integer",
+            "title": "The robot_number schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "team_color": {
+            "$id": "#/properties/team_color",
+            "type": "string",
+            "title": "The team_color schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "MAGENTA"
+            ]
+        },
+        "maintenance": {
+            "$id": "#/properties/maintenance",
+            "type": "boolean",
+            "title": "The maintenance schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": false,
+            "examples": [
+                true
+            ]
+        }
+    }
+}

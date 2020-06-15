@@ -22,10 +22,13 @@
 
 #include <core/threading/mutex_locker.h>
 #include <rapidjson/document.h>
+#include <rapidjson/filereadstream.h>
+#include <rapidjson/schema.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
 #include <condition_variable>
+#include <cstdio>
 #include <iostream>
 #include <mutex>
 #include <queue>
@@ -42,6 +45,54 @@ namespace llsfrb::websocket {
 Data::Data(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
 : logger_(logger_), env_(env_), env_mutex_(env_mutex_)
 {
+	logger_->log_info("Websocket", "loading JSON schemas for command validation");
+
+	std::string base_path      = std::getenv("LLSF_REFBOX_DIR");
+	std::string schema_names[] = {"confirm_delivery",
+	                              "machine_add_base",
+	                              "randomize_field",
+	                              "set_gamephase",
+	                              "set_gamestate",
+	                              "set_machine_state",
+	                              "set_order_delivered",
+	                              "set_robot_maintenance",
+	                              "set_teamname"};
+
+	for (const std::string &schema_name : schema_names) {
+		rapidjson::SchemaDocument *sd =
+		  load_schema(base_path + "/src/libs/websocket/message_schemas/" + schema_name + ".json");
+		if (sd) {
+			command_schema_map[schema_name];
+		} else {
+			//throw an exception
+		}
+	}
+}
+
+/**
+ * @brief Read a JSON schema file and return pointer to a rapidjson SchemaDocument
+ * 
+ * @param path 
+ * @return rapidjson::SchemaDocument 
+ */
+rapidjson::SchemaDocument *
+Data::load_schema(std::string path)
+{
+	rapidjson::Document d;
+
+	FILE *fp = std::fopen(path.c_str(), "rb");
+	if (fp == 0) {
+		logger_->log_error("Websocket", "couldn't load JSON schema file");
+		return nullptr;
+	}
+	char                      readBuffer[65536];
+	rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+	if (d.ParseStream(is).HasParseError()) {
+		logger_->log_error("Websocket", "couldn't parse JSON schema file");
+		return nullptr;
+	}
+	rapidjson::SchemaDocument *schema = new rapidjson::SchemaDocument(d);
+	return schema;
 }
 
 /**
