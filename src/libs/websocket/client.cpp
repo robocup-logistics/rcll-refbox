@@ -53,10 +53,9 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
 {
 	logger_   = logger;
 	data_     = data;
-	can_send_ = can_send;
 	socket->accept();
-	if(can_send)
-		client_t = std::thread(&Client::receive_thread, this);
+	can_send_ = can_send;
+	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "client receive thread started");
 }
 
@@ -134,8 +133,8 @@ ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data *data
 {
 	logger_   = logger;
 	data_     = data;
-	if(can_send)
-		client_t  = std::thread(&Client::receive_thread, this);
+	can_send_ = can_send;
+	client_t  = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "TCP-socket client receive thread started");
 }
 
