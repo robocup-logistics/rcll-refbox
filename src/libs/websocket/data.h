@@ -72,6 +72,13 @@ public:
 	void log_push_machine_info();
 	void log_push_workpiece_info();
 	std::map<std::string, rapidjson::SchemaDocument *> command_schema_map;
+	template <class T> void get_machine_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T> void get_order_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T> void get_robot_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T> void get_game_state_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T> void get_ring_spec_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T> void get_points_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T> void get_workpiece_info_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 
 private:
 	Logger *                             logger_;
