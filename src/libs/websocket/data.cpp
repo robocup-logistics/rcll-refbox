@@ -62,7 +62,7 @@ Data::Data(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
 		rapidjson::SchemaDocument *sd =
 		  load_schema(base_path + "/src/libs/websocket/message_schemas/" + schema_name + ".json");
 		if (sd) {
-			command_schema_map[schema_name];
+			command_schema_map[schema_name] = sd;
 		} else {
 			//throw an exception
 		}
