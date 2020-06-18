@@ -63,14 +63,14 @@ public:
 	std::function<void(std::string)>                 clips_production_machine_add_base;
 	std::function<void(std::string, std::string)>    clips_production_set_machine_state;
 	std::function<void(int, std::string, bool)>      clips_robot_set_robot_maintenance;
-	bool match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
-	void log_push_points();
-	void log_push_ring_spec();
-	void log_push_game_state();
-	void log_push_robot_info();
-	void log_push_order_info();
-	void log_push_machine_info();
-	void log_push_workpiece_info();
+	bool        match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
+	void        log_push_points();
+	void        log_push_ring_spec();
+	void        log_push_game_state();
+	void        log_push_robot_info();
+	void        log_push_order_info();
+	void        log_push_machine_info();
+	void        log_push_workpiece_info();
 	std::string on_connect_machine_info();
 	std::string on_connect_order_info();
 	std::string on_connect_workpiece_info();
@@ -78,14 +78,31 @@ public:
 	std::string on_connect_ring_spec();
 	std::string on_connect_points();
 	std::map<std::string, rapidjson::SchemaDocument *> command_schema_map;
-	template <class T> void get_machine_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
-	template <class T> void get_order_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
-	template <class T> void get_robot_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
-	template <class T> void get_game_state_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
-	template <class T> void get_ring_spec_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
-	template <class T> void get_points_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
-	template <class T> void get_workpiece_info_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
-	std::string on_connect_info(std::string tmpl_name, void (Data::*get_info_fact)(rapidjson::Value*, rapidjson::Document::AllocatorType&, CLIPS::Fact::pointer));
+	template <class T>
+	void
+	get_machine_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_order_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_robot_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_game_state_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void        get_workpiece_info_fact(T *                                 o,
+	                                    rapidjson::Document::AllocatorType &alloc,
+	                                    CLIPS::Fact::pointer                fact);
+	std::string on_connect_info(std::string tmpl_name,
+	                            void (Data::*get_info_fact)(rapidjson::Value *,
+	                                                        rapidjson::Document::AllocatorType &,
+	                                                        CLIPS::Fact::pointer));
 
 private:
 	Logger *                             logger_;

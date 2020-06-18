@@ -532,9 +532,10 @@ Data::log_push_workpiece_info()
  * 
  * @return std::string 
  */
-std::string Data::on_connect_workpiece_info()
+std::string
+Data::on_connect_workpiece_info()
 {
-	return on_connect_info("workpiece", &Data::get_workpiece_info_fact<rapidjson::Value> );
+	return on_connect_info("workpiece", &Data::get_workpiece_info_fact<rapidjson::Value>);
 }
 
 /**
@@ -542,9 +543,10 @@ std::string Data::on_connect_workpiece_info()
  * 
  * @return std::string 
  */
-std::string Data::on_connect_robot_info()
+std::string
+Data::on_connect_robot_info()
 {
-	return on_connect_info("robot", &Data::get_robot_info_fact<rapidjson::Value> );
+	return on_connect_info("robot", &Data::get_robot_info_fact<rapidjson::Value>);
 }
 
 /**
@@ -552,9 +554,10 @@ std::string Data::on_connect_robot_info()
  * 
  * @return std::string 
  */
-std::string Data::on_connect_ring_spec() 
+std::string
+Data::on_connect_ring_spec()
 {
-	return on_connect_info("ring-spec", &Data::get_ring_spec_fact<rapidjson::Value> );
+	return on_connect_info("ring-spec", &Data::get_ring_spec_fact<rapidjson::Value>);
 }
 
 /**
@@ -562,11 +565,11 @@ std::string Data::on_connect_ring_spec()
  * 
  * @return std::string 
  */
-std::string Data::on_connect_points() 
+std::string
+Data::on_connect_points()
 {
-	return on_connect_info("points", &Data::get_points_fact<rapidjson::Value> );
+	return on_connect_info("points", &Data::get_points_fact<rapidjson::Value>);
 }
-
 
 /**
  * @brief Create a string of a JSON array containing the data of all current order info facts
@@ -576,9 +579,8 @@ std::string Data::on_connect_points()
 std::string
 Data::on_connect_order_info()
 {
-	return on_connect_info("order", &Data::get_order_info_fact<rapidjson::Value> );
+	return on_connect_info("order", &Data::get_order_info_fact<rapidjson::Value>);
 }
-
 
 /**
  * @brief Create a string of a JSON array containing the data of all current machine info facts
@@ -588,9 +590,8 @@ Data::on_connect_order_info()
 std::string
 Data::on_connect_machine_info()
 {
-	return on_connect_info("machine", &Data::get_machine_info_fact<rapidjson::Value> );
+	return on_connect_info("machine", &Data::get_machine_info_fact<rapidjson::Value>);
 }
-
 
 /**
  * @brief Prepare a message that contains all facts of a given template name
@@ -600,12 +601,16 @@ Data::on_connect_machine_info()
  * @return std::string 
  */
 std::string
-Data::on_connect_info(std::string tmpl_name, void (Data::* get_info_fact)(rapidjson::Value*, rapidjson::Document::AllocatorType&, CLIPS::Fact::pointer)) {
-	MutexLocker          lock(&env_mutex_);
+Data::on_connect_info(std::string tmpl_name,
+                      void (Data::*get_info_fact)(rapidjson::Value *,
+                                                  rapidjson::Document::AllocatorType &,
+                                                  CLIPS::Fact::pointer))
+{
+	MutexLocker         lock(&env_mutex_);
 	rapidjson::Document d;
 	d.SetArray();
 	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
-    std::vector<CLIPS::Fact::pointer> facts = {};
+	std::vector<CLIPS::Fact::pointer>   facts = {};
 
 	//get machine facts pointers
 	CLIPS::Fact::pointer fact = env_->get_facts();
@@ -618,7 +623,7 @@ Data::on_connect_info(std::string tmpl_name, void (Data::* get_info_fact)(rapidj
 	d.Reserve(facts.size(), alloc);
 
 	//get facts and pack into json array
-	for(CLIPS::Fact::pointer fact : facts) {
+	for (CLIPS::Fact::pointer fact : facts) {
 		try {
 			rapidjson::Value o;
 			o.SetObject();
@@ -628,7 +633,7 @@ Data::on_connect_info(std::string tmpl_name, void (Data::* get_info_fact)(rapidj
 		} catch (Exception &e) {
 			logger_->log_error("Websocket", "can't access value(s) of fact, ommitting");
 		}
-    }
+	}
 
 	//write to string and return
 	rapidjson::StringBuffer                    buffer;
@@ -636,8 +641,6 @@ Data::on_connect_info(std::string tmpl_name, void (Data::* get_info_fact)(rapidj
 	d.Accept(writer);
 	return buffer.GetString();
 }
-
-
 
 /**
  * @brief Gets data of a machine-info fact and packs into into a rapidjson object
@@ -648,8 +651,12 @@ Data::on_connect_info(std::string tmpl_name, void (Data::* get_info_fact)(rapidj
  * @param fact 
  */
 template <class T>
-void Data::get_machine_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact) {
-  	//generic type information
+void
+Data::get_machine_info_fact(T *                                 o,
+                            rapidjson::Document::AllocatorType &alloc,
+                            CLIPS::Fact::pointer                fact)
+{
+	//generic type information
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);
 	(*o).AddMember("level", json_string, alloc);
@@ -713,7 +720,11 @@ void Data::get_machine_info_fact (T* o, rapidjson::Document::AllocatorType &allo
  * @param fact 
  */
 template <class T>
-void Data::get_order_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact) {
+void
+Data::get_order_info_fact(T *                                 o,
+                          rapidjson::Document::AllocatorType &alloc,
+                          CLIPS::Fact::pointer                fact)
+{
 	//generic type information
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);
@@ -772,7 +783,11 @@ void Data::get_order_info_fact (T* o, rapidjson::Document::AllocatorType &alloc,
  * @param fact 
  */
 template <class T>
-void Data::get_robot_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact) {
+void
+Data::get_robot_info_fact(T *                                 o,
+                          rapidjson::Document::AllocatorType &alloc,
+                          CLIPS::Fact::pointer                fact)
+{
 	//generic type information
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);
@@ -831,7 +846,11 @@ void Data::get_robot_info_fact (T* o, rapidjson::Document::AllocatorType &alloc,
  * @param fact 
  */
 template <class T>
-void Data::get_game_state_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact) {
+void
+Data::get_game_state_fact(T *                                 o,
+                          rapidjson::Document::AllocatorType &alloc,
+                          CLIPS::Fact::pointer                fact)
+{
 	//generic type information
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);
@@ -868,7 +887,9 @@ void Data::get_game_state_fact (T* o, rapidjson::Document::AllocatorType &alloc,
  * @param fact 
  */
 template <class T>
-void Data::get_ring_spec_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact) {
+void
+Data::get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact)
+{
 	//generic type information
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);
@@ -891,7 +912,9 @@ void Data::get_ring_spec_fact(T* o, rapidjson::Document::AllocatorType &alloc, C
  * @param fact 
  */
 template <class T>
-void Data::get_points_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact) {
+void
+Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact)
+{
 	//generic type information
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);
@@ -920,7 +943,11 @@ void Data::get_points_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIP
  * @param fact 
  */
 template <class T>
-void Data::get_workpiece_info_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact) {
+void
+Data::get_workpiece_info_fact(T *                                 o,
+                              rapidjson::Document::AllocatorType &alloc,
+                              CLIPS::Fact::pointer                fact)
+{
 	//generic type information
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);

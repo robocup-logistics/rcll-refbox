@@ -44,7 +44,7 @@ public:
 	virtual void        close()               = 0;
 	void                receive_thread();
 	void                disconnect();
-	void on_connect_update();
+	void                on_connect_update();
 	bool                active = true;
 
 protected:

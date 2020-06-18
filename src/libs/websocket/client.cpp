@@ -51,11 +51,11 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
                    bool                                                          can_send)
 : socket(socket)
 {
-	logger_   = logger;
-	data_     = data;
+	logger_ = logger;
+	data_   = data;
 	socket->accept();
 	can_send_ = can_send;
-	client_t = std::thread(&Client::receive_thread, this);
+	client_t  = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "client receive thread started");
 	on_connect_update();
 }
@@ -291,7 +291,8 @@ Client::disconnect()
  * 
  */
 void
-Client::on_connect_update() {
+Client::on_connect_update()
+{
 	logger_->log_info("Websocket", "send on connect update");
 	send(data_->on_connect_machine_info());
 	send(data_->on_connect_order_info());
