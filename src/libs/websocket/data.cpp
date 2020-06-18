@@ -323,7 +323,7 @@ get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
 }
 
 /**
- * @brief 
+ * @brief Check if the given fact pointer is an instance of the given template
  * 
  * @param fact 
  * @param tmpl_name 
