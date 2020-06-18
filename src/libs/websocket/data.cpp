@@ -410,7 +410,7 @@ Data::log_push_machine_info()
 
 				//send it off bye bye
 				log_push(d);
-			} catch(Exception& e) {
+			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type machine");
 			}
 		}
@@ -487,7 +487,7 @@ Data::log_push_order_info()
 
 				//send it off bye bye
 				log_push(d);
-			} catch(Exception& e) {
+			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type order");
 			}
 		}
@@ -561,7 +561,7 @@ Data::log_push_robot_info()
 
 				//send it off
 				log_push(d);
-			} catch(Exception& e) {
+			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type robot");
 			}
 		}
@@ -613,7 +613,7 @@ Data::log_push_game_state()
 
 				//send it off
 				log_push(d);
-			} catch(Exception& e) {
+			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type gamestate");
 			}
 		}
@@ -651,7 +651,7 @@ Data::log_push_ring_spec()
 
 				//send it off
 				log_push(d);
-			} catch(Exception& e) {
+			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type ring-spec");
 			}
 		}
@@ -695,7 +695,7 @@ Data::log_push_points()
 
 				//send it off
 				log_push(d);
-			} catch(Exception& e) {
+			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type points");
 			}
 		}
@@ -754,7 +754,7 @@ Data::log_push_workpiece_info()
 
 				//send it off
 				log_push(d);
-			} catch(Exception& e) {
+			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type workpiece");
 			}
 		}
