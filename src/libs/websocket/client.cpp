@@ -57,6 +57,7 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
 	can_send_ = can_send;
 	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "client receive thread started");
+	on_connect_update();
 }
 
 /**
@@ -136,6 +137,7 @@ ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data *data
 	can_send_ = can_send;
 	client_t  = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "TCP-socket client receive thread started");
+	on_connect_update();
 }
 
 /**
@@ -282,6 +284,21 @@ Client::disconnect()
 		close();
 		logger_->log_info("Websocket", "client disconnected");
 	}
+}
+
+/**
+ * @brief Send the current fact base to a freshly connected client
+ * 
+ */
+void
+Client::on_connect_update() {
+	logger_->log_info("Websocket", "send on connect update");
+	send(data_->on_connect_machine_info());
+	send(data_->on_connect_order_info());
+	send(data_->on_connect_robot_info());
+	send(data_->on_connect_workpiece_info());
+	send(data_->on_connect_ring_spec());
+	send(data_->on_connect_points());
 }
 
 } // namespace llsfrb::websocket

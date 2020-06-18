@@ -527,6 +527,117 @@ Data::log_push_workpiece_info()
 	}
 }
 
+/**
+ * @brief Create a string of a JSON array containing the data of all current workpiece info facts
+ * 
+ * @return std::string 
+ */
+std::string Data::on_connect_workpiece_info()
+{
+	return on_connect_info("workpiece", &Data::get_workpiece_info_fact<rapidjson::Value> );
+}
+
+/**
+ * @brief Create a string of a JSON array containing the data of all current robot info facts
+ * 
+ * @return std::string 
+ */
+std::string Data::on_connect_robot_info()
+{
+	return on_connect_info("robot", &Data::get_robot_info_fact<rapidjson::Value> );
+}
+
+/**
+ * @brief  Create a string of a JSON array containing the data of all current ring spec facts
+ * 
+ * @return std::string 
+ */
+std::string Data::on_connect_ring_spec() 
+{
+	return on_connect_info("ring-spec", &Data::get_ring_spec_fact<rapidjson::Value> );
+}
+
+/**
+ * @brief Create a string of a JSON array containing the data of all current points facts
+ * 
+ * @return std::string 
+ */
+std::string Data::on_connect_points() 
+{
+	return on_connect_info("points", &Data::get_points_fact<rapidjson::Value> );
+}
+
+
+/**
+ * @brief Create a string of a JSON array containing the data of all current order info facts
+ * 
+ * @return std::string 
+ */
+std::string
+Data::on_connect_order_info()
+{
+	return on_connect_info("order", &Data::get_order_info_fact<rapidjson::Value> );
+}
+
+
+/**
+ * @brief Create a string of a JSON array containing the data of all current machine info facts
+ * 
+ * @return std::string 
+ */
+std::string
+Data::on_connect_machine_info()
+{
+	return on_connect_info("machine", &Data::get_machine_info_fact<rapidjson::Value> );
+}
+
+
+/**
+ * @brief Prepare a message that contains all facts of a given template name
+ * 
+ * @param tmpl_name 
+ * @param get_info_fact 
+ * @return std::string 
+ */
+std::string
+Data::on_connect_info(std::string tmpl_name, void (Data::* get_info_fact)(rapidjson::Value*, rapidjson::Document::AllocatorType&, CLIPS::Fact::pointer)) {
+	MutexLocker          lock(&env_mutex_);
+	rapidjson::Document d;
+	d.SetArray();
+	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+    std::vector<CLIPS::Fact::pointer> facts = {};
+
+	//get machine facts pointers
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, tmpl_name)) {
+			facts.push_back(fact);
+		}
+		fact = fact->next();
+	}
+	d.Reserve(facts.size(), alloc);
+
+	//get facts and pack into json array
+	for(CLIPS::Fact::pointer fact : facts) {
+		try {
+			rapidjson::Value o;
+			o.SetObject();
+			(this->*get_info_fact)(&o, alloc, fact);
+			//add to JSON array
+			d.PushBack(o, alloc);
+		} catch (Exception &e) {
+			logger_->log_error("Websocket", "can't access value(s) of fact, ommitting");
+		}
+    }
+
+	//write to string and return
+	rapidjson::StringBuffer                    buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	d.Accept(writer);
+	return buffer.GetString();
+}
+
+
 
 /**
  * @brief Gets data of a machine-info fact and packs into into a rapidjson object

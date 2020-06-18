@@ -71,6 +71,12 @@ public:
 	void log_push_order_info();
 	void log_push_machine_info();
 	void log_push_workpiece_info();
+	std::string on_connect_machine_info();
+	std::string on_connect_order_info();
+	std::string on_connect_workpiece_info();
+	std::string on_connect_robot_info();
+	std::string on_connect_ring_spec();
+	std::string on_connect_points();
 	std::map<std::string, rapidjson::SchemaDocument *> command_schema_map;
 	template <class T> void get_machine_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T> void get_order_info_fact (T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
@@ -79,6 +85,7 @@ public:
 	template <class T> void get_ring_spec_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T> void get_points_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T> void get_workpiece_info_fact(T* o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	std::string on_connect_info(std::string tmpl_name, void (Data::*get_info_fact)(rapidjson::Value*, rapidjson::Document::AllocatorType&, CLIPS::Fact::pointer));
 
 private:
 	Logger *                             logger_;
