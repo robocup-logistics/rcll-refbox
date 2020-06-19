@@ -345,19 +345,21 @@ Data::match(CLIPS::Fact::pointer &fact, std::string tmpl_name)
  * 
  */
 void
-Data::log_push_machine_info()
+Data::log_push_machine_info(std::string name)
 {
 	MutexLocker          lock(&env_mutex_);
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
 		if (match(fact, "machine")) {
 			try {
-				rapidjson::Document d;
-				d.SetObject();
-				rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
-				get_machine_info_fact(&d, alloc, fact);
-				//send it off bye bye
-				log_push(d);
+				if (get_value<std::string>(fact, "name") == name) {
+					rapidjson::Document d;
+					d.SetObject();
+					rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+					get_machine_info_fact(&d, alloc, fact);
+					//send it off
+					log_push(d);
+				}
 			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type machine");
 			}
@@ -371,7 +373,7 @@ Data::log_push_machine_info()
  * 
  */
 void
-Data::log_push_order_info()
+Data::log_push_order_info(int id)
 {
 	MutexLocker lock(&env_mutex_);
 
@@ -379,12 +381,14 @@ Data::log_push_order_info()
 	while (fact) {
 		if (match(fact, "order")) {
 			try {
-				rapidjson::Document d;
-				d.SetObject();
-				rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
-				get_order_info_fact(&d, alloc, fact);
-				//send it off bye bye
-				log_push(d);
+				if (get_value<int64_t>(fact, "id") == id) {
+					rapidjson::Document d;
+					d.SetObject();
+					rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+					get_order_info_fact(&d, alloc, fact);
+					//send it off
+					log_push(d);
+				}
 			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type order");
 			}
@@ -398,7 +402,7 @@ Data::log_push_order_info()
  * 
  */
 void
-Data::log_push_robot_info()
+Data::log_push_robot_info(int number, std::string name)
 {
 	MutexLocker lock(&env_mutex_);
 
@@ -406,12 +410,15 @@ Data::log_push_robot_info()
 	while (fact) {
 		if (match(fact, "robot")) {
 			try {
-				rapidjson::Document d;
-				d.SetObject();
-				rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
-				get_robot_info_fact(&d, alloc, fact);
-				//send it off bye bye
-				log_push(d);
+				if (get_value<int64_t>(fact, "number") == number
+				    && get_value<std::string>(fact, "name") == name) {
+					rapidjson::Document d;
+					d.SetObject();
+					rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+					get_robot_info_fact(&d, alloc, fact);
+					//send it off bye bye
+					log_push(d);
+				}
 			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type robot");
 			}
@@ -506,7 +513,7 @@ Data::log_push_points()
  * 
  */
 void
-Data::log_push_workpiece_info()
+Data::log_push_workpiece_info(int id)
 {
 	MutexLocker lock(&env_mutex_);
 
@@ -514,12 +521,14 @@ Data::log_push_workpiece_info()
 	while (fact) {
 		if (match(fact, "workpiece")) {
 			try {
-				rapidjson::Document d;
-				d.SetObject();
-				rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
-				get_workpiece_info_fact(&d, alloc, fact);
-				//send it off
-				log_push(d);
+				if (get_value<int64_t>(fact, "id") == id) {
+					rapidjson::Document d;
+					d.SetObject();
+					rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+					get_workpiece_info_fact(&d, alloc, fact);
+					//send it off
+					log_push(d);
+				}
 			} catch (Exception &e) {
 				logger_->log_error("Websocket", "can't access value(s) of fact of type workpiece");
 			}

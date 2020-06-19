@@ -377,7 +377,6 @@
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?wi (net-create-WorkpieceInfo))
-  (assert (ws-send-WorkpieceInfo))
 
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?wi))
@@ -484,8 +483,6 @@
   (do-for-all-facts ((?client network-client)) (not ?client:is-slave)
     (pb-send ?client:id ?ri))
   (pb-destroy ?ri)
-  
-  (assert (ws-send-RobotInfo))
 )
 
 (defrule net-broadcast-RobotInfo
@@ -630,8 +627,6 @@
     (pb-send ?client:id ?s)
   )
   (pb-destroy ?s)
-
-  (assert (ws-send-MachineInfo))
 )
 
 (deffunction net-create-broadcast-MachineInfo (?team-color)
@@ -691,7 +686,6 @@
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
   (bind ?s (net-create-RingInfo))
-  (assert (ws-create-RingInfo))
   (pb-broadcast ?peer-id-cyan ?s)
   (pb-broadcast ?peer-id-magenta ?s)
   (pb-destroy ?s)
@@ -774,8 +768,6 @@
     (pb-send ?client:id ?oi))
   (pb-broadcast ?peer-id ?oi)
   (pb-destroy ?oi)
-
-  (assert (ws-send-OrderInfo))
 )
 
 

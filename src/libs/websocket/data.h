@@ -68,10 +68,10 @@ public:
 	void        log_push_points();
 	void        log_push_ring_spec();
 	void        log_push_game_state();
-	void        log_push_robot_info();
-	void        log_push_order_info();
-	void        log_push_machine_info();
-	void        log_push_workpiece_info();
+	void        log_push_robot_info(int number, std::string name);
+	void        log_push_order_info(int id);
+	void        log_push_machine_info(std::string name);
+	void        log_push_workpiece_info(int id);
 	std::string on_connect_machine_info();
 	std::string on_connect_order_info();
 	std::string on_connect_workpiece_info();

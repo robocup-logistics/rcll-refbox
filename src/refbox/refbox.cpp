@@ -1750,24 +1750,31 @@ LLSFRefBox::setup_clips_websocket()
 	                                                    &websocket::Data::log_push_game_state)));
 
 	clips_->add_function("ws-create-RobotInfo",
-	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
-	                                                    &websocket::Data::log_push_robot_info)));
+	                     sigc::slot<void, int, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_robot_info)));
 
 	clips_->add_function("ws-create-MachineInfo",
-	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
-	                                                    &websocket::Data::log_push_machine_info)));
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_machine_info)));
 
 	clips_->add_function("ws-create-RingInfo",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_ring_spec)));
 
 	clips_->add_function("ws-create-WorkpieceInfo",
-	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
-	                                                    &websocket::Data::log_push_workpiece_info)));
+	                     sigc::slot<void, int>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_workpiece_info)));
 
 	clips_->add_function("ws-create-OrderInfo",
+	                     sigc::slot<void, int>(sigc::mem_fun(*(backend_->get_data()),
+	                                                         &websocket::Data::log_push_order_info)));
+
+	clips_->add_function("ws-create-Points",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
-	                                                    &websocket::Data::log_push_order_info)));
+	                                                    &websocket::Data::log_push_points)));
 
 	//define functions that set facts in the CLIPS environment to control the refbox
 	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) {

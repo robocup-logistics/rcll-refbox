@@ -29,59 +29,68 @@
   )
 )
 
-;; net.clp related functions and rules for websocket communciation
+;; message generation based on fact changes
 
-; OrderInfo
+; send udpate of gamestate whenever the gamestate fact changes
 
-(defrule ws-proc-OrderInfo
-     ?msg <- (ws-send-OrderInfo)
-     =>
-     (retract ?msg)
-     (ws-create-OrderInfo)
-)
-
-; WorkpieceInfo
-
-(defrule ws-proc-send-WorkpieceInfo 
-  ?msg <- (ws-send-WorkpieceInfo)
+(defrule ws-update-gamestate
+  ?sf <- (gamestate)
   =>
-  (retract ?msg)
-  (ws-create-WorkpieceInfo)
-)
-
-; RingInfo
-
-(defrule ws-proc-send-RingInfo
-  ?msg <-(ws-send-RingInfo)
-  =>
-  (retract ?msg)
-  (ws-create-RingInfo)
-)
-
-; MachineInfo
-
-(defrule ws-proc-send-MachineInfo
-  ?msg <- (ws-send-MachineInfo)
-  =>
-  (retract ?msg)
-  (ws-create-MachineInfo)
-)
-
-; RobotInfo
-
-(defrule ws-proc-send-RobotInfo
-  ?msg <- (ws-send-RobotInfo)
-  =>
-  (retract ?msg)
-  (ws-create-RobotInfo)
-)
-
-; GameState
-
-(defrule ws-proc-send-GameState
-  ;?msg <- (ws-send-GameState)
-  ?gs <- (gamestate (game-time ?gt))
-  =>
-  ;(retract ?msg)
   (ws-create-GameState)  
+)
+
+; send update of an order, whenever the order fact changes
+
+(defrule ws-update-order
+  ?sf <- (order (id ?id))
+  =>
+  (ws-create-OrderInfo ?id)
+)
+
+; send update of an order, whenever the unconfirmed delivery information changes
+
+(defrule ws-update-unconfirmed-delivery
+  ?sf <- (product-processed (order ?id))
+  =>
+  (ws-create-OrderInfo ?id)
+)
+
+; send update of a robot, whenever the robot fact changes
+
+(defrule ws-update-robot
+  ?sf <- (robot (number ?number) (name ?name))
+  =>
+  (ws-create-RobotInfo ?number ?name)
+)
+
+; send update of a workpiece, whenever the workpiece fact changes
+
+(defrule ws-update-workpiece
+  ?sf <- (workpiece (id ?id))
+  =>
+  (ws-create-WorkpieceInfo ?id)
+)
+
+; send update of a machine, whenever the machine fact changes
+
+(defrule ws-update-machine
+  ?sf <- (machine (name ?name))
+  =>
+  (ws-create-MachineInfo (str-cat ?name))
+)
+
+; send update of points, whenever a points fact changes
+
+(defrule ws-update-points
+  ?sf <- (points)
+  =>
+  (ws-create-Points)
+)
+
+; send update of ring-spec, whenever a ring-spec fact changes
+
+(defrule ws-update-ringspec
+  ?sf <- (ring-spec)
+  =>
+  (ws-create-RingInfo)
 )
