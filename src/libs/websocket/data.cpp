@@ -772,6 +772,56 @@ Data::get_order_info_fact(T *                                 o,
 		ring_array.PushBack(v, alloc);
 	}
 	(*o).AddMember("ring_colors", ring_array, alloc);
+
+	(*o).AddMember("unconfirmed_deliveries",
+	               get_unconfirmed_delivery_fact(alloc, get_value<int64_t>(fact, "id")),
+	               alloc);
+}
+
+/**
+ * @brief Creates a rapidjson array of unconfirmed delivery objects for the given order id
+ * 
+ * @param alloc 
+ * @param id order id to get the correct unconfirmed delivery
+ * @return rapidjson::Value 
+ */
+rapidjson::Value
+Data::get_unconfirmed_delivery_fact(rapidjson::Document::AllocatorType &alloc, int64_t id)
+{
+	rapidjson::Value unconfirmed_delivery(rapidjson::kArrayType);
+	rapidjson::Value json_string;
+
+	CLIPS::Fact::pointer delivery = env_->get_facts();
+	while (delivery) {
+		if (match(delivery, "product-processed")) {
+			if (get_value<std::string>(delivery, "confirmed") == "FALSE"
+			    && get_value<int64_t>(delivery, "order") == id
+			    && get_value<std::string>(delivery, "mtype") == "DS") {
+				CLIPS::Fact::pointer referee_confirmation = env_->get_facts();
+				while (referee_confirmation) {
+					if (match(referee_confirmation, "referee-confirmation")
+					    && get_value<int64_t>(delivery, "order")
+					         == get_value<int64_t>(referee_confirmation, "process-id")
+					    && get_value<std::string>(referee_confirmation, "state") == "REQUIRED") {
+						rapidjson::Value o;
+						o.SetObject();
+						json_string.SetInt((get_value<int64_t>(delivery, "id")));
+						o.AddMember("delivery_id", json_string, alloc);
+						json_string.SetString((get_value<std::string>(delivery, "team")).c_str(), alloc);
+						o.AddMember("team", json_string, alloc);
+						json_string.SetFloat((get_value<float>(delivery, "game-time")));
+						o.AddMember("game_time", json_string, alloc);
+
+						unconfirmed_delivery.PushBack(o, alloc);
+					}
+					referee_confirmation = referee_confirmation->next();
+				}
+			}
+		}
+		delivery = delivery->next();
+	}
+
+	return unconfirmed_delivery;
 }
 
 /**

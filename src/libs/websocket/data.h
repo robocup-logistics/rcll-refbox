@@ -96,13 +96,16 @@ public:
 	template <class T>
 	void get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
-	void        get_workpiece_info_fact(T *                                 o,
-	                                    rapidjson::Document::AllocatorType &alloc,
-	                                    CLIPS::Fact::pointer                fact);
-	std::string on_connect_info(std::string tmpl_name,
-	                            void (Data::*get_info_fact)(rapidjson::Value *,
-	                                                        rapidjson::Document::AllocatorType &,
-	                                                        CLIPS::Fact::pointer));
+	void get_workpiece_info_fact(T *                                 o,
+	                             rapidjson::Document::AllocatorType &alloc,
+	                             CLIPS::Fact::pointer                fact);
+
+	rapidjson::Value get_unconfirmed_delivery_fact(rapidjson::Document::AllocatorType &alloc,
+	                                               int64_t                             id);
+	std::string      on_connect_info(std::string tmpl_name,
+	                                 void (Data::*get_info_fact)(rapidjson::Value *,
+                                                          rapidjson::Document::AllocatorType &,
+                                                          CLIPS::Fact::pointer));
 
 private:
 	Logger *                             logger_;
