@@ -1,0 +1,53 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "command": "reset_machine_by_team",
+            "team_color": "CYAN",
+            "machine_name": "C-CS2"
+        }
+    ],
+    "required": [
+        "command",
+        "team_color",
+        "machine_name"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "title": "The command schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "reset_machine_by_team"
+            ]
+        },
+        "team_color": {
+            "$id": "#/properties/team_color",
+            "type": "string",
+            "title": "The team_color schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "CYAN"
+            ]
+        },
+        "machine_name": {
+            "$id": "#/properties/machine_name",
+            "type": "string",
+            "title": "The machine_name schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "C-CS2"
+            ]
+        }
+    }
+}
