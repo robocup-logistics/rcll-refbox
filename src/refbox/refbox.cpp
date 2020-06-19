@@ -1817,6 +1817,13 @@ LLSFRefBox::setup_clips_websocket()
 		                        team_color.c_str(),
 		                        maintenance ? "TRUE" : "FALSE");
 	  };
+	backend_->get_data()->clips_production_reset_machine_by_team = [this](std::string machine_name,
+	                                                                      std::string team_color) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(ws-reset-machine-message %s %s)",
+		                      machine_name.c_str(),
+		                      team_color.c_str());
+	};
 }
 
 #endif

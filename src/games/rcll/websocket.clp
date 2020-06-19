@@ -7,11 +7,26 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+; forward attention messages to the websocket backend
+
 (defrule ws-send-attention-message
      ?msg <- (ws-attention-message ?text ?team ?time-to-show)
      =>
      (retract ?msg)
      (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show))
+)
+
+; handle machine reset by team 
+
+(defrule ws-reset-machine-by-team
+  ?msg <- (ws-reset-machine-message ?machine ?team_color)
+  =>
+  (retract ?msg)
+  (printout t "Received reset for " ?machine crlf)
+  (do-for-fact ((?m machine)) (and (eq ?m:name ?machine) (eq ?m:team ?team_color))
+    (modify ?m (state BROKEN)
+      (broken-reason (str-cat "Machine " ?machine " resetted by the team " ?team_color)))
+  )
 )
 
 ;; net.clp related functions and rules for websocket communciation

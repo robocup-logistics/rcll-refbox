@@ -259,6 +259,10 @@ Client::receive_thread()
 						                                         msgs["team_color"].GetString(),
 						                                         msgs["maintenance"].GetBool());
 					}
+					if (strcmp(msgs["command"].GetString(), "reset_machine_by_team") == 0) {
+						data_->clips_production_reset_machine_by_team(msgs["machine_name"].GetString(),
+						                                              msgs["team_color"].GetString());
+					}
 				}
 			} else {
 				logger_->log_error("Websocket", "malformed message received, won't be processed");

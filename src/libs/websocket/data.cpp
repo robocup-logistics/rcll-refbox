@@ -56,7 +56,8 @@ Data::Data(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
 	                              "set_machine_state",
 	                              "set_order_delivered",
 	                              "set_robot_maintenance",
-	                              "set_teamname"};
+	                              "set_teamname",
+	                              "reset_machine_by_team"};
 
 	for (const std::string &schema_name : schema_names) {
 		rapidjson::SchemaDocument *sd =
