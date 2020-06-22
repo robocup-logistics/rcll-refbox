@@ -298,12 +298,15 @@ void
 Client::on_connect_update()
 {
 	logger_->log_info("Websocket", "send on connect update");
-	send(data_->on_connect_machine_info());
-	send(data_->on_connect_order_info());
-	send(data_->on_connect_robot_info());
-	send(data_->on_connect_workpiece_info());
-	send(data_->on_connect_ring_spec());
-	send(data_->on_connect_points());
+	if (data_->get_gamestate() == "RUNNING" || data_->get_gamestate() == "PAUSED") {
+		send(data_->on_connect_machine_info());
+		send(data_->on_connect_robot_info());
+		send(data_->on_connect_workpiece_info());
+		send(data_->on_connect_points());
+	}
+	if (data_->get_gamephase() == "PRODUCTION") {
+		send(data_->on_connect_order_info());
+		send(data_->on_connect_ring_spec());
+	}
 }
-
 } // namespace llsfrb::websocket
