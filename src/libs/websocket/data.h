@@ -78,6 +78,8 @@ public:
 	std::string on_connect_robot_info();
 	std::string on_connect_ring_spec();
 	std::string on_connect_points();
+	std::string get_gamestate();
+	std::string get_gamephase();
 	std::map<std::string, rapidjson::SchemaDocument *> command_schema_map;
 	template <class T>
 	void

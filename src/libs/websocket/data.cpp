@@ -1042,4 +1042,46 @@ Data::get_workpiece_info_fact(T *                                 o,
 	(*o).AddMember("ring_colors", rings_array, alloc);
 }
 
+/**
+ * @brief Get the current phase of the game as a string
+ * 
+ * @return std::string 
+ */
+std::string
+Data::get_gamephase()
+{
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "gamestate")) {
+			return get_value<std::string>(fact, "phase");
+		}
+		fact = fact->next();
+	}
+	return NULL;
+}
+
+/**
+ * @brief Get the current state of the game as a string 
+ * 
+ * @return std::string 
+ */
+std::string
+Data::get_gamestate()
+{
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "gamestate")) {
+			return get_value<std::string>(fact, "state");
+		}
+		fact = fact->next();
+	}
+	return NULL;
+}
+
 } // namespace llsfrb::websocket
