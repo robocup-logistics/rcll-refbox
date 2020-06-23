@@ -341,7 +341,7 @@ Data::match(CLIPS::Fact::pointer &fact, std::string tmpl_name)
 }
 
 /**
- * @brief Gets all machine-info facts from CLIPS and pushes them to the send queue
+ * @brief Gets specific machine-info fact from CLIPS and pushes it to the send queue
  * 
  */
 void
@@ -369,7 +369,7 @@ Data::log_push_machine_info(std::string name)
 }
 
 /**
- * @brief Gets all order-info facts from CLIPS and pushes them to the send queue
+ * @brief Gets a specific order-info fact from CLIPS and pushes it to the send queue
  * 
  */
 void
@@ -398,7 +398,7 @@ Data::log_push_order_info(int id)
 }
 
 /**
- * @brief Gets all robot-info facts from CLIPS and pushes them to the send queue
+ * @brief Gets a specific robot-info fact from CLIPS and pushes it to the send queue
  * 
  */
 void
@@ -428,7 +428,7 @@ Data::log_push_robot_info(int number, std::string name)
 }
 
 /**
- * @brief Gets all game-state facts from CLIPS and pushes them to the send queue
+ * @brief Gets the game-state fact from CLIPS and pushes it to the send queue
  * 
  */
 void
@@ -455,7 +455,7 @@ Data::log_push_game_state()
 }
 
 /**
- * @brief Gets all ring-spec facts from CLIPS and pushes them to the send queue
+ * @brief Gets all ring-spec facts from CLIPS and pushes them to the send queue as an array
  * 
  */
 void
@@ -482,7 +482,7 @@ Data::log_push_ring_spec()
 }
 
 /**
- * @brief Gets all points facts from CLIPS and pushes them to the send queue
+ * @brief Gets all points facts from CLIPS and pushes them to the send queue as an array
  * 
  */
 void
@@ -509,7 +509,7 @@ Data::log_push_points()
 }
 
 /**
- * @brief Gets all workpiece facts from CLIPS and pushes them to the send queue
+ * @brief Gets a specifc workpiece fact from CLIPS and pushes it to the send queue
  * 
  */
 void
