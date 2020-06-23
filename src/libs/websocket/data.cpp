@@ -461,24 +461,7 @@ Data::log_push_game_state()
 void
 Data::log_push_ring_spec()
 {
-	MutexLocker lock(&env_mutex_);
-
-	CLIPS::Fact::pointer fact = env_->get_facts();
-	while (fact) {
-		if (match(fact, "ring-spec")) {
-			try {
-				rapidjson::Document d;
-				d.SetObject();
-				rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
-				get_ring_spec_fact(&d, alloc, fact);
-				//send it off
-				log_push(d);
-			} catch (Exception &e) {
-				logger_->log_error("Websocket", "can't access value(s) of fact of type ring-spec");
-			}
-		}
-		fact = fact->next();
-	}
+	log_push(on_connect_ring_spec());
 }
 
 /**
@@ -488,24 +471,7 @@ Data::log_push_ring_spec()
 void
 Data::log_push_points()
 {
-	MutexLocker lock(&env_mutex_);
-
-	CLIPS::Fact::pointer fact = env_->get_facts();
-	while (fact) {
-		if (match(fact, "points")) {
-			try {
-				rapidjson::Document d;
-				d.SetObject();
-				rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
-				get_points_fact(&d, alloc, fact);
-				//send it off
-				log_push(d);
-			} catch (Exception &e) {
-				logger_->log_error("Websocket", "can't access value(s) of fact of type points");
-			}
-		}
-		fact = fact->next();
-	}
+	log_push(on_connect_points());
 }
 
 /**
