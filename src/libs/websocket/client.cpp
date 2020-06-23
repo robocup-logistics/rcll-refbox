@@ -298,14 +298,20 @@ void
 Client::on_connect_update()
 {
 	logger_->log_info("Websocket", "send on connect update");
-	if (data_->get_gamestate() == "RUNNING" || data_->get_gamestate() == "PAUSED") {
+	std::string gamephase = data_->get_gamephase();
+	std::string gamestate = data_->get_gamestate();
+
+	if (gamestate == "RUNNING" || gamestate == "PAUSED") {
 		send(data_->on_connect_machine_info());
 		send(data_->on_connect_robot_info());
 		send(data_->on_connect_workpiece_info());
 		send(data_->on_connect_points());
 	}
-	if (data_->get_gamephase() == "PRODUCTION") {
+	if (gamephase == "PRODUCTION") {
 		send(data_->on_connect_order_info());
+		send(data_->on_connect_ring_spec());
+	}
+	if (gamephase == "SETUP" || gamephase == "EXPLORATION") {
 		send(data_->on_connect_ring_spec());
 	}
 }
