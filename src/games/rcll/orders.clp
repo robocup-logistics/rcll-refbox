@@ -90,7 +90,6 @@
 
 (defrule order-proc-ConfirmDelivery
   (gamestate (phase PRODUCTION|POST_GAME))
-  ?pf <- (protobuf-msg (type "llsf_msgs.ConfirmDelivery") (ptr ?p) (rcvd-via STREAM))
   ?cmd <- (order-ConfirmDelivery ?delivery-id ?correctness ?order-id ?team-color)
   =>
   (if (not (do-for-fact ((?rc referee-confirmation))
