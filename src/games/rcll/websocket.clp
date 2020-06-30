@@ -55,6 +55,16 @@
   (ws-create-OrderInfo ?id)
 )
 
+; send an update when the fact ws-update-order-cmd is asserted by an external rule or function
+
+(defrule ws-update-order-external
+  ?cmd <- (ws-update-order-cmd ?id)
+  =>
+  (retract ?cmd)
+  (ws-create-OrderInfo ?id)
+)
+
+
 ; send update of a robot, whenever the robot fact changes
 
 (defrule ws-update-robot

@@ -99,6 +99,7 @@
               (modify ?rc (state CONFIRMED))
             else
               (modify ?rc (state DENIED)))
+              (assert (ws-update-order-cmd ?order-id))
             ; make sure do-for-fact evaluates to TRUE
             TRUE))
    then
