@@ -43,7 +43,8 @@ namespace llsfrb::websocket {
  * @param data_ptr pointer to Data object that is used for this session
  * @param logger_ logger used by the backend
  */
-Server::Server(Data *data_, Logger *logger_) : data_(data_), logger_(logger_)
+Server::Server(std::shared_ptr<Data> data, std::shared_ptr<Logger> logger)
+: data_(data), logger_(logger)
 {
 }
 
@@ -67,7 +68,7 @@ Server::operator()()
 
 	// acceptor loop
 	while (true) {
-		std::shared_ptr<tcp::socket> socket(new tcp::socket(io_service));
+		std::shared_ptr<tcp::socket> socket = std::make_shared<tcp::socket>(io_service);
 		acceptor_.accept(*socket);
 
 		//client can send control command if allow_control_all_ is set or it is the localhost
@@ -76,13 +77,15 @@ Server::operator()()
 
 		if (ws_mode_) {
 			// websocket approach
-			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket(
-			  new boost::beast::websocket::stream<tcp::socket>(std::move(*socket)));
-			std::shared_ptr<Client> client(new ClientWS(web_socket, logger_, data_, client_can_send));
+			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket =
+			  std::make_shared<boost::beast::websocket::stream<tcp::socket>>(std::move(*socket));
+			std::shared_ptr<Client> client =
+			  std::make_shared<ClientWS>(web_socket, logger_, data_, client_can_send);
 			data_->clients_add(client);
 		} else {
 			// socket approach
-			std::shared_ptr<Client> client(new ClientS(socket, logger_, data_, client_can_send));
+			std::shared_ptr<Client> client =
+			  std::make_shared<ClientS>(socket, logger_, data_, client_can_send);
 			data_->clients_add(client);
 		}
 

@@ -35,6 +35,8 @@
 #include <string>
 #include <vector>
 
+#define BUFFER_SIZE 65536
+
 namespace llsfrb::websocket {
 
 /**
@@ -42,9 +44,11 @@ namespace llsfrb::websocket {
  * 
  * @param logger_ logger to be used
  */
-Data::Data(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
-: logger_(logger_), env_(env_), env_mutex_(env_mutex_)
+Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex)
+: logger_(logger), env_mutex_(env_mutex)
 {
+	env_ = std::shared_ptr<CLIPS::Environment>(env);
+
 	logger_->log_info("Websocket", "loading JSON schemas for command validation");
 
 	std::string base_path      = std::getenv("LLSF_REFBOX_DIR");
@@ -60,7 +64,7 @@ Data::Data(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
 	                              "reset_machine_by_team"};
 
 	for (const std::string &schema_name : schema_names) {
-		rapidjson::SchemaDocument *sd =
+		std::shared_ptr<rapidjson::SchemaDocument> sd =
 		  load_schema(base_path + "/src/libs/websocket/message_schemas/" + schema_name + ".json");
 		if (sd) {
 			command_schema_map[schema_name] = sd;
@@ -76,7 +80,7 @@ Data::Data(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
  * @param path 
  * @return rapidjson::SchemaDocument 
  */
-rapidjson::SchemaDocument *
+std::shared_ptr<rapidjson::SchemaDocument>
 Data::load_schema(std::string path)
 {
 	rapidjson::Document d;
@@ -86,13 +90,15 @@ Data::load_schema(std::string path)
 		logger_->log_error("Websocket", "couldn't load JSON schema file");
 		return nullptr;
 	}
-	char                      readBuffer[65536];
+	char                      readBuffer[BUFFER_SIZE];
 	rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
 	if (d.ParseStream(is).HasParseError()) {
 		logger_->log_error("Websocket", "couldn't parse JSON schema file");
 		return nullptr;
 	}
-	rapidjson::SchemaDocument *schema = new rapidjson::SchemaDocument(d);
+	std::shared_ptr<rapidjson::SchemaDocument> schema =
+	  std::make_shared<rapidjson::SchemaDocument>(d);
+	std::fclose(fp);
 	return schema;
 }
 

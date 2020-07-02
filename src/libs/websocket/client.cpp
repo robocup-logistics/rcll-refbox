@@ -46,16 +46,16 @@ namespace llsfrb::websocket {
  * @param socket Established WebSocket socket shared pointer user for this client
  */
 ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket,
-                   Logger *                                                      logger,
-                   Data *                                                        data,
+                   std::shared_ptr<Logger>                                       logger,
+                   std::shared_ptr<Data>                                         data,
                    bool                                                          can_send)
 : socket(socket)
 {
-	logger_ = logger;
-	data_   = data;
-	socket->accept();
+	logger_   = logger;
+	data_     = data;
 	can_send_ = can_send;
-	client_t  = std::thread(&Client::receive_thread, this);
+	socket->accept();
+	client_t = std::thread(&Client::receive_thread, this);
 	logger_->log_info("Websocket", "client receive thread started");
 	on_connect_update();
 }
@@ -127,9 +127,14 @@ ClientWS::close()
  * @brief Construct a new ClientS::ClientS object
  * 
  * @param socket TCP socket over which client communication happens
- * @param logger_ Logger instance to be used 
+ * @param logger Logger instance to be used 
+ * @param data Data instance to be used
+ * @param can_send sets if the connected client's incoming commands are processed
  */
-ClientS::ClientS(std::shared_ptr<tcp::socket> socket, Logger *logger, Data *data, bool can_send)
+ClientS::ClientS(std::shared_ptr<tcp::socket> socket,
+                 std::shared_ptr<Logger>      logger,
+                 std::shared_ptr<Data>        data,
+                 bool                         can_send)
 : socket(socket)
 {
 	logger_   = logger;

@@ -48,20 +48,20 @@ public:
 	bool                active = true;
 
 protected:
-	std::mutex  rd_mu;
-	std::mutex  wr_mu;
-	std::thread client_t;
-	Logger *    logger_;
-	Data *      data_;
-	bool        can_send_;
+	std::mutex              rd_mu;
+	std::mutex              wr_mu;
+	std::thread             client_t;
+	std::shared_ptr<Logger> logger_;
+	std::shared_ptr<Data>   data_;
+	bool                    can_send_;
 };
 
 class ClientWS : public Client
 {
 public:
 	ClientWS(std::shared_ptr<boost::beast::websocket::stream<boost::asio::ip::tcp::socket>> socket,
-	         Logger *                                                                       logger_,
-	         Data *                                                                         data_,
+	         std::shared_ptr<Logger>                                                        logger,
+	         std::shared_ptr<Data>                                                          data,
 	         bool                                                                           can_send);
 	~ClientWS();
 	bool        send(std::string msg);
@@ -76,8 +76,8 @@ class ClientS : public Client
 {
 public:
 	ClientS(std::shared_ptr<boost::asio::ip::tcp::socket> socket,
-	        Logger *                                      logger_,
-	        Data *                                        data_,
+	        std::shared_ptr<Logger>                       logger,
+	        std::shared_ptr<Data>                         data,
 	        bool                                          can_send);
 	~ClientS();
 	bool        send(std::string msg);

@@ -35,10 +35,10 @@ namespace llsfrb::websocket {
  * 
  * @param logger_ logger used by the backend
  */
-Backend::Backend(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_)
-: logger_(logger_)
+Backend::Backend(Logger *logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex)
 {
-	data_   = new Data(logger_, env_, env_mutex_);
+	logger_ = std::shared_ptr<Logger>(logger);
+	data_   = std::make_shared<Data>(logger_, env, env_mutex);
 	server_ = Server(data_, logger_);
 }
 
@@ -93,7 +93,7 @@ Backend::operator()()
  * 
  * @return Data* 
  */
-Data *
+std::shared_ptr<Data>
 Backend::get_data()
 {
 	return data_;

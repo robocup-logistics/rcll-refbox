@@ -33,18 +33,18 @@ namespace llsfrb::websocket {
 class Backend
 {
 public:
-	Backend(Logger *logger_, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_);
+	Backend(Logger *logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex);
 
-	void  operator()();
-	void  start(uint port, bool ws_mode = true, bool allow_control_all = false);
-	Data *get_data();
+	void                  operator()();
+	void                  start(uint port, bool ws_mode = true, bool allow_control_all = false);
+	std::shared_ptr<Data> get_data();
 
 private:
-	Logger *    logger_;
-	Data *      data_;
-	Server      server_;
-	std::thread backend_t_;
-	std::thread server_t_;
+	std::shared_ptr<Logger> logger_;
+	std::shared_ptr<Data>   data_;
+	Server                  server_;
+	std::thread             backend_t_;
+	std::thread             server_t_;
 };
 
 } // namespace llsfrb::websocket

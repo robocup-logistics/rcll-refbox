@@ -44,7 +44,7 @@ class Client; // forward declaration
 class Data
 {
 public:
-	Data(Logger *logger, CLIPS::Environment *env_, fawkes::Mutex &env_mutex_);
+	Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex);
 	std::string log_pop();
 	void        log_push(std::string log);
 	void        log_push(rapidjson::Document &d);
@@ -80,7 +80,7 @@ public:
 	std::string on_connect_points();
 	std::string get_gamestate();
 	std::string get_gamephase();
-	std::map<std::string, rapidjson::SchemaDocument *> command_schema_map;
+	std::map<std::string, std::shared_ptr<rapidjson::SchemaDocument>> command_schema_map;
 	template <class T>
 	void
 	get_machine_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
@@ -111,15 +111,15 @@ public:
                                                           CLIPS::Fact::pointer));
 
 private:
-	Logger *                             logger_;
-	std::mutex                           log_mu;
-	std::mutex                           cli_mu;
-	std::condition_variable              log_cv;
-	std::queue<std::string>              logs;
-	std::vector<std::shared_ptr<Client>> clients;
-	CLIPS::Environment *                 env_;
-	fawkes::Mutex &                      env_mutex_;
-	rapidjson::SchemaDocument *          load_schema(std::string path);
+	std::shared_ptr<Logger>                    logger_;
+	std::mutex                                 log_mu;
+	std::mutex                                 cli_mu;
+	std::condition_variable                    log_cv;
+	std::queue<std::string>                    logs;
+	std::vector<std::shared_ptr<Client>>       clients;
+	std::shared_ptr<CLIPS::Environment>        env_;
+	fawkes::Mutex &                            env_mutex_;
+	std::shared_ptr<rapidjson::SchemaDocument> load_schema(std::string path);
 };
 
 } // namespace llsfrb::websocket

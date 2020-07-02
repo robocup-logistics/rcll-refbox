@@ -52,8 +52,8 @@ namespace llsfrb {
 /** Constructor.
  * @param log_level minimum level to log
  */
-WebsocketLogger::WebsocketLogger(websocket::Data *data_, LogLevel log_level)
-: Logger(log_level), data_(data_)
+WebsocketLogger::WebsocketLogger(std::shared_ptr<websocket::Data> data, LogLevel log_level)
+: Logger(log_level), data_(data)
 {
 	now_s    = (struct ::tm *)malloc(sizeof(struct ::tm));
 	mutex    = new fawkes::Mutex();
