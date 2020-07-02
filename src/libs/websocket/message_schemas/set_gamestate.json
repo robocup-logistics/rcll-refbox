@@ -2,8 +2,8 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "http://example.com/example.json",
     "type": "object",
-    "title": "The root schema",
-    "description": "The root schema comprises the entire JSON document.",
+    "title": "set_gamestate command schema",
+    "description": "This command sets the gamestate to the given state.",
     "default": {},
     "examples": [
         {
@@ -20,8 +20,6 @@
         "command": {
             "$id": "#/properties/command",
             "type": "string",
-            "title": "The command schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
                 "set_gamestate"
@@ -30,8 +28,6 @@
         "state": {
             "$id": "#/properties/state",
             "type": "string",
-            "title": "The state schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
                 "RUNNING"

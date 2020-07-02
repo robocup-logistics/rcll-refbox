@@ -2,8 +2,8 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "http://example.com/example.json",
     "type": "object",
-    "title": "The root schema",
-    "description": "The root schema comprises the entire JSON document.",
+    "title": "randomize_field command schema",
+    "description": "This command can be used to start the gamefield randomizer.",
     "default": {},
     "examples": [
         {
@@ -18,8 +18,6 @@
         "command": {
             "$id": "#/properties/command",
             "type": "string",
-            "title": "The command schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
                 "randomize_field"

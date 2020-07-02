@@ -2,8 +2,8 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "http://example.com/example.json",
     "type": "object",
-    "title": "The root schema",
-    "description": "The root schema comprises the entire JSON document.",
+    "title": "confirm_delivery command schema",
+    "description": "An object of this type is used to confirm an unconfirmed delivery.",
     "default": {},
     "examples": [
         {
@@ -26,8 +26,6 @@
         "command": {
             "$id": "#/properties/command",
             "type": "string",
-            "title": "The command schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
                 "confirm_delivery"
@@ -36,8 +34,6 @@
         "delivery_id": {
             "$id": "#/properties/delivery_id",
             "type": "integer",
-            "title": "The delivery_id schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": 0,
             "examples": [
                 3
@@ -46,8 +42,6 @@
         "correctness": {
             "$id": "#/properties/correctness",
             "type": "boolean",
-            "title": "The correctness schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": false,
             "examples": [
                 true
@@ -56,8 +50,6 @@
         "order_id": {
             "$id": "#/properties/order_id",
             "type": "integer",
-            "title": "The order_id schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": 0,
             "examples": [
                 1
@@ -66,8 +58,6 @@
         "color": {
             "$id": "#/properties/color",
             "type": "string",
-            "title": "The color schema",
-            "description": "An explanation about the purpose of this instance.",
             "default": "",
             "examples": [
                 "MAGENTA"
