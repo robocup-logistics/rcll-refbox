@@ -7,18 +7,16 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-; forward attention messages to the websocket backend
-
 (defrule ws-send-attention-message
-     ?msg <- (ws-attention-message ?text ?team ?time-to-show)
-     =>
-     (retract ?msg)
-     (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show))
+  "forward attention messages to the websocket backend"
+  ?msg <- (ws-attention-message ?text ?team ?time-to-show)
+  =>
+  (retract ?msg)
+  (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show))
 )
 
-; handle machine reset by team 
-
 (defrule ws-reset-machine-by-team
+  "handle machine reset by team"
   ?msg <- (ws-reset-machine-message ?machine ?team_color)
   =>
   (retract ?msg)
@@ -29,77 +27,67 @@
   )
 )
 
-;; message generation based on fact changes
-
-; send udpate of gamestate whenever the gamestate fact changes
+; message generation based on fact changes
 
 (defrule ws-update-gamestate
+  "send udpate of gamestate whenever the gamestate fact changes"
   ?sf <- (gamestate)
   =>
   (ws-create-GameState)  
 )
 
-; send update of an order, whenever the order fact changes
-
 (defrule ws-update-order
+  "send update of an order, whenever the order fact changes"
   ?sf <- (order (id ?id))
   =>
   (ws-create-OrderInfo ?id)
 )
 
-; send update of an order, whenever the unconfirmed delivery information changes
-
 (defrule ws-update-unconfirmed-delivery
+  "send update of an order, whenever the unconfirmed delivery information changes"
   ?sf <- (product-processed (order ?id))
   =>
   (ws-create-OrderInfo ?id)
 )
 
-; send an update when the fact ws-update-order-cmd is asserted by an external rule or function
-
 (defrule ws-update-order-external
+  "send an update when the fact ws-update-order-cmd is asserted by an external rule or function"
   ?cmd <- (ws-update-order-cmd ?id)
   =>
   (retract ?cmd)
   (ws-create-OrderInfo ?id)
 )
 
-
-; send update of a robot, whenever the robot fact changes
-
 (defrule ws-update-robot
+  "send update of a robot, whenever the robot fact changes"
   ?sf <- (robot (number ?number) (name ?name))
   =>
   (ws-create-RobotInfo ?number ?name)
 )
 
-; send update of a workpiece, whenever the workpiece fact changes
-
 (defrule ws-update-workpiece
+  "send update of a workpiece, whenever the workpiece fact changes"
   ?sf <- (workpiece (id ?id))
   =>
   (ws-create-WorkpieceInfo ?id)
 )
 
-; send update of a machine, whenever the machine fact changes
-
 (defrule ws-update-machine
+  "send update of a machine, whenever the machine fact changes"
   ?sf <- (machine (name ?name))
   =>
   (ws-create-MachineInfo (str-cat ?name))
 )
 
-; send update of points, whenever a points fact changes
-
 (defrule ws-update-points
+  "send update of points, whenever a points fact changes"
   ?sf <- (points)
   =>
   (ws-create-Points)
 )
 
-; send update of ring-spec, whenever a ring-spec fact changes
-
 (defrule ws-update-ringspec
+  "send update of ring-spec, whenever a ring-spec fact changes"
   ?sf <- (ring-spec)
   =>
   (ws-create-RingInfo)
