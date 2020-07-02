@@ -29,5 +29,3 @@ ifeq ($(HAVE_WEBSOCKET),1)
   LIBS_WEBSOCKET = llsfrbwebsocket
 	
 endif 
-
-
