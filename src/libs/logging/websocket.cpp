@@ -3,8 +3,7 @@
  *  websocket.cpp - Refbox websocket logger
  *
  *  Created: Thu Apr 02 12:46:00 2020
- *  Copyright  2006-2011  Tim Niemueller [www.niemueller.de]
- *             2020  Daniel Swoboda [swoboda@kbsg.rwth-aachen.de]
+ *  Copyright  2020  Daniel Swoboda [swoboda@kbsg.rwth-aachen.de]
  *
  ****************************************************************************/
 

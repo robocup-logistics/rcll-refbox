@@ -1,5 +1,5 @@
 #*****************************************************************************
-#           Makefile Build System for LLSF RefBox: Websocket Backend
+#           Makefile Build System for RCLL RefBox: Websocket Backend
 #                            -------------------
 #   Created on Tue May 05 16:18:00 2020
 #   Copyright (C) 2020 Daniel Swoboda [swoboda@kbsg.rwth-aachen.de]

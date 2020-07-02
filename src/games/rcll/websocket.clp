@@ -1,6 +1,6 @@
 
 ;---------------------------------------------------------------------------
-;  websocket.clp - LLSF RefBox CLIPS fact monitoring for websocket clients
+;  websocket.clp - RCLL RefBox CLIPS fact monitoring for websocket clients
 ;
 ;  Created: Mon May 11 15:19:25 2020
 ;  Copyright  2020       Daniel Swoboda
