@@ -72,6 +72,7 @@ public:
 	void        log_push_order_info(int id);
 	void        log_push_machine_info(std::string name);
 	void        log_push_workpiece_info(int id);
+	void        log_push_order_info_via_delivery(int delivery_id);
 	std::string on_connect_machine_info();
 	std::string on_connect_order_info();
 	std::string on_connect_workpiece_info();

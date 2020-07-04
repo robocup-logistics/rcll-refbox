@@ -1776,6 +1776,11 @@ LLSFRefBox::setup_clips_websocket()
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_points)));
 
+	clips_->add_function("ws-create-OrderInfo-via-delivery",
+	                     sigc::slot<void, int>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_order_info_via_delivery)));
+
 	//define functions that set facts in the CLIPS environment to control the refbox
 	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);

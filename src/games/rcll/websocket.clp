@@ -55,7 +55,7 @@
   ?cmd <- (ws-update-order-cmd ?id)
   =>
   (retract ?cmd)
-  (ws-create-OrderInfo ?id)
+  (ws-create-OrderInfo-via-delivery ?id)
 )
 
 (defrule ws-update-robot

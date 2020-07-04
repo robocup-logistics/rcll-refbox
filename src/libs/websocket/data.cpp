@@ -404,6 +404,45 @@ Data::log_push_order_info(int id)
 }
 
 /**
+ * @brief 
+ * 
+ * @param delivery_id 
+ */
+void
+Data::log_push_order_info_via_delivery(int delivery_id)
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "product-processed")) {
+			try {
+				if (get_value<int64_t>(fact, "id") == delivery_id) {
+					CLIPS::Fact::pointer order = env_->get_facts();
+					while (order) {
+						if (match(fact, "order")) {
+							if (get_value<int64_t>(fact, "order") == get_value<int64_t>(order, "id")) {
+								rapidjson::Document d;
+								d.SetObject();
+								rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+								get_order_info_fact(&d, alloc, order);
+								//send it off
+								log_push(d);
+							}
+						}
+
+						order = order->next();
+					}
+				}
+			} catch (Exception &e) {
+				logger_->log_error("Websocket", "can't access value(s) of fact of type order");
+			}
+		}
+		fact = fact->next();
+	}
+}
+
+/**
  * @brief Gets a specific robot-info fact from CLIPS and pushes it to the send queue
  * 
  */
@@ -779,6 +818,7 @@ Data::get_unconfirmed_delivery_fact(rapidjson::Document::AllocatorType &alloc, i
 			if (get_value<std::string>(delivery, "confirmed") == "FALSE"
 			    && get_value<int64_t>(delivery, "order") == id
 			    && get_value<std::string>(delivery, "mtype") == "DS") {
+
 				CLIPS::Fact::pointer referee_confirmation = env_->get_facts();
 				while (referee_confirmation) {
 					if (match(referee_confirmation, "referee-confirmation")
