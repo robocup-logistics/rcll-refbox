@@ -818,7 +818,6 @@ Data::get_unconfirmed_delivery_fact(rapidjson::Document::AllocatorType &alloc, i
 			if (get_value<std::string>(delivery, "confirmed") == "FALSE"
 			    && get_value<int64_t>(delivery, "order") == id
 			    && get_value<std::string>(delivery, "mtype") == "DS") {
-
 				CLIPS::Fact::pointer referee_confirmation = env_->get_facts();
 				while (referee_confirmation) {
 					if (match(referee_confirmation, "referee-confirmation")
