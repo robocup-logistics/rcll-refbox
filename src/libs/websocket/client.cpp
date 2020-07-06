@@ -312,7 +312,7 @@ Client::on_connect_update()
 		send(data_->on_connect_workpiece_info());
 		send(data_->on_connect_points());
 	}
-	if (gamephase == "PRODUCTION") {
+	if (gamephase == "PRODUCTION" || gamephase == "POST_GAME") {
 		send(data_->on_connect_order_info());
 		send(data_->on_connect_ring_spec());
 	}
