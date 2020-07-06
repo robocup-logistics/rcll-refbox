@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "set_machine_state command schema",
+    "description": "This command sets the given machine tot the given state.",
+    "default": {},
+    "examples": [
+        {
+            "command": "set_machine_state",
+            "mname": "",
+            "state": ""
+        }
+    ],
+    "required": [
+        "command",
+        "mname",
+        "state"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "set_machine_state"
+            ]
+        },
+        "mname": {
+            "$id": "#/properties/mname",
+            "type": "string",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "state": {
+            "$id": "#/properties/state",
+            "type": "string",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        }
+    }
+}

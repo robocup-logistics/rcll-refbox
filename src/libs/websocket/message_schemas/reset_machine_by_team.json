@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "reset_machine_by_team command schema",
+    "description": "This command resets the given machine based on the team color",
+    "default": {},
+    "examples": [
+        {
+            "command": "reset_machine_by_team",
+            "team_color": "CYAN",
+            "machine_name": "C-CS2"
+        }
+    ],
+    "required": [
+        "command",
+        "team_color",
+        "machine_name"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "reset_machine_by_team"
+            ]
+        },
+        "team_color": {
+            "$id": "#/properties/team_color",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "CYAN"
+            ]
+        },
+        "machine_name": {
+            "$id": "#/properties/machine_name",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "C-CS2"
+            ]
+        }
+    }
+}

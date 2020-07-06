@@ -55,6 +55,11 @@
 #include <rest-api/webview_server.h>
 #include <webview/rest_api_manager.h>
 
+#ifdef HAVE_WEBSOCKETS
+#	include <websocket/backend.h>
+#	include <logging/websocket.h>
+#endif
+
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <cstdlib>
@@ -188,6 +193,15 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	setup_protobuf_comm();
 	setup_clips();
 
+#ifdef HAVE_WEBSOCKETS
+	//launch websocket backend and add websocket logger
+	backend_ = new websocket::Backend(logger_.get(), clips_.get(), clips_mutex_);
+	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
+	                config_->get_bool("/llsfrb/websocket/ws-mode"),
+	                config_->get_bool("/llsfrb/websocket/allow-control-all"));
+	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
+#endif
+
 	try {
 		if (config_->get_bool("/llsfrb/mps/enable")) {
 			std::string prefix = "/llsfrb/mps/stations/";
@@ -295,6 +309,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	  new mps_placing_clips::MPSPlacingGenerator(clips_.get(), clips_mutex_));
 
 	logger_->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
+
+#ifdef HAVE_WEBSOCKETS
+	setup_clips_websocket();
+#endif
 
 #ifdef HAVE_MONGODB
 	cfg_mongodb_enabled_ = false;
@@ -1709,5 +1727,117 @@ LLSFRefBox::run()
 	io_service_.run();
 	return 0;
 }
+
+#ifdef HAVE_WEBSOCKETS
+/** Setup websocket related CLIPS functions. */
+void
+LLSFRefBox::setup_clips_websocket()
+{
+	fawkes::MutexLocker lock(&clips_mutex_);
+
+	//tell CLIPS that the websocket rules should be considered
+	clips_->build("(deffacts have-feature-websocket (have-feature websocket))");
+
+	//define the functions called by CLIPS
+
+	clips_->add_function("ws-send-attention-message",
+	                     sigc::slot<void, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_attention_message)));
+
+	clips_->add_function("ws-create-GameState",
+	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
+	                                                    &websocket::Data::log_push_game_state)));
+
+	clips_->add_function("ws-create-RobotInfo",
+	                     sigc::slot<void, int, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_robot_info)));
+
+	clips_->add_function("ws-create-MachineInfo",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_machine_info)));
+
+	clips_->add_function("ws-create-RingInfo",
+	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
+	                                                    &websocket::Data::log_push_ring_spec)));
+
+	clips_->add_function("ws-create-WorkpieceInfo",
+	                     sigc::slot<void, int>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_workpiece_info)));
+
+	clips_->add_function("ws-create-OrderInfo",
+	                     sigc::slot<void, int>(sigc::mem_fun(*(backend_->get_data()),
+	                                                         &websocket::Data::log_push_order_info)));
+
+	clips_->add_function("ws-create-Points",
+	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
+	                                                    &websocket::Data::log_push_points)));
+
+	clips_->add_function("ws-create-OrderInfo-via-delivery",
+	                     sigc::slot<void, int>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_order_info_via_delivery)));
+
+	//define functions that set facts in the CLIPS environment to control the refbox
+	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(net-SetGameState %s)", state_string.c_str());
+	};
+	backend_->get_data()->clips_set_gamephase = [this](std::string phase_string) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(net-SetGamePhase %s)", phase_string.c_str());
+	};
+	backend_->get_data()->clips_randomize_field = [this]() {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(net-RandomizeField)");
+	};
+	backend_->get_data()->clips_set_teamname = [this](std::string color_string,
+	                                                  std::string name_string) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(net-SetTeamName %s \"%s\")", color_string.c_str(), name_string.c_str());
+	};
+	backend_->get_data()->clips_confirm_delivery =
+	  [this](int delivery_id, bool correctness, int order_id, std::string team_color) {
+		  fawkes::MutexLocker clips_lock(&clips_mutex_);
+		  clips_->assert_fact_f("(order-ConfirmDelivery %d %s %d %s)",
+		                        delivery_id,
+		                        correctness ? "TRUE" : "FALSE",
+		                        order_id,
+		                        team_color.c_str());
+	  };
+	backend_->get_data()->clips_set_order_delivered = [this](std::string team_color, int order_id) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(order-SetOrderDelivered %s %d)", team_color.c_str(), order_id);
+	};
+	backend_->get_data()->clips_production_machine_add_base = [this](std::string mname) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(production-MachineAddBase %s)", mname.c_str());
+	};
+	backend_->get_data()->clips_production_set_machine_state = [this](std::string mname,
+	                                                                  std::string state) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(production-SetMachineState %s %s)", mname.c_str(), state.c_str());
+	};
+	backend_->get_data()->clips_robot_set_robot_maintenance =
+	  [this](int robot_number, std::string team_color, bool maintenance) {
+		  fawkes::MutexLocker clips_lock(&clips_mutex_);
+		  clips_->assert_fact_f("(robot-SetRobotMaintenance %d %s %s)",
+		                        robot_number,
+		                        team_color.c_str(),
+		                        maintenance ? "TRUE" : "FALSE");
+	  };
+	backend_->get_data()->clips_production_reset_machine_by_team = [this](std::string machine_name,
+	                                                                      std::string team_color) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(ws-reset-machine-message %s %s)",
+		                      machine_name.c_str(),
+		                      team_color.c_str());
+	};
+}
+
+#endif
 
 } // end of namespace llsfrb

@@ -55,32 +55,61 @@
   =>
   (bind ?team (pb-field-value ?p "team_color"))
   (bind ?order (pb-field-value ?p "order_id"))
-  (bind ?wp-id (workpiece-simulate-tracking ?order ?team ?gt))
-  (assert (product-processed (game-time ?gt) (team ?team) (order ?order) (confirmed TRUE)
+  (assert (order-SetOrderDelivered ?team ?order))
+)
+
+(defrule order-proc-SetOrderDelivered
+  (gamestate (phase PRODUCTION) (game-time ?gt))
+  ?cmd <- (order-SetOrderDelivered ?team-color ?order)
+  =>
+  (bind ?wp-id (workpiece-simulate-tracking ?order ?team-color ?gt))
+  (assert (product-processed (game-time ?gt) (team ?team-color) (order ?order) (confirmed TRUE)
                              (workpiece ?wp-id) (mtype DS) (scored FALSE)))
-  (printout t "Delivery by team " ?team " for order " ?order " reported!" crlf)
+  (printout t "Delivery by team " ?team-color " for order " ?order " reported!" crlf)
+  (retract ?cmd)
+)
+
+(defrule order-monitor-SetOrderDelivered
+  ?cmd <- (order-SetOrderDelivered ?team-color ?order)
+  =>
+  (printout t "Delivery by team " ?team-color " for order " ?order " reported!" crlf)
 )
 
 (defrule order-recv-ConfirmDelivery
   (gamestate (phase PRODUCTION|POST_GAME))
   ?pf <- (protobuf-msg (type "llsf_msgs.ConfirmDelivery") (ptr ?p) (rcvd-via STREAM))
   =>
+  (bind ?delivery-id (pb-field-value ?p "delivery_id"))
+  (bind ?correctness (pb-field-value ?p "correct"))
+  (bind ?order-id (pb-field-value ?p "order_id"))
+  (bind ?team-color (pb-field-value ?p "team_color"))
+  
+  (assert (order-ConfirmDelivery ?delivery-id ?correctness ?order-id ?team-color))
+  (retract ?pf)
+)
+
+(defrule order-proc-ConfirmDelivery
+  (gamestate (phase PRODUCTION|POST_GAME))
+  ?cmd <- (order-ConfirmDelivery ?delivery-id ?correctness ?order-id ?team-color)
+  =>
   (if (not (do-for-fact ((?rc referee-confirmation))
-            (and (eq ?rc:process-id (pb-field-value ?p "delivery_id"))
+            (and (eq ?rc:process-id ?delivery-id)
                  (eq ?rc:state REQUIRED))
-            (if (eq (pb-field-value ?p "correct") TRUE) then
+            (if (eq ?correctness TRUE) then
               (modify ?rc (state CONFIRMED))
             else
               (modify ?rc (state DENIED)))
+              (assert (ws-update-order-cmd ?delivery-id))
             ; make sure do-for-fact evaluates to TRUE
             TRUE))
    then
     (printout error "Received invalid SetOrderDelivered"
-                    " (order " (pb-field-value ?p "order_id")
-                    ", team " (pb-field-value ?p "team_color") ")" crlf)
+                    " (order " ?order-id
+                    ", team " ?team-color ")" crlf)
   )
-  (retract ?pf)
+  (retract ?cmd)
 )
+
 
 (defrule order-referee-confirmation-automatic
   "Automatically grant referee confirmation after DS idles,

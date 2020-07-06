@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "set_order_delivered command schema",
+    "description": "This command adds one instance of the given order as delivered for the given team (legacy/debugging/testing).",
+    "default": {},
+    "examples": [
+        {
+            "command": "set_order_delivered",
+            "color": "CYAN",
+            "order_id": 1
+        }
+    ],
+    "required": [
+        "command",
+        "color",
+        "order_id"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "set_order_delivered"
+            ]
+        },
+        "color": {
+            "$id": "#/properties/color",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "CYAN"
+            ]
+        },
+        "order_id": {
+            "$id": "#/properties/order_id",
+            "type": "integer",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        }
+    }
+}

@@ -87,11 +87,19 @@
   (gamestate (phase ?phase) (cont-time ?ctime) (game-time ?game-time))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
-  (do-for-fact ((?robot robot))
-    (and (eq ?robot:number (pb-field-value ?p "robot_number"))
-	 (eq ?robot:team-color (sym-cat (pb-field-value ?p "team_color"))))
+  (assert (robot-SetRobotMaintenance (pb-field-value ?p "robot_number") (sym-cat (pb-field-value ?p "team_color")) (pb-field-value ?p "maintenance")))
+)
 
-    (if (eq (pb-field-value ?p "maintenance") TRUE)
+(defrule robot-proc-SetRobotMaintenance
+  (gamestate (phase ?phase) (cont-time ?ctime) (game-time ?game-time))
+  ?cmd <- (robot-SetRobotMaintenance ?robot-number ?team-color ?maintenance)
+  =>
+  (retract ?cmd) ; message will be destroyed after rule completes
+  (do-for-fact ((?robot robot))
+    (and (eq ?robot:number ?robot-number)
+	 (eq ?robot:team-color ?team-color))
+
+    (if (eq ?maintenance TRUE)
     then
       (if (eq ?robot:state ACTIVE) then
 	(bind ?cycle (+ ?robot:maintenance-cycles 1))

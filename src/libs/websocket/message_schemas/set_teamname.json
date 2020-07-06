@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "set_teamname command schema",
+    "description": "This command sets the teamname of the given color.",
+    "default": {},
+    "examples": [
+        {
+            "command": "set_teamname",
+            "color": "CYAN",
+            "name": "Carologistics"
+        }
+    ],
+    "required": [
+        "command",
+        "color",
+        "name"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "set_teamname"
+            ]
+        },
+        "color": {
+            "$id": "#/properties/color",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "CYAN"
+            ]
+        },
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "Carologistics"
+            ]
+        }
+    }
+}

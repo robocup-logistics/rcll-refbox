@@ -1,0 +1,57 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "set_robot_maintenance command schema",
+    "description": "This command sets the maintenance state of the given robot (by number) of the given team (by color).",
+    "default": {},
+    "examples": [
+        {
+            "command": "set_robot_maintenance",
+            "robot_number": 1,
+            "team_color": "MAGENTA",
+            "maintenance": true
+        }
+    ],
+    "required": [
+        "command",
+        "robot_number",
+        "team_color",
+        "maintenance"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "set_robot_maintenance"
+            ]
+        },
+        "robot_number": {
+            "$id": "#/properties/robot_number",
+            "type": "integer",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "team_color": {
+            "$id": "#/properties/team_color",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "MAGENTA"
+            ]
+        },
+        "maintenance": {
+            "$id": "#/properties/maintenance",
+            "type": "boolean",
+            "default": false,
+            "examples": [
+                true
+            ]
+        }
+    }
+}

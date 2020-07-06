@@ -216,6 +216,7 @@
   )
 )
 
+
 ; **** MPS status feedback processing
 (defrule production-mps-feedback-state-ready
 	?m <- (machine (name ?n))
@@ -605,10 +606,18 @@
   =>
   (bind ?mname (sym-cat (pb-field-value ?p "machine_name")))
   (bind ?state (sym-cat (pb-field-value ?p "state")))
+  (assert (production-SetMachineState ?mname ?state))
+)
+
+(defrule production-proc-SetMachineState
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?cmd <- (production-SetMachineState ?mname ?state)
+  =>
+  (retract ?cmd)
   (printout t "Received state " ?state " for machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-		(modify ?m (state ?state))
-	)
+    (modify ?m (state ?state))
+  )
 )
 
 (defrule production-pb-recv-MachineAddBase
@@ -618,8 +627,18 @@
 		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
   =>
   (bind ?mname (sym-cat (pb-field-value ?p "machine_name")))
+  (assert (production-MachineAddBase ?mname))
+)
+
+
+(defrule production-proc-MachineAddBase
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  ?cmd <- (production-MachineAddBase ?mname)
+  =>
+  (retract ?cmd)
   (printout t "Add base to machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
 		(assert (mps-add-base-on-slide ?m:name))
   )
+
 )

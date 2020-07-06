@@ -1,0 +1,37 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "machine_add_base command schema",
+    "description": "This command can be used to add bases to machines given the name.",
+    "default": {},
+    "examples": [
+        {
+            "command": "machine_add_base",
+            "mname": ""
+        }
+    ],
+    "required": [
+        "command",
+        "mname"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "machine_add_base"
+            ]
+        },
+        "mname": {
+            "$id": "#/properties/mname",
+            "type": "string",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        }
+    }
+}

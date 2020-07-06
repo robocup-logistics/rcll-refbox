@@ -1,0 +1,67 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "confirm_delivery command schema",
+    "description": "An object of this type is used to confirm an unconfirmed delivery.",
+    "default": {},
+    "examples": [
+        {
+            "command": "confirm_delivery",
+            "delivery_id": 3,
+            "correctness": true,
+            "order_id": 1,
+            "color": "MAGENTA"
+        }
+    ],
+    "required": [
+        "command",
+        "delivery_id",
+        "correctness",
+        "order_id",
+        "color"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "confirm_delivery"
+            ]
+        },
+        "delivery_id": {
+            "$id": "#/properties/delivery_id",
+            "type": "integer",
+            "default": 0,
+            "examples": [
+                3
+            ]
+        },
+        "correctness": {
+            "$id": "#/properties/correctness",
+            "type": "boolean",
+            "default": false,
+            "examples": [
+                true
+            ]
+        },
+        "order_id": {
+            "$id": "#/properties/order_id",
+            "type": "integer",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "color": {
+            "$id": "#/properties/color",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "MAGENTA"
+            ]
+        }
+    }
+}

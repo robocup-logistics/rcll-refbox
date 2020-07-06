@@ -1,0 +1,37 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "set_gamestate command schema",
+    "description": "This command sets the gamestate to the given state.",
+    "default": {},
+    "examples": [
+        {
+            "command": "set_gamestate",
+            "state": "RUNNING"
+        }
+    ],
+    "required": [
+        "command",
+        "state"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "set_gamestate"
+            ]
+        },
+        "state": {
+            "$id": "#/properties/state",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "RUNNING"
+            ]
+        }
+    }
+}

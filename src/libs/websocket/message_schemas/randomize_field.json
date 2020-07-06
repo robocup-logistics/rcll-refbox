@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "randomize_field command schema",
+    "description": "This command can be used to start the gamefield randomizer.",
+    "default": {},
+    "examples": [
+        {
+            "command": "randomize_field"
+        }
+    ],
+    "required": [
+        "command"
+    ],
+    "additionalProperties": true,
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "randomize_field"
+            ]
+        }
+    }
+}
