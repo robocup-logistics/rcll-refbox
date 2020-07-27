@@ -254,9 +254,13 @@
 				(bind ?m-zone (sym-cat (bson-get ?m-p "zone")))
 				(bind ?m-rotation (sym-cat (bson-get ?m-p "rotation")))
 				(bind ?m-rs-ring-colors (create$))
+				(bind ?m-rs-ring-colors-strings (create$))
 				(bind ?m-type (sym-cat (bson-get ?m-p "type")))
 				(if (eq ?m-type RS) then
-					(bind ?m-rs-ring-colors (bson-get-array ?m-p "rs-ring-colors"))
+					(bind ?m-rs-ring-colors-strings (bson-get-array ?m-p "rs-ring-colors"))
+					(foreach ?c ?m-rs-ring-colors-strings
+						(bind ?m-rs-ring-colors (append$ ?m-rs-ring-colors (sym-cat ?c)))
+					)
 				)
 				;(printout t "Machine " ?m-name " is in zone " ?m-zone " with rotation " ?m-rotation crlf)
 				(do-for-fact ((?m machine)) (eq ?m:name ?m-name)
