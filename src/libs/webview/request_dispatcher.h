@@ -30,6 +30,11 @@
 #include <string>
 #include <vector>
 
+#if MHD_VERSION >= 0x00097002
+#	define MHD_RESULT MHD_Result
+#else
+#	define MHD_RESULT int
+#endif
 namespace fawkes {
 
 class WebRequestProcessor;
@@ -51,14 +56,14 @@ public:
 	                     WebPageFooterGenerator *footergen = 0);
 	~WebRequestDispatcher();
 
-	static int process_request_cb(void *                 callback_data,
-	                              struct MHD_Connection *connection,
-	                              const char *           url,
-	                              const char *           method,
-	                              const char *           version,
-	                              const char *           upload_data,
-	                              size_t *               upload_data_size,
-	                              void **                session_data);
+	static MHD_RESULT process_request_cb(void *                 callback_data,
+	                                     struct MHD_Connection *connection,
+	                                     const char *           url,
+	                                     const char *           method,
+	                                     const char *           version,
+	                                     const char *           upload_data,
+	                                     size_t *               upload_data_size,
+	                                     void **                session_data);
 
 	static void request_completed_cb(void *                          cls,
 	                                 struct MHD_Connection *         connection,
@@ -76,21 +81,21 @@ public:
 
 private:
 	struct MHD_Response *prepare_static_response(StaticWebReply *sreply);
-	int                  queue_static_reply(struct MHD_Connection *connection,
+	MHD_RESULT           queue_static_reply(struct MHD_Connection *connection,
 	                                        WebRequest *           request,
 	                                        StaticWebReply *       sreply);
-	int                  queue_dynamic_reply(struct MHD_Connection *connection,
+	MHD_RESULT           queue_dynamic_reply(struct MHD_Connection *connection,
 	                                         WebRequest *           request,
 	                                         DynamicWebReply *      sreply);
-	int   queue_basic_auth_fail(struct MHD_Connection *connection, WebRequest *request);
-	int   process_request(struct MHD_Connection *connection,
-	                      const char *           url,
-	                      const char *           method,
-	                      const char *           version,
-	                      const char *           upload_data,
-	                      size_t *               upload_data_size,
-	                      void **                session_data);
-	void *log_uri(const char *uri);
+	MHD_RESULT queue_basic_auth_fail(struct MHD_Connection *connection, WebRequest *request);
+	MHD_RESULT process_request(struct MHD_Connection *connection,
+	                           const char *           url,
+	                           const char *           method,
+	                           const char *           version,
+	                           const char *           upload_data,
+	                           size_t *               upload_data_size,
+	                           void **                session_data);
+	void *     log_uri(const char *uri);
 
 	void request_completed(WebRequest *request, MHD_RequestTerminationCode term_code);
 
