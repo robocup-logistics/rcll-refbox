@@ -60,7 +60,7 @@
 #	include <logging/websocket.h>
 #endif
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 #include <cstdlib>
 
@@ -105,6 +105,7 @@ using namespace protobuf_clips;
 using namespace llsf_utils;
 using namespace fawkes;
 using namespace llsfrb::mps_comm;
+using namespace boost::placeholders;
 
 #ifdef HAVE_MONGODB
 using bsoncxx::builder::basic::document;
