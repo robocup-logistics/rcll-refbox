@@ -54,7 +54,7 @@
 #include <llsf_sps/mps_pick_place_2.h>
 #include <llsf_sps/mps_deliver.h>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 #if BOOST_ASIO_VERSION < 100601
 #  include <csignal>
@@ -78,6 +78,7 @@ using namespace llsf_sps;
 using namespace protobuf_comm;
 using namespace protobuf_clips;
 using namespace llsf_utils;
+using namespace boost::placeholders;
 
 namespace llsfrb {
 #if 0 /* just to make Emacs auto-indent happy */
