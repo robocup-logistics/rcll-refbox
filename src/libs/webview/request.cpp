@@ -30,10 +30,16 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#if MHD_VERSION >= 0x00097002
+#	define MHD_RESULT MHD_Result
+#else
+#	define MHD_RESULT int
+#endif
+
 namespace fawkes {
 
 /// @cond INTERNAL
-static int
+static MHD_RESULT
 cookie_iterator(void *cls, enum MHD_ValueKind kind, const char *key, const char *value)
 {
 	WebRequest *request = static_cast<WebRequest *>(cls);
@@ -41,7 +47,7 @@ cookie_iterator(void *cls, enum MHD_ValueKind kind, const char *key, const char 
 	return MHD_YES;
 }
 
-static int
+static MHD_RESULT
 get_argument_iterator(void *cls, enum MHD_ValueKind kind, const char *key, const char *value)
 {
 	WebRequest *request = static_cast<WebRequest *>(cls);
@@ -52,7 +58,7 @@ get_argument_iterator(void *cls, enum MHD_ValueKind kind, const char *key, const
 	return MHD_YES;
 }
 
-static int
+static MHD_RESULT
 header_iterator(void *cls, enum MHD_ValueKind kind, const char *key, const char *value)
 {
 	WebRequest *request = static_cast<WebRequest *>(cls);
