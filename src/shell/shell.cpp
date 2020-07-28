@@ -62,7 +62,7 @@
 #include <cursesm.h>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 
 #include <cstring>
 #include <unistd.h>
@@ -78,6 +78,7 @@
 #define MIN_NUM_ROBOTS 6
 
 using namespace protobuf_comm;
+using namespace boost::placeholders;
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
