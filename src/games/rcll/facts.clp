@@ -76,8 +76,9 @@
   (slot ds-order (type INTEGER))
 
   (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
+  (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
   ;(multislot ss-slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
-	(slot ss-holding (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+	;(slot ss-holding (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE)) */
 
   (slot rs-ring-color (type SYMBOL)
 	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
@@ -96,7 +97,7 @@
 
 (deftemplate machine-ss-filled
   (slot name (type SYMBOL))
-  (multislot slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
+  (multislot shelf-slot (type INTEGER) (cardinality 2 2)) ; first number is the shelf, second is the slot
 )
 
 (deftemplate machine-light-code
@@ -239,8 +240,8 @@
 (deftemplate delivery-period
   (multislot delivery-gates (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6) (cardinality 2 2))
   (multislot period (type INTEGER) (cardinality 2 2))
-)  
- 
+)
+
 (deffunction gen-int-id ()
   "Generate a unique uint that can be used as an ID."
   (bind ?id-string (str-cat (gensym*)))
@@ -412,19 +413,6 @@
   (mirror-orientation (cyan 225) (magenta 315))
   (mirror-orientation (cyan 270) (magenta 270))
   (mirror-orientation (cyan 315) (magenta 225))
-
-  (machine-ss-filled (name C-SS) (slot 0 0 0))
-  (machine-ss-filled (name C-SS) (slot 1 0 0))
-  (machine-ss-filled (name C-SS) (slot 2 0 0))
-  (machine-ss-filled (name C-SS) (slot 3 0 0))
-  (machine-ss-filled (name C-SS) (slot 4 0 0))
-  (machine-ss-filled (name C-SS) (slot 5 0 0))
-  (machine-ss-filled (name M-SS) (slot 0 0 0))
-  (machine-ss-filled (name M-SS) (slot 1 0 0))
-  (machine-ss-filled (name M-SS) (slot 2 0 0))
-  (machine-ss-filled (name M-SS) (slot 3 0 0))
-  (machine-ss-filled (name M-SS) (slot 4 0 0))
-  (machine-ss-filled (name M-SS) (slot 5 0 0))
 )
 
 (deffacts light-codes

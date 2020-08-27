@@ -105,24 +105,33 @@
 						 then
 							(bind ?prepmsg (pb-field-value ?p "instruction_ss"))
 							(bind ?operation (sym-cat (pb-field-value ?prepmsg "operation")))
-							(if (eq ?operation RETRIEVE)
+							(bind ?shelf (integer (pb-field-value ?prepmsg "shelf")))
+							(bind ?slot (integer (pb-field-value ?prepmsg "slot")))
+							(if (or (< ?shelf 0) (< ?slot 0) (> ?shelf ?*SS-MAX-SHELF*) (> ?slot ?*SS-MAX-SLOT*))
 							 then
-								(if ?m:ss-holding
-								 then
-									(printout t "Prepared " ?mname crlf)
-									(modify ?m (state PREPARED) (ss-operation ?operation) (wait-for-product-since ?gt))
-								 else
 									(modify ?m (state BROKEN)
-									           (broken-reason (str-cat "Prepare received for " ?mname ", but station is empty")))
-								)
+									           (broken-reason (str-cat "Prepare received for " ?mname " with invalid shelf or slot (" ?shelf " [0, " ?*SS-MAX-SHELF*"], " ?slot " [0, " ?*SS-MAX-SLOT*"])" )))
 							 else
-								(if (eq ?operation STORE)
+								(if (eq ?operation RETRIEVE)
 								 then
-									(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation")))
+									(if (any-factp ((?filled machine-ss-filled)) (eq ?filled:shelf-slot (create$ ?shelf ?slot)))
+									 then
+										(printout t "Prepared " ?mname crlf)
+										(modify ?m (state PREPARED) (ss-operation ?operation) (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt))
+									 else
+										(modify ?m (state BROKEN)
+										           (broken-reason (str-cat "Prepare received for " ?mname ", but station is empty (" ?shelf ", " ?slot ")")))
+									)
 								 else
-								 	(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation " ?operation)))
-								)
-							)
+									(if (eq ?operation STORE)
+									 then
+										(if (any-factp ((?filled machine-ss-filled)) (eq ?filled:shelf-slot (create$ ?shelf ?slot)))
+										 then
+											(bind ?timestamp (pb-field-value ?prepmsg "timestamp"))
+											(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation for occupied shelf slot (" ?shelf ", " ?slot "), recv " ?timestamp)))
+										 else
+											(modify ?m (state PREPARED) (ss-operation ?operation) (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt))
+									))))
 						 else
 							(modify ?m (state BROKEN)
 							           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
@@ -506,26 +515,87 @@
   (modify ?m (state WAIT-IDLE) (idle-since ?gt))
 )
 
-(defrule production-ss-start-retrieval
-	"SS is prepared, move the workpiece to the output."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
-                 (ss-operation RETRIEVE) (task nil))
+(defrule production-ss-store-move-to-mid
+  "Start moving the workpiece to the middle if the CS is PREPARED."
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	?m <- (machine (name ?n) (mtype SS) (state PREPARED) (task nil)
+	               (ss-operation STORE))
 	=>
-	(modify ?m (state PROCESSING) (proc-start ?gt))
+	(printout t "Machine " ?n " prepared for STORE" crlf)
+	(modify ?m (task MOVE-MID) (mps-busy WAIT))
+	; TODO: is this the correct direction?
+	(mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
 )
 
-(defrule production-ss-processed-retrieval
-	"The conveyor started moving, go to processed."
+(defrule production-ss-start-retrieval
+	"SS is prepared for retrieval, get the product from the shelf."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype SS) (team ?team) (state PROCESSING) (ss-operation RETRIEVE)
-	               (proc-start ?t&:(timeout-sec ?gt ?t ?*PROCESS-TIME-SS*)))
+	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
+	               (ss-operation ?ss-op&RETRIEVE) (ss-shelf-slot ?shelf ?slot) (task nil))
 	=>
-	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
-	                (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
-	                (reason (str-cat "Retrieved product from " ?n))))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op) (mps-busy WAIT))
+	(mps-ss-retrieve (str-cat ?n) ?shelf ?slot)
+)
+
+(defrule production-ss-start-store
+	"SS has moved the product to the middle, store it on the shelf."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
+	               (ss-operation ?ss-op&STORE) (ss-shelf-slot ?shelf ?slot)
+	               (task MOVE-MID) (mps-busy FALSE))
+	=>
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op)(mps-busy WAIT))
+	(mps-ss-store (str-cat ?n) ?shelf ?slot)
+)
+
+(defrule production-ss-move-to-output
+	"The SS has completed the retrieval. Move the workpiece to the output."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (team ?team)
+	               (task RETRIEVE) (mps-busy FALSE) (ss-shelf-slot ?shelf ?slot))
+	(workpiece-tracking (enabled ?tracking-enabled))
+  ?ss-filled <- (machine-ss-filled (name ?n) (shelf-slot ?shelf ?slot))
+	=>
+	; TODO: Workpiece Tracking at SS?
+	(printout t "Machine " ?n ": move to output" crlf)
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
+	; TODO: Is this the correct side?
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
-	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT) (ss-holding FALSE))
+  (retract ?ss-filled)
+)
+
+;(defrule production-ss-processed-retrieval
+;	"The conveyor started moving, go to processed."
+;	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+;	?m <- (machine (name ?n) (mtype SS) (team ?team) (state PROCESSING) (ss-operation RETRIEVE)
+;	               (proc-start ?t&:(timeout-sec ?gt ?t ?*PROCESS-TIME-SS*)))
+;	=>
+;	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+;	                (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
+;	                (reason (str-cat "Retrieved product from " ?n))))
+;	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
+;	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT) (ss-holding FALSE))
+;)
+
+(defrule production-ss-storage-completed
+	"The DS processed the workpiece, ask the referee for confirmation of the delivery."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (task STORE) (mps-busy FALSE)
+	               (ss-shelf-slot ?shelf ?slot) (team ?team))
+  =>
+  (printout t "Machine " ?n " finished storage at (" ?shelf ", " ?slot ")" crlf)
+  (modify ?m (state PROCESSED) (proc-start ?gt))
+  (assert (machine-ss-filled (name ?n) (shelf-slot (create$ ?shelf ?slot))))
+)
+
+(defrule production-ss-store-processed
+  "The SS finished storing the workpiece, set the machine to IDLE and reset it."
+	(declare (salience ?*PRIORITY_LAST*))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (task STORE) (state PROCESSED))
+	=>
+  (printout t "Machine " ?n " finished processing" crlf)
+  (modify ?m (state WAIT-IDLE) (idle-since ?gt) (task nil))
 )
 
 (defrule production-mps-idle

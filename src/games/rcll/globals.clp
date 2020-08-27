@@ -54,6 +54,8 @@
   ?*PROCESSING-WAIT-TILL-RESET* = 90
   ?*PREPARE-WAIT-TILL-PROCESSING* = 5
   ?*PROCESS-TIME-SS* = 5
+  ?*SS-MAX-SHELF* = 5 ; min value is 0
+  ?*SS-MAX-SLOT* = 7 ; min value is 0
 
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1
