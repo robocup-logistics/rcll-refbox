@@ -40,21 +40,21 @@
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot zone (type SYMBOL) (default TBD)
 	  (allowed-values TBD
-      C_Z18 C_Z28 C_Z38 C_Z48 C_Z58 C_Z68 C_Z78 
-      C_Z17 C_Z27 C_Z37 C_Z47 C_Z57 C_Z67 C_Z77 
-      C_Z16 C_Z26 C_Z36 C_Z46 C_Z56 C_Z66 C_Z76 
-      C_Z15 C_Z25 C_Z35 C_Z45 C_Z55 C_Z65 C_Z75 
-      C_Z14 C_Z24 C_Z34 C_Z44 C_Z54 C_Z64 C_Z74 
-      C_Z13 C_Z23 C_Z33 C_Z43 C_Z53 C_Z63 C_Z73 
-      C_Z12 C_Z22 C_Z32 C_Z42 C_Z52 C_Z62 C_Z72 
+      C_Z18 C_Z28 C_Z38 C_Z48 C_Z58 C_Z68 C_Z78
+      C_Z17 C_Z27 C_Z37 C_Z47 C_Z57 C_Z67 C_Z77
+      C_Z16 C_Z26 C_Z36 C_Z46 C_Z56 C_Z66 C_Z76
+      C_Z15 C_Z25 C_Z35 C_Z45 C_Z55 C_Z65 C_Z75
+      C_Z14 C_Z24 C_Z34 C_Z44 C_Z54 C_Z64 C_Z74
+      C_Z13 C_Z23 C_Z33 C_Z43 C_Z53 C_Z63 C_Z73
+      C_Z12 C_Z22 C_Z32 C_Z42 C_Z52 C_Z62 C_Z72
       C_Z11 C_Z21 C_Z31 C_Z41
-      M_Z18 M_Z28 M_Z38 M_Z48 M_Z58 M_Z68 M_Z78 
-      M_Z17 M_Z27 M_Z37 M_Z47 M_Z57 M_Z67 M_Z77 
-      M_Z16 M_Z26 M_Z36 M_Z46 M_Z56 M_Z66 M_Z76 
-      M_Z15 M_Z25 M_Z35 M_Z45 M_Z55 M_Z65 M_Z75 
-      M_Z14 M_Z24 M_Z34 M_Z44 M_Z54 M_Z64 M_Z74 
-      M_Z13 M_Z23 M_Z33 M_Z43 M_Z53 M_Z63 M_Z73 
-      M_Z12 M_Z22 M_Z32 M_Z42 M_Z52 M_Z62 M_Z72 
+      M_Z18 M_Z28 M_Z38 M_Z48 M_Z58 M_Z68 M_Z78
+      M_Z17 M_Z27 M_Z37 M_Z47 M_Z57 M_Z67 M_Z77
+      M_Z16 M_Z26 M_Z36 M_Z46 M_Z56 M_Z66 M_Z76
+      M_Z15 M_Z25 M_Z35 M_Z45 M_Z55 M_Z65 M_Z75
+      M_Z14 M_Z24 M_Z34 M_Z44 M_Z54 M_Z64 M_Z74
+      M_Z13 M_Z23 M_Z33 M_Z43 M_Z53 M_Z63 M_Z73
+      M_Z12 M_Z22 M_Z32 M_Z42 M_Z52 M_Z62 M_Z72
       M_Z11 M_Z21 M_Z31 M_Z41
     )
   )
@@ -76,8 +76,7 @@
   (slot ds-order (type INTEGER))
 
   (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
-  ;(multislot ss-slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
-	(slot ss-holding (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
 
   (slot rs-ring-color (type SYMBOL)
 	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
@@ -96,7 +95,7 @@
 
 (deftemplate machine-ss-filled
   (slot name (type SYMBOL))
-  (multislot slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
+  (multislot shelf-slot (type INTEGER) (cardinality 2 2)) ; first number is the shelf, second is the slot
 )
 
 (deftemplate machine-light-code
@@ -239,8 +238,8 @@
 (deftemplate delivery-period
   (multislot delivery-gates (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6) (cardinality 2 2))
   (multislot period (type INTEGER) (cardinality 2 2))
-)  
- 
+)
+
 (deffunction gen-int-id ()
   "Generate a unique uint that can be used as an ID."
   (bind ?id-string (str-cat (gensym*)))
@@ -304,22 +303,22 @@
 	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot zone (type SYMBOL)
-	  (allowed-values NOT-REPORTED 
-      C_Z18 C_Z28 C_Z38 C_Z48 C_Z58 C_Z68 C_Z78 
-      C_Z17 C_Z27 C_Z37 C_Z47 C_Z57 C_Z67 C_Z77 
-      C_Z16 C_Z26 C_Z36 C_Z46 C_Z56 C_Z66 C_Z76 
-      C_Z15 C_Z25 C_Z35 C_Z45 C_Z55 C_Z65 C_Z75 
-      C_Z14 C_Z24 C_Z34 C_Z44 C_Z54 C_Z64 C_Z74 
-      C_Z13 C_Z23 C_Z33 C_Z43 C_Z53 C_Z63 C_Z73 
-      C_Z12 C_Z22 C_Z32 C_Z42 C_Z52 C_Z62 C_Z72 
+	  (allowed-values NOT-REPORTED
+      C_Z18 C_Z28 C_Z38 C_Z48 C_Z58 C_Z68 C_Z78
+      C_Z17 C_Z27 C_Z37 C_Z47 C_Z57 C_Z67 C_Z77
+      C_Z16 C_Z26 C_Z36 C_Z46 C_Z56 C_Z66 C_Z76
+      C_Z15 C_Z25 C_Z35 C_Z45 C_Z55 C_Z65 C_Z75
+      C_Z14 C_Z24 C_Z34 C_Z44 C_Z54 C_Z64 C_Z74
+      C_Z13 C_Z23 C_Z33 C_Z43 C_Z53 C_Z63 C_Z73
+      C_Z12 C_Z22 C_Z32 C_Z42 C_Z52 C_Z62 C_Z72
       C_Z11 C_Z21 C_Z31 C_Z41
-      M_Z18 M_Z28 M_Z38 M_Z48 M_Z58 M_Z68 M_Z78 
-      M_Z17 M_Z27 M_Z37 M_Z47 M_Z57 M_Z67 M_Z77 
-      M_Z16 M_Z26 M_Z36 M_Z46 M_Z56 M_Z66 M_Z76 
-      M_Z15 M_Z25 M_Z35 M_Z45 M_Z55 M_Z65 M_Z75 
-      M_Z14 M_Z24 M_Z34 M_Z44 M_Z54 M_Z64 M_Z74 
-      M_Z13 M_Z23 M_Z33 M_Z43 M_Z53 M_Z63 M_Z73 
-      M_Z12 M_Z22 M_Z32 M_Z42 M_Z52 M_Z62 M_Z72 
+      M_Z18 M_Z28 M_Z38 M_Z48 M_Z58 M_Z68 M_Z78
+      M_Z17 M_Z27 M_Z37 M_Z47 M_Z57 M_Z67 M_Z77
+      M_Z16 M_Z26 M_Z36 M_Z46 M_Z56 M_Z66 M_Z76
+      M_Z15 M_Z25 M_Z35 M_Z45 M_Z55 M_Z65 M_Z75
+      M_Z14 M_Z24 M_Z34 M_Z44 M_Z54 M_Z64 M_Z74
+      M_Z13 M_Z23 M_Z33 M_Z43 M_Z53 M_Z63 M_Z73
+      M_Z12 M_Z22 M_Z32 M_Z42 M_Z52 M_Z62 M_Z72
       M_Z11 M_Z21 M_Z31 M_Z41
 	  )
   )
@@ -383,7 +382,7 @@
   (setup-light-toggle CS2)
   (whac-a-mole-light NONE)
 
-  (machine (name C-BS)  (team CYAN) (mtype BS)) 
+  (machine (name C-BS)  (team CYAN) (mtype BS))
   (machine (name C-DS)  (team CYAN) (mtype DS))
   (machine (name C-SS)  (team CYAN) (mtype SS))
   (machine (name C-RS1) (team CYAN) (mtype RS))
@@ -412,19 +411,6 @@
   (mirror-orientation (cyan 225) (magenta 315))
   (mirror-orientation (cyan 270) (magenta 270))
   (mirror-orientation (cyan 315) (magenta 225))
-
-  (machine-ss-filled (name C-SS) (slot 0 0 0))
-  (machine-ss-filled (name C-SS) (slot 1 0 0))
-  (machine-ss-filled (name C-SS) (slot 2 0 0))
-  (machine-ss-filled (name C-SS) (slot 3 0 0))
-  (machine-ss-filled (name C-SS) (slot 4 0 0))
-  (machine-ss-filled (name C-SS) (slot 5 0 0))
-  (machine-ss-filled (name M-SS) (slot 0 0 0))
-  (machine-ss-filled (name M-SS) (slot 1 0 0))
-  (machine-ss-filled (name M-SS) (slot 2 0 0))
-  (machine-ss-filled (name M-SS) (slot 3 0 0))
-  (machine-ss-filled (name M-SS) (slot 4 0 0))
-  (machine-ss-filled (name M-SS) (slot 5 0 0))
 )
 
 (deffacts light-codes
