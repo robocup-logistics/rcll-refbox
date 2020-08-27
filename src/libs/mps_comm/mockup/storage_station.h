@@ -30,7 +30,12 @@ class MockupStorageStation : public virtual MockupMachine, public virtual Storag
 {
 public:
 	MockupStorageStation(const std::string &name);
+	void retrieve(unsigned int shelf, unsigned int slot) override;
+	void store(unsigned int shelf, unsigned int slot) override;
 	void identify() override{};
+
+private:
+	void storage_op();
 };
 } // namespace mps_comm
 } // namespace llsfrb

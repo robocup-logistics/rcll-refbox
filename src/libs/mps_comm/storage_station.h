@@ -26,6 +26,9 @@ namespace mps_comm {
 
 class StorageStation : public virtual Machine
 {
+public:
+	virtual void retrieve(unsigned int shelf, unsigned int slot) = 0;
+	virtual void store(unsigned int shelf, unsigned int slot)    = 0;
 };
 } // namespace mps_comm
 } // namespace llsfrb
