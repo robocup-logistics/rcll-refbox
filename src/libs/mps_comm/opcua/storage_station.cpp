@@ -43,5 +43,12 @@ OpcUaStorageStation::OpcUaStorageStation(const std::string &name,
 {
 }
 
+void OpcUaStorageStation::retrieve(unsigned int shelf, unsigned int slot) {
+}
+
+void OpcUaStorageStation::store(unsigned int shelf, unsigned int slot) {
+}
+
+
 } // namespace mps_comm
 } // namespace llsfrb

@@ -20,11 +20,36 @@
 
 #include "storage_station.h"
 
+#include "durations.h"
+
+#include <chrono>
+
 namespace llsfrb {
 namespace mps_comm {
 
 MockupStorageStation::MockupStorageStation(const std::string &name) : Machine(name)
 {
+}
+
+void MockupStorageStation::retrieve(unsigned int shelf, unsigned int slot)
+{
+	storage_op();
+}
+
+void MockupStorageStation::store(unsigned int shelf, unsigned int slot)
+{
+	storage_op();
+}
+
+void MockupStorageStation::storage_op() {
+	callback_busy_(true);
+	std::lock_guard<std::mutex> lg(queue_mutex_);
+	queue_.push(std::make_tuple([this] { callback_busy_(false); },
+	                            std::chrono::system_clock::now()
+	                              + std::max(min_operation_duration_,
+	                                         std::chrono::round<std::chrono::milliseconds>(
+	                                           duration_storage_op_ / exec_speed_))));
+	queue_condition_.notify_one();
 }
 
 } // namespace mps_comm
