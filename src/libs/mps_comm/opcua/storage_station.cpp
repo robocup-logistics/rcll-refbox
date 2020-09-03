@@ -50,17 +50,13 @@ OpcUaStorageStation::~OpcUaStorageStation()
 void
 OpcUaStorageStation::retrieve(unsigned int shelf, unsigned int slot)
 {
-	enqueue_instruction(Operation::OPERATION_WP_RETRIEVE + machine_type_,
-			    shelf,
-			    slot);
+	enqueue_instruction(Operation::OPERATION_WP_RETRIEVE + machine_type_, shelf, slot);
 }
 
 void
 OpcUaStorageStation::store(unsigned int shelf, unsigned int slot)
 {
-	enqueue_instruction(Operation::OPERATION_WP_STORE + machine_type_,
-			    shelf,
-			    slot);
+	enqueue_instruction(Operation::OPERATION_WP_STORE + machine_type_, shelf, slot);
 }
 
 } // namespace mps_comm
