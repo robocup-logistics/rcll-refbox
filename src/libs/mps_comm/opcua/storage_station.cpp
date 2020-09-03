@@ -43,6 +43,10 @@ OpcUaStorageStation::OpcUaStorageStation(const std::string &name,
 {
 }
 
+OpcUaStorageStation::~OpcUaStorageStation()
+{
+}
+
 void
 OpcUaStorageStation::retrieve(unsigned int shelf, unsigned int slot)
 {

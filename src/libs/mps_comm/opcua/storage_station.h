@@ -38,6 +38,9 @@ public:
 	                    unsigned short     port,
 	                    const std::string &log_path = "",
 	                    ConnectionMode     mode     = PLC);
+
+	virtual ~OpcUaStorageStation();
+
 	void retrieve(unsigned int shelf, unsigned int slot) override;
 	void store(unsigned int shelf, unsigned int slot) override;
 };
