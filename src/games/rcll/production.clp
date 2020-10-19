@@ -562,7 +562,8 @@
 	(bind ?o-slot (nth$ 2 ?o))
 	(printout t ?n " position (" ?shelf "," ?slot ") in not accessible, relocate "
 	            "(" ?shelf "," ?front-slot") to (" ?o-shelf "," ?o-slot ")" crlf)
-	(modify ?m (task RELOCATE) (proc-start ?gt) (state PROCESSING) (mps-busy WAIT))
+	(modify ?m (task RELOCATE) (proc-start ?gt) (state PROCESSING) (mps-busy WAIT)
+	               (wait-for-product-since ?gt))
 	(modify ?s (move-to ?o-shelf ?o-slot))
 	(mps-ss-relocate (str-cat ?n) ?shelf ?front-slot ?o-shelf ?o-slot)
 )
@@ -613,7 +614,8 @@
 		            "(" (nth$ 1 ?front-pos)"," (nth$ 2 ?front-pos) ") to "
 		            "(" (nth$ 1 ?free-pos) "," (nth$ 2 ?free-pos) ")" crlf)
 		(printout t  ?n " has to make  (" ?shelf "," ?slot ") accessible" crlf)
-		(modify ?m (state PROCESSING) (proc-start ?gt) (task RELOCATE) (mps-busy WAIT))
+		(modify ?m (state PROCESSING) (proc-start ?gt) (task RELOCATE) (mps-busy WAIT)
+		           (wait-for-product-since ?gt))
 		(modify ?front (move-to ?free-pos))
 		(mps-ss-relocate (str-cat ?n) (nth$ 1 ?front-pos) (nth$ 2 ?front-pos)
 		                                (nth$ 1 ?free-pos) (nth$ 2 ?free-pos))
@@ -638,7 +640,7 @@
 	                             (num-payments ?np)
 	                             (last-payed ?lp))
 	=>
-	(modify ?m (task nil))
+	(modify ?m (task nil) (wait-for-product-since ?gt))
 	(modify ?s (is-filled FALSE) (move-to (create$ ) ))
 	(modify ?t (is-filled TRUE) (num-payments ?np) (last-payed ?lp))
 	(ss-update-accessible-slots ?n ?curr-shelf ?curr-slot TRUE)
