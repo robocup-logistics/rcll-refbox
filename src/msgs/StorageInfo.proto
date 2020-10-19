@@ -1,9 +1,9 @@
 
 /***************************************************************************
- *  MachineInstructions.proto - LLSF Protocol - Machine instruction messages
+ *  StorageInfo.proto - Load status of each storage station shelf slot
  *
- *  Created: Thu Apr 16 14:19:07 2015
- *  Copyright  2013  Tim Niemueller [www.niemueller.de]
+ *  Created: Oct 19 2020
+ *  Copyright  2020  Tarik Viehmann
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -38,76 +38,36 @@ syntax = "proto2";
 
 package llsf_msgs;
 
-import "MachineDescription.proto";
-import "ProductColor.proto";
 import "Team.proto";
 
 option java_package = "org.robocup_logistics.llsf_msgs";
-option java_outer_classname = "MachineInstructionProtos";
+option java_outer_classname = "StorageInfoProtos";
 
-enum MachineSide {
-  INPUT  = 1;
-  OUTPUT = 2;
-}
-
-message PrepareInstructionBS {
-  required MachineSide side  = 1;
-  required BaseColor   color = 2;
-}
-
-message PrepareInstructionDS {
-  reserved "gate";
-  reserved 1;
-  required uint32 order_id = 2;
-}
-
-message PrepareInstructionSS {
-  required SSOp   operation = 1;
-  required uint32 shelf = 2;
-  required uint32 slot = 3;
-  // Optional description of the workpiece that is stored.
-  // The RefBox attaches this description when sending information about
-  // stored products
-  optional string wp_description = 10;
-}
-
-message PrepareInstructionRS {
-  required RingColor ring_color = 1;
-}
-
-message PrepareInstructionCS {
-  required CSOp operation = 1;
-}
-
-message PrepareMachine {
+// Shelf Information
+message ShelfSlotInfo {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 101;
+    MSG_TYPE = 121;
   }
-
-  required Team   team_color = 1;
-  // Machine name which to instruct
-  required string machine = 2;
-
-  optional PrepareInstructionBS instruction_bs = 4;
-  optional PrepareInstructionDS instruction_ds = 5;
-  optional PrepareInstructionSS instruction_ss = 8;
-  optional PrepareInstructionRS instruction_rs = 6;
-  optional PrepareInstructionCS instruction_cs = 7;
-  // time since Unix epoch in seconds
-  // if specified and the message is too old it gets ignored
-  // (threshold is specified in globals.clp)
-  optional uint64 sent_at = 15;
+	// shelf position
+  required uint32 shelf = 1;
+	// slot position
+  required uint32 slot = 2;
+  // fill status
+  required bool is_filled = 3;
+  // additional information of the workpiece in that position
+  optional string description = 5;
 }
 
-message ResetMachine {
+// Storage Station Information
+message StorageInfo {
   enum CompType {
     COMP_ID  = 2000;
-    MSG_TYPE = 104;
+    MSG_TYPE = 122;
   }
-
-  required Team   team_color = 1;
-  // Machine name which to instruct
+	required Team team_color = 1;
+  // Storage station name for which storage information is sent
   required string machine = 2;
-}
 
+  repeated ShelfSlotInfo shelf_slot_info = 5;
+}

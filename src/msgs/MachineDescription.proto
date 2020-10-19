@@ -57,6 +57,7 @@ enum LightState {
 enum SSOp {
   STORE   = 1;
   RETRIEVE = 2;
+  CHANGE_INFO = 3;
 }
 
 // message SSSlot {
