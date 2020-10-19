@@ -183,3 +183,63 @@
 		(modify ?s (is-accessible ?is-free))
 	)
 )
+
+; Assert points without crossing the threshold
+; @param ?upper-bounded: Set to FALSE iff the threshold is a lower bound
+; @param ?prefix: Prefix of the reason which determines whether a point score
+;                 contributes to the threshold
+; @param ?threshold: Threshold that is not crossed
+; @param ?msg: reason for points
+; @param ?points: number of points to add
+; @param ?gt: Current game time
+; @param ?team: Team scoring the points
+; @param ?phase: Game phase
+(deffunction assert-points-with-threshold (?upper-bounded ?prefix ?threshold ?msg ?points ?gt ?team ?phase)
+	(bind ?resulting-points ?points)
+	(bind ?total-points 0)
+	(bind ?print-max-points-reached FALSE)
+	(do-for-all-facts ((?p points))
+	                  (and (eq (sub-string 1 (length ?prefix) ?p:reason) ?prefix)
+	                       (eq ?p:team ?team))
+	                  (bind ?total-points (+ ?total-points ?p:points))
+	)
+	(bind ?threshold-comp (- ?threshold (+ ?total-points ?points)))
+	(if (and ?upper-bounded (> ?points 0) (<= ?threshold-comp 0))
+	 then
+		(bind ?resulting-points (max 0 (+ ?points ?threshold-comp)))
+		(bind ?print-max-points-reached TRUE)
+	)
+	(if (and (not ?upper-bounded) (< ?points 0) (>= ?threshold-comp 0))
+	 then
+		(bind ?resulting-points (min 0 (+ ?points ?threshold-comp)))
+		(bind ?print-max-points-reached TRUE)
+	)
+	(if (neq ?resulting-points 0)
+	 then
+		(assert (points (game-time ?gt) (team ?team) (phase ?phase)
+		                (points ?resulting-points) (reason (str-cat ?prefix ": " ?msg))))
+		(if ?print-max-points-reached
+		 then
+			(bind ?t-str (create$ "lower bound" "deducted"))
+			(if ?upper-bounded then (bind ?t-str (create$ "upper bound" "added")))
+			(printout t "Team " ?team " reached " (nth$ 1 ?t-str)" at " ?prefix ": "
+			            ?threshold ". No more points are " (nth$ 2 ?t-str) "." crlf)
+		)
+	)
+)
+
+; Assert point deductions for using the SS without crossing the max threshold
+; @param ?msg reason for points
+; @param ?points number of points to add (negative for deductions)
+; @param ?gt Current game time
+; @param ?team Team scoring the points
+(deffunction ss-assert-points-with-threshold (?msg ?points ?gt ?team)
+	(assert-points-with-threshold FALSE
+	                              "SS"
+	                              ?*PRODUCTION-POINTS-SS-MAX-TOTAL-POINTS*
+	                              ?msg
+	                              ?points
+	                              ?gt
+	                              ?team
+	                              PRODUCTION)
+)

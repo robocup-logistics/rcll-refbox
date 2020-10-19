@@ -632,11 +632,12 @@
 	(modify ?t (is-filled TRUE) (last-payed ?lp))
 	(ss-update-accessible-slots ?n ?curr-shelf ?curr-slot TRUE)
 	(ss-update-accessible-slots ?n ?target-shelf ?target-slot FALSE)
-	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
-	                (points ?*PRODUCTION-POINTS-SS-RELOCATION*)
-	                (reason (str-cat "Payment for relocating "
-	                        "(" ?curr-shelf "," ?curr-slot ") to "
-	                        "(" ?target-shelf "," ?target-slot ") in " ?n))))
+	(ss-assert-points-with-threshold
+	  (str-cat "Payment for relocating "
+	           "(" ?curr-shelf "," ?curr-slot ") to "
+	           "(" ?target-shelf "," ?target-slot ") in " ?n)
+	  ?*PRODUCTION-POINTS-SS-RELOCATION*
+	  ?gt ?team)
 )
 
 (defrule production-ss-retrieve-start
@@ -674,9 +675,10 @@
 	; TODO: Is this the correct side?
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 	(ss-update-accessible-slots ?n ?shelf ?slot TRUE)
-	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
-	                (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
-	                (reason (str-cat "SS: Payment for retrieving ( " ?shelf"," ?slot ") from " ?n))))
+	(ss-assert-points-with-threshold
+	  (str-cat "SS: Payment for retrieving ( " ?shelf"," ?slot ") from " ?n)
+	  ?*PRODUCTION-POINTS-SS-RETRIEVAL*
+	  ?gt ?team)
 	(modify ?s (is-filled FALSE))
 )
 
@@ -691,9 +693,10 @@
 	(modify ?m (state PROCESSED) (proc-start ?gt))
 	(modify ?s (is-filled TRUE) (last-payed (+ ?gt ?*PRODUCTION-POINTS-SS-STORAGE-GRACE-PERIOD*)))
 	(ss-update-accessible-slots ?n ?shelf ?slot FALSE)
-	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
-	                (points ?*PRODUCTION-POINTS-SS-STORAGE*)
-	                (reason (str-cat "Payment for storing ("?shelf "," ?slot") at " ?n))))
+	(ss-assert-points-with-threshold
+	  (str-cat "Payment for storing ("?shelf "," ?slot") at " ?n)
+	  ?*PRODUCTION-POINTS-SS-STORAGE*
+	  ?gt ?team)
 )
 
 (defrule production-ss-store-processed
@@ -828,7 +831,8 @@
 	(machine (name ?n) (team ?team))
 	=>
 	(modify ?s (last-payed (+ ?lp ?*PRODUCTION-POINTS-SS-PAYMENT-INTERVAL*)))
-	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
-	                (points ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME*)
-	                (reason (str-cat "SS: Payment for keeping product at " ?n " (" ?shelf "," ?slot ")"))))
+	(ss-assert-points-with-threshold
+	  (str-cat "Payment for keeping product at " ?n " (" ?shelf "," ?slot ")")
+	  ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME*
+	  ?gt ?team)
 )
