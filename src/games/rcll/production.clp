@@ -551,11 +551,20 @@
 	(machine-ss-shelf-slot (name ?n) (position ?other-shelf ?other-slot)
 	                       (is-filled FALSE) (is-accessible TRUE))
 	=>
+	(bind ?relocate-options (find-all-facts
+	  ((?free machine-ss-shelf-slot))
+	  (and (eq ?free:name ?n)
+	       (eq ?free:is-filled FALSE)
+	       (eq ?free:is-accessible TRUE))))
+	(bind ?relocate-options (randomize$ ?relocate-options))
+	(bind ?o (fact-slot-value (nth$ 1 ?relocate-options) position))
+	(bind ?o-shelf (nth$ 1 ?o))
+	(bind ?o-slot (nth$ 2 ?o))
 	(printout t ?n " position (" ?shelf "," ?slot ") in not accessible, relocate "
-	            "(" ?shelf "," ?front-slot ") to (" ?other-shelf "," ?other-slot ")" crlf)
+	            "(" ?shelf "," ?front-slot") to (" ?o-shelf "," ?o-slot ")" crlf)
 	(modify ?m (task RELOCATE) (proc-start ?gt) (state PROCESSING) (mps-busy WAIT))
-	(modify ?s (move-to ?other-shelf ?other-slot))
-	(mps-ss-relocate (str-cat ?n) ?shelf ?front-slot ?other-shelf ?other-slot)
+	(modify ?s (move-to ?o-shelf ?o-slot))
+	(mps-ss-relocate (str-cat ?n) ?shelf ?front-slot ?o-shelf ?o-slot)
 )
 
 (defrule production-ss-store-move-to-mid
@@ -595,6 +604,7 @@
 	       (ss-slot-blocked-by (nth$ 2 ?free:position) (nth 2 ?front:position)))))
 	(if (> (length$ ?relocate-options) 0)
 	 then
+		(bind ?relocate-options (randomize-tuple-list$ ?relocate-options ?*SS-SHELF-DEPTH*))
 		(bind ?free-pos (fact-slot-value (nth$ 1 ?relocate-options) position))
 		(bind ?front (nth$ 2 ?relocate-options))
 		(bind ?front-pos (fact-slot-value ?front position))

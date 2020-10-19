@@ -15,6 +15,26 @@
   (insert$ ?list (+ (length$ ?list) 1) ?items)
 )
 
+; Randomize a list of n-tuples such that each tuple stays connected
+; @param ?list: List of n-tuples (hence its length is divisible by n)
+; @param ?tuple-length: Length n of each tuple
+; @return: random order of the n-tuples, e.g., (1 2 3 4) 2 -> (3 4 1 2) or (1 2 3 4)
+(deffunction randomize-tuple-list$ (?list ?tuple-length)
+	(bind ?l (/ (length$ ?list) ?tuple-length))
+	(loop-for-count 200 do
+		(bind ?a (random 1 ?l))
+		(bind ?b (random 1 ?l))
+		(loop-for-count (?partial 0 (- ?tuple-length 1)) do
+			(bind ?a-curr (- (* ?a ?tuple-length) ?partial))
+			(bind ?b-curr (- (* ?b ?tuple-length) ?partial))
+			(bind ?tmp (nth$ ?a-curr ?list))
+			(bind ?list (replace$ ?list ?a-curr ?a-curr (nth$ ?b-curr ?list)))
+			(bind ?list (replace$ ?list ?b-curr ?b-curr ?tmp))
+		)
+	)
+	(return ?list)
+)
+
 (deffunction randomize$ (?list)
   (bind ?l (length$ ?list))
   (loop-for-count 200 do
