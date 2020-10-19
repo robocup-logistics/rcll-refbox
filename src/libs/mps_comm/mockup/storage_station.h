@@ -32,7 +32,10 @@ public:
 	MockupStorageStation(const std::string &name);
 	void retrieve(unsigned int shelf, unsigned int slot) override;
 	void store(unsigned int shelf, unsigned int slot) override;
-	void relocate(unsigned int shelf, unsigned int slot, unsigned int target_shelf, unsigned int target_slot) override;
+	void relocate(unsigned int shelf,
+	              unsigned int slot,
+	              unsigned int target_shelf,
+	              unsigned int target_slot) override;
 	void identify() override{};
 
 private:

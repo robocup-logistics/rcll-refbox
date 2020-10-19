@@ -31,22 +31,30 @@ MockupStorageStation::MockupStorageStation(const std::string &name) : Machine(na
 {
 }
 
-void MockupStorageStation::retrieve(unsigned int shelf, unsigned int slot)
+void
+MockupStorageStation::retrieve(unsigned int shelf, unsigned int slot)
 {
 	storage_op();
 }
 
-void MockupStorageStation::store(unsigned int shelf, unsigned int slot)
+void
+MockupStorageStation::store(unsigned int shelf, unsigned int slot)
 {
 	storage_op();
 }
 
-void MockupStorageStation::relocate(unsigned int shelf, unsigned int slot, unsigned int target_shelf, unsigned int target_slot)
+void
+MockupStorageStation::relocate(unsigned int shelf,
+                               unsigned int slot,
+                               unsigned int target_shelf,
+                               unsigned int target_slot)
 {
 	storage_op();
 }
 
-void MockupStorageStation::storage_op() {
+void
+MockupStorageStation::storage_op()
+{
 	callback_busy_(true);
 	std::lock_guard<std::mutex> lg(queue_mutex_);
 	queue_.push(std::make_tuple([this] { callback_busy_(false); },

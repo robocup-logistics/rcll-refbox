@@ -43,13 +43,22 @@ OpcUaStorageStation::OpcUaStorageStation(const std::string &name,
 {
 }
 
-void OpcUaStorageStation::retrieve(unsigned int shelf, unsigned int slot) {
+void
+OpcUaStorageStation::retrieve(unsigned int shelf, unsigned int slot)
+{
 }
 
-void OpcUaStorageStation::store(unsigned int shelf, unsigned int slot) {
+void
+OpcUaStorageStation::store(unsigned int shelf, unsigned int slot)
+{
 }
 
-void OpcUaStorageStation::relocate(unsigned int shelf, unsigned int slot, unsigned int target_shelf, unsigned int target_slot) {
+void
+OpcUaStorageStation::relocate(unsigned int shelf,
+                              unsigned int slot,
+                              unsigned int target_shelf,
+                              unsigned int target_slot)
+{
 }
 
 } // namespace mps_comm
