@@ -124,18 +124,25 @@
 								(bind ?shelf (integer (pb-field-value ?prepmsg "shelf")))
 								(bind ?slot (integer (pb-field-value ?prepmsg "slot")))
 								(bind ?filled-status FALSE)
+								(bind ?description-provided (pb-has-field ?prepmsg "wp_description"))
 								(do-for-fact  ((?ss-f machine-ss-shelf-slot))
 								                      (and (eq ?ss-f:position (create$ ?shelf ?slot))
 								                           (eq ?ss-f:name ?m:name))
 								                      (bind ?filled-status ?ss-f))
 								(if ?filled-status
 								 then
+									(bind ?description (fact-slot-value ?filled-status description))
+									(bind ?new-description ?description)
+									(if ?description-provided
+										 then
+											(bind ?new-description (pb-field-value ?prepmsg "wp_description"))
+									)
 									(if (eq ?operation RETRIEVE)
 									 then
 										(if (fact-slot-value ?filled-status is-filled)
 										 then
-											(printout t "Prepared " ?mname crlf)
-											(modify ?m (state PREPARED) (ss-operation ?operation) (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt))
+											(printout t "Prepared " ?mname " to RETRIEVE (" ?shelf "," ?slot ")" crlf)
+											(modify ?m (state PREPARED) (ss-operation ?operation) (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt) (ss-wp-description ?description))
 										 else
 											(modify ?m (state BROKEN)
 											           (broken-reason (str-cat "Prepare received for " ?mname ", but station is empty (" ?shelf ", " ?slot ")")))
@@ -147,8 +154,20 @@
 											 then
 												(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation for occupied shelf slot (" ?shelf ", " ?slot ")")))
 											 else
-												(modify ?m (state PREPARED) (ss-operation ?operation) (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt))
-									)))
+												(printout t "Prepared " ?mname " to STORE (" ?shelf "," ?slot ")" crlf)
+												(modify ?m (state PREPARED) (ss-operation ?operation) (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt) (ss-wp-description ?new-description))
+											)
+										)
+										(if (eq ?operation CHANGE_INFO)
+										 then
+											(if ?description-provided
+											 then
+											 (modify ?filled-status (description ?new-description))
+											 else
+											(printout t "Change Description for " ?mname " at (" ?shelf "," ?slot ") but no description provided, ignoring.")
+											)
+										)
+									)
 								 else
 									(modify ?m (state BROKEN)
 									           (broken-reason (str-cat "Prepare received for " ?mname " with invalid shelf or slot (" ?shelf " [0, " ?*SS-MAX-SHELF*"], " ?slot " [0, " ?*SS-MAX-SLOT*"])" )))
@@ -634,6 +653,7 @@
 	               (ss-shelf-slot ?shelf ?slot) (task RELOCATE) (mps-busy FALSE))
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?curr-shelf ?curr-slot)
 	                             (move-to ?target-shelf ?target-slot)
+	                             (description ?description)
 	                             (is-accessible TRUE) (is-filled TRUE))
 	?t <- (machine-ss-shelf-slot (name ?n) (position ?target-shelf ?target-slot)
 	                             (is-filled FALSE)
@@ -641,8 +661,9 @@
 	                             (last-payed ?lp))
 	=>
 	(modify ?m (task nil) (wait-for-product-since ?gt))
-	(modify ?s (is-filled FALSE) (move-to (create$ ) ))
-	(modify ?t (is-filled TRUE) (num-payments ?np) (last-payed ?lp))
+	(modify ?s (is-filled FALSE) (move-to (create$ ) ) (description ""))
+	(modify ?t (is-filled TRUE) (num-payments ?np) (last-payed ?lp)
+	           (description ?description))
 	(ss-update-accessible-slots ?n ?curr-shelf ?curr-slot TRUE)
 	(ss-update-accessible-slots ?n ?target-shelf ?target-slot FALSE)
 	(ss-assert-points-with-threshold
@@ -689,22 +710,22 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 	(ss-update-accessible-slots ?n ?shelf ?slot TRUE)
 	(ss-assert-points-with-threshold
-	  (str-cat "SS: Payment for retrieving ( " ?shelf"," ?slot ") from " ?n)
+	  (str-cat "Payment for retrieving ( " ?shelf"," ?slot ") from " ?n)
 	  ?*PRODUCTION-POINTS-SS-RETRIEVAL*
 	  ?gt ?team)
-	(modify ?s (is-filled FALSE))
+	(modify ?s (is-filled FALSE)(description ""))
 )
 
 (defrule production-ss-store-completed
 	"The SS processed the workpiece. "
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (task STORE) (mps-busy FALSE)
-	               (ss-shelf-slot ?shelf ?slot) (team ?team))
+	               (ss-shelf-slot ?shelf ?slot) (team ?team) (ss-wp-description ?description))
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled FALSE))
 	=>
 	(printout t "Machine " ?n " finished storage at (" ?shelf ", " ?slot ")" crlf)
 	(modify ?m (state PROCESSED) (proc-start ?gt))
-	(modify ?s (is-filled TRUE) (num-payments 0)
+	(modify ?s (is-filled TRUE) (num-payments 0) (description ?description)
 	           (last-payed (+ ?gt ?*PRODUCTION-POINTS-SS-STORAGE-GRACE-PERIOD*)))
 	(ss-update-accessible-slots ?n ?shelf ?slot FALSE)
 	(ss-assert-points-with-threshold

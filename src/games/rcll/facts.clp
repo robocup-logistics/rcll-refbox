@@ -77,6 +77,7 @@
 
   (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
   (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
+  (slot ss-wp-description (type STRING))
 
   (slot rs-ring-color (type SYMBOL)
 	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
@@ -100,6 +101,7 @@
   (slot is-accessible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (multislot move-to (type INTEGER) (cardinality 0 2))
   (slot num-payments (type INTEGER) (default 0))
+  (slot description (type STRING) (default ""))
   (slot last-payed (type FLOAT))
 )
 
@@ -383,6 +385,7 @@
   (signal (type machine-report-info) (time (create$ 0 0)) (seq 1))
   (signal (type version-info) (time (create$ 0 0)) (seq 1))
   (signal (type workpiece-info) (time (create$ 0 0)) (seq 1))
+  (signal (type storage-info) (time (create$ 0 0)) (seq 1))
   (signal (type setup-light-toggle) (time (create$ 0 0)) (seq 1))
   (setup-light-toggle CS2)
   (whac-a-mole-light NONE)
