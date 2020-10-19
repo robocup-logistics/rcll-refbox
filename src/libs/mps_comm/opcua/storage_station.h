@@ -40,6 +40,7 @@ public:
 	                    ConnectionMode     mode     = PLC);
 	void retrieve(unsigned int shelf, unsigned int slot) override;
 	void store(unsigned int shelf, unsigned int slot) override;
+	void relocate(unsigned int shelf, unsigned int slot, unsigned int target_shelf, unsigned int target_slot) override;
 };
 
 } // namespace mps_comm

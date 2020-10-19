@@ -29,6 +29,7 @@ class StorageStation : public virtual Machine
 public:
 	virtual void retrieve(unsigned int shelf, unsigned int slot) = 0;
 	virtual void store(unsigned int shelf, unsigned int slot)    = 0;
+	virtual void relocate(unsigned int shelf, unsigned int slot, unsigned int target_shelf, unsigned int target_slot)    = 0;
 };
 } // namespace mps_comm
 } // namespace llsfrb
