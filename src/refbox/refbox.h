@@ -159,6 +159,11 @@ private: // methods
 	void clips_mps_ds_process(std::string machine, int slide);
 	void clips_mps_ss_retrieve(std::string machine, unsigned int shelf, unsigned int slot);
 	void clips_mps_ss_store(std::string machine, unsigned int shelf, unsigned int slot);
+	void clips_mps_ss_relocate(std::string  machine,
+	                           unsigned int shelf,
+	                           unsigned int slot,
+	                           unsigned int target_shelf,
+	                           unsigned int target_slot);
 	void clips_mps_set_light(std::string machine, std::string light, std::string state);
 	void clips_mps_set_lights(std::string machine,
 	                          std::string red_state,
