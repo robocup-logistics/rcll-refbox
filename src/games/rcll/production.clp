@@ -625,11 +625,12 @@
 	                             (is-accessible TRUE) (is-filled TRUE))
 	?t <- (machine-ss-shelf-slot (name ?n) (position ?target-shelf ?target-slot)
 	                             (is-filled FALSE)
+	                             (num-payments ?np)
 	                             (last-payed ?lp))
 	=>
 	(modify ?m (task nil))
 	(modify ?s (is-filled FALSE) (move-to (create$ ) ))
-	(modify ?t (is-filled TRUE) (last-payed ?lp))
+	(modify ?t (is-filled TRUE) (num-payments ?np) (last-payed ?lp))
 	(ss-update-accessible-slots ?n ?curr-shelf ?curr-slot TRUE)
 	(ss-update-accessible-slots ?n ?target-shelf ?target-slot FALSE)
 	(ss-assert-points-with-threshold
@@ -691,7 +692,8 @@
 	=>
 	(printout t "Machine " ?n " finished storage at (" ?shelf ", " ?slot ")" crlf)
 	(modify ?m (state PROCESSED) (proc-start ?gt))
-	(modify ?s (is-filled TRUE) (last-payed (+ ?gt ?*PRODUCTION-POINTS-SS-STORAGE-GRACE-PERIOD*)))
+	(modify ?s (is-filled TRUE) (num-payments 0)
+	           (last-payed (+ ?gt ?*PRODUCTION-POINTS-SS-STORAGE-GRACE-PERIOD*)))
 	(ss-update-accessible-slots ?n ?shelf ?slot FALSE)
 	(ss-assert-points-with-threshold
 	  (str-cat "Payment for storing ("?shelf "," ?slot") at " ?n)
@@ -827,10 +829,12 @@
 ; Each occupied shelf slot of a SS causes periodic costs.
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?s <- (machine-ss-shelf-slot (name ?n) (is-filled TRUE) (position ?shelf ?slot)
+	  (num-payments ?np&:(< ?np ?*PRODUCTION-POINTS-SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
 	  (last-payed ?lp&:(> (- ?gt ?lp) ?*PRODUCTION-POINTS-SS-PAYMENT-INTERVAL*)))
 	(machine (name ?n) (team ?team))
 	=>
-	(modify ?s (last-payed (+ ?lp ?*PRODUCTION-POINTS-SS-PAYMENT-INTERVAL*)))
+	(modify ?s (num-payments (+ ?np 1))
+	           (last-payed (+ ?lp ?*PRODUCTION-POINTS-SS-PAYMENT-INTERVAL*)))
 	(ss-assert-points-with-threshold
 	  (str-cat "Payment for keeping product at " ?n " (" ?shelf "," ?slot ")")
 	  ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME*

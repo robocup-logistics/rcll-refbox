@@ -99,6 +99,7 @@
   (slot is-filled (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (slot is-accessible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (multislot move-to (type INTEGER) (cardinality 0 2))
+  (slot num-payments (type INTEGER) (default 0))
   (slot last-payed (type FLOAT))
 )
 
