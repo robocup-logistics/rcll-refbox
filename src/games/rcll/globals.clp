@@ -56,6 +56,7 @@
   ?*PROCESS-TIME-SS* = 5
   ?*SS-MAX-SHELF* = 5 ; min value is 0
   ?*SS-MAX-SLOT* = 7 ; min value is 0
+  ?*SS-SHELF-DEPTH* = 2
 
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1

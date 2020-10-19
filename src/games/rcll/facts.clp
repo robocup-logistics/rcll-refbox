@@ -93,9 +93,13 @@
   (slot num-bases (type INTEGER) (default 0))
 )
 
-(deftemplate machine-ss-filled
+(deftemplate machine-ss-shelf-slot
   (slot name (type SYMBOL))
-  (multislot shelf-slot (type INTEGER) (cardinality 2 2)) ; first number is the shelf, second is the slot
+  (multislot position (type INTEGER) (cardinality 2 2)) ; first number is the shelf, second is the slot
+  (slot is-filled (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot is-accessible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot move-to (type INTEGER) (cardinality 0 2))
+  (slot last-payed (type FLOAT))
 )
 
 (deftemplate machine-light-code

@@ -162,3 +162,24 @@
   (bind ?rf (round ?f))
   (return (if (> (- ?rf ?f) 0) then (- ?rf 1) else ?rf))
 )
+
+; Checks if a SS shelf slot is located in the back of another slot.
+; @param ?back-slot some slot number
+; @param ?front-slot some slot number
+; @return TRUE iff ?back-slot is located in the back of ?front-slot
+(deffunction ss-slot-blocked-by (?back-slot ?front-slot)
+	(return (and (eq ?front-slot (- ?back-slot 1)) (eq 0 (mod ?front-slot 2))))
+)
+
+; Update shelf-slot accessibility status
+; @param ?machine: SS which has stored/retrieved/re-positioned a product
+; @param ?shelf: shelf number where the change happened
+; @param ?slot: slot where the storage status changed
+; @param FALSE iff the shelf-slot is now occupied
+(deffunction ss-update-accessible-slots (?machine ?shelf ?slot ?is-free)
+	(do-for-fact ((?s machine-ss-shelf-slot))
+	             (and (eq ?s:name ?machine) (eq (nth$ 1 ?s:position) ?shelf)
+	                  (ss-slot-blocked-by (nth$ 2 ?s:position) ?slot))
+		(modify ?s (is-accessible ?is-free))
+	)
+)
