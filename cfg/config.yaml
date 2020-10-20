@@ -120,6 +120,7 @@ llsfrb:
                     net-send-beacon, net-send-GameState, net-send-OrderInfo,
                     net-send-MachineInfo, net-send-RobotInfo,
                     exploration-send-MachineReportInfo,
+                    net-send-StorageInfo,
                     net-broadcast-MachineInfo, net-send-VersionInfo]
 
   comm:
