@@ -42,10 +42,9 @@
 #include <protobuf_comm/peer.h>
 #include <utils/system/argparser.h>
 
-#include <chrono>
-
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
+#include <chrono>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
@@ -166,6 +165,9 @@ handle_message(boost::asio::ip::udp::endpoint &           sender,
 			llsf_msgs::PrepareMachine prep;
 			prep.set_team_color(team_color_);
 			prep.set_machine(machine_name_);
+			auto duration = std::chrono::system_clock::now().time_since_epoch();
+			auto millis   = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+			prep.set_sent_at(millis);
 			if (machine_type_ == "BS") {
 				llsf_msgs::PrepareInstructionBS *prep_bs = prep.mutable_instruction_bs();
 				prep_bs->set_side(bs_side_);
@@ -255,7 +257,7 @@ main(int argc, char **argv)
 			exit(-2);
 		}
 		ss_shelf_ = argp.parse_item_int(3);
-		ss_slot_ = argp.parse_item_int(4);
+		ss_slot_  = argp.parse_item_int(4);
 	} else if (machine_type_ == "RS") {
 		if (!llsf_msgs::RingColor_Parse(argp.items()[2], &rs_ring_color_)) {
 			printf("Invalid ring color\n");
