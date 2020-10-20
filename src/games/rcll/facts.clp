@@ -95,14 +95,14 @@
 )
 
 (deftemplate machine-ss-shelf-slot
-  (slot name (type SYMBOL))
+  (slot name (type SYMBOL) (allowed-values UNSET C-SS M-SS)(default UNSET))
   (multislot position (type INTEGER) (cardinality 2 2)) ; first number is the shelf, second is the slot
   (slot is-filled (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (slot is-accessible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
-  (multislot move-to (type INTEGER) (cardinality 0 2))
+  (multislot move-to (type INTEGER) (cardinality 0 2) (default (create$ )))
   (slot num-payments (type INTEGER) (default 0))
   (slot description (type STRING) (default ""))
-  (slot last-payed (type FLOAT))
+  (slot last-payed (type FLOAT) (default 0.0))
 )
 
 (deftemplate machine-light-code
@@ -432,6 +432,16 @@
   ;(machine-light-code (id 8) (code GREEN-BLINK))
   ;(machine-light-code (id 9) (code YELLOW-BLINK))
   ;(machine-light-code (id 10) (code RED-BLINK))
+)
+
+(deffacts storage-slots
+  (init-storage-slots)
+  (machine-ss-shelf-slot (position 0 0) (description "BASE_RED CAP_GREY") (is-filled TRUE))
+  (machine-ss-shelf-slot (position 1 0) (description "BASE_SILVER CAP_GREY") (is-filled TRUE))
+  (machine-ss-shelf-slot (position 2 0) (description "BASE_BLACK CAP_GREY") (is-filled TRUE))
+  (machine-ss-shelf-slot (position 3 0) (description "BASE_RED CAP_BLACK") (is-filled TRUE))
+  (machine-ss-shelf-slot (position 4 0) (description "BASE_SILVER CAP_BLACK") (is-filled TRUE))
+  (machine-ss-shelf-slot (position 5 0) (description "BASE_BLACK CAP_BLACK") (is-filled TRUE))
 )
 
 ; check workpiece-assign-order rule in workpieces.clp for specific
