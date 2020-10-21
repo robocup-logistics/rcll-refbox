@@ -49,7 +49,7 @@ message ShelfSlotInfo {
     COMP_ID  = 2000;
     MSG_TYPE = 121;
   }
-	// shelf position
+	// shelf position (see MachineInstructons.proto)
   required uint32 shelf = 1;
 	// slot position
   required uint32 slot = 2;
