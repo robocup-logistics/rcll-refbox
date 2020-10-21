@@ -15,11 +15,12 @@
   (insert$ ?list (+ (length$ ?list) 1) ?items)
 )
 
-; Randomize a list of n-tuples such that each tuple stays connected
-; @param ?list: List of n-tuples (hence its length is divisible by n)
-; @param ?tuple-length: Length n of each tuple
-; @return: random order of the n-tuples, e.g., (1 2 3 4) 2 -> (3 4 1 2) or (1 2 3 4)
 (deffunction randomize-tuple-list$ (?list ?tuple-length)
+" Randomize a list of n-tuples such that each tuple stays connected
+  @param ?list: List of n-tuples (hence its length is divisible by n)
+  @param ?tuple-length: Length n of each tuple
+  @return: random order of the n-tuples, e.g., (1 2 3 4) 2 -> (3 4 1 2) or (1 2 3 4)
+"
 	(bind ?l (/ (length$ ?list) ?tuple-length))
 	(loop-for-count 200 do
 		(bind ?a (random 1 ?l))
@@ -183,17 +184,18 @@
   (return (if (> (- ?rf ?f) 0) then (- ?rf 1) else ?rf))
 )
 
-; Assert points without crossing the threshold
-; @param ?upper-bounded: Set to FALSE iff the threshold is a lower bound
-; @param ?prefix: Prefix of the reason which determines whether a point score
-;                 contributes to the threshold
-; @param ?threshold: Threshold that is not crossed
-; @param ?msg: reason for points
-; @param ?points: number of points to add
-; @param ?gt: Current game time
-; @param ?team: Team scoring the points
-; @param ?phase: Game phase
 (deffunction assert-points-with-threshold (?upper-bounded ?prefix ?threshold ?msg ?points ?gt ?team ?phase)
+" Assert points without crossing the threshold
+  @param ?upper-bounded: Set to FALSE iff the threshold is a lower bound
+  @param ?prefix: Prefix of the reason which determines whether a point score
+                  contributes to the threshold
+  @param ?threshold: Threshold that is not crossed
+  @param ?msg: reason for points
+  @param ?points: number of points to add
+  @param ?gt: Current game time
+  @param ?team: Team scoring the points
+  @param ?phase: Game phase
+"
 	(bind ?resulting-points ?points)
 	(bind ?total-points 0)
 	(bind ?print-max-points-reached FALSE)
@@ -227,12 +229,13 @@
 	)
 )
 
-; Assert point deductions for using the SS without crossing the max threshold
-; @param ?msg reason for points
-; @param ?points number of points to add (negative for deductions)
-; @param ?gt Current game time
-; @param ?team Team scoring the points
 (deffunction ss-assert-points-with-threshold (?msg ?points ?gt ?team)
+" Assert point deductions for using the SS without crossing the max threshold
+  @param ?msg reason for points
+  @param ?points number of points to add (negative for deductions)
+  @param ?gt Current game time
+  @param ?team Team scoring the points
+"
 	(assert-points-with-threshold FALSE
 	                              "SS"
 	                              ?*PRODUCTION-POINTS-SS-MAX-TOTAL-POINTS*
@@ -243,20 +246,22 @@
 	                              PRODUCTION)
 )
 
-; Checks if a SS shelf slot is located in the back of another slot.
-; @param ?back-slot some slot number
-; @param ?front-slot some slot number
-; @return TRUE iff ?back-slot is located in the back of ?front-slot
 (deffunction ss-slot-blocked-by (?back-slot ?front-slot)
+" Checks if a SS shelf slot is located in the back of another slot.
+  @param ?back-slot some slot number
+  @param ?front-slot some slot number
+  @return TRUE iff ?back-slot is located in the back of ?front-slot
+"
 	(return (and (eq ?front-slot (- ?back-slot 1)) (eq 0 (mod ?front-slot 2))))
 )
 
-; Update shelf-slot accessibility status
-; @param ?machine: SS which has stored/retrieved/re-positioned a product
-; @param ?shelf: shelf number where the change happened
-; @param ?slot: slot where the storage status changed
-; @param FALSE iff the shelf-slot is now occupied
 (deffunction ss-update-accessible-slots (?machine ?shelf ?slot ?is-free)
+" Update shelf-slot accessibility status
+  @param ?machine: SS which has stored/retrieved/re-positioned a product
+  @param ?shelf: shelf number where the change happened
+  @param ?slot: slot where the storage status changed
+  @param FALSE iff the shelf-slot is now occupied
+"
 	(do-for-fact ((?s machine-ss-shelf-slot))
 	             (and (eq ?s:name ?machine) (eq (nth$ 1 ?s:position) ?shelf)
 	                  (ss-slot-blocked-by (nth$ 2 ?s:position) ?slot))
@@ -264,12 +269,13 @@
 	)
 )
 
-; Comparison for function sort to order machine-ss-shelf-slot facts in
-; ascending order based on their position
-; @param ?f-1: fact adress or index of machine-ss-shelf-slot fact
-; @param ?f-2: fact adress or index of machine-ss-shelf-slot fact
-; @return: ?f-1 > ?f-2 where ">" compares shelf and slot positions
 (deffunction ss-positions-compare (?f-1 ?f-2)
+" Comparison for function sort to order machine-ss-shelf-slot facts in
+  ascending order based on their position
+  @param ?f-1: fact adress or index of machine-ss-shelf-slot fact
+  @param ?f-2: fact adress or index of machine-ss-shelf-slot fact
+  @return: ?f-1 > ?f-2 where ">" compares shelf and slot positions
+"
 	(bind ?pos1 (fact-slot-value ?f-1 position))
 	(bind ?pos2 (fact-slot-value ?f-2 position))
 	(return (or (> (nth$ 1 ?pos1) (nth$ 1 ?pos2))
@@ -303,9 +309,10 @@
 	)
 )
 
-; Print all stored products of a storage station
-; @param ?mps-ss: name of storage station to print information about
 (deffunction ss-print-storage (?mps-ss)
+" Print all stored products of a storage station
+  @param ?mps-ss: name of storage station to print information about
+"
 	(printout t ?mps-ss " contains:" crlf)
 	(bind ?filled-positions (find-all-facts ((?ssf machine-ss-shelf-slot))
 		                (and ?ssf:is-filled (eq ?ssf:name ?mps-ss))))
