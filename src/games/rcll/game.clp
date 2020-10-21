@@ -186,6 +186,14 @@
 	(bind ?competitive-order-id (nth$ (random 1 (length$ ?potential-competitive-orders)) ?potential-competitive-orders))
 	(do-for-fact ((?order order)) (eq ?order:id ?competitive-order-id)
 	  (modify ?order (competitive TRUE)))
+
+	; Randomize storage station initial shelf positions by shuffling each shelf
+	(ss-shuffle-shelves)
+	(ss-print-storage C-SS)
+	(ss-print-storage M-SS)
+	(printout t "Top  5        1 3 5 7" crlf)
+	(printout t " |   :        0 2 4 6" crlf)
+	(printout t "Bot  0   Input ------> Output" crlf)
 )
 
 (defrule game-print

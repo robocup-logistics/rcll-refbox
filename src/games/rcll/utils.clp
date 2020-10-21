@@ -183,27 +183,6 @@
   (return (if (> (- ?rf ?f) 0) then (- ?rf 1) else ?rf))
 )
 
-; Checks if a SS shelf slot is located in the back of another slot.
-; @param ?back-slot some slot number
-; @param ?front-slot some slot number
-; @return TRUE iff ?back-slot is located in the back of ?front-slot
-(deffunction ss-slot-blocked-by (?back-slot ?front-slot)
-	(return (and (eq ?front-slot (- ?back-slot 1)) (eq 0 (mod ?front-slot 2))))
-)
-
-; Update shelf-slot accessibility status
-; @param ?machine: SS which has stored/retrieved/re-positioned a product
-; @param ?shelf: shelf number where the change happened
-; @param ?slot: slot where the storage status changed
-; @param FALSE iff the shelf-slot is now occupied
-(deffunction ss-update-accessible-slots (?machine ?shelf ?slot ?is-free)
-	(do-for-fact ((?s machine-ss-shelf-slot))
-	             (and (eq ?s:name ?machine) (eq (nth$ 1 ?s:position) ?shelf)
-	                  (ss-slot-blocked-by (nth$ 2 ?s:position) ?slot))
-		(modify ?s (is-accessible ?is-free))
-	)
-)
-
 ; Assert points without crossing the threshold
 ; @param ?upper-bounded: Set to FALSE iff the threshold is a lower bound
 ; @param ?prefix: Prefix of the reason which determines whether a point score
@@ -262,4 +241,76 @@
 	                              ?gt
 	                              ?team
 	                              PRODUCTION)
+)
+
+; Checks if a SS shelf slot is located in the back of another slot.
+; @param ?back-slot some slot number
+; @param ?front-slot some slot number
+; @return TRUE iff ?back-slot is located in the back of ?front-slot
+(deffunction ss-slot-blocked-by (?back-slot ?front-slot)
+	(return (and (eq ?front-slot (- ?back-slot 1)) (eq 0 (mod ?front-slot 2))))
+)
+
+; Update shelf-slot accessibility status
+; @param ?machine: SS which has stored/retrieved/re-positioned a product
+; @param ?shelf: shelf number where the change happened
+; @param ?slot: slot where the storage status changed
+; @param FALSE iff the shelf-slot is now occupied
+(deffunction ss-update-accessible-slots (?machine ?shelf ?slot ?is-free)
+	(do-for-fact ((?s machine-ss-shelf-slot))
+	             (and (eq ?s:name ?machine) (eq (nth$ 1 ?s:position) ?shelf)
+	                  (ss-slot-blocked-by (nth$ 2 ?s:position) ?slot))
+		(modify ?s (is-accessible ?is-free))
+	)
+)
+
+; Comparison for function sort to order machine-ss-shelf-slot facts in
+; ascending order based on their position
+; @param ?f-1: fact adress or index of machine-ss-shelf-slot fact
+; @param ?f-2: fact adress or index of machine-ss-shelf-slot fact
+; @return: ?f-1 > ?f-2 where ">" compares shelf and slot positions
+(deffunction ss-positions-compare (?f-1 ?f-2)
+	(bind ?pos1 (fact-slot-value ?f-1 position))
+	(bind ?pos2 (fact-slot-value ?f-2 position))
+	(return (or (> (nth$ 1 ?pos1) (nth$ 1 ?pos2))
+	            (and (= (nth$ 1 ?pos1) (nth$ 1 ?pos2))
+	                 (> (nth$ 2 ?pos1) (nth$ 2 ?pos2)))))
+)
+
+; Randomize the positions of each product for each shelf
+(deffunction ss-shuffle-shelves ()
+	(loop-for-count (?shelf 0 ?*SS-MAX-SHELF*)
+		(bind ?positions (create$))
+		(do-for-all-facts ((?ssf machine-ss-shelf-slot))
+			                (and (eq ?ssf:name C-SS) (eq (nth$ 1 ?ssf:position) ?shelf))
+			                (bind ?positions (append$ ?positions ?ssf:position))
+		)
+		(bind ?positions (randomize-tuple-list$ ?positions 2))
+		(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+			(bind ?i 1)
+			(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot))
+				                        (and (eq ?ss:name ?ssf:name)
+				                             (eq (nth$ 1 ?ssf:position) ?shelf))
+				(modify ?ssf (position (subseq$ ?positions ?i (+ ?i 1))))
+				(bind ?i (+ ?i 2))
+			)
+		)
+	)
+	(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+		(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot)) TRUE
+			(ss-update-accessible-slots ?ss:name (nth$ 1 ?ssf:position) (nth$ 2 ?ssf:position) (not ?ssf:is-filled))
+		)
+	)
+)
+
+; Print all stored products of a storage station
+; @param ?mps-ss: name of storage station to print information about
+(deffunction ss-print-storage (?mps-ss)
+	(printout t ?mps-ss " contains:" crlf)
+	(bind ?filled-positions (find-all-facts ((?ssf machine-ss-shelf-slot))
+		                (and ?ssf:is-filled (eq ?ssf:name ?mps-ss))))
+	(bind ?filled-positions (sort ss-positions-compare ?filled-positions))
+	(foreach ?f ?filled-positions
+		(printout t " - " (fact-slot-value ?f position) " stores " (fact-slot-value ?f description) crlf)
+	)
 )
