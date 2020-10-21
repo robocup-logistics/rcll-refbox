@@ -70,7 +70,7 @@
 
 (deffunction want-mirrored-rotation (?mtype ?zone)
 "According to the RCLL2017 rulebook, this is when a machine is mirrored"
-  (bind ?zn (str-cat ?zone)) 
+  (bind ?zn (str-cat ?zone))
   (bind ?x (eval (sub-string 4 4 ?zn)))
   (bind ?y (eval (sub-string 5 5 ?zn)))
 
@@ -95,12 +95,12 @@
      then
       (do-for-fact ((?mo mirror-orientation)) (eq ?mo:cyan ?ori)
         (bind ?m-ori ?mo:magenta)
-      )   
+      )
      else
       (do-for-fact ((?mo mirror-orientation)) (eq ?mo:magenta ?ori)
         (bind ?m-ori ?mo:cyan)
-      )   
-    )   
+      )
+    )
     (return ?m-ori)
    else
     (bind ?x (eval (sub-string 4 4 ?zn)))
@@ -108,7 +108,7 @@
 
     (if (eq ?y 8) then
       (return 180)
-    )   
+    )
     (if (or (eq ?y 1) (eq ?y 2)) then
       (return 0)
     )
@@ -124,7 +124,7 @@
 )
 
 (deffunction pick-random$ (?list)
-  (return (nth$ (random 1 (length$ ?list)) ?list)) 
+  (return (nth$ (random 1 (length$ ?list)) ?list))
 )
 
 (deffunction remove$ (?list ?item)

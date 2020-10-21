@@ -201,7 +201,7 @@
   (bson-append-array ?doc "timestamp" ?time)
   (bson-append-time  ?doc "time" ?time)
   (bind ?m-arr (bson-array-start))
-	
+
 	(do-for-all-facts ((?m machine)) TRUE
     (bind ?m-doc (bson-create))
 		(bson-append ?m-doc "name" ?m:name)
@@ -277,7 +277,7 @@
 	  (bson-builder-destroy ?sort)
    else
 	  (printout error "Empty result in mongoDB from game_report" crlf)
-    
+
   )
   (mongodb-cursor-destroy ?t-cursor)
 	(bson-builder-destroy ?t-query)

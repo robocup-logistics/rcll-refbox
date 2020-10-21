@@ -241,7 +241,7 @@
 	(bind ?lights (replace$ ?lights 1 1 (sym-cat RED- (nth$ 1 ?lights))))
 	(bind ?lights (replace$ ?lights 2 2 (sym-cat YELLOW- (nth$ 2 ?lights))))
 	(bind ?lights (replace$ ?lights 3 3 (sym-cat GREEN- (nth$ 3 ?lights))))
-	
+
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
 		(modify ?m (desired-lights ?lights))
   )

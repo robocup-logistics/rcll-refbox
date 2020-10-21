@@ -247,7 +247,7 @@
     prepared base-color."
     (gamestate (phase PRODUCTION))
     (workpiece-tracking (enabled TRUE))
-    ?wf <- (workpiece (id ?id) 
+    ?wf <- (workpiece (id ?id)
                       (state AVAILABLE)
                       (at-machine ?m-name)
                       (base-color ?base-color))

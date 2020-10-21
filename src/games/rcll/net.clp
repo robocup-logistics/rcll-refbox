@@ -308,7 +308,7 @@
 (defrule net-proc-RandomizeField
 	?sf <- (gamestate (phase PRE_GAME|SETUP))
   ?cmd <- (net-RandomizeField)
-  => 
+  =>
   (retract ?cmd)
 	(assert (game-reset))
 	(delayed-do-for-all-facts ((?m machine)) TRUE
@@ -364,7 +364,7 @@
 			(pb-set-field ?w "cap_color" (str-cat ?wp:cap-color)))
 
 		(pb-add-list ?wi "workpieces" ?w) ; destroys ?w
-  )	
+  )
 
   (return ?wi)
 )

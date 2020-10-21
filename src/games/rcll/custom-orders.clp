@@ -55,19 +55,19 @@
   )
 
   ;-- compose and insert order fact
-  (assert (order (id ?custom-order-id) 
+  (assert (order (id ?custom-order-id)
                  (complexity ?complexity)
                  (competitive FALSE)
                  (base-color ?base-color)
                  (ring-colors ?ring-colors)
                  (cap-color ?cap-color)
-                 (quantity-requested ?quantity) 
+                 (quantity-requested ?quantity)
                  (quantity-delivered 0 0)
-                 (start-range 0 0) 
+                 (start-range 0 0)
                  (duration-range 0 0)
                  (delivery-period (+ ?order-time 5.0) 1020)
                  (delivery-gate ?gate)
-                 (active FALSE) ;-- TODO: determine when this gets activated 
+                 (active FALSE) ;-- TODO: determine when this gets activated
                  (activate-at (+ ?order-time 5.0))
                  (activation-range 0 0)
                  (allow-overtime FALSE)
@@ -79,9 +79,9 @@
 
 (deffunction copy-order
   (?orig)
-  
+
   (bind ?copy (pb-create "llsf_msgs.Order"))
-  
+
   (pb-set-field ?copy "id" (pb-field-value ?orig "id"))
   (pb-set-field ?copy "complexity" (pb-field-value ?orig "complexity"))
   (pb-set-field ?copy "base_color" (pb-field-value ?orig "base_color"))
@@ -93,15 +93,15 @@
   (pb-set-field ?copy "delivery_period_end" (pb-field-value ?orig "delivery_period_end"))
   (pb-set-field ?copy "delivery_gate" (pb-field-value ?orig "delivery_gate"))
   (pb-set-field ?copy "competitive" FALSE)
-  
+
   (return ?copy)
 )
 
 (deffunction get-orderinfo-extid
   (?orderinfo)
-  
+
   (bind ?eid 0)
-  
+
   ;(bind ?orders (pb-field-list ?orderinfo "orders"))
   ;(bind ?o (first$ ?orders)
   ;(bind ?eid (pb-field-value ?o "id"))
@@ -110,7 +110,7 @@
     (bind ?eid (pb-field-value ?o "id"))
     (break)
   )
-    
+
   (return ?eid)
 )
 
@@ -128,12 +128,12 @@
   (custom-order)
   ?of <- (order (id ?id&:(< ?id 10))
                 (start-range ?ss&:(< ?ss 1320) ?se&:(<= ?se 1320))
-         ) 
+         )
 =>
   (printout warn "INFO: Remove initial order id " ?id crlf)
 
   ;-- remove original game order
-  (retract ?of)  
+  (retract ?of)
 )
 
 (defrule net-recv-custom-OrderInfo
@@ -146,15 +146,15 @@
             (client-id ?cid)
          )
   ;-- reject already processing orders
-  (not (orderer-client-response-info 
+  (not (orderer-client-response-info
           (extern-id ?eid&:(eq ?eid (get-orderinfo-extid ?ptr)))
         )
   )
-  
+
 =>
 
   (printout warn "INFO: Received order information from client " ?cid crlf)
-  
+
   ;-- insert orders from message
   (bind ?recv-resp (pb-create "llsf_msgs.Order"))
   (bind ?eid -1)
@@ -165,13 +165,13 @@
       (bind ?eid (pb-field-value ?o "id"))
     )
 
-    (bind ?id 
+    (bind ?id
       (assert-custom-order ?o ?now)
     )
-    
+
     ;-- increase product count
     (bind ?cnt (+ ?cnt 1))
-    
+
     ;-- assert orderer-client-response-product-info
     (bind ?quantity (pb-field-value ?o "quantity_requested"))
     (assert (orderer-client-response-product-info
@@ -181,18 +181,18 @@
               (last-delivered 0.0)
             )
     )
-    
+
     (printout warn "INFO: Append " ?quantity "x product/s from external order: "?eid" to order: "?id crlf)
   )
-  
+
   ;-- remember orders and orderer (client)
   (assert (orderer-client-response-info
-            (client ?cid) 
-            (extern-id ?eid) 
+            (client ?cid)
+            (extern-id ?eid)
             (product-count ?cnt)
           )
   )
-    
+
   (printout warn "INFO: Inserted external order " ?eid " with " ?cnt " products" crlf)
   (pb-send ?cid ?recv-resp)
   (pb-destroy ?recv-resp)
@@ -202,22 +202,22 @@
   ?pf <- (product-processed (game-time ?gt) (team ?team) (order ?id) (confirmed TRUE)
                             (workpiece ?wp-id) (mtype DS) (scored FALSE))
   ?of <- (order (id ?id))
-  ?roi <- (orderer-client-response-product-info 
-            (extern-id ?eid) 
+  ?roi <- (orderer-client-response-product-info
+            (extern-id ?eid)
             (product-id ?id)
             ;-- prevent triggering when quantity is already reached
             (quantity    ?quantity&:(> ?quantity 0))
             ;-- prevent triggering same product-delivered multiple times
             (last-delivered ?time&~?gt)
           )
-  ?ri <- (orderer-client-response-info 
-           (extern-id ?eid) 
+  ?ri <- (orderer-client-response-info
+           (extern-id ?eid)
            (product-count ?ocnt)
          )
 =>
   ;-- decrease remaining quanties
   (bind ?updquant (- ?quantity 1))
-  (modify ?roi 
+  (modify ?roi
             (quantity ?updquant)
             (last-delivered ?gt)
   )
@@ -227,13 +227,13 @@
 (defrule custom-all-of-product-delivered
   ?pf <- (product-processed (order ?id&~0))
   ?of <- (order (id ?id))
-  ?roi <- (orderer-client-response-product-info 
-            (extern-id ?eid) 
+  ?roi <- (orderer-client-response-product-info
+            (extern-id ?eid)
             (product-id ?id)
             (quantity 0)
           )
-  ?ri <- (orderer-client-response-info 
-           (extern-id ?eid) 
+  ?ri <- (orderer-client-response-info
+           (extern-id ?eid)
            (product-count ?ocnt)
          )
 =>
@@ -249,9 +249,9 @@
 (defrule custom-order-complete
   (custom-order)
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-  ?ri <- (orderer-client-response-info 
-           (client ?cid) 
-           (extern-id ?eid) 
+  ?ri <- (orderer-client-response-info
+           (client ?cid)
+           (extern-id ?eid)
            (product-count 0)
          )
 =>

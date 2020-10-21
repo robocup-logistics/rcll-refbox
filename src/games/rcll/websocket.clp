@@ -33,7 +33,7 @@
   "send udpate of gamestate whenever the gamestate fact changes"
   ?sf <- (gamestate)
   =>
-  (ws-create-GameState)  
+  (ws-create-GameState)
 )
 
 (defrule ws-update-order
