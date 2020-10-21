@@ -102,7 +102,7 @@
   (multislot move-to (type INTEGER) (cardinality 0 2) (default (create$ )))
   (slot num-payments (type INTEGER) (default 0))
   (slot description (type STRING) (default ""))
-  (slot last-payed (type FLOAT) (default 0.0))
+  (slot last-payed (type FLOAT) (default ?*SS-STORAGE-GRACE-PERIOD*))
 )
 
 (deftemplate machine-light-code
@@ -436,12 +436,18 @@
 
 (deffacts storage-slots
   (init-storage-slots)
-  (machine-ss-shelf-slot (position 0 0) (description "BASE_RED CAP_GREY") (is-filled TRUE))
-  (machine-ss-shelf-slot (position 1 0) (description "BASE_SILVER CAP_GREY") (is-filled TRUE))
-  (machine-ss-shelf-slot (position 2 0) (description "BASE_BLACK CAP_GREY") (is-filled TRUE))
-  (machine-ss-shelf-slot (position 3 0) (description "BASE_RED CAP_BLACK") (is-filled TRUE))
-  (machine-ss-shelf-slot (position 4 0) (description "BASE_SILVER CAP_BLACK") (is-filled TRUE))
-  (machine-ss-shelf-slot (position 5 0) (description "BASE_BLACK CAP_BLACK") (is-filled TRUE))
+  (machine-ss-shelf-slot (position 0 0) (description "BASE_RED CAP_GREY") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
+  (machine-ss-shelf-slot (position 1 0) (description "BASE_SILVER CAP_GREY") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
+  (machine-ss-shelf-slot (position 2 0) (description "BASE_BLACK CAP_GREY") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*) )
+  (machine-ss-shelf-slot (position 3 0) (description "BASE_RED CAP_BLACK") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
+  (machine-ss-shelf-slot (position 4 0) (description "BASE_SILVER CAP_BLACK") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
+  (machine-ss-shelf-slot (position 5 0) (description "BASE_BLACK CAP_BLACK") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
 )
 
 ; check workpiece-assign-order rule in workpieces.clp for specific
