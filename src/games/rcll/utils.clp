@@ -297,10 +297,13 @@
 			(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot))
 				                        (and (eq ?ss:name ?ssf:name)
 				                             (eq (nth$ 1 ?ssf:position) ?shelf))
-				(modify ?ssf (position (subseq$ ?positions ?i (+ ?i 1))))
+				(modify ?ssf (position (subseq$ ?positions ?i (+ ?i 1))) (move-to (subseq$ ?positions ?i (+ ?i 1)) ) )
 				(bind ?i (+ ?i 2))
 			)
 		)
+	)
+	(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot)) TRUE
+		(modify ?ssf (move-to (create$ ) ) )
 	)
 	(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
 		(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot)) TRUE
