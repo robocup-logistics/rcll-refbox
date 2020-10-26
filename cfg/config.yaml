@@ -146,6 +146,9 @@ llsfrb:
     # disabling randomization requires mongodb to be enabled as the game
     # parameters are loaded from a mongodb game report in this case
     random-field: true
+    random-machine-setup: true
+    random-orders: true
+    random-storage: true
     # load data from latest game report with a given name
     # leave empty to always load from latest stored report
     load-from-report: ""

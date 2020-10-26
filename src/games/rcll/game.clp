@@ -3,28 +3,104 @@
 ;  game.clp - LLSF RefBox CLIPS game maintenance
 ;
 ;  Created: Tue Jun 11 15:19:25 2013
-;  Copyright  2013  Tim Niemueller [www.niemueller.de]
+;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
+;             2017       Tobias Neumann
+;             2019       Till Hofmann
+;             2019       Mostafa Gomaa
+;             2020       Tarik Viehmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
-(deffunction game-reset ()
+(deffunction game-randomize-orders ()
+	(bind ?ring-colors (create$))
+	(do-for-all-facts ((?rs ring-spec)) TRUE
+	  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
+	)
+	(bind ?ring-colors (randomize$ ?ring-colors))
+	(bind ?c1-first-ring (subseq$ ?ring-colors 1 1))
+	(bind ?c2-first-ring (subseq$ ?ring-colors 2 2))
+	(bind ?c3-first-ring (subseq$ ?ring-colors 3 3))
+	(bind ?cx-first-ring (subseq$ ?ring-colors 4 4))
 
-  ; Retract machine initialization state, if set
-  (do-for-fact ((?mi machines-initialized)) TRUE
-    (retract ?mi)
-  )
+	(bind ?c1-counter 0)
+	(bind ?c2-counter 0)
+	(bind ?c3-counter 0)
+	; reset orders, assign random times
+	(delayed-do-for-all-facts ((?order order)) TRUE
+		(bind ?deliver-start (random (nth$ 1 ?order:start-range)
+		                             (nth$ 2 ?order:start-range)))
+		(bind ?deliver-end
+		  (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
+		                            (nth$ 2 ?order:duration-range))))
+		(if (and (> ?deliver-end ?*PRODUCTION-TIME*) (not ?order:allow-overtime))
+		 then
+			(printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
+			            (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "
+			            "time shift: " (- ?deliver-end ?*PRODUCTION-TIME*) crlf)
+			(bind ?deliver-start (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)))
+			(bind ?deliver-end ?*PRODUCTION-TIME*)
+		)
+		(bind ?activation-pre-time
+		      (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
+		(bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
+		(if ?*RANDOMIZE-ACTIVATE-ALL-AT-START* then (bind ?activate-at 0))
+		(bind ?gate (random 1 3))
 
-  ; retract all delivery periods
-  ;(printout t "Retracting delivery periods" crlf)
-  (delayed-do-for-all-facts ((?dp delivery-period)) TRUE
-    (retract ?dp)
-  )
+		; check workpiece-assign-order rule in workpieces.clp for specific
+		; assumptions for the 2016 game and order to workpiece assignment!
+		(bind ?order-ring-colors (create$))
+		(switch ?order:complexity
+			;(case C0 then) ; for C0 we have nothing to do, no ring color
+			(case C1 then (bind ?c1-counter (+ ?c1-counter 1))
+			              (if (<= ?c1-counter 1) then (bind ?first-ring ?c1-first-ring)
+			                                     else (bind ?first-ring ?cx-first-ring))
+			              (bind ?order-ring-colors (create$ ?first-ring)))
+			(case C2 then (bind ?c2-counter (+ ?c2-counter 1))
+			              (if (<= ?c2-counter 1) then (bind ?first-ring ?c2-first-ring)
+			                                     else (bind ?first-ring ?cx-first-ring))
+			              (bind ?order-ring-colors (create$ ?first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?first-ring)) 1 1))))
+			(case C3 then (bind ?c3-counter (+ ?c3-counter 1))
+			              (if (<= ?c3-counter 1) then (bind ?first-ring ?c3-first-ring)
+			                                     else (bind ?first-ring ?cx-first-ring))
+			              (bind ?order-ring-colors (create$ ?first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?first-ring)) 1 2))))
+		)
 
-  ; reset all down periods
-  ;(printout t "Resetting down periods" crlf) 
-  (delayed-do-for-all-facts ((?m machine)) TRUE
-    (modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
-  )
+		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
+		(bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
+
+		(modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
+		  (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
+		  (ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
+		)
+
+	; Randomize number of required additional bases
+	(bind ?m-add-bases (randomize$ (create$ 1 3)))
+	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 1 ?m-add-bases) ?ring-colors))
+	  (modify ?ring (req-bases 2))
+	)
+	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 2 ?m-add-bases) ?ring-colors))
+	  (modify ?ring (req-bases 1))
+	)
+	(delayed-do-for-all-facts ((?ring ring-spec))
+	  (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
+	  (modify ?ring (req-bases 0))
+	)
+
+	; Randomly assign an order to be a competitive order
+	(bind ?potential-competitive-orders (create$))
+	(do-for-all-facts ((?order order))
+	                  (and (eq ?order:complexity C0) ; must be C0
+	                       (eq ?order:quantity-requested 1) ; must not request more than 1 product
+	                       (eq ?order:allow-overtime FALSE) ; no overtime order
+	                       (or (neq (nth$ 1 ?order:delivery-period) 0) ; no standing order
+	                           (neq (nth$ 2 ?order:delivery-period) ?*PRODUCTION-TIME*))
+	                  )
+	                  (bind ?potential-competitive-orders (insert$ ?potential-competitive-orders 1 ?order:id))
+	)
+	;(printout t "Potential competitive orders: " ?potential-competitive-orders crlf)
+	(bind ?competitive-order-id (nth$ (random 1 (length$ ?potential-competitive-orders)) ?potential-competitive-orders))
+	(do-for-fact ((?order order)) (eq ?order:id ?competitive-order-id)
+	  (modify ?order (competitive TRUE)))
 )
 
 (deffunction game-calc-phase-points (?team-color ?phase)
@@ -63,7 +139,7 @@
   =>
   (retract ?gf)
 )
-  
+
 (defrule game-reset-done
   (declare (salience -10000))
   ?gf <- (game-reset)
@@ -71,12 +147,40 @@
   (retract ?gf)
 )
 
+(defrule game-init-parameterization-from-config
+	?gt <- (game-parameters (is-initialized FALSE))
+	(confval (path "/llsfrb/game/random-field") (type BOOL) (value ?random-field))
+	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value ?random-machine-setup))
+	(confval (path "/llsfrb/game/random-orders") (type BOOL) (value ?random-orders))
+	(confval (path "/llsfrb/game/random-storage") (type BOOL) (value ?random-storage))
+	(confval (path "/llsfrb/mongodb/enable") (type BOOL) (value ?cfg-mongodb-enabled))
+	=>
+	(bind ?m-positions PENDING)
+	(bind ?m-setup PENDING)
+	(bind ?orders PENDING)
+	(bind ?s-status PENDING)
+	(bind ?mongodb-enabled (eq ?cfg-mongodb-enabled true))
+	(if (and (not ?mongodb-enabled) (member$ false (create$ ?random-field ?random-machine-setup ?random-orders ?random-storage )))
+	 then
+		(printout warn "Mongodb disabled, randomize all parameters despite configured static settings." crlf)
+	)
+	(if (or (not ?mongodb-enabled) (eq ?random-field  true)) then (bind ?m-positions RANDOM))
+	(if (or (not ?mongodb-enabled) (eq ?random-machine-setup true)) then (bind ?m-setup RANDOM))
+	(if (or (not ?mongodb-enabled) (eq ?random-orders true)) then (bind ?orders RANDOM))
+	(if (or (not ?mongodb-enabled) (eq ?random-storage true)) then (bind ?s-status RANDOM))
+	(modify ?gt (machine-positions ?m-positions)
+	            (machine-setup ?m-setup)
+	            (orders ?orders)
+	            (storage-status ?s-status)
+	            (is-initialized TRUE))
+)
+
 (defrule game-mps-solver-start
   "start the solver"
   (declare (salience ?*PRIORITY_HIGHER*))
   (gamestate (game-time ?gt))
-  (not (game-parameterized))
   ?mg <- (machine-generation (state NOT-STARTED))
+  (game-parameters (is-parameterized FALSE) (machine-positions RANDOM))
   =>
   (printout t "starting the solver for the generation of the machine positions" crlf)
   (mps-generator-start)
@@ -100,97 +204,48 @@
 )
 
 (defrule game-parameterize
-  (declare (salience ?*PRIORITY_HIGHER*))
-  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
-  (not (game-parameterized))
-  (or (machine-generation (state FINISHED))
-      (and (not (test (any-factp ((?m machine)) (eq ?m:zone TBD))))
-           (confval (path "/llsfrb/game/random-field") (type BOOL) (value false))
-      )
-  )
-  =>
-  (assert (game-parameterized))
+	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+	?gp <- (game-parameters (machine-positions ?m-positions&~PENDING)
+	                        (machine-setup ?m-setup&~PENDING)
+	                        (orders ?orders&~PENDING)
+	                        (storage-status ?s-status&~PENDING)
+	                        (is-parameterized FALSE))
+	(machine-generation (state ?s&:(or (eq ?s FINISHED) (eq ?m-positions STATIC))))
+	=>
+	(modify ?gp (is-parameterized TRUE))
 
-  (bind ?ring-colors (create$))
-  (do-for-all-facts ((?rs ring-spec)) TRUE
-    (bind ?ring-colors (append$ ?ring-colors ?rs:color))
-  )
-  (bind ?ring-colors (randomize$ ?ring-colors))
-
-  ; machine assignment if not already done
-  (if (not (any-factp ((?mi machines-initialized)) TRUE))
-   then (machine-init-randomize ?ring-colors))
-
-  ; reset orders, assign random times
-  (delayed-do-for-all-facts ((?order order)) TRUE
-    (bind ?deliver-start
-      (random (nth$ 1 ?order:start-range)
-              (nth$ 2 ?order:start-range)))
-    (bind ?deliver-end
-      (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
-																(nth$ 2 ?order:duration-range))))
-		(if (and (> ?deliver-end ?*PRODUCTION-TIME*) (not ?order:allow-overtime))
-		 then
-		  (printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
-								(- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "
-								"time shift: " (- ?deliver-end ?*PRODUCTION-TIME*) crlf)
-			(bind ?deliver-start (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)))
-			(bind ?deliver-end ?*PRODUCTION-TIME*)
-		)
-    (bind ?activation-pre-time
-          (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
-    (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
-		(if ?*RANDOMIZE-ACTIVATE-ALL-AT-START* then (bind ?activate-at 0))
-    (bind ?gate (random 1 3))
-
-		(bind ?order-ring-colors (create$))
-		(switch ?order:complexity
-			;(case C0 then) ; for C0 we have nothing to do, no ring color
-			(case C1 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 1)))
-			(case C2 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 2)))
-			(case C3 then (bind ?order-ring-colors (subseq$ (randomize$ ?ring-colors) 1 3)))
-    )
-
-		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
-		(bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
-
-    (modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
-	    (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
-			(ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
-  )
-
-  ; Randomize number of required additional bases
-  (bind ?m-add-bases (randomize$ (create$ 1 3)))
-  (do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 1 ?m-add-bases) ?ring-colors))
-    (modify ?ring (req-bases 2))
-  )
-  (do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 2 ?m-add-bases) ?ring-colors))
-    (modify ?ring (req-bases 1))
-  )
-  (delayed-do-for-all-facts ((?ring ring-spec))
-    (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
-    (modify ?ring (req-bases 0))
-  )
-
-	; Randomly assign an order to be a competitive order
-	(bind ?potential-competitive-orders (create$))
-	(do-for-all-facts ((?order order))
-	                  (and (eq ?order:complexity C0) ; must be C0
-	                       (eq ?order:quantity-requested 1) ; must not request more than 1 product
-	                       (eq ?order:allow-overtime FALSE) ; no overtime order
-	                       (or (neq (nth$ 1 ?order:delivery-period) 0) ; no standing order
-	                           (neq (nth$ 2 ?order:delivery-period) ?*PRODUCTION-TIME*))
-	                  )
-	                  (bind ?potential-competitive-orders (insert$ ?potential-competitive-orders 1 ?order:id))
+	; reset machines
+	(delayed-do-for-all-facts ((?machine machine)) TRUE
+	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
+	  (modify ?machine (productions 0) (state IDLE)
+	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
-	;(printout t "Potential competitive orders: " ?potential-competitive-orders crlf)
-	(bind ?competitive-order-id (nth$ (random 1 (length$ ?potential-competitive-orders)) ?potential-competitive-orders))
-	(do-for-fact ((?order order)) (eq ?order:id ?competitive-order-id)
-	  (modify ?order (competitive TRUE)))
+	(if (eq ?m-positions RANDOM)
+	 then
+		(machine-randomize-positions)
+	)
+	(if (eq ?m-setup RANDOM)
+	 then
+		(machine-randomize-machine-setup)
+	)
+	(if (eq ?orders RANDOM)
+	 then
+		(game-randomize-orders)
+	)
+	(if (eq ?s-status RANDOM)
+	 then
+		(ss-shuffle-shelves)
+	)
+
+	(ss-print-storage C-SS)
+	(ss-print-storage M-SS)
+	(printout t "Top  5        1 3 5 7" crlf)
+	(printout t " |   :        0 2 4 6" crlf)
+	(printout t "Bot  0   Input ------> Output" crlf)
 )
 
 (defrule game-print
-  (game-parameterized)
+  (game-parameters (is-parameterized TRUE))
   (gamestate (teams $?teams))
   (not (game-printed))
   =>
@@ -393,4 +448,40 @@
   =>
   (retract ?w)
   (game-summary)
+)
+
+(deffunction game-reset ()
+	; Retract all delivery periods
+	(delayed-do-for-all-facts ((?dp delivery-period)) TRUE
+		(retract ?dp)
+	)
+	; Reset all down periods
+	(delayed-do-for-all-facts ((?m machine)) TRUE
+		(modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
+	)
+	; Reset game parameterization
+	(delayed-do-for-all-facts ((?gp game-parameters)) TRUE
+		(retract ?gp)
+	)
+	(assert (game-parameters))
+	; Reset machine generation
+	(do-for-fact ((?mg machine-generation)) TRUE
+		(modify ?mg (state NOT-STARTED))
+	)
+	; Print machines again
+	(do-for-fact ((?mp machines-printed)) TRUE
+		(retract ?mp)
+	)
+	; Print game info again
+	(do-for-fact ((?gp game-printed)) TRUE
+		(retract ?gp)
+	)
+)
+
+(defrule game-reset
+	"Allow calling the function via fact to avoid file loading order issues"
+	?gr <- (game-reset)
+	=>
+	(retract ?gr)
+	(game-reset)
 )
