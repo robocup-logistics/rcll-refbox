@@ -167,6 +167,9 @@ llsfrb:
     # If enabled, some machines will randomly go DOWN for some period during
     # the game. If disabled, no machine will go DOWN.
     random-machine-down-times: true
+    random-machine-setup: true
+    random-orders: true
+    random-storage: true
     # load data from latest game report with a given name
     # leave empty to always load from latest stored report
     load-from-report: ""

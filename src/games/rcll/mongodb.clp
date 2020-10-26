@@ -277,6 +277,11 @@
 	)
 	(bson-array-finish ?doc "ring-specs" ?m-arr)
 	(bind ?m-arr (bson-array-start))
+	(do-for-all-facts ((?m machine-ss-shelf-slot)) TRUE
+		(bson-array-append ?m-arr (mongodb-fact-to-bson ?m))
+	)
+	(bson-array-finish ?doc "machine-ss-shelf-slots" ?m-arr)
+	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine)) TRUE
 		(bson-array-append ?m-arr (mongodb-fact-to-bson ?m))
 	)
@@ -353,22 +358,83 @@
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/random-storage") (type BOOL) (value false))
-	; load only once
-	(not (storage-tried-from-db))
+	?gp <- (game-parameters (storage-status PENDING))
 	=>
 	(printout t "Loading storage from database" crlf)
 	(assert (storage-tried-from-db))
-	(mongodb-load-facts-from-game-report ?report-name "machine-ss-shelf-slots" machine-ss-shelf-slot name)
+	(if (mongodb-load-facts-from-game-report ?report-name
+	                                         "machine-ss-shelf-slots"
+	                                         machine-ss-shelf-slot
+	                                         name)
+	 then
+		(printout t "Loading storage status finished" crlf)
+		(modify ?gp (storage-status STATIC))
+	 else
+		(printout error "Loading storage status from database failed, fallback to random generation." crlf)
+		(modify ?gp (storage-status RANDOM))
+	)
 )
 
+(defrule mongodb-load-orders
+	(declare (salience ?*PRIORITY_FIRST*))
+	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
+	(confval (path "/llsfrb/game/random-orders") (type BOOL) (value false))
+	?gp <- (game-parameters (orders PENDING))
+	=>
+	(printout t "Loading orders from database" crlf)
+	(assert (orders-tried-from-db))
+	(if (mongodb-load-facts-from-game-report ?report-name
+	                                         "orders"
+	                                          order
+	                                          id
+	                                          (create$ complexity competitive
+	                                                   quantity-requested base-color
+	                                                   ring-colors cap-color
+	                                                   delivery-period delivery-gate
+	                                                   activate-at
+	                                                   allow-overtime))
+	 then
+		(printout t "Loading orders finished" crlf)
+		(modify ?gp (orders STATIC))
+	 else
+		(printout error "Loading orders from database failed, fallback to random generation." crlf)
+		(modify ?gp (orders RANDOM))
+	)
+)
+
+(defrule mongodb-load-machine-setup
+	(declare (salience ?*PRIORITY_FIRST*))
+	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
+	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value false))
+	?gp <- (game-parameters (machine-setup PENDING))
+	=>
+	(printout t "Loading machine setup from database" crlf)
+	(if (and (mongodb-load-facts-from-game-report ?report-name
+	                                              "machines"
+	                                              machine
+	                                              name
+	                                              (create$ down-period rs-ring-colors))
+	         (mongodb-load-facts-from-game-report ?report-name
+	                                              "ring-specs"
+	                                              ring-spec
+	                                              color))
+	 then
+		(printout t "Loading machine-setup finished" crlf)
+		(modify ?gp (machine-setup STATIC))
+	 else
+		(printout error "Loading machines from database failed, fallback to random generation." crlf)
+		(modify ?gp (machine-setup RANDOM))
+	)
+)
 
 (defrule mongodb-load-machine-zones
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(not (confval (path "/llsfrb/game/random-field") (type BOOL) (value true)))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	; try only once
-	(not (machine-positions-tried-from-db))
+	?gp <- (game-parameters (machine-positions PENDING))
 	=>
 		(printout t "Loading machine positions from database" crlf)
 	(if (mongodb-load-facts-from-game-report ?report-name
@@ -377,11 +443,10 @@
 	                                         name
 	                                         (create$ zone rotation))
 	 then
-		; disable generation of machine positions
-		(assert (machine-positions-loaded))
 		(printout t "Loading machine positions finished" crlf)
+		(modify ?gp (machine-positions STATIC))
 	 else
 		(printout error "Loading machines from database failed, fallback to random generation." crlf)
+		(modify ?gp (machine-positions RANDOM))
 	)
-		(assert (machine-positions-tried-from-db))
 )
