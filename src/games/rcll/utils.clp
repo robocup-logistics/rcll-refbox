@@ -184,6 +184,35 @@
   (return (if (> (- ?rf ?f) 0) then (- ?rf 1) else ?rf))
 )
 
+(deffunction type-cast (?value ?type)
+" Convert a value to a given type by a direct type cast.
+  @param ?value Value to cast
+  @param ?type Target type to cast
+  @return Value of ?value with ?type
+"
+	(switch ?type
+		(case INTEGER then (return (integer ?value)))
+		(case STRING then (return (str-cat ?value)))
+		(case FLOAT then (return (float ?value)))
+		(case SYMBOL then (return (sym-cat ?value)))
+	)
+	(printout debug "cast: unsupported type cast: " ?type " Expected INTEGER|STRING|FLOAT|SYMBOL" crlf)
+	(return ?value)
+)
+
+(deffunction type-cast-list (?list ?type)
+" Convert each member of a list to a given type.
+  @param ?list List to cast
+  @param ?type Target type to cast
+  @return List with all elements of ?list but with type ?type
+"
+	(bind ?res (create$))
+	(foreach ?c ?list
+		(bind ?res (append$ ?res (type-cast ?c ?type)))
+	)
+	(return ?res)
+)
+
 (deffunction assert-points-with-threshold (?upper-bounded ?prefix ?threshold ?msg ?points ?gt ?team ?phase)
 " Assert points without crossing the threshold
   @param ?upper-bounded: Set to FALSE iff the threshold is a lower bound
