@@ -49,7 +49,7 @@
 
 (deffunction want-mirrored-rotation (?mtype ?zone)
 "According to the RCLL2017 rulebook, this is when a machine is mirrored"
-  (bind ?zn (str-cat ?zone)) 
+  (bind ?zn (str-cat ?zone))
   (bind ?x (eval (sub-string 4 4 ?zn)))
   (bind ?y (eval (sub-string 5 5 ?zn)))
 
@@ -74,12 +74,12 @@
      then
       (do-for-fact ((?mo mirror-orientation)) (eq ?mo:cyan ?ori)
         (bind ?m-ori ?mo:magenta)
-      )   
+      )
      else
       (do-for-fact ((?mo mirror-orientation)) (eq ?mo:magenta ?ori)
         (bind ?m-ori ?mo:cyan)
-      )   
-    )   
+      )
+    )
     (return ?m-ori)
    else
     (bind ?x (eval (sub-string 4 4 ?zn)))
@@ -87,7 +87,7 @@
 
     (if (eq ?y 8) then
       (return 180)
-    )   
+    )
     (if (or (eq ?y 1) (eq ?y 2)) then
       (return 0)
     )
@@ -103,7 +103,7 @@
 )
 
 (deffunction pick-random$ (?list)
-  (return (nth$ (random 1 (length$ ?list)) ?list)) 
+  (return (nth$ (random 1 (length$ ?list)) ?list))
 )
 
 (deffunction is-even-int (?num)
@@ -154,4 +154,180 @@
 (deffunction floor (?f)
   (bind ?rf (round ?f))
   (return (if (> (- ?rf ?f) 0) then (- ?rf 1) else ?rf))
+)
+
+(deffunction type-cast (?value ?type)
+" Convert a value to a given type by a direct type cast.
+  @param ?value Value to cast
+  @param ?type Target type to cast
+  @return Value of ?value with ?type
+"
+	(switch ?type
+		(case INTEGER then (return (integer ?value)))
+		(case STRING then (return (str-cat ?value)))
+		(case FLOAT then (return (float ?value)))
+		(case SYMBOL then (return (sym-cat ?value)))
+	)
+	(printout debug "cast: unsupported type cast: " ?type " Expected INTEGER|STRING|FLOAT|SYMBOL" crlf)
+	(return ?value)
+)
+
+(deffunction type-cast-list (?list ?type)
+" Convert each member of a list to a given type.
+  @param ?list List to cast
+  @param ?type Target type to cast
+  @return List with all elements of ?list but with type ?type
+"
+	(bind ?res (create$))
+	(foreach ?c ?list
+		(bind ?res (append$ ?res (type-cast ?c ?type)))
+	)
+	(return ?res)
+)
+
+(deffunction assert-points-with-threshold (?upper-bounded ?prefix ?threshold ?msg ?points ?gt ?team ?phase)
+" Assert points without crossing the threshold
+  @param ?upper-bounded: Set to FALSE iff the threshold is a lower bound
+  @param ?prefix: Prefix of the reason which determines whether a point score
+                  contributes to the threshold
+  @param ?threshold: Threshold that is not crossed
+  @param ?msg: reason for points
+  @param ?points: number of points to add
+  @param ?gt: Current game time
+  @param ?team: Team scoring the points
+  @param ?phase: Game phase
+"
+	(bind ?resulting-points ?points)
+	(bind ?total-points 0)
+	(bind ?print-max-points-reached FALSE)
+	(do-for-all-facts ((?p points))
+	                  (and (eq (sub-string 1 (length ?prefix) ?p:reason) ?prefix)
+	                       (eq ?p:team ?team))
+	                  (bind ?total-points (+ ?total-points ?p:points))
+	)
+	(bind ?threshold-comp (- ?threshold (+ ?total-points ?points)))
+	(if (and ?upper-bounded (> ?points 0) (<= ?threshold-comp 0))
+	 then
+		(bind ?resulting-points (max 0 (+ ?points ?threshold-comp)))
+		(bind ?print-max-points-reached TRUE)
+	)
+	(if (and (not ?upper-bounded) (< ?points 0) (>= ?threshold-comp 0))
+	 then
+		(bind ?resulting-points (min 0 (+ ?points ?threshold-comp)))
+		(bind ?print-max-points-reached TRUE)
+	)
+	(if (neq ?resulting-points 0)
+	 then
+		(assert (points (game-time ?gt) (team ?team) (phase ?phase)
+		                (points ?resulting-points) (reason (str-cat ?prefix ": " ?msg))))
+		(if ?print-max-points-reached
+		 then
+			(bind ?t-str (create$ "lower bound" "deducted"))
+			(if ?upper-bounded then (bind ?t-str (create$ "upper bound" "added")))
+			(printout t "Team " ?team " reached " (nth$ 1 ?t-str)" at " ?prefix ": "
+			            ?threshold ". No more points are " (nth$ 2 ?t-str) "." crlf)
+		)
+	)
+)
+
+(deffunction ss-assert-points-with-threshold (?msg ?points ?gt ?team)
+" Assert point deductions for using the SS without crossing the max threshold
+  @param ?msg reason for points
+  @param ?points number of points to add (negative for deductions)
+  @param ?gt Current game time
+  @param ?team Team scoring the points
+"
+	(if ?*PRODUCTION-POINTS-SS-USE-MAX-POINT-LIMIT*
+	 then
+		(assert-points-with-threshold FALSE
+		                              "SS"
+		                              ?*PRODUCTION-POINTS-SS-MAX-TOTAL-POINTS*
+		                              ?msg
+		                              ?points
+		                              ?gt
+		                              ?team
+		                              PRODUCTION)
+	 else
+		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+		                (points ?points) (reason (str-cat "SS: " ?msg))))
+	)
+)
+
+(deffunction ss-slot-blocked-by (?back-slot ?front-slot)
+" Checks if a SS shelf slot is located in the back of another slot.
+  @param ?back-slot some slot number
+  @param ?front-slot some slot number
+  @return TRUE iff ?back-slot is located in the back of ?front-slot
+"
+	(return (and (eq ?front-slot (- ?back-slot 1)) (eq 0 (mod ?front-slot 2))))
+)
+
+(deffunction ss-update-accessible-slots (?machine ?shelf ?slot ?is-free)
+" Update shelf-slot accessibility status
+  @param ?machine: SS which has stored/retrieved/re-positioned a product
+  @param ?shelf: shelf number where the change happened
+  @param ?slot: slot where the storage status changed
+  @param FALSE iff the shelf-slot is now occupied
+"
+	(do-for-fact ((?s machine-ss-shelf-slot))
+	             (and (eq ?s:name ?machine) (eq (nth$ 1 ?s:position) ?shelf)
+	                  (ss-slot-blocked-by (nth$ 2 ?s:position) ?slot))
+		(modify ?s (is-accessible ?is-free))
+	)
+)
+
+(deffunction ss-positions-compare (?f-1 ?f-2)
+" Comparison for function sort to order machine-ss-shelf-slot facts in
+  ascending order based on their position
+  @param ?f-1: fact adress or index of machine-ss-shelf-slot fact
+  @param ?f-2: fact adress or index of machine-ss-shelf-slot fact
+  @return: ?f-1 > ?f-2 where ">" compares shelf and slot positions
+"
+	(bind ?pos1 (fact-slot-value ?f-1 position))
+	(bind ?pos2 (fact-slot-value ?f-2 position))
+	(return (or (> (nth$ 1 ?pos1) (nth$ 1 ?pos2))
+	            (and (= (nth$ 1 ?pos1) (nth$ 1 ?pos2))
+	                 (> (nth$ 2 ?pos1) (nth$ 2 ?pos2)))))
+)
+
+; Randomize the positions of each product for each shelf
+(deffunction ss-shuffle-shelves ()
+	(loop-for-count (?shelf 0 ?*SS-MAX-SHELF*)
+		(bind ?positions (create$))
+		(do-for-all-facts ((?ssf machine-ss-shelf-slot))
+			                (and (eq ?ssf:name C-SS) (eq (nth$ 1 ?ssf:position) ?shelf))
+			                (bind ?positions (append$ ?positions ?ssf:position))
+		)
+		(bind ?positions (randomize-tuple-list$ ?positions 2))
+		(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+			(bind ?i 1)
+			(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot))
+				                        (and (eq ?ss:name ?ssf:name)
+				                             (eq (nth$ 1 ?ssf:position) ?shelf))
+				(modify ?ssf (position (subseq$ ?positions ?i (+ ?i 1))) (move-to (subseq$ ?positions ?i (+ ?i 1)) ) )
+				(bind ?i (+ ?i 2))
+			)
+		)
+	)
+	(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot)) TRUE
+		(modify ?ssf (move-to (create$ ) ) )
+	)
+	(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+		(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot)) TRUE
+			(ss-update-accessible-slots ?ss:name (nth$ 1 ?ssf:position) (nth$ 2 ?ssf:position) (not ?ssf:is-filled))
+		)
+	)
+)
+
+(deffunction ss-print-storage (?mps-ss)
+" Print all stored products of a storage station
+  @param ?mps-ss: name of storage station to print information about
+"
+	(printout t ?mps-ss " contains:" crlf)
+	(bind ?filled-positions (find-all-facts ((?ssf machine-ss-shelf-slot))
+		                (and ?ssf:is-filled (eq ?ssf:name ?mps-ss))))
+	(bind ?filled-positions (sort ss-positions-compare ?filled-positions))
+	(foreach ?f ?filled-positions
+		(printout t " - " (fact-slot-value ?f position) " stores " (fact-slot-value ?f description) crlf)
+	)
 )
