@@ -261,8 +261,10 @@
 	(modify ?f1 (points 0 0) (end 0 0))
 )
 
+
 (defrule mongodb-game-report-begin
   (declare (salience ?*PRIORITY_HIGH*))
+	?gp <- (game-parameters (is-parameterized TRUE))
   (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
