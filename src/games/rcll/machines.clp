@@ -74,125 +74,102 @@
 	(return (if (eq ?prefix "C") then CYAN else MAGENTA))
 )
 
-(deffunction machine-init-randomize ()
-  ; reset machines
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-    (modify ?machine (productions 0) (state IDLE)
-	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
-  )
-
-  (bind ?overwrite-generating false)
-  (do-for-fact ((?cv confval)) (and (eq ?cv:path "/llsfrb/game/random-field")
-                                    (eq ?cv:type BOOL)
-                               )
-    (bind ?overwrite-generating ?cv:value)
-  )
-
-  ; if the field is not compleate
-  ; or when the field should be regenerated
-  (if (or (any-factp ((?m machine)) (eq ?m:zone TBD))
-          (eq (str-cat ?overwrite-generating) "true")
-      )
-   then
-    (printout t "Randomizing from scratch" crlf)
-    ; reset all zones, since we cannot do partial assinemend anymore
-    (delayed-do-for-all-facts ((?m machine)) TRUE
-      (modify ?m (zone TBD))
-    )
-    ; randomly assigned machines to zones using the external generator
-		(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
-    (bind ?machines (mps-generator-get-generated-field))
-    (delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
-      (if (member$ ?m:name ?machines)
-       then
-        (bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
-        (bind ?rot (nth$ (+ (member$ ?m:name ?machines) 2) ?machines))
-        (printout t ?m:name ": " ?zone " with " ?rot crlf)
-        (modify ?m (zone ?zone) (rotation ?rot))
-       else
-        (printout error ?m:name " not found in generation" crlf)
-      )
-    )
-
-    ; Mirror machines for other team
-    (delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
-      (do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
-        (modify ?mc
-          (zone (mirror-zone ?mm:zone))
-          (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
-        )
-      )
-    )
-
-    ; Swap machines
-		(bind ?machines-to-swap
-	    (create$ (str-cat "RS" (random 1 2)) (str-cat "CS" (random 1 2))))
-		(foreach ?ms ?machines-to-swap
-      (do-for-fact ((?m-cyan machine) (?m-magenta machine))
-          (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
-					  	 (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
-
-				(printout t "Swapping " ?m-cyan:name " with " ?m-magenta:name crlf)
-
-				(bind ?z-cyan ?m-cyan:zone)
-				(bind ?r-cyan ?m-cyan:rotation)
-				(bind ?z-magenta ?m-magenta:zone)
-				(bind ?r-magenta ?m-magenta:rotation)
-				(modify ?m-cyan    (zone ?z-magenta) (rotation ?r-magenta))
-				(modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
-			)
+(deffunction machine-randomize-positions ()
+	(printout t "Randomizing from scratch" crlf)
+	; reset all zones, since we cannot do partial assignment anymore
+	(delayed-do-for-all-facts ((?m machine)) TRUE
+	  (modify ?m (zone TBD))
+	)
+	; randomly assigned machines to zones using the external generator
+	(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
+	(bind ?machines (mps-generator-get-generated-field))
+	(delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
+	  (if (member$ ?m:name ?machines)
+	   then
+	    (bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
+	    (bind ?rot (nth$ (+ (member$ ?m:name ?machines) 2) ?machines))
+	    (printout t ?m:name ": " ?zone " with " ?rot crlf)
+	    (modify ?m (zone ?zone) (rotation ?rot))
+	   else
+	    (printout error ?m:name " not found in generation" crlf)
 	  )
-		; Randomize ring colors per machine
-		(bind ?ring-colors (create$))
-		(do-for-all-facts ((?rs ring-spec)) TRUE
-			(bind ?ring-colors (append$ ?ring-colors ?rs:color))
-		)
-		(do-for-fact ((?m-cyan machine) (?m-magenta machine))
-			(and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
+	)
 
-			(modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
-			(modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
-		)
-		(do-for-fact ((?m-cyan machine) (?m-magenta machine))
-			(and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
+	; Mirror machines for other team
+	(delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
+	  (do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
+	    (modify ?mc
+	      (zone (mirror-zone ?mm:zone))
+	      (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
+	    )
+	  )
+	)
 
-			(modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
-			(modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+  ; Swap machines
+	(bind ?machines-to-swap
+    (create$ (str-cat "RS" (random 1 2)) (str-cat "CS" (random 1 2))))
+	(foreach ?ms ?machines-to-swap
+		(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+		    (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
+		         (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
+
+		  (printout t "Swapping " ?m-cyan:name " with " ?m-magenta:name crlf)
+
+		  (bind ?z-cyan ?m-cyan:zone)
+		  (bind ?r-cyan ?m-cyan:rotation)
+		  (bind ?z-magenta ?m-magenta:zone)
+		  (bind ?r-magenta ?m-magenta:rotation)
+		  (modify ?m-cyan    (zone ?z-magenta) (rotation ?r-magenta))
+		  (modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
 		)
   )
+)
 
-  ; assign random down times
-  (if ?*RANDOMIZE-GAME* then
-    (bind ?candidates (create$))
-    (foreach ?t ?*DOWN-TYPES*
-      (bind ?t-candidates (find-all-facts ((?m machine))
-    	      (and (eq ?m:mtype ?t) (eq ?m:team CYAN))))
+(deffunction machine-randomize-machine-setup ()
+	; Randomize ring colors per machine
+	(bind ?ring-colors (create$))
+	(do-for-all-facts ((?rs ring-spec)) TRUE
+	  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
+	)
+	(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+	  (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
+	  (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+	  (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+	)
+	(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+	  (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
+	  (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+	  (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+	)
 
-      (bind ?candidates (append$ ?candidates (first$ (randomize$ ?t-candidates))))
-    )
+	; assign random down times
+	(if ?*RANDOMIZE-GAME* then
+		(bind ?candidates (create$))
+		(foreach ?t ?*DOWN-TYPES*
+			(bind ?t-candidates (find-all-facts ((?m machine))
+			                      (and (eq ?m:mtype ?t) (eq ?m:team CYAN))))
 
-    (foreach ?c ?candidates
-      (bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
-      (bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
-      (bind ?end-time (+ ?start-time ?duration))
+		  (bind ?candidates (append$ ?candidates (first$ (randomize$ ?t-candidates))))
+		)
 
-      ; Copy to magenta machine
-      (do-for-fact ((?m-magenta machine))
-        (eq ?m-magenta:name (machine-magenta-for-cyan (fact-slot-value ?c name)))
-        (modify ?m-magenta (down-period ?start-time ?end-time))
-      )
+		(foreach ?c ?candidates
+			(bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
+			(bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
+			(bind ?end-time (+ ?start-time ?duration))
 
-      (modify ?c (down-period ?start-time ?end-time))
-    )
-  )
+			; Copy to magenta machine
+			(do-for-fact ((?m-magenta machine))
+			  (eq ?m-magenta:name (machine-magenta-for-cyan (fact-slot-value ?c name)))
+			  (modify ?m-magenta (down-period ?start-time ?end-time))
+			)
 
-
-  (assert (machines-initialized))
+		  (modify ?c (down-period ?start-time ?end-time))
+		)
+	)
 )
 
 (defrule machines-print
-  (machines-initialized)
+  (game-parameters (is-parameterized TRUE))
   (gamestate (teams $?teams) (phase PRODUCTION|EXPLORATION))
   (not (machines-printed))
   =>
