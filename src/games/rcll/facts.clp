@@ -363,6 +363,15 @@
   (slot real-time-factor (type FLOAT) (default 0.0))
 )
 
+(deftemplate game-parameters
+	(slot is-parameterized (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+	(slot is-initialized (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+	(slot machine-positions (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot machine-setup (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot orders (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot storage-status (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg
@@ -374,6 +383,7 @@
 (deffacts startup
   (gamestate (phase PRE_GAME))
   (machine-generation (state NOT-STARTED))
+  (game-parameters)
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))
