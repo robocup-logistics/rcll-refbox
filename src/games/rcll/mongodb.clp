@@ -189,11 +189,11 @@
 			(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
 			(bson-destroy ?m-p)
 		)
-		(bson-destroy ?t-doc)
 		(bind ?success TRUE)
 	 else
 		(printout error "Empty result in mongoDB from game_report" crlf)
 	)
+	(bson-destroy ?t-doc)
 	(mongodb-cursor-destroy ?t-cursor)
 	(bson-builder-destroy ?t-query)
 	(bson-builder-destroy ?t-sort)
@@ -245,7 +245,9 @@
 
 	(bind ?o-arr (bson-array-start))
 	(do-for-all-facts ((?o order)) TRUE
-		(bson-array-append ?o-arr (mongodb-fact-to-bson ?o))
+		(bind ?order-doc (mongodb-fact-to-bson ?o))
+		(bson-array-append ?o-arr ?order-doc)
+		(bson-builder-destroy ?order-doc)
 	)
 	(bson-array-finish ?doc "orders" ?o-arr)
 
@@ -275,17 +277,23 @@
 	; store information describing the game setup only once
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m ring-spec)) TRUE
-		(bson-array-append ?m-arr (mongodb-fact-to-bson ?m))
+		(bind ?ring-spec-doc (mongodb-fact-to-bson ?m))
+		(bson-array-append ?m-arr ?ring-spec-doc)
+		(bson-builder-destroy ?ring-spec-doc)
 	)
 	(bson-array-finish ?doc "ring-specs" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine-ss-shelf-slot)) TRUE
-		(bson-array-append ?m-arr (mongodb-fact-to-bson ?m))
+		(bind ?ss-doc (mongodb-fact-to-bson ?m))
+		(bson-array-append ?m-arr ?ss-doc)
+		(bson-builder-destroy ?ss-doc)
 	)
 	(bson-array-finish ?doc "machine-ss-shelf-slots" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine)) TRUE
-		(bson-array-append ?m-arr (mongodb-fact-to-bson ?m))
+		(bind ?machine-doc (mongodb-fact-to-bson ?m))
+		(bson-array-append ?m-arr ?machine-doc)
+		(bson-builder-destroy ?machine-doc)
 	)
 	(bson-array-finish ?doc "machines" ?m-arr)
 	(mongodb-write-game-report ?doc ?stime)
