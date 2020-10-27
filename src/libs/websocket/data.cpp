@@ -41,7 +41,7 @@ namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new Data:: Data object
- * 
+ *
  * @param logger_ logger to be used
  */
 Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex)
@@ -76,9 +76,9 @@ Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mute
 
 /**
  * @brief Read a JSON schema file and return pointer to a rapidjson SchemaDocument
- * 
- * @param path 
- * @return rapidjson::SchemaDocument 
+ *
+ * @param path
+ * @return rapidjson::SchemaDocument
  */
 std::shared_ptr<rapidjson::SchemaDocument>
 Data::load_schema(std::string path)
@@ -104,9 +104,9 @@ Data::load_schema(std::string path)
 
 /**
  * @brief get first element from log queue
- * 
+ *
  *  This thread-safe function returns the first element from the log message queue and removes it.
- * 
+ *
  * @return std::string first element from log queue
  */
 std::string
@@ -120,9 +120,9 @@ Data::log_pop()
 
 /**
  * @brief add element to log queue
- * 
- * This thread-safe function adds an element to the log message queue. 
- * 
+ *
+ * This thread-safe function adds an element to the log message queue.
+ *
  * @param log element (std::string) to be added
  */
 void
@@ -135,9 +135,9 @@ Data::log_push(std::string log)
 
 /**
  * @brief add JSON element to log queue
- * 
- * This thread-safe function adds a JSON element to the log message queue. 
- * 
+ *
+ * This thread-safe function adds a JSON element to the log message queue.
+ *
  * @param d element (rapidjson::Document) to be added
  */
 void
@@ -154,7 +154,7 @@ Data::log_push(rapidjson::Document &d)
 
 /**
  * @brief check if log queue is empty
- * 
+ *
  * @return true log queue is empty
  * @return false log queue is not empty
  */
@@ -166,7 +166,7 @@ Data::log_empty()
 
 /**
  * @brief blocks calling thread until log queue is not-empty
- * 
+ *
  */
 void
 Data::log_wait()
@@ -180,10 +180,10 @@ Data::log_wait()
 
 /**
  * @brief add client for handling
- * 
- *  Add a new connected client to the vector of currently active clients. 
- *  The client will be handled, e.g. for log distribution. 
- * 
+ *
+ *  Add a new connected client to the vector of currently active clients.
+ *  The client will be handled, e.g. for log distribution.
+ *
  * @param client client to be added
  */
 void
@@ -195,10 +195,10 @@ Data::clients_add(std::shared_ptr<Client> client)
 
 /**
  * @brief send one message to all clients
- * 
- *  Sends the given message to all connected clients. 
+ *
+ *  Sends the given message to all connected clients.
  *  Handles disconnects and removes the respective clients.
- * 
+ *
  * @param msg message to be sent
  */
 void
@@ -222,9 +222,9 @@ Data::clients_send_all(std::string msg)
 
 /**
  * @brief send one JSON document to all clients
- * 
- *  Converts given JSON document to string and calls clients_send_all(std::string msg). 
- * 
+ *
+ *  Converts given JSON document to string and calls clients_send_all(std::string msg).
+ *
  * @param d JSON document to be sent
  */
 void
@@ -238,12 +238,12 @@ Data::clients_send_all(rapidjson::Document &d)
 
 /**
  * @brief log attention message
- * 
+ *
  * Called from the CLIPS environment when an attention message is generated, forward that to the clients
- * 
- * @param text 
- * @param team 
- * @param time 
+ *
+ * @param text
+ * @param team
+ * @param time
  */
 void
 Data::log_push_attention_message(std::string text, std::string team, std::string time)
@@ -331,11 +331,11 @@ get_values(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
 
 /**
  * @brief Check if the given fact pointer is an instance of the given template
- * 
- * @param fact 
- * @param tmpl_name 
- * @return true 
- * @return false 
+ *
+ * @param fact
+ * @param tmpl_name
+ * @return true
+ * @return false
  */
 bool
 Data::match(CLIPS::Fact::pointer &fact, std::string tmpl_name)
@@ -348,7 +348,7 @@ Data::match(CLIPS::Fact::pointer &fact, std::string tmpl_name)
 
 /**
  * @brief Gets specific machine-info fact from CLIPS and pushes it to the send queue
- * 
+ *
  */
 void
 Data::log_push_machine_info(std::string name)
@@ -376,7 +376,7 @@ Data::log_push_machine_info(std::string name)
 
 /**
  * @brief Gets a specific order-info fact from CLIPS and pushes it to the send queue
- * 
+ *
  */
 void
 Data::log_push_order_info(int id)
@@ -404,9 +404,9 @@ Data::log_push_order_info(int id)
 }
 
 /**
- * @brief 
- * 
- * @param delivery_id 
+ * @brief
+ *
+ * @param delivery_id
  */
 void
 Data::log_push_order_info_via_delivery(int delivery_id)
@@ -444,7 +444,7 @@ Data::log_push_order_info_via_delivery(int delivery_id)
 
 /**
  * @brief Gets a specific robot-info fact from CLIPS and pushes it to the send queue
- * 
+ *
  */
 void
 Data::log_push_robot_info(int number, std::string name)
@@ -474,7 +474,7 @@ Data::log_push_robot_info(int number, std::string name)
 
 /**
  * @brief Gets the game-state fact from CLIPS and pushes it to the send queue
- * 
+ *
  */
 void
 Data::log_push_game_state()
@@ -501,7 +501,7 @@ Data::log_push_game_state()
 
 /**
  * @brief Gets all ring-spec facts from CLIPS and pushes them to the send queue as an array
- * 
+ *
  */
 void
 Data::log_push_ring_spec()
@@ -511,7 +511,7 @@ Data::log_push_ring_spec()
 
 /**
  * @brief Gets all points facts from CLIPS and pushes them to the send queue as an array
- * 
+ *
  */
 void
 Data::log_push_points()
@@ -521,7 +521,7 @@ Data::log_push_points()
 
 /**
  * @brief Gets a specifc workpiece fact from CLIPS and pushes it to the send queue
- * 
+ *
  */
 void
 Data::log_push_workpiece_info(int id)
@@ -550,8 +550,8 @@ Data::log_push_workpiece_info(int id)
 
 /**
  * @brief Create a string of a JSON array containing the data of all current workpiece info facts
- * 
- * @return std::string 
+ *
+ * @return std::string
  */
 std::string
 Data::on_connect_workpiece_info()
@@ -561,8 +561,8 @@ Data::on_connect_workpiece_info()
 
 /**
  * @brief Create a string of a JSON array containing the data of all current robot info facts
- * 
- * @return std::string 
+ *
+ * @return std::string
  */
 std::string
 Data::on_connect_robot_info()
@@ -572,8 +572,8 @@ Data::on_connect_robot_info()
 
 /**
  * @brief  Create a string of a JSON array containing the data of all current ring spec facts
- * 
- * @return std::string 
+ *
+ * @return std::string
  */
 std::string
 Data::on_connect_ring_spec()
@@ -583,8 +583,8 @@ Data::on_connect_ring_spec()
 
 /**
  * @brief Create a string of a JSON array containing the data of all current points facts
- * 
- * @return std::string 
+ *
+ * @return std::string
  */
 std::string
 Data::on_connect_points()
@@ -594,8 +594,8 @@ Data::on_connect_points()
 
 /**
  * @brief Create a string of a JSON array containing the data of all current order info facts
- * 
- * @return std::string 
+ *
+ * @return std::string
  */
 std::string
 Data::on_connect_order_info()
@@ -605,8 +605,8 @@ Data::on_connect_order_info()
 
 /**
  * @brief Create a string of a JSON array containing the data of all current machine info facts
- * 
- * @return std::string 
+ *
+ * @return std::string
  */
 std::string
 Data::on_connect_machine_info()
@@ -616,10 +616,10 @@ Data::on_connect_machine_info()
 
 /**
  * @brief Prepare a message that contains all facts of a given template name
- * 
- * @param tmpl_name 
- * @param get_info_fact 
- * @return std::string 
+ *
+ * @param tmpl_name
+ * @param get_info_fact
+ * @return std::string
  */
 std::string
 Data::on_connect_info(std::string tmpl_name,
@@ -665,11 +665,11 @@ Data::on_connect_info(std::string tmpl_name,
 
 /**
  * @brief Gets data of a machine-info fact and packs into into a rapidjson object
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -734,11 +734,11 @@ Data::get_machine_info_fact(T *                                 o,
 
 /**
  * @brief Gets data of a order-info fact and packs into into a rapidjson object
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -801,10 +801,10 @@ Data::get_order_info_fact(T *                                 o,
 
 /**
  * @brief Creates a rapidjson array of unconfirmed delivery objects for the given order id
- * 
- * @param alloc 
+ *
+ * @param alloc
  * @param id order id to get the correct unconfirmed delivery
- * @return rapidjson::Value 
+ * @return rapidjson::Value
  */
 rapidjson::Value
 Data::get_unconfirmed_delivery_fact(rapidjson::Document::AllocatorType &alloc, int64_t id)
@@ -847,11 +847,11 @@ Data::get_unconfirmed_delivery_fact(rapidjson::Document::AllocatorType &alloc, i
 
 /**
  * @brief Gets data of a robot-info fact and packs into into a rapidjson object
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -910,11 +910,11 @@ Data::get_robot_info_fact(T *                                 o,
 
 /**
  * @brief Gets data of a gamestate fact and packs into into a rapidjson object
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -951,11 +951,11 @@ Data::get_game_state_fact(T *                                 o,
 
 /**
  * @brief Gets data of a ring-spec fact and packs into into a rapidjson object
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -976,11 +976,11 @@ Data::get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS:
 
 /**
  * @brief Gets data of a points fact and packs into into a rapidjson object
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -1007,11 +1007,11 @@ Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
 
 /**
  * @brief Gets data of a workpiece-info fact and packs into into a rapidjson object
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -1055,8 +1055,8 @@ Data::get_workpiece_info_fact(T *                                 o,
 
 /**
  * @brief Get the current phase of the game as a string
- * 
- * @return std::string 
+ *
+ * @return std::string
  */
 std::string
 Data::get_gamephase()
@@ -1075,9 +1075,9 @@ Data::get_gamephase()
 }
 
 /**
- * @brief Get the current state of the game as a string 
- * 
- * @return std::string 
+ * @brief Get the current state of the game as a string
+ *
+ * @return std::string
  */
 std::string
 Data::get_gamestate()
