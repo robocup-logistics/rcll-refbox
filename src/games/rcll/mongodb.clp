@@ -80,11 +80,11 @@
 	)
 )
 
-(deffunction mongodb-update-fact-from-bson (?doc ?template ?slot-id $?only-slots)
+(deffunction mongodb-update-fact-from-bson (?doc ?template ?id-slots $?only-slots)
 " Update a fact by the content of a bson document.
   @param ?doc bson document
   @param ?template Template name of the fact that is encoded in ?doc
-  @param ?slot-id Name of the slot that uniquely determines the ?template fact
+  @param ?id-slots Name of the slot(s) that uniquely determines the ?template fact
                   that is updated
   @param $?only-slots optional list of slots within ?template that are updated
                       by the values contained in ?doc. If unspecified all slots
@@ -98,28 +98,49 @@
 	)
 
 	; retrieve fact matching the document
-	(bind ?id-types (deftemplate-slot-types ?template ?slot-id))
-	(if (neq (length$ ?id-types) 1)
-	 then
-		(printout error "mongodb-update-fact-from-bson: Type of identifier slot "
-		                ?slot-id " not uniquely determined: " ?id-types crlf)
-		(return)
+	(bind ?f-list (find-all-facts ((?x ?template)) TRUE))
+	(if (neq (type ?id-slots) MULTIFIELD) then (bind ?id-slots (create$ ?id-slots)))
+	(loop-for-count (?i 1 (length$ ?id-slots))
+		(bind ?curr-slot (nth$ ?i ?id-slots))
+		(bind ?type-candidates (deftemplate-slot-types ?template ?curr-slot))
+		(if (neq (length$ ?type-candidates) 1)
+		 then
+			(printout error "mongodb-update-fact-from-bson: Type of identifier slot "
+			                ?curr-slot " not uniquely determined: " ?type-candidates crlf)
+			(return)
+		 else
+			(bind ?type (nth$ 1 ?type-candidates))
+			(bind ?curr-value (mongodb-retrieve-value-from-doc
+			                    ?doc
+			                    ?curr-slot
+			                    ?type
+			                    (deftemplate-slot-multip ?template ?curr-slot)))
+			; filter out candidates that do not match the current id field
+			(bind ?j 1)
+			(loop-for-count (length$ ?f-list)
+				(bind ?f-entry (nth$ ?j ?f-list))
+				(if (neq (fact-slot-value ?f-entry ?curr-slot) ?curr-value)
+				 then
+					(bind ?f-pos (member$ ?f-entry ?f-list))
+					(bind ?f-list (delete$ ?f-list ?f-pos ?f-pos))
+				 else
+					(bind ?j (+ ?j 1))
+				)
+			)
+		)
+	)
+	; check if a single fact is identified for modification
+	(if (<= 1 (length$ ?f-list))
+		then (bind ?f (nth$ 1 ?f-list))
+		(if (< 1 (length$ ?f-list)) then
+			(printout warn "mongodb-update-fact-from-bson: Ambiguous Fact match" crlf)
+		)
 	 else
-		(bind ?id-type (nth$ 1 ?id-types))
-	)
-	(bind ?id-value
-	      (mongodb-retrieve-value-from-doc ?doc
-	                                       ?slot-id
-	                                       ?id-type
-	                                       (deftemplate-slot-multip ?template ?slot-id)))
-	(bind ?f-list (find-fact ((?x ?template)) (eq (fact-slot-value ?x ?slot-id) ?id-value)))
-	(if (eq (length$ ?f-list) 0) then
 		(printout error "mongodb-update-fact-from-bson: No " ?template
-		                " fact with identifier " ?slot-id
-		                " found that matches doc value " ?id-value crlf)
+		                " fact with identifiers " ?id-slots
+		                " found that matches doc values" crlf)
 		(return)
 	)
-	(bind ?f (nth$ 1 ?f-list))
 
 	; build string of the updated fact
 	(bind ?update-str (str-cat "(" ?template))
@@ -375,7 +396,7 @@
 	(if (mongodb-load-facts-from-game-report ?report-name
 	                                         "machine-ss-shelf-slots"
 	                                         machine-ss-shelf-slot
-	                                         name)
+	                                         (create$ name position))
 	 then
 		(printout t "Loading storage status finished" crlf)
 		(modify ?gp (storage-status STATIC))
