@@ -198,7 +198,7 @@
 	(bind ?t-query (bson-parse "{}"))
 	(if (neq ?report-name "")
 	 then
-		(bind ?t-query (bson-parse (str-cat "{\"report-name\": " ?report-name "}")))
+		(bind ?t-query (bson-parse (str-cat "{\"report-name\": \"" ?report-name "\"}")))
 	)
 	(bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
 	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
