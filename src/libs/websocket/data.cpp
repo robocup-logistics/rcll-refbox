@@ -51,7 +51,7 @@ Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mute
 
 	logger_->log_info("Websocket", "loading JSON schemas for command validation");
 
-	std::string base_path      = std::getenv("LLSF_REFBOX_DIR");
+	std::string base_path      = std::string(SHAREDIR);
 	std::string schema_names[] = {"confirm_delivery",
 	                              "machine_add_base",
 	                              "randomize_field",
@@ -65,7 +65,7 @@ Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mute
 
 	for (const std::string &schema_name : schema_names) {
 		std::shared_ptr<rapidjson::SchemaDocument> sd =
-		  load_schema(base_path + "/src/libs/websocket/message_schemas/" + schema_name + ".json");
+		  load_schema(base_path + "/libs/websocket/message_schemas/" + schema_name + ".json");
 		if (sd) {
 			command_schema_map[schema_name] = sd;
 		} else {
