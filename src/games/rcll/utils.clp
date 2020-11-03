@@ -236,14 +236,20 @@
   @param ?gt Current game time
   @param ?team Team scoring the points
 "
-	(assert-points-with-threshold FALSE
-	                              "SS"
-	                              ?*PRODUCTION-POINTS-SS-MAX-TOTAL-POINTS*
-	                              ?msg
-	                              ?points
-	                              ?gt
-	                              ?team
-	                              PRODUCTION)
+	(if ?*PRODUCTION-POINTS-SS-USE-MAX-POINT-LIMIT*
+	 then
+		(assert-points-with-threshold FALSE
+		                              "SS"
+		                              ?*PRODUCTION-POINTS-SS-MAX-TOTAL-POINTS*
+		                              ?msg
+		                              ?points
+		                              ?gt
+		                              ?team
+		                              PRODUCTION)
+	 else
+		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
+		                (points ?points) (reason (str-cat "SS: " ?msg))))
+	)
 )
 
 (deffunction ss-slot-blocked-by (?back-slot ?front-slot)

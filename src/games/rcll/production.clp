@@ -732,7 +732,7 @@
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 	(ss-update-accessible-slots ?n ?shelf ?slot TRUE)
 	(ss-assert-points-with-threshold
-	  (str-cat "Payment for retrieving ( " ?shelf"," ?slot ") from " ?n)
+	  (str-cat "Payment for retrieving (" ?shelf "," ?slot ") from " ?n)
 	  ?*PRODUCTION-POINTS-SS-RETRIEVAL*
 	  ?gt ?team)
 	(modify ?s (is-filled FALSE)(description ""))
@@ -881,7 +881,9 @@
 )
 
 (defrule production-ss-continuous-costs
-; Each occupied shelf slot of a SS causes periodic costs.
+" Each occupied shelf slot of a SS causes periodic costs.
+"
+	(test (> ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME* 0))
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?s <- (machine-ss-shelf-slot (name ?n) (is-filled TRUE) (position ?shelf ?slot)
 	  (num-payments ?np&:(< ?np ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
