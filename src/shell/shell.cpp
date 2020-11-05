@@ -58,13 +58,12 @@
 #include <msgs/RobotCommands.pb.h>
 
 #include <cursesp.h>
+#include <boost/bind/bind.hpp>
+#include <boost/lexical_cast.hpp>
+#include <cstring>
 #include <cursesf.h>
 #include <cursesm.h>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/bind.hpp>
-
-#include <cstring>
 #include <unistd.h>
 #include <modbus/modbus.h>
 
@@ -78,6 +77,7 @@
 #define MIN_NUM_ROBOTS 6
 
 using namespace protobuf_comm;
+using namespace boost::placeholders;
 
 namespace llsfrb_shell {
 #if 0 /* just to make Emacs auto-indent happy */
