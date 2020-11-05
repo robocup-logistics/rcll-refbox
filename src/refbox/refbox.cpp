@@ -60,7 +60,7 @@
 #	include <logging/websocket.h>
 #endif
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 #include <cstdlib>
 
