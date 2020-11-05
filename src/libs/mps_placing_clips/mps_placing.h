@@ -679,6 +679,13 @@ public:
 		solution = NULL;
 	}
 
+#if GECODE_VERSION_NUMBER >= 600200
+	virtual Gecode::IntMinimizeSpace *
+	copy()
+	{
+		return new MPSPlacing(*this);
+	}
+#else
 	MPSPlacing(bool share, MPSPlacing &s) : Gecode::IntMinimizeSpace(share, s)
 	{
 		height_ = s.height_;
@@ -700,6 +707,7 @@ public:
 	{
 		return new MPSPlacing(share, *this);
 	}
+#endif
 
 	Gecode::IntVar
 	cost(void) const
