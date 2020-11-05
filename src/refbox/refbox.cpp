@@ -54,7 +54,7 @@
 #include <llsf_sps/mps_pick_place_2.h>
 #include <llsf_sps/mps_deliver.h>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 #if BOOST_ASIO_VERSION < 100601
 #  include <csignal>
