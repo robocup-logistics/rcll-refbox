@@ -41,8 +41,11 @@
 #include <protobuf_comm/peer.h>
 #include <protobuf_comm/server.h>
 
+#include <boost/bind/bind.hpp>
+
 using namespace google::protobuf;
 using namespace protobuf_comm;
+using namespace boost::placeholders;
 
 namespace protobuf_clips {
 #if 0 /* just to make Emacs auto-indent happy */
