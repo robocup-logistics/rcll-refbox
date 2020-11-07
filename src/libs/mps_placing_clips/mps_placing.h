@@ -178,8 +178,8 @@ public:
 			}
 		}
 		for (int x = 1; x <= width_; x++) {
-			// CAP1, CAP2, RING1, RING 2
-			for (int t = CAP1; t <= RING2; t++) {
+			// CAP1, CAP2, RING1, RING 2, STORAGE
+			for (int t = CAP1; t <= STORAGE; t++) {
 				Gecode::rel(*this,
 				            (mps_type_[index(x, 1)] == t)
 				              >> ((mps_angle_[index(x, 1)]
@@ -191,8 +191,8 @@ public:
 			}
 		}
 		for (int x = 1; x <= width_; x++) {
-			// STORAGE, DELIVERY
-			for (int t = STORAGE; t <= DELIVERY; t++) {
+			// DELIVERY
+			for (int t = DELIVERY; t <= DELIVERY; t++) {
 				Gecode::rel(*this,
 				            (mps_type_[index(x, 1)] == t) >> ((mps_angle_[index(x, 1)] != ANGLE_225)
 				                                              && (mps_angle_[index(x, 1)] != ANGLE_270)
@@ -207,16 +207,16 @@ public:
 
 		// special case entry zone wall
 		for (int x = width_ - 1; x <= width_; x++) {
-			// BASE, CAP1, CAP2, RING1, RING 2
-			for (int t = BASE; t <= RING2; t++) {
+			// BASE, CAP1, CAP2, RING1, RING 2, STORAGE
+			for (int t = BASE; t <= STORAGE; t++) {
 				Gecode::rel(*this,
 				            (mps_type_[index(x, 2)] == t) >> ((mps_angle_[index(x, 2)] == ANGLE_0)
 				                                              || (mps_angle_[index(x, 2)] == ANGLE_180)));
 			}
 		}
 		for (int x = width_ - 1; x <= width_; x++) {
-			// STORAGE, DELIVERY
-			for (int t = STORAGE; t <= DELIVERY; t++) {
+			// DELIVERY
+			for (int t = DELIVERY; t <= DELIVERY; t++) {
 				Gecode::rel(*this,
 				            (mps_type_[index(x, 2)] == t) >> ((mps_angle_[index(x, 1)] != ANGLE_225)
 				                                              && (mps_angle_[index(x, 1)] != ANGLE_270)
@@ -238,8 +238,8 @@ public:
 			}
 		}
 		for (int y = 1; y <= height_; y++) {
-			// CAP1, CAP2, RING1, RING 2
-			for (int t = CAP1; t <= RING2; t++) {
+			// CAP1, CAP2, RING1, RING 2, STORAGE
+			for (int t = CAP1; t <= STORAGE; t++) {
 				Gecode::rel(*this,
 				            (mps_type_[index(1, y)] == t) >> ((mps_angle_[index(1, y)] == ANGLE_90)
 				                                              || (mps_angle_[index(1, y)] == ANGLE_270)));
@@ -250,8 +250,8 @@ public:
 			}
 		}
 		for (int y = 1; y <= height_; y++) {
-			// STORAGE, DELIVERY
-			for (int t = STORAGE; t <= DELIVERY; t++) {
+			// DELIVERY
+			for (int t = DELIVERY; t <= DELIVERY; t++) {
 				Gecode::rel(*this,
 				            (mps_type_[index(1, y)] == t) >> ((mps_angle_[index(1, y)] != ANGLE_45)
 				                                              && (mps_angle_[index(1, y)] != ANGLE_0)
@@ -266,16 +266,16 @@ public:
 
 		//special case entry wall
 
-		// BASE, CAP1, CAP2, RING1, RING 2
-		for (int t = BASE; t <= RING2; t++) {
+		// BASE, CAP1, CAP2, RING1, RING 2, STORAGE
+		for (int t = BASE; t <= STORAGE; t++) {
 			Gecode::rel(*this,
 			            (mps_type_[index(width_ - 3, 1)] == t)
 			              >> ((mps_angle_[index(width_ - 3, 1)] == ANGLE_90)
 			                  || (mps_angle_[index(width_ - 3, 1)] == ANGLE_270)));
 		}
 
-		// STORAGE, DELIVERY
-		for (int t = STORAGE; t <= DELIVERY; t++) {
+		// DELIVERY
+		for (int t = DELIVERY; t <= DELIVERY; t++) {
 			Gecode::rel(*this,
 			            (mps_type_[index(width_ - 3, 1)] == t)
 			              >> ((mps_angle_[index(width_ - 3, 1)] != ANGLE_135)
