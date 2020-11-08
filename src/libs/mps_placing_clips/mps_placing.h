@@ -295,6 +295,7 @@ public:
 		Gecode::rel(*this, mps_type_[index(width_ - 1, 1)] == EMPTY_ROT);
 		Gecode::rel(*this, mps_type_[index(width_ - 2, 1)] == EMPTY_ROT);
 		Gecode::rel(*this, mps_type_[index(width_ - 2, 2)] == EMPTY_ROT);
+		Gecode::rel(*this, mps_type_[index(width_, height_)] == EMPTY_ROT);
 
 		// insert blocking contraints
 		for (int x = 1; x <= width_; x++) {
