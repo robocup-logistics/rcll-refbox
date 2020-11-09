@@ -217,7 +217,7 @@ private:
 	  sig_peer_sent_;
 
 	fawkes::Mutex map_mutex_;
-	long int      next_client_id_;
+	long int      next_client_id_ = 0;
 
 	std::map<long int, protobuf_comm::ProtobufStreamServer::ClientID>         server_clients_;
 	typedef std::map<protobuf_comm::ProtobufStreamServer::ClientID, long int> RevServerClientMap;
