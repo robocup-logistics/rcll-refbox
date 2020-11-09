@@ -679,6 +679,28 @@ public:
 		solution = NULL;
 	}
 
+#if GECODE_VERSION_NUMBER >= 600200
+	virtual MPSPlacing *
+	copy()
+	{
+		return new MPSPlacing(*this);
+	}
+	explicit MPSPlacing(MPSPlacing &s) : Gecode::IntMinimizeSpace(s)
+	{
+		height_ = s.height_;
+		width_  = s.width_;
+		mps_type_.update(*this, s.mps_type_);
+		mps_angle_.update(*this, s.mps_angle_);
+		mps_count_.update(*this, s.mps_count_);
+		mps_resource_.resize(width_ + 2);
+		for (int x = 0; x < width_ + 2; x++) {
+			mps_resource_[x].resize(height_ + 2);
+			for (int y = 0; y < height_ + 2; y++) {
+				mps_resource_[x][y].update(*this, s.mps_resource_[x][y]);
+			}
+		}
+	};
+#else
 	MPSPlacing(bool share, MPSPlacing &s) : Gecode::IntMinimizeSpace(share, s)
 	{
 		height_ = s.height_;
@@ -695,11 +717,12 @@ public:
 		}
 	}
 
-	Gecode::IntMinimizeSpace *
+	MPSPlacing *
 	copy(bool share)
 	{
 		return new MPSPlacing(share, *this);
 	}
+#endif
 
 	Gecode::IntVar
 	cost(void) const

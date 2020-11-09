@@ -20,13 +20,12 @@ LDFLAGS += $(LDFLAGS_LIBMICROHTTPD)
 CFLAGS  += $(CFLAGS_LIBMICROHTTPD)
 LIBS_libllsfrbwebview = stdc++ llsfrbcore llsfrbutils llsfrblogging
 OBJS_libllsfrbwebview = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp $(SRCDIR)/*/*.cpp)))))
-HDRS_libfawkeswebview = $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h $(SRCDIR)/*/*.h))
+HDRS_libllsfrbwebview = $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h $(SRCDIR)/*/*.h))
 
-OBJS_all = $(OBJS_libllsfrbswebview)
-LIBS_all = $(LIBDIR)/libllsfrbwebview.so
 
 ifeq ($(HAVE_LIBMICROHTTPD),1)
-  LIBS_build = $(LIBS_all)
+  OBJS_all = $(OBJS_libllsfrbwebview)
+  LIBS_all = $(LIBDIR)/libllsfrbwebview.so
 else
   WARN_TARGETS += warning_libmicrohttpd
 endif
