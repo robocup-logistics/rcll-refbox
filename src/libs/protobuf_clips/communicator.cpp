@@ -67,7 +67,7 @@ namespace protobuf_clips {
  */
 ClipsProtobufCommunicator::ClipsProtobufCommunicator(CLIPS::Environment *env,
                                                      fawkes::Mutex &     env_mutex)
-: clips_(env), clips_mutex_(env_mutex), server_(NULL)
+: clips_(env), clips_mutex_(env_mutex), server_(NULL), next_client_id_(0)
 {
 	message_register_ = new MessageRegister();
 	setup_clips();
@@ -81,7 +81,7 @@ ClipsProtobufCommunicator::ClipsProtobufCommunicator(CLIPS::Environment *env,
 ClipsProtobufCommunicator::ClipsProtobufCommunicator(CLIPS::Environment *      env,
                                                      fawkes::Mutex &           env_mutex,
                                                      std::vector<std::string> &proto_path)
-: clips_(env), clips_mutex_(env_mutex), server_(NULL)
+: clips_(env), clips_mutex_(env_mutex), server_(NULL), next_client_id_(0)
 {
 	message_register_ = new MessageRegister(proto_path);
 	setup_clips();
@@ -868,7 +868,7 @@ ClipsProtobufCommunicator::clips_assert_message(std::pair<std::string, unsigned 
                                                 uint16_t                                msg_type,
                                                 std::shared_ptr<google::protobuf::Message> &msg,
                                                 ClipsProtobufCommunicator::ClientType       ct,
-                                                unsigned int client_id)
+                                                long int client_id)
 {
 	CLIPS::Template::pointer temp = clips_->get_template("protobuf-msg");
 	if (temp) {
