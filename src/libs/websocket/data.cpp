@@ -549,6 +549,17 @@ Data::log_push_workpiece_info(int id)
 }
 
 /**
+ * @brief Create a string of a JSON array containing the data of all current known teams facts
+ *
+ * @return std::string
+ */
+std::string
+Data::on_connect_known_teams()
+{
+	return on_connect_info("known-teams", &Data::get_known_teams_fact<rapidjson::Value>);
+}
+
+/**
  * @brief Create a string of a JSON array containing the data of all current workpiece info facts
  *
  * @return std::string
@@ -661,6 +672,38 @@ Data::on_connect_info(std::string tmpl_name,
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	d.Accept(writer);
 	return buffer.GetString();
+}
+
+/**
+ * @brief Gets data of the saved known-teams on the refbox side to support user input
+ * 
+ * @tparam T 
+ * @param o 
+ * @param alloc 
+ * @param fact 
+ */
+template <class T>
+void
+Data::get_known_teams_fact(T *                                 o,
+                           rapidjson::Document::AllocatorType &alloc,
+                           CLIPS::Fact::pointer                fact)
+{
+	//generic type information
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	(*o).AddMember("level", json_string, alloc);
+	json_string.SetString("know-teams", alloc);
+	(*o).AddMember("type", json_string, alloc);
+
+	//value fields
+	rapidjson::Value teams_array(rapidjson::kArrayType);
+	teams_array.Reserve(get_values(fact, "").size(), alloc);
+	for (const auto &e : get_values(fact, "")) {
+		rapidjson::Value v;
+		v.SetString(e, alloc);
+		teams_array.PushBack(v, alloc);
+	}
+	(*o).AddMember("know_teams", teams_array, alloc);
 }
 
 /**
