@@ -615,6 +615,46 @@ Data::on_connect_order_info()
 }
 
 /**
+ * @brief Create a string of a JSON object containing the count of existing orders
+ *
+ * @return std::string
+ */
+std::string
+Data::on_connect_order_count()
+{
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+
+	//count order info pointers
+	CLIPS::Fact::pointer fact    = env_->get_facts();
+	int                  counter = 0;
+	while (fact) {
+		if (match(fact, "order")) {
+			counter++;
+		}
+		fact = fact->next();
+	}
+
+	rapidjson::Document d;
+	d.SetObject();
+	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	d.AddMember("level", json_string, alloc);
+	json_string.SetString("order-count", alloc);
+	d.AddMember("type", json_string, alloc);
+	json_string.SetInt(counter);
+	d.AddMember("count", json_string, alloc);
+
+	rapidjson::StringBuffer                    buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	d.Accept(writer);
+
+	return buffer.GetString();
+}
+
+/**
  * @brief Create a string of a JSON array containing the data of all current machine info facts
  *
  * @return std::string

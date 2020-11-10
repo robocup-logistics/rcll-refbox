@@ -307,6 +307,7 @@ Client::on_connect_update()
 	std::string gamestate = data_->get_gamestate();
 
 	send(data_->on_connect_known_teams());
+	send(data_->on_connect_order_count());
 
 	if (gamestate == "RUNNING" || gamestate == "PAUSED") {
 		send(data_->on_connect_machine_info());
