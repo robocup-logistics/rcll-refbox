@@ -732,7 +732,7 @@ Data::get_known_teams_fact(T *                                 o,
 	rapidjson::Value json_string;
 	json_string.SetString("clips", alloc);
 	(*o).AddMember("level", json_string, alloc);
-	json_string.SetString("know-teams", alloc);
+	json_string.SetString("known-teams", alloc);
 	(*o).AddMember("type", json_string, alloc);
 
 	//value fields
