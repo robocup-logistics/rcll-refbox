@@ -743,7 +743,7 @@ Data::get_known_teams_fact(T *                                 o,
 		v.SetString(e, alloc);
 		teams_array.PushBack(v, alloc);
 	}
-	(*o).AddMember("know_teams", teams_array, alloc);
+	(*o).AddMember("known_teams", teams_array, alloc);
 }
 
 /**
