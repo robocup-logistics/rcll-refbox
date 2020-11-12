@@ -549,6 +549,17 @@ Data::log_push_workpiece_info(int id)
 }
 
 /**
+ * @brief Create a string of a JSON array containing the data of all current known teams facts
+ *
+ * @return std::string
+ */
+std::string
+Data::on_connect_known_teams()
+{
+	return on_connect_info("known-teams", &Data::get_known_teams_fact<rapidjson::Value>);
+}
+
+/**
  * @brief Create a string of a JSON array containing the data of all current workpiece info facts
  *
  * @return std::string
@@ -601,6 +612,46 @@ std::string
 Data::on_connect_order_info()
 {
 	return on_connect_info("order", &Data::get_order_info_fact<rapidjson::Value>);
+}
+
+/**
+ * @brief Create a string of a JSON object containing the count of existing orders
+ *
+ * @return std::string
+ */
+std::string
+Data::on_connect_order_count()
+{
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+
+	//count order info pointers
+	CLIPS::Fact::pointer fact    = env_->get_facts();
+	int                  counter = 0;
+	while (fact) {
+		if (match(fact, "order")) {
+			counter++;
+		}
+		fact = fact->next();
+	}
+
+	rapidjson::Document d;
+	d.SetObject();
+	rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	d.AddMember("level", json_string, alloc);
+	json_string.SetString("order-count", alloc);
+	d.AddMember("type", json_string, alloc);
+	json_string.SetInt(counter);
+	d.AddMember("count", json_string, alloc);
+
+	rapidjson::StringBuffer                    buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	d.Accept(writer);
+
+	return buffer.GetString();
 }
 
 /**
@@ -661,6 +712,38 @@ Data::on_connect_info(std::string tmpl_name,
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	d.Accept(writer);
 	return buffer.GetString();
+}
+
+/**
+ * @brief Gets data of the saved known-teams on the refbox side to support user input
+ * 
+ * @tparam T 
+ * @param o 
+ * @param alloc 
+ * @param fact 
+ */
+template <class T>
+void
+Data::get_known_teams_fact(T *                                 o,
+                           rapidjson::Document::AllocatorType &alloc,
+                           CLIPS::Fact::pointer                fact)
+{
+	//generic type information
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	(*o).AddMember("level", json_string, alloc);
+	json_string.SetString("known-teams", alloc);
+	(*o).AddMember("type", json_string, alloc);
+
+	//value fields
+	rapidjson::Value teams_array(rapidjson::kArrayType);
+	teams_array.Reserve(get_values(fact, "").size(), alloc);
+	for (const auto &e : get_values(fact, "")) {
+		rapidjson::Value v;
+		v.SetString(e, alloc);
+		teams_array.PushBack(v, alloc);
+	}
+	(*o).AddMember("known_teams", teams_array, alloc);
 }
 
 /**

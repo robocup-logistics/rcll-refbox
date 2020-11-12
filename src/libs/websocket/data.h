@@ -73,8 +73,10 @@ public:
 	void        log_push_machine_info(std::string name);
 	void        log_push_workpiece_info(int id);
 	void        log_push_order_info_via_delivery(int delivery_id);
+	std::string on_connect_known_teams();
 	std::string on_connect_machine_info();
 	std::string on_connect_order_info();
+	std::string on_connect_order_count();
 	std::string on_connect_workpiece_info();
 	std::string on_connect_robot_info();
 	std::string on_connect_ring_spec();
@@ -82,6 +84,9 @@ public:
 	std::string get_gamestate();
 	std::string get_gamephase();
 	std::map<std::string, std::shared_ptr<rapidjson::SchemaDocument>> command_schema_map;
+	template <class T>
+	void
+	get_known_teams_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void
 	get_machine_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
