@@ -268,6 +268,13 @@ Client::receive_thread()
 						data_->clips_production_reset_machine_by_team(msgs["machine_name"].GetString(),
 						                                              msgs["team_color"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "add_points_team") == 0) {
+						data_->clips_add_points_team(msgs["points"].GetInt(),
+						                             msgs["team_color"].GetString(),
+						                             msgs["game_time"].GetFloat(),
+						                             msgs["phase"].GetString(),
+						                             msgs["reason"].GetString());
+					}
 				}
 			} else {
 				logger_->log_error("Websocket", "malformed message received, won't be processed");

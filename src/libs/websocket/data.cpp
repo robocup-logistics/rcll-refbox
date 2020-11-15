@@ -61,7 +61,8 @@ Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mute
 	                              "set_order_delivered",
 	                              "set_robot_maintenance",
 	                              "set_teamname",
-	                              "reset_machine_by_team"};
+	                              "reset_machine_by_team",
+	                              "add_points_team"};
 
 	for (const std::string &schema_name : schema_names) {
 		std::shared_ptr<rapidjson::SchemaDocument> sd =

@@ -1836,6 +1836,20 @@ LLSFRefBox::setup_clips_websocket()
 		                      machine_name.c_str(),
 		                      team_color.c_str());
 	};
+	backend_->get_data()->clips_add_points_team = [this](int         points,
+	                                                     std::string team_color,
+	                                                     float       game_time,
+	                                                     std::string phase,
+	                                                     std::string reason) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f(
+		  "(points (points %d) (team %s) (game-time %f) (phase %s) (reason \"%s\"))",
+		  points,
+		  team_color.c_str(),
+		  game_time,
+		  phase.c_str(),
+		  reason.c_str());
+	};
 }
 
 #endif
