@@ -64,6 +64,7 @@ public:
 	std::function<void(std::string, std::string)>    clips_production_set_machine_state;
 	std::function<void(int, std::string, bool)>      clips_robot_set_robot_maintenance;
 	std::function<void(std::string, std::string)>    clips_production_reset_machine_by_team;
+	std::function<void(int, std::string, float, std::string, std::string)> clips_add_points_team;
 	bool        match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
 	void        log_push_points();
 	void        log_push_ring_spec();

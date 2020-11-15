@@ -1,0 +1,76 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "add_points_team schema",
+    "description": "This command adds the given amount of points to the given team.",
+    "default": {},
+    "examples": [
+        {
+            "command": "add_points_team",
+            "points": 100,
+            "team_color": "CYAN",
+            "game_time": 354.223424,
+            "phase": "PRODUCTION",
+            "reason": "Best looking robot!"
+        }
+    ],
+    "required": [
+        "command",
+        "points",
+        "team_color",
+        "game_time",
+        "phase",
+        "reason"
+    ],
+    "properties": {
+        "command": {
+            "$id": "#/properties/command",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "add_points_team"
+            ]
+        },
+        "points": {
+            "$id": "#/properties/points",
+            "type": "integer",
+            "default": 0,
+            "examples": [
+                100
+            ]
+        },
+        "team_color": {
+            "$id": "#/properties/team_color",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "CYAN"
+            ]
+        },
+        "game_time": {
+            "$id": "#/properties/game_time",
+            "type": "number",
+            "default": 0.0,
+            "examples": [
+                354.223424
+            ]
+        },
+        "phase": {
+            "$id": "#/properties/phase",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "PRODUCTION"
+            ]
+        },
+        "reason": {
+            "$id": "#/properties/reason",
+            "type": "string",
+            "default": "",
+            "examples": [
+                "Best looking robot!"
+            ]
+        }
+    }
+}
