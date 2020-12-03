@@ -190,27 +190,17 @@ OpcUaMachine::set_light(llsf_msgs::LightColor color,
                         llsf_msgs::LightState state,
                         unsigned short        time)
 {
-	LightColor m_color;
+	LightColor m_color = LIGHT_COLOR_RESET;
 	switch (color) {
 	case llsf_msgs::LightColor::RED: m_color = LightColor::LIGHT_COLOR_RED; break;
 	case llsf_msgs::LightColor::YELLOW: m_color = LightColor::LIGHT_COLOR_YELLOW; break;
 	case llsf_msgs::LightColor::GREEN: m_color = LightColor::LIGHT_COLOR_GREEN; break;
 	}
-	switch (m_color) {
-	case LightColor::LIGHT_COLOR_RESET:
-	case LightColor::LIGHT_COLOR_RED:
-	case LightColor::LIGHT_COLOR_YELLOW:
-	case LightColor::LIGHT_COLOR_GREEN: break;
-	default: throw std::invalid_argument("Illegal color! See MPSIoMapping.h for choices.");
-	}
-	unsigned short int plc_state;
+	unsigned short int plc_state = LightState::LIGHT_STATE_OFF;
 	switch (state) {
 	case llsf_msgs::ON: plc_state = LightState::LIGHT_STATE_ON; break;
 	case llsf_msgs::OFF: plc_state = LightState::LIGHT_STATE_OFF; break;
 	case llsf_msgs::BLINK: plc_state = LightState::LIGHT_STATE_BLINK; break;
-	default:
-		plc_state = LightState::LIGHT_STATE_OFF;
-		// TODO error
 	}
 	enqueue_instruction(m_color, plc_state, time);
 }

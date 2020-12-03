@@ -44,7 +44,8 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS)$(HAVE_NCURSES),111)
   BINS_all =	$(BINDIR)/llsf-refbox-shell
 
   CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_NCURSES) \
-	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
+	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS)) \
+	     -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
   LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_NCURSES) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
