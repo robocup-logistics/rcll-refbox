@@ -34,8 +34,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
-
 #include "shell.h"
 
 #include "colors.h"
