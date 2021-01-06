@@ -1771,7 +1771,7 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::error,
 	                               boost::asio::placeholders::signal_number));
 #else
-	g_refbox          = this;
+	g_refbox = this;
 	signal(SIGINT, llsfrb::handle_signal);
 #endif
 
