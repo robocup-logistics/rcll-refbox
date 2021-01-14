@@ -150,7 +150,7 @@ llsfrb:
       recv-port: !udp-port 4447
 
   mongodb:
-    enable: false
+    enable: true
     hostport: localhost
     collections:
       text-log: log
@@ -164,13 +164,13 @@ llsfrb:
     # set to true to generate a random field at startup
     # disabling randomization requires mongodb to be enabled as the game
     # parameters are loaded from a mongodb game report in this case
-    random-field: true
-    random-machine-setup: true
+    random-field: false
+    random-machine-setup: false
     random-orders: true
-    random-storage: true
+    random-storage: false
     # load data from latest game report with a given name
     # leave empty to always load from latest stored report
-    load-from-report: ""
+    load-from-report: "test_hit"
     # store game report under a name for later reference
     store-to-report: ""
 
@@ -222,7 +222,7 @@ llsfrb:
       estimate-time: true
 
   webshop:
-    enable: false
+    enable: true
 
   websocket:
     # true if accepting websocket clients, not tcp socket clients
