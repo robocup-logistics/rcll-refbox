@@ -291,10 +291,14 @@ public:
 		// insert blocking contraints
 
 		//block entry zones
-		Gecode::rel(*this, mps_type_[index(width_, 1)] == EMPTY_ROT);
-		Gecode::rel(*this, mps_type_[index(width_ - 1, 1)] == EMPTY_ROT);
-		Gecode::rel(*this, mps_type_[index(width_ - 2, 1)] == EMPTY_ROT);
 		Gecode::rel(*this, mps_type_[index(width_ - 2, 2)] == EMPTY_ROT);
+		for (int _i = 0; _i <= width_; _i++) {
+			Gecode::rel(*this, mps_type_[index(width_ - _i, 1)] == EMPTY_ROT);
+			Gecode::rel(*this, mps_type_[index(width_ - _i, height_)] == EMPTY_ROT);
+		}
+		for (int _i = 1; _i < height_; _i++) {	
+			Gecode::rel(*this, mps_type_[index(width_, height_ - 1)] == EMPTY_ROT);
+		}
 
 		// insert blocking contraints
 		for (int x = 1; x <= width_; x++) {
