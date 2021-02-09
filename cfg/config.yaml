@@ -10,6 +10,12 @@ include:
 ---
 # Main configuration document
 
+challenges:
+  # 1: Navigation or Exploration, 2: Production, 3: Half Field
+  challenge: 1
+  # 1: 2 Stations, 2: 3 Stations, 3: 4 Stations
+  difficulty: 3
+
 llsfrb:
   log:
     level: info
