@@ -56,7 +56,7 @@ namespace mps_placing_clips {
 class MPSPlacingGenerator
 {
 public:
-	MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex &env_mutex);
+	MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex &env_mutex, int _c, int _d);
 	~MPSPlacingGenerator();
 
 	void          generate_start();
@@ -81,6 +81,11 @@ private:
 
 	std::list<std::string> functions_;
 	CLIPS::Fact::pointer   avail_fact_;
+
+	int width;
+	int height;
+	int challenge;
+	int difficulty;
 };
 
 } // namespace mps_placing_clips

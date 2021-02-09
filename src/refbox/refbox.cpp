@@ -306,7 +306,11 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	}
 
 	mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
-	  new mps_placing_clips::MPSPlacingGenerator(clips_.get(), clips_mutex_));
+	  new mps_placing_clips::MPSPlacingGenerator(
+	    clips_.get(),
+	    clips_mutex_,
+	    config_->get_int_or_default("challenges/challenge", 1),
+	    config_->get_int_or_default("challenges/difficulty", 1)));
 
 	logger_->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 

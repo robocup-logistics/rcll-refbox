@@ -54,7 +54,10 @@ namespace mps_placing_clips {
  * @param env CLIPS environment to which to provide the protobuf functionality
  * @param env_mutex mutex to lock when operating on the CLIPS environment.
  */
-MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex &env_mutex)
+MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env,
+                                         fawkes::Mutex &     env_mutex,
+                                         int                 _challenge,
+                                         int                 _difficulty)
 : clips_(env), clips_mutex_(env_mutex)
 {
 	setup_clips();
@@ -62,6 +65,8 @@ MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex 
 	is_field_generated_    = false;
 	generator_             = nullptr;
 	generator_thread_      = nullptr;
+	challenge              = _challenge;
+	difficulty             = _difficulty;
 }
 
 /** Destructor. */
@@ -127,8 +132,13 @@ MPSPlacingGenerator::generate_start()
 	}
 	is_generation_running_ = true;
 	is_field_generated_    = false;
-
-	generator_ = std::shared_ptr<MPSPlacing>(new MPSPlacing(7, 8));
+	width                  = 5;
+	height                 = 5;
+	if (challenge == 3) {
+		width  = 7;
+		height = 8;
+	}
+	generator_ = std::shared_ptr<MPSPlacing>(new MPSPlacing(width, height, challenge, difficulty));
 	generator_thread_ =
 	  std::shared_ptr<std::thread>(new std::thread(&MPSPlacingGenerator::generator_thread, this));
 }

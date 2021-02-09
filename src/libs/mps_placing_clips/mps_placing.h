@@ -83,22 +83,80 @@ public:
 
 class MPSPlacing : public Gecode::IntMinimizeSpace
 {
-public:
-	MPSPlacing(int _width, int _height)
+public: // _challenge {1 = Expo || Nav, 2 = Produ, 3 = Half field}
+	// _difficulty{1,2,3}
+	MPSPlacing(int _width, int _height, int _challenge, int _difficulty)
+	//MPSPlacing(int _width, int _height)
 	{
+		/* Stations for Challenges
+                 * |Challenge   |Stations on field  |Allowed Stations   |
+                 * |------------|-------------------|-------------------|
+                 * |Explor      |2                  |1,2,3,4,5,6,7      |
+                 * |            |3                  |                   |
+                 * |            |4                  |                   |
+                 * |------------|-------------------|-------------------|
+                 * |Navigation  |2                  |1,2,3,4,5,6,7      |
+                 * |            |3                  |                   |
+                 * |            |4                  |                   |
+                 * |------------|-------------------|-------------------|
+                 * |Production  |2                  |1,2                |
+                 * |+ Explo &   |3                  |1,2,4              |
+                 * |  Production|4                  |1,2,4,5            |
+                 * |------------|-------------------|-------------------|
+                 * |Half Field  |7                  |1,2,3,4,5,6,7      |
+                */
+		int production_challenge[] = {0, 1, 2, 4, 5};
+		int subtract_num_mps;
+
+		//randomize station types for exploration and navigation
+		std::vector<int> _mps{1, 2, 3, 4, 5, 6, 7};
+		std::random_shuffle(_mps.begin(), _mps.end());
+
 		height_ = _height;
 		width_  = _width;
 
-		mps_type_  = Gecode::IntVarArray(*this, (height_ + 2) * (width_ + 2), EMPTY_ROT, NUM_MPS);
+		// limit amount of mps stations on field
+		switch (_difficulty) {
+		case 1: subtract_num_mps = 5; break;
+		case 2: subtract_num_mps = 4; break;
+		case 3: subtract_num_mps = 3; break;
+		default: subtract_num_mps = 0; break;
+		}
+		mps_type_  = Gecode::IntVarArray(*this,
+                                    (height_ + 2) * (width_ + 2),
+                                    EMPTY_ROT,
+                                    NUM_MPS - subtract_num_mps);
 		mps_angle_ = Gecode::IntVarArray(*this, (height_ + 2) * (width_ + 2), EMPTY_ROT, ANGLE_315);
 		//zone_blocked_ = Gecode::IntVarArray(*this, (height_+2) * (width_+2) , 0, 1);
 
 		rg_ = Gecode::Rnd(time(NULL));
 
 		std::vector<int> types;
-
 		for (int i = 0; i <= NUM_MPS; i++) {
 			types.push_back(i);
+		}
+		std::vector<int> allowed_types;
+		// fill types vector with allowed mps station types for each challenge according to table above
+		switch (_challenge) {
+		case 1:
+			// push back 0, because or random mps stations in _mps vector
+			allowed_types.push_back(0);
+			for (int i = 1; i <= NUM_MPS - subtract_num_mps; i++) {
+				allowed_types.push_back(_mps.back());
+				_mps.pop_back();
+			}
+			std::sort(allowed_types.begin(), allowed_types.end());
+			break;
+		case 2:
+			for (int i = 0; i <= NUM_MPS - subtract_num_mps; i++) {
+				allowed_types.push_back(production_challenge[i]);
+			}
+			break;
+		case 3:
+			for (int i = 0; i <= NUM_MPS; i++) {
+				allowed_types.push_back(i);
+			}
+			break;
 		}
 
 		mps_types_ = Gecode::IntArgs(types);
@@ -113,13 +171,21 @@ public:
 		}
 
 		// counting constraint for number of different machines
-		Gecode::rel(*this, mps_count_[BASE], Gecode::IRT_EQ, 1);
+		for (int i = 1; i <= NUM_MPS; i++) {
+			if (std::binary_search(allowed_types.begin(), allowed_types.end(), i)) {
+				Gecode::rel(*this, mps_count_[i], Gecode::IRT_EQ, 1);
+			} else {
+				Gecode::rel(*this, mps_count_[i], Gecode::IRT_EQ, 0);
+			}
+		}
+
+		/*Gecode::rel(*this, mps_count_[BASE], Gecode::IRT_EQ, 1);
 		Gecode::rel(*this, mps_count_[CAP1], Gecode::IRT_EQ, 1);
 		Gecode::rel(*this, mps_count_[CAP2], Gecode::IRT_EQ, 1);
 		Gecode::rel(*this, mps_count_[RING1], Gecode::IRT_EQ, 1);
 		Gecode::rel(*this, mps_count_[RING2], Gecode::IRT_EQ, 1);
 		Gecode::rel(*this, mps_count_[STORAGE], Gecode::IRT_EQ, 1);
-		Gecode::rel(*this, mps_count_[DELIVERY], Gecode::IRT_EQ, 1);
+                Gecode::rel(*this, mps_count_[DELIVERY], Gecode::IRT_EQ, 1);*/
 
 		// an EMPTY_ROT zone has no orientation
 		for (int i = 0; i < (height_ + 2) * (width_ + 2); i++) {
@@ -162,7 +228,7 @@ public:
 			}
 		}
 
-		// manage boder cases
+		// manage border cases
 
 		// along x border
 		for (int x = 1; x <= width_; x++) {
@@ -294,7 +360,7 @@ public:
 		Gecode::rel(*this, mps_type_[index(width_, 1)] == EMPTY_ROT);
 		Gecode::rel(*this, mps_type_[index(width_ - 1, 1)] == EMPTY_ROT);
 		Gecode::rel(*this, mps_type_[index(width_ - 2, 1)] == EMPTY_ROT);
-		Gecode::rel(*this, mps_type_[index(width_ - 2, 2)] == EMPTY_ROT);
+		//Gecode::rel(*this, mps_type_[index(width_ - 2, 2)] == EMPTY_ROT);
 
 		// insert blocking contraints
 		for (int x = 1; x <= width_; x++) {
