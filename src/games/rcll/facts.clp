@@ -326,6 +326,7 @@
 	(slot machine-positions (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
 	(slot machine-setup (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
 	(slot orders (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot gamestate (type SYMBOL) (allowed-values PENDING RECOVERED FRESH) (default PENDING))
 	(slot storage-status (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
 )
 
