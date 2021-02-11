@@ -8,6 +8,10 @@
 ;             2020  Tarik Viehmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
+(defglobal
+	; Mongodb Game Report Version,
+	?*MONGODB-REPORT-VERSION* = 1.0
+)
 
 (deftemplate mongodb-game-report
 	(multislot start (type INTEGER) (cardinality 2 2) (default 0 0))
@@ -228,6 +232,7 @@
   (bson-append-time  ?doc "start-time" ?stime)
   (bson-append-array ?doc "teams" ?teams)
   (bson-append ?doc "report-name" ?report-name)
+	(bson-append ?doc "report-version" ?*MONGODB-REPORT-VERSION*)
 
   (if (time-nonzero ?etime) then
     (bson-append-time ?doc "end-time" ?etime)
