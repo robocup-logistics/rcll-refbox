@@ -11,10 +11,13 @@
 (defglobal
 	; Mongodb Game Report Version,
 	?*MONGODB-REPORT-VERSION* = 1.0
+	; Update rate in seconds
+	?*MONGODB-REPORT-UPDATE-FREQUENCY* = 10
 )
 
 (deftemplate mongodb-game-report
 	(multislot start (type INTEGER) (cardinality 2 2) (default 0 0))
+	(multislot last-updated (type INTEGER) (cardinality 2 2) (default 0 0))
 	(multislot end (type INTEGER) (cardinality 2 2) (default 0 0))
 	(slot name (type STRING) (default ""))
 	(multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
@@ -184,6 +187,45 @@
 	(bson-builder-destroy ?doc)
 )
 
+(deffunction mongodb-load-fact-from-game-report (?report-name ?fact ?template ?id-slot $?only-slots)
+" Update fact with values from a game report.
+  @param ?report-name Name of the report from which data is loaded. In case
+                      Multiple reports have the same name the newest one is
+                      chosen.
+  @param ?fact field name within game reports that contains the fact
+  @param ?template Template name of the fact that is encoded in ?facts
+  @param ?slot-id Name of the slot that uniquely determines the ?template fact
+                  that is updated
+  @param $?only-slots optional list of slots within ?template that are updated
+                      by the values contained in ?doc. If unspecified all slots
+                      are updated.
+  @return TRUE if the game report has a field name ?facts, FALSE otherwise.
+"
+	(bind ?success FALSE)
+	(bind ?t-query (bson-parse "{}"))
+	(if (neq ?report-name "")
+	 then
+		(bind ?t-query (bson-parse (str-cat "{\"report-name\": \"" ?report-name "\"}")))
+	)
+	(bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
+	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
+	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(if (neq ?t-doc FALSE) then
+	 then
+		(bind ?m-p (bson-get ?t-doc ?fact))
+		(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
+		(bson-destroy ?m-p)
+		(bind ?success TRUE)
+	 else
+		(printout error "Empty result in mongoDB from game_report for fact " ?template crlf)
+	)
+	(bson-destroy ?t-doc)
+	(mongodb-cursor-destroy ?t-cursor)
+	(bson-builder-destroy ?t-query)
+	(bson-builder-destroy ?t-sort)
+	(return ?success)
+)
+
 (deffunction mongodb-load-facts-from-game-report (?report-name ?facts ?template ?id-slot $?only-slots)
 " Update facts with values from a game report.
   @param ?report-name Name of the report from which data is loaded. In case
@@ -238,6 +280,11 @@
     (bson-append-time ?doc "end-time" ?etime)
   )
 
+	(do-for-fact ((?p gamestate)) TRUE
+		(bind ?gamestate-doc (mongodb-fact-to-bson ?p))
+		(bson-append ?doc (str-cat "gamestate/" ?p:phase) ?gamestate-doc)
+		(bson-builder-destroy ?gamestate-doc)
+	)
   (bind ?points-arr (bson-array-start))
   (bind ?phase-points-doc-cyan (bson-create))
   (bind ?phase-points-doc-magenta (bson-create))
@@ -388,6 +435,33 @@
   (bson-builder-destroy ?update-query)
 )
 
+
+(defrule mongodb-restore-gamestate
+	(declare (salience ?*PRIORITY_FIRST*))
+	(time $?now)
+	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
+	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
+	?gp <- (game-parameters (gamestate PENDING))
+	=>
+	(printout t "Loading gamestate from database" crlf)
+	(if (mongodb-load-fact-from-game-report ?report-name
+	                                         (sym-cat "gamestate/" ?p)
+	                                         gamestate
+	                                         (create$))
+	 then
+		(printout t "Loading gamestate finished" crlf)
+		(modify ?gp (gamestate RECOVERED))
+		; ensure that time elapses from now on
+		(do-for-fact ((?g gamestate)) TRUE
+			(modify ?g (last-time $?now))
+		)
+	 else
+		(printout error "Loading gamestate from database failed, fallback to fresh one." crlf)
+		(modify ?gp (gamestate FRESH))
+	)
+)
 
 (defrule mongodb-load-storage-status
 	(declare (salience ?*PRIORITY_FIRST*))
