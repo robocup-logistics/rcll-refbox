@@ -170,6 +170,9 @@ llsfrb:
     random-machine-setup: true
     random-orders: true
     random-storage: true
+    restore-gamestate:
+      enable: false
+      phase: PRODUCTION
     # load data from latest game report with a given name
     # leave empty to always load from latest stored report
     load-from-report: ""
