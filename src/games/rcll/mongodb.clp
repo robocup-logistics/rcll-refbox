@@ -384,14 +384,18 @@
 )
 
 (defrule mongodb-game-report-update
-  (declare (salience ?*PRIORITY_HIGH*))
-	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
-  (gamestate (state RUNNING)
+	(declare (salience ?*PRIORITY_HIGH*))
+	(time $?now)
+	(gamestate (state RUNNING)
 	     (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (start-time $?stime) (end-time $?etime)
-	     (points $?points&:(neq ?points ?gr-points)))
-  =>
-  (modify ?gr (points ?points))
+	     (points $?points))
+	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name)
+	     (last-updated $?last-updated&:(or
+	       (neq $?points $?gr-points)
+	       (timeout $?now $?last-updated ?*MONGODB-REPORT-UPDATE-FREQUENCY*))))
+	=>
+	(modify ?gr (points $?points) (last-updated $?now))
 	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime)
 )
 
