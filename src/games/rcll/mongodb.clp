@@ -231,7 +231,7 @@
   @param ?report-name Name of the report from which data is loaded. In case
                       Multiple reports have the same name the newest one is
                       chosen.
-  @param ?facts field name within game reports taht contains the facts
+  @param ?facts field name within game reports that contains the facts
   @param ?template Template name of the fact that is encoded in ?facts
   @param ?slot-id Name of the slot that uniquely determines the ?template fact
                   that is updated
@@ -471,7 +471,6 @@
 	?gp <- (game-parameters (storage-status PENDING))
 	=>
 	(printout t "Loading storage from database" crlf)
-	(assert (storage-tried-from-db))
 	(if (mongodb-load-facts-from-game-report ?report-name
 	                                         "machine-ss-shelf-slots"
 	                                         machine-ss-shelf-slot
@@ -493,7 +492,6 @@
 	?gp <- (game-parameters (orders PENDING))
 	=>
 	(printout t "Loading orders from database" crlf)
-	(assert (orders-tried-from-db))
 	(if (mongodb-load-facts-from-game-report ?report-name
 	                                         "orders"
 	                                          order
