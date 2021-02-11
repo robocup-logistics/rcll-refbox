@@ -268,53 +268,53 @@
 )
 
 (deffunction mongodb-create-game-report (?teams ?stime ?etime ?report-name)
-  (bind ?doc (bson-create))
+	(bind ?doc (bson-create))
 
-  (bson-append-array ?doc "start-timestamp" ?stime)
-  (bson-append-time  ?doc "start-time" ?stime)
-  (bson-append-array ?doc "teams" ?teams)
-  (bson-append ?doc "report-name" ?report-name)
+	(bson-append-array ?doc "start-timestamp" ?stime)
+	(bson-append-time  ?doc "start-time" ?stime)
+	(bson-append-array ?doc "teams" ?teams)
+	(bson-append ?doc "report-name" ?report-name)
 	(bson-append ?doc "report-version" ?*MONGODB-REPORT-VERSION*)
 
-  (if (time-nonzero ?etime) then
-    (bson-append-time ?doc "end-time" ?etime)
-  )
+	(if (time-nonzero ?etime) then
+		(bson-append-time ?doc "end-time" ?etime)
+	)
 
 	(do-for-fact ((?p gamestate)) TRUE
 		(bind ?gamestate-doc (mongodb-fact-to-bson ?p))
 		(bson-append ?doc (str-cat "gamestate/" ?p:phase) ?gamestate-doc)
 		(bson-builder-destroy ?gamestate-doc)
 	)
-  (bind ?points-arr (bson-array-start))
-  (bind ?phase-points-doc-cyan (bson-create))
-  (bind ?phase-points-doc-magenta (bson-create))
+	(bind ?points-arr (bson-array-start))
+	(bind ?phase-points-doc-cyan (bson-create))
+	(bind ?phase-points-doc-magenta (bson-create))
 
-  (bind ?points-cyan 0)
-  (bind ?points-magenta 0)
-  (foreach ?phase (deftemplate-slot-allowed-values points phase)
-    (bind ?phase-points-cyan 0)
-    (bind ?phase-points-magenta 0)
-    (do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
-      (bind ?point-doc (mongodb-fact-to-bson ?p))
-      (if (eq ?p:team CYAN)
-        then (bind ?phase-points-cyan (+ ?phase-points-cyan ?p:points))
-        else (bind ?phase-points-magenta (+ ?phase-points-magenta ?p:points))
-      )
-      (bson-array-append ?points-arr ?point-doc)
-      (bson-builder-destroy ?point-doc)
-    )
-    (bson-append ?phase-points-doc-cyan ?phase ?phase-points-cyan)
-    (bson-append ?phase-points-doc-magenta ?phase ?phase-points-magenta)
-    (bind ?points-cyan (+ ?points-cyan ?phase-points-cyan))
-    (bind ?points-magenta (+ ?points-magenta ?phase-points-magenta))
-  )
+	(bind ?points-cyan 0)
+	(bind ?points-magenta 0)
+	(foreach ?phase (deftemplate-slot-allowed-values points phase)
+		(bind ?phase-points-cyan 0)
+		(bind ?phase-points-magenta 0)
+		(do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
+			(bind ?point-doc (mongodb-fact-to-bson ?p))
+			(if (eq ?p:team CYAN)
+			 then (bind ?phase-points-cyan (+ ?phase-points-cyan ?p:points))
+			 else (bind ?phase-points-magenta (+ ?phase-points-magenta ?p:points))
+			)
+			(bson-array-append ?points-arr ?point-doc)
+			(bson-builder-destroy ?point-doc)
+		)
+		(bson-append ?phase-points-doc-cyan ?phase ?phase-points-cyan)
+		(bson-append ?phase-points-doc-magenta ?phase ?phase-points-magenta)
+		(bind ?points-cyan (+ ?points-cyan ?phase-points-cyan))
+		(bind ?points-magenta (+ ?points-magenta ?phase-points-magenta))
+	)
 
-  (bson-array-finish ?doc "points" ?points-arr)
-  (bson-append ?doc "phase-points-cyan" ?phase-points-doc-cyan)
-  (bson-append ?doc "phase-points-magenta" ?phase-points-doc-magenta)
-  (bson-append-array ?doc "total-points" (create$ ?points-cyan ?points-magenta))
-  (bson-builder-destroy ?phase-points-doc-cyan)
-  (bson-builder-destroy ?phase-points-doc-magenta)
+	(bson-array-finish ?doc "points" ?points-arr)
+	(bson-append ?doc "phase-points-cyan" ?phase-points-doc-cyan)
+	(bson-append ?doc "phase-points-magenta" ?phase-points-doc-magenta)
+	(bson-append-array ?doc "total-points" (create$ ?points-cyan ?points-magenta))
+	(bson-builder-destroy ?phase-points-doc-cyan)
+	(bson-builder-destroy ?phase-points-doc-magenta)
 
 	(bind ?o-arr (bson-array-start))
 	(do-for-all-facts ((?o order)) TRUE
@@ -324,7 +324,7 @@
 	)
 	(bson-array-finish ?doc "orders" ?o-arr)
 
-  ;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
+	;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 	(return ?doc)
 )
 
@@ -338,15 +338,15 @@
 
 
 (defrule mongodb-game-report-begin
-  (declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY_HIGH*))
 	?gp <- (game-parameters (is-parameterized TRUE))
-  (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
-  (not (mongodb-game-report (start $?stime) (name ?report-name)))
-  =>
-  (assert (mongodb-game-report (start ?stime) (name ?report-name)))
-  (bind ?doc (mongodb-create-game-report ?teams ?stime ?etime ?report-name))
+	(not (mongodb-game-report (start $?stime) (name ?report-name)))
+	=>
+	(assert (mongodb-game-report (start ?stime) (name ?report-name)))
+	(bind ?doc (mongodb-create-game-report ?teams ?stime ?etime ?report-name))
 	; store information describing the game setup only once
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m ring-spec)) TRUE
@@ -373,11 +373,11 @@
 )
 
 (defrule mongodb-game-report-end
-  (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
-						 (phase POST_GAME) (start-time $?stime) (end-time $?etime))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	  (phase POST_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
-  ?gr <- (mongodb-game-report (start $?stime) (name ?report-name) (end $?end&:(neq ?end ?etime)))
-  =>
+	?gr <- (mongodb-game-report (start $?stime) (name ?report-name) (end $?end&:(neq ?end ?etime)))
+	=>
 	(printout t "Writing game report to MongoDB" crlf)
 	(modify ?gr (end ?etime))
 	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime)
@@ -400,12 +400,12 @@
 )
 
 (defrule mongodb-game-report-finalize
-  (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	(declare (salience ?*PRIORITY_HIGH*))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (start-time $?stime) (end-time $?etime))
-  ?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
-  (finalize)
-  =>
+	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
+	(finalize)
+	=>
 	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime)
 )
 
