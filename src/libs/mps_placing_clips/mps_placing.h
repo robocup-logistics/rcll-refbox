@@ -125,7 +125,7 @@ public: // _challenge {1 = Expo || Nav, 2 = Produ, 3 = Half field}
 		mps_type_  = Gecode::IntVarArray(*this,
                                     (height_ + 2) * (width_ + 2),
                                     EMPTY_ROT,
-                                    NUM_MPS - subtract_num_mps);
+                                    NUM_MPS);
 		mps_angle_ = Gecode::IntVarArray(*this, (height_ + 2) * (width_ + 2), EMPTY_ROT, ANGLE_315);
 		//zone_blocked_ = Gecode::IntVarArray(*this, (height_+2) * (width_+2) , 0, 1);
 
@@ -175,7 +175,7 @@ public: // _challenge {1 = Expo || Nav, 2 = Produ, 3 = Half field}
 			if (std::binary_search(allowed_types.begin(), allowed_types.end(), i)) {
 				Gecode::rel(*this, mps_count_[i], Gecode::IRT_EQ, 1);
 			} else {
-				Gecode::rel(*this, mps_count_[i], Gecode::IRT_EQ, 0);
+                                Gecode::rel(*this, mps_count_[i], Gecode::IRT_EQ, 0);
 			}
 		}
 
