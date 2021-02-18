@@ -545,6 +545,5 @@
 	(do-for-all-facts ((?rs ring-spec)) TRUE
 	  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
 	)
-	(randomize$ ?ring-colors)
 	(game-randomize-orders ?ring-colors ?time-offset)
 )
