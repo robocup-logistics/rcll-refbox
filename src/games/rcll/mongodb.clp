@@ -455,7 +455,7 @@
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value true))
 	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
-	?gp <- (game-parameters (gamestate PENDING))
+	?gp <- (game-parameters (gamestate PENDING) (is-parameterized TRUE))
 	=>
 	(printout t "Loading gamestate from database" crlf)
 	(if (mongodb-load-fact-from-game-report ?report-name
