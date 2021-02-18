@@ -212,10 +212,14 @@
 	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
 	(if (neq ?t-doc FALSE) then
 	 then
-		(bind ?m-p (bson-get ?t-doc ?fact))
-		(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
-		(bson-destroy ?m-p)
-		(bind ?success TRUE)
+		(if (bind ?m-p (bson-get ?t-doc ?fact))
+		 then
+			(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
+			(bson-destroy ?m-p)
+			(bind ?success TRUE)
+		 else
+			(printout error "Specified game report does not contain field " ?fact crlf)
+		)
 	 else
 		(printout error "Empty result in mongoDB from game_report for fact " ?template crlf)
 	)
@@ -251,12 +255,16 @@
 	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
 	(if (neq ?t-doc FALSE) then
 	 then
-		(bind ?m-arr (bson-get-array ?t-doc ?facts))
-		(foreach ?m-p ?m-arr
-			(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
-			(bson-destroy ?m-p)
+		(if (bind ?m-arr (bson-get-array ?t-doc ?facts))
+		 then
+			(foreach ?m-p ?m-arr
+				(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
+				(bson-destroy ?m-p)
+			)
+			(bind ?success TRUE)
+		 else
+			(printout error "Specified game report does not contain field " ?facts crlf)
 		)
-		(bind ?success TRUE)
 	 else
 		(printout error "Empty result in mongoDB from game_report" crlf)
 	)
