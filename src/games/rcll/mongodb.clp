@@ -465,9 +465,17 @@
 	 then
 		(printout t "Loading gamestate finished" crlf)
 		(modify ?gp (gamestate RECOVERED))
-		; ensure that time elapses from now on
+		(bind ?team-colors (create$ CYAN MAGENTA))
 		(do-for-fact ((?g gamestate)) TRUE
+			; ensure that time elapses from now on
 			(modify ?g (last-time $?now))
+			; setup the team peer
+			(foreach ?team ?g:teams
+				(if (neq ?team "")
+				 then
+					(assert (net-SetTeamName (nth$ ?team-index ?team-colors) ?team))
+				)
+			)
 		)
 	 else
 		(printout error "Loading gamestate from database failed, fallback to fresh one." crlf)
