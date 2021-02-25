@@ -162,8 +162,8 @@ llsfrb:
       Carologistics: randomkey
     # set to true to generate a random field at startup
     random-field: true
-    # If enabled, some machines will randomly go DOWN for some period during the game.
-    # If disabled, no machine will go DOWN.
+    # If enabled, some machines will randomly go DOWN for some period during
+    # the game. If disabled, no machine will go DOWN.
     random-machine-down-times: true
 
   shell:
