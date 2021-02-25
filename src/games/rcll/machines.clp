@@ -163,7 +163,9 @@
   )
 
   ; assign random down times
-  (if ?*RANDOMIZE-GAME* then
+  (if (and ?*RANDOMIZE-GAME*
+           (config-get-bool "/llsfrb/game/random-machine-down-times"))
+   then
     (bind ?candidates (create$))
     (foreach ?t ?*DOWN-TYPES*
       (bind ?t-candidates (find-all-facts ((?m machine))
