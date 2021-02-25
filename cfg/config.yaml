@@ -144,6 +144,9 @@ llsfrb:
       Carologistics: randomkey
     # whenever a random field should be generated or not (e.g. used from mongodb)
     random-field: true
+    # If enabled, some machines will randomly go DOWN for some period during the game.
+    # If disabled, no machine will go DOWN.
+    random-machine-down-times: true
 
   shell:
     refbox-host: localhost
