@@ -146,7 +146,7 @@ llsfrb:
     random-field: true
     # If enabled, some machines will randomly go DOWN for some period during the game.
     # If disabled, no machine will go DOWN.
-    random-machine-down-times: true
+    random-machine-down-times: false
 
   shell:
     refbox-host: localhost
