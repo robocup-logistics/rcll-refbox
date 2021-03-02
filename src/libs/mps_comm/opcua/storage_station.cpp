@@ -46,11 +46,13 @@ OpcUaStorageStation::OpcUaStorageStation(const std::string &name,
 void
 OpcUaStorageStation::retrieve(unsigned int shelf, unsigned int slot)
 {
+	enqueue_instruction(Operation::OPERATION_RETRIEVE + machine_type_, shelf, slot);
 }
 
 void
 OpcUaStorageStation::store(unsigned int shelf, unsigned int slot)
 {
+	enqueue_instruction(Operation::OPERATION_STORE + machine_type_, shelf, slot);
 }
 
 void
@@ -59,6 +61,9 @@ OpcUaStorageStation::relocate(unsigned int shelf,
                               unsigned int target_shelf,
                               unsigned int target_slot)
 {
+	enqueue_instruction(Operation::OPERATION_RELOCATE + machine_type_,
+	                    (shelf * 10) + slot,
+	                    (target_shelf * 10) + target_slot);
 }
 
 } // namespace mps_comm
