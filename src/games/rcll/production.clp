@@ -7,8 +7,175 @@
 ;             2017       Tobias Neumann
 ;             2019       Till Hofmann
 ;             2019       Mostafa Gomaa
+;             2020       Tarik Viehmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
+
+; Functions to process instructions for the different machine types.
+; @param ?p: Pointer to PrepareMachine message
+; @param ?m: machine fact index
+; @param ?mname: name of the machine corresponding to ?m
+; @param ?gt: current game tim
+(deffunction production-prepare-bs (?p ?m ?mname ?gt)
+	(if (pb-has-field ?p "instruction_bs")
+	 then
+		(bind ?prepmsg (pb-field-value ?p "instruction_bs"))
+		(bind ?side (sym-cat (pb-field-value ?prepmsg "side")))
+		(bind ?color (sym-cat (pb-field-value ?prepmsg "color")))
+		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
+		(modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color) (wait-for-product-since ?gt))
+	 else
+		(modify ?m (state BROKEN)
+		(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+	)
+)
+
+(deffunction production-prepare-ds (?p ?m ?mname ?gt)
+	(if (pb-has-field ?p "instruction_ds")
+	 then
+		(bind ?prepmsg (pb-field-value ?p "instruction_ds"))
+		(bind ?order-id (pb-field-value ?prepmsg "order_id"))
+		(if (any-factp ((?order order)) (eq ?order:id ?order-id))
+		 then
+			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
+			(modify ?m (state PREPARED) (ds-order ?order-id)
+		                       (wait-for-product-since ?gt))
+		 else
+			(modify ?m (state BROKEN)
+			  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
+		)
+	 else
+		(modify ?m (state BROKEN)
+		           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+	)
+)
+
+(deffunction production-prepare-ss (?p ?m ?mname ?gt)
+	(if (pb-has-field ?p "instruction_ss")
+	 then
+		(bind ?prepmsg (pb-field-value ?p "instruction_ss"))
+		(bind ?operation (sym-cat (pb-field-value ?prepmsg "operation")))
+		(bind ?shelf (integer (pb-field-value ?prepmsg "shelf")))
+		(bind ?slot (integer (pb-field-value ?prepmsg "slot")))
+		(bind ?filled-status FALSE)
+		(bind ?description-provided (pb-has-field ?prepmsg "wp_description"))
+		(do-for-fact  ((?ss-f machine-ss-shelf-slot))
+		                      (and (eq ?ss-f:position (create$ ?shelf ?slot))
+		                           (eq ?ss-f:name (fact-slot-value ?m name)))
+		                      (bind ?filled-status ?ss-f))
+		(if ?filled-status
+		 then
+			(bind ?description (fact-slot-value ?filled-status description))
+			(bind ?new-description ?description)
+			(if ?description-provided
+				 then
+					(bind ?new-description (pb-field-value ?prepmsg "wp_description"))
+			)
+			(if (eq ?operation RETRIEVE)
+			 then
+				(if (fact-slot-value ?filled-status is-filled)
+				 then
+					(printout t "Prepared " ?mname " to RETRIEVE (" ?shelf "," ?slot ")" crlf)
+					(modify ?m (state PREPARED) (ss-operation ?operation)
+					           (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt)
+					           (ss-wp-description ?description))
+				 else
+					(modify ?m (state BROKEN)
+					           (broken-reason (str-cat "Prepare received for " ?mname
+					                           ", but station is empty (" ?shelf ", " ?slot ")")))
+				)
+			 else
+				(if (eq ?operation STORE)
+				 then
+					(if (fact-slot-value ?filled-status is-filled)
+					 then
+						(modify ?m (state BROKEN)
+						           (broken-reason (str-cat "Prepare received for " ?mname
+						            " with STORE operation for occupied shelf slot (" ?shelf ", " ?slot ")")))
+					 else
+						(printout t "Prepared " ?mname " to STORE (" ?shelf "," ?slot ")" crlf)
+						(modify ?m (state PREPARED) (ss-operation ?operation)
+						           (ss-shelf-slot ?shelf ?slot) (wait-for-product-since ?gt)
+						           (ss-wp-description ?new-description))
+					)
+				)
+				(if (eq ?operation CHANGE_INFO)
+				 then
+					(if ?description-provided
+					 then
+					 (modify ?filled-status (description ?new-description))
+					 else
+					(printout t "Change Description for " ?mname " at (" ?shelf "," ?slot
+					            ") but no description provided, ignoring.")
+					)
+				)
+			)
+		 else
+			(modify ?m (state BROKEN)
+			           (broken-reason (str-cat "Prepare received for " ?mname
+			            " with invalid shelf or slot (" ?shelf " [0, " ?*SS-MAX-SHELF*
+			            "], " ?slot " [0, " ?*SS-MAX-SLOT*"])" )))
+		)
+	 else
+		(modify ?m (state BROKEN)
+		           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+	)
+)
+
+(deffunction production-prepare-rs (?p ?m ?mname ?gt)
+	(if (pb-has-field ?p "instruction_rs")
+	 then
+		(bind ?prepmsg (pb-field-value ?p "instruction_rs"))
+		(bind ?ring-color (sym-cat (pb-field-value ?prepmsg "ring_color")))
+		(if (member$ ?ring-color (fact-slot-value ?m rs-ring-colors))
+		 then
+			(printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
+			(modify ?m (state PREPARED) (rs-ring-color ?ring-color)
+			           (wait-for-product-since ?gt))
+		 else
+			(modify ?m (state BROKEN)
+			           (broken-reason (str-cat "Prepare received for " ?mname " for invalid ring color (" ?ring-color ")")))
+		)
+	 else
+		(modify ?m (state BROKEN)
+		(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+	)
+)
+
+(deffunction production-prepare-cs (?p ?m ?mname ?gt)
+	(if (pb-has-field ?p "instruction_cs")
+	 then
+		(bind ?prepmsg (pb-field-value ?p "instruction_cs"))
+		(bind ?cs-op (sym-cat (pb-field-value ?prepmsg "operation")))
+		(switch ?cs-op
+
+		 (case RETRIEVE_CAP then
+			(if (not (fact-slot-value ?m cs-retrieved))
+			 then
+				(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
+				(modify ?m (state PREPARED) (cs-operation ?cs-op)
+				           (wait-for-product-since ?gt))
+			 else
+				(modify ?m (state BROKEN)
+				           (broken-reason (str-cat "Prepare received for " ?mname ": "
+				                                   "cannot retrieve while already holding")))
+		 ))
+		 (case MOUNT_CAP then
+			(if (fact-slot-value ?m cs-retrieved)
+			 then
+				(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
+				(modify ?m (state PREPARED) (cs-operation ?cs-op)
+				           (wait-for-product-since ?gt))
+			 else
+				(modify ?m (state BROKEN)
+				           (broken-reason (str-cat "Prepare received for " ?mname
+				                                   ": cannot mount without cap")))
+		)))
+	 else
+		(modify ?m (state BROKEN)
+		           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+	)
+)
 
 (defrule production-start
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
@@ -50,6 +217,7 @@
 	?pf <- (protobuf-msg (type "llsf_msgs.PrepareMachine") (ptr ?p)
 	       (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
 	(network-peer (id ?cid) (group ?group))
+	(time $?now)
 	=>
 	(retract ?pf)
 	(bind ?mname (sym-cat (pb-field-value ?p "machine")))
@@ -66,121 +234,25 @@
 			        (text (str-cat "Prepare received for invalid machine " ?mname))))
 		 else
 		 	(printout t "Received prepare for " ?mname crlf)
-		 	(do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
-				(if (eq ?m:state IDLE) then
-					(printout t ?mname " is IDLE, processing prepare" crlf)
-					(switch ?m:mtype
-					 (case BS then
-						(if (pb-has-field ?p "instruction_bs")
-						 then
-							(bind ?prepmsg (pb-field-value ?p "instruction_bs"))
-							(bind ?side (sym-cat (pb-field-value ?prepmsg "side")))
-							(bind ?color (sym-cat (pb-field-value ?prepmsg "color")))
-							(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
-							(modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color) (wait-for-product-since ?gt))
-						 else
-							(modify ?m (state BROKEN)
-							(broken-reason (str-cat "Prepare received for " ?mname " without data")))
-						))
-					 (case DS then
-						(if (pb-has-field ?p "instruction_ds")
-						 then
-							(bind ?prepmsg (pb-field-value ?p "instruction_ds"))
-							(bind ?order-id (pb-field-value ?prepmsg "order_id"))
-							(if (any-factp ((?order order)) (eq ?order:id ?order-id))
-							 then
-								(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
-								(modify ?m (state PREPARED) (ds-order ?order-id)
-							                       (wait-for-product-since ?gt))
-							 else
-								(modify ?m (state BROKEN)
-								  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
-							)
-						 else
-							(modify ?m (state BROKEN)
-							           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
-					 ))
-					 (case SS then
-						(if (pb-has-field ?p "instruction_ss")
-						 then
-							(bind ?prepmsg (pb-field-value ?p "instruction_ss"))
-							(bind ?operation (sym-cat (pb-field-value ?prepmsg "operation")))
-							(if (eq ?operation RETRIEVE)
-							 then
-								(if ?m:ss-holding
-								 then
-									(printout t "Prepared " ?mname crlf)
-									(modify ?m (state PREPARED) (ss-operation ?operation) (wait-for-product-since ?gt))
-								 else
-									(modify ?m (state BROKEN)
-									           (broken-reason (str-cat "Prepare received for " ?mname ", but station is empty")))
-								)
-							 else
-								(if (eq ?operation STORE)
-								 then
-									(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with STORE operation")))
-								 else
-								 	(modify ?m (state BROKEN) (broken-reason (str-cat "Prepare received for " ?mname " with unknown operation " ?operation)))
-								)
-							)
-						 else
-							(modify ?m (state BROKEN)
-							           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
-					 ))
-					 (case RS then
-						(if (pb-has-field ?p "instruction_rs")
-						 then
-							(bind ?prepmsg (pb-field-value ?p "instruction_rs"))
-							(bind ?ring-color (sym-cat (pb-field-value ?prepmsg "ring_color")))
-							(if (member$ ?ring-color ?m:rs-ring-colors)
-							 then
-								(printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
-								(modify ?m (state PREPARED) (rs-ring-color ?ring-color)
-								           (wait-for-product-since ?gt))
-							 else
-								(modify ?m (state BROKEN)
-								           (broken-reason (str-cat "Prepare received for " ?mname " for invalid ring color (" ?ring-color ")")))
-							)
-						 else
-							(modify ?m (state BROKEN)
-							(broken-reason (str-cat "Prepare received for " ?mname " without data")))
-					 ))
-					 (case CS then
-						(if (pb-has-field ?p "instruction_cs")
-						 then
-							(bind ?prepmsg (pb-field-value ?p "instruction_cs"))
-							(bind ?cs-op (sym-cat (pb-field-value ?prepmsg "operation")))
-							(switch ?cs-op
-					
-							 (case RETRIEVE_CAP then
-								(if (not ?m:cs-retrieved)
-								 then
-									(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-									(modify ?m (state PREPARED) (cs-operation ?cs-op)
-									           (wait-for-product-since ?gt))
-								 else
-									(modify ?m (state BROKEN)
-									           (broken-reason (str-cat "Prepare received for " ?mname ": "
-									                                   "cannot retrieve while already holding")))
-							 ))
-							 (case MOUNT_CAP then
-								(if ?m:cs-retrieved
-								 then
-									(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-									(modify ?m (state PREPARED) (cs-operation ?cs-op)
-									           (wait-for-product-since ?gt))
-								 else
-									(modify ?m (state BROKEN)
-									           (broken-reason (str-cat "Prepare received for " ?mname
-									                                   ": cannot mount without cap")))
-							)))
-						 else
-							(modify ?m (state BROKEN)
-							           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
-					)))
-				 else
-					(if (eq ?m:state READY-AT-OUTPUT) then
-						(modify ?m (state BROKEN)))
+			(if (and (pb-has-field ?p "sent_at")
+			         (timeout ?now (time-from-sec (pb-field-value ?p "sent_at")) ?*PRODUCTION-PREPARE-TIMEOUT*))
+			 then
+				(printout t "Prepare message received that is older than " ?*PRODUCTION-PREPARE-TIMEOUT* " sec (" (time-diff-sec ?now (time-from-sec (pb-field-value ?p "sent_at"))) ") ignoring it" crlf)
+			 else
+				(do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
+					(if (eq ?m:state IDLE) then
+						(printout t ?mname " is IDLE, processing prepare" crlf)
+						(switch ?m:mtype
+						 (case BS then (production-prepare-bs ?p ?m ?mname ?gt))
+						 (case DS then (production-prepare-ds ?p ?m ?mname ?gt))
+						 (case SS then (production-prepare-ss ?p ?m ?mname ?gt))
+						 (case RS then (production-prepare-rs ?p ?m ?mname ?gt))
+						 (case CS then (production-prepare-cs ?p ?m ?mname ?gt))
+						)
+					 else
+						(if (eq ?m:state READY-AT-OUTPUT) then
+							(modify ?m (state BROKEN)))
+					)
 				)
 			)
 		)
@@ -506,26 +578,192 @@
   (modify ?m (state WAIT-IDLE) (idle-since ?gt))
 )
 
-(defrule production-ss-start-retrieval
-	"SS is prepared, move the workpiece to the output."
+(defrule production-ss-simple-relocate-start
+	" Another workpiece blocks the requested storage/retrieval operation.
+	  Hence  the blocking workpiece is relocated to a different position.
+	"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
-                 (ss-operation RETRIEVE) (task nil))
+	?m <- (machine (name ?n) (mtype SS) (state PROCESSING|PREPARED) (task nil)
+	               (ss-shelf-slot ?shelf ?slot&:(eq 1 (mod ?slot 2))))
+	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible FALSE))
+	?s <- (machine-ss-shelf-slot (position ?shelf ?front-slot&:(ss-slot-blocked-by ?slot ?front-slot))
+	                             (is-filled TRUE) (is-accessible TRUE))
+
+	(machine-ss-shelf-slot (name ?n) (position ?other-shelf ?other-slot)
+	                       (is-filled FALSE) (is-accessible TRUE))
 	=>
-	(modify ?m (state PROCESSING) (proc-start ?gt))
+	(bind ?relocate-options (find-all-facts
+	  ((?free machine-ss-shelf-slot))
+	  (and (eq ?free:name ?n)
+	       (eq ?free:is-filled FALSE)
+	       (eq ?free:is-accessible TRUE))))
+	(bind ?relocate-options (randomize$ ?relocate-options))
+	(bind ?o (fact-slot-value (nth$ 1 ?relocate-options) position))
+	(bind ?o-shelf (nth$ 1 ?o))
+	(bind ?o-slot (nth$ 2 ?o))
+	(printout t ?n " position (" ?shelf "," ?slot ") in not accessible, relocate "
+	            "(" ?shelf "," ?front-slot") to (" ?o-shelf "," ?o-slot ")" crlf)
+	(modify ?m (task RELOCATE) (proc-start ?gt) (state PROCESSING) (mps-busy WAIT)
+	               (wait-for-product-since ?gt))
+	(modify ?s (move-to ?o-shelf ?o-slot))
+	(mps-ss-relocate (str-cat ?n) ?shelf ?front-slot ?o-shelf ?o-slot)
 )
 
-(defrule production-ss-processed-retrieval
-	"The conveyor started moving, go to processed."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (name ?n) (mtype SS) (team ?team) (state PROCESSING) (ss-operation RETRIEVE)
-	               (proc-start ?t&:(timeout-sec ?gt ?t ?*PROCESS-TIME-SS*)))
+(defrule production-ss-store-move-to-mid
+	"Start moving the workpiece to the middle if the SS is PREPARED."
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	?m <- (machine (name ?n) (mtype SS) (state PREPARED|PROCESSING) (task nil)
+	             (ss-shelf-slot ?shelf ?slot) (ss-operation STORE))
+	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled FALSE)
+	                       (is-accessible TRUE))
 	=>
-	(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
-	                (points ?*PRODUCTION-POINTS-SS-RETRIEVAL*)
-	                (reason (str-cat "Retrieved product from " ?n))))
+	(printout t "Machine " ?n " prepared for STORE" crlf)
+	(modify ?m (task MOVE-MID) (mps-busy WAIT))
+	; TODO: is this the correct direction?
+	(mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
+)
+
+(defrule production-ss-double-relocate-start
+	"SS is is prepared, but the target position is blocked by a product in front
+	 of it. No slot is accessible to relocate the blocking product to.
+	 Either the machine is full or a some positions in the back are free which
+	 can be filled to free a front row slot with a relocation operation.
+	"
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PREPARED)
+	               (ss-operation ?ss-op) (ss-shelf-slot ?shelf ?slot) (task nil))
+	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible FALSE))
+	(not (machine-ss-shelf-slot (name ?n) (is-accessible TRUE) (is-filled FALSE)))
+	=>
+	(bind ?relocate-options (find-all-facts
+	  ((?free machine-ss-shelf-slot) (?front machine-ss-shelf-slot))
+	  (and (eq ?free:name ?n)
+	       (eq ?free:is-filled FALSE)
+	       (neq ?free:position
+	           (create$ ?shelf ?slot))
+	       (eq ?front:name ?n)
+	       (eq (nth$ 1 ?front:position) (nth$ 1 ?free:position))
+	       (ss-slot-blocked-by (nth$ 2 ?free:position) (nth 2 ?front:position)))))
+	(if (> (length$ ?relocate-options) 0)
+	 then
+		(bind ?relocate-options (randomize-tuple-list$ ?relocate-options ?*SS-SHELF-DEPTH*))
+		(bind ?free-pos (fact-slot-value (nth$ 1 ?relocate-options) position))
+		(bind ?front (nth$ 2 ?relocate-options))
+		(bind ?front-pos (fact-slot-value ?front position))
+		(printout t ?n " position (" ?shelf "," ?slot ") in not accessible" crlf)
+		(printout t "No free accessible spot at " ?n ", relocate "
+		            "(" (nth$ 1 ?front-pos)"," (nth$ 2 ?front-pos) ") to "
+		            "(" (nth$ 1 ?free-pos) "," (nth$ 2 ?free-pos) ")" crlf)
+		(printout t  ?n " has to make  (" ?shelf "," ?slot ") accessible" crlf)
+		(modify ?m (state PROCESSING) (proc-start ?gt) (task RELOCATE) (mps-busy WAIT)
+		           (wait-for-product-since ?gt))
+		(modify ?front (move-to ?free-pos))
+		(mps-ss-relocate (str-cat ?n) (nth$ 1 ?front-pos) (nth$ 2 ?front-pos)
+		                                (nth$ 1 ?free-pos) (nth$ 2 ?free-pos))
+	 else
+		(printout t  ?n " has no free spot to access inaccessible position (" ?shelf "," ?slot ")" crlf)
+		(modify ?m (state BROKEN)
+		  (broken-reason (str-cat "Prepare received for " ?n " for inaccessible slot while the storage is full.")))
+	)
+)
+
+(defrule production-ss-relocate-completed
+	" SS is done relocating, update the storage information.
+	"
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (team ?team) (mtype SS) (state PREPARED|PROCESSING)
+	               (ss-shelf-slot ?shelf ?slot) (task RELOCATE) (mps-busy FALSE))
+	?s <- (machine-ss-shelf-slot (name ?n) (position ?curr-shelf ?curr-slot)
+	                             (move-to ?target-shelf ?target-slot)
+	                             (description ?description)
+	                             (is-accessible TRUE) (is-filled TRUE))
+	?t <- (machine-ss-shelf-slot (name ?n) (position ?target-shelf ?target-slot)
+	                             (is-filled FALSE)
+	                             (num-payments ?np)
+	                             (last-payed ?lp))
+	=>
+	(modify ?m (task nil) (wait-for-product-since ?gt))
+	(modify ?s (is-filled FALSE) (move-to (create$ ) ) (description ""))
+	(modify ?t (is-filled TRUE) (num-payments ?np) (last-payed ?lp)
+	           (description ?description))
+	(ss-update-accessible-slots ?n ?curr-shelf ?curr-slot TRUE)
+	(ss-update-accessible-slots ?n ?target-shelf ?target-slot FALSE)
+	(ss-assert-points-with-threshold
+	  (str-cat "Payment for relocating "
+	           "(" ?curr-shelf "," ?curr-slot ") to "
+	           "(" ?target-shelf "," ?target-slot ") in " ?n)
+	  ?*PRODUCTION-POINTS-SS-RELOCATION*
+	  ?gt ?team)
+)
+
+(defrule production-ss-retrieve-start
+	"SS is prepared for retrieval, get the product from the shelf."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PROCESSING|PREPARED)
+	               (ss-operation ?ss-op&RETRIEVE) (ss-shelf-slot ?shelf ?slot) (task nil))
+	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible TRUE) (is-filled TRUE))
+	=>
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op) (mps-busy WAIT))
+	(mps-ss-retrieve (str-cat ?n) ?shelf ?slot)
+)
+
+(defrule production-ss-store-start
+	"SS has moved the product to the middle, store it on the shelf."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PREPARED|PROCESSING)
+	               (ss-operation ?ss-op&STORE) (ss-shelf-slot ?shelf ?slot)
+	               (task MOVE-MID) (mps-busy FALSE))
+	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible TRUE) (is-filled FALSE))
+	=>
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op) (mps-busy WAIT))
+	(mps-ss-store (str-cat ?n) ?shelf ?slot)
+)
+
+(defrule production-ss-retrieve-completed-move-to-output
+	"The SS has completed the retrieval. Move the workpiece to the output."
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (team ?team)
+	               (task RETRIEVE) (mps-busy FALSE) (ss-shelf-slot ?shelf ?slot))
+	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled TRUE))
+	=>
+	(printout t "Machine " ?n ": move to output" crlf)
+	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
+	; TODO: Is this the correct side?
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
-	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT) (ss-holding FALSE))
+	(ss-update-accessible-slots ?n ?shelf ?slot TRUE)
+	(ss-assert-points-with-threshold
+	  (str-cat "Payment for retrieving (" ?shelf "," ?slot ") from " ?n)
+	  ?*PRODUCTION-POINTS-SS-RETRIEVAL*
+	  ?gt ?team)
+	(modify ?s (is-filled FALSE)(description ""))
+)
+
+(defrule production-ss-store-completed
+	"The SS processed the workpiece. "
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (task STORE) (mps-busy FALSE)
+	               (ss-shelf-slot ?shelf ?slot) (team ?team) (ss-wp-description ?description))
+	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled FALSE))
+	=>
+	(printout t "Machine " ?n " finished storage at (" ?shelf ", " ?slot ")" crlf)
+	(modify ?m (state PROCESSED) (proc-start ?gt))
+	(modify ?s (is-filled TRUE) (num-payments 0) (description ?description)
+	           (last-payed (+ ?gt ?*SS-STORAGE-GRACE-PERIOD*)))
+	(ss-update-accessible-slots ?n ?shelf ?slot FALSE)
+	(ss-assert-points-with-threshold
+	  (str-cat "Payment for storing ("?shelf "," ?slot") at " ?n)
+	  ?*PRODUCTION-POINTS-SS-STORAGE*
+	  ?gt ?team)
+)
+
+(defrule production-ss-store-processed
+  "The SS finished storing the workpiece, set the machine to IDLE and reset it."
+	(declare (salience ?*PRIORITY_LAST*))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype SS) (task STORE) (state PROCESSED))
+	=>
+	(printout t "Machine " ?n " finished processing" crlf)
+	(modify ?m (state WAIT-IDLE) (idle-since ?gt) (task nil))
 )
 
 (defrule production-mps-idle
@@ -638,7 +876,24 @@
   (retract ?cmd)
   (printout t "Add base to machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-		(assert (mps-add-base-on-slide ?m:name))
+    (assert (mps-add-base-on-slide ?m:name))
   )
+)
 
+(defrule production-ss-continuous-costs
+" Each occupied shelf slot of a SS causes periodic costs.
+"
+	(test (> ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME* 0))
+	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?s <- (machine-ss-shelf-slot (name ?n) (is-filled TRUE) (position ?shelf ?slot)
+	  (num-payments ?np&:(< ?np ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
+	  (last-payed ?lp&:(> (- ?gt ?lp) ?*SS-PAYMENT-INTERVAL*)))
+	(machine (name ?n) (team ?team))
+	=>
+	(modify ?s (num-payments (+ ?np 1))
+	           (last-payed (+ ?lp ?*SS-PAYMENT-INTERVAL*)))
+	(ss-assert-points-with-threshold
+	  (str-cat "Payment for keeping product at " ?n " (" ?shelf "," ?slot ")")
+	  ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME*
+	  ?gt ?team)
 )

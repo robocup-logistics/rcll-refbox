@@ -44,6 +44,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/date_time.hpp>
+#include <chrono>
 
 using namespace protobuf_comm;
 using namespace llsf_msgs;
@@ -56,9 +57,8 @@ llsf_msgs::MachineSide bs_side_;
 llsf_msgs::BaseColor   bs_color_;
 int                    ds_order_id_;
 llsf_msgs::SSOp        ss_op_;
-int                    ss_slot_x_;
-int                    ss_slot_y_;
-int                    ss_slot_z_;
+unsigned int           ss_shelf_;
+unsigned int           ss_slot_;
 llsf_msgs::RingColor   rs_ring_color_;
 llsf_msgs::CSOp        cs_operation_;
 std::string            team_name_;
@@ -159,11 +159,15 @@ handle_message(boost::asio::ip::udp::endpoint &           sender,
 
 	std::shared_ptr<BeaconSignal> b;
 	if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
+		using namespace std::chrono;
 		if (b->team_name() == "LLSF" && b->peer_name() == "RefBox") {
 			printf("Announcing machine type\n");
 			llsf_msgs::PrepareMachine prep;
 			prep.set_team_color(team_color_);
 			prep.set_machine(machine_name_);
+			auto duration = std::chrono::system_clock::now().time_since_epoch();
+			auto millis   = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+			prep.set_sent_at(millis);
 			if (machine_type_ == "BS") {
 				llsf_msgs::PrepareInstructionBS *prep_bs = prep.mutable_instruction_bs();
 				prep_bs->set_side(bs_side_);
@@ -176,7 +180,10 @@ handle_message(boost::asio::ip::udp::endpoint &           sender,
 				prep_ds->set_order_id(ds_order_id_);
 			} else if (machine_type_ == "SS") {
 				llsf_msgs::PrepareInstructionSS *prep_ss = prep.mutable_instruction_ss();
+				printf("prep message built with %d, %d %d\n", ss_op_, ss_shelf_, ss_slot_);
 				prep_ss->set_operation(ss_op_);
+				prep_ss->set_shelf(ss_shelf_);
+				prep_ss->set_slot(ss_slot_);
 			} else if (machine_type_ == "RS") {
 				llsf_msgs::PrepareInstructionRS *prep_rs = prep.mutable_instruction_rs();
 				prep_rs->set_ring_color(rs_ring_color_);
@@ -197,7 +204,7 @@ usage(const char *progname)
 	       "instructions are specific for the machine type:\n"
 	       "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
 	       "DS:  <order_id>\n"
-	       "SS:  (RETRIEVE|STORE)\n"
+	       "SS:  (RETRIEVE|STORE) <shelf-num> <slot-num>\n"
 	       "RS:  (RING_BLUE|RING_GREEN|RING_ORANGE|RING_YELLOW)\n"
 	       "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n",
 	       progname);
@@ -239,15 +246,18 @@ main(int argc, char **argv)
 		}
 		ds_order_id_ = argp.parse_item_int(2);
 	} else if (machine_type_ == "SS") {
-		if (argp.num_items() != 3) {
-			printf("Wrong number of arguments. Expected 3, got %zu\n", argp.num_items());
+		if (argp.num_items() != 5) {
+			printf("Wrong number of arguments. Expected 5, got %zu\n", argp.num_items());
 			usage(argv[0]);
 			exit(-1);
 		}
+
 		if (!llsf_msgs::SSOp_Parse(argp.items()[2], &ss_op_)) {
 			printf("Invalid operation\n");
 			exit(-2);
 		}
+		ss_shelf_ = argp.parse_item_int(3);
+		ss_slot_  = argp.parse_item_int(4);
 	} else if (machine_type_ == "RS") {
 		if (!llsf_msgs::RingColor_Parse(argp.items()[2], &rs_ring_color_)) {
 			printf("Invalid ring color\n");
@@ -267,7 +277,7 @@ main(int argc, char **argv)
 	} else if (team_str == "M") {
 		team_color_ = MAGENTA;
 	} else {
-		printf("Unknonw team value, using cyan\n");
+		printf("Unknown team value, using cyan\n");
 		usage(argv[0]);
 		exit(-1);
 	}

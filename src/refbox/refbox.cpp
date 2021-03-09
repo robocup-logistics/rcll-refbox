@@ -572,6 +572,15 @@ LLSFRefBox::setup_clips()
 		clips_->add_function("mps-deliver",
 		                     sigc::slot<void, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
+		clips_->add_function("mps-ss-retrieve",
+		                     sigc::slot<void, std::string, int, int>(
+		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_retrieve)));
+		clips_->add_function("mps-ss-store",
+		                     sigc::slot<void, std::string, int, int>(
+		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_store)));
+		clips_->add_function("mps-ss-relocate",
+		                     sigc::slot<void, std::string, int, int, int, int>(
+		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_relocate)));
 	}
 
 	clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
@@ -881,6 +890,49 @@ LLSFRefBox::clips_mps_cs_mount_cap(std::string machine)
 		return;
 	}
 	station->mount_cap();
+}
+
+void
+LLSFRefBox::clips_mps_ss_retrieve(std::string machine, unsigned int shelf, unsigned int slot)
+{
+	StorageStation *station;
+	try {
+		station = dynamic_cast<StorageStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+		return;
+	}
+	station->retrieve(shelf, slot);
+}
+
+void
+LLSFRefBox::clips_mps_ss_store(std::string machine, unsigned int shelf, unsigned int slot)
+{
+	StorageStation *station;
+	try {
+		station = dynamic_cast<StorageStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+		return;
+	}
+	station->store(shelf, slot);
+}
+
+void
+LLSFRefBox::clips_mps_ss_relocate(std::string  machine,
+                                  unsigned int shelf,
+                                  unsigned int slot,
+                                  unsigned int target_shelf,
+                                  unsigned int target_slot)
+{
+	StorageStation *station;
+	try {
+		station = dynamic_cast<StorageStation *>(mps_.at(machine).get());
+	} catch (std::out_of_range &e) {
+		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
+		return;
+	}
+	station->relocate(shelf, slot, target_shelf, target_slot);
 }
 
 void
@@ -1719,7 +1771,7 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::error,
 	                               boost::asio::placeholders::signal_number));
 #else
-	g_refbox          = this;
+	g_refbox = this;
 	signal(SIGINT, llsfrb::handle_signal);
 #endif
 

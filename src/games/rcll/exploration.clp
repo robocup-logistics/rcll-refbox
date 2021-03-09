@@ -107,7 +107,7 @@
 	=>
   (modify ?er (rotation ?rotation) (rotation-state CORRECT_REPORT))
 	(printout t "Correct partial report: " ?name " (rotation " ?rotation "). "
-						"Awarding " ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* " points" crlf) 
+						"Awarding " ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS*)
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Correct partial exploration report for "
@@ -125,7 +125,7 @@
 	=>
   (modify ?er (rotation ?rotation) (rotation-state WRONG_REPORT))
 	(printout t "Wrong partial report: " ?name " (rotation " ?rotation "). "
-						"Awarding " ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS* " points" crlf) 
+						"Awarding " ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS*)
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Wrong partial exploration report for "
@@ -154,7 +154,7 @@
 	=>
   (modify ?er (zone ?zone) (zone-state CORRECT_REPORT))
 	(printout t "Correct partial report: " ?name " (zone " ?zone "). "
-						"Awarding " ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS* " points." crlf) 
+						"Awarding " ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS* " points." crlf)
 	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS*)
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Correct partial exploration report for "
@@ -172,7 +172,7 @@
 	=>
   (modify ?er (zone ?zone) (zone-state WRONG_REPORT))
 	(printout t "Wrong partial report: " ?name " (zone " ?zone "). "
-						"Awarding " ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS* " points" crlf) 
+						"Awarding " ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS*)
 									(phase EXPLORATION) (team ?team) (game-time ?game-time)
 									(reason (str-cat "Wrong partial exploration report for "
@@ -240,7 +240,7 @@
 ;                (if (and (eq ?machine:exploration-type ?type) (eq ?machine:zone ?zone))
 ;                 then ; correct report
 ; 	               (printout t "Correct report: " ?name " (type " ?type ") in zone " ?zone ". "
-; 			              "Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
+; 			              "Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf)
 ; 	               (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
 ; 			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
 ; 			      (reason (str-cat "Correct exploration report for "

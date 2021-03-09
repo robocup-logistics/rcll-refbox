@@ -27,6 +27,34 @@
   (return ?points)
 )
 
+(defrule game-init-storage
+	" Assert shelf-slot facts for each storage slot on each station.
+	  Corresponding facts that already exist but do not have a machine specified
+	  get properly initialized.
+	"
+	?init <- (init-storage-slots)
+ =>
+	(retract ?init)
+	(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot)) (eq ?ssf:name UNSET)
+		(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+			(duplicate ?ssf (name ?ss:name))
+		)
+		(retract ?ssf)
+	)
+	(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+		(loop-for-count (?shelf 0 ?*SS-MAX-SHELF*)
+			(loop-for-count (?slot 0 ?*SS-MAX-SLOT*)
+				(if (not (any-factp ((?ssf machine-ss-shelf-slot))
+				                    (and (eq ?ss:name ?ssf:name)
+				                         (eq ?ssf:position (create$ ?shelf ?slot)))))
+				 then
+					(assert (machine-ss-shelf-slot (name ?ss:name) (position (create$ ?shelf ?slot))))
+				)
+			)
+		)
+	)
+)
+
 (defrule game-mps-solver-start
   "start the solver"
   (gamestate (game-time ?gt))
@@ -158,6 +186,14 @@
 	(bind ?competitive-order-id (nth$ (random 1 (length$ ?potential-competitive-orders)) ?potential-competitive-orders))
 	(do-for-fact ((?order order)) (eq ?order:id ?competitive-order-id)
 	  (modify ?order (competitive TRUE)))
+
+	; Randomize storage station initial shelf positions by shuffling each shelf
+	(ss-shuffle-shelves)
+	(ss-print-storage C-SS)
+	(ss-print-storage M-SS)
+	(printout t "Top  5        1 3 5 7" crlf)
+	(printout t " |   :        0 2 4 6" crlf)
+	(printout t "Bot  0   Input ------> Output" crlf)
 )
 
 (defrule game-print

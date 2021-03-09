@@ -83,7 +83,7 @@
   (bind ?correctness (pb-field-value ?p "correct"))
   (bind ?order-id (pb-field-value ?p "order_id"))
   (bind ?team-color (pb-field-value ?p "team_color"))
-  
+
   (assert (order-ConfirmDelivery ?delivery-id ?correctness ?order-id ?team-color))
   (retract ?pf)
 )

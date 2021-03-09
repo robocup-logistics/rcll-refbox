@@ -308,7 +308,7 @@
 (defrule net-proc-RandomizeField
 	?sf <- (gamestate (phase PRE_GAME|SETUP))
   ?cmd <- (net-RandomizeField)
-  => 
+  =>
   (retract ?cmd)
 	(assert (game-reset))
 	(delayed-do-for-all-facts ((?m machine)) TRUE
@@ -364,7 +364,7 @@
 			(pb-set-field ?w "cap_color" (str-cat ?wp:cap-color)))
 
 		(pb-add-list ?wi "workpieces" ?w) ; destroys ?w
-  )	
+  )
 
   (return ?wi)
 )
@@ -498,6 +498,18 @@
   (pb-destroy ?ri)
 )
 
+(deffunction net-create-ShelfSlotInfo (?message ?mps-ss)
+	(do-for-all-facts ((?ssf machine-ss-shelf-slot))
+	                       (eq ?ssf:name ?mps-ss)
+	                  (bind ?ssf-pb (pb-create "llsf_msgs.ShelfSlotInfo"))
+	                  (pb-set-field ?ssf-pb "shelf" (nth$ 1 ?ssf:position))
+	                  (pb-set-field ?ssf-pb "slot" (nth$ 2 ?ssf:position))
+	                  (pb-set-field ?ssf-pb "is_filled" ?ssf:is-filled)
+	                  (pb-set-field ?ssf-pb "description" ?ssf:description)
+	                  (pb-add-list ?message "status_ss" ?ssf-pb)
+	)
+)
+
 (deffunction net-create-Machine (?mf ?add-restricted-info)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
@@ -522,6 +534,10 @@
         (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
 
       else (pb-set-field ?m "state" "")
+    )
+
+    (if (eq ?mtype SS) then
+      (net-create-ShelfSlotInfo ?m (fact-slot-value ?mf name))
     )
 
     (if ?add-restricted-info
@@ -566,6 +582,9 @@
 	  (case SS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
 	    (pb-set-field ?pm "operation" (fact-slot-value ?mf ss-operation))
+	    (bind ?shelf-slot (fact-slot-value ?mf ss-shelf-slot))
+	    (pb-set-field ?pm "shelf" (nth$ 1 ?shelf-slot))
+	    (pb-set-field ?pm "slot" (nth$ 2 ?shelf-slot))
       (pb-set-field ?m "instruction_ss" ?pm)
 	  )
 	  (case RS then
