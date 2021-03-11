@@ -18,6 +18,7 @@ jobs:
               git \
               glibmm24-devel \
               gtkmm30-devel \
+              libmicrohttpd-devel \
               libmodbus-devel \
               mongodb-devel \
               ncurses-devel \
