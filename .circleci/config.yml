@@ -20,7 +20,7 @@ jobs:
               gtkmm30-devel \
               libmicrohttpd-devel \
               libmodbus-devel \
-              mongodb-devel \
+              mongo-cxx-driver-devel \
               ncurses-devel \
               openssh-clients \
               openssl-devel \
