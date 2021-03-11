@@ -23,6 +23,15 @@
 	(multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
+(deftemplate mongodb-machine-history
+	(slot name (type SYMBOL))
+	(slot state (type SYMBOL))
+	(slot game-time (type FLOAT) (default 0.0))
+	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+	(multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+	(slot fact-string (type STRING))
+)
+
 (deffunction mongodb-time-as-ms (?time)
 	(return (+ (* (nth$ 1 ?time) 1000) (div (nth$ 2 ?time) 1000)))
 )
@@ -86,6 +95,50 @@
 		(return (type-cast ?raw-val ?type))
 	)
 )
+
+(deffunction fact-to-string (?fact)
+	(bind ?template (fact-relation ?fact))
+	(bind ?update-str (str-cat "(" ?template))
+	(foreach ?slot (deftemplate-slot-names ?template)
+		(bind ?is-multislot (deftemplate-slot-multip ?template ?slot))
+		(bind ?types (deftemplate-slot-types ?template ?slot))
+		(if (neq (length$ ?types) 1)
+		 then
+			(printout error "fact-to-string: type of slot " ?slot
+			                " of template "  ?template " cannot be determined, skipping." crlf)
+		 else
+			(bind ?type (nth$ 1 ?types))
+			(bind ?value (fact-slot-value ?fact ?slot))
+			(bind ?value (mongodb-pack-value-to-string ?value ?type))
+			(bind ?update-str (str-cat ?update-str " (" ?slot " " ?value ")"))
+		)
+	)
+	(bind ?update-str (str-cat ?update-str ")"))
+  (return ?update-str)
+)
+
+(defrule mongodb-create-first-machine-history
+	?m <- (machine (name ?n) (state ?s))
+	(gamestate (game-time ?gt))
+	(time $?now)
+	(not (mongodb-machine-history (name ?n)))
+	=>
+	(assert (mongodb-machine-history (name ?n) (game-time ?gt) (time ?now)
+	          (state ?s) (fact-string (fact-to-string ?m))))
+)
+
+(defrule mongodb-create-next-machine-history
+	?m <- (machine (name ?n) (state ?s))
+	?hist <- (mongodb-machine-history (name ?n) (state ?s-last&:(neq ?s ?s-last))
+	           (time $?last) (is-latest TRUE))
+	(gamestate (game-time ?gt))
+	(time $?now)
+	=>
+	(modify ?hist (is-latest FALSE))
+	(assert (mongodb-machine-history (name ?n) (game-time ?gt)
+	          (time ?now) (state ?s) (fact-string (fact-to-string ?m))))
+)
+
 
 (deffunction mongodb-update-fact-from-bson (?doc ?template ?id-slots $?only-slots)
 " Update a fact by the content of a bson document.
@@ -331,6 +384,19 @@
 		(bson-builder-destroy ?order-doc)
 	)
 	(bson-array-finish ?doc "orders" ?o-arr)
+
+	(bind ?machine-history-arr (bson-array-start))
+	(do-for-all-facts ((?mh mongodb-machine-history)) TRUE
+		(bind ?history-doc (mongodb-fact-to-bson ?mh))
+		(bind ?temp-fact (assert-string ?mh:fact-string))
+		(bind ?machine-doc (mongodb-fact-to-bson ?temp-fact))
+		(bson-append ?history-doc "machine-fact" ?machine-doc)
+		(retract ?temp-fact)
+		(bson-array-append ?machine-history-arr ?history-doc)
+		(bson-builder-destroy ?machine-doc)
+		(bson-builder-destroy ?history-doc)
+	)
+	(bson-array-finish ?doc "machine-history" ?machine-history-arr)
 
 	;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 	(return ?doc)
