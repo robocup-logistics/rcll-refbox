@@ -120,31 +120,32 @@
   (return ?points)
 )
 
-(defrule game-reset
-  (game-reset) ; this is a fact
-  =>
-  (game-reset) ; this is a function
-)
-
-(defrule game-reset-re-parameterize
-  (game-reset)
-  ?gf <- (game-parameterized)
-  =>
-  (retract ?gf)
-)
-
-(defrule game-reset-print
-  (game-reset)
-  ?gf <- (game-printed)
-  =>
-  (retract ?gf)
-)
-
-(defrule game-reset-done
-  (declare (salience -10000))
-  ?gf <- (game-reset)
-  =>
-  (retract ?gf)
+(defrule game-init-storage
+	" Assert shelf-slot facts for each storage slot on each station.
+	  Corresponding facts that already exist but do not have a machine specified
+	  get properly initialized.
+	"
+	?init <- (init-storage-slots)
+ =>
+	(retract ?init)
+	(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot)) (eq ?ssf:name UNSET)
+		(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+			(duplicate ?ssf (name ?ss:name))
+		)
+		(retract ?ssf)
+	)
+	(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+		(loop-for-count (?shelf 0 ?*SS-MAX-SHELF*)
+			(loop-for-count (?slot 0 ?*SS-MAX-SLOT*)
+				(if (not (any-factp ((?ssf machine-ss-shelf-slot))
+				                    (and (eq ?ss:name ?ssf:name)
+				                         (eq ?ssf:position (create$ ?shelf ?slot)))))
+				 then
+					(assert (machine-ss-shelf-slot (name ?ss:name) (position (create$ ?shelf ?slot))))
+				)
+			)
+		)
+	)
 )
 
 (defrule game-init-parameterization-from-config

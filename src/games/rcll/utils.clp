@@ -15,6 +15,27 @@
   (insert$ ?list (+ (length$ ?list) 1) ?items)
 )
 
+(deffunction randomize-tuple-list$ (?list ?tuple-length)
+" Randomize a list of n-tuples such that each tuple stays connected
+  @param ?list: List of n-tuples (hence its length is divisible by n)
+  @param ?tuple-length: Length n of each tuple
+  @return: random order of the n-tuples, e.g., (1 2 3 4) 2 -> (3 4 1 2) or (1 2 3 4)
+"
+	(bind ?l (/ (length$ ?list) ?tuple-length))
+	(loop-for-count 200 do
+		(bind ?a (random 1 ?l))
+		(bind ?b (random 1 ?l))
+		(loop-for-count (?partial 0 (- ?tuple-length 1)) do
+			(bind ?a-curr (- (* ?a ?tuple-length) ?partial))
+			(bind ?b-curr (- (* ?b ?tuple-length) ?partial))
+			(bind ?tmp (nth$ ?a-curr ?list))
+			(bind ?list (replace$ ?list ?a-curr ?a-curr (nth$ ?b-curr ?list)))
+			(bind ?list (replace$ ?list ?b-curr ?b-curr ?tmp))
+		)
+	)
+(return ?list)
+
+)
 (deffunction randomize$ (?list)
   (bind ?l (length$ ?list))
   (loop-for-count 200 do
@@ -104,6 +125,13 @@
 
 (deffunction pick-random$ (?list)
   (return (nth$ (random 1 (length$ ?list)) ?list))
+)
+
+(deffunction remove$ (?list ?item)
+	(bind ?idx (member$ ?item ?list))
+	(if ?idx
+		then  (return (delete$ ?list ?idx ?idx))
+		else  (return ?list))
 )
 
 (deffunction is-even-int (?num)
@@ -298,14 +326,16 @@
 			                (and (eq ?ssf:name C-SS) (eq (nth$ 1 ?ssf:position) ?shelf))
 			                (bind ?positions (append$ ?positions ?ssf:position))
 		)
-		(bind ?positions (randomize-tuple-list$ ?positions 2))
-		(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
-			(bind ?i 1)
-			(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot))
-				                        (and (eq ?ss:name ?ssf:name)
-				                             (eq (nth$ 1 ?ssf:position) ?shelf))
-				(modify ?ssf (position (subseq$ ?positions ?i (+ ?i 1))) (move-to (subseq$ ?positions ?i (+ ?i 1)) ) )
-				(bind ?i (+ ?i 2))
+		(if (> (length$ ?positions) 0) then
+			(bind ?positions (randomize-tuple-list$ ?positions 2))
+			(do-for-all-facts ((?ss machine)) (eq ?ss:mtype SS)
+				(bind ?i 1)
+				(delayed-do-for-all-facts ((?ssf machine-ss-shelf-slot))
+					                        (and (eq ?ss:name ?ssf:name)
+					                             (eq (nth$ 1 ?ssf:position) ?shelf))
+					(modify ?ssf (position (subseq$ ?positions ?i (+ ?i 1))) (move-to (subseq$ ?positions ?i (+ ?i 1)) ) )
+					(bind ?i (+ ?i 2))
+				)
 			)
 		)
 	)

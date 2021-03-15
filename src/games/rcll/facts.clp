@@ -91,6 +91,17 @@
   (slot num-bases (type INTEGER) (default 0))
 )
 
+(deftemplate machine-ss-shelf-slot
+  (slot name (type SYMBOL) (allowed-values UNSET C-SS M-SS)(default UNSET))
+  (multislot position (type INTEGER) (cardinality 2 2)) ; first number is the shelf, second is the slot
+  (slot is-filled (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot is-accessible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot move-to (type INTEGER) (cardinality 0 2) (default (create$ )))
+  (slot num-payments (type INTEGER) (default 0))
+  (slot description (type STRING) (default ""))
+  (slot last-payed (type FLOAT) (default ?*SS-STORAGE-GRACE-PERIOD*))
+)
+
 (deftemplate machine-ss-filled
   (slot name (type SYMBOL))
   (multislot slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
