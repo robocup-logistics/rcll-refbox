@@ -36,10 +36,11 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   OBJS_all =	$(OBJS_llsf_refbox)
   BINS_all =	$(BINDIR)/llsf-refbox
 
-  CFLAGS  += $(CFLAGS_CPP17) $(CFLAGS_PROTOBUF) $(CFLAGS_CLIPS) \
+  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_LIBMODBUS) $(CFLAGS_CLIPS) $(CFLAGS_CPP17) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_CLIPS) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
   #MANPAGES_all =  $(MANDIR)/man1/llsf-refbox.1
 
   ifeq ($(HAVE_AVAHI),1)
