@@ -87,6 +87,7 @@ using namespace llsf_sps;
 using namespace protobuf_comm;
 using namespace protobuf_clips;
 using namespace llsf_utils;
+using namespace boost::placeholders;
 
 #ifdef HAVE_MONGODB
 using bsoncxx::builder::basic::document;
@@ -222,48 +223,16 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	std::string cfg_name = std::string(i->path()).substr(prefix.length());
 	cfg_name = cfg_name.substr(0, cfg_name.find("/"));
 
-#ifdef HAVE_MONGODB
-	cfg_mongodb_enabled_ = false;
-	try {
-		cfg_mongodb_enabled_ = config_->get_bool("/llsfrb/mongodb/enable");
-	} catch (fawkes::Exception &e) {
-	} // ignore, use default
-
-	if (cfg_mongodb_enabled_) {
-		cfg_mongodb_hostport_     = config_->get_string("/llsfrb/mongodb/hostport");
-		std::string mdb_text_log  = config_->get_string("/llsfrb/mongodb/collections/text-log");
-		std::string mdb_clips_log = config_->get_string("/llsfrb/mongodb/collections/clips-log");
-		std::string mdb_protobuf  = config_->get_string("/llsfrb/mongodb/collections/protobuf");
-		mlogger->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_text_log));
-
-		clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_clips_log));
-
-		mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
-
-		client_   = mongocxx::client{mongocxx::uri{"mongodb://" + cfg_mongodb_hostport_}};
-		database_ = client_["rcll"];
-
-		setup_clips_mongodb();
-
-		pb_comm_->server()->signal_received().connect(
-		  boost::bind(&LLSFRefBox::handle_server_client_msg, this, _1, _2, _3, _4));
-		pb_comm_->server()->signal_receive_failed().connect(
-		  boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
-
-	  std::string cfg_prefix = prefix + cfg_name + "/";
-
-	  printf("Config: %s  prefix %s\n", cfg_name.c_str(), cfg_prefix.c_str());
-
 	  bool active = true;
 	  try {
-	    active = config_->get_bool((cfg_prefix + "active").c_str());
+	    active = config_->get_bool((prefix + "active").c_str());
 	  } catch (Exception &e) {} // ignored, assume enabled
 
 	  if (active) {
 
- 	    std::string mpstype = config_->get_string((cfg_prefix + "type").c_str());
-	    std::string mpsip = config_->get_string((cfg_prefix + "host").c_str());
-	    unsigned int port = config_->get_uint((cfg_prefix + "port").c_str());
+	    std::string mpstype = config_->get_string((prefix + "type").c_str());
+	    std::string mpsip = config_->get_string((prefix + "host").c_str());
+	    unsigned int port = config_->get_uint((prefix + "port").c_str());
 
 	    if(mpstype == "BS") {
 	      logger_->log_info("RefBox", "Adding BS %s:%u", mpsip.c_str(), port);
@@ -293,9 +262,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	    ignored_mps_configs.insert(cfg_name);
 	  }
 	}
-      }
-    }
-  } catch (Exception &e) {
+  }
+	}	catch (Exception &e) {
     throw;
   }
 
@@ -310,48 +278,42 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
   mlogger->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 
- #ifdef HAVE_MONGODB
-  cfg_mongodb_enabled_ = false;
-  try {
-    cfg_mongodb_enabled_ = config_->get_bool("/llsfrb/mongodb/enable");
-  } catch (fawkes:: Exception &e) {} // ignore, use default
+#ifdef HAVE_MONGODB
+	cfg_mongodb_enabled_ = false;
+	try {
+		cfg_mongodb_enabled_ = config_->get_bool("/llsfrb/mongodb/enable");
+	} catch (fawkes::Exception &e) {
+	} // ignore, use default
 
-  if (cfg_mongodb_enabled_) {
-    cfg_mongodb_hostport_     = config_->get_string("/llsfrb/mongodb/hostport");
-    std::string mdb_text_log  = config_->get_string("/llsfrb/mongodb/collections/text-log");
-    std::string mdb_clips_log = config_->get_string("/llsfrb/mongodb/collections/clips-log");
-    std::string mdb_protobuf  = config_->get_string("/llsfrb/mongodb/collections/protobuf");
-    mlogger->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_text_log));
+	if (cfg_mongodb_enabled_) {
+		cfg_mongodb_hostport_     = config_->get_string("/llsfrb/mongodb/hostport");
+		std::string mdb_text_log  = config_->get_string("/llsfrb/mongodb/collections/text-log");
+		std::string mdb_clips_log = config_->get_string("/llsfrb/mongodb/collections/clips-log");
+		std::string mdb_protobuf  = config_->get_string("/llsfrb/mongodb/collections/protobuf");
+		clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_text_log));
 
-    clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_clips_log));
+		clips_logger_->add_logger(new MongoDBLogLogger(cfg_mongodb_hostport_, mdb_clips_log));
 
-    mongodb_protobuf_ = new MongoDBLogProtobuf(cfg_mongodb_hostport_, mdb_protobuf);
+		mongodb_protobuf_ = std::make_unique<MongoDBLogProtobuf>(cfg_mongodb_hostport_, mdb_protobuf);
 
+		client_   = mongocxx::client{mongocxx::uri{"mongodb://" + cfg_mongodb_hostport_}};
+		database_ = client_["rcll"];
 
-    mongo::DBClientConnection *conn =
-      new mongo::DBClientConnection(/* auto reconnect */ true);
-    mongodb_ = conn;
-    std::string errmsg;
-    if (! conn->connect(cfg_mongodb_hostport_, errmsg)) {
-      throw fawkes::Exception("Could not connect to MongoDB at %s: %s",
-			      cfg_mongodb_hostport_.c_str(), errmsg.c_str());
-    }
+		setup_clips_mongodb();
 
-    setup_clips_mongodb();
+		pb_comm_->server()->signal_received().connect(
+		  boost::bind(&LLSFRefBox::handle_server_client_msg, this, _1, _2, _3, _4));
+		pb_comm_->server()->signal_receive_failed().connect(
+		  boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
 
-    pb_comm_->server()->signal_received()
-      .connect(boost::bind(&LLSFRefBox::handle_server_client_msg, this, _1, _2, _3, _4));
-    pb_comm_->server()->signal_receive_failed()
-      .connect(boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
-
-    pb_comm_->signal_server_sent()
-      .connect(boost::bind(&LLSFRefBox::handle_server_sent_msg, this, _1, _2));
-    pb_comm_->signal_client_sent()
-      .connect(boost::bind(&LLSFRefBox::handle_client_sent_msg, this, _1, _2, _3));
-    pb_comm_->signal_peer_sent()
-      .connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _2));
-  }
+		pb_comm_->signal_server_sent().connect(
+		  boost::bind(&LLSFRefBox::handle_server_sent_msg, this, _1, _2));
+		pb_comm_->signal_client_sent().connect(
+		  boost::bind(&LLSFRefBox::handle_client_sent_msg, this, _1, _2, _3));
+		pb_comm_->signal_peer_sent().connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _2));
+	}
 #endif
+
 
   start_clips();
 

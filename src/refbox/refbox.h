@@ -214,7 +214,7 @@ class LLSFRefBox
 #ifdef HAVE_MONGODB
 	bool                cfg_mongodb_enabled_;
 	std::string         cfg_mongodb_hostport_;
-	MongoDBLogProtobuf *mongodb_protobuf_;
+	std::unique_ptr<MongoDBLogProtobuf> mongodb_protobuf_;
 	mongocxx::client    client_;
 	mongocxx::database  database_;
 #endif
