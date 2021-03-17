@@ -142,6 +142,10 @@ llsfrb:
     teams: [Carologistics]
     crypto-keys:
       Carologistics: randomkey
+    # If enabled, some machines will randomly go DOWN for some period during the game.
+    # If disabled, no machine will go DOWN.
+    # this option is independent from the mongodb game-report feature
+    random-machine-down-time: true
     # set to true to generate a random field at startup
     # disabling randomization requires mongodb to be enabled as the game
     # parameters are loaded from a mongodb game report in this case
