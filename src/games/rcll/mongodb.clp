@@ -493,8 +493,8 @@
   (bson-append ?client-doc "client-id" ?client-id)
   (bson-append ?client-doc "host" ?host)
   (bson-append ?client-doc "port" ?port)
-  (mongodb-insert "llsfrb.clients" ?client-doc)
-  (bson-destroy ?client-doc)
+  (mongodb-insert "clients" ?client-doc)
+  (bson-builder-destroy ?client-doc)
 )
 
 (defrule mongodb-net-client-disconnected
@@ -508,9 +508,9 @@
   (bson-append-time ?update-query "session" ?*START-TIME*)
   (bson-append ?update-query "client-id" ?client-id)
 
-  (mongodb-update "llsfrb.clients" ?client-update-doc ?update-query)
-  (bson-destroy ?client-update-doc)
-  (bson-destroy ?update-query)
+  (mongodb-update "clients" ?client-update-doc ?update-query)
+  (bson-builder-destroy ?client-update-doc)
+  (bson-builder-destroy ?update-query)
 )
 
 
