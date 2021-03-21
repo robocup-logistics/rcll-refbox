@@ -18,7 +18,7 @@ BASEDIR = ../../..
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/clips.mk
 
-CFLAGS += $(CFLAGS_CPP11)
+CFLAGS += $(CFLAGS_CPP17)
 
 LIBS_libllsf_mps_placing_clips = stdc++ m llsfrbcore
 OBJS_libllsf_mps_placing_clips = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp)))))
