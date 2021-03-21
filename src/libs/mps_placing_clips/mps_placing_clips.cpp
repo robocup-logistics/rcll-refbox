@@ -62,7 +62,7 @@ MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex 
 	is_field_generated_    = false;
 	generator_             = nullptr;
 	generator_thread_      = nullptr;
-	machines_ = { BASE, CAP1, CAP2, RING1, RING2, STORAGE, DELIVERY };
+	machines_              = {BASE, CAP1, CAP2, RING1, RING2, STORAGE, DELIVERY};
 }
 
 /** Destructor. */
