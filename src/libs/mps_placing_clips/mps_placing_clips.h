@@ -44,6 +44,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
 #include <thread>
 
 class MPSPlacing;
@@ -69,6 +70,7 @@ private:
 	void                setup_clips();
 	CLIPS::Environment *clips_;
 	fawkes::Mutex &     clips_mutex_;
+	std::set<int>       machines_;
 
 	void generator_thread();
 
