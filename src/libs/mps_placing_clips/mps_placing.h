@@ -41,6 +41,7 @@
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
 #include <vector>
+#include <set>
 
 #define EMPTY_ROT 0
 #define ANGLE_0 1
@@ -84,24 +85,18 @@ public:
 class MPSPlacing : public Gecode::IntMinimizeSpace
 {
 public:
-	MPSPlacing(int _width, int _height)
+	MPSPlacing(int _width, int _height, std::set<int> _machines)
 	{
 		height_ = _height;
 		width_  = _width;
-
+		machines_ = _machines;
 		mps_type_  = Gecode::IntVarArray(*this, (height_ + 2) * (width_ + 2), EMPTY_ROT, NUM_MPS);
 		mps_angle_ = Gecode::IntVarArray(*this, (height_ + 2) * (width_ + 2), EMPTY_ROT, ANGLE_315);
 		//zone_blocked_ = Gecode::IntVarArray(*this, (height_+2) * (width_+2) , 0, 1);
 
 		rg_ = Gecode::Rnd(time(NULL));
 
-		std::vector<int> types;
-
-		for (int i = 0; i <= NUM_MPS; i++) {
-			types.push_back(i);
-		}
-
-		mps_types_ = Gecode::IntArgs(types);
+		mps_types_ = Gecode::IntArgs(std::vector(machines_.begin(),machines_.end()));
 		mps_count_ = Gecode::IntVarArray(*this, NUM_MPS + 1, EMPTY_ROT, (height_ + 2) * (width_ + 2));
 
 		mps_resource_.resize(width_ + 2);
@@ -113,13 +108,9 @@ public:
 		}
 
 		// counting constraint for number of different machines
-		Gecode::rel(*this, mps_count_[BASE], Gecode::IRT_EQ, 1);
-		Gecode::rel(*this, mps_count_[CAP1], Gecode::IRT_EQ, 1);
-		Gecode::rel(*this, mps_count_[CAP2], Gecode::IRT_EQ, 1);
-		Gecode::rel(*this, mps_count_[RING1], Gecode::IRT_EQ, 1);
-		Gecode::rel(*this, mps_count_[RING2], Gecode::IRT_EQ, 1);
-		Gecode::rel(*this, mps_count_[STORAGE], Gecode::IRT_EQ, 1);
-		Gecode::rel(*this, mps_count_[DELIVERY], Gecode::IRT_EQ, 1);
+		for(const auto &mps : machines_) {
+			Gecode::rel(*this, mps_count_[mps], Gecode::IRT_EQ, 1);
+		}
 
 		// an EMPTY_ROT zone has no orientation
 		for (int i = 0; i < (height_ + 2) * (width_ + 2); i++) {
@@ -781,6 +772,7 @@ public:
 	Gecode::IntVarArray                           mps_count_;
 	int                                           height_;
 	int                                           width_;
+	std::set<int>                                 machines_;
 	Gecode::DFS<MPSPlacing> *                     search_;
 	MPSPlacing *                                  solution;
 	Gecode::Rnd                                   rg_;

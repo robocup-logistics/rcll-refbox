@@ -62,6 +62,7 @@ MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex 
 	is_field_generated_    = false;
 	generator_             = nullptr;
 	generator_thread_      = nullptr;
+	machines_ = { BASE, CAP1, CAP2, RING1, RING2, STORAGE, DELIVERY };
 }
 
 /** Destructor. */
@@ -128,7 +129,7 @@ MPSPlacingGenerator::generate_start()
 	is_generation_running_ = true;
 	is_field_generated_    = false;
 
-	generator_ = std::shared_ptr<MPSPlacing>(new MPSPlacing(7, 8));
+	generator_ = std::shared_ptr<MPSPlacing>(new MPSPlacing(7, 8, machines_));
 	generator_thread_ =
 	  std::shared_ptr<std::thread>(new std::thread(&MPSPlacingGenerator::generator_thread, this));
 }
