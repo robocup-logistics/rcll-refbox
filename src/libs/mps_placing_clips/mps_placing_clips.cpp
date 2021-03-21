@@ -97,6 +97,12 @@ MPSPlacingGenerator::setup_clips()
 {
 	fawkes::MutexLocker lock(&clips_mutex_);
 
+	ADD_FUNCTION("mps-generator-add-machine",
+	             (sigc::slot<CLIPS::Value, int>(
+	               sigc::mem_fun(*this, &MPSPlacingGenerator::add_machine))));
+	ADD_FUNCTION("mps-generator-remove-machine",
+	             (sigc::slot<CLIPS::Value, int>(
+	               sigc::mem_fun(*this, &MPSPlacingGenerator::remove_machine))));
 	ADD_FUNCTION("mps-generator-start",
 	             (sigc::slot<void>(sigc::mem_fun(*this, &MPSPlacingGenerator::generate_start))));
 	ADD_FUNCTION("mps-generator-abort",
@@ -117,6 +123,20 @@ MPSPlacingGenerator::generator_thread()
 {
 	is_field_generated_    = generator_->solve();
 	is_generation_running_ = false;
+}
+
+CLIPS::Value
+MPSPlacingGenerator::add_machine(int machine_index)
+{
+	auto [it, success] = machines_.insert(machine_index);
+	return CLIPS::Value(success ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+}
+
+CLIPS::Value
+MPSPlacingGenerator::remove_machine(int machine_index)
+{
+	auto success = machines_.erase(machine_index);
+	return CLIPS::Value(success ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
 }
 
 void

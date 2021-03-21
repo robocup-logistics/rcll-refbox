@@ -62,6 +62,8 @@ public:
 
 	void          generate_start();
 	void          generate_abort();
+	CLIPS::Value  add_machine(int machine_index);
+	CLIPS::Value  remove_machine(int machine_index);
 	CLIPS::Value  generate_running();
 	CLIPS::Value  field_layout_generated();
 	CLIPS::Values get_generated_field();
