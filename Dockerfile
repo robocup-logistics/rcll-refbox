@@ -14,12 +14,12 @@ RUN dnf install -y --nodocs \
       boost-devel \
       clips-devel \
       clipsmm-devel \
-      freeopcua-devel \
       gcc-c++ \
       gecode-devel \
       git \
       glibmm24-devel \
       gtkmm30-devel \
+      libmodbus-devel \
       make \
       mongo-cxx-driver-devel \
       ncurses-devel \
