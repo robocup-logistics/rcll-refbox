@@ -28,7 +28,6 @@ jobs:
               which \
               yaml-cpp-devel
       - checkout
-      - run: make quick-check
       - run: make all FAIL_ON_WARNING=1
   build_ubuntu:
     docker:
