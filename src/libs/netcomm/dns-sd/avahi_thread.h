@@ -36,6 +36,7 @@
 #include <string>
 #include <utility>
 #include <netinet/in.h>
+#include <chrono>
 
 struct AvahiEntryGroup;
 struct AvahiSimplePoll;
@@ -193,6 +194,7 @@ class AvahiThread
   AvahiSimplePoll  *simple_poll;
   AvahiClient      *client;
   AvahiClientState  client_state;
+	const static std::chrono::seconds wait_on_init_failure;
 
   WaitCondition         *init_wc;
 
