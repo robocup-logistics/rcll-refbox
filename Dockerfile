@@ -38,7 +38,7 @@ RUN dnf install -y --nodocs \
 COPY . /buildenv/
 SHELL ["/usr/bin/bash", "-c"]
 WORKDIR /buildenv
-RUN make -j`nproc` -l`nproc` USE_AVAHI=0 FAIL_ON_WARNING=1 \
+RUN make -j`nproc` -l`nproc` FAIL_ON_WARNING=1 \
     EXEC_CONFDIR=/etc/rcll-refbox EXEC_BINDIR=/usr/local/bin EXEC_LIBDIR=/usr/local/lib64 \
     EXEC_SHAREDIR=/usr/local/share/rcll-refbox
 # Compute the dependencies and store them in requires.txt
