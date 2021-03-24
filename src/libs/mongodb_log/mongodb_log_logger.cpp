@@ -25,11 +25,19 @@
 #include <core/threading/mutex.h>
 #include <core/threading/mutex_locker.h>
 
-// from MongoDB
-#include <mongo/client/dbclient.h>
+#include <bsoncxx/builder/basic/document.hpp>
+#include <chrono>
+#include <mongocxx/client.hpp>
+#include <mongocxx/exception/operation_exception.hpp>
+#include <mongocxx/uri.hpp>
+#include <string>
 
 using namespace mongo;
 using namespace fawkes;
+
+using bsoncxx::builder::basic::document;
+using bsoncxx::builder::basic::kvp;
+using bsoncxx::builder::basic::sub_document;
 
 /** @class MongoDBLogLogger <mongodb_log/mongodb_log_logger.h>
  * Thread that provides a logger writing to MongoDB.
@@ -41,18 +49,10 @@ using namespace fawkes;
 /** Constructor. */
 MongoDBLogLogger::MongoDBLogLogger(std::string host_port, std::string collection)
 {
-  mutex_ = new Mutex();
-
-  collection_ = collection;
-
-  DBClientConnection *conn =
-    new DBClientConnection(/* auto reconnect */ true);
-  mongodb_ = conn;
-  std::string errmsg;
-  if (! conn->connect(host_port, errmsg)) {
-    throw Exception("Could not connect to MongoDB at %s: %s",
-		    host_port.c_str(), errmsg.c_str());
-  }
+	mutex_ = new Mutex();
+	std::string uri{"mongodb://" + host_port};
+	client_     = mongocxx::client{mongocxx::uri{"mongodb://" + host_port}};
+	collection_ = client_["rcll"][collection];
 }
 
 
@@ -66,65 +66,59 @@ void
 MongoDBLogLogger::insert_message(LogLevel ll, const char *component,
 				 const char *format, va_list va)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
+	if (log_level <= ll) {
+		MutexLocker    lock(mutex_);
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		//Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
 
-    char *msg;
-    if (vasprintf(&msg, format, va) == -1) {
-      // Cannot do anything useful, drop log message
-      return;
-    }
+		char *msg;
+		if (vasprintf(&msg, format, va) == -1) {
+			// Cannot do anything useful, drop log message
+			return;
+		}
 
-    BSONObjBuilder b;
-    switch (ll) {
-    case LL_DEBUG: b.append("level", "DEBUG"); break;
-    case LL_INFO:  b.append("level", "INFO");  break;
-    case LL_WARN:  b.append("level", "WARN");  break;
-    case LL_ERROR: b.append("level", "ERROR"); break;
-    default:       b.append("level", "UNKN");  break;
-    }
-    b.append("component", component);
-    b.appendDate("time", nowd);
-    b.append("message", msg);
-
-    free(msg);
-
-    try {
-      mongodb_->insert(collection_, b.obj());
-    } catch (mongo::DBException &e) {} // ignored
-  }
+		document doc{};
+		doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
+		switch (ll) {
+		case LL_DEBUG: doc.append(kvp("level", "DEBUG")); break;
+		case LL_INFO: doc.append(kvp("level", "INFO")); break;
+		case LL_WARN: doc.append(kvp("level", "WARN")); break;
+		case LL_ERROR: doc.append(kvp("level", "ERROR")); break;
+		default: doc.append(kvp("level", "UNKN")); break;
+		}
+		doc.append(kvp("component", component));
+		doc.append(kvp("message", msg));
+		collection_.insert_one(doc.view());
+		free(msg);
+	}
 }
 
 void
 MongoDBLogLogger::insert_message(LogLevel ll, const char *component,
 				 Exception &e)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    Date_t nowd = now.tv_sec * 1000 + now.tv_usec / 1000;
+	if (log_level <= ll) {
+		MutexLocker lock(mutex_);
 
-    for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
-      BSONObjBuilder b;
-      switch (ll) {
-      case LL_DEBUG: b.append("level", "DEBUG"); break;
-      case LL_INFO:  b.append("level", "INFO");  break;
-      case LL_WARN:  b.append("level", "WARN");  break;
-      case LL_ERROR: b.append("level", "ERROR"); break;
-      default:       b.append("level", "UNKN");  break;
-      }
-      b.append("component", component);
-      b.appendDate("time", nowd);
-      b.append("message", std::string("[EXCEPTION] ") + *i);
-      try {
-        mongodb_->insert(collection_, b.obj());
-      } catch (mongo::DBException &e) {} // ignored
-    }
-  }
+		for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
+			document doc{};
+			switch (ll) {
+			case LL_DEBUG: doc.append(kvp("level", "DEBUG")); break;
+			case LL_INFO: doc.append(kvp("level", "INFO")); break;
+			case LL_WARN: doc.append(kvp("level", "WARN")); break;
+			case LL_ERROR: doc.append(kvp("level", "ERROR")); break;
+			default: doc.append(kvp("level", "UNKN")); break;
+			}
+			doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
+			doc.append(kvp("component", component));
+			doc.append(kvp("message", std::string("[EXCEPTION] ") + *i));
+			try {
+				collection_.insert_one(doc.view());
+			} catch (mongocxx::operation_exception &) {
+			} // ignored
+		}
+	}
 }
 
 void
@@ -220,60 +214,58 @@ MongoDBLogLogger::tlog_insert_message(LogLevel ll, struct timeval *t,
 				      const char *component,
 				      const char *format, va_list va)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    char *msg;
-    if (vasprintf(&msg, format, va) == -1) {
-      return;
-    }
+	if (log_level <= ll) {
+		MutexLocker lock(mutex_);
+		char *      msg;
+		if (vasprintf(&msg, format, va) == -1) {
+			return;
+		}
+		document doc{};
+		switch (ll) {
+		case LL_DEBUG: doc.append(kvp("level", "DEBUG")); break;
+		case LL_INFO: doc.append(kvp("level", "INFO")); break;
+		case LL_WARN: doc.append(kvp("level", "WARN")); break;
+		case LL_ERROR: doc.append(kvp("level", "ERROR")); break;
+		default: doc.append(kvp("level", "UNKN")); break;
+		}
+		doc.append(kvp("component", component));
+		doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
+		doc.append(kvp("message", msg));
+		try {
+			collection_.insert_one(doc.view());
+		} catch (mongocxx::operation_exception &) {
+		} // ignored
 
-    Date_t nowd = t->tv_sec * 1000 + t->tv_usec / 1000;
+		free(msg);
 
-    BSONObjBuilder b;
-    switch (ll) {
-    case LL_DEBUG: b.append("level", "DEBUG"); break;
-    case LL_INFO:  b.append("level", "INFO");  break;
-    case LL_WARN:  b.append("level", "WARN");  break;
-    case LL_ERROR: b.append("level", "ERROR"); break;
-    default:       b.append("level", "UNKN");  break;
-    }
-    b.append("component", component);
-    b.appendDate("time", nowd);
-    b.append("message", msg);
-    try {
-      mongodb_->insert(collection_, b.obj());
-    } catch (mongo::DBException &e) {} // ignored
-
-    free(msg);
-
-    mutex_->unlock();
-  }
+		mutex_->unlock();
+	}
 }
 
 void
 MongoDBLogLogger::tlog_insert_message(LogLevel ll, struct timeval *t,
 				      const char *component, Exception &e)
 {
-  if (log_level <= ll ) {
-    MutexLocker lock(mutex_);
-    Date_t nowd = t->tv_sec * 1000 + t->tv_usec / 1000;
-    for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
-      BSONObjBuilder b;
-      switch (ll) {
-      case LL_DEBUG: b.append("level", "DEBUG"); break;
-      case LL_INFO:  b.append("level", "INFO");  break;
-      case LL_WARN:  b.append("level", "WARN");  break;
-      case LL_ERROR: b.append("level", "ERROR"); break;
-      default:       b.append("level", "UNKN");  break;
-      }
-      b.append("component", component);
-      b.appendDate("time", nowd);
-      b.append("message", std::string("[EXCEPTION] ") + *i);
-      try {
-        mongodb_->insert(collection_, b.obj());
-      } catch (mongo::DBException &e) {} // ignored
-    }
-  }
+	if (log_level <= ll) {
+		MutexLocker lock(mutex_);
+		for (Exception::iterator i = e.begin(); i != e.end(); ++i) {
+			document doc{};
+			switch (ll) {
+			case LL_DEBUG: doc.append(kvp("level", "DEBUG")); break;
+			case LL_INFO: doc.append(kvp("level", "INFO")); break;
+			case LL_WARN: doc.append(kvp("level", "WARN")); break;
+			case LL_ERROR: doc.append(kvp("level", "ERROR")); break;
+			default: doc.append(kvp("level", "UNKN")); break;
+			}
+			doc.append(kvp("component", component));
+			doc.append(kvp("time", bsoncxx::types::b_date(std::chrono::system_clock::now())));
+			doc.append(kvp("message", std::string("[EXCEPTION] ") + *i));
+			try {
+				collection_.insert_one(doc.view());
+			} catch (mongocxx::operation_exception &) {
+			} // ignored
+		}
+	}
 }
 
 void

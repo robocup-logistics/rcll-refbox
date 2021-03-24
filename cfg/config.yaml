@@ -71,7 +71,7 @@ llsfrb:
         active: false
         host: !ipv4 192.168.2.32
         port: !tcp-port 502
-        type: CS  
+        type: CS
       M-RS1:
         active: false
         host: !ipv4 192.168.2.31
@@ -108,7 +108,7 @@ llsfrb:
     protobuf-dirs: ["@BASEDIR@/src/msgs"]
 
     server-port: !tcp-port 4444
-    
+
     public-peer:
       #host: !ipv4 192.168.122.255
       host: !ipv4 127.0.0.1
@@ -134,16 +134,33 @@ llsfrb:
     enable: false
     hostport: localhost
     collections:
-      text-log: llsfrb.log
-      clips-log: llsfrb.clipslog
-      protobuf: llsfrb.protobuf
+      text-log: log
+      clips-log: clipslog
+      protobuf: protobuf
 
   game:
     teams: [Carologistics]
     crypto-keys:
       Carologistics: randomkey
-    # whenever a random field should be generated or not (e.g. used from mongodb)
+    # If enabled, some machines will randomly go DOWN for some period during the game.
+    # If disabled, no machine will go DOWN.
+    # this option is independent from the mongodb game-report feature
+    random-machine-down-time: true
+    # set to true to generate a random field at startup
+    # disabling randomization requires mongodb to be enabled as the game
+    # parameters are loaded from a mongodb game report in this case
     random-field: true
+    random-machine-setup: true
+    random-orders: true
+    random-storage: true
+    restore-gamestate:
+      enable: false
+      phase: PRODUCTION
+    # load data from latest game report with a given name
+    # leave empty to always load from latest stored report
+    load-from-report: ""
+    # store game report under a name for later reference
+    store-to-report: ""
 
   shell:
     refbox-host: localhost
@@ -156,7 +173,7 @@ llsfrb:
 
   simulation:
     enable: true
-    # synchronize refbox time with the time of a simulation 
+    # synchronize refbox time with the time of a simulation
     time-sync:
       enable: true
       # estimate time by using the last given simulation time speed

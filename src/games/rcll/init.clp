@@ -25,6 +25,7 @@
   )
   (return FALSE)
 )
+(load* (resolve-file globals.clp))
 
 (load* (resolve-file facts.clp))
 (load* (resolve-file utils.clp))
@@ -32,7 +33,6 @@
 (load* (resolve-file config.clp))
 (load* (resolve-file protobuf.clp))
 
-(load* (resolve-file globals.clp))
 (load* (resolve-file priorities.clp))
 
 (defrule load-config

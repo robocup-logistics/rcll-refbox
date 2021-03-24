@@ -36,10 +36,11 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   OBJS_all =	$(OBJS_llsf_refbox)
   BINS_all =	$(BINDIR)/llsf-refbox
 
-  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_LIBMODBUS) $(CFLAGS_CLIPS) $(CFLAGS_MONGODB) \
+  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_LIBMODBUS) $(CFLAGS_CLIPS) $(CFLAGS_CPP17) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_LIBMODBUS) $(LDFLAGS_CLIPS) $(LDFLAGS_MONGODB) \
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_CLIPS) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
+
   #MANPAGES_all =  $(MANDIR)/man1/llsf-refbox.1
 
   ifeq ($(HAVE_AVAHI),1)
@@ -48,7 +49,11 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_LIBMODBUS)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   endif
 
   ifeq ($(HAVE_MONGODB),1)
+    CFLAGS += $(CFLAGS_MONGODB)
+    LDFLAGS += $(LDFLAGS_MONGODB)
     LIBS_llsf_refbox += llsf_mongodb_log
+  else
+    WARN_TARGETS += warning_mongodb
   endif
 else
   ifneq ($(HAVE_PROTOBUF),1)
@@ -63,15 +68,14 @@ else
   ifneq ($(HAVE_BOOST_LIBS),1)
     WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
   endif
-endif
-
-ifneq ($(HAVE_MONGODB),1)
-  WARN_TARGETS += warning_mongodb
+  ifneq ($(HAVE_MONGODB),1)
+    WARN_TARGETS += warning_mongodb
+  endif
 endif
 
 ifeq ($(OBJSSUBMAKE),1)
 all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
-.PHONY: warning_libmodbus warning_protobuf warning_clips warning_mongodb $(WARN_TARGETS_BOOST)
+.PHONY: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
 warning_libmodbus:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build LLSF RefBox$(TNORMAL) (libmodbus not found)"
 warning_protobuf:

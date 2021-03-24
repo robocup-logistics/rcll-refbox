@@ -91,6 +91,17 @@
   (slot num-bases (type INTEGER) (default 0))
 )
 
+(deftemplate machine-ss-shelf-slot
+  (slot name (type SYMBOL) (allowed-values UNSET C-SS M-SS)(default UNSET))
+  (multislot position (type INTEGER) (cardinality 2 2)) ; first number is the shelf, second is the slot
+  (slot is-filled (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot is-accessible (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot move-to (type INTEGER) (cardinality 0 2) (default (create$ )))
+  (slot num-payments (type INTEGER) (default 0))
+  (slot description (type STRING) (default ""))
+  (slot last-payed (type FLOAT) (default ?*SS-STORAGE-GRACE-PERIOD*))
+)
+
 (deftemplate machine-ss-filled
   (slot name (type SYMBOL))
   (multislot slot (type INTEGER) (cardinality 3 3)) ; meaning defined in llsf_msgs.SSSlot
@@ -320,6 +331,16 @@
   (slot real-time-factor (type FLOAT) (default 0.0))
 )
 
+(deftemplate game-parameters
+	(slot is-parameterized (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+	(slot is-initialized (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+	(slot machine-positions (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot machine-setup (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot orders (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot gamestate (type SYMBOL) (allowed-values PENDING RECOVERED FRESH) (default PENDING))
+	(slot storage-status (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg
@@ -331,6 +352,7 @@
 (deffacts startup
   (gamestate (phase PRE_GAME))
   (machine-generation (state NOT-STARTED))
+  (game-parameters)
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))

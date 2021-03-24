@@ -36,11 +36,13 @@
 
 #include "refbox.h"
 
-#include <termios.h>
 #include <clipsmm.h>
-#ifdef HAVE_MONGODB_VERSION_H
-#  include <mongo/client/init.h>
+
+#ifdef HAVE_MONGODB
+#	include <mongocxx/instance.hpp>
 #endif
+
+#include <termios.h>
 
 using namespace llsfrb;
 
@@ -53,9 +55,9 @@ main(int argc, char **argv)
   term.c_lflag &= ~ECHO ;
   tcsetattr(0 , TCSANOW, &term);
 
-  CLIPS::init();
-#ifdef HAVE_MONGODB_VERSION_H
-  mongo::client::initialize();
+	CLIPS::init();
+#ifdef HAVE_MONGODB
+	mongocxx::instance mongodb_instance{};
 #endif
   LLSFRefBox llsfrb(argc, argv);
   int rv = llsfrb.run();
