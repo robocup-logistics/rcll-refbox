@@ -37,7 +37,6 @@
 (defrule challenges-configure-machines
 "adjust the machines placed on the field"
 	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
-	(confval (path "/llsfrb/challenges/enable") (type BOOL) (value true))
 	(confval (path "/llsfrb/challenges/machines") (is-list TRUE) (list-value $?machines))
 	(confval (path "/llsfrb/challenges/field/width") (type UINT) (value ?x))
 	(confval (path "/llsfrb/challenges/field/height") (type UINT) (value ?y))
@@ -98,7 +97,6 @@
 
 	(ss-print-storage C-SS)
 	(ss-print-storage M-SS)
-	(printout error "i am here4" crlf)
 	(printout t "Top  5        1 3 5 7" crlf)
 	(printout t " |   :        0 2 4 6" crlf)
 	(printout t "Bot  0   Input ------> Output" crlf)
