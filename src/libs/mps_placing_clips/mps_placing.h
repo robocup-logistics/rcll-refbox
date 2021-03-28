@@ -37,6 +37,9 @@
 #ifndef MPS_PLACING_H
 #define MPS_PLACING_H
 
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/connected_components.hpp>
 #include <gecode/int.hh>
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
@@ -515,18 +518,21 @@ public:
 	bool
 	solve()
 	{
-		if (solution) {
-			delete solution;
+		bool connected_field = false;
+		while (!connected_field) {
+			if (solution) {
+				delete solution;
+			}
+
+			stop_->reset();
+
+			solution = search_->next();
+
+			if (!solution) {
+				return false;
+			}
+			connected_field = is_field_connected();
 		}
-
-		stop_->reset();
-
-		solution = search_->next();
-
-		if (!solution) {
-			return false;
-		}
-
 		return true;
 	}
 
@@ -537,12 +543,55 @@ public:
 	}
 
 	bool
+	is_field_connected()
+	{
+		using namespace boost;
+		if (solution) {
+			// construct grid graph
+			typedef boost::adjacency_list<vecS, vecS, undirectedS> Graph;
+
+			Graph                         G((width_ + 2) * (height_ + 2));
+			std::function<bool(int, int)> is_free_field = [this](int x, int y) {
+				if (solution->mps_type_[index(x, y)].val() != EMPTY_ROT || x == 0 || x == width_ + 1
+				    || y == 0 || y == height_ + 1) {
+					return false;
+				} else {
+					// exclude the insertion zone
+					if (y == 1 && x > width_ - 3) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			};
+			int num_excluded_zones = 0;
+			for (int x = 0; x < width_ + 2; x++) {
+				for (int y = 0; y < height_ + 2; y++) {
+					if (is_free_field(x, y)) {
+						if (is_free_field(x + 1, y)) {
+							add_edge(index(x, y), index(x + 1, y), G);
+						}
+						if (is_free_field(x, y + 1)) {
+							add_edge(index(x, y), index(x, y + 1), G);
+						}
+					} else {
+						num_excluded_zones++;
+					}
+				}
+			}
+			std::vector<int> component(num_vertices(G));
+			int              num = boost::connected_components(G, &component[0]);
+			return num == num_excluded_zones + 1;
+		}
+		return false;
+	}
+
+	bool
 	get_solution(std::vector<MPSPlacingPlacing> &result)
 	{
 		if (!solution) {
 			return false;
 		}
-
 		for (int x = 0; x < width_ + 2; x++) {
 			for (int y = 0; y < height_ + 2; y++) {
 				if (solution->mps_type_[index(x, y)].val() != EMPTY_ROT) {
