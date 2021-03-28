@@ -554,6 +554,61 @@
 	)
 )
 
+(defrule mongodb-load-gamephase-points
+	(declare (salience ?*PRIORITY_FIRST*))
+	?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
+	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
+	=>
+	(bind ?success FALSE)
+	(bind ?t-query (bson-parse "{}"))
+	(if (neq ?report-name "")
+	 then
+		(bind ?t-query (bson-parse (str-cat "{\"report-name\": \"" ?report-name "\"}")))
+	)
+	(bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
+	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
+	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(if (neq ?t-doc FALSE) then
+	 then
+		(if (bind ?phasepoints (bson-get ?t-doc "phase-points-cyan")) then
+			(if (bind ?points (bson-get ?phasepoints "PRODUCTION")) then
+				(assert (points (points ?points) (team CYAN) (game-time 0.0) (phase PRODUCTION) (reason "Restored")))
+			)
+			(if (bind ?points (bson-get ?phasepoints "EXPLORATION")) then
+				(assert (points (points ?points) (team CYAN) (game-time 0.0) (phase EXPLORATION) (reason "Restored")))
+			)
+			(if (bind ?points (bson-get ?phasepoints "WHACK_A_MOLE_CHALLENGE")) then
+				(assert (points (points ?points) (team CYAN) (game-time 0.0) (phase WHACK_A_MOLE_CHALLENGE) (reason "Restored")))
+			)
+		else
+			(printout error "Couldn't read phase points for cyan" crlf)
+		)
+		(if (bind ?phasepoints (bson-get ?t-doc "phase-points-magenta")) then
+			(if (bind ?points (bson-get ?phasepoints "PRODUCTION")) then
+				(assert (points (points ?points) (team MAGENTA) (game-time 0.0) (phase PRODUCTION) (reason "Restored")))
+			)
+			(if (bind ?points (bson-get ?phasepoints "EXPLORATION")) then
+				(assert (points (points ?points) (team MAGENTA) (game-time 0.0) (phase EXPLORATION) (reason "Restored")))
+			)
+			(if (bind ?points (bson-get ?phasepoints "WHACK_A_MOLE_CHALLENGE")) then
+				(assert (points (points ?points) (team MAGENTA) (game-time 0.0) (phase WHACK_A_MOLE_CHALLENGE) (reason "Restored")))
+			)
+		else
+			(printout error "Couldn't read phase points for magenta" crlf)
+		)
+
+	 else
+		(printout error "Empty result in mongoDB from game_report" crlf)
+	)
+	(bson-destroy ?t-doc)
+	(mongodb-cursor-destroy ?t-cursor)
+	(bson-builder-destroy ?t-query)
+	(bson-builder-destroy ?t-sort)
+  )
+)
+
 (defrule mongodb-load-storage-status
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
