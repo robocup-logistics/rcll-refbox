@@ -25,7 +25,8 @@
 (load* (resolve-file machine-lights.clp))
 (if (config-get-bool "/llsfrb/webshop/enable")
   then (printout t "Enabling Opencart Webshop" crlf) (load* (resolve-file custom-orders.clp)))
-;(load* (resolve-file challenges.clp))
+(if (config-get-bool "/llsfrb/challenges/enable")
+  then (load* (resolve-file challenges.clp)))
 
 (defrule config-timer-interval
   (confval (path "/llsfrb/clips/timer-interval") (type ?t) (value ?v))
