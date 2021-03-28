@@ -62,6 +62,7 @@ public:
 
 	void          generate_start();
 	void          generate_abort();
+	CLIPS::Value  set_field(int width, int height);
 	CLIPS::Value  add_machine(int machine_index);
 	CLIPS::Value  remove_machine(int machine_index);
 	CLIPS::Value  generate_running();
@@ -73,6 +74,8 @@ private:
 	CLIPS::Environment *clips_;
 	fawkes::Mutex &     clips_mutex_;
 	std::set<int>       machines_;
+	int                 width_;
+	int                 height_;
 
 	void generator_thread();
 
