@@ -519,9 +519,7 @@ public:
 	solve()
 	{
 		bool connected_field = false;
-		int  i               = 0;
 		while (!connected_field) {
-			i++;
 			if (solution) {
 				delete solution;
 			}
