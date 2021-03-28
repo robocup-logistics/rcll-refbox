@@ -74,6 +74,37 @@
 	(return (if (eq ?prefix "C") then CYAN else MAGENTA))
 )
 
+(deffunction machine-retrieve-generated-mps (?mirror)
+	(bind ?machines (mps-generator-get-generated-field))
+	(delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
+		(if (member$ ?m:name ?machines)
+		 then
+			(bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
+			(bind ?rot (nth$ (+ (member$ ?m:name ?machines) 2) ?machines))
+			(printout t ?m:name ": " ?zone " with " ?rot crlf)
+			(modify ?m (zone ?zone) (rotation ?rot))
+		 else
+			(printout t ?m:name " not found in generation, skipping" crlf)
+			(retract ?m)
+		)
+	)
+	; Mirror machines for other team
+	(delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
+		(do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
+		(if ?mirror then
+			(modify ?mc
+			  (zone (mirror-zone ?mm:zone))
+			  (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
+			)
+		 else
+			(modify ?mc
+			  (zone ?mm:zone)
+			  (rotation ?mm:rotation))
+			)
+		)
+	)
+)
+
 (deffunction machine-randomize-positions ()
 	(printout t "Randomizing from scratch" crlf)
 	; reset all zones, since we cannot do partial assignment anymore
@@ -82,28 +113,8 @@
 	)
 	; randomly assigned machines to zones using the external generator
 	(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
-	(bind ?machines (mps-generator-get-generated-field))
-	(delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
-	  (if (member$ ?m:name ?machines)
-	   then
-	    (bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
-	    (bind ?rot (nth$ (+ (member$ ?m:name ?machines) 2) ?machines))
-	    (printout t ?m:name ": " ?zone " with " ?rot crlf)
-	    (modify ?m (zone ?zone) (rotation ?rot))
-	   else
-	    (printout error ?m:name " not found in generation" crlf)
-	  )
-	)
+	(machine-retrieve-generated-mps TRUE)
 
-	; Mirror machines for other team
-	(delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
-	  (do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
-	    (modify ?mc
-	      (zone (mirror-zone ?mm:zone))
-	      (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
-	    )
-	  )
-	)
 
   ; Swap machines
 	(bind ?machines-to-swap
@@ -150,8 +161,9 @@
 		(foreach ?t ?*DOWN-TYPES*
 			(bind ?t-candidates (find-all-facts ((?m machine))
 			                      (and (eq ?m:mtype ?t) (eq ?m:team CYAN))))
-
-		  (bind ?candidates (append$ ?candidates (first$ (randomize$ ?t-candidates))))
+			(if (> (length$ ?t-candidates) 0) then
+				(bind ?candidates (append$ ?candidates (first$ (randomize$ ?t-candidates))))
+			)
 		)
 
 		(foreach ?c ?candidates
