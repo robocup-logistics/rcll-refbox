@@ -186,6 +186,10 @@
   (slot time (type INTEGER) (default 5))
 )
 
+(deftemplate send-mps-positions
+  (multislot phases (type SYMBOL) (allowed-values nil PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default PRODUCTION))
+)
+
 (deftemplate order
   (slot id (type INTEGER))
 
@@ -385,6 +389,7 @@
   (gamestate (phase PRE_GAME))
   (machine-generation (state NOT-STARTED))
   (game-parameters)
+  (send-mps-positions)
   (signal (type beacon) (time (create$ 0 0)) (seq 1))
   (signal (type gamestate) (time (create$ 0 0)) (seq 1))
   (signal (type robot-info) (time (create$ 0 0)) (seq 1))

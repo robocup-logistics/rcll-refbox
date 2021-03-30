@@ -34,8 +34,56 @@
 	(return 0)
 )
 
+(defrule challenges-configure-machine-ground-truth
+" Send the ground truth for machine positions only for specified phases "
+	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(confval (path "/llsfrb/challenges/send-mps-ground-truth") (is-list TRUE) (list-value $?gt))
+	?s <- (send-mps-positions (phases ~$?gt))
+=>
+	(modify ?s (phases $?gt))
+)
+
+(defrule challenges-customize-orders
+" Send the ground truth for machine positions only for specified phases "
+	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(confval (path "/llsfrb/challenges/orders/customize") (type BOOL) (value true))
+	(confval (path "/llsfrb/challenges/production-time") (type UINT) (value ?max-time))
+=>
+	(bind ?id 1)
+	(do-for-all-facts ((?o order)) TRUE (retract ?o))
+	(bind ?path-prefix "/llsfrb/challenges/orders/")
+	(bind ?base-suffix "/base-color")
+	(bind ?ring-suffix "/ring-colors")
+	(bind ?cap-suffix "/cap-color")
+	(do-for-all-facts ((?bc confval) (?rc confval) (?cc confval))
+		(and (str-index ?path-prefix ?bc:path)
+		     (str-index ?path-prefix ?rc:path)
+		     (str-index ?path-prefix ?cc:path)
+		     (str-index ?base-suffix ?bc:path)
+		     (str-index ?ring-suffix ?rc:path)
+		     (str-index ?cap-suffix ?cc:path)
+		     (eq (sub-string 1 (- (str-index ?base-suffix ?bc:path) 1) ?bc:path)
+		         (sub-string 1 (- (str-index ?ring-suffix ?rc:path) 1) ?rc:path)
+		         (sub-string 1 (- (str-index ?cap-suffix ?cc:path) 1) ?cc:path)
+		     )
+		)
+		(bind ?id (string-to-field (sub-string (+ (length$ ?path-prefix) 2)
+		                               (- (str-index ?base-suffix ?bc:path) 1)
+		                               ?bc:path)))
+		(bind ?ring-colors (create$))
+		(progn$ (?str-color ?rc:list-value) (bind ?ring-colors (append$ ?ring-colors (sym-cat ?str-color))))
+		(printout error ?id crlf)
+		(bind ?delivery-period (create$ 0 ?max-time))
+		(assert (order (id ?id) (complexity (sym-cat C (length$ ?rc:list-value)))
+		                        (base-color (sym-cat ?bc:value))
+		                        (ring-colors ?ring-colors)
+		                        (cap-color (sym-cat ?cc:value))
+		                        (delivery-period ?delivery-period)))
+	)
+)
+
 (defrule challenges-configure-machines
-"adjust the machines placed on the field"
+" adjust the machines placed on the field "
 	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
 	(confval (path "/llsfrb/challenges/machines") (is-list TRUE) (list-value $?machines))
 	(confval (path "/llsfrb/challenges/field/width") (type UINT) (value ?x))
@@ -55,6 +103,34 @@
 	)
 	(foreach ?m ?machines
 		(mps-generator-add-machine (machine-to-id (sym-cat ?m)))
+	)
+	(if (config-get-bool "/llsfrb/challenges/machine-setup/customize")
+	 then
+		(delayed-do-for-all-facts ((?m machine) (?rc confval))
+			(and (eq ?m:mtype RS)
+			     (str-index "/llsfrb/challenges/machine-setup/rs" ?rc:path)
+			     (str-index "-colors" ?rc:path)
+			     (eq (sub-string 5 5 ?m:name)
+			         (sub-string (+ (length$ "/llsfrb/challenges/machine-setup/rs") 1)
+			                     (- (str-index "-colors" ?rc:path) 1)
+			                     ?rc:path))
+			)
+			(bind ?ring-colors (create$))
+			(progn$ (?str-color ?rc:list-value)
+				(bind ?ring-colors (append$ ?ring-colors (sym-cat ?str-color))))
+			(modify ?m (rs-ring-colors ?ring-colors))
+		)
+		(bind ?spec-prefix "/llsfrb/challenges/machine-setup/ring-specs/")
+		(delayed-do-for-all-facts ((?spec confval))
+			(str-index ?spec-prefix ?spec:path)
+			(bind ?color (sym-cat (sub-string (+ (length$ ?spec-prefix) 1)
+			                                  (length$ ?spec:path)
+			                                  ?spec:path)))
+
+			(do-for-fact ((?rs ring-spec)) (eq ?rs:color ?color) (retract ?rs))
+
+			(assert (ring-spec (color ?color) (req-bases ?spec:value)))
+		)
 	)
 	(mps-generator-set-field ?x ?y)
 	(assert (machine-generation-triggered))
@@ -82,11 +158,11 @@
 	 then
 		(machine-retrieve-generated-mps false)
 	)
-	(if (eq ?m-setup RANDOM)
+	(if (not (config-get-bool "/llsfrb/challenges/machine-setup/customize"))
 	 then
 		(machine-randomize-machine-setup)
 	)
-	(if (eq ?orders RANDOM)
+	(if (not (config-get-bool "/llsfrb/challenges/orders/customize"))
 	 then
 		(game-randomize-orders)
 	)
