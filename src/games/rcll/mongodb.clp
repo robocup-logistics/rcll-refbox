@@ -231,13 +231,13 @@
 	(assert-string ?update-str)
 )
 
-(deffunction mongodb-write-game-report(?doc ?stime)
+(deffunction mongodb-write-game-report(?doc ?stime ?report-name)
 " Upsert a game report to mongodb.
   @param ?doc bson document storing the game report
   @param ?stime start time of the report
 "
 	(mongodb-upsert "game_report" ?doc
-	  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "]}"))
+	  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "], \"report-name\": \"" ?report-name "\"}"))
 	(bson-builder-destroy ?doc)
 )
 
@@ -465,7 +465,7 @@
 		(bson-builder-destroy ?machine-doc)
 	)
 	(bson-array-finish ?doc "machines" ?m-arr)
-	(mongodb-write-game-report ?doc ?stime)
+	(mongodb-write-game-report ?doc ?stime ?report-name)
 )
 
 (defrule mongodb-game-report-end
@@ -476,7 +476,7 @@
 	=>
 	(printout t "Writing game report to MongoDB" crlf)
 	(modify ?gr (end ?etime))
-	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime)
+	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
 )
 
 (defrule mongodb-game-report-update
@@ -492,7 +492,7 @@
 	       (timeout $?now $?last-updated ?*MONGODB-REPORT-UPDATE-FREQUENCY*))))
 	=>
 	(modify ?gr (points $?points) (last-updated $?now))
-	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime)
+	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
 )
 
 (defrule mongodb-game-report-finalize
@@ -502,7 +502,7 @@
 	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
 	(finalize)
 	=>
-	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime)
+	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
 )
 
 (defrule mongodb-net-client-connected
