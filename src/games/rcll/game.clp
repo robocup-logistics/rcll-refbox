@@ -347,6 +347,13 @@
   (assert (attention-message (text "Starting setup phase") (time 15)))
 )
 
+(defrule game-set-start-time-if-unset
+  ?gs <- (gamestate (teams ?team_cyan ?team_magenta) (phase ~PRE_GAME) (start-time 0 0))
+  =>
+  (modify ?gs (start-time (now)))
+  (assert (attention-message (text "Start time unset, despite not in PRE_GAME. Setting it now!") (time 15)))
+)
+
 (defrule game-setup-warn-end-near
   (gamestate (phase SETUP) (state RUNNING)
 	     (game-time ?game-time&:(>= ?game-time (* ?*SETUP-TIME* .9))))
