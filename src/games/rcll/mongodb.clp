@@ -572,33 +572,15 @@
 	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
 	(if (neq ?t-doc FALSE) then
 	 then
-		(if (bind ?phasepoints (bson-get ?t-doc "phase-points-cyan")) then
-			(if (bind ?points (bson-get ?phasepoints "PRODUCTION")) then
-				(assert (points (points ?points) (team CYAN) (game-time 0.0) (phase PRODUCTION) (reason "Restored")))
+		(if (bind ?points-arr (bson-get-array ?t-doc "points"))
+		 then
+			(foreach ?point ?points-arr
+				(assert (points (points (bson-get ?point "points")) (team (bson-get ?point "team")) (game-time (bson-get ?point "game-time")) (phase (bson-get ?point "phase")) (reason (bson-get ?point "reason"))))
+				(bson-destroy ?point)
 			)
-			(if (bind ?points (bson-get ?phasepoints "EXPLORATION")) then
-				(assert (points (points ?points) (team CYAN) (game-time 0.0) (phase EXPLORATION) (reason "Restored")))
-			)
-			(if (bind ?points (bson-get ?phasepoints "WHACK_A_MOLE_CHALLENGE")) then
-				(assert (points (points ?points) (team CYAN) (game-time 0.0) (phase WHACK_A_MOLE_CHALLENGE) (reason "Restored")))
-			)
-		else
-			(printout error "Couldn't read phase points for cyan" crlf)
+		 else
+			(printout error "Couldn't read points array" crlf)
 		)
-		(if (bind ?phasepoints (bson-get ?t-doc "phase-points-magenta")) then
-			(if (bind ?points (bson-get ?phasepoints "PRODUCTION")) then
-				(assert (points (points ?points) (team MAGENTA) (game-time 0.0) (phase PRODUCTION) (reason "Restored")))
-			)
-			(if (bind ?points (bson-get ?phasepoints "EXPLORATION")) then
-				(assert (points (points ?points) (team MAGENTA) (game-time 0.0) (phase EXPLORATION) (reason "Restored")))
-			)
-			(if (bind ?points (bson-get ?phasepoints "WHACK_A_MOLE_CHALLENGE")) then
-				(assert (points (points ?points) (team MAGENTA) (game-time 0.0) (phase WHACK_A_MOLE_CHALLENGE) (reason "Restored")))
-			)
-		else
-			(printout error "Couldn't read phase points for magenta" crlf)
-		)
-
 	 else
 		(printout error "Empty result in mongoDB from game_report" crlf)
 	)
