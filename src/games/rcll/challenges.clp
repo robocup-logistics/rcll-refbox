@@ -268,11 +268,11 @@
 )
 
 (deffunction challenges-net-create-broadcast-NavigationRoutes (?team-color)
-  (bind ?s (pb-create "llsf_msgs.NavigationRoutes"))
-  (pb-set-field ?s "team_color" ?team-color)
-  (do-for-all-facts ((?route challenges-route)) (eq ?route:team ?team-color)
-    (bind ?m (pb-create "llsf_msgs.Route"))
-    (pb-set-field ?m "id" (fact-slot-value ?route id))
+	(bind ?s (pb-create "llsf_msgs.NavigationRoutes"))
+	(pb-set-field ?s "team_color" ?team-color)
+	(do-for-all-facts ((?route challenges-route)) (eq ?route:team ?team-color)
+		(bind ?m (pb-create "llsf_msgs.Route"))
+		(pb-set-field ?m "id" (fact-slot-value ?route id))
 		(foreach ?z (fact-slot-value ?route way-points)
 			(pb-add-list ?m "route" z)
 		)
@@ -282,30 +282,32 @@
 		(foreach ?z (fact-slot-value ?route remaining)
 			(pb-add-list ?m "remaining" ?z)
 		)
-    (pb-add-list ?s "routes" ?m)
-  )
-  (return ?s)
+		(pb-add-list ?s "routes" ?m)
+	)
+	(return ?s)
 )
 
 (defrule challenges-net-send-navigation-messages
-  (time $?now)
-  (gamestate (phase PRODUCTION))
-  ?sf <- (signal (type navigation-routes-bc) (seq ?seq) (count ?count)
-		 (time $?t&:(timeout ?now ?t (if (> ?count ?*BC-MACHINE-INFO-BURST-COUNT*)
-					       then ?*BC-MACHINE-INFO-PERIOD*
-					       else ?*BC-MACHINE-INFO-BURST-PERIOD*))))
-  (network-peer (group CYAN) (id ?peer-id-cyan))
-  (network-peer (group MAGENTA) (id ?peer-id-magenta))
-  =>
-  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+	(time $?now)
+	(gamestate (phase PRODUCTION))
+	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value true))
+	?sf <- (signal (type navigation-routes-bc) (seq ?seq) (count ?count)
+	  (time $?t&:(timeout ?now ?t
+	    (if (> ?count ?*BC-MACHINE-INFO-BURST-COUNT*)
+	      then ?*BC-MACHINE-INFO-PERIOD*
+	      else ?*BC-MACHINE-INFO-BURST-PERIOD*))))
+	(network-peer (group CYAN) (id ?peer-id-cyan))
+	(network-peer (group MAGENTA) (id ?peer-id-magenta))
+=>
+	(modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
-  (bind ?s (challenges-net-create-broadcast-NavigationRoutes CYAN))
-  (pb-broadcast ?peer-id-cyan ?s)
-  (pb-destroy ?s)
+	(bind ?s (challenges-net-create-broadcast-NavigationRoutes CYAN))
+	(pb-broadcast ?peer-id-cyan ?s)
+	(pb-destroy ?s)
 
-  (bind ?s (challenges-net-create-broadcast-NavigationRoutes MAGENTA))
-  (pb-broadcast ?peer-id-magenta ?s)
-  (pb-destroy ?s)
+	(bind ?s (challenges-net-create-broadcast-NavigationRoutes MAGENTA))
+	(pb-broadcast ?peer-id-magenta ?s)
+	(pb-destroy ?s)
 )
 
 ; ***** WHACK-A-MOLE challenge *****
