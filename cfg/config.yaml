@@ -197,7 +197,12 @@ llsfrb:
         base-color: BASE_RED
         ring-colors: [RING_BLUE, RING_YELLOW, RING_ORANGE]
         cap-color: CAP_BLACK
-
+    publish-routes:
+      enable: true
+      num-points: 4
+      num-routes: 3
+      start: INSERTION_ZONE
+      end: INSERTION_ZOME
 
       # orders are randomized according to the given spec
     machines: [BS, CS1, RS1, RS2]
