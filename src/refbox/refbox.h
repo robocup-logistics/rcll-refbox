@@ -114,6 +114,7 @@ private: // methods
 	void          clips_load_config(std::string cfg_prefix);
 	CLIPS::Value  clips_config_path_exists(std::string path);
 	CLIPS::Value  clips_config_get_bool(std::string path);
+	CLIPS::Value  clips_config_get_int(std::string path);
 
 	bool mutex_future_ready(const std::string &name);
 

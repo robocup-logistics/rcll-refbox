@@ -533,6 +533,9 @@ LLSFRefBox::setup_clips()
 	clips_->add_function("config-get-bool",
 	                     sigc::slot<CLIPS::Value, std::string>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_bool)));
+	clips_->add_function("config-get-int",
+	                     sigc::slot<CLIPS::Value, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_int)));
 
 	if (!simulation) {
 		clips_->add_function("mps-move-conveyor",
@@ -703,6 +706,17 @@ LLSFRefBox::clips_config_get_bool(std::string path)
 		return CLIPS::Value(v ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
 	} catch (Exception &e) {
 		return CLIPS::Value("FALSE", CLIPS::TYPE_SYMBOL);
+	}
+}
+
+CLIPS::Value
+LLSFRefBox::clips_config_get_int(std::string path)
+{
+	try {
+		int v = config_->get_int(path.c_str());
+		return CLIPS::Value(v);
+	} catch (Exception &e) {
+		return CLIPS::Value(0);
 	}
 }
 
