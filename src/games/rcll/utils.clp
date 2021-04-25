@@ -68,6 +68,16 @@
   )
 )
 
+(deffunction pose-to-zone (?x ?y)
+	(bind ?x-zone (+ (integer ?x) 1))
+	(bind ?y-zone (+ (integer ?y) 1))
+	(bind ?side "M_Z")
+	(if (< ?x 0) then
+		(bind ?side "C_Z")
+	)
+	(return (str-cat ?side ?x-zone ?y-zone))
+)
+
 (deffunction want-mirrored-rotation (?mtype ?zone)
 "According to the RCLL2017 rulebook, this is when a machine is mirrored"
   (bind ?zn (str-cat ?zone))
