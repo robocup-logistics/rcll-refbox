@@ -124,9 +124,9 @@
 " Send the ground truth for machine positions only for specified phases "
 	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
 	(confval (path "/llsfrb/challenges/send-mps-ground-truth") (is-list TRUE) (list-value $?gt))
-	?s <- (send-mps-positions (phases ~$?gt))
+	?s <- (send-mps-positions (phases $?old-phases&:(neq ?old-phases (type-cast-list ?gt SYMBOL))))
 =>
-	(modify ?s (phases $?gt))
+	(modify ?s (phases (type-cast-list ?gt SYMBOL)))
 )
 
 (defrule challenges-customize-orders

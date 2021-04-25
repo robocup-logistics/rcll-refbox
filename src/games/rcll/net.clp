@@ -527,7 +527,7 @@
        (pb-add-list ?m "ring_colors" ?rc)
      )
     )
-    (if (any-factp ((?gs gamestate)(?send send-mps-positions)) (member$ ?gs:phase ?send:phases))
+    (if (any-factp ((?gs gamestate) (?send send-mps-positions)) (member$ ?gs:phase ?send:phases))
       then
 			  (pb-set-field ?m "state" (fact-slot-value ?mf state))
         (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
