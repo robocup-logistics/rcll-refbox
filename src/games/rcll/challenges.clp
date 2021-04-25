@@ -18,6 +18,51 @@
 	?*PRIORITY_CHALLENGE_OVERRIDE* = 100
 )
 
+(deftemplate challenges-field
+	(multislot free-zones (type SYMBOL))
+	(multislot occupied-zones (type SYMBOL))
+)
+
+(deftemplate challenges-route
+	(slot id (type INTEGER))
+	(slot team (type SYMBOL) (allowed-values CYAN MAGENTA) (default CYAN))
+	(multislot way-points (type SYMBOL))
+	(multislot reached (type SYMBOL) (default (create$)))
+	(multislot remaining (type SYMBOL) (default (create$)))
+)
+
+(deffunction challenges-init-field (?width ?height ?mirror)
+	(bind ?free (create$))
+	; all possible fields
+	(loop-for-count (?x 1 ?width)
+		(loop-for-count (?y 1 ?height)
+			(bind ?free (append$ ?free (sym-cat M_Z ?x ?y)))
+			(if ?mirror then
+				(bind ?free (append$ ?free (sym-cat C_Z ?x ?y)))
+			)
+		)
+	)
+	(bind ?occupied (create$))
+	(loop-for-count (?x (- ?width 2) ?width)
+			(bind ?occupied (append$ ?occupied (sym-cat M_Z ?x 1)))
+			(if ?mirror then
+				(bind ?occupied (append$ ?occupied (sym-cat C_Z ?x 1)))
+			)
+	)
+	(do-for-all-facts ((?m machine)) TRUE
+		(if (neq ?m:zone TBD) then
+			(bind ?occupied (append$ ?occupied ?m:zone))
+		)
+	)
+	; remove occupied zones
+	(foreach ?zone ?occupied
+		(bind ?pos (member$ ?zone ?free))
+		(if ?pos then
+			(bind ?free (delete$ ?free ?pos ?pos))
+		)
+	)
+	(assert (challenges-field (free-zones ?free) (occupied-zones ?occupied)))
+)
 
 (deffunction machine-to-id (?mps)
 	(switch ?mps
@@ -32,6 +77,39 @@
 	(printout error "machine-to-id: unsupported machine: "
 	  ?mps " Expected BS|CS1|CS2|RS1|RS2|SS|DS" crlf)
 	(return 0)
+)
+
+(defrule challenges-create-routes
+" Create some routes with waypoints in the field as a navigation challenge "
+	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/challenges/publish-routes/num-points") (type UINT) (value ?points))
+	(confval (path "/llsfrb/challenges/publish-routes/num-routes") (type UINT) (value ?routes))
+	(challenges-field (free-zones $?free) (occupied-zones $?occupied))
+	(not (challenges-route))
+=>
+	(bind ?mirror (config-get-bool "/llsfrb/challenges/field/mirror"))
+	(loop-for-count (?r 1 ?routes)
+		(bind ?route-candidates (randomize$ ?free) 1 ?points)
+		(bind ?route (create$))
+		(bind ?route-mirror (create$))
+		(loop-for-count (?r 1 ?points)
+			(bind ?zone (nth$ 1 ?route-candidates))
+			(bind ?route-candidates (delete$ ?route-candidates 1 1))
+			(if ?mirror then
+				(bind ?mirror-zone (member$ (mirror-zone ?zone) ?route-candidates))
+				(if ?mirror-zone then
+					(bind ?route-candidates (delete$ ?route-candidates ?mirror-zone ?mirror-zone))
+					(bind ?route-mirror (append$ ?route-mirror (mirror-zone ?zone)))
+				)
+				 else
+					(bind ?route-mirror (append$ ?route ?zone))
+			)
+			(bind ?route (append$ ?route ?zone))
+		)
+		(assert (challenges-route (id ?r) (way-points ?route) (team MAGENTA)))
+		(assert (challenges-route (id ?r) (way-points ?route-mirror) (team CYAN)))
+	)
 )
 
 (defrule challenges-configure-machine-ground-truth
@@ -144,9 +222,11 @@
 	                        (orders ?orders&~PENDING)
 	                        (storage-status ?s-status&~PENDING)
 	                        (is-parameterized FALSE))
+	(confval (path "/llsfrb/challenges/field/width") (type UINT) (value ?width))
+	(confval (path "/llsfrb/challenges/field/height") (type UINT) (value ?height))
 	(machine-generation (state ?s&:(or (eq ?s FINISHED) (eq ?m-positions STATIC))))
 	=>
-	(modify ?gp (is-parameterized TRUE))
+	(bind ?mirror (config-get-bool "/llsfrb/challenges/field/mirror"))
 
 	; reset machines
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
@@ -156,7 +236,8 @@
 	)
 	(if (eq ?m-positions RANDOM)
 	 then
-		(machine-retrieve-generated-mps false)
+		(machine-retrieve-generated-mps ?mirror)
+		(challenges-init-field ?width ?height ?mirror)
 	)
 	(if (not (config-get-bool "/llsfrb/challenges/machine-setup/customize"))
 	 then
