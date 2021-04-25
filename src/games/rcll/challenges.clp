@@ -16,8 +16,9 @@
 	?*STORAGE_STATION* = 6
 	?*DELIVERY_STATION* = 7
 	?*PRIORITY_CHALLENGE_OVERRIDE* = 100
+	?*FIELD-WIDTH*  = (config-get-int "/llsfrb/challenges/field/width")
+	?*FIELD-HEIGHT* = (config-get-int "/llsfrb/challenges/field/height")
 )
-
 (deftemplate challenges-field
 	(multislot free-zones (type SYMBOL))
 	(multislot occupied-zones (type SYMBOL))
