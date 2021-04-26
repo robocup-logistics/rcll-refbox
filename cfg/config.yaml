@@ -185,6 +185,8 @@ llsfrb:
     field:
       width: 5
       height: 5
+      # if true this effectively doubles the field size
+      mirror: false
     # Phases in which the machine positions are broadcasted
     send-mps-ground-truth: []
 
