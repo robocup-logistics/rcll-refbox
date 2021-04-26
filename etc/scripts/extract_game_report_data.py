@@ -397,7 +397,7 @@ class DataExtractor:
     ax.legend()
 
     fig.tight_layout()
-    plt.savefig(file_name+'.png', bbox_inches='tight'. dpi=300)
+    plt.savefig(file_name+'.png', bbox_inches='tight', dpi=300)
     plt.close(fig)
 
   def autolabel(self, rects, ax):
