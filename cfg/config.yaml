@@ -201,10 +201,9 @@ llsfrb:
         cap-color: CAP_BLACK
     publish-routes:
       enable: true
-      num-points: 4
-      num-routes: 3
-      start: INSERTION_ZONE
-      end: INSERTION_ZOME
+      num-points: 12
+      num-routes: 1
+      pause-duration: 5
 
       # orders are randomized according to the given spec
     machines: [BS, CS1, RS1, RS2]

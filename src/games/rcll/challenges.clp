@@ -18,15 +18,24 @@
 	?*PRIORITY_CHALLENGE_OVERRIDE* = 100
 	?*FIELD-WIDTH*  = (config-get-int "/llsfrb/challenges/field/width")
 	?*FIELD-HEIGHT* = (config-get-int "/llsfrb/challenges/field/height")
+	?*VISIT-ZOME-DURATION* = (config-get-int "/llsfrb/challenges/publish-routes/pause-duration")
 )
 (deftemplate challenges-field
 	(multislot free-zones (type SYMBOL))
 	(multislot occupied-zones (type SYMBOL))
 )
 
+(deftemplate challenges-zone-visit
+	(slot robot-number (type INTEGER))
+	(slot team-color (type SYMBOL) (allowed-values CYAN MAGENTA))
+	(slot visited-zone (type SYMBOL))
+	(slot route-id (type INTEGER))
+	(slot visit-start (type FLOAT))
+)
+
 (deftemplate challenges-route
 	(slot id (type INTEGER))
-	(slot team (type SYMBOL) (allowed-values CYAN MAGENTA) (default CYAN))
+	(slot team-color (type SYMBOL) (allowed-values CYAN MAGENTA) (default CYAN))
 	(multislot way-points (type SYMBOL))
 	(multislot reached (type SYMBOL) (default (create$)))
 	(multislot remaining (type SYMBOL) (default (create$)))
@@ -115,8 +124,8 @@
 			)
 			(bind ?route (append$ ?route ?zone))
 		)
-		(assert (challenges-route (id ?r) (way-points ?route) (team MAGENTA)))
-		(assert (challenges-route (id ?r) (way-points ?route-mirror) (team CYAN)))
+		(assert (challenges-route (id ?r) (way-points ?route) (team-color MAGENTA)))
+		(assert (challenges-route (id ?r) (way-points ?route-mirror) (team-color CYAN)))
 	)
 )
 
@@ -158,7 +167,6 @@
 		                               ?bc:path)))
 		(bind ?ring-colors (create$))
 		(progn$ (?str-color ?rc:list-value) (bind ?ring-colors (append$ ?ring-colors (sym-cat ?str-color))))
-		(printout error ?id crlf)
 		(bind ?delivery-period (create$ 0 ?max-time))
 		(assert (order (id ?id) (complexity (sym-cat C (length$ ?rc:list-value)))
 		                        (base-color (sym-cat ?bc:value))
@@ -270,7 +278,7 @@
 (deffunction challenges-net-create-broadcast-NavigationRoutes (?team-color)
 	(bind ?s (pb-create "llsf_msgs.NavigationRoutes"))
 	(pb-set-field ?s "team_color" ?team-color)
-	(do-for-all-facts ((?route challenges-route)) (eq ?route:team ?team-color)
+	(do-for-all-facts ((?route challenges-route)) (eq ?route:team-color ?team-color)
 		(bind ?m (pb-create "llsf_msgs.Route"))
 		(pb-set-field ?m "id" (fact-slot-value ?route id))
 		(foreach ?z (fact-slot-value ?route way-points)
@@ -308,6 +316,45 @@
 	(bind ?s (challenges-net-create-broadcast-NavigationRoutes MAGENTA))
 	(pb-broadcast ?peer-id-magenta ?s)
 	(pb-destroy ?s)
+)
+
+(defrule challenges-zone-visit-start
+	(robot (number ?n) (team-color ?col) (pose ?x ?y ?z) (state ACTIVE))
+	(challenges-route (id ?r-id) (team-color ?col) (remaining $?zones&:(member$ (pose-to-zone ?x ?y) ?zones)))
+	(not (challenges-zone-visit (robot-number ?n) (team-color ?col)))
+	(not (challenges-zone-visit (team-color ?col) (route-id ?r-id)))
+	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+=>
+	(assert (challenges-zone-visit (route-id ?r-id) (team-color ?col)
+	(robot-number ?n) (visited-zone (pose-to-zone ?x ?y)) (visit-start ?gt)))
+)
+(defrule challenges-zone-visit-abort
+	(robot (number ?n) (team-color ?col) (pose ?x ?y ?z) (state ACTIVE))
+	?zv <- (challenges-zone-visit (robot-number ?n) (team-color ?col)
+	         (visited-zone ?zone&:(neq ?zone (pose-to-zone ?x ?y))))
+	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+=>
+	(retract ?zv)
+)
+
+(defrule challenges-zone-visit-success
+	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+	?route <- (challenges-route (team-color ?col) (id ?r-id)
+	  (remaining $?remaining) (reached $?reached))
+	?zv <- (challenges-zone-visit (team-color ?col) (route-id ?r-id)
+	  (visit-start ?start&:(> (- ?gt ?start) ?*VISIT-ZOME-DURATION*))
+	  (visited-zone ?zone))
+
+=>
+	(retract ?zv)
+	(bind ?z-index (member$ ?zone ?remaining))
+	(if ?z-index then
+		(modify ?route (remaining (delete$ ?remaining ?z-index ?z-index))
+		               (reached (append$ ?reached ?zone)))
+	 else
+		(printout error "Visited zone " ?zone " of route " ?r-id " team " ?col
+		                "that was not marked as 'remaining', ignoring" crlf)
+	)
 )
 
 ; ***** WHACK-A-MOLE challenge *****
