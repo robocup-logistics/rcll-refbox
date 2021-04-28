@@ -389,14 +389,24 @@
 	(do-for-all-facts ((?mh mongodb-machine-history)) TRUE
 		(bind ?history-doc (mongodb-fact-to-bson ?mh))
 		(bind ?temp-fact (assert-string ?mh:fact-string))
+		(bind ?machine-doc FALSE)
 		(if ?temp-fact
 		 then
 			(bind ?machine-doc (mongodb-fact-to-bson ?temp-fact))
 		 else
-			(bind ?machine-doc (find-fact ((?m machine)) (eq ?mh:name ?m:name)))
+			(bind ?machine-facts (find-fact ((?m machine)) (eq ?mh:name ?m:name)))
+			(if ?machine-facts then
+				(bind ?machine-doc (mongodb-fact-to-bson (nth$ 1 ?machine-facts)))
+			)
 		)
-		(bson-append ?history-doc "machine-fact" ?machine-doc)
-		(retract ?temp-fact)
+		(if ?machine-doc then
+			(bson-append ?history-doc "machine-fact" ?machine-doc)
+		 else
+			(printout warn "mongodb: machine history fact without machine fact!" crlf)
+		)
+		(if ?temp-fact then
+			(retract ?temp-fact)
+		)
 		(bson-array-append ?machine-history-arr ?history-doc)
 		(bson-builder-destroy ?machine-doc)
 		(bson-builder-destroy ?history-doc)
