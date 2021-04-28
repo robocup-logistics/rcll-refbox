@@ -222,7 +222,7 @@ class DataExtractor:
         plots = list()
         for i, s in enumerate(split_vals):
             plots.append(ax.boxplot(values[s], positions=[len(split_vals)*y+i for y in range(len(values[s]))]
-                                    , widths=0.35,
+                                    , widths=0.35, showmeans=True,
                  patch_artist=True))
             for element in ['boxes', 'whiskers', 'fliers', 'means', 'medians', 'caps']:
                 plt.setp(plots[-1][element], color="black")
@@ -242,7 +242,7 @@ class DataExtractor:
 
         x_ticks= list()
 
-        row_labels = ["Q1", "Q2","median", "Q3","Q4","stddev"]
+        row_labels = ["Q1", "Q2","median", "Q3","Q4","mean","stddev"]
         num_columns = len(split_vals)*len(key_vals)
         num_rows = len(row_labels)
         row_values=[['' for y in range(num_columns)] for x in range(num_rows)]
@@ -250,6 +250,7 @@ class DataExtractor:
         for k,v in self.cross_game_data[d].items():
             for s, data in v.items():
                 column_data = list(np.percentile(list(data.values()),[0,25,50,75,100]))
+                column_data.append(np.mean(list(data.values())))
                 column_data.append(np.std(list(data.values())))
                 for table_row in range(num_rows):
                     row_values[table_row][i]='%1.1f' % column_data[table_row]
