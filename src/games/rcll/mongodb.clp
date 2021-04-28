@@ -10,7 +10,8 @@
 ;---------------------------------------------------------------------------
 (defglobal
 	; Mongodb Game Report Version,
-	?*MONGODB-REPORT-VERSION* = 1.0
+	; 1.1 -> includes config
+	?*MONGODB-REPORT-VERSION* = 1.1
 	; Update rate in seconds
 	?*MONGODB-REPORT-UPDATE-FREQUENCY* = 10
 )
@@ -384,7 +385,13 @@
 		(bson-builder-destroy ?order-doc)
 	)
 	(bson-array-finish ?doc "orders" ?o-arr)
-
+	(bind ?cfg-arr (bson-array-start))
+	(do-for-all-facts ((?cfg confval)) TRUE
+		(bind ?cfg-doc (mongodb-fact-to-bson ?cfg))
+		(bson-array-append ?cfg-arr ?cfg-doc)
+		(bson-builder-destroy ?cfg-doc)
+	)
+	(bson-array-finish ?doc "config" ?cfg-arr)
 	(bind ?machine-history-arr (bson-array-start))
 	(do-for-all-facts ((?mh mongodb-machine-history)) TRUE
 		(bind ?history-doc (mongodb-fact-to-bson ?mh))
