@@ -204,8 +204,8 @@ class DataExtractor:
 
 
   def box_plot_axis(self, ax, d):
-        key_vals = list(self.cross_game_data[d].keys())
-        split_vals = self.cross_game_data[d][key_vals[0]].keys()
+        key_vals = sorted(list(self.cross_game_data[d].keys()))
+        split_vals = sorted(self.cross_game_data[d][key_vals[0]].keys())
 
         num_splits = len(split_vals)
         x_label, y_label, title = self.get_figure_labels(d)
@@ -376,8 +376,8 @@ class DataExtractor:
     return structured_data, key_vals, split_vals
 
   def bar_diagram(self, data, x_label, y_label, file_name):
-    key_vals = list(self.structured_data[data].keys())
-    split_vals = self.structured_data[data][key_vals[0]].keys()
+    key_vals = sorted(list(self.structured_data[data].keys()))
+    split_vals = sorted(self.structured_data[data][key_vals[0]].keys())
 
     x = np.arange(len(key_vals))  # the label locations
     num_splits = len(split_vals)
