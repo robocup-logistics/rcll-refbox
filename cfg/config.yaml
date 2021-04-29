@@ -181,6 +181,7 @@ llsfrb:
 
   challenges:
     enable: false
+    name: ""
     # max is 7 x 8
     field:
       width: 5
