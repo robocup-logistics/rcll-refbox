@@ -275,6 +275,7 @@
 	(printout t "Top  5        1 3 5 7" crlf)
 	(printout t " |   :        0 2 4 6" crlf)
 	(printout t "Bot  0   Input ------> Output" crlf)
+	(modify ?gp (is-parameterized TRUE))
 )
 
 (deffunction challenges-net-create-broadcast-NavigationRoutes (?team-color)
