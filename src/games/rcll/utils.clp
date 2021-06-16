@@ -69,13 +69,16 @@
 )
 
 (deffunction pose-to-zone (?x ?y)
-	(bind ?x-zone (+ (integer ?x) 1))
-	(bind ?y-zone (+ (integer ?y) 1))
-	(bind ?side "M_Z")
-	(if (< ?x 0) then
+	(if (< ?x 0)
+	 then
+		(bind ?x-zone (+ (* -1 (integer ?x)) 1))
+		(bind ?side "M_Z")
+	 else
+		(bind ?x-zone (+ (integer ?x) 1))
 		(bind ?side "C_Z")
 	)
-	(return (str-cat ?side ?x-zone ?y-zone))
+	(bind ?y-zone (+ (integer ?y) 1))
+	(return (sym-cat ?side ?x-zone ?y-zone))
 )
 
 (deffunction want-mirrored-rotation (?mtype ?zone)
