@@ -103,6 +103,10 @@
 			)
 		)
 	)
+	(delayed-do-for-all-facts ((?m machine)) (eq ?m:zone TBD)
+		(printout t ?m:name " not found in generation, skipping" crlf)
+		(retract ?m)
+	)
 )
 
 (deffunction machine-randomize-positions ()
