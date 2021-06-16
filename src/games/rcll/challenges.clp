@@ -126,8 +126,10 @@
 		)
 		(assert (challenges-route (id ?r) (way-points ?route) (remaining ?route)
 		        (team-color MAGENTA)))
+		(printout t "Route MAGENTA: " ?route crlf)
 		(assert (challenges-route (id ?r) (way-points ?route-mirror)
 		        (remaining ?route-mirror) (team-color CYAN)))
+		(printout t "Route CYAN: " ?route-mirror crlf)
 	)
 )
 
@@ -360,6 +362,7 @@
 	(if ?z-index then
 		(modify ?route (remaining (delete$ ?remaining ?z-index ?z-index))
 		               (reached (append$ ?reached ?zone)))
+		(printout t "Visited zone " ?zone " of route " ?r-id " team " ?col crlf)
 	 else
 		(printout error "Visited zone " ?zone " of route " ?r-id " team " ?col
 		                "that was not marked as 'remaining', ignoring" crlf)
