@@ -256,6 +256,11 @@
 	 then
 		(machine-retrieve-generated-mps ?mirror)
 		(challenges-init-field ?width ?height ?mirror)
+	 else
+		(delayed-do-for-all-facts ((?m machine)) (eq ?m:zone TBD)
+			(printout t ?m:name " not set in mongodb log, skipping" crlf)
+			(retract ?m)
+		)
 	)
 	(if (not (config-get-bool "/llsfrb/challenges/machine-setup/customize"))
 	 then
