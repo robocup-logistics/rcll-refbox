@@ -282,7 +282,7 @@
 		(bind ?m (pb-create "llsf_msgs.Route"))
 		(pb-set-field ?m "id" (fact-slot-value ?route id))
 		(foreach ?z (fact-slot-value ?route way-points)
-			(pb-add-list ?m "route" z)
+			(pb-add-list ?m "route" ?z)
 		)
 		(foreach ?z (fact-slot-value ?route reached)
 			(pb-add-list ?m "reached" ?z)
