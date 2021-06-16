@@ -124,8 +124,10 @@
 			)
 			(bind ?route (append$ ?route ?zone))
 		)
-		(assert (challenges-route (id ?r) (way-points ?route) (team-color MAGENTA)))
-		(assert (challenges-route (id ?r) (way-points ?route-mirror) (team-color CYAN)))
+		(assert (challenges-route (id ?r) (way-points ?route) (remaining ?route)
+		        (team-color MAGENTA)))
+		(assert (challenges-route (id ?r) (way-points ?route-mirror)
+		        (remaining ?route-mirror) (team-color CYAN)))
 	)
 )
 
