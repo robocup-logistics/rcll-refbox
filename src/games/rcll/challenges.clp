@@ -257,6 +257,7 @@
 		(machine-retrieve-generated-mps ?mirror)
 		(challenges-init-field ?width ?height ?mirror)
 	 else
+		(challenges-init-field ?width ?height ?mirror)
 		(delayed-do-for-all-facts ((?m machine)) (eq ?m:zone TBD)
 			(printout t ?m:name " not set in mongodb log, skipping" crlf)
 			(retract ?m)
