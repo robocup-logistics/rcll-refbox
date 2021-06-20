@@ -187,7 +187,7 @@
 	(confval (path "/llsfrb/challenges/field/width") (type UINT) (value ?x))
 	(confval (path "/llsfrb/challenges/field/height") (type UINT) (value ?y))
 	?mg <- (machine-generation (state NOT-STARTED))
-	(game-parameters (is-parameterized FALSE) (machine-positions RANDOM))
+	(game-parameters (is-parameterized FALSE) (machine-setup RANDOM))
 	(not (machine-generation-triggered))
 =>
 	(foreach ?m (create$ ?*BASE_STATION*
