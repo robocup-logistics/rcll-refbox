@@ -126,10 +126,10 @@
 		)
 		(assert (challenges-route (id ?r) (way-points ?route) (remaining ?route)
 		        (team-color MAGENTA)))
-		(printout t "Route MAGENTA: " ?route crlf)
+		(printout t "Route MAGENTA created" crlf)
 		(assert (challenges-route (id ?r) (way-points ?route-mirror)
 		        (remaining ?route-mirror) (team-color CYAN)))
-		(printout t "Route CYAN: " ?route-mirror crlf)
+		(printout t "Route CYAN created" crlf)
 	)
 )
 
