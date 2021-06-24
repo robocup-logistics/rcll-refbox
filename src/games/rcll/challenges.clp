@@ -234,6 +234,28 @@
 	(assert (machine-generation-triggered))
 )
 
+(defrule challenges-reset-flush-reset-flag
+	?c <- (challanges-reset-back-in-setup)
+	(gamestate (phase ~SETUP))
+	=>
+	(retract ?c)
+)
+
+(defrule challenges-reset-field-back-to-setup
+	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(gamestate (phase SETUP) (prev-phase PRODUCTION|POST_GAME|EXPLORATION))
+	(not (challanges-reset-back-in-setup))
+	=>
+	(delayed-do-for-all-facts ((?machine machine)) TRUE
+	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
+	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
+	             (ss-operation STORE)
+	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	)
+	(delayed-do-for-all-facts ((?r challenges-route)) (retract ?r))
+	(assert (challanges-reset-back-in-setup))
+)
+
 (defrule challenges-parameterize
 	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
@@ -251,7 +273,8 @@
 	; reset machines
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE)
+	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
+	             (ss-operation STORE)
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(if (eq ?m-positions RANDOM)

@@ -216,7 +216,8 @@
 	; reset machines
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE)
+	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
+	             (ss-operation STORE)
 	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(if (eq ?m-positions RANDOM)
