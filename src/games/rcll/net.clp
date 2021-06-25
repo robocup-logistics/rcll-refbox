@@ -529,12 +529,10 @@
     )
     (if (any-factp ((?gs gamestate) (?send send-mps-positions)) (member$ ?gs:phase ?send:phases))
       then
-			  (pb-set-field ?m "state" (fact-slot-value ?mf state))
         (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
         (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
-
-      else (pb-set-field ?m "state" "")
     )
+    (pb-set-field ?m "state" (fact-slot-value ?mf state))
 
     (if (eq ?mtype SS) then
       (net-create-ShelfSlotInfo ?m (fact-slot-value ?mf name))
