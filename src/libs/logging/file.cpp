@@ -52,7 +52,7 @@ FileLogger::FileLogger(const char *filename, LogLevel log_level) : Logger(log_le
 	if (fd == -1) {
 		throw fawkes::Exception(errno, "Failed to open log file %s", filename);
 	}
-	log_file = fdopen(fd, "a");
+	log_file = fdopen(fd, "w");
 
 	now_s = (struct tm *)malloc(sizeof(struct tm));
 
