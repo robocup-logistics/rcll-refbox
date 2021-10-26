@@ -30,7 +30,7 @@ class MockupRingStation : public virtual MockupMachine, public virtual RingStati
 {
 public:
 	MockupRingStation(const std::string &name);
-	void mount_ring(unsigned int feeder) override;
+	void mount_ring(unsigned int, llsf_msgs::RingColor) override;
 	void register_slide_callback(std::function<void(unsigned int)> callback) override{};
 	void identify() override{};
 };

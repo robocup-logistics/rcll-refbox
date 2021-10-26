@@ -32,7 +32,7 @@ MockupRingStation::MockupRingStation(const std::string &name) : Machine(name)
 }
 
 void
-MockupRingStation::mount_ring(unsigned int feeder)
+MockupRingStation::mount_ring(unsigned int, llsf_msgs::RingColor)
 {
 	callback_busy_(true);
 	std::lock_guard<std::mutex> lg(queue_mutex_);

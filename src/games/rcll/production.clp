@@ -418,7 +418,7 @@
 	(printout t "Machine " ?n ": mount ring" crlf)
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task MOUNT-RING) (mps-busy WAIT)
 	           (bases-used (+ ?bu ?req-bases)))
-  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors))
+  (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors) (str-cat ?ring-color))
 )
 
 (defrule production-rs-move-to-output

@@ -47,9 +47,10 @@ OpcUaRingStation::OpcUaRingStation(const std::string &name,
 }
 
 void
-OpcUaRingStation::mount_ring(unsigned int feeder)
+OpcUaRingStation::mount_ring(unsigned int feeder, llsf_msgs::RingColor color)
 {
-	enqueue_instruction(Operation::OPERATION_MOUNT_RING + machine_type_, feeder);
+	uint16_t payload2 = color;
+	enqueue_instruction(Operation::OPERATION_MOUNT_RING + machine_type_, feeder, payload2);
 }
 
 void

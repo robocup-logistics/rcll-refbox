@@ -155,7 +155,7 @@ private: // methods
 	void clips_mps_cs_mount_cap(std::string machine);
 
 	void clips_mps_bs_dispense(std::string machine, std::string color);
-	void clips_mps_rs_mount_ring(std::string machine, int slide);
+	void clips_mps_rs_mount_ring(std::string machine, int slide, std::string color);
 	void clips_mps_ds_process(std::string machine, int slide);
 	void clips_mps_ss_retrieve(std::string machine, unsigned int shelf, unsigned int slot);
 	void clips_mps_ss_store(std::string machine, unsigned int shelf, unsigned int slot);

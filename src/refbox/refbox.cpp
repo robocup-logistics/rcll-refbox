@@ -38,6 +38,7 @@
 #include "refbox.h"
 
 #include "clips_logger.h"
+#include "msgs/ProductColor.pb.h"
 #include "rest-api/clips-rest-api/clips-rest-api.h"
 
 #include <config/yaml.h>
@@ -561,7 +562,7 @@ LLSFRefBox::setup_clips()
 		                     sigc::slot<void, std::string, int>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
 		clips_->add_function("mps-rs-mount-ring",
-		                     sigc::slot<void, std::string, int>(
+		                     sigc::slot<void, std::string, int, std::string>(
 		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
 		clips_->add_function("mps-reset",
 		                     sigc::slot<void, std::string>(
@@ -818,7 +819,7 @@ LLSFRefBox::clips_mps_ds_process(std::string machine, int slide)
 }
 
 void
-LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
+LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide, std::string color)
 {
 	logger_->log_info("MPS", "Mount ring on %s: slide %d", machine.c_str(), slide);
 	RingStation *station;
@@ -828,7 +829,20 @@ LLSFRefBox::clips_mps_rs_mount_ring(std::string machine, int slide)
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
-	station->mount_ring(slide);
+	llsf_msgs::RingColor ring_color;
+	if (color == "RING_BLUE") {
+		ring_color = llsf_msgs::RING_BLUE;
+	} else if (color == "RING_GREEN") {
+		ring_color = llsf_msgs::RING_GREEN;
+	} else if (color == "RING_ORANGE") {
+		ring_color = llsf_msgs::RING_ORANGE;
+	} else if (color == "RING_YELLOW") {
+		ring_color = llsf_msgs::RING_YELLOW;
+	} else {
+		logger_->log_info("MPS", "Unexpected ring color %s", color.c_str());
+		return;
+	}
+	station->mount_ring(slide, ring_color);
 }
 
 void
