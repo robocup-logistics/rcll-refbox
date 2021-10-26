@@ -260,6 +260,10 @@ OpcUaMachine::reconnect()
 
 		for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
 			registerNodes[i] = OpcUtils::getNode(client.get(), (OpcUtils::MPSRegister)i, simulation_);
+		subscribe(SUB_REGISTERS, simulation_);
+		identify();
+		update_callbacks();
+		return true;
 	} catch (const std::exception &exc) {
 		logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
 		return false;
@@ -267,11 +271,6 @@ OpcUaMachine::reconnect()
 		logger->error("Unknown error.");
 		return false;
 	}
-
-	subscribe(SUB_REGISTERS, simulation_);
-	identify();
-	update_callbacks();
-	return true;
 }
 
 void
