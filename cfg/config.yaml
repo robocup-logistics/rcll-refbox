@@ -13,9 +13,9 @@ include:
 llsfrb:
   log:
     level: info
-    general: refbox.log
-    clips: clips.log
-    game: game.log
+    general: refbox_$time.log
+    clips: refbox-debug_$time.log
+    game: game_$time.log
     mps_dir: mps
 
   mps:
