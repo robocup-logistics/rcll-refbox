@@ -30,7 +30,9 @@
 #include <cerrno>
 #include <cstdlib>
 #include <fcntl.h>
+#include <string>
 #include <time.h>
+#include <unistd.h>
 
 namespace llsfrb {
 
@@ -43,18 +45,69 @@ namespace llsfrb {
  */
 
 /** Constructor. 
- * @param filename the name of the log-file
+ * @param filename_pattern the name of the log-file, $time will be replaced by a timestamp
  * @param log_level minimum log level
  */
-FileLogger::FileLogger(const char *filename, LogLevel log_level) : Logger(log_level)
+FileLogger::FileLogger(const char *filename_pattern, LogLevel log_level) : Logger(log_level)
 {
+	now_s = (struct tm *)malloc(sizeof(struct tm));
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	localtime_r(&now.tv_sec, now_s);
+	char *start_time;
+	if (asprintf(&start_time,
+	             "%04d-%02d-%02d_%02d-%02d-%02d",
+	             1900 + now_s->tm_year,
+	             now_s->tm_mon + 1,
+	             now_s->tm_mday,
+	             now_s->tm_hour,
+	             now_s->tm_min,
+	             now_s->tm_sec)
+	    == -1) {
+		throw fawkes::Exception("Failed to print current time");
+	}
+	std::string pattern(filename_pattern);
+	std::string time_var = "$time";
+	size_t      pos      = pattern.find(time_var);
+	if (pos != std::string::npos) {
+		pattern.replace(pos, time_var.length(), std::string(start_time));
+	}
+	free(start_time);
+	const char *filename = pattern.c_str();
 	int fd = open(filename, O_RDWR | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 	if (fd == -1) {
 		throw fawkes::Exception(errno, "Failed to open log file %s", filename);
 	}
-	log_file = fdopen(fd, "w");
+	log_file = fdopen(fd, "a");
+	// make buffer line-buffered
+	setvbuf(log_file, NULL, _IOLBF, 0);
 
-	now_s = (struct tm *)malloc(sizeof(struct tm));
+	// create a symlink for the latest log if the filename has a time stamp
+	if (pos != std::string::npos) {
+		std::string latest_filename(filename_pattern);
+		latest_filename.replace(pos, time_var.length(), "latest");
+		int link_res = symlink(filename, latest_filename.c_str());
+		if (link_res == -1) {
+			if (errno == EEXIST) {
+				int unlink_res = unlink(latest_filename.c_str());
+				if (unlink_res == -1) {
+					throw fawkes::Exception(errno, "Failed to update symlink at %s", latest_filename.c_str());
+				}
+				link_res = symlink(filename, latest_filename.c_str());
+				if (link_res == -1) {
+					throw fawkes::Exception(errno,
+					                        "Failed ot create symlink from %s to %s",
+					                        filename,
+					                        latest_filename.c_str());
+				}
+			} else {
+				throw fawkes::Exception(errno,
+				                        "Failed ot create symlink from %s to %s",
+				                        filename,
+				                        latest_filename.c_str());
+			}
+		}
+	}
 
 	mutex = new fawkes::Mutex();
 }
