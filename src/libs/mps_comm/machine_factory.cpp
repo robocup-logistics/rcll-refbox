@@ -66,7 +66,8 @@ MachineFactory::create_machine(const std::string &name,
 			                        type.c_str(),
 			                        name.c_str());
 		}
-		mps->connect();
+		// Do not connect just now; instead, let it connect in the background.
+		//mps->connect();
 		return std::move(mps);
 	}
 #endif

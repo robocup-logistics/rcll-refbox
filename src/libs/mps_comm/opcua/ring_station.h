@@ -39,7 +39,7 @@ public:
 	                 const std::string &log_path = "",
 	                 ConnectionMode     mode     = PLC);
 
-	void mount_ring(unsigned int feeder) override;
+	void mount_ring(unsigned int feeder, llsf_msgs::RingColor color) override;
 	void register_slide_callback(std::function<void(unsigned int)>) override;
 };
 

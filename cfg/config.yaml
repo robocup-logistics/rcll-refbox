@@ -13,9 +13,9 @@ include:
 llsfrb:
   log:
     level: info
-    general: refbox.log
-    clips: clips.log
-    game: game.log
+    general: refbox_$time.log
+    clips: refbox-debug_$time.log
+    game: game_$time.log
     mps_dir: mps
 
   mps:
@@ -24,84 +24,84 @@ llsfrb:
       C-BS:
         active: true
         type: BS
-        host: !ipv4 192.168.2.27
+        host: localhost
         port: !tcp-port 4840
-        connection: mockup
+        connection: plc
       C-CS1:
         active: true
-        host: !ipv4 192.168.2.24
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4841
         type: CS
-        connection: mockup
+        connection: plc
       C-CS2:
         active: true
-        host: !ipv4 192.168.2.25
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4842
         type: CS
-        connection: mockup
+        connection: plc
       C-RS1:
         active: true
-        host: !ipv4 192.168.2.23
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4843
         type: RS
-        connection: mockup
+        connection: plc
       C-RS2:
         active: true
-        host: !ipv4 192.168.2.26
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4844
         type: RS
-        connection: mockup
+        connection: plc
       C-DS:
         active: true
-        host: !ipv4 192.168.2.28
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4845
         type: DS
-        connection: mockup
+        connection: plc
       C-SS:
         active: true
-        host: !ipv4 192.168.2.22
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4846
         type: SS
-        connection: mockup
+        connection: plc
       M-BS:
         active: true
-        host: !ipv4 192.168.2.33
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4850
         type: BS
-        connection: mockup
+        connection: plc
       M-CS1:
         active: true
-        host: !ipv4 192.168.2.30
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4851
         type: CS
-        connection: mockup
+        connection: plc
       M-CS2:
         active: true
-        host: !ipv4 192.168.2.32
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4852
         type: CS
-        connection: mockup
+        connection: plc
       M-RS1:
         active: true
-        host: !ipv4 192.168.2.31
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4853
         type: RS
-        connection: mockup
+        connection: plc
       M-RS2:
         active: true
-        host: !ipv4 192.168.2.34
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4854
         type: RS
-        connection: mockup
+        connection: plc
       M-DS:
         active: true
-        host: !ipv4 192.168.2.29
-        port: !tcp-port 4840
+        host: localhost
+        port: !tcp-port 4855
         type: DS
-        connection: mockup
+        connection: plc
       M-SS:
         active: true
-        host: !ipv4 192.168.2.35
+        host: localhost
         port: !tcp-port 4840
         type: SS
         connection: mockup
