@@ -143,7 +143,7 @@
 )
 
 (defrule challenges-customize-orders
-" Send the ground truth for machine positions only for specified phases "
+" Delete all existing orders and then load orders from configuration "
 	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
 	(confval (path "/llsfrb/challenges/orders/customize") (type BOOL) (value true))
 	(confval (path "/llsfrb/challenges/production-time") (type UINT) (value ?max-time))
