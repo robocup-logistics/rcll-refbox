@@ -145,8 +145,8 @@ MPSPlacingGenerator::set_field(int width, int height)
 CLIPS::Value
 MPSPlacingGenerator::add_machine(int machine_index)
 {
-	auto [it, success] = machines_.insert(machine_index);
-	return CLIPS::Value(success ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+	auto success = machines_.insert(machine_index);
+	return CLIPS::Value(success.second ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
 }
 
 CLIPS::Value
