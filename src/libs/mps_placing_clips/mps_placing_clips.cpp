@@ -63,8 +63,8 @@ MPSPlacingGenerator::MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex 
 	generator_             = nullptr;
 	generator_thread_      = nullptr;
 	machines_              = {BASE, CAP1, CAP2, RING1, RING2, STORAGE, DELIVERY};
-	width_ = 7;
-	height_ = 8;
+	width_                 = 7;
+	height_                = 8;
 }
 
 /** Destructor. */
@@ -133,8 +133,8 @@ MPSPlacingGenerator::generator_thread()
 CLIPS::Value
 MPSPlacingGenerator::set_field(int width, int height)
 {
-	if(width_ > 0 && height > 0) {
-		width_ = width;
+	if (width_ > 0 && height > 0) {
+		width_  = width;
 		height_ = height;
 		return CLIPS::Value("TRUE", CLIPS::TYPE_SYMBOL);
 	} else {
