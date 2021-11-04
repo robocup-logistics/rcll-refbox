@@ -68,6 +68,19 @@
   )
 )
 
+(deffunction pose-to-zone (?x ?y)
+	(if (< ?x 0)
+	 then
+		(bind ?x-zone (+ (* -1 (integer ?x)) 1))
+		(bind ?side "M_Z")
+	 else
+		(bind ?x-zone (+ (integer ?x) 1))
+		(bind ?side "C_Z")
+	)
+	(bind ?y-zone (+ (integer ?y) 1))
+	(return (sym-cat ?side ?x-zone ?y-zone))
+)
+
 (deffunction want-mirrored-rotation (?mtype ?zone)
 "According to the RCLL2017 rulebook, this is when a machine is mirrored"
   (bind ?zn (str-cat ?zone))
@@ -75,10 +88,11 @@
   (bind ?y (eval (sub-string 5 5 ?zn)))
 
   (return (or (member$ ?mtype (create$ BS DS SS))
-              (not (or (eq ?x 7) ; left or right
-                       (eq ?y 8) ; top wall
+              (not (or (eq ?x ?*FIELD-WIDTH*) ; left or right
+                       (eq ?y ?*FIELD-HEIGHT*) ; top wall
                        (eq ?y 1) ; bottom wall
-                       (and (member$ ?x (create$ 5 6 7)); insertion
+                       (and (<= ?x ?*FIELD-WIDTH*) ; insertion
+                            (>= ?x (- ?*FIELD-WIDTH* 2))
                             (eq ?y 2)
                        )
                    )
@@ -106,16 +120,16 @@
     (bind ?x (eval (sub-string 4 4 ?zn)))
     (bind ?y (eval (sub-string 5 5 ?zn)))
 
-    (if (eq ?y 8) then
+    (if (eq ?y ?*FIELD-HEIGHT*) then
       (return 180)
     )
     (if (or (eq ?y 1) (eq ?y 2)) then
       (return 0)
     )
-    (if (and (eq ?x 7) (eq ?t "M")) then  ; this is the other way around, because I compare with the team color of the originalting machine
+    (if (and (eq ?x ?*FIELD-WIDTH*) (eq ?t "M")) then  ; this is the other way around, because I compare with the team color of the originalting machine
       (return 90)
     )
-    (if (and (eq ?x 7) (eq ?t "C")) then
+    (if (and (eq ?x ?*FIELD-WIDTH*) (eq ?t "C")) then
       (return 270)
     )
     (printout error "error in rotation of machines, checked all possible cases, but nothing cateched" crlf)

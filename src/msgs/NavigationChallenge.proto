@@ -1,10 +1,8 @@
-
 /***************************************************************************
- *  mps_placing_clips.h - mps_placing generator for CLIPS
+ *  NavigationChallenge.proto - Messages with way-points to visit
  *
- *  Created: Tue Apr 16 13:41:13 2013
- *  Copyright  2013-2014  Tim Niemueller [www.niemueller.de]
- *                  2017  Tobias Neumann
+ *  Created: April 25th 2021
+ *  Copyright  2021 Tarik Viehmann
  ****************************************************************************/
 
 /*  Redistribution and use in source and binary forms, with or without
@@ -35,61 +33,29 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __MPS_PLACING_CLIPS_H_
-#define __MPS_PLACING_CLIPS_H_
+syntax = "proto2";
 
-#include <core/threading/mutex.h>
+package llsf_msgs;
 
-#include <clipsmm.h>
-#include <list>
-#include <map>
-#include <memory>
-#include <set>
-#include <thread>
+import "Team.proto";
+import "Zone.proto";
 
-class MPSPlacing;
+option java_package = "org.robocup_logistics.llsf_msgs";
+option java_outer_classname = "NavigationChallengeProtos";
 
-namespace mps_placing_clips {
-#if 0 /* just to make Emacs auto-indent happy */
+message Route {
+  required uint32 id = 1;
+  repeated Zone route = 2;
+  repeated Zone reached = 3;
+  repeated Zone remaining = 4;
 }
-#endif
 
-class MPSPlacingGenerator
-{
-public:
-	MPSPlacingGenerator(CLIPS::Environment *env, fawkes::Mutex &env_mutex);
-	~MPSPlacingGenerator();
+message NavigationRoutes {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 250;
+  }
 
-	void          generate_start();
-	void          generate_abort();
-	CLIPS::Value  set_field(int width, int height);
-	CLIPS::Value  add_machine(int machine_index);
-	CLIPS::Value  remove_machine(int machine_index);
-	CLIPS::Value  generate_running();
-	CLIPS::Value  field_layout_generated();
-	CLIPS::Values get_generated_field();
-
-private:
-	void                setup_clips();
-	CLIPS::Environment *clips_;
-	fawkes::Mutex &     clips_mutex_;
-	std::set<int>       machines_;
-	int                 width_;
-	int                 height_;
-
-	void generator_thread();
-
-	std::shared_ptr<std::thread> generator_thread_;
-	std::shared_ptr<MPSPlacing>  generator_;
-	bool                         is_generation_running_;
-	bool                         is_field_generated_;
-
-	fawkes::Mutex map_mutex_;
-
-	std::list<std::string> functions_;
-	CLIPS::Fact::pointer   avail_fact_;
-};
-
-} // namespace mps_placing_clips
-
-#endif
+  required Team team_color = 1;
+	repeated Route routes = 5;
+}

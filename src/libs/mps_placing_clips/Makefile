@@ -16,9 +16,13 @@
 
 BASEDIR = ../../..
 include $(BASEDIR)/etc/buildsys/config.mk
+include $(BUILDSYSDIR)/boost.mk
 include $(BUILDSYSDIR)/clips.mk
 
-CFLAGS += $(CFLAGS_CPP11)
+CFLAGS += $(CFLAGS_CPP17)
+
+REQ_BOOST_LIBS = graph
+HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 LIBS_libllsf_mps_placing_clips = stdc++ m llsfrbcore
 OBJS_libllsf_mps_placing_clips = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp)))))
@@ -33,10 +37,12 @@ ifneq ($(wildcard /usr/include/gecode/kernel.hh),)
   endif
 endif
 
-ifeq ($(HAVE_CLIPS)$(HAVE_GECODE),11)
-  CFLAGS  += $(CFLAGS_CLIPS) -I/usr/include/gecode/
+ifeq ($(HAVE_CLIPS)$(HAVE_GECODE)$(HAVE_BOOST_LIBS),111)
+  CFLAGS  += $(CFLAGS_CLIPS) -I/usr/include/gecode/ \
+       $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS += $(LDFLAGS_CLIPS) -lgecodeint -lgecodekernel -lgecodesupport \
-						 -lgecodesearch -lgecodedriver -lgecodeminimodel
+              -lgecodesearch -lgecodedriver -lgecodeminimodel \
+       $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   LIBS_all  = $(LIBDIR)/libllsf_mps_placing_clips.so
 else
@@ -46,15 +52,20 @@ else
   ifneq ($(HAVE_GECODE),1)
     WARN_TARGETS = warning_gecode
   endif
+  ifneq ($(HAVE_BOOST_LIBS),1)
+    WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
+  endif
 endif
 
 ifeq ($(OBJSSUBMAKE),1)
-all: $(WARN_TARGETS)
-.PHONY: $(WARN_TARGETS)
+all: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
+.PHONY: $(WARN_TARGETS) $(WARN_TARGETS_BOOST)
 warning_clips:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build mps_placing_clips library$(TNORMAL) (clipsmm not found)"
 warning_gecode:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build mps_placing_clips library$(TNORMAL) (gecode not found)"
+$(WARN_TARGETS_BOOST): warning_boost_%:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_comm library$(TNORMAL) (Boost library $* not found)"
 endif
 
 include $(BUILDSYSDIR)/base.mk
