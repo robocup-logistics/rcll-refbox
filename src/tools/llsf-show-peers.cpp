@@ -94,7 +94,7 @@ int
 main(int argc, char **argv)
 {
 	llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
-	config->load("config.yaml");
+	config->load("config_generated.yaml");
 
 	ProtobufBroadcastPeer *peer;
 

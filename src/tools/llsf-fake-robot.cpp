@@ -356,7 +356,7 @@ main(int argc, char **argv)
 	}
 
 	config_ = new llsfrb::YamlConfiguration(CONFDIR);
-	config_->load("config.yaml");
+	config_->load("config_generated.yaml");
 
 	if (config_->exists("/llsfrb/comm/public-peer/send-port")
 	    && config_->exists("/llsfrb/comm/public-peer/recv-port")) {

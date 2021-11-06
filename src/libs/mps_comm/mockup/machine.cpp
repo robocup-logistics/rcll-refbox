@@ -33,7 +33,7 @@ namespace mps_comm {
 MockupMachine::MockupMachine() : shutdown_(false)
 {
 	Configuration *config = new YamlConfiguration(CONFDIR);
-	config->load("config.yaml");
+	config->load("config_generated.yaml");
 	exec_speed_    = config->get_float_or_default("llsfrb/simulation/speedup", 1);
 	worker_thread_ = std::thread(&MockupMachine::queue_worker, this);
 }
