@@ -1,0 +1,13 @@
+%YAML 1.2
+---
+---
+# Enable Mongodb.
+
+llsfrb:
+  mongodb:
+    enable: true
+    hostport: localhost
+    collections:
+      text-log: log
+      clips-log: clipslog
+      protobuf: protobuf

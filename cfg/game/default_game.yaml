@@ -1,0 +1,28 @@
+%YAML 1.2
+---
+---
+# Start a fresh game per default.
+
+llsfrb:
+  game:
+    teams: [Carologistics]
+    crypto-keys:
+      Carologistics: randomkey
+    # set to true to generate a random field at startup
+    # disabling randomization requires mongodb to be enabled as the game
+    # parameters are loaded from a mongodb game report in this case
+    random-field: true
+    # If enabled, some machines will randomly go DOWN for some period during
+    # the game. If disabled, no machine will go DOWN.
+    random-machine-down-times: true
+    random-machine-setup: true
+    random-orders: true
+    random-storage: true
+    restore-gamestate:
+      enable: false
+      phase: PRODUCTION
+    # load data from latest game report with a given name
+    # leave empty to always load from latest stored report
+    load-from-report: ""
+    # store game report under a name for later reference
+    store-to-report: ""

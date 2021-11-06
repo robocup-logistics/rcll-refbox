@@ -1,0 +1,44 @@
+%YAML 1.2
+---
+---
+# Exploration with 2 machines on the field.
+
+llsfrb:
+  challenges:
+    enable: true
+    name: "Exploration_Easy"
+    # max is 7 x 8
+    field:
+      width: 5
+      height: 5
+      # if true this effectively doubles the field size
+      mirror: false
+    # Phases in which the machine positions are broadcasted
+    send-mps-ground-truth: []
+
+    production-time: 1020
+    orders:
+      # if disabled, use default orders from rcll
+      customize: false
+      # each order is named O<INTEGER>
+      O1:
+        base-color: BASE_RED
+        ring-colors: [RING_BLUE, RING_YELLOW, RING_ORANGE]
+        cap-color: CAP_BLACK
+    publish-routes:
+      enable: false
+      num-points: 12
+      num-routes: 1
+      pause-duration: 5
+
+      # orders are randomized according to the given spec
+    machines: [BS, CS1]
+    machine-setup:
+      customize: false
+      rs1-colors: [RING_BLUE, RING_YELLOW]
+      rs2-colors: [RING_ORANGE, RING_GREEN]
+      ring-specs:
+        RING_BLUE: 1
+        RING_YELLOW: 0
+        RING_ORANGE: 2
+        RING_GREEN: 0

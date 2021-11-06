@@ -1,0 +1,93 @@
+%YAML 1.2
+---
+---
+# Configuration for using mockup machines
+
+llsfrb:
+  mps:
+    enable: true
+    stations:
+      C-BS:
+        active: true
+        type: BS
+        host: localhost
+        port: !tcp-port 4840
+        connection: mockup
+      C-CS1:
+        active: true
+        host: localhost
+        port: !tcp-port 4841
+        type: CS
+        connection: mockup
+      C-CS2:
+        active: true
+        host: localhost
+        port: !tcp-port 4842
+        type: CS
+        connection: mockup
+      C-RS1:
+        active: true
+        host: localhost
+        port: !tcp-port 4843
+        type: RS
+        connection: mockup
+      C-RS2:
+        active: true
+        host: localhost
+        port: !tcp-port 4844
+        type: RS
+        connection: mockup
+      C-DS:
+        active: true
+        host: localhost
+        port: !tcp-port 4845
+        type: DS
+        connection: mockup
+      C-SS:
+        active: true
+        host: localhost
+        port: !tcp-port 4846
+        type: SS
+        connection: mockup
+      M-BS:
+        active: true
+        host: localhost
+        port: !tcp-port 4850
+        type: BS
+        connection: mockup
+      M-CS1:
+        active: true
+        host: localhost
+        port: !tcp-port 4851
+        type: CS
+        connection: mockup
+      M-CS2:
+        active: true
+        host: localhost
+        port: !tcp-port 4852
+        type: CS
+        connection: mockup
+      M-RS1:
+        active: true
+        host: localhost
+        port: !tcp-port 4853
+        type: RS
+        connection: mockup
+      M-RS2:
+        active: true
+        host: localhost
+        port: !tcp-port 4854
+        type: RS
+        connection: mockup
+      M-DS:
+        active: true
+        host: localhost
+        port: !tcp-port 4855
+        type: DS
+        connection: mockup
+      M-SS:
+        active: true
+        host: localhost
+        port: !tcp-port 4840
+        type: SS
+        connection: mockup
