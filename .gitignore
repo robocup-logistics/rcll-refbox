@@ -41,4 +41,7 @@
 # Log files
 *.log
 
+# generated cfg files
+*_generated.yaml
+
 .vscode/
