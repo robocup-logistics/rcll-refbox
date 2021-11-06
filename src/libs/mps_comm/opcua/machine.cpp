@@ -47,6 +47,7 @@ namespace mps_comm {
 #if 0
 }
 #endif
+inline const std::chrono::milliseconds opcua_poll_rate_{40};
 
 const std::vector<OpcUtils::MPSRegister>
   OpcUaMachine::SUB_REGISTERS({OpcUtils::MPSRegister::BARCODE_IN,
@@ -151,10 +152,10 @@ OpcUaMachine::send_instruction(const Instruction &instruction)
 		setNodeValue(registerNodes[reg], (uint8_t)error, reg);
 	} catch (std::exception &e) {
 		logger->warn("Error while sending command: {}", e.what());
+		std::this_thread::sleep_for(opcua_poll_rate_);
 		return false;
 	}
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(40));
+	std::this_thread::sleep_for(opcua_poll_rate_);
 	return true;
 }
 
@@ -170,7 +171,9 @@ OpcUaMachine::connect()
 	if (connection_mode_ == MOCKUP) {
 		return;
 	}
-	while (!reconnect()) {}
+	while (!reconnect()) {
+		std::this_thread::sleep_for(opcua_poll_rate_);
+	}
 }
 
 OpcUaMachine::~OpcUaMachine()
