@@ -54,6 +54,7 @@
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
 #include <rest-api/webview_server.h>
+#include <utils/system/argparser.h>
 #include <webview/rest_api_manager.h>
 
 #ifdef HAVE_WEBSOCKETS
@@ -141,10 +142,12 @@ handle_signal(int signum)
 LLSFRefBox::LLSFRefBox(int argc, char **argv)
 : clips_mutex_(fawkes::Mutex::RECURSIVE), timer_(io_service_)
 {
+	generate_config(argc, argv);
+
 	pb_comm_ = NULL;
 
 	config_ = std::make_unique<YamlConfiguration>(CONFDIR);
-	config_->load("config.yaml");
+	config_->load("config_generated.yaml");
 
 	cfg_clips_dir_ = std::string(SHAREDIR) + "/games/rcll/";
 
@@ -436,6 +439,103 @@ LLSFRefBox::~LLSFRefBox()
 
 	// Delete all global objects allocated by libprotobuf
 	google::protobuf::ShutdownProtobufLibrary();
+}
+
+/** Generate config based on given command line options.
+ * @param argc number of arguments passed
+ * @param argv array of arguments
+ */
+void
+LLSFRefBox::generate_config(int argc, char **argv)
+{
+	// key: cfg option, value: path to file
+	std::map<std::string, std::string> cfg_files_to_include;
+	std::vector<std::string>           gen_options_str;
+	// collect folders and default files
+	for (auto &p : std::filesystem::directory_iterator(CONFDIR)) {
+		if (p.is_directory()) {
+			std::string cfg_opt = "cfg-" + p.path().filename().string();
+			std::string default_cfg =
+			  p.path().string() + "/default_" + p.path().filename().string() + ".yaml";
+			if (std::filesystem::exists(std::filesystem::path(default_cfg))) {
+				cfg_files_to_include[cfg_opt] = default_cfg;
+				gen_options_str.push_back(cfg_opt);
+			}
+		}
+	}
+	// Populate generated options, stuck to raw arrays as the char arrays within
+	// the option struct can be invalidated through smart containters
+	option generated_options[cfg_files_to_include.size()];
+	for (size_t i = 0; i < gen_options_str.size(); i++) {
+		generated_options[i].name    = gen_options_str[i].c_str();
+		generated_options[i].has_arg = 1;
+	}
+	// Add custom command line options here
+	std::vector<option> static_options = {{"no-default-cfg", 0, 0, 0},
+	                                      {"cfg-custom", 1, 0, 0},
+	                                      {0, 0, 0, 0}}; // required last option
+	option              options[cfg_files_to_include.size() + static_options.size() + 1];
+	// Prepare ArgumentParser
+	for (size_t i = 0; i < gen_options_str.size(); i++) {
+		options[i] = generated_options[i];
+	}
+
+	for (size_t i = 0; i < static_options.size(); i++) {
+		options[gen_options_str.size() + i] = static_options[i];
+	}
+
+	// Process provided options
+	ArgumentParser argp(argc, argv, "h", options);
+	if (argp.has_arg("h")) {
+		std::string help_message = "1. Config overrides:\n\n";
+		size_t      longest_opt  = std::max_element(gen_options_str.begin(),
+                                          gen_options_str.end(),
+                                          [](const std::string &lhs, const std::string &rhs) {
+                                            return lhs.size() < rhs.size();
+                                          })
+		                       ->size();
+		for (const auto &cfg_option : cfg_files_to_include) {
+			std::string padding(longest_opt - cfg_option.first.size(), ' ');
+			;
+			help_message += "  --" + cfg_option.first + " <yaml-file> " + padding
+			                + ": load <yaml-file> instead of " + cfg_option.second + "\n";
+		}
+		help_message += "\n2. Other options:\n\n";
+		help_message += "  --no-default-cfg             : do not load any specific default configs\n";
+		help_message +=
+		  "  --cfg-custom <yaml-file>     : load an additional <yaml-file> (loaded last)\n";
+		printf("--- RefBox customization options ---\n%s", help_message.c_str());
+		exit(1);
+	}
+	if (argp.has_arg("no-default-cfg")) {
+		cfg_files_to_include.clear();
+	}
+	for (const auto &opt : gen_options_str) {
+		if (argp.arg(opt.c_str())) {
+			std::string opt_arg(argp.arg(opt.c_str()));
+			cfg_files_to_include[opt] = opt_arg;
+		}
+	}
+
+	// generate the configuration file
+	std::ofstream generated_cfg_file;
+	generated_cfg_file.open(std::string(CONFDIR) + "/config_generated.yaml");
+	generated_cfg_file <<
+	  R"delimiter(%YAML 1.2
+%TAG ! tag:fawkesrobotics.org,cfg/
+---
+# Generated Configuration meta information document, do not modify this!
+include:
+)delimiter";
+	for (const auto &std_val : cfg_files_to_include) {
+		generated_cfg_file << " -  " << std_val.second.c_str() << "\n";
+	}
+	if (argp.arg("cfg-custom")) {
+		std::string opt_arg(argp.arg("cfg-custom"));
+		generated_cfg_file << " - " << opt_arg << "\n";
+	}
+	generated_cfg_file << "---\n";
+	generated_cfg_file.close();
 }
 
 void
