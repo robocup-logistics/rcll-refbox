@@ -468,7 +468,7 @@ LLSFRefBox::generate_config(int argc, char **argv)
 	std::vector<std::string>           gen_options_str;
 	// collect folders and default files
 	for (auto &p : fs::directory_iterator(CONFDIR)) {
-		if (p.is_directory()) {
+		if (fs::is_directory(p.status())) {
 			std::string cfg_opt = "cfg-" + p.path().filename().string();
 			std::string default_cfg =
 			  p.path().string() + "/default_" + p.path().filename().string() + ".yaml";
