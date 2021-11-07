@@ -128,14 +128,15 @@ while true; do
 			esac
 			;;
 		--ground-truth)
-			CHALLENGE_FOLDER="prod_no_gt/"
+			CHALLENGE_FOLDER="challenges/prod_no_gt/"
 		;;
 		--team)
 			if [ -n "$CUSTOM_CFG" ]; then
 				echo "Can only use either --team or -cfg-custom, not both!"
 				exit
 			fi
-			printf '%s\n%s\n%s\n' '%YAML 1.2' '# Generated File, do not edit!' \
+			printf '%s\n%s\n%s\n%s\n%s\n' '%YAML 1.2' '---' \
+				'# Generated File, do not edit!' '---' \
 				"llsfrb/game/teams: [$OPTARG]" > $LLSF_REFBOX_DIR/cfg/team_generated.yaml
 			CUSTOM_CFG=" --cfg-custom team_generated.yaml "
 			;;
