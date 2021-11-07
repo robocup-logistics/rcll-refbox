@@ -57,6 +57,8 @@
 #include <utils/system/argparser.h>
 #include <webview/rest_api_manager.h>
 
+#include <filesystem>
+
 #ifdef HAVE_WEBSOCKETS
 #	include <websocket/backend.h>
 #	include <logging/websocket.h>
