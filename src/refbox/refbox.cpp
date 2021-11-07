@@ -530,7 +530,7 @@ LLSFRefBox::generate_config(int argc, char **argv)
 include:
 )delimiter";
 	for (const auto &std_val : cfg_files_to_include) {
-		generated_cfg_file << " -  " << std_val.second.c_str() << "\n";
+		generated_cfg_file << " - " << std_val.second.c_str() << "\n";
 	}
 	if (argp.arg("cfg-custom")) {
 		std::string opt_arg(argp.arg("cfg-custom"));
