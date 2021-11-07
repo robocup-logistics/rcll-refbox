@@ -57,7 +57,20 @@
 #include <utils/system/argparser.h>
 #include <webview/rest_api_manager.h>
 
-#include <filesystem>
+#ifndef __has_include
+static_assert(false, "__has_include not supported");
+#else
+#	if __cplusplus >= 201703L && __has_include(<filesystem>)
+#		include <filesystem>
+namespace fs = std::filesystem;
+#	elif __has_include(<experimental/filesystem>)
+#		include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#	elif __has_include(<boost/filesystem.hpp>)
+#		include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+#	endif
+#endif
 
 #ifdef HAVE_WEBSOCKETS
 #	include <websocket/backend.h>
@@ -454,12 +467,12 @@ LLSFRefBox::generate_config(int argc, char **argv)
 	std::map<std::string, std::string> cfg_files_to_include;
 	std::vector<std::string>           gen_options_str;
 	// collect folders and default files
-	for (auto &p : std::filesystem::directory_iterator(CONFDIR)) {
+	for (auto &p : fs::directory_iterator(CONFDIR)) {
 		if (p.is_directory()) {
 			std::string cfg_opt = "cfg-" + p.path().filename().string();
 			std::string default_cfg =
 			  p.path().string() + "/default_" + p.path().filename().string() + ".yaml";
-			if (std::filesystem::exists(std::filesystem::path(default_cfg))) {
+			if (fs::exists(fs::path(default_cfg))) {
 				cfg_files_to_include[cfg_opt] = default_cfg;
 				gen_options_str.push_back(cfg_opt);
 			}
