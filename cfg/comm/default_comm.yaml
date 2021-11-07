@@ -6,9 +6,18 @@
 llsfrb:
   comm:
     protobuf-dirs: ["@SHAREDIR@/msgs"]
-
+    # TCP port the refbox listens on for controller connections.
     server-port: !tcp-port 4444
-
+    # peer communication broadcast address.
+    # You will most likely need to change this.
+    #
+    # The refbox can either listen and send to the same UDP port for broadcasts
+    # or listen and send on different ports.
+    # The latter is useful for simulation setups, where a distinction of
+    # ports may be required
+    #
+    # Set only either of "host" or "send-port"+"receive-port" pair.
+    # Do not specify both!
     public-peer:
       # host: !ipv4 192.168.122.255
       host: !ipv4 127.0.0.1
