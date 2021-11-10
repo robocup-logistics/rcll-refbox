@@ -157,12 +157,9 @@ handle_signal(int signum)
 LLSFRefBox::LLSFRefBox(int argc, char **argv)
 : clips_mutex_(fawkes::Mutex::RECURSIVE), timer_(io_service_)
 {
-	generate_config(argc, argv);
+	read_config(argc, argv);
 
 	pb_comm_ = NULL;
-
-	config_ = std::make_unique<YamlConfiguration>(CONFDIR);
-	config_->load("config_generated.yaml");
 
 	cfg_clips_dir_ = std::string(SHAREDIR) + "/games/rcll/";
 
@@ -461,7 +458,7 @@ LLSFRefBox::~LLSFRefBox()
  * @param argv array of arguments
  */
 void
-LLSFRefBox::generate_config(int argc, char **argv)
+LLSFRefBox::read_config(int argc, char **argv)
 {
 	// key: cfg option, value: path to file
 	std::map<std::string, std::string> cfg_files_to_include;
@@ -479,7 +476,7 @@ LLSFRefBox::generate_config(int argc, char **argv)
 		}
 	}
 	// Populate generated options, stuck to raw arrays as the char arrays within
-	// the option struct can be invalidated through smart containters
+	// the option struct can be invalidated through smart containers
 	option generated_options[cfg_files_to_include.size()];
 	for (size_t i = 0; i < gen_options_str.size(); i++) {
 		generated_options[i].name    = gen_options_str[i].c_str();
@@ -519,6 +516,8 @@ LLSFRefBox::generate_config(int argc, char **argv)
 		help_message += "  --no-default-cfg             : do not load any specific default configs\n";
 		help_message +=
 		  "  --cfg-custom <yaml-file>     : load an additional <yaml-file> (loaded last)\n";
+		help_message += "  --dump-cfg <yaml-file>       : write the configuration file (required to "
+		                "use some of the companion tools)\n";
 		printf("--- RefBox customization options ---\n%s", help_message.c_str());
 		exit(1);
 	}
@@ -531,26 +530,38 @@ LLSFRefBox::generate_config(int argc, char **argv)
 			cfg_files_to_include[opt] = opt_arg;
 		}
 	}
-
-	// generate the configuration file
+	bool          dump_cfg = argp.has_arg("dump-cfg");
 	std::ofstream generated_cfg_file;
-	generated_cfg_file.open(std::string(CONFDIR) + "/config_generated.yaml");
-	generated_cfg_file <<
-	  R"delimiter(%YAML 1.2
+
+	if (dump_cfg) {
+		// generate the configuration file
+		generated_cfg_file.open(std::string(CONFDIR) + "/config_generated.yaml");
+		generated_cfg_file <<
+		  R"delimiter(%YAML 1.2
 %TAG ! tag:fawkesrobotics.org,cfg/
 ---
 # Generated Configuration meta information document, do not modify this!
 include:
 )delimiter";
+	}
+	config_ = std::make_unique<YamlConfiguration>(CONFDIR);
 	for (const auto &std_val : cfg_files_to_include) {
-		generated_cfg_file << " - " << std_val.second.c_str() << "\n";
+		if (dump_cfg) {
+			generated_cfg_file << " - " << std_val.second.c_str() << "\n";
+		}
+		config_->load(std_val.second.c_str());
 	}
 	if (argp.arg("cfg-custom")) {
-		std::string opt_arg(argp.arg("cfg-custom"));
-		generated_cfg_file << " - " << opt_arg << "\n";
+		if (dump_cfg) {
+			std::string opt_arg(argp.arg("cfg-custom"));
+		}
+		config_->load(argp.arg("cfg-custom"));
 	}
-	generated_cfg_file << "---\n";
-	generated_cfg_file.close();
+	if (dump_cfg) {
+		generated_cfg_file << "---\n";
+		generated_cfg_file.close();
+	}
+	std::shared_ptr<Configuration::ValueIterator> v(config_->search("llsfrb"));
 }
 
 void
