@@ -99,6 +99,8 @@ public:
 	void handle_signal(const boost::system::error_code &error, int signum);
 
 private: // methods
+	void read_config(int argc, char **argv);
+
 	void start_timer();
 	void handle_timer(const boost::system::error_code &error);
 

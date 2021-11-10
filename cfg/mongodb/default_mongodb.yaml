@@ -1,0 +1,13 @@
+%YAML 1.2
+---
+---
+# Mongodb is disabled by default.
+
+llsfrb:
+  mongodb:
+    enable: false
+    hostport: localhost
+    collections:
+      text-log: log
+      clips-log: clipslog
+      protobuf: protobuf

@@ -109,7 +109,7 @@ LLSFRefBoxShell::LLSFRefBoxShell()
 	stdin_  = new boost::asio::posix::stream_descriptor(io_service_, dup(STDIN_FILENO));
 	client  = new ProtobufStreamClient();
 	config_ = new llsfrb::YamlConfiguration(CONFDIR);
-	config_->load("config.yaml");
+	config_->load("config_generated.yaml");
 }
 
 LLSFRefBoxShell::~LLSFRefBoxShell()

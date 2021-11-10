@@ -342,6 +342,8 @@ YamlConfiguration::YamlConfiguration(const char *sysconfdir, const char *usercon
 			}
 		}
 	}
+
+	root_ = std::make_shared<YamlConfigurationNode>();
 }
 
 /** Destructor. */
@@ -456,8 +458,6 @@ YamlConfiguration::read_yaml_config(std::string                             file
                                     std::list<std::string> &                files,
                                     std::list<std::string> &                dirs)
 {
-	root = std::make_shared<YamlConfigurationNode>();
-
 	std::queue<LoadQueueEntry> load_queue;
 	load_queue.push(LoadQueueEntry(filename, false));
 
