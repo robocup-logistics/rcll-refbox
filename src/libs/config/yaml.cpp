@@ -458,7 +458,6 @@ YamlConfiguration::read_yaml_config(std::string                             file
                                     std::list<std::string> &                files,
                                     std::list<std::string> &                dirs)
 {
-
 	std::queue<LoadQueueEntry> load_queue;
 	load_queue.push(LoadQueueEntry(filename, false));
 
