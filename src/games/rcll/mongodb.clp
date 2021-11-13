@@ -8,6 +8,7 @@
 ;             2020  Tarik Viehmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
+
 (defglobal
 	; Mongodb Game Report Version,
 	; 1.1 -> includes config
@@ -432,6 +433,10 @@
 	(modify ?f1 (points 0 0) (end 0 0))
 )
 
+(deftemplate mongodb-phase-change
+	(multislot registered-phases (type SYMBOL) (default (create$)))
+)
+
 
 (defrule mongodb-game-report-begin
 	(declare (salience ?*PRIORITY_HIGH*))
@@ -466,6 +471,7 @@
 	)
 	(bson-array-finish ?doc "machines" ?m-arr)
 	(mongodb-write-game-report ?doc ?stime ?report-name)
+	(assert (mongodb-phase-change))
 )
 
 (defrule mongodb-game-report-end
@@ -478,6 +484,21 @@
 	(modify ?gr (end ?etime))
 	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
 )
+
+(defrule mongodb-game-report-new-phase-update
+	(declare (salience ?*PRIORITY_HIGH*))
+	(time $?now)
+	(gamestate (phase ?p) (state RUNNING)
+	     (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (start-time $?stime) (end-time $?etime))
+	?pc <- (mongodb-phase-change (registered-phases $?phases&:(not (member$ ?p ?phases))))
+	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
+	=>
+	(modify ?pc (registered-phases (append$ ?phases ?p)))
+	(modify ?gr (last-updated $?now))
+	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
+)
+
 
 (defrule mongodb-game-report-update
 	(declare (salience ?*PRIORITY_HIGH*))
