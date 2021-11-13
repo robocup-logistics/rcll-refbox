@@ -80,6 +80,7 @@ namespace fs = boost::filesystem;
 #include <boost/bind/bind.hpp>
 #include <boost/format.hpp>
 #include <cstdlib>
+#include <sstream>
 
 #if __GNUC__ && __GNUC__ < 8
 #	include <experimental/filesystem>
@@ -453,7 +454,7 @@ LLSFRefBox::~LLSFRefBox()
 	google::protobuf::ShutdownProtobufLibrary();
 }
 
-/** Generate config based on given command line options.
+/** Read yaml configurations based on given command line options.
  * @param argc number of arguments passed
  * @param argv array of arguments
  */
@@ -666,6 +667,9 @@ LLSFRefBox::setup_clips()
 	clips_->add_function("config-get-int",
 	                     sigc::slot<CLIPS::Value, std::string>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_get_int)));
+	clips_->add_function("print-fact-list",
+	                     sigc::slot<void, CLIPS::Values, CLIPS::Values>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_print_fact_list)));
 
 	if (!simulation) {
 		clips_->add_function("mps-move-conveyor",
@@ -768,12 +772,131 @@ LLSFRefBox::clips_now()
 	return rv;
 }
 
+/** Convert a clips value into a string representation
+ * @param v Value to convert
+ * @return v represented as std::string
+ */
+std::string
+LLSFRefBox::clips_value_to_string(const CLIPS::Value &v)
+{
+	switch (v.type()) {
+	case CLIPS::Type::TYPE_FLOAT: return std::to_string(v.as_float());
+	case CLIPS::Type::TYPE_STRING:
+	case CLIPS::Type::TYPE_SYMBOL: return v.as_string();
+	case CLIPS::Type::TYPE_INTEGER: return std::to_string(v.as_integer());
+	default: return "";
+	}
+}
+
 CLIPS::Values
 LLSFRefBox::clips_get_clips_dirs()
 {
 	CLIPS::Values rv;
 	rv.push_back(cfg_clips_dir_);
 	return rv;
+}
+
+/** Print a list of facts as a formatted table
+ * @param facts A multifield of fact indices, which all belong to the same
+ *              template
+ * @param fields A multifield of field names that belong to the template of
+ *               the given fact. If an empty multifield is supplied, then
+ *               all fields of the template are considered.
+ *
+ * Prints out a table, where each row consists of field values (from fields)
+ * of a fact from the given fact list.
+ */
+void
+LLSFRefBox::clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields)
+{
+	if (facts.size() == 0) {
+		return;
+	}
+	MutexLocker           lock(&clips_mutex_);
+	std::vector<long int> fact_indices;
+	try {
+		std::transform(facts.begin(),
+		               facts.end(),
+		               std::back_inserter(fact_indices),
+		               [this](const CLIPS::Value &s) -> long int { return s.as_integer(); });
+	} catch (Exception &e) {
+		logger_->log_error("print-fact-list", "Expected fact-index %s");
+	}
+	std::map<long int, CLIPS::Fact::pointer> retrieved_facts;
+	CLIPS::Fact::pointer                     fact = clips_->get_facts();
+
+	CLIPS::Template::pointer fact_template;
+	while (fact) {
+		if (std::find(fact_indices.begin(), fact_indices.end(), fact->index()) != fact_indices.end()) {
+			retrieved_facts[fact->index()] = fact;
+			if (!fact_template) {
+				fact_template = fact->get_template();
+			} else {
+				if (fact_template->name() != fact->get_template()->name()) {
+					logger_->log_error("print-fact-list", "Expected facts from exactly one template");
+					return;
+				}
+			}
+		}
+		fact = fact->next();
+	}
+
+	std::map<std::string, size_t> slot_value_length;
+	std::vector<std::string>      slot_names;
+
+	for (const auto &field : fields) {
+		slot_names.push_back(clips_value_to_string(field));
+	}
+	if (slot_names.size() == 0) {
+		slot_names = fact_template->slot_names();
+	}
+
+	for (auto slot_name : slot_names) {
+		slot_value_length.emplace(slot_name, 0);
+	}
+
+	for (const auto &f : fact_indices) {
+		auto elem = retrieved_facts.find(f);
+		if (elem != retrieved_facts.end()) {
+			for (const auto &slot_name : slot_names) {
+				size_t slot_val_length = 0;
+				for (const auto &val : elem->second->slot_value(slot_name)) {
+					slot_val_length += clips_value_to_string(val).size() + 1;
+				}
+				slot_value_length[slot_name] =
+				  std::max({slot_value_length[slot_name], slot_val_length, slot_name.size()});
+			}
+		} else {
+			logger_->log_error("print-fact-list", "Expected fact-index %s");
+			return;
+		}
+	}
+
+	std::stringstream table_header;
+	table_header << " | ";
+	std::stringstream table_sep;
+	table_sep << "---";
+	for (auto &slot_name : slot_names) {
+		table_header << std::left << std::setw(slot_value_length[slot_name]) << std::setfill(' ')
+		             << slot_name << " | ";
+		table_sep << std::left << std::setw(slot_value_length[slot_name]) << std::setfill('-') << "-"
+		          << "---";
+	}
+	logger_->log_info("C", table_header.str().c_str());
+	logger_->log_info("C", table_sep.str().c_str());
+	for (auto &fact_id : fact_indices) {
+		std::stringstream row;
+		row << " | ";
+		for (auto &slot_name : slot_names) {
+			std::string slot_str;
+			for (const auto &val : retrieved_facts[fact_id]->slot_value(slot_name)) {
+				slot_str += clips_value_to_string(val) + " ";
+			}
+			row << std::left << std::setw(slot_value_length[slot_name]) << std::setfill(' ') << slot_str
+			    << " | ";
+		}
+		logger_->log_info("C", row.str().c_str());
+	}
 }
 
 void

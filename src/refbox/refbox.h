@@ -136,6 +136,7 @@ private: // methods
 	void         clips_mongodb_update(std::string collection, void *bson, CLIPS::Value query);
 	void         clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query);
 	void         clips_mongodb_insert(std::string collection, void *bson);
+	void         clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields);
 	void         mongodb_update(std::string &                  collection,
 	                            const bsoncxx::document::view &doc,
 	                            CLIPS::Value &                 query,
@@ -178,6 +179,8 @@ private: // methods
 	void clips_mps_reset(std::string machine);
 	void clips_mps_reset_base_counter(std::string machine);
 	void clips_mps_deliver(std::string machine);
+
+	std::string clips_value_to_string(const CLIPS::Value &v);
 
 	void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
 	                              uint16_t                                      component_id,
