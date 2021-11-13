@@ -41,6 +41,27 @@
 	(multislot remaining (type SYMBOL) (default (create$)))
 )
 
+(defrule challenges-print-essential-info
+	(declare (salience (- ?*PRIORITY_HIGH* 1)))
+	(finalize)
+	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value ?routes-enabled))
+	(confval (path "/llsfrb/challenges/publish-routes/num-points") (type UINT) (value ?points))
+	(confval (path "/llsfrb/challenges/publish-routes/num-routes") (type UINT) (value ?routes))
+	(not (challenges-info-printed))
+	=>
+	(print-sep (str-cat " Challenge routes with " ?points " waypoints and " ?*VISIT-ZONE-DURATION* "s of stay"))
+	; print relevant machine
+	(bind ?routes (find-all-facts ((?m challenges-route)) TRUE))
+	(bind ?routes (sort id> ?routes))
+	(print-fact-list (fact-indices ?routes) (create$))
+
+	(print-sep "Challenge configuration ")
+	(bind ?challenge-cfg (find-all-facts ((?confval confval)) (str-index "/llsfrb/challenges/" ?confval:path)))
+	(print-fact-list (fact-indices ?challenge-cfg) (create$ path value list-value))
+	(assert (challenges-info-printed))
+)
+
+
 (defrule challenges-init
 	(not (challenges-initalized))
 =>

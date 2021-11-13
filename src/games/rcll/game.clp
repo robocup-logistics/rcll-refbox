@@ -403,10 +403,51 @@
   (game-print-points-team MAGENTA)
 )
 
+(deffunction machine> (?m1-fact ?m2-fact)
+	(return (> (str-compare (fact-slot-value ?m1-fact name) (fact-slot-value ?m2-fact name)) 0))
+)
+(deffunction history> (?h1-fact ?h2-fact)
+	(return (< (time-diff-sec (fact-slot-value ?h2-fact time) (fact-slot-value ?h1-fact time)) 0))
+)
+
+(deffunction id> (?o1-fact ?o2-fact)
+	(return (> (fact-slot-value ?o1-fact id) (fact-slot-value ?o2-fact id)))
+)
+
+(deffunction points> (?p1-fact ?p2-fact)
+	(return (> (fact-slot-value ?p1-fact game-time) (fact-slot-value ?p2-fact game-time)))
+)
+
 (deffunction game-summary ()
   (game-print-points)
   (assert (attention-message (text "Game Over") (time 60)))
   (printout t "===  Game Over  ===" crlf)
+	(print-sep "Field Layout")
+	; print relevant machine
+	(bind ?machines (find-all-facts ((?m machine)) TRUE))
+	(bind ?machines (sort machine> ?machines))
+	(print-fact-list (fact-indices ?machines) (create$ name team zone rotation down-period))
+
+	; print relevant order info
+	(print-sep "Orders")
+	(bind ?orders (find-all-facts ((?o order)) TRUE))
+	(bind ?orders (sort id> ?orders))
+	(print-fact-list (fact-indices ?orders)
+	                 (create$ id complexity competitive base-color ring-colors
+	                          cap-color quantity-requested quantity-delivered
+	                          delivery-period activate-at))
+	(foreach ?phase (deftemplate-slot-allowed-values points phase)
+		(print-sep (str-cat ?phase " points"))
+		(bind ?point (find-all-facts ((?h points)) (eq ?h:phase ?phase)))
+		(bind ?point (sort points> ?point))
+		(print-fact-list (fact-indices ?point) (create$))
+	)
+
+	(print-sep "Game configuration")
+	(bind ?game-cfg (find-all-facts ((?confval confval))
+	                (and (str-index "/llsfrb/game/" ?confval:path)
+	                     (not (str-index "/llsfrb/game/crypto-keys" ?confval:path)))))
+	(print-fact-list (fact-indices ?game-cfg) (create$ path value list-value))
 )
 
 (defrule game-over
