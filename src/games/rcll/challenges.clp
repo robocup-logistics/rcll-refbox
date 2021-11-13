@@ -18,7 +18,7 @@
 	?*PRIORITY_CHALLENGE_OVERRIDE* = 100
 	?*FIELD-WIDTH*  = (config-get-int "/llsfrb/challenges/field/width")
 	?*FIELD-HEIGHT* = (config-get-int "/llsfrb/challenges/field/height")
-	?*VISIT-ZOME-DURATION* = (config-get-int "/llsfrb/challenges/publish-routes/pause-duration")
+	?*VISIT-ZONE-DURATION* = (config-get-int "/llsfrb/challenges/publish-routes/pause-duration")
 )
 (deftemplate challenges-field
 	(multislot free-zones (type SYMBOL))
@@ -376,7 +376,7 @@
 	?route <- (challenges-route (team-color ?col) (id ?r-id)
 	  (remaining $?remaining) (reached $?reached))
 	?zv <- (challenges-zone-visit (team-color ?col) (route-id ?r-id)
-	  (visit-start ?start&:(> (- ?gt ?start) ?*VISIT-ZOME-DURATION*))
+	  (visit-start ?start&:(> (- ?gt ?start) ?*VISIT-ZONE-DURATION*))
 	  (visited-zone ?zone))
 
 =>
