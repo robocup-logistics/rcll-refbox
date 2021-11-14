@@ -481,6 +481,8 @@ LLSFRefBox::read_config(int argc, char **argv)
 	for (size_t i = 0; i < gen_options_str.size(); i++) {
 		generated_options[i].name    = gen_options_str[i].c_str();
 		generated_options[i].has_arg = 1;
+		generated_options[i].flag    = 0;
+		generated_options[i].val     = 0;
 	}
 	// Add custom command line options here
 	std::vector<option> static_options = {{"no-default-cfg", 0, 0, 0},
