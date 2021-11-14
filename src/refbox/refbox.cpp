@@ -487,8 +487,9 @@ LLSFRefBox::read_config(int argc, char **argv)
 	// Add custom command line options here
 	std::vector<option> static_options = {{"no-default-cfg", 0, 0, 0},
 	                                      {"cfg-custom", 1, 0, 0},
-	                                      {0, 0, 0, 0}}; // required last option
-	option              options[cfg_files_to_include.size() + static_options.size() + 1];
+	                                      {"dump-cfg", 0, 0, 0},
+	                                      {0, 0, 0, 0}}; // null terminate options
+	option              options[cfg_files_to_include.size() + static_options.size()];
 	// Prepare ArgumentParser
 	for (size_t i = 0; i < gen_options_str.size(); i++) {
 		options[i] = generated_options[i];
