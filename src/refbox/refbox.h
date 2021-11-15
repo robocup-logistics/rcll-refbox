@@ -151,6 +151,8 @@ private: // methods
 	CLIPS::Values clips_bson_get_time(void *bson, std::string field_name);
 #endif
 
+	void clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields);
+
 	void clips_mps_move_conveyor(std::string machine,
 	                             std::string goal_position,
 	                             std::string conveyor_direction = "FORWARD");
