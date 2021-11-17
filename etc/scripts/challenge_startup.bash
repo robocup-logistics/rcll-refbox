@@ -61,12 +61,18 @@ CHALLENGE_FOLDER=
 MONGODB_CFG=" --cfg-mongodb mongodb/enable_mongodb.yaml"
 OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,difficulty:,team:,pack-results" -- "$@")
 
+if [ -z "$LLSF_REFBOX_DIR" ]; then
+	echo "LLSF_REFBOX_DIR not set, abort"
+	exit
+fi
+
 if [ $? != 0 ]
 then
 	echo "Failed to parse parameters"
 	usage
 	exit 1
 fi
+
 eval set -- "$OPTS"
 while true; do
 	OPTION=$1
