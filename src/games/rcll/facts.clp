@@ -288,12 +288,10 @@
   (slot prev-state (type SYMBOL)
 	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
   (slot phase (type SYMBOL)
-	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME
-			OPEN_CHALLENGE NAVIGATION_CHALLENGE WHACK_A_MOLE_CHALLENGE)
+	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
 	(default PRE_GAME))
   (slot prev-phase (type SYMBOL)
-	(allowed-values NONE PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME
-			OPEN_CHALLENGE NAVIGATION_CHALLENGE WHACK_A_MOLE_CHALLENGE)
+	(allowed-values NONE PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
 	(default NONE))
   (slot game-time (type FLOAT) (default 0.0))
   (slot cont-time (type FLOAT) (default 0.0))
@@ -346,7 +344,7 @@
   (slot points (type INTEGER))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot game-time (type FLOAT))
-  (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION WHACK_A_MOLE_CHALLENGE))
+  (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION))
   (slot reason (type STRING))
   (slot product-step (type INTEGER) (default 0))
 )
