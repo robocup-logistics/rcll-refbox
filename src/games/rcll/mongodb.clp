@@ -319,10 +319,10 @@
 		 else
 			(printout error "Specified game report does not contain field " ?facts crlf)
 		)
+		(bson-destroy ?t-doc)
 	 else
 		(printout error "Empty result in mongoDB from game_report" crlf)
 	)
-	(bson-destroy ?t-doc)
 	(mongodb-cursor-destroy ?t-cursor)
 	(bson-builder-destroy ?t-query)
 	(bson-builder-destroy ?t-sort)
