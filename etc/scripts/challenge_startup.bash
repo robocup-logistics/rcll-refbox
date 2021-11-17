@@ -47,7 +47,6 @@ Additional tweaking:
    --difficulty [easy|medium|hard]
                                    (ignored, unless --navigation or
                                     --exploration is used)
-   --team <team-name>              Add team to RefBox config (sets --cfg-custom)
    --pack-results                  Pack the logfiles and mongodb game report
                                    to an archive
 
@@ -162,12 +161,6 @@ while true; do
 		--ground-truth)
 			CHALLENGE_FOLDER="challenges/prod_no_gt/"
 		;;
-		--team)
-			printf '%s\n%s\n%s\n%s\n%s\n' '%YAML 1.2' '---' \
-				'# Generated File, do not edit!' '---' \
-				"llsfrb/game/teams: [$OPTARG]" > $LLSF_REFBOX_DIR/cfg/team_generated.yaml
-			CUSTOM_CFG=" --cfg-custom team_generated.yaml "
-			;;
 		--pack-results)
 			PACK_RESULTS=1
 			;;
