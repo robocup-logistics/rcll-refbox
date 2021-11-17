@@ -5,9 +5,6 @@
 
 llsfrb:
   game:
-    teams: [Carologistics]
-    crypto-keys:
-      Carologistics: randomkey
     # set to true to generate a random field at startup
     # disabling randomization requires mongodb to be enabled as the game
     # parameters are loaded from a mongodb game report in this case
