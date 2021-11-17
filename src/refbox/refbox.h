@@ -206,7 +206,7 @@ private: // methods
 #endif
 
 private: // members
-	std::unique_ptr<Configuration>                          config_;
+	std::shared_ptr<Configuration>                          config_;
 	std::unique_ptr<MultiLogger>                            logger_;
 	std::unique_ptr<MultiLogger>                            clips_logger_;
 	Logger::LogLevel                                        log_level_;

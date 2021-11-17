@@ -30,6 +30,8 @@
 
 namespace llsfrb {
 namespace mps_comm {
+MachineFactory::MachineFactory(std::shared_ptr<Configuration> config) : config_(config){};
+
 std::unique_ptr<Machine>
 MachineFactory::create_machine(const std::string &name,
                                const std::string &type,
@@ -73,16 +75,17 @@ MachineFactory::create_machine(const std::string &name,
 #endif
 #ifdef HAVE_MOCKUP
 	if (connection_mode == "mockup") {
+		float exec_speed = config_->get_float_or_default("llsfrb/simulation/speedup", 1);
 		if (type == "BS") {
-			return std::make_unique<MockupBaseStation>(name);
+			return std::make_unique<MockupBaseStation>(name, exec_speed);
 		} else if (type == "CS") {
-			return std::make_unique<MockupCapStation>(name);
+			return std::make_unique<MockupCapStation>(name, exec_speed);
 		} else if (type == "DS") {
-			return std::make_unique<MockupDeliveryStation>(name);
+			return std::make_unique<MockupDeliveryStation>(name, exec_speed);
 		} else if (type == "RS") {
-			return std::make_unique<MockupRingStation>(name);
+			return std::make_unique<MockupRingStation>(name, exec_speed);
 		} else if (type == "SS") {
-			return std::make_unique<MockupStorageStation>(name);
+			return std::make_unique<MockupStorageStation>(name, exec_speed);
 		} else {
 			throw fawkes::Exception(
 			  "Unexpected machine type '%s' for machine '%s' and connection mode '%s'",

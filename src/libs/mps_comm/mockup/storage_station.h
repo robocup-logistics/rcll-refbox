@@ -29,7 +29,7 @@ namespace mps_comm {
 class MockupStorageStation : public virtual MockupMachine, public virtual StorageStation
 {
 public:
-	MockupStorageStation(const std::string &name);
+	MockupStorageStation(const std::string &name, float exec_speed);
 	void retrieve(unsigned int shelf, unsigned int slot) override;
 	void store(unsigned int shelf, unsigned int slot) override;
 	void relocate(unsigned int shelf,

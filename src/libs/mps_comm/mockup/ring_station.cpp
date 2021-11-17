@@ -27,7 +27,8 @@
 namespace llsfrb {
 namespace mps_comm {
 
-MockupRingStation::MockupRingStation(const std::string &name) : Machine(name)
+MockupRingStation::MockupRingStation(const std::string &name, float exec_speed)
+: MockupMachine(name, exec_speed)
 {
 }
 

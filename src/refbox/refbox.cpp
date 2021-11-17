@@ -275,7 +275,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 							log_path += "/" + log_suffix;
 						}
 
-						MachineFactory mps_factory;
+						MachineFactory mps_factory(config_);
 						auto           mps = mps_factory.create_machine(
               cfg_name, mpstype, mpsip, port, log_path, connection_string);
 						mps->register_ready_callback([this, cfg_name](bool ready) {
@@ -547,7 +547,7 @@ LLSFRefBox::read_config(int argc, char **argv)
 include:
 )delimiter";
 	}
-	config_ = std::make_unique<YamlConfiguration>(CONFDIR);
+	config_ = std::make_shared<YamlConfiguration>(CONFDIR);
 	for (const auto &std_val : cfg_files_to_include) {
 		if (dump_cfg) {
 			generated_cfg_file << " - " << std_val.second.c_str() << "\n";

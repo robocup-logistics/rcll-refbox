@@ -33,7 +33,7 @@ namespace mps_comm {
 class MockupMachine : public virtual Machine
 {
 public:
-	MockupMachine();
+	MockupMachine(const std::string &name, float exec_speed);
 	~MockupMachine() override;
 	void         set_light(llsf_msgs::LightColor color,
 	                       llsf_msgs::LightState state = llsf_msgs::ON,

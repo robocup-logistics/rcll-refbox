@@ -22,6 +22,8 @@
 
 #include "machine.h"
 
+#include <config/yaml.h>
+
 #include <memory>
 #include <string>
 
@@ -30,13 +32,18 @@ namespace mps_comm {
 class MachineFactory
 {
 public:
-	MachineFactory() = default;
+	MachineFactory(std::shared_ptr<Configuration> config);
+
 	std::unique_ptr<Machine> create_machine(const std::string &name,
 	                                        const std::string &type,
 	                                        const std::string &ip,
 	                                        unsigned int       port,
 	                                        const std::string &log_path        = "",
 	                                        const std::string &connection_mode = "plc");
+
+private:
+	std::shared_ptr<Configuration> config_;
 };
+
 } // namespace mps_comm
 } // namespace llsfrb
