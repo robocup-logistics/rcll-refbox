@@ -35,6 +35,11 @@ Exactly one of the following options is required:
    --production [c0|c1|c2|c3]      Production Challenge (sets --cfg-challenges)
    --navigation                    Navigation challenge (sets --cfg-challenges)
    --exploration                   Exploration challenge (sets --cfg-challenges)
+   --grasping                      Grasping challenge
+                                   (sets --cfg-challenges and --cfg-game)
+                                   Make sure that
+                                   benchmarks/grasping_challenge.gz is
+                                   loaded to your mongodb instance
 
 Additional tweaking:
    --ground-truth                  Send Ground Truth
@@ -53,13 +58,14 @@ $LLSF_REFBOX_DIR/bin/./llsf-refbox -h
 }
 
 PACK_RESULTS=
+GAME_CFG=
 CHALLENGE_OPT=" --cfg-challenges "
 MPS_CFG=" --cfg-mps mps/mockup_mps.yaml "
 CHALLENGE_FILE=
 CHALLENGE_SUFFIX=
 CHALLENGE_FOLDER=
 MONGODB_CFG=" --cfg-mongodb mongodb/enable_mongodb.yaml"
-OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,difficulty:,team:,pack-results" -- "$@")
+OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,grasping,difficulty:,pack-results" -- "$@")
 
 if [ -z "$LLSF_REFBOX_DIR" ]; then
 	echo "LLSF_REFBOX_DIR not set, abort"
@@ -125,6 +131,16 @@ while true; do
 			fi
 			CHALLENGE_FILE="nav"
 			CHALLENGE_FOLDER="challenges/nav/"
+			;;
+		--grasping)
+			if [ -n "$CHALLENGE_FILE" ]; then
+				echo "Can only use one challenge at a time!"
+				exit
+			fi
+			CHALLENGE_FILE="grasping"
+			CHALLENGE_FOLDER="challenges/grasping/"
+			GAME_CFG=" --cfg-game challenges/grasping/grasping_game.yaml "
+			CHALLENGE_SUFFIX=".yaml"
 			;;
 		--difficulty)
 			case $OPTARG in
@@ -194,4 +210,4 @@ fi
 
 $LLSF_REFBOX_DIR/bin/./llsf-refbox $CHALLENGE_OPT \
 	$CHALLENGE_FOLDER$CHALLENGE_FILE$CHALLENGE_SUFFIX \
-	$MONGODB_CFG $MPS_CFG $@
+	$MONGODB_CFG $MPS_CFG $GAME_CFG $@
