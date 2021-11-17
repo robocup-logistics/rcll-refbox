@@ -14,7 +14,7 @@ llsfrb:
       # if true this effectively doubles the field size
       mirror: false
     # Phases in which the machine positions are broadcasted
-    send-mps-ground-truth: []
+    send-mps-ground-truth: [PRODUCTION]
 
     production-time: 1020
     orders:
