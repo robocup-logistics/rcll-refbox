@@ -49,6 +49,7 @@ Additional tweaking:
 Any refbox option set via this wrapper script can be overridden
 using <refbox-options>, if necessary.
 EOF
+$LLSF_REFBOX_DIR/bin/./llsf-refbox -h
 }
 
 PACK_RESULTS=
@@ -73,7 +74,6 @@ while true; do
 	case $OPTION in
 		-h)
 			usage
-			$LLSF_REFBOX_DIR/bin/./llsf-refbox -h
 			exit 1
 			;;
 		--production)
