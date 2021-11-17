@@ -43,19 +43,22 @@ Additional tweaking:
                                    (ignored, unless --navigation or
                                     --exploration is used)
    --team <team-name>              Add team to RefBox config (sets --cfg-custom)
+   --pack-results                  Pack the logfiles and mongodb game report
+                                   to an archive
 
 Any refbox option set via this wrapper script can be overridden
 using <refbox-options>, if necessary.
 EOF
 }
-CUSTOM_CFG=
+
+PACK_RESULTS=
 CHALLENGE_OPT=" --cfg-challenges "
 MPS_CFG=" --cfg-mps mps/mockup_mps.yaml "
 CHALLENGE_FILE=
 CHALLENGE_SUFFIX=
 CHALLENGE_FOLDER=
 MONGODB_CFG=" --cfg-mongodb mongodb/enable_mongodb.yaml"
-OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,difficulty:,team:" -- "$@")
+OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,difficulty:,team:,pack-results" -- "$@")
 
 if [ $? != 0 ]
 then
@@ -138,13 +141,13 @@ while true; do
 			CHALLENGE_FOLDER="challenges/prod_no_gt/"
 		;;
 		--team)
-			fi
 			printf '%s\n%s\n%s\n%s\n%s\n' '%YAML 1.2' '---' \
 				'# Generated File, do not edit!' '---' \
 				"llsfrb/game/teams: [$OPTARG]" > $LLSF_REFBOX_DIR/cfg/team_generated.yaml
 			CUSTOM_CFG=" --cfg-custom team_generated.yaml "
 			;;
-		--team)
+		--pack-results)
+			PACK_RESULTS=1
 			;;
 		--)
 			shift
@@ -166,6 +169,23 @@ if [ -z "$CHALLENGE_SUFFIX" ]; then
 	usage
 	exit
 fi
+
+
+
+
+if [ -n "$PACK_RESULTS" ]; then
+		stop_run () {
+		DATE=$(date "+%d_%m_%Y-%H_%M_%S")
+	  trap - $TRAP_SIGNALS
+		LATEST_REPORT=$(mongo --quiet rcll --eval "db.game_report.find('', {'_id':1}).sort({_id:-1}).limit(1)")
+		mongodump -d rcll -c game_report -q "$LATEST_REPORT" --gzip --archive=mongo_game_report.gz
+		tar -chzf output_$DATE.tar.gz mongo_game_report.gz refbox-debug_latest.log refbox_latest.log
+		rm mongo_game_report.gz
+	}
+	TRAP_SIGNALS="SIGINT SIGTERM SIGPIPE EXIT"
+	trap stop_run $TRAP_SIGNALS
+fi
+
 $LLSF_REFBOX_DIR/bin/./llsf-refbox $CHALLENGE_OPT \
 	$CHALLENGE_FOLDER$CHALLENGE_FILE$CHALLENGE_SUFFIX \
-	$MONGODB_CFG $CUSTOM_CFG $MPS_CFG $@
+	$MONGODB_CFG $MPS_CFG $@
