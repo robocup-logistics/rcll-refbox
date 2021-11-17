@@ -19,28 +19,33 @@
 usage()
 {
 cat << EOF
-usage: $0 options
+usage: $0 <options> [-- <refbox-options>]
 
-This script automatically configures the RefBox to run challenges.
+This script automatically configures the RefBox to run challenges
+
+The following refbox options are set per default:
+--cfg-mps mps/mockup_mps.yaml
+--cfg-mongodb mongodb/enable_mongodb.yaml
+
 
 Options:
    -h                              Show this message
 
 Exactly one of the following options is required:
-   --production [c0|c1|c2|c3]      Production Challenge
-   --navigation                    Navigation challenge
-   --exploration                   Production challenge
+   --production [c0|c1|c2|c3]      Production Challenge (sets --cfg-challenges)
+   --navigation                    Navigation challenge (sets --cfg-challenges)
+   --exploration                   Exploration challenge (sets --cfg-challenges)
 
 Additional tweaking:
-	 --ground-truth                  Send Ground Truth
+   --ground-truth                  Send Ground Truth
                                    (ignored, unless --production is used)
    --difficulty [easy|medium|hard]
                                    (ignored, unless --navigation or
                                     --exploration is used)
-   --team <team-name>              Add team to RefBox config
-                                   (do not use this with --cfg-custom)
-   --cfg-custom <yaml-file>        Load additional <yaml-file>
-                                   (do not use this with --team)
+   --team <team-name>              Add team to RefBox config (sets --cfg-custom)
+
+Any refbox option set via this wrapper script can be overridden
+using <refbox-options>, if necessary.
 EOF
 }
 CUSTOM_CFG=
@@ -51,6 +56,7 @@ CHALLENGE_SUFFIX=
 CHALLENGE_FOLDER=
 MONGODB_CFG=" --cfg-mongodb mongodb/enable_mongodb.yaml"
 OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,difficulty:,team:" -- "$@")
+
 if [ $? != 0 ]
 then
 	echo "Failed to parse parameters"
@@ -64,6 +70,7 @@ while true; do
 	case $OPTION in
 		-h)
 			usage
+			$LLSF_REFBOX_DIR/bin/./llsf-refbox -h
 			exit 1
 			;;
 		--production)
@@ -131,9 +138,6 @@ while true; do
 			CHALLENGE_FOLDER="challenges/prod_no_gt/"
 		;;
 		--team)
-			if [ -n "$CUSTOM_CFG" ]; then
-				echo "Can only use either --team or -cfg-custom, not both!"
-				exit
 			fi
 			printf '%s\n%s\n%s\n%s\n%s\n' '%YAML 1.2' '---' \
 				'# Generated File, do not edit!' '---' \
@@ -141,11 +145,6 @@ while true; do
 			CUSTOM_CFG=" --cfg-custom team_generated.yaml "
 			;;
 		--team)
-			if [ -n "$CUSTOM_CFG" ]; then
-				echo "Can only use either --team or -cfg-custom, not both!"
-				exit
-			fi
-			CUSTOM_CFG=" --cfg-custom $OPTARG "
 			;;
 		--)
 			shift
@@ -154,6 +153,9 @@ while true; do
 		esac
 		shift
 done
+
+
+
 if [ -z "$CHALLENGE_FILE" ]; then
 	echo "No challenge selected, abort"
 	usage
@@ -166,4 +168,4 @@ if [ -z "$CHALLENGE_SUFFIX" ]; then
 fi
 $LLSF_REFBOX_DIR/bin/./llsf-refbox $CHALLENGE_OPT \
 	$CHALLENGE_FOLDER$CHALLENGE_FILE$CHALLENGE_SUFFIX \
-	$MONGODB_CFG $CUSTOM_CFG $MPS_CFG
+	$MONGODB_CFG $CUSTOM_CFG $MPS_CFG $@
