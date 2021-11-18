@@ -25,7 +25,7 @@ llsfrb:
       O1:
         base-color: BASE_RED
         ring-colors: [RING_YELLOW, RING_ORANGE]
-        cap-color: GREY
+        cap-color: CAP_GREY
     publish-routes:
       enable: false
       num-points: 12
