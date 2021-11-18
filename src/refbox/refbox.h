@@ -136,7 +136,6 @@ private: // methods
 	void         clips_mongodb_update(std::string collection, void *bson, CLIPS::Value query);
 	void         clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query);
 	void         clips_mongodb_insert(std::string collection, void *bson);
-	void         clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields);
 	void         mongodb_update(std::string &                  collection,
 	                            const bsoncxx::document::view &doc,
 	                            CLIPS::Value &                 query,
