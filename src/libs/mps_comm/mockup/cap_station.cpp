@@ -1,5 +1,5 @@
 /***************************************************************************
- *  cap_station.cpp - 
+ *  cap_station.cpp -
  *
  *  Created: Sat 01 Feb 2020 17:57:56 CET 17:57
  *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
@@ -25,7 +25,8 @@
 namespace llsfrb {
 namespace mps_comm {
 
-MockupCapStation::MockupCapStation(const std::string &name) : Machine(name)
+MockupCapStation::MockupCapStation(const std::string &name, float exec_speed)
+: MockupMachine(name, exec_speed)
 {
 }
 

@@ -19,44 +19,65 @@
 usage()
 {
 cat << EOF
-usage: $0 options
+usage: $0 <options> [-- <refbox-options>]
 
-This script automatically configures the RefBox to run challenges.
+This script automatically configures the RefBox to run challenges
+
+The following refbox options are set per default:
+--cfg-mps mps/mockup_mps.yaml
+--cfg-mongodb mongodb/enable_mongodb.yaml
+
 
 Options:
    -h                              Show this message
 
 Exactly one of the following options is required:
-   --production [c0|c1|c2|c3]      Production Challenge
-   --navigation                    Navigation challenge
-   --exploration                   Production challenge
+   --production [c0|c1|c2|c3]      Production Challenge (sets --cfg-challenges)
+   --navigation                    Navigation challenge (sets --cfg-challenges)
+   --exploration                   Exploration challenge (sets --cfg-challenges)
+   --grasping                      Grasping challenge
+                                   (sets --cfg-challenges and --cfg-game)
+                                   Make sure that
+                                   benchmarks/grasping_challenge.gz is
+                                   loaded to your mongodb instance
 
 Additional tweaking:
-	 --ground-truth                  Send Ground Truth
+   --ground-truth                  Send Ground Truth
                                    (ignored, unless --production is used)
    --difficulty [easy|medium|hard]
                                    (ignored, unless --navigation or
                                     --exploration is used)
-   --team <team-name>              Add team to RefBox config
-                                   (do not use this with --cfg-custom)
-   --cfg-custom <yaml-file>        Load additional <yaml-file>
-                                   (do not use this with --team)
+   --pack-results                  Pack the logfiles and mongodb game report
+                                   to an archive
+
+Any refbox option set via this wrapper script can be overridden
+using <refbox-options>, if necessary.
 EOF
+$LLSF_REFBOX_DIR/bin/./llsf-refbox -h
 }
-CUSTOM_CFG=
+
+PACK_RESULTS=
+GAME_CFG=
 CHALLENGE_OPT=" --cfg-challenges "
 MPS_CFG=" --cfg-mps mps/mockup_mps.yaml "
 CHALLENGE_FILE=
 CHALLENGE_SUFFIX=
 CHALLENGE_FOLDER=
 MONGODB_CFG=" --cfg-mongodb mongodb/enable_mongodb.yaml"
-OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,difficulty:,team:" -- "$@")
+OPTS=$(getopt -o "h" -l "production:,ground-truth,navigation,exploration,grasping,difficulty:,pack-results" -- "$@")
+
+if [ -z "$LLSF_REFBOX_DIR" ]; then
+	echo "LLSF_REFBOX_DIR not set, abort"
+	exit
+fi
+
 if [ $? != 0 ]
 then
 	echo "Failed to parse parameters"
 	usage
 	exit 1
 fi
+
 eval set -- "$OPTS"
 while true; do
 	OPTION=$1
@@ -110,6 +131,16 @@ while true; do
 			CHALLENGE_FILE="nav"
 			CHALLENGE_FOLDER="challenges/nav/"
 			;;
+		--grasping)
+			if [ -n "$CHALLENGE_FILE" ]; then
+				echo "Can only use one challenge at a time!"
+				exit
+			fi
+			CHALLENGE_FILE="grasping"
+			CHALLENGE_FOLDER="challenges/grasping/"
+			GAME_CFG=" --cfg-game challenges/grasping/grasping_game.yaml "
+			CHALLENGE_SUFFIX=".yaml"
+			;;
 		--difficulty)
 			case $OPTARG in
 				easy)
@@ -130,22 +161,8 @@ while true; do
 		--ground-truth)
 			CHALLENGE_FOLDER="challenges/prod_no_gt/"
 		;;
-		--team)
-			if [ -n "$CUSTOM_CFG" ]; then
-				echo "Can only use either --team or -cfg-custom, not both!"
-				exit
-			fi
-			printf '%s\n%s\n%s\n%s\n%s\n' '%YAML 1.2' '---' \
-				'# Generated File, do not edit!' '---' \
-				"llsfrb/game/teams: [$OPTARG]" > $LLSF_REFBOX_DIR/cfg/team_generated.yaml
-			CUSTOM_CFG=" --cfg-custom team_generated.yaml "
-			;;
-		--team)
-			if [ -n "$CUSTOM_CFG" ]; then
-				echo "Can only use either --team or -cfg-custom, not both!"
-				exit
-			fi
-			CUSTOM_CFG=" --cfg-custom $OPTARG "
+		--pack-results)
+			PACK_RESULTS=1
 			;;
 		--)
 			shift
@@ -154,6 +171,9 @@ while true; do
 		esac
 		shift
 done
+
+
+
 if [ -z "$CHALLENGE_FILE" ]; then
 	echo "No challenge selected, abort"
 	usage
@@ -164,6 +184,23 @@ if [ -z "$CHALLENGE_SUFFIX" ]; then
 	usage
 	exit
 fi
+
+
+
+
+if [ -n "$PACK_RESULTS" ]; then
+		stop_run () {
+		DATE=$(date "+%d_%m_%Y-%H_%M_%S")
+	  trap - $TRAP_SIGNALS
+		LATEST_REPORT=$(mongo --quiet rcll --eval "db.game_report.find('', {'_id':1}).sort({_id:-1}).limit(1)")
+		mongodump -d rcll -c game_report -q "$LATEST_REPORT" --gzip --archive=mongo_game_report.gz
+		tar -chzf output_$DATE.tar.gz mongo_game_report.gz refbox-debug_latest.log refbox_latest.log
+		rm mongo_game_report.gz
+	}
+	TRAP_SIGNALS="SIGINT SIGTERM SIGPIPE EXIT"
+	trap stop_run $TRAP_SIGNALS
+fi
+
 $LLSF_REFBOX_DIR/bin/./llsf-refbox $CHALLENGE_OPT \
 	$CHALLENGE_FOLDER$CHALLENGE_FILE$CHALLENGE_SUFFIX \
-	$MONGODB_CFG $CUSTOM_CFG $MPS_CFG
+	$MONGODB_CFG $MPS_CFG $GAME_CFG $@

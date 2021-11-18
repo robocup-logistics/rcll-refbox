@@ -275,7 +275,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 							log_path += "/" + log_suffix;
 						}
 
-						MachineFactory mps_factory;
+						MachineFactory mps_factory(config_);
 						auto           mps = mps_factory.create_machine(
               cfg_name, mpstype, mpsip, port, log_path, connection_string);
 						mps->register_ready_callback([this, cfg_name](bool ready) {
@@ -481,12 +481,15 @@ LLSFRefBox::read_config(int argc, char **argv)
 	for (size_t i = 0; i < gen_options_str.size(); i++) {
 		generated_options[i].name    = gen_options_str[i].c_str();
 		generated_options[i].has_arg = 1;
+		generated_options[i].flag    = 0;
+		generated_options[i].val     = 0;
 	}
 	// Add custom command line options here
 	std::vector<option> static_options = {{"no-default-cfg", 0, 0, 0},
 	                                      {"cfg-custom", 1, 0, 0},
-	                                      {0, 0, 0, 0}}; // required last option
-	option              options[cfg_files_to_include.size() + static_options.size() + 1];
+	                                      {"dump-cfg", 0, 0, 0},
+	                                      {0, 0, 0, 0}}; // null terminate options
+	option              options[cfg_files_to_include.size() + static_options.size()];
 	// Prepare ArgumentParser
 	for (size_t i = 0; i < gen_options_str.size(); i++) {
 		options[i] = generated_options[i];
@@ -544,7 +547,7 @@ LLSFRefBox::read_config(int argc, char **argv)
 include:
 )delimiter";
 	}
-	config_ = std::make_unique<YamlConfiguration>(CONFDIR);
+	config_ = std::make_shared<YamlConfiguration>(CONFDIR);
 	for (const auto &std_val : cfg_files_to_include) {
 		if (dump_cfg) {
 			generated_cfg_file << " - " << std_val.second.c_str() << "\n";

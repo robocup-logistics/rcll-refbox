@@ -1,0 +1,10 @@
+%YAML 1.2
+---
+---
+# Start a fresh game per default.
+
+llsfrb:
+  game:
+    teams: [Carologistics]
+    crypto-keys:
+      Carologistics: randomkey

@@ -16,23 +16,14 @@
 )
 
 (defrule config-print-disabled-slide-counter-checks
-  (confval (path "/llsfrb/simulation/disable-base-payment-check")
-					 (is-list TRUE) (list-value $?disabled-machines))
+	(machine (name ?n) (mtype RS))
+	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?n "/connection")))
+	         (type STRING) (is-list FALSE) (value "mockup"))
+	(not (disabled-slide-printed ?n))
 	=>
-  (do-for-all-facts ((?m machine))
-      (and (eq ?m:mtype RS)
-					 (member$ (str-cat ?m:name) ?disabled-machines))
-    (printout warn "Slide counter check for "
-                   (str-cat ?m:name) " disabled, by config" crlf))
-)
-
-(defrule config-print-invalid-slide-counter-check-option
-  (confval (path "/llsfrb/simulation/disable-base-payment-check")
-					 (is-list TRUE) (list-value $? ?m $?))
-	(not (machine (name ?machine&:(eq ?machine (sym-cat ?m))) (mtype RS)))
-	=>
-  (printout warn "Disabling of slide counter check on machine " ?m " failed. "
-                 "Reason: " ?m " is not a ring station" crlf)
+  (printout warn "Slide counter check for "
+                 ?n " disabled, as it is using mockup mode" crlf)
+	(assert (disabled-slide-printed ?n))
 )
 
 ;(defrule print-confval

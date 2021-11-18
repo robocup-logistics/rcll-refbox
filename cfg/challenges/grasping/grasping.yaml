@@ -1,12 +1,13 @@
 %YAML 1.2
 ---
 ---
-# Navigation challenge with 2 machines on the field.
+# Grasping challenge, which from the refbox side consists simply of a static
+# field
 
 llsfrb:
   challenges:
-    enable: true
-    name: "Navigation_Easy"
+    enable: false
+    name: ""
     # max is 7 x 8
     field:
       width: 5
@@ -14,27 +15,22 @@ llsfrb:
       # if true this effectively doubles the field size
       mirror: false
     # Phases in which the machine positions are broadcasted
-    send-mps-ground-truth: [PRODUCTION]
+    send-mps-ground-truth: [Production]
 
     production-time: 1020
     orders:
       # if disabled, use default orders from rcll
-      customize: false
-      # each order is named O<INTEGER>
-      O1:
-        base-color: BASE_RED
-        ring-colors: [RING_BLUE, RING_YELLOW, RING_ORANGE]
-        cap-color: CAP_BLACK
+      customize: true
     publish-routes:
-      enable: true
+      enable: false
       num-points: 12
       num-routes: 1
       pause-duration: 5
 
       # orders are randomized according to the given spec
-    machines: [BS, CS1]
+    machines: [BS, CS1, RS1]
     machine-setup:
-      customize: false
+      customize: true
       rs1-colors: [RING_BLUE, RING_YELLOW]
       rs2-colors: [RING_ORANGE, RING_GREEN]
       ring-specs:

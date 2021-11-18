@@ -151,6 +151,8 @@ private: // methods
 	CLIPS::Values clips_bson_get_time(void *bson, std::string field_name);
 #endif
 
+	void clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields);
+
 	void clips_mps_move_conveyor(std::string machine,
 	                             std::string goal_position,
 	                             std::string conveyor_direction = "FORWARD");
@@ -204,7 +206,7 @@ private: // methods
 #endif
 
 private: // members
-	std::unique_ptr<Configuration>                          config_;
+	std::shared_ptr<Configuration>                          config_;
 	std::unique_ptr<MultiLogger>                            logger_;
 	std::unique_ptr<MultiLogger>                            clips_logger_;
 	Logger::LogLevel                                        log_level_;

@@ -364,9 +364,8 @@
 		 (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
 	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
-	(confval (path "/llsfrb/simulation/disable-base-payment-check")
-				(type STRING) (is-list TRUE)
-				(list-value $?disabled&:(not (member$ (str-cat ?n) ?disabled))))
+	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?n "/connection")))
+	         (type STRING) (is-list FALSE) (value ~"mockup"))
   =>
   (modify ?m (state BROKEN)
 	  (broken-reason (str-cat ?n ": insufficient bases ("
@@ -385,9 +384,8 @@
   (ring-spec (color ?ring-color)
 	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
   (not (mps-status-feedback ?n SLIDE-COUNTER ?))
-	(confval (path "/llsfrb/simulation/disable-base-payment-check")
-			(type STRING) (is-list TRUE)
-			(list-value $?disabled&:(member$ (str-cat ?n) ?disabled)))
+	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?n "/connection")))
+	         (type STRING) (is-list FALSE) (value "mockup"))
 	(not (mps-add-base-on-slide ?n))
   =>
   (printout warn "Simulating "(str-cat ?n) " base payment feedback. "

@@ -29,7 +29,7 @@ namespace mps_comm {
 class MockupDeliveryStation : public virtual MockupMachine, public virtual DeliveryStation
 {
 public:
-	MockupDeliveryStation(const std::string &name);
+	MockupDeliveryStation(const std::string &name, float exec_speed);
 	void deliver_product(int slot) override;
 	void identify() override{};
 };
