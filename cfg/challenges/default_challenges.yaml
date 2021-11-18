@@ -23,10 +23,10 @@ llsfrb:
       # each order is named O<INTEGER>
       O1:
         base-color: BASE_RED
-        ring-colors: [RING_BLUE, RING_YELLOW, RING_ORANGE]
-        cap-color: CAP_BLACK
+        ring-colors: [RING_GREEN, RING_YELLOW, RING_ORANGE]
+        cap-color: CAP_GREY
     publish-routes:
-      enable: true
+      enable: false
       num-points: 12
       num-routes: 1
       pause-duration: 5
