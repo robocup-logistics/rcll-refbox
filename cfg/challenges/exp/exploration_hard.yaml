@@ -19,12 +19,7 @@ llsfrb:
     production-time: 1020
     orders:
       # if disabled, use default orders from rcll
-      customize: false
-      # each order is named O<INTEGER>
-      O1:
-        base-color: BASE_RED
-        ring-colors: [RING_BLUE, RING_YELLOW, RING_ORANGE]
-        cap-color: CAP_BLACK
+      customize: true
     publish-routes:
       enable: false
       num-points: 12
