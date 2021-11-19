@@ -104,12 +104,6 @@
   ?*SETUP-LIGHT-SPEEDUP-TIME-1* = 240
   ?*SETUP-LIGHT-SPEEDUP-TIME-2* = 270
   ?*SETUP-LIGHT-MACHINES* = (create$ BS DS SS RS1 RS2 CS1 CS2)
-  ; Technical challenge settings
-  ?*TECHCHALL-WAM-MACHINES* = (create$ M1 M2 M3 M4 M5 M6 M7 M8 M9 M10)
-  ; maximum X or Y distance from signal to accept target reached
-  ?*TECHCHALL-WAM-BOX-SIZE* = (create$ 0.65 0.65)
-  ?*TECHCHALL-WAM-TIME* = 300
-  ?*TECHCHALL-NAVIGATION-TIME* = 60
   ; number of allowed robot maintenance cycles
   ?*MAINTENANCE-ALLOWED-CYCLES* = 2
   ?*MAINTENANCE-COST*           = (create$ 0 5)

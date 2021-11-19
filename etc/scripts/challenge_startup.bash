@@ -111,7 +111,7 @@ while true; do
 					;;
 			esac
 			if [ -z "$CHALLENGE_FOLDER" ]; then
-				CHALLENGE_FOLDER="challenges/prod/"
+				CHALLENGE_FOLDER="challenges/prod_no_gt/"
 			fi
 			CHALLENGE_SUFFIX=".yaml"
 			;;
@@ -159,7 +159,7 @@ while true; do
 			esac
 			;;
 		--ground-truth)
-			CHALLENGE_FOLDER="challenges/prod_no_gt/"
+			CHALLENGE_FOLDER="challenges/prod/"
 		;;
 		--pack-results)
 			PACK_RESULTS=1

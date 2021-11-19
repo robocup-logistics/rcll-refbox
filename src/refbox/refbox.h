@@ -179,6 +179,8 @@ private: // methods
 	void clips_mps_reset_base_counter(std::string machine);
 	void clips_mps_deliver(std::string machine);
 
+	std::string clips_value_to_string(const CLIPS::Value &v);
+
 	void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
 	                              uint16_t                                      component_id,
 	                              uint16_t                                      msg_type,

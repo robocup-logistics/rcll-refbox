@@ -19,12 +19,7 @@ llsfrb:
     production-time: 1020
     orders:
       # if disabled, use default orders from rcll
-      customize: false
-      # each order is named O<INTEGER>
-      O1:
-        base-color: BASE_RED
-        ring-colors: [RING_BLUE, RING_YELLOW, RING_ORANGE]
-        cap-color: CAP_BLACK
+      customize: true
     publish-routes:
       enable: true
       num-points: 12
@@ -32,7 +27,7 @@ llsfrb:
       pause-duration: 5
 
       # orders are randomized according to the given spec
-    machines: [BS, CS1, RS1, CS2]
+    machines: [BS, CS1, RS1, RS2]
     machine-setup:
       customize: false
       rs1-colors: [RING_BLUE, RING_YELLOW]

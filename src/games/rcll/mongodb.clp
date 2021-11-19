@@ -8,6 +8,7 @@
 ;             2020  Tarik Viehmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
+
 (defglobal
 	; Mongodb Game Report Version,
 	; 1.1 -> includes config
@@ -432,6 +433,10 @@
 	(modify ?f1 (points 0 0) (end 0 0))
 )
 
+(deftemplate mongodb-phase-change
+	(multislot registered-phases (type SYMBOL) (default (create$)))
+)
+
 
 (defrule mongodb-game-report-begin
 	(declare (salience ?*PRIORITY_HIGH*))
@@ -466,6 +471,7 @@
 	)
 	(bson-array-finish ?doc "machines" ?m-arr)
 	(mongodb-write-game-report ?doc ?stime ?report-name)
+	(assert (mongodb-phase-change))
 )
 
 (defrule mongodb-game-report-end
@@ -478,6 +484,21 @@
 	(modify ?gr (end ?etime))
 	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
 )
+
+(defrule mongodb-game-report-new-phase-update
+	(declare (salience ?*PRIORITY_HIGH*))
+	(time $?now)
+	(gamestate (phase ?p) (state RUNNING)
+	     (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (start-time $?stime) (end-time $?etime))
+	?pc <- (mongodb-phase-change (registered-phases $?phases&:(not (member$ ?p ?phases))))
+	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
+	=>
+	(modify ?pc (registered-phases (append$ ?phases ?p)))
+	(modify ?gr (last-updated $?now))
+	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
+)
+
 
 (defrule mongodb-game-report-update
 	(declare (salience ?*PRIORITY_HIGH*))
@@ -664,5 +685,52 @@
 	 else
 		(printout error "Loading machines from database failed, fallback to random generation." crlf)
 		(modify ?gp (machine-positions RANDOM))
+	)
+)
+
+(defrule mongodb-print-machine-history
+	(declare (salience ?*PRIORITY_HIGH*))
+	(finalize)
+	=>
+	; machine history
+	(foreach ?curr-mps (deftemplate-slot-allowed-values machine name)
+		(print-sep (str-cat ?curr-mps " states"))
+		(bind ?history (find-all-facts ((?h mongodb-machine-history)) (eq ?h:name ?curr-mps)))
+		(bind ?history (sort history> ?history))
+		(print-fact-list (fact-indices ?history) (create$ game-time time name state))
+	)
+)
+
+(defrule mongodb-print-gamestates-from-mongodb-report
+	(declare (salience (- ?*PRIORITY_HIGH* 1)))
+	(finalize)
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	(mongodb-phase-change (registered-phases $?phases))
+	=>
+	(print-sep "Phase times")
+	; backup current game state
+	(bind ?old-gs-str (create$))
+	(delayed-do-for-all-facts ((?gs gamestate)) TRUE
+		(bind ?old-gs-str (append$ ?old-gs-str (fact-to-string ?gs)))
+		(retract ?gs)
+	)
+	; assert a gamestate for each phase and then load the corresponding values
+	; into it
+	(foreach ?phase ?phases
+		(assert (gamestate (phase ?phase)))
+		(mongodb-load-fact-from-game-report ?report-name
+	                                         (sym-cat "gamestate/" ?phase)
+	                                         gamestate
+	                                         (create$ phase))
+	)
+	(bind ?all-gs (find-all-facts ((?gs gamestate)) TRUE))
+	(print-fact-list (fact-indices ?all-gs)
+	                 (create$ phase prev-phase game-time cont-time points))
+	; delete all the gamestates created above and restore the old ones
+	(delayed-do-for-all-facts ((?gs gamestate)) TRUE
+		(retract ?gs)
+	)
+	(foreach ?old-gs ?old-gs-str
+		(str-assert ?old-gs)
 	)
 )

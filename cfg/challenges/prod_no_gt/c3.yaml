@@ -24,7 +24,7 @@ llsfrb:
       # each order is named O<INTEGER>
       O1:
         base-color: BASE_RED
-        ring-colors: [RING_YELLOW, RING_BLUE, RING_ORANGE]
+        ring-colors: [RING_GREEN, RING_BLUE, RING_ORANGE]
         cap-color: CAP_GREY
     publish-routes:
       enable: false

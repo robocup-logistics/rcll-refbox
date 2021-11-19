@@ -21,7 +21,6 @@ echo "Loads dumped game reports from an archive"
 echo "------------------------------------------------------------------------"
 echo ""
 
-CONFIG=${LLSF_REFBOX_DIR}/cfg/config.yaml
 if [ -z "$1" ]
   then
     echo "expected 1 argument"

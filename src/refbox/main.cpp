@@ -42,29 +42,17 @@
 #	include <mongocxx/instance.hpp>
 #endif
 
-#include <termios.h>
-
 using namespace llsfrb;
 
 int
 main(int argc, char **argv)
 {
-	// Disable annoying display of ^C on Ctrl-C
-	struct termios term;
-	tcgetattr(0, &term);
-	term.c_lflag &= ~ECHO;
-	tcsetattr(0, TCSANOW, &term);
-
 	CLIPS::init();
 #ifdef HAVE_MONGODB
 	mongocxx::instance mongodb_instance{};
 #endif
 	LLSFRefBox llsfrb(argc, argv);
 	int        rv = llsfrb.run();
-
-	// restore terminal
-	term.c_lflag |= ECHO;
-	tcsetattr(0, TCSANOW, &term);
 
 	return rv;
 }

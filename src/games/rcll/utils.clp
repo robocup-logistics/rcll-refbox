@@ -6,6 +6,9 @@
 ;  Copyright  2012  Tim Niemueller [www.niemueller.de]
 ;  Licensed under GPLv2+ license, cf. LICENSE file
 ;---------------------------------------------------------------------------
+(defglobal
+	?*LINE-WIDTH* = 80
+)
 
 (deffunction debug (?level)
   (return (<= ?level ?*DEBUG*))
@@ -372,4 +375,27 @@
 	(foreach ?f ?filled-positions
 		(printout t " - " (fact-slot-value ?f position) " stores " (fact-slot-value ?f description) crlf)
 	)
+)
+
+(deffunction print-sep (?header)
+" Prints a dashed line with centered header of constant width "
+	(bind ?length (str-length ?header))
+	(bind ?pre-padding-length (/ (- ?*LINE-WIDTH* ?length) 2))
+	(bind ?post-padding-length (- ?*LINE-WIDTH* (+ ?length ?pre-padding-length)))
+	(bind ?pre-padding "")
+	(loop-for-count ?pre-padding-length
+		(bind ?pre-padding (str-cat ?pre-padding "-"))
+	)
+	(bind ?post-padding "")
+	(loop-for-count ?post-padding-length
+		(bind ?post-padding (str-cat ?post-padding "-"))
+	)
+	(printout t crlf ?pre-padding ?header ?post-padding crlf crlf)
+)
+
+(deffunction fact-indices (?fact-addresses)
+" Returns fact indices to a given list of fact addresses."
+	(bind ?indices (create$))
+	(progn$ (?m-f ?fact-addresses) (bind ?indices (append$ ?indices (fact-index ?m-f))))
+	(return ?indices)
 )
