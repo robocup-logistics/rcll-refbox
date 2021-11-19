@@ -42,8 +42,6 @@
 #	include <mongocxx/instance.hpp>
 #endif
 
-#include <termios.h>
-
 using namespace llsfrb;
 
 int
@@ -55,7 +53,6 @@ main(int argc, char **argv)
 #endif
 	LLSFRefBox llsfrb(argc, argv);
 	int        rv = llsfrb.run();
-
 
 	return rv;
 }
