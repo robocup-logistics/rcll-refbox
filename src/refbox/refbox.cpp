@@ -202,6 +202,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		}
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
+	std::stringstream refbox_call;
+	for (int i = 0; i < argc; ++i)
+		refbox_call << " " << argv[i];
+	logger_->log_info("RefBox", "%s", refbox_call.str().c_str());
 	logger_->log_info("RefBox",
 	                  "Using %s machine assignment",
 	                  (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
