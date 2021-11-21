@@ -6,7 +6,7 @@
 
 llsfrb:
   challenges:
-    enable: false
+    enable: true
     name: ""
     # max is 7 x 8
     field:
