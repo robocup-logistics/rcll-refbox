@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# challenge_startup.bash start and configure the refbox to play challenges
+# rcll_challenge_startup.bash start and configure the refbox to play challenges
 #
 # Copyright (C) 2021 Tarik Viehmann <viehmann@kbsg.rwth-aachen.de>
 #
