@@ -39,7 +39,7 @@ COPY . /buildenv/
 SHELL ["/usr/bin/bash", "-c"]
 WORKDIR /buildenv
 RUN make -j`nproc` -l`nproc` USE_AVAHI=0 FAIL_ON_WARNING=1 \
-    EXEC_CONFDIR=/etc/rcll-refbox/cfg/ EXEC_BINDIR=/usr/local/bin EXEC_LIBDIR=/usr/local/lib64 \
+    EXEC_CONFDIR=/etc/rcll-refbox/ EXEC_BINDIR=/usr/local/bin EXEC_LIBDIR=/usr/local/lib64 \
     EXEC_SHAREDIR=/usr/local/share/rcll-refbox
 # Compute the dependencies and store them in requires.txt
 RUN shopt -s globstar; \
@@ -52,7 +52,7 @@ COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
 COPY --from=buildenv /buildenv/src/msgs/*.proto /usr/local/share/rcll-refbox/msgs/
 COPY --from=buildenv /buildenv/src/libs/websocket/message_schemas/*.json /usr/local/share/rcll-refbox/libs/websocket/message_schemas/
-COPY --from=buildenv /buildenv/cfg/. /etc/rcll-refbox/cfg/
+COPY --from=buildenv /buildenv/cfg /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
