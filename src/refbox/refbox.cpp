@@ -90,6 +90,8 @@ namespace stdfs = std::experimental::filesystem;
 namespace stdfs = std::filesystem;
 #endif
 
+namespace ph = boost::placeholders;
+
 #include <memory>
 #include <unordered_map>
 #if BOOST_ASIO_VERSION < 100601
@@ -359,15 +361,16 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		setup_clips_mongodb();
 
 		pb_comm_->server()->signal_received().connect(
-		  boost::bind(&LLSFRefBox::handle_server_client_msg, this, _1, _2, _3, _4));
+		  boost::bind(&LLSFRefBox::handle_server_client_msg, this, ph::_1, ph::_2, ph::_3, ph::_4));
 		pb_comm_->server()->signal_receive_failed().connect(
-		  boost::bind(&LLSFRefBox::handle_server_client_fail, this, _1, _2, _3, _4));
+		  boost::bind(&LLSFRefBox::handle_server_client_fail, this, ph::_1, ph::_2, ph::_3, ph::_4));
 
 		pb_comm_->signal_server_sent().connect(
-		  boost::bind(&LLSFRefBox::handle_server_sent_msg, this, _1, _2));
+		  boost::bind(&LLSFRefBox::handle_server_sent_msg, this, ph::_1, ph::_2));
 		pb_comm_->signal_client_sent().connect(
-		  boost::bind(&LLSFRefBox::handle_client_sent_msg, this, _1, _2, _3));
-		pb_comm_->signal_peer_sent().connect(boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, _2));
+		  boost::bind(&LLSFRefBox::handle_client_sent_msg, this, ph::_1, ph::_2, ph::_3));
+		pb_comm_->signal_peer_sent().connect(
+		  boost::bind(&LLSFRefBox::handle_peer_sent_msg, this, ph::_2));
 	}
 #endif
 
@@ -379,7 +382,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		const std::map<long int, protobuf_comm::ProtobufBroadcastPeer *> &peers = pb_comm_->peers();
 		for (auto p : peers) {
 			p.second->signal_received().connect(
-			  boost::bind(&LLSFRefBox::handle_peer_msg, this, _1, _2, _3, _4));
+			  boost::bind(&LLSFRefBox::handle_peer_msg, this, ph::_1, ph::_2, ph::_3, ph::_4));
 		}
 	}
 #endif
