@@ -351,7 +351,10 @@ class DataExtractor:
 
   def create_boxplots(self, show_tables):
     for d in Data:
-      fig1, (ax, tabax) = plt.subplots(nrows=2)
+      if show_tables:
+        fig1, (ax, tabax) = plt.subplots(nrows=2)
+      else:
+        fig1, ax = plt.subplots()
       ax = self.box_plot_axis(ax, d)
       if not ax:
         return
