@@ -68,7 +68,6 @@ class DataExtractor:
       query = {"$or": []}
       for report in reports:
         query["$or"].append({"report-name": report})
-    print(query)
     all_reports = self.collection.find(query)
     games_per_team = dict()
     game_counter_per_team = dict()
@@ -198,10 +197,8 @@ class DataExtractor:
             proc["duration"] = game_length - start_entry["game-time"]
             proc["picked_up"] = False
             self.raw_data[Data.MPS_OUTPUT_READY].append(flatten(proc))
-    print("Games per team cyan")
-    print(games_per_team)
-    print("Games counted per team cyan")
-    print(game_counter_per_team)
+    print("Reports per team:", games_per_team)
+    print("Games counted per team:", game_counter_per_team)
     self.structured_data = dict()
     for d in Data:
       self.structured_data[d] = self.structure_data(d)[0]
