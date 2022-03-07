@@ -490,6 +490,9 @@ class DataExtractor:
     return structured_data, key_vals, split_vals
 
   def bar_diagram(self, data, x_label, y_label, file_name):
+    if not self.cross_game_data[data]:
+      print("No data for ", data, " found, skipping bar diagram")
+      return None
     key_vals = sorted(list(self.structured_data[data].keys()))
     split_vals = sorted(self.structured_data[data][key_vals[0]].keys())
 
