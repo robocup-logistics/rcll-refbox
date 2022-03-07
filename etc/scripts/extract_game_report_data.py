@@ -71,6 +71,7 @@ class DataExtractor:
     all_reports = self.collection.find(query)
     games_per_team = dict()
     game_counter_per_team = dict()
+    game_length = None
     for x in all_reports:
       if "gamestate/POST_GAME" in x:
         game_length = x["gamestate/POST_GAME"]["game-time"]
