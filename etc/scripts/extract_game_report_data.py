@@ -254,6 +254,9 @@ class DataExtractor:
       return "default x label", "default y label", "default name"
 
   def box_plot_axis(self, ax, d):
+    if not self.cross_game_data[d]:
+      print("No data for ", d, " found, skipping boxplot")
+      return None
     key_vals = sorted(list(self.cross_game_data[d].keys()))
     split_vals = sorted(self.cross_game_data[d][key_vals[0]].keys())
 
@@ -350,6 +353,8 @@ class DataExtractor:
     for d in Data:
       fig1, (ax, tabax) = plt.subplots(nrows=2)
       ax = self.box_plot_axis(ax, d)
+      if not ax:
+        return
       if show_tables:
         tabax = self.table_axis(tabax, d)
       plt.tight_layout()
