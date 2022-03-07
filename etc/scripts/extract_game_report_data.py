@@ -86,6 +86,8 @@ class DataExtractor:
         if skip_short:
           continue
       elif not game_length:
+        if skip_short:
+          continue
         game_length = desired_game_length
         print(
             "Warning, unexpected gamestate times in game report {}, default to {}, report {} (_id {})".format(
