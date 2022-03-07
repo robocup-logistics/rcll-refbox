@@ -48,9 +48,12 @@ class DataExtractor:
   def __init__(
           self,
           mongodb_uri,
-          database='rcll',
-          collection='game_report',
-          reports=[]):
+          database="rcll",
+          collection="game_report",
+          reports=[],
+          desired_game_length=1020,
+          skip_short=False,
+          ):
     self.client = pymongo.MongoClient(mongodb_uri)
     self.database = database
     self.collection = self.client[database][collection]
@@ -73,19 +76,35 @@ class DataExtractor:
             game_length=x["gamestate/POST_GAME"]["game-time"]
         elif("gamestate/PRODUCTION" in x):
             game_length=x["gamestate/PRODUCTION"]["game-time"]
-        else:
-            game_length=1020
-            print("Warning, unexpected gamestate times in game report" + x["report-name"] + ", defaulting game length to 1020")
-        if not x["teams"][0] in game_counter_per_team:
-            game_counter_per_team[x["teams"][0]]=1
-        else:
-            game_counter_per_team[x["teams"][0]]+=1
-        if not x["teams"][0] in games_per_team:
-                games_per_team[x["teams"][0]] = dict()
-        if not x["report-name"] in  games_per_team[x["teams"][0]]:
-            games_per_team[x["teams"][0]][x["report-name"]]=1
-        else:
-            games_per_team[x["teams"][0]][x["report-name"]]+=1
+        if game_length and game_length < desired_game_length:
+          print(
+              "Warning, game length is too short ({} < {}), report {} (_id {})".format(
+                  game_length, desired_game_length, x["report-name"], x["_id"]
+              )
+          )
+          if skip_short:
+            continue
+        elif not game_length:
+          game_length = desired_game_length
+          print(
+              "Warning, unexpected gamestate times in game report {}, default to {}, report {} (_id {})".format(
+                  x["report-name"],
+                  desired_game_length,
+                  x["report-name"],
+                  x["_id"],
+              ))
+        for team in x["teams"]:
+          if team != "":
+            if not x["teams"][0] in game_counter_per_team:
+              game_counter_per_team[team] = 1
+            else:
+              game_counter_per_team[team] += 1
+            if team not in games_per_team:
+              games_per_team[team] = dict()
+            if not x["report-name"] in games_per_team[team]:
+              games_per_team[team][x["report-name"]] = 1
+            else:
+              games_per_team[team][x["report-name"]] += 1
         game = {}
         game["_id"] = x["_id"]
         game["report-name"] = x["report-name"]
@@ -505,30 +524,49 @@ def main():
       help='report names of games that should be evaluated',
       default=[])
   parser.add_argument(
-      '--export-csv',
-      default=False,
-      action='store_true',
-      help=textwrap.dedent('''export the raw data to csv'''))
+      "--game-length",
+      type=int,
+      help="Desired length of each game.",
+      default=1020)
   parser.add_argument(
-      '--boxplot-tables',
+      "--skip-short",
+      help="Skip reports with a shorter PRODUCTION phase than the game length.",
       default=False,
-      action='store_true',
-      help=textwrap.dedent('''mongodb database name'''))
+      action="store_true",
+  )
   parser.add_argument(
-      '--accumulated-bar-diagrams',
+      "--export-csv",
       default=False,
-      action='store_true',
-      help=textwrap.dedent('''generate graphs showing the total data'''))
+      action="store_true",
+      help=textwrap.dedent("""export the raw data to csv"""),
+  )
   parser.add_argument(
-      '--boxplots',
+      "--boxplot-tables",
       default=False,
-      action='store_true',
-      help=textwrap.dedent('''generate boxplots about the data accross games'''))
-  args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-  extractor=DataExtractor(args.mongodb_uri,
-          database=args.database,
-          collection=args.collection,
-          reports=args.report_names)
+      action="store_true",
+      help=textwrap.dedent("""mongodb database name"""),
+  )
+  parser.add_argument(
+      "--accumulated-bar-diagrams",
+      default=False,
+      action="store_true",
+      help=textwrap.dedent("""generate graphs showing the total data"""),
+  )
+  parser.add_argument(
+      "--boxplots",
+      default=False,
+      action="store_true",
+      help=textwrap.dedent("""generate boxplots about the data accross games"""),
+  )
+  args = parser.parse_args(args=None if sys.argv[1:] else ["--help"])
+  extractor = DataExtractor(
+      args.mongodb_uri,
+      database=args.database,
+      collection=args.collection,
+      reports=args.report_names,
+      desired_game_length=args.game_length,
+      skip_short=args.skip_short,
+  )
   extractor.cross_game_evaluate()
   if args.export_csv:
       extractor.export_raw_data()
