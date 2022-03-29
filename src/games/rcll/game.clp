@@ -335,7 +335,7 @@
 (defrule game-start-training
   ?gs <- (gamestate (teams "" "") (phase PRE_GAME) (state RUNNING))
   =>
-  (modify ?gs (phase EXPLORATION) (prev-phase PRE_GAME) (game-time 0.0) (start-time (now)))
+  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (game-time 0.0) (start-time (now)))
   (assert (attention-message (text "Starting  *** TRAINING ***  game")))
 )
 
@@ -366,7 +366,7 @@
   ?gs <- (gamestate (phase SETUP) (state RUNNING)
 		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
   =>
-  (modify ?gs (phase EXPLORATION) (prev-phase SETUP) (game-time 0.0))
+  (modify ?gs (phase PRODUCTION) (prev-phase SETUP) (game-time 0.0))
   (assert (attention-message (text "Switching to exploration phase")))
 )
 
