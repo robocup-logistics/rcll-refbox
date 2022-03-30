@@ -196,7 +196,7 @@
 		(retract ?exp)
 	)
 	(do-for-all-facts ((?m machine))
-		(assert (exploration-report (name ?n) (rtype RECORD) (zone ?zone)
+		(assert (exploration-report (name ?m:name) (rtype RECORD) (zone ?zone)
 		                            (rotation ?rotation) (correctly-reported TRUE)))
 	)
 )
