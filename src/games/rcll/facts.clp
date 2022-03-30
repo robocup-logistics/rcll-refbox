@@ -479,5 +479,9 @@
   (order (id  8))
   (order (id  9))
   (order (id  10))
+  (order (id  11) (start-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
+                  (activation-range 0 0) (competitive TRUE)
+                  (duration-range ?*PRODUCTION-OVERTIME* ?*PRODUCTION-OVERTIME*)
+                  (complexity C0) (allow-overtime TRUE))
 )
 

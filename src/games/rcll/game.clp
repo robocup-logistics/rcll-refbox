@@ -60,7 +60,8 @@
   (bind ?activate-at-center 180)
   (bind ?complexities (randomize$ ?complexities))
   ; Set start activation and duration ranges
-  (delayed-do-for-all-facts ((?order order)) (is-standing-order ?order:id)
+  (delayed-do-for-all-facts ((?order order))
+    (and (not (is-standing-order ?order:id)) (not ?order:allow-overtime))
     (bind ?complexity (nth$ 1 ?complexities))
     (bind ?complexities (rest$ ?complexities))
     (switch ?complexity
@@ -123,7 +124,8 @@
       (bind ?deliver-start (+ ?deliver-start ?shift-time))
       (bind ?deliver-end   (+ ?deliver-end ?shift-time))
     )
-    (if (> ?activate-at ?*ORDER-ACTIVATE-LATEST-TIME*) then
+    (if (and (> ?activate-at ?*ORDER-ACTIVATE-LATEST-TIME*)
+             (not ?order:allow-overtime)) then
       (bind ?shift-time (- ?activate-at ?*ORDER-ACTIVATE-LATEST-TIME*))
       (bind ?activate-at   (- ?activate-at ?shift-time))
       (bind ?deliver-start (- ?deliver-start ?shift-time))
