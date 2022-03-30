@@ -156,7 +156,7 @@
 
 (defrule exploration-send-MachineReportInfo
 	(time $?now)
-	(gamestate (phase EXPLORATION|PRODUCTION) (game-time ?game-time&:(< ?game-time ?*EXPLORATION-TIME)))
+	(gamestate (phase EXPLORATION|PRODUCTION) (game-time ?game-time&:(< ?game-time ?*EXPLORATION-TIME*)))
 	?sf <- (signal (type machine-report-info)
 	       (time $?t&:(timeout ?now ?t ?*BC-MACHINE-REPORT-INFO-PERIOD*)) (seq ?seq))
 	(network-peer (group CYAN) (id ?peer-id-cyan))
@@ -190,7 +190,7 @@
 (defrule exploration-set-ground-truth
 	(machine (name ?n) (team ?team) (rotation ?rotation) (zone ?zone))
 	(not (exploration-report (name ?n) (rtype RECORD) (correctly-reported TRUE)))
-	(gamestate (phase PRODUCTION) (game-time ?game-time&:(>= ?game-time ?*EXPLORATION-TIME)))
+	(gamestate (phase PRODUCTION) (game-time ?game-time&:(>= ?game-time ?*EXPLORATION-TIME*)))
 	=>
 	(do-for-all-facts ((?exp exploration-report))
 		(retract ?exp)
