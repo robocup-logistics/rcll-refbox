@@ -113,7 +113,7 @@
   ; Game phase time; seconds
   ?*SETUP-TIME*           = 300
   ?*EXPLORATION-TIME*     = 180
-  ?*PRODUCTION-TIME*      = 1020
+  ?*PRODUCTION-TIME*      = 1200
   ?*PRODUCTION-OVERTIME*  = 300
   ?*PRODUCTION-PREPARE-TIMEOUT*  = 5
   ; Machine distribution
