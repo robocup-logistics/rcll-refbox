@@ -128,12 +128,13 @@
 	?er <- (exploration-report (rtype RECORD) (name ?name)
 	                           (zone-state CORRECT_REPORT) (rotation -1))
 	(machine (name ?name) (team ?team) (rotation ?rotation))
+	(gamestate (phase ?phase))
 	=>
   (modify ?er (rotation ?rotation) (rotation-state CORRECT_REPORT))
 	(printout t "Correct partial report: " ?name " (rotation " ?rotation "). "
 	            "Awarding " ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS*)
-	                (phase EXPLORATION) (team ?team) (game-time ?game-time)
+	                (phase ?phase) (team ?team) (game-time ?game-time)
 	                (reason (str-cat "Correct partial exploration report for "
 	                                 ?name ": rotation = " ?rotation))))
 )
@@ -146,12 +147,13 @@
 	?er <- (exploration-report (rtype RECORD) (name ?name)
 	                           (zone-state CORRECT_REPORT) (rotation -1))
 	?mf <- (machine (name ?name) (team ?team) (rotation ?erotation&~?rotation))
+	(gamestate (phase ?phase))
 	=>
 	(modify ?er (rotation ?rotation) (rotation-state WRONG_REPORT))
 	(printout t "Wrong partial report: " ?name " (rotation " ?rotation "). "
 	          "Awarding " ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS*)
-	                (phase EXPLORATION) (team ?team) (game-time ?game-time)
+	                (phase ?phase) (team ?team) (game-time ?game-time)
 	                (reason (str-cat "Wrong partial exploration report for "
 	                        ?name ": rotation = " ?rotation " (should be " ?erotation ")"))))
 )
@@ -197,12 +199,13 @@
 	                    (team ?team) (host ?from-host) (port ?from-port))
 	?er <- (exploration-report (rtype RECORD) (name ?name) (zone NOT-REPORTED))
 	?mf <- (machine (name ?name) (team ?team) (zone ?zone))
+	(gamestate (phase ?phase))
 	=>
 	(modify ?er (zone ?zone) (zone-state CORRECT_REPORT))
 	(printout t "Correct partial report: " ?name " (zone " ?zone "). "
 	          "Awarding " ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS* " points." crlf)
 	(assert (points (points ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS*)
-	                (phase EXPLORATION) (team ?team) (game-time ?game-time)
+	                (phase ?phase) (team ?team) (game-time ?game-time)
 	                (reason (str-cat "Correct partial exploration report for "
 	                        ?name ": zone = " ?zone))))
 )
@@ -213,12 +216,13 @@
 	                    (team ?team) (host ?from-host) (port ?from-port))
 	?er <- (exploration-report (rtype RECORD) (name ?name) (zone NOT-REPORTED))
 	?mf <- (machine (name ?name) (team ?team) (zone ?mzone&~?zone))
+	(gamestate (phase ?phase))
 	=>
 	(modify ?er (zone ?zone) (zone-state WRONG_REPORT))
 	(printout t "Wrong partial report: " ?name " (zone " ?zone "). "
 	          "Awarding " ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS*)
-	                (phase EXPLORATION) (team ?team) (game-time ?game-time)
+	                (phase ?phase) (team ?team) (game-time ?game-time)
 	                (reason (str-cat "Wrong partial exploration report for "
 	                        ?name ": zone = " ?zone " (should be " ?mzone ")"))))
 )
