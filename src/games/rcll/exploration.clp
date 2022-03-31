@@ -8,6 +8,41 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deffunction type-can-be-reported (?type ?team)
+	(bind ?num-reported-types (length$ (find-all-facts ((?exp exploration-report))
+		(and (eq ?exp:team ?team)
+		     (eq ?exp:type ?type) (eq ?exp:rtype RECORD)
+		)
+	)))
+	(bind ?num-machines-of-type (length$ (find-all-facts ((?m machine)) (and (eq ?m:mtype ?type) (eq ?m:team ?team)))))
+	(return (< ?num-reported-types ?num-machines-of-type))
+)
+
+(deffunction machine-can-be-reported (?type ?team)
+	(bind ?num-reported-types (length$ (find-all-facts ((?exp exploration-report))
+		(or (and (eq ?exp:team ?team)
+		         (eq ?exp:type ?type)
+		         (eq ?exp:rtype RECORD)
+		         (eq ?exp:type-state WRONG_REPORT))
+		    (and (str-index (str-cat ?type) (str-cat ?exp:name))
+		         (eq ?exp:team ?team)
+		         (eq ?exp:rtype RECORD))
+		)
+	)))
+	(bind ?num-machines-of-type (length$ (find-all-facts ((?m machine)) (and (eq ?m:mtype ?type) (eq ?m:team ?team)))))
+	(return (< ?num-reported-types ?num-machines-of-type))
+)
+
+(deffunction net-create-MachineTypeFeedback (?type ?zone ?name ?team_color)
+	(bind ?m (pb-create "llsf_msgs.MachineTypeFeedback"))
+	(pb-set-field ?m "type" ?type)
+	(pb-set-field ?m "zone" ?zone)
+	(if ?name then
+		(pb-set-field ?m "name" ?name)
+		(pb-set-field ?m "team_color" ?team_color)
+	)
+	(return ?m)
+)
 
 (defrule exploration-report-incoming
 	(gamestate (phase EXPLORATION|PRODUCTION) (game-time ?game-time))
@@ -26,12 +61,13 @@
 		(return)
 	)
 	(foreach ?m (pb-field-list ?p "machines")
-		(bind ?name (sym-cat (pb-field-value ?m "name")))
+		(bind ?name (if (pb-has-field ?m "name") then (sym-cat (pb-field-value ?m "name")) else UNKNOWN))
+		(bind ?type (if (pb-has-field ?m "type") then (sym-cat (pb-field-value ?m "type")) else UNKNOWN))
 		(bind ?zone (if (pb-has-field ?m "zone") then (sym-cat (pb-field-value ?m "zone")) else NOT-REPORTED))
 		(bind ?rotation (if (pb-has-field ?m "rotation") then (pb-field-value ?m "rotation") else -1))
 		(assert (exploration-report (rtype INCOMING)
 		                            (name ?name) (zone ?zone) (rotation ?rotation)
-		                            (game-time ?game-time)
+		                            (game-time ?game-time) (type ?type)
 		                            (team ?team) (host ?from-host) (port ?from-port)))
 		(pb-destroy ?m)
 	)
@@ -44,16 +80,44 @@
 	(retract ?ei)
 )
 
-(defrule exploration-report-new
-	(exploration-report (rtype INCOMING) (name ?name) (zone ?zone) (rotation ?rotation)
-	                    (game-time ?game-time)
-	                    (team ?team) (host ?from-host) (port ?from-port))
+(defrule exploration-report-new-machine
+	?exp <- (exploration-report (rtype INCOMING) (name ?name&~UNKNOWN)
+	                            (zone ?zone) (rotation ?rotation)
+	                            (game-time ?game-time)
+	                            (team ?team) (host ?from-host) (port ?from-port))
+	(machine (name ?name) (mtype ?type))
 	(not (exploration-report (rtype RECORD) (name ?name)))
 	=>
-	(assert (exploration-report (rtype RECORD)
-	                            (name ?name) (zone NOT-REPORTED) (rotation -1)
-	                            (game-time ?game-time)
-	                            (team ?team) (host ?from-host) (port ?from-port)))
+	(if (machine-can-be-reported ?type ?team)
+		then
+			(assert (exploration-report (rtype RECORD)
+			                            (name ?name) (zone NOT-REPORTED) (rotation -1)
+			                            (game-time ?game-time)
+			                            (team ?team) (host ?from-host) (port ?from-port)))
+	 else
+			(printout t "Team " ?team " reported too many machines of type " ?type
+			            " already, ignoring further reports of this type" crlf)
+			(retract ?exp)
+	)
+)
+
+(defrule exploration-report-new-type
+	?exp <- (exploration-report (rtype INCOMING) (name UNKNOWN) (zone ?zone&~NOT-REPORTED)
+	                    (game-time ?game-time) (type ?type)
+	                    (team ?team) (host ?from-host) (port ?from-port))
+	(not (exploration-report (rtype RECORD) (zone ?zone) (type ?type)))
+	=>
+	(if (type-can-be-reported ?type ?team)
+		then
+			(assert (exploration-report (rtype RECORD)
+			                            (name UNKNOWN) (zone ?zone) (rotation -1)
+			                            (game-time ?game-time) (type ?type)
+			                            (team ?team) (host ?from-host) (port ?from-port)))
+	 else
+			(printout t "Team " ?team " reported too many machines of type " ?type
+			            " already, ignoring further reports of this type" crlf)
+			(retract ?exp)
+	)
 )
 
 (defrule exploration-report-rotation-correct
@@ -102,6 +166,29 @@
 	=>
   (modify ?er (rotation ?rotation))
   (printout t "Ignored partial report: " ?name " (rotation " ?rotation "). since zone is wrong" crlf)
+)
+
+(defrule exploration-report-type-correct
+	(exploration-report (rtype INCOMING) (name UNKNOWN) (zone ?zone&~NOT-REPORTED)
+	                    (game-time ?game-time) (type ?type) (team ?team)
+	                    (host ?from-host) (port ?from-port))
+	?er <- (exploration-report (rtype RECORD) (type ?type) (zone ?zone) (team ?team) (type-state ~CORRECT_REPORT))
+	?mf <- (machine (name ?name) (team ?m-team) (zone ?zone) (mtype ?type))
+	=>
+	; % TODO: ignore if prior wrong reports are inbound
+	(modify ?er (type-state CORRECT_REPORT))
+	(printout t "Correct type report: " ?type " (zone " ?zone ") from " ?team " is machine " ?name "." crlf)
+)
+
+(defrule exploration-report-type-wrong
+	(exploration-report (rtype INCOMING) (name UNKNOWN) (zone ?zone&~NOT-REPORTED)
+	                    (game-time ?game-time) (type ?type)
+	                    (team ?team) (host ?from-host) (port ?from-port))
+	?er <- (exploration-report (rtype RECORD) (name ?name) (type ?type) (zone ?zone) (type-state ~WRONG_REPORT))
+	(not (machine (zone ?zone) (mtype ?type)))
+	=>
+	(modify ?er (type-state WRONG_REPORT))
+	(printout t "Wrong type report: " ?type " (zone " ?zone ") from " ?team "." crlf)
 )
 
 (defrule exploration-report-zone-correct
@@ -177,8 +264,23 @@
 	(bind ?s (pb-create "llsf_msgs.MachineReportInfo"))
 
 	(pb-set-field ?s "team_color" CYAN)
-	(do-for-all-facts ((?report exploration-report)) (and (eq ?report:team CYAN) (eq ?report:rtype RECORD))
+	(do-for-all-facts ((?report exploration-report)) (and (eq ?report:team CYAN) (eq ?report:rtype RECORD) (neq ?report:name UNKNOWN))
 		(pb-add-list ?s "reported_machines" ?report:name)
+	)
+	(do-for-all-facts ((?report exploration-report))
+		(and (eq ?report:team CYAN)
+		     (eq ?report:rtype RECORD)
+		     (eq ?report:name UNKNOWN))
+		(bind ?name FALSE)
+		(bind ?team_color FALSE)
+		(if (eq ?report:type-state CORRECT_REPORT) then
+			(do-for-fact ((?m machine)) (eq ?m:zone ?report:zone)
+				(bind ?name ?m:name)
+				(bind ?team_color ?m:team)
+			)
+		)
+		(bind ?m (net-create-MachineTypeFeedback ?report:type ?report:zone ?name ?team_color))
+		(pb-add-list ?s "reported_types" ?m)
 	)
 
 	(pb-broadcast ?peer-id-cyan ?s)
@@ -190,6 +292,21 @@
 	(pb-set-field ?s "team_color" MAGENTA)
 	(do-for-all-facts ((?report exploration-report)) (and (eq ?report:team MAGENTA) (eq ?report:rtype RECORD))
 		(pb-add-list ?s "reported_machines" ?report:name)
+	)
+	(do-for-all-facts ((?report exploration-report))
+		(and (eq ?report:team MAGENTA)
+		     (eq ?report:rtype RECORD)
+		     (eq ?report:name UNKNOWN))
+		(bind ?name FALSE)
+		(bind ?team_color FALSE)
+		(if (eq ?report:type-state CORRECT_REPORT) then
+			(do-for-fact ((?m machine)) (eq ?m:zone ?report:zone)
+				(bind ?name ?m:name)
+				(bind ?team_color ?m:team)
+			)
+		)
+		(bind ?m (net-create-MachineTypeFeedback ?report:type ?report:zone ?name ?team_color))
+		(pb-add-list ?s "reported_types" ?m)
 	)
 
 	(pb-broadcast ?peer-id-magenta ?s)
