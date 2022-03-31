@@ -55,8 +55,11 @@ std::string            machine_name_;
 bool                   send_rotation_ = false;
 unsigned int           machine_rotation_;
 bool                   send_zone_ = false;
+bool                   send_type_ = false;
+bool                   send_name_ = false;
 llsf_msgs::Zone        machine_zone_;
 std::string            team_name_;
+std::string            machine_type_;
 Team                   team_color_;
 ProtobufBroadcastPeer *peer_public_  = NULL;
 ProtobufBroadcastPeer *peer_team_    = NULL;
@@ -141,17 +144,21 @@ handle_message(boost::asio::ip::udp::endpoint &           sender,
 	std::shared_ptr<BeaconSignal> b;
 	if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
 		if (b->team_name() == "LLSF" && b->peer_name() == "RefBox") {
-			printf("Announcing machine: Zone: %s   rotation %u\n",
+			printf("Announcing machine: Zone: %s   rotation: %u type: %s \n",
 			       send_zone_ ? Zone_Name(machine_zone_).c_str() : "*NO*",
-			       send_rotation_ ? machine_rotation_ : -1);
+			       send_rotation_ ? machine_rotation_ : -1,
+			       send_type_ ? machine_type_.c_str() : "*NO*");
 			llsf_msgs::MachineReport report;
 			report.set_team_color(team_color_);
 			llsf_msgs::MachineReportEntry *entry = report.add_machines();
-			entry->set_name(machine_name_);
+			if (send_name_)
+				entry->set_name(machine_name_);
 			if (send_rotation_)
 				entry->set_rotation(machine_rotation_);
 			if (send_zone_)
 				entry->set_zone(machine_zone_);
+			if (send_type_)
+				entry->set_type(machine_type_);
 			peer_team_->send(report);
 		}
 	}
@@ -159,9 +166,17 @@ handle_message(boost::asio::ip::udp::endpoint &           sender,
 	std::shared_ptr<MachineReportInfo> mrinfo;
 	if ((mrinfo = std::dynamic_pointer_cast<MachineReportInfo>(msg))) {
 		if (mrinfo->team_color() == team_color_) {
-			printf("Reported machines (%s):", llsf_msgs::Team_Name(team_color_).c_str());
+			printf("Reported machines (%s):\n", llsf_msgs::Team_Name(team_color_).c_str());
 			for (int i = 0; i < mrinfo->reported_machines_size(); ++i) {
 				printf(" %s", mrinfo->reported_machines(i).c_str());
+			}
+			printf("Reported machine types (%s):\n", llsf_msgs::Team_Name(team_color_).c_str());
+			for (int i = 0; i < mrinfo->reported_types_size(); ++i) {
+				printf(" %s, %s, %s, %s\n",
+				       mrinfo->reported_types(i).type().c_str(),
+				       Zone_Name(mrinfo->reported_types(i).zone()).c_str(),
+				       mrinfo->reported_types(i).name().c_str(),
+				       Team_Name(mrinfo->reported_types(i).team_color()).c_str());
 			}
 			printf("\n");
 		}
@@ -171,21 +186,22 @@ handle_message(boost::asio::ip::udp::endpoint &           sender,
 int
 main(int argc, char **argv)
 {
-	ArgumentParser argp(argc, argv, "T:r:z:");
+	ArgumentParser argp(argc, argv, "T:r:z:t:n:");
 
-	if (argp.num_items() != 2 || (!argp.has_arg("t") && !argp.has_arg("z"))) {
-		printf("Usage: %s [-T team] [-t <type>] [-z <zone>] <team-name> <machine-name>\n"
+	if (argp.num_items() != 1 || (!argp.has_arg("t") && !argp.has_arg("z"))) {
+		printf("Usage: %s [-T team] [-t <type>] [-z <zone>] [-n <machine-name>]<team-name>\n"
 		       "\n"
 		       "-T team	  Select team to send for, CYAN (default) or MAGENTA\n"
 		       "-r rotation Rotation to report for machine\n"
 		       "-z zone     Zone to report for machine\n\n"
+		       "-n name     Name to report for machine\n\n"
+		       "-t type     Type to report for machine\n\n"
 		       "You must supply at least one of type and zone, or both.\n",
 		       argv[0]);
 		exit(1);
 	}
 
-	team_name_    = argp.items()[0];
-	machine_name_ = argp.items()[1];
+	team_name_ = argp.items()[0];
 
 	if (argp.has_arg("r")) {
 		machine_rotation_ = boost::lexical_cast<unsigned int>(argp.arg("r"));
@@ -200,6 +216,16 @@ main(int argc, char **argv)
 		send_zone_ = true;
 	}
 
+	if (argp.has_arg("t")) {
+		machine_type_ = argp.arg("t");
+		send_type_    = true;
+	}
+
+	if (argp.has_arg("n")) {
+		machine_name_ = argp.arg("n");
+		send_name_    = true;
+	}
+
 	team_color_ = CYAN;
 	if (argp.has_arg("T")) {
 		std::string team_str = argp.arg("T");
@@ -208,7 +234,7 @@ main(int argc, char **argv)
 		} else if (team_str == "magenta") {
 			team_color_ = MAGENTA;
 		} else {
-			printf("Unknonw team value, using cyan\n");
+			printf("Unknown team value, using cyan\n");
 		}
 	}
 
