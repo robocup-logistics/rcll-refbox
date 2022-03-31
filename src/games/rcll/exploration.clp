@@ -12,10 +12,19 @@
 (defrule exploration-report-incoming
 	(gamestate (phase EXPLORATION|PRODUCTION) (game-time ?game-time))
   ?mf <- (protobuf-msg (type "llsf_msgs.MachineReport") (ptr ?p)
-	                     (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+	                     (rcvd-from ?from-host ?from-port) (rcvd-via ?via)
+	                     (client-type ?ct) (client-id ?cid))
+	(network-peer (id ?cid) (group ?group))
 	=>
 	(retract ?mf)
 	(bind ?team (sym-cat (pb-field-value ?p "team_color")))
+	(if (and (eq ?ct PEER) (neq ?team ?group))
+	 then
+		; message received for a team over the wrong channel, deny
+		(assert (attention-message (team ?group)
+		        (text (str-cat "Invalid prepare for team " ?team " of team " ?group))))
+		(return)
+	)
 	(foreach ?m (pb-field-list ?p "machines")
 		(bind ?name (sym-cat (pb-field-value ?m "name")))
 		(bind ?zone (if (pb-has-field ?m "zone") then (sym-cat (pb-field-value ?m "zone")) else NOT-REPORTED))
