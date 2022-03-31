@@ -187,9 +187,15 @@
 	                    (team ?team) (host ?from-host) (port ?from-port))
 	?er <- (exploration-report (rtype RECORD) (name ?name) (type ?type) (zone ?zone) (type-state ~WRONG_REPORT))
 	(not (machine (zone ?zone) (mtype ?type)))
+	(gamestate (phase ?phase))
 	=>
 	(modify ?er (type-state WRONG_REPORT))
-	(printout t "Wrong type report: " ?type " (zone " ?zone ") from " ?team "." crlf)
+	(printout t "Wrong partial report: " ?type " in zone " ?zone "). "
+	          "Awarding " ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS* " points" crlf)
+	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS*)
+	                (phase ?phase) (team ?team) (game-time ?game-time)
+	                (reason (str-cat "Wrong partial exploration report for type "
+	                        ?type ": zone = " ?zone "."))))
 )
 
 (defrule exploration-report-zone-correct
