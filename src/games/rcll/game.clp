@@ -367,7 +367,7 @@
 		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
   =>
   (modify ?gs (phase PRODUCTION) (prev-phase SETUP) (game-time 0.0))
-  (assert (attention-message (text "Switching to exploration phase")))
+  (assert (attention-message (text "Switching to production phase")))
 )
 
 (defrule game-switch-to-production

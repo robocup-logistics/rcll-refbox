@@ -177,7 +177,6 @@
 	?er <- (exploration-report (rtype RECORD) (type ?type) (zone ?zone) (team ?team) (type-state ~CORRECT_REPORT))
 	?mf <- (machine (name ?name) (team ?m-team) (zone ?zone) (mtype ?type))
 	=>
-	; % TODO: ignore if prior wrong reports are inbound
 	(modify ?er (type-state CORRECT_REPORT))
 	(printout t "Correct type report: " ?type " (zone " ?zone ") from " ?team " is machine " ?name "." crlf)
 )
