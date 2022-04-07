@@ -187,7 +187,7 @@
 )
 
 (deftemplate send-mps-positions
-  (multislot phases (type SYMBOL) (allowed-values nil PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default PRODUCTION))
+  (multislot phases (type SYMBOL) (allowed-values nil PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default nil))
 )
 
 (deftemplate order
