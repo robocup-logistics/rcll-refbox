@@ -876,7 +876,7 @@
 
 (defrule production-send-machine-positions
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt&:(> ?gt ?*EXPLORATION-TIME*)))
-  ?send-pos <- (send-mps-positions (phases $?phases&:(not (member$ PRODUCTION) ?phases)))
+  ?send-pos <- (send-mps-positions (phases $?phases&:(not (member$ PRODUCTION ?phases))))
   =>
   (modify ?send-pos (phases (append$ ?phases PRODUCTION)))
 )
