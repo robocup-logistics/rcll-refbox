@@ -59,7 +59,7 @@ $LLSF_REFBOX_DIR/bin/./llsf-refbox -h
 PACK_RESULTS=
 GAME_CFG=
 CHALLENGE_OPT=" --cfg-challenges "
-MPS_CFG=" --cfg-mps mps/mockup_mps.yaml "
+MPS_CFG=" --cfg-mps mps/carologistics_mps.yaml --cfg-comm comm/carologistics_comm.yaml --dump-cfg"
 CHALLENGE_FILE=
 CHALLENGE_SUFFIX=
 CHALLENGE_FOLDER=

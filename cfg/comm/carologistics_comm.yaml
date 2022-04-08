@@ -1,0 +1,42 @@
+%YAML 1.2
+---
+---
+# Carologistics Communication settings for Carologistics(-5G) wifi.
+# Make sure that all machines communicating with the refbox have the correct
+# subnet mask (255.255.0.0) and gateway (172.26.108.1) configured to match the
+# specified peer (172.26.255.255).
+
+llsfrb:
+  comm:
+    protobuf-dirs: ["@SHAREDIR@/msgs"]
+    # TCP port the refbox listens on for controller connections.
+    server-port: !tcp-port 4444
+    # peer communication broadcast address.
+    # You will most likely need to change this.
+    #
+    # The refbox can either listen and send to the same UDP port for broadcasts
+    # or listen and send on different ports.
+    # The latter is useful for simulation setups, where a distinction of
+    # ports may be required, or if refbox assistance tools such as
+    # rcll-instruct-machine are executed from the same machine as the one that
+    # the refbox is running from.
+    #
+    # Set only either of "host" or "send-port"+"receive-port" pair.
+    # Do not specify both!
+    public-peer:
+      host: !ipv4 172.26.255.255
+      port: !udp-port 4444
+      # send-port: !udp-port 4444
+      # recv-port: !udp-port 4445
+
+    cyan-peer:
+      host: !ipv4 172.26.255.255
+      port: !udp-port 4441
+      # send-port: !udp-port 4441
+      # recv-port: !udp-port 4446
+
+    magenta-peer:
+      host: !ipv4 172.26.255.255
+      port: !udp-port 4442
+      # send-port: !udp-port 4442
+      # recv-port: !udp-port 4447
