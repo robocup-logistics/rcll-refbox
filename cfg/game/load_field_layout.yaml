@@ -21,6 +21,7 @@ llsfrb:
       phase: PRODUCTION
     # load data from latest game report with a given name
     # leave empty to always load from latest stored report
-    load-from-report: ""
+    load-from-report: "5_by_5_no_insertion_zone"
+    #load-from-report: ""
     # store game report under a name for later reference
     store-to-report: ""
