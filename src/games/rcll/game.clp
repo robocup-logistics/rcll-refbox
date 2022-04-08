@@ -183,6 +183,7 @@
   (game-parameters (is-parameterized FALSE) (machine-positions RANDOM))
   =>
   (printout t "starting the solver for the generation of the machine positions" crlf)
+  (mps-generator-set-field 5 7)
   (mps-generator-start)
   (modify ?mg (state STARTED) (generation-state-last-checked ?gt))
 )
