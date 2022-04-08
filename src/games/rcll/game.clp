@@ -1,6 +1,6 @@
 
 ;---------------------------------------------------------------------------
-;  game.clp - LLSF RefBox CLIPS game maintenance
+;  game.clp - RCLL RefBox CLIPS game maintenance
 ;
 ;  Created: Tue Jun 11 15:19:25 2013
 ;  Copyright  2013-2016  Tim Niemueller [www.niemueller.de]
@@ -10,97 +10,198 @@
 ;             2020       Tarik Viehmann
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
+(deffunction is-standing-order (?order-id)
+  (return (<= ?order-id 2))
+)
+
+(deffunction randomize-ring-colors (?complexity ?ring-colors)
+  (bind ?order-ring-colors (create$))
+  (bind ?choices (create$ 1 2 3 4))
+  (bind ?ring1-choice (pick-random$ ?choices))
+  (bind ?ring2-choice (pick-random$ (delete$ ?choices ?ring1-choice ?ring1-choice)))
+  (bind ?ring3-choice (pick-random$ (delete$ ?choices ?ring2-choice ?ring2-choice)))
+  (bind ?ring1-color (nth$ ?ring1-choice ?ring-colors))
+  (bind ?ring2-color (nth$ ?ring2-choice ?ring-colors))
+  (bind ?ring3-color (nth$ ?ring3-choice ?ring-colors))
+  (switch ?complexity
+    ;(case C0 then) ; for C0 we have nothing to do, no ring color
+    (case C1 then (bind ?order-ring-colors (create$ ?ring1-color)))
+    (case C2 then (bind ?order-ring-colors (create$ ?ring1-color ?ring2-color)))
+    (case C3 then (bind ?order-ring-colors (create$ ?ring1-color ?ring2-color ?ring3-color)))
+  )
+  (return ?order-ring-colors)
+)
 
 (deffunction game-randomize-orders ()
-	(bind ?ring-colors (create$))
-	(do-for-all-facts ((?rs ring-spec)) TRUE
-	  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
-	)
-	(bind ?ring-colors (randomize$ ?ring-colors))
-	(bind ?c1-first-ring (subseq$ ?ring-colors 1 1))
-	(bind ?c2-first-ring (subseq$ ?ring-colors 2 2))
-	(bind ?c3-first-ring (subseq$ ?ring-colors 3 3))
-	(bind ?cx-first-ring (subseq$ ?ring-colors 4 4))
+  (bind ?ring-colors (create$))
+  (do-for-all-facts ((?rs ring-spec)) TRUE
+    (bind ?ring-colors (append$ ?ring-colors ?rs:color))
+  )
+  (bind ?ring-colors (randomize$ ?ring-colors))
 
-	(bind ?c1-counter 0)
-	(bind ?c2-counter 0)
-	(bind ?c3-counter 0)
-	; reset orders, assign random times
-	(delayed-do-for-all-facts ((?order order)) TRUE
-		(bind ?deliver-start (random (nth$ 1 ?order:start-range)
-		                             (nth$ 2 ?order:start-range)))
-		(bind ?deliver-end
-		  (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
-		                            (nth$ 2 ?order:duration-range))))
-		(if (and (> ?deliver-end ?*PRODUCTION-TIME*) (not ?order:allow-overtime))
-		 then
-			(printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
-			            (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "
-			            "time shift: " (- ?deliver-end ?*PRODUCTION-TIME*) crlf)
-			(bind ?deliver-start (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)))
-			(bind ?deliver-end ?*PRODUCTION-TIME*)
-		)
-		(bind ?activation-pre-time
-		      (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
-		(bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
-		(if ?*RANDOMIZE-ACTIVATE-ALL-AT-START* then (bind ?activate-at 0))
-		(bind ?gate (random 1 3))
+  (bind ?low-complexity (create$ C0 C1))
+  (bind ?high-complexity (create$ C2 C3))
+  (bind ?complexities (create$))
+  (loop-for-count (?current-order 1 5)
+       (bind ?low-complexity (randomize$ ?low-complexity))
+       (bind ?high-complexity (randomize$ ?high-complexity))
+       (bind ?complexities (append$ ?complexities
+             (create$ (nth$ 1 ?low-complexity)
+                      (nth$ 1 ?high-complexity))))
+  )
+  ; Standing Orders
+  (delayed-do-for-all-facts ((?order order)) (is-standing-order ?order:id)
+    (bind ?complexity (nth$ 1 ?complexities))
+    (bind ?complexities (rest$ ?complexities))
+    (modify ?order (complexity ?complexity) (start-range 0 0)
+                   (activation-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
+                   (duration-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*))
+  )
+  (bind ?activate-at-center 180)
+  (bind ?complexities (randomize$ ?complexities))
+  ; Set start activation and duration ranges
+  (delayed-do-for-all-facts ((?order order))
+    (and (not (is-standing-order ?order:id)) (not ?order:allow-overtime))
+    (bind ?complexity (nth$ 1 ?complexities))
+    (bind ?complexities (rest$ ?complexities))
+    (switch ?complexity
+      (case C0 then
+        (modify ?order (complexity ?complexity)
+                       (start-range (- ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*)
+                                         (+ ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*))
+                       (activation-range ?*ORDER-PRODUCTION-WINDOW-START-C0*
+                                         ?*ORDER-PRODUCTION-WINDOW-END-C0*)
+                       (duration-range ?*ORDER-DELIVERY-WINDOW-START-C0* ?*ORDER-DELIVERY-WINDOW-END-C0*)
+        )
+      )
+      (case C1 then
+       (modify ?order (complexity ?complexity)
+                      (start-range (- ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*)
+                                         (+ ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*))
+                      (activation-range ?*ORDER-PRODUCTION-WINDOW-START-C1*
+                                         ?*ORDER-PRODUCTION-WINDOW-END-C1*)
+                      (duration-range ?*ORDER-DELIVERY-WINDOW-START-C1* ?*ORDER-DELIVERY-WINDOW-END-C1*)
+        )
+      )
+      (case C2 then
+        (modify ?order (complexity ?complexity)
+                       (start-range (- ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*)
+                                         (+ ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*))
+                       (activation-range ?*ORDER-PRODUCTION-WINDOW-START-C2*
+                                         ?*ORDER-PRODUCTION-WINDOW-END-C2*)
+                       (duration-range ?*ORDER-DELIVERY-WINDOW-START-C2* ?*ORDER-DELIVERY-WINDOW-END-C2*)
+        )
+      )
+      (case C3 then
+        (modify ?order (complexity ?complexity)
+                       (start-range (- ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*)
+                                         (+ ?activate-at-center ?*ORDER-ACTIVATION-DEVIATION*))
+                       (activation-range ?*ORDER-PRODUCTION-WINDOW-START-C3*
+                                         ?*ORDER-PRODUCTION-WINDOW-END-C3*)
+                       (duration-range ?*ORDER-DELIVERY-WINDOW-START-C3* ?*ORDER-DELIVERY-WINDOW-END-C3*)
+        )
+      )
+      (default then (printout t "Unknown complexity " ?complexity crlf))
+    )
+    (bind ?activate-at-center (+ ?activate-at-center ?*ORDER-ACTIVATION-DISTANCE*))
+  )
+  ; reset orders, assign random times
+  (delayed-do-for-all-facts ((?order order)) TRUE
+    (bind ?deliver-start (random (nth$ 1 ?order:start-range)
+                                 (nth$ 2 ?order:start-range)))
+    (bind ?deliver-end
+      (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
+                                (nth$ 2 ?order:duration-range))))
+    (bind ?activation-pre-time
+          (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
+    (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
+    (if ?*RANDOMIZE-ACTIVATE-ALL-AT-START* then (bind ?activate-at 0))
+    ; keep the activation time between ?*EXPLORATION-TIME* and
+    ; ?*ORDER-ACTIVATE-LATEST-TIME*
+    (if (and (not (is-standing-order ?order:id)) (< ?activate-at ?*EXPLORATION-TIME*)) then
+      (bind ?shift-time (- ?*EXPLORATION-TIME* ?activate-at))
+      (bind ?activate-at   (+ ?activate-at ?shift-time))
+      (bind ?deliver-start (+ ?deliver-start ?shift-time))
+      (bind ?deliver-end   (+ ?deliver-end ?shift-time))
+    )
+    (if (and (> ?activate-at ?*ORDER-ACTIVATE-LATEST-TIME*)
+             (not ?order:allow-overtime)) then
+      (bind ?shift-time (- ?activate-at ?*ORDER-ACTIVATE-LATEST-TIME*))
+      (bind ?activate-at   (- ?activate-at ?shift-time))
+      (bind ?deliver-start (- ?deliver-start ?shift-time))
+      (bind ?deliver-end   (- ?deliver-end ?shift-time))
+    )
+   ; keep the delivery time within the ?*PRODUCTION-TIME*
+    (if (and (> ?deliver-end ?*PRODUCTION-TIME*) (not ?order:allow-overtime))
+     then
+      (printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
+                  (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "
+                  "time shift: " (- ?deliver-end ?*PRODUCTION-TIME*) crlf)
+      (bind ?deliver-start (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)))
+      (bind ?deliver-end ?*PRODUCTION-TIME*)
+    )
 
-		; check workpiece-assign-order rule in workpieces.clp for specific
-		; assumptions for the 2016 game and order to workpiece assignment!
-		(bind ?order-ring-colors (create$))
-		(switch ?order:complexity
-			;(case C0 then) ; for C0 we have nothing to do, no ring color
-			(case C1 then (bind ?c1-counter (+ ?c1-counter 1))
-			              (if (<= ?c1-counter 1) then (bind ?first-ring ?c1-first-ring)
-			                                     else (bind ?first-ring ?cx-first-ring))
-			              (bind ?order-ring-colors (create$ ?first-ring)))
-			(case C2 then (bind ?c2-counter (+ ?c2-counter 1))
-			              (if (<= ?c2-counter 1) then (bind ?first-ring ?c2-first-ring)
-			                                     else (bind ?first-ring ?cx-first-ring))
-			              (bind ?order-ring-colors (create$ ?first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?first-ring)) 1 1))))
-			(case C3 then (bind ?c3-counter (+ ?c3-counter 1))
-			              (if (<= ?c3-counter 1) then (bind ?first-ring ?c3-first-ring)
-			                                     else (bind ?first-ring ?cx-first-ring))
-			              (bind ?order-ring-colors (create$ ?first-ring (subseq$ (randomize$ (remove$ ?ring-colors ?first-ring)) 1 2))))
-		)
+    (bind ?gate (random 1 3))
 
-		(bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
-		(bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
+    (bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
+    (bind ?order-ring-colors (randomize-ring-colors ?order:complexity ?ring-colors))
+    (bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
 
-		(modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
-		  (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
-		  (ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
-		)
+    (modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
+      (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
+      (ring-colors ?order-ring-colors) (cap-color ?order-cap-color))
+  )
+  ; Randomize number of required additional bases
+  (bind ?m-add-bases (randomize$ (create$ 1 3)))
+  (do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 1 ?m-add-bases) ?ring-colors))
+    (modify ?ring (req-bases 2))
+  )
+  (do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 2 ?m-add-bases) ?ring-colors))
+    (modify ?ring (req-bases 1))
+  )
+  (bind ?free-ring-colors (create$))
+  (delayed-do-for-all-facts ((?ring ring-spec))
+    (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
+    (modify ?ring (req-bases 0))
+    (bind ?free-ring-colors (append$ ?free-ring-colors ?ring:color))
+  )
 
-	; Randomize number of required additional bases
-	(bind ?m-add-bases (randomize$ (create$ 1 3)))
-	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 1 ?m-add-bases) ?ring-colors))
-	  (modify ?ring (req-bases 2))
-	)
-	(do-for-fact ((?ring ring-spec)) (eq ?ring:color (nth$ (nth$ 2 ?m-add-bases) ?ring-colors))
-	  (modify ?ring (req-bases 1))
-	)
-	(delayed-do-for-all-facts ((?ring ring-spec))
-	  (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
-	  (modify ?ring (req-bases 0))
-	)
-
-	; Randomly assign an order to be a competitive order
-	(bind ?potential-competitive-orders (create$))
-	(do-for-all-facts ((?order order))
-	                  (and (eq ?order:complexity C0) ; must be C0
-	                       (eq ?order:quantity-requested 1) ; must not request more than 1 product
-	                       (eq ?order:allow-overtime FALSE) ; no overtime order
-	                       (or (neq (nth$ 1 ?order:delivery-period) 0) ; no standing order
-	                           (neq (nth$ 2 ?order:delivery-period) ?*PRODUCTION-TIME*))
-	                  )
-	                  (bind ?potential-competitive-orders (insert$ ?potential-competitive-orders 1 ?order:id))
-	)
-	;(printout t "Potential competitive orders: " ?potential-competitive-orders crlf)
-	(bind ?competitive-order-id (nth$ (random 1 (length$ ?potential-competitive-orders)) ?potential-competitive-orders))
-	(do-for-fact ((?order order)) (eq ?order:id ?competitive-order-id)
-	  (modify ?order (competitive TRUE)))
+  ; Randomly assign an order to be a competitive order
+  (bind ?potential-competitive-orders (create$))
+  (do-for-all-facts ((?order order))
+                    (and (eq ?order:quantity-requested 1) ; must not request more than 1 product
+                         (eq ?order:allow-overtime FALSE) ; no overtime order
+                         (or (neq (nth$ 1 ?order:delivery-period) 0) ; no standing order
+                             (neq (nth$ 2 ?order:delivery-period) ?*PRODUCTION-TIME*))
+                    )
+                    (bind ?potential-competitive-orders (insert$ ?potential-competitive-orders 1 ?order:id))
+  )
+  (bind ?competitive-order-id (nth$ (random 1 (length$ ?potential-competitive-orders)) ?potential-competitive-orders))
+  (do-for-fact ((?order order)) (eq ?order:id ?competitive-order-id)
+    (modify ?order (competitive TRUE)))
+  (bind ?conflict TRUE)
+  ; Check if the assigned colors are correct according to the rules
+  (while ?conflict
+    (bind ?conflict FALSE)
+    (do-for-fact ((?order1 order) (?order2 order))
+                     ; ... standing orders should have a first ring without costs
+                 (or (and (is-standing-order ?order1:id)
+                          (> (length$ ?order1:ring-colors) 0)
+                          (not (member$ (nth$ 1 ?order1:ring-colors) ?free-ring-colors)))
+                     ; ... orders should have unique base+ring combinations
+                     ; such that one can not start one order and finish it as
+                     ; another one
+                     (and (eq ?order1:base-color ?order2:base-color)
+                          (> (length$ ?order1:ring-colors) 0)
+                          (> (length$ ?order2:ring-colors) 0)
+                          (> ?order1:id ?order2:id)
+                          (eq (nth$ 1 ?order1:ring-colors) (nth$ 1 ?order2:ring-colors)))
+                 )
+      (modify ?order1 (ring-colors (randomize-ring-colors ?order1:complexity ?ring-colors))
+                      (base-color (pick-random$ (deftemplate-slot-allowed-values order base-color))))
+      (bind ?conflict TRUE)
+    )
+  )
 )
 
 (deffunction game-calc-phase-points (?team-color ?phase)
