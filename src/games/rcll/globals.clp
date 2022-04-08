@@ -112,7 +112,7 @@
   ?*MAINTENANCE-GRACE-TIME*     =  15
   ; Game phase time; seconds
   ?*SETUP-TIME*           = 300
-  ?*EXPLORATION-TIME*     = 180
+  ?*EXPLORATION-TIME*     = 1800
   ?*PRODUCTION-TIME*      = 1200
   ?*PRODUCTION-OVERTIME*  = 300
   ?*PRODUCTION-PREPARE-TIMEOUT*  = 5
