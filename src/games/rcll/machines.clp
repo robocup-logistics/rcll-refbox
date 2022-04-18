@@ -142,19 +142,31 @@
 
 (deffunction machine-randomize-machine-setup ()
 	; Randomize ring colors per machine
-	(bind ?ring-colors (create$))
-	(do-for-all-facts ((?rs ring-spec)) TRUE
-	  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
-	)
+	;(bind ?ring-colors (create$))
+	;(do-for-all-facts ((?rs ring-spec)) TRUE
+	;  (bind ?ring-colors (append$ ?ring-colors ?rs:color))
+	;)
+	;(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+	;  (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
+	;  (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+	;  (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+	;)
+	;(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+	;  (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
+	;  (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+	;  (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+	;)
+	; No need to randomize color assignment, the color costs are randomized
+	; anyways
 	(do-for-fact ((?m-cyan machine) (?m-magenta machine))
 	  (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
-	  (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 1 2)))
-	  (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 1 2)))
+	  (modify ?m-cyan    (rs-ring-colors RING_ORANGE RING_GREEN))
+	  (modify ?m-magenta (rs-ring-colors RING_ORANGE RING_GREEN))
 	)
 	(do-for-fact ((?m-cyan machine) (?m-magenta machine))
 	  (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
-	  (modify ?m-cyan    (rs-ring-colors (subseq$ ?ring-colors 3 4)))
-	  (modify ?m-magenta (rs-ring-colors (subseq$ ?ring-colors 3 4)))
+	  (modify ?m-cyan    (rs-ring-colors RING_BLUE RING_YELLOW))
+	  (modify ?m-magenta (rs-ring-colors RING_BLUE RING_YELLOW))
 	)
 
 	; assign random down times
