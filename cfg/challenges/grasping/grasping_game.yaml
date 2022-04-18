@@ -14,7 +14,7 @@ llsfrb:
     random-machine-down-times: true
     random-machine-setup: false
     random-orders: true
-    random-storage: true
+    default-storage: true
     restore-gamestate:
       enable: false
       phase: PRODUCTION

@@ -596,7 +596,7 @@
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	(confval (path "/llsfrb/game/random-storage") (type BOOL) (value false))
+	(confval (path "/llsfrb/game/default-storage") (type BOOL) (value false))
 	?gp <- (game-parameters (storage-status PENDING))
 	=>
 	(printout t "Loading storage from database" crlf)
