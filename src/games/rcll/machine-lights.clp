@@ -98,17 +98,6 @@
 	(modify ?m (desired-lights (create$ RED-ON)))
 )
 
-; (defrule machine-lights-prepared-stop-blinking
-; 	"The machine (name ?n) is PREPARED and has been blinking, change the light signal to GREEN (non-blinking)"
-; 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-; 	?m <- (machine (name ?n) (state PREPARED|PROCESSING)
-; 		 (actual-lights GREEN-BLINK) (desired-lights GREEN-BLINK)
-; 		 (prep-blink-start ?bs&:(timeout-sec ?gt ?bs ?*PREPARED-BLINK-TIME*)))
-; 	(exploration-report (name ?n) (correctly-reported TRUE))
-; 	=>
-; 	(modify ?m (desired-lights GREEN-ON))
-; )
-
 (defrule machine-lights-processing
 	(gamestate (phase PRODUCTION))
 	?m <- (machine (name ?n) (state PROCESSING) (desired-lights $?dl&:(neq ?dl (create$ YELLOW-ON GREEN-ON))))
