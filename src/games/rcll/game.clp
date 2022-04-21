@@ -362,19 +362,11 @@
   (assert (attention-message (text "Setup phase is about to end")))
 )
 
-(defrule game-switch-to-exploration
+(defrule game-switch-from-setup-to-production
   ?gs <- (gamestate (phase SETUP) (state RUNNING)
 		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
   =>
   (modify ?gs (phase PRODUCTION) (prev-phase SETUP) (game-time 0.0))
-  (assert (attention-message (text "Switching to production phase")))
-)
-
-(defrule game-switch-to-production
-  ?gs <- (gamestate (phase EXPLORATION) (state RUNNING)
-		    (game-time ?game-time&:(>= ?game-time ?*EXPLORATION-TIME*)))
-  =>
-  (modify ?gs (phase PRODUCTION) (prev-phase EXPLORATION) (game-time 0.0))
   (assert (attention-message (text "Switching to production phase")))
 )
 
