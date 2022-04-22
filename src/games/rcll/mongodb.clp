@@ -592,6 +592,43 @@
 	)
 )
 
+(defrule mongodb-load-gamephase-points
+	(declare (salience ?*PRIORITY_FIRST*))
+	?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
+	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
+	=>
+	(bind ?success FALSE)
+	(bind ?t-query (bson-parse "{}"))
+	(if (neq ?report-name "")
+	 then
+		(bind ?t-query (bson-parse (str-cat "{\"report-name\": \"" ?report-name "\"}")))
+	)
+	(bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
+	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
+	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(if (neq ?t-doc FALSE) then
+	 then
+		(if (bind ?points-arr (bson-get-array ?t-doc "points"))
+		 then
+			(foreach ?point ?points-arr
+				(assert (points (points (bson-get ?point "points")) (team (bson-get ?point "team")) (game-time (bson-get ?point "game-time")) (phase (bson-get ?point "phase")) (reason (bson-get ?point "reason"))))
+				(bson-destroy ?point)
+			)
+		 else
+			(printout error "Couldn't read points array" crlf)
+		)
+	 else
+		(printout error "Empty result in mongoDB from game_report" crlf)
+	)
+	(bson-destroy ?t-doc)
+	(mongodb-cursor-destroy ?t-cursor)
+	(bson-builder-destroy ?t-query)
+	(bson-builder-destroy ?t-sort)
+  )
+)
+
 (defrule mongodb-load-storage-status
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
