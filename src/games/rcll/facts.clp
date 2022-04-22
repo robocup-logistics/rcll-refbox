@@ -374,7 +374,7 @@
 	(slot machine-setup (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
 	(slot orders (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
 	(slot gamestate (type SYMBOL) (allowed-values PENDING RECOVERED FRESH) (default PENDING))
-	(slot storage-status (type SYMBOL) (allowed-values PENDING RANDOM STATIC) (default PENDING))
+	(slot storage-status (type SYMBOL) (allowed-values PENDING DEFAULT STATIC) (default PENDING))
 )
 
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
@@ -452,17 +452,17 @@
 
 (deffacts storage-slots
   (init-storage-slots)
-  (machine-ss-shelf-slot (position 0 0) (description "BASE_RED CAP_GREY") (is-filled TRUE)
+  (machine-ss-shelf-slot (position 0 1) (description "BASE_RED CAP_GREY") (is-filled TRUE)
     (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
-  (machine-ss-shelf-slot (position 1 0) (description "BASE_SILVER CAP_GREY") (is-filled TRUE)
+  (machine-ss-shelf-slot (position 1 1) (description "BASE_RED CAP_BLACK") (is-filled TRUE)
     (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
-  (machine-ss-shelf-slot (position 2 0) (description "BASE_BLACK CAP_GREY") (is-filled TRUE)
+  (machine-ss-shelf-slot (position 2 1) (description "BASE_SILVER CAP_GREY") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
+  (machine-ss-shelf-slot (position 3 1) (description "BASE_SILVER CAP_BLACK") (is-filled TRUE)
+    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
+  (machine-ss-shelf-slot (position 4 1) (description "BASE_BLACK CAP_GREY") (is-filled TRUE)
     (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*) )
-  (machine-ss-shelf-slot (position 3 0) (description "BASE_RED CAP_BLACK") (is-filled TRUE)
-    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
-  (machine-ss-shelf-slot (position 4 0) (description "BASE_SILVER CAP_BLACK") (is-filled TRUE)
-    (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
-  (machine-ss-shelf-slot (position 5 0) (description "BASE_BLACK CAP_BLACK") (is-filled TRUE)
+  (machine-ss-shelf-slot (position 5 1) (description "BASE_BLACK CAP_BLACK") (is-filled TRUE)
     (num-payments ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
 )
 

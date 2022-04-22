@@ -254,7 +254,7 @@
 	(confval (path "/llsfrb/game/random-field") (type BOOL) (value ?random-field))
 	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value ?random-machine-setup))
 	(confval (path "/llsfrb/game/random-orders") (type BOOL) (value ?random-orders))
-	(confval (path "/llsfrb/game/random-storage") (type BOOL) (value ?random-storage))
+	(confval (path "/llsfrb/game/default-storage") (type BOOL) (value ?default-storage))
 	(confval (path "/llsfrb/mongodb/enable") (type BOOL) (value ?cfg-mongodb-enabled))
 	=>
 	(bind ?m-positions PENDING)
@@ -262,14 +262,14 @@
 	(bind ?orders PENDING)
 	(bind ?s-status PENDING)
 	(bind ?mongodb-enabled (eq ?cfg-mongodb-enabled true))
-	(if (and (not ?mongodb-enabled) (member$ false (create$ ?random-field ?random-machine-setup ?random-orders ?random-storage )))
+	(if (and (not ?mongodb-enabled) (member$ false (create$ ?random-field ?random-machine-setup ?random-orders ?default-storage )))
 	 then
 		(printout warn "Mongodb disabled, randomize all parameters despite configured static settings." crlf)
 	)
 	(if (or (not ?mongodb-enabled) (eq ?random-field  true)) then (bind ?m-positions RANDOM))
 	(if (or (not ?mongodb-enabled) (eq ?random-machine-setup true)) then (bind ?m-setup RANDOM))
 	(if (or (not ?mongodb-enabled) (eq ?random-orders true)) then (bind ?orders RANDOM))
-	(if (or (not ?mongodb-enabled) (eq ?random-storage true)) then (bind ?s-status RANDOM))
+	(if (or (not ?mongodb-enabled) (eq ?default-storage true)) then (bind ?s-status DEFAULT))
 	(modify ?gt (machine-positions ?m-positions)
 	            (machine-setup ?m-setup)
 	            (orders ?orders)
@@ -333,9 +333,11 @@
 	 then
 		(game-randomize-orders)
 	)
-	(if (eq ?s-status RANDOM)
+	; Shelves are not shuffled in default games
+	(if (eq ?s-status DEFAULT)
 	 then
-		(ss-shuffle-shelves)
+		;(ss-shuffle-shelves)
+		(printout t "Using default setup for pre-stored products at SS." crlf)
 	)
 
 	(ss-print-storage C-SS)
