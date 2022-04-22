@@ -187,7 +187,7 @@
 )
 
 (deftemplate send-mps-positions
-  (multislot phases (type SYMBOL) (allowed-values nil PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default PRODUCTION))
+  (multislot phases (type SYMBOL) (allowed-values nil PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default nil))
 )
 
 (deftemplate order
@@ -309,7 +309,8 @@
 (deftemplate exploration-report
 	(slot rtype (type SYMBOL) (allowed-values INCOMING RECORD))
   (slot name (type SYMBOL)
-	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2 UNKNOWN))
+  (slot type (type SYMBOL) (allowed-values UNKNOWN BS CS SS RS DS))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot zone (type SYMBOL)
 	  (allowed-values NOT-REPORTED
@@ -338,6 +339,7 @@
   (slot correctly-reported (type SYMBOL) (allowed-values UNKNOWN TRUE FALSE) (default UNKNOWN))
   (slot zone-state (type SYMBOL) (allowed-values NO_REPORT CORRECT_REPORT WRONG_REPORT) (default NO_REPORT))
   (slot rotation-state (type SYMBOL) (allowed-values NO_REPORT CORRECT_REPORT WRONG_REPORT) (default NO_REPORT))
+  (slot type-state (type SYMBOL) (allowed-values NO_REPORT CORRECT_REPORT WRONG_REPORT) (default NO_REPORT))
 )
 
 (deftemplate points

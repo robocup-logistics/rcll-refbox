@@ -172,7 +172,7 @@
 
 		(foreach ?c ?candidates
 			(bind ?duration (random ?*DOWN-TIME-MIN* ?*DOWN-TIME-MAX*))
-			(bind ?start-time (random 1 (- ?*PRODUCTION-TIME* ?duration)))
+			(bind ?start-time (random ?*EXPLORATION-TIME* (- ?*PRODUCTION-TIME* ?duration)))
 			(bind ?end-time (+ ?start-time ?duration))
 
 			; Copy to magenta machine

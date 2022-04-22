@@ -18,62 +18,114 @@
 ;
 ; Read the full text in the LICENSE.GPL file in the doc directory.
 ;
+(defrule machine-report-init-lights
+	(declare (salience ?*PRIORITY_HIGH*))
+	?gf <- (gamestate (phase ?PHASE) (prev-phase SETUP))
+	=>
+	; Set prev phase to avoid re-firing, reset game time
+	(modify ?gf (prev-phase ?PHASE) (game-time 0.0))
+
+	; Set lights
+	(delayed-do-for-all-facts ((?machine machine)) TRUE
+		(modify ?machine (desired-lights (create$ YELLOW-ON)))
+	)
+)
+
+(defrule machine-lights-pause
+	(gamestate (phase EXPLORATION|PRODUCTION) (state PAUSED) (prev-state ~PAUSED))
+	?m <- (machine (desired-lights ?some-light))
+	=>
+	(delayed-do-for-all-facts ((?machine machine)) TRUE
+		(modify ?machine (desired-lights))
+	)
+)
+
+(defrule machine-lights-unknown-report
+	(gamestate (phase EXPLORATION|PRODUCTION) (state RUNNING))
+	?m <- (machine (name ?n) (desired-lights ?dl&:(neq $?dl (create$ YELLOW-ON))))
+	(exploration-report (name ?n) (correctly-reported UNKNOWN) (zone NOT-REPORTED))
+	=>
+	(modify ?m (desired-lights (create$ YELLOW-ON)))
+)
+
+(defrule machine-lights-partial-report
+	(gamestate (phase EXPLORATION|PRODUCTION) (state RUNNING))
+	?m <- (machine (name ?n) (desired-lights ?dl&:(neq $?dl YELLOW-BLINK)))
+	(exploration-report (name ?n) (correctly-reported UNKNOWN)
+	                    (zone-state CORRECT_REPORT))
+	=>
+	(printout t (neq ?dl (create$ YELLOW-BLINK)) " and " (neq ?dl YELLOW-BLINK) crlf)
+	(modify ?m (desired-lights (create$ YELLOW-BLINK)))
+)
+
+(defrule machine-lights-wrong-report-zone
+	(gamestate (phase EXPLORATION|PRODUCTION) (state RUNNING))
+	?m <- (machine (name ?n) (desired-lights ?dl&:(neq $?dl (create$ RED-ON YELLOW-ON))))
+	(exploration-report (name ?n) (zone-state WRONG_REPORT))
+	=>
+	(modify ?m (desired-lights (create$ RED-ON YELLOW-ON)))
+)
+
+(defrule machine-lights-wrong-report-rotation
+	(gamestate (phase EXPLORATION|PRODUCTION) (state RUNNING))
+	?m <- (machine (name ?n) (desired-lights ?dl&:(neq $?dl (create$ RED-ON YELLOW-BLINK))))
+	(exploration-report (name ?n) (rotation-state WRONG_REPORT))
+	=>
+	(modify ?m (desired-lights (create$ RED-ON YELLOW-BLINK)))
+)
 
 (defrule machine-lights-idle
 	(gamestate (phase PRODUCTION))
-	?m <- (machine (state IDLE) (desired-lights $?dl&:(neq ?dl (create$ GREEN-ON))))
+	?m <- (machine (state IDLE) (name ?n) (desired-lights $?dl&:(neq ?dl (create$ GREEN-ON))))
+	(exploration-report (name ?n) (correctly-reported TRUE))
 	=>
 	(modify ?m (desired-lights GREEN-ON))
 )
 
 (defrule machine-lights-wait-idle
 	(gamestate (phase PRODUCTION))
-	?m <- (machine (state WAIT-IDLE) (desired-lights $?dl&:(neq ?dl (create$ YELLOW-BLINK))))
+	?m <- (machine (name ?n) (state WAIT-IDLE) (desired-lights $?dl&:(neq ?dl (create$ YELLOW-BLINK GREEN-BLINK))))
+	(exploration-report (name ?n) (correctly-reported TRUE))
 	=>
-	(modify ?m (desired-lights YELLOW-BLINK))
+	(modify ?m (desired-lights (create$ YELLOW-BLINK GREEN-BLINK)))
 )
 
 (defrule machine-lights-down
 	(gamestate (phase PRODUCTION))
-	?m <- (machine (state DOWN) (desired-lights $?dl&:(neq ?dl (create$ RED-ON))))
+	?m <- (machine (name ?n) (state DOWN) (desired-lights $?dl&:(neq ?dl (create$ RED-ON))))
+	(exploration-report (name ?n) (correctly-reported TRUE))
 	=>
-	(modify ?m (desired-lights RED-ON))
-)
-
-(defrule machine-lights-prepared-stop-blinking
-  "The machine is PREPARED and has been blinking, change the light signal to GREEN (non-blinking)"
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
-  ?m <- (machine (name ?n) (state PREPARED|PROCESSING)
-		 (actual-lights GREEN-BLINK) (desired-lights GREEN-BLINK)
-		 (prep-blink-start ?bs&:(timeout-sec ?gt ?bs ?*PREPARED-BLINK-TIME*)))
-  =>
-  (modify ?m (desired-lights GREEN-ON))
+	(modify ?m (desired-lights (create$ RED-ON)))
 )
 
 (defrule machine-lights-processing
 	(gamestate (phase PRODUCTION))
-	?m <- (machine (state PROCESSING) (desired-lights $?dl&:(neq ?dl (create$ GREEN-ON YELLOW-ON))))
+	?m <- (machine (name ?n) (state PROCESSING) (desired-lights $?dl&:(neq ?dl (create$ YELLOW-ON GREEN-ON))))
+	(exploration-report (name ?n) (correctly-reported TRUE))
 	=>
-	(modify ?m (desired-lights GREEN-ON YELLOW-ON))
+	(modify ?m (desired-lights YELLOW-ON GREEN-ON))
 )
 
 (defrule machine-lights-prepared
 	(gamestate (phase PRODUCTION) (game-time ?gt))
-	?m <- (machine (state PREPARED) (desired-lights $?dl&:(neq ?dl (create$ GREEN-BLINK))))
+	?m <- (machine (name ?n) (state PREPARED) (desired-lights $?dl&:(neq ?dl (create$ GREEN-BLINK))))
+	(exploration-report (name ?n) (correctly-reported TRUE))
 	=>
 	(modify ?m (desired-lights GREEN-BLINK) (prep-blink-start ?gt))
 )
 
 (defrule machine-lights-ready-at-output
-  (gamestate (phase PRODUCTION))
-  ?m <- (machine (state READY-AT-OUTPUT) (desired-lights $?dl&:(neq ?dl (create$ YELLOW-ON))))
-  =>
-  (modify ?m (desired-lights YELLOW-ON))
+	(gamestate (phase PRODUCTION))
+	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (desired-lights $?dl&:(neq ?dl (create$ YELLOW-ON GREEN-BLINK))))
+	(exploration-report (name ?n) (correctly-reported TRUE))
+	=>
+	(modify ?m (desired-lights YELLOW-ON GREEN-BLINK))
 )
 
 (defrule machine-lights-broken
-  (gamestate (phase PRODUCTION))
-  ?m <- (machine (state BROKEN) (desired-lights $?dl&:(neq ?dl (create$ RED-BLINK YELLOW-BLINK))))
-  =>
-  (modify ?m (desired-lights RED-BLINK YELLOW-BLINK))
+	(gamestate (phase PRODUCTION))
+	?m <- (machine (name ?n) (state BROKEN) (desired-lights $?dl&:(neq ?dl (create$ RED-BLINK YELLOW-BLINK))))
+	(exploration-report (name ?n) (correctly-reported TRUE))
+	=>
+	(modify ?m (desired-lights RED-BLINK YELLOW-BLINK))
 )

@@ -239,6 +239,14 @@
 			 then
 				(printout t "Prepare message received that is older than " ?*PRODUCTION-PREPARE-TIMEOUT* " sec (" (time-diff-sec ?now (time-from-sec (pb-field-value ?p "sent_at"))) ") ignoring it" crlf)
 			 else
+				(if (not (any-factp ((?exp exploration-report)) (and (eq ?exp:name ?mname)
+				                                                     (eq ?exp:rtype RECORD)
+				                                                     ?exp:correctly-reported)))
+				 then
+						(assert (attention-message (team ?team)
+						        (text (str-cat "Prepare received for machine that was not correctly reported yet: " ?mname))))
+						(return)
+				)
 				(do-for-fact ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))
 					(if (eq ?m:state IDLE) then
 						(printout t ?mname " is IDLE, processing prepare" crlf)
@@ -866,6 +874,12 @@
   (assert (production-MachineAddBase ?mname))
 )
 
+(defrule production-send-machine-positions
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt&:(> ?gt ?*EXPLORATION-TIME*)))
+  ?send-pos <- (send-mps-positions (phases $?phases&:(not (member$ PRODUCTION ?phases))))
+  =>
+  (modify ?send-pos (phases (append$ ?phases PRODUCTION)))
+)
 
 (defrule production-proc-MachineAddBase
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
