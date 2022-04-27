@@ -40,6 +40,14 @@ NUM_BENCHMARKS=$2
 
 tmpconfig=$(mktemp ${LLSF_REFBOX_DIR}/cfg/store_to_report_generated_XXXXXX.yaml)
 
+TRAP_SIGNALS="SIGINT SIGTERM SIGPIPE EXIT"
+cleanup () {
+  trap - $TRAP_SIGNALS
+  rm -f $tmpconfig
+	killall -9 llsf-refbox &>/dev/null &
+}
+trap cleanup $TRAP_SIGNALS
+
 for i in  $(seq 1 $NUM_BENCHMARKS)
 do
 	DOC_COUNT=$(mongo rcll --eval "db.game_report.count({\"report-name\": \"${NAME_PREFIX}_${i}\"})" --quiet)
