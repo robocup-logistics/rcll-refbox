@@ -644,8 +644,8 @@
 		(printout t "Loading storage status finished" crlf)
 		(modify ?gp (storage-status STATIC))
 	 else
-		(printout error "Loading storage status from database failed, fallback to random generation." crlf)
-		(modify ?gp (storage-status RANDOM))
+		(printout error "Loading storage status from database failed, fallback to default assignment." crlf)
+		(modify ?gp (storage-status DEFAULT))
 	)
 )
 
