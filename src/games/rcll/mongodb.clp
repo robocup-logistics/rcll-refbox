@@ -626,7 +626,6 @@
 	(mongodb-cursor-destroy ?t-cursor)
 	(bson-builder-destroy ?t-query)
 	(bson-builder-destroy ?t-sort)
-  )
 )
 
 (defrule mongodb-load-storage-status
