@@ -23,3 +23,5 @@ llsfrb:
     load-from-report: ""
     # store game report under a name for later reference
     store-to-report: ""
+
+    exploration-time: 180
