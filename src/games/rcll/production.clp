@@ -878,7 +878,6 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt&:(> ?gt ?*EXPLORATION-TIME*)))
   ?send-pos <- (send-mps-positions (phases $?phases&:(not (member$ PRODUCTION ?phases))))
   =>
-  (printout t "Exploration Phase over, sending ground truth of machines" crlf)
   (modify ?send-pos (phases (append$ ?phases PRODUCTION)))
 )
 

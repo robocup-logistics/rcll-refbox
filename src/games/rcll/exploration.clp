@@ -325,8 +325,10 @@
 (defrule exploration-set-ground-truth
 	(machine (name ?n) (team ?team) (rotation ?rotation) (zone ?zone))
 	(not (exploration-report (name ?n) (rtype RECORD) (correctly-reported TRUE)))
-	(gamestate (phase PRODUCTION) (game-time ?game-time&:(>= ?game-time ?*EXPLORATION-TIME*)))
+	(gamestate (phase ?phase))
+	(send-mps-positions (phases $?phases&:(member$ ?phase ?phases)))
 	=>
+	(printout t "Exploration Phase over, sending ground truth of machines" crlf)
 	(do-for-all-facts ((?exp exploration-report))
 		(retract ?exp)
 	)
