@@ -877,8 +877,8 @@
 (defrule production-send-machine-positions
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt&:(> ?gt ?*EXPLORATION-TIME*)))
   ?send-pos <- (send-mps-positions (phases $?phases&:(not (member$ PRODUCTION ?phases))))
+  (not (confval (path "/llsfrb/challenges/enable") (type BOOL) (value true)))
   =>
-  (printout t "Exploration Phase over, sending ground truth of machines" crlf)
   (modify ?send-pos (phases (append$ ?phases PRODUCTION)))
 )
 
