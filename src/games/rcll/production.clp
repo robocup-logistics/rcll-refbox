@@ -25,8 +25,7 @@
 		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
 		(modify ?m (state PREPARED) (bs-side  ?side) (bs-color ?color) (wait-for-product-since ?gt))
 	 else
-		(modify ?m (state BROKEN)
-		(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+		(printout warn "Prepare received for " ?mname " without data, ignoring" crlf)
 	)
 )
 
@@ -45,8 +44,7 @@
 			  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
 		)
 	 else
-		(modify ?m (state BROKEN)
-		           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+		(printout warn "Prepare received for " ?mname " without data, ignoring" crlf)
 	)
 )
 
@@ -117,8 +115,7 @@
 			            "], " ?slot " [0, " ?*SS-MAX-SLOT*"])" )))
 		)
 	 else
-		(modify ?m (state BROKEN)
-		           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+		(printout warn "Prepare received for " ?mname " without data, ignoring" crlf)
 	)
 )
 
@@ -137,8 +134,7 @@
 			           (broken-reason (str-cat "Prepare received for " ?mname " for invalid ring color (" ?ring-color ")")))
 		)
 	 else
-		(modify ?m (state BROKEN)
-		(broken-reason (str-cat "Prepare received for " ?mname " without data")))
+		(printout warn "Prepare received for " ?mname " without data, ignoring" crlf)
 	)
 )
 
@@ -172,8 +168,7 @@
 				                                   ": cannot mount without cap")))
 		)))
 	 else
-		(modify ?m (state BROKEN)
-		           (broken-reason (str-cat "Prepare received for " ?mname " without data")))
+		(printout warn "Prepare received for " ?mname " without data, ignoring" crlf)
 	)
 )
 
