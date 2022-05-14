@@ -117,7 +117,7 @@
 	)
 	; randomly assigned machines to zones using the external generator
 	(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
-	(machine-retrieve-generated-mps TRUE)
+	(machine-retrieve-generated-mps FALSE)
 
 
   ; Swap machines
