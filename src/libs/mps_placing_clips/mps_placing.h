@@ -267,7 +267,8 @@ public:
 			                  && (mps_angle_[index(width_ - 3, 1)] != ANGLE_180)
 			                  && (mps_angle_[index(width_ - 3, 1)] != ANGLE_225)));
 		}
-
+		// Carologistics FH Aachen pillar block
+		Gecode::rel(*this, mps_resource_[4][3][0] == 1);
 		// entry zone is blocked
 		Gecode::rel(*this, mps_resource_[width_][1][0] == 1);
 		Gecode::rel(*this, mps_resource_[width_ - 1][1][0] == 1);
