@@ -160,6 +160,41 @@
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
+(deftemplate agent-task
+  (slot task-type (type SYMBOL) (allowed-values nil MOVE RETRIEVE DELIVER BUFFER EXPLORE_MACHINE))
+  (multislot task-parameters)
+
+  (slot task-id (type INTEGER))
+  (slot robot-id (type INTEGER))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+
+  (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
+
+  (slot order-id (type INTEGER))
+
+  (slot workpiece-id (type INTEGER))
+
+  (slot successful (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+
+  (slot base-color (type SYMBOL) (allowed-values nil BASE_BLACK BASE_CLEAR BASE_RED BASE_SILVER))
+  (multislot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+)
+
+(deftemplate stamped-pose
+  (slot task-id (type INTEGER))
+  (slot robot-id (type INTEGER))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+
+  (slot x (type FLOAT))
+  (slot y (type FLOAT))
+  (slot ori (type FLOAT))
+
+  (slot sec (type INTEGER))
+  (slot usec (type INTEGER))
+)
+
 (deftemplate signal
   (slot type)
   (multislot time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
