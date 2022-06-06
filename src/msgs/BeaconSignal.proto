@@ -75,10 +75,10 @@ message BeaconSignal {
   optional AgentTask task = 9; // current task-id of robot
   repeated FinishedTask finished_tasks = 10; // a list of all the tasks that the robot has done. Contains the ID of the task and the result
 }
- 
+
 message FinishedTask{
 	required uint32 TaskId = 1; // the specific task thats been done
 	required bool successful = 2; // the result of the task thats been done
 }
- 
- 
+
+
