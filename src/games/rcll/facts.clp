@@ -136,6 +136,19 @@
   (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot next-at (type SYMBOL) (allowed-values M-BS M-BS
+                                              M-RS1 M-RS1
+                                              M-RS2 M-RS2
+                                              M-CS1 M-CS1
+                                              M-CS2 M-CS2
+                                              M-DS
+                                              C-BS C-BS
+                                              C-RS1 C-RS1
+                                              C-RS2 C-RS2
+                                              C-CS1 C-CS1
+                                              C-CS2 C-CS2
+                                              C-DS))
+  (slot next-side (type SYMBOL) (allowed-values INPUT OUTPUT))
   (multislot vision-pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot vision-pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot maintenance-start-time (type FLOAT))
@@ -265,14 +278,21 @@
 )
 
 (deftemplate workpiece
-	(slot id (type INTEGER))
-	(slot order (type INTEGER))
-	(slot at-machine (type SYMBOL)
-				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot id (type INTEGER))
+  (slot order (type INTEGER))
+  (slot latest-data (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot start-time (type FLOAT))
+  (multislot end-time (type FLOAT))
+  (slot at-machine (type SYMBOL)
+                   (allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot at-side (type SYMBOL) (allowed-values INPUT OUTPUT SHELF SLIDE))
+  (slot holding (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot robot-holding (type INTEGER))
+  (slot unknown-action (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (slot state (type SYMBOL) (allowed-values IDLE AVAILABLE RETRIEVED) (default IDLE))
   (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK BASE_CLEAR))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
-						 (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+                         (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
   (slot visible (type FLOAT))
