@@ -37,6 +37,7 @@
 #define BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
 
 #include <config/yaml.h>
+#include <msgs/AgentTask.pb.h>
 #include <msgs/BeaconSignal.pb.h>
 #include <msgs/ExplorationInfo.pb.h>
 #include <msgs/GameState.pb.h>
@@ -63,6 +64,12 @@ static boost::asio::deadline_timer *timer_ = NULL;
 std::string                         name_;
 Team                                team_color_;
 std::string                         team_name_;
+int                                 task_id_;
+std::string                         task_type_;
+std::string                         waypoint_;
+std::string                         machine_point_;
+std::string                         machine_id_;
+int                                 shelf_number_;
 unsigned long                       seq_          = 0;
 ProtobufBroadcastPeer              *peer_public_  = NULL;
 ProtobufBroadcastPeer              *peer_team_    = NULL;
@@ -103,6 +110,7 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
                uint16_t                                   msg_type,
                std::shared_ptr<google::protobuf::Message> msg)
 {
+	printf("Got message \n");
 	std::shared_ptr<BeaconSignal> b;
 	if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
 #if __WORDSIZE == 64
@@ -294,14 +302,17 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
 			printf("  %s %u\n", RingColor_Name(r.ring_color()).c_str(), r.raw_material());
 		}
 	}
+	printf("Leave message \n");
 }
 
 void
 handle_timer(const boost::system::error_code &error)
 {
+	printf("handle_time 1 \n");
 	if (!error) {
 		boost::posix_time::ptime               now(boost::posix_time::microsec_clock::universal_time());
 		std::shared_ptr<BeaconSignal>          signal(new BeaconSignal());
+		AgentTask                             *task        = signal->mutable_task();
 		Time                                  *time        = signal->mutable_time();
 		boost::posix_time::time_duration const since_epoch = now - boost::posix_time::from_time_t(0);
 
@@ -323,11 +334,66 @@ handle_timer(const boost::system::error_code &error)
 		signal->set_team_name(team_name_);
 		signal->set_team_color(team_color_);
 		signal->set_seq(++seq_);
+
+		task->set_task_id(task_id_);
+		task->set_robot_id(1);
+		task->set_team_color(team_color_);
+
+		if (task_id_ > 0) {
+			FinishedTask *finished_task = signal->add_finished_tasks();
+			finished_task->set_taskid(task_id_ - 1);
+			finished_task->set_successful(true);
+		}
+
+		printf("handle_time 2 \n");
+
+		if (task_type_ == "Move") {
+			Move *move_task = task->mutable_move();
+			move_task->set_waypoint(waypoint_);
+			move_task->set_machine_point(machine_point_);
+		} else if (task_type_ == "Retrieve") {
+			Retrieve *retrieve_task = task->mutable_retrieve();
+			retrieve_task->set_machine_id(machine_id_);
+			retrieve_task->set_machine_point(machine_point_);
+		} else if (task_type_ == "Deliver") {
+			Deliver *deliver_task = task->mutable_deliver();
+			deliver_task->set_machine_id(machine_id_);
+			deliver_task->set_machine_point(machine_point_);
+		} else if (task_type_ == "BufferStation") {
+			BufferStation *buffer_task = task->mutable_buffer();
+			buffer_task->set_machine_id(machine_id_);
+			buffer_task->set_shelf_number(shelf_number_);
+		} else if (task_type_ == "ExploreWaypoint") {
+			ExploreWaypoint *explore_task = task->mutable_explore_machine();
+			explore_task->set_waypoint(waypoint_);
+			explore_task->set_machine_id(machine_id_);
+			explore_task->set_machine_point(machine_point_);
+		}
+		printf("handle_time 3 \n");
+
 		peer_team_->send(signal);
+
+		printf("handle_time 4 \n");
 
 		timer_->expires_at(timer_->expires_at() + boost::posix_time::milliseconds(2000));
 		timer_->async_wait(handle_timer);
+
+		printf("handle_time 5 \n");
 	}
+}
+
+void
+usage(const char *progname)
+{
+	printf("Usage: %s <name> <team> <task-type> <task-id> <parameter>\n"
+	       "\n"
+	       "parameter are specific for the agent-task type:\n"
+	       "Move:  <waypoint> <machine_point>\n"
+	       "Retrieve:  <machine_id> <machine_point>\n"
+	       "Deliver:  <machine_id> <machine_point>\n"
+	       "BufferStation:  <machine_id> <shelf_number>\n"
+	       "ExploreWaypoint:  <waypoint> <machine_id> <machine_point>\n",
+	       progname);
 }
 
 int
@@ -335,13 +401,58 @@ main(int argc, char **argv)
 {
 	ArgumentParser argp(argc, argv, "T:");
 
-	if (argp.num_items() != 2) {
-		printf("Usage: %s <name> <team>\n", argv[0]);
+	if (argp.num_items() < 4) {
+		usage(argv[0]);
 		exit(1);
 	}
 
 	name_      = argp.items()[0];
 	team_name_ = argp.items()[1];
+	task_type_ = argp.items()[2];
+	task_id_   = argp.parse_item_int(3);
+
+	if (task_type_ == "Move") {
+		if (argp.num_items() != 6) {
+			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+			usage(argv[0]);
+			exit(-1);
+		}
+		waypoint_      = argp.items()[3];
+		machine_point_ = argp.items()[4];
+	} else if (task_type_ == "Retrieve") {
+		if (argp.num_items() != 6) {
+			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+			usage(argv[0]);
+			exit(-1);
+		}
+		machine_id_    = argp.items()[4];
+		machine_point_ = argp.items()[5];
+	} else if (task_type_ == "Deliver") {
+		if (argp.num_items() != 6) {
+			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+			usage(argv[0]);
+			exit(-1);
+		}
+		machine_id_    = argp.items()[4];
+		machine_point_ = argp.items()[5];
+	} else if (task_type_ == "BufferStation") {
+		if (argp.num_items() != 6) {
+			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+			usage(argv[0]);
+			exit(-1);
+		}
+		machine_id_   = argp.items()[3];
+		shelf_number_ = argp.parse_item_int(4);
+	} else if (task_type_ == "ExploreWaypoint") {
+		if (argp.num_items() != 7) {
+			printf("Wrong number of arguments. Expected 7, got %zu\n", argp.num_items());
+			usage(argv[0]);
+			exit(-1);
+		}
+		waypoint_      = argp.items()[4];
+		machine_id_    = argp.items()[5];
+		machine_point_ = argp.items()[6];
+	}
 
 	team_color_ = CYAN;
 	if (argp.has_arg("T")) {
@@ -371,6 +482,7 @@ main(int argc, char **argv)
 
 	MessageRegister &message_register = peer_public_->message_register();
 	message_register.add_message_type<BeaconSignal>();
+	//message_register.add_message_type<AgentTask>();
 	message_register.add_message_type<OrderInfo>();
 	message_register.add_message_type<GameState>();
 	message_register.add_message_type<VersionInfo>();
