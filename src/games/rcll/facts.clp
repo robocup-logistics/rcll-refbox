@@ -173,6 +173,8 @@
 
   (slot order-id (type INTEGER))
 
+  (slot processed (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+
   (slot workpiece-id (type INTEGER))
 
   (slot successful (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
