@@ -187,6 +187,7 @@
                         (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
 
   (if (pb-has-field ?p "task") then
+    (printout warn "task received" crlf)
     (bind ?at (pb-field-value ?p "task"))
     (bind ?team-color (pb-field-value ?at "team_color"))
     (bind ?task-id (pb-field-value ?at "task_id"))
@@ -202,12 +203,10 @@
                           (usec (nth$ 2 ?pose-time))))
 
     ; if agent task does not exist, create one
-    (if (eq (any-instancep ((?agent-task agent-task))
-              (and (eq ?agent-task:team-color ?team-color)
-                   (eq ?agent-task:task-id ?task-id)
-                   (eq ?agent-task:robot-id ?robot-id)))
-            FALSE) then
-
+    (if (not (any-factp ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
+                                                        (eq ?agent-task:task-id ?task-id)
+                                                        (eq ?agent-task:robot-id ?robot-id)))) then
+      (printout warn "create agent-task" crlf)
       ; bind task infos
       (bind ?task-type nil)
       (bind ?task-parameters (create$ waypoint nil))
@@ -255,7 +254,7 @@
       )
 
       (bind ?order-id nil)
-      (if (pb-has-value ?at "order_id") then
+      (if (pb-has-field ?at "order_id") then
         (bind ?order-id (pb-field-value ?at "order_id"))
       )
 
@@ -268,14 +267,17 @@
                           (end-time 0 0)
                           (order-id ?order-id)
                           (successful TRUE)
+                          (processed FALSE)
                           (base-color ?base-color)
                           (ring-color ?ring-color)
                           (cap-color ?cap-color)))
+      (printout warn "agent-task: " ?task-type ?task-parameters crlf)
     )
 
     ; check if end time and succesful flag are set
-    (foreach ?ft (pb-field-list ?p "finished_tasks")
+    (progn$ (?ft (pb-field-list ?p "finished_tasks"))
       (bind ?task-id (pb-field-value ?ft "task_id"))
+      (printout warn "task-done:" ?task-id crlf)
       (bind ?success (pb-field-value ?ft "successful"))
 
       (do-for-fact ((?agent-task agent-task))
