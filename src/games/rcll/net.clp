@@ -443,6 +443,7 @@
 (defrule net-recv-WorkpieceAddRing
   ?mf <- (protobuf-msg (type "llsf_msgs.WorkpieceAddRing") (ptr ?p) (rcvd-at $?rcvd-at)
 											 (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  (gamestate (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
 
@@ -451,9 +452,10 @@
 
 	(printout t "Add ring " ?ring-color " to workpiece " ?id crlf)
 
-	(do-for-fact ((?wp workpiece)) (eq ?wp:id ?id)
+	(do-for-fact ((?wp workpiece)) (and (eq ?wp:id ?id) (eq ?wp:latest-data TRUE))
 		(printout t "Add ring " ?ring-color " to workpiece " ?id " *** " crlf)
-	  (modify ?wp (ring-colors (append$ ?wp:ring-colors ?ring-color)))
+	  (duplicate ?wp (start-time ?gt) (ring-colors (append$ ?wp:ring-colors ?ring-color)))
+	  (modify ?wp (latest-data FALSE) (end-time ?gt))
 	)
 )
 
@@ -461,7 +463,7 @@
   (bind ?wi (pb-create "llsf_msgs.WorkpieceInfo"))
 
   (do-for-all-facts
-    ((?wp workpiece)) TRUE
+    ((?wp workpiece)) (eq ?wp:latest-data TRUE)
 
     (bind ?w (pb-create "llsf_msgs.Workpiece"))
 		(pb-set-field ?w "id" ?wp:id)

@@ -67,7 +67,7 @@
 
 (defrule ws-update-workpiece
   "send update of a workpiece, whenever the workpiece fact changes"
-  ?sf <- (workpiece (id ?id))
+  ?sf <- (workpiece (id ?id) (latest-data TRUE))
   =>
   (ws-create-WorkpieceInfo ?id)
 )

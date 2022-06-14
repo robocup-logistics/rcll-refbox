@@ -192,6 +192,7 @@
                 (base-color ?base-color)
                 (ring-colors $?ring-colors))
   (workpiece (id ?wp-id)
+             (latest-data TRUE)
              (team ?team)
              (base-color ?base-color)
              (ring-colors $?ring-colors))
@@ -199,9 +200,10 @@
   (workpiece-tracking (enabled TRUE))
   (not (and
       (workpiece (team ?team)
-                  (base-color ?base-color)
-                  (ring-colors $?ring-colors)
-                  (id ?wpp-id&:(neq ?wpp-id ?wp-id)))
+                 (latest-data TRUE)
+                 (base-color ?base-color)
+                 (ring-colors $?ring-colors)
+                 (id ?wpp-id&:(neq ?wpp-id ?wp-id)))
       (product-processed (workpiece ?wpp-id) (mtype CS) (confirmed FALSE)))
   )
   =>
@@ -225,11 +227,12 @@
 
 
 (defrule order-delivery-confirmation-referee-confirmed-workpiece-rectify
-  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece ?workpiece-id) (game-time ?delivery-time))
   ?wf <- (workpiece (id ?workpiece-id)
+                    (latest-data TRUE)
                     (order ?workpiece-order)
                     (cap-color ?workpiece-cap)
                     (base-color ?workpiece-base)
@@ -237,7 +240,7 @@
   ?of <- (order (id ?order)
                 (active TRUE)
                 (cap-color ?order-cap)
-	           (base-color ?order-base)
+                (base-color ?order-base)
                 (ring-colors $?order-rings))
 
   (test (or (neq ?workpiece-order ?order)
@@ -325,7 +328,12 @@
      (printout t "Rectifying workpiece " ?workpiece-id ": removing old delivery operation for order " ?pd:order  crlf)
      (retract ?pd)
   )
-  (modify ?wf (order ?order) (base-color ?order-base) (cap-color ?order-cap) (ring-colors ?order-rings))
+  (duplicate ?wf (start-time ?gt)
+                 (order ?order)
+                 (base-color ?order-base)
+                 (cap-color ?order-cap)
+                 (ring-colors ?order-rings))
+  (modify ?wf (latest-data FALSE) (end-time ?gt))
 )
 
 (defrule order-delivery-confirmation-referee-confirmed-workpiece-verified
@@ -334,6 +342,7 @@
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece ?wp-id) (game-time ?delivery-time))
   ?wf <- (workpiece (id ?wp-id)
+                    (latest-data TRUE)
                     (order ?order)
                     (cap-color ?cap-color)
                     (base-color ?base-color)
@@ -341,7 +350,7 @@
   ?of <- (order (id ?order)
                 (active TRUE)
                 (cap-color ?cap-color)
-	           (base-color ?base-color)
+                (base-color ?base-color)
                 (ring-colors $?ring-colors))
    =>
   (printout t "Workpiece " ?wp-id  " verified for order " ?order crlf)
@@ -358,7 +367,7 @@
 	                          (confirmed TRUE))
 	(not (product-processed (game-time ?other-delivery&:(< ?other-delivery ?delivery-time))
 	                        (scored FALSE) (mtype DS)))
-  (workpiece (id ?wp-id) (order ?id))
+  (workpiece (id ?wp-id) (order ?id) (latest-data TRUE))
   ; the actual order we are delivering
   ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (competitive ?competitive)
 	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
@@ -425,7 +434,7 @@
                             (id ?p-id)  (workpiece ?wp-id) (order ?o-id)
                             (scored FALSE) (confirmed TRUE)
                             (delivery-gate ?gate))
-  (workpiece (id ?wp-id) (order ?o-id))
+  (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
   ; the actual order we are delivering
   (order (id ?o-id) (active TRUE) (delivery-gate ?dgate&~?gate&:(neq ?gate 0)))
 	=>
@@ -443,7 +452,7 @@
   ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
                             (id ?p-id) (order ?o-id) (workpiece ?wp-id)
                             (scored FALSE) (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?o-id))
+  (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
   ; the actual order we are delivering
   (order (id ?o-id) (active TRUE) (delivery-period $?dp&:(< ?game-time (nth$ 1 ?dp))))
 	=>
@@ -461,7 +470,7 @@
   ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
                             (id ?p-id) (order ?o-id) (workpiece ?wp-id)
                             (scored FALSE) (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?o-id))
+  (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
   ; the actual order we are delivering
   ?of <- (order (id ?o-id) (active TRUE) (quantity-requested ?q-req)
 								(quantity-delivered $?q-del&:(>= (order-q-del-team ?q-del ?team) ?q-req)))
@@ -514,6 +523,7 @@
                             (cap-color ?step-c-color)
                             (ring-color ?step-r-color&~nil))
   (workpiece (id ?w-id)
+             (latest-data TRUE)
              (team ?team)
              (order ?o-id)
              (base-color ?base-color)
@@ -572,6 +582,7 @@
                               (ring-color ?step-r-color)
                               (cap-color ?step-c-color&~nil))
     (workpiece (id ?w-id)
+               (latest-data TRUE)
                (team ?team)
                (order ?o-id)
                (base-color ?base-color)
@@ -611,7 +622,7 @@
     ?pf <- (product-processed (id ?id) (workpiece ?w-id&~0)
                               (confirmed TRUE) (scored TRUE)
                               (mtype ~DS) (team ?team))
-    (not (workpiece (id ?w-id)))
+    (not (workpiece (id ?w-id) (latest-data TRUE)))
     =>
     (retract ?pf)
 )
@@ -640,6 +651,7 @@
                               (ring-color ?operation-ring)
                               (cap-color ?operation-cap))
     (workpiece (id ?w-id)
+               (latest-data TRUE)
                (team ?team)
                (order ?order)
                (base-color ?base-color)
@@ -667,8 +679,9 @@
                               (base-color ?operation-base)
                               (ring-color ?operation-ring)
                               (cap-color ?operation-cap)
-						(order ?operation-order))
+                              (order ?operation-order))
     (workpiece (id ?w-id)
+               (latest-data TRUE)
                (team ?team)
                (order ?order)
                (cap-color ?cap-color)
