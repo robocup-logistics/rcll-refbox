@@ -188,7 +188,9 @@
 
   (slot processed (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
 
-  (slot workpiece-id (type INTEGER))
+  (slot workpiece-name (type SYMBOL))
+
+  (slot unknown-action (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
 
   (slot successful (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
 
@@ -278,6 +280,7 @@
 
 (deftemplate workpiece
   (slot id (type INTEGER))
+  (slot name (type SYMBOL))
   (slot order (type INTEGER))
   (slot latest-data (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (multislot start-time (type FLOAT))
@@ -326,14 +329,14 @@
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
   (slot mtype (type SYMBOL) (allowed-values BS DS RS CS SS))
   (slot at-machine (type SYMBOL)
-				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
-	(slot delivery-gate (type INTEGER))
+                   (allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot delivery-gate (type INTEGER))
   (slot confirmed (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK))
   (slot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
   (slot scored (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
-	(slot order (type INTEGER) (default 0))
+  (slot order (type INTEGER) (default 0))
 )
 
 
