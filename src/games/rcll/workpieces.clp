@@ -406,17 +406,6 @@
     )
 )
 
-(defrule workpiece-tracking-disabled-remove-undelivered-workpiece
-    "If tracking was disabled for any reason, remove any undelivered workpieces."
-    (gamestate (game-time ?gt))
-    (workpiece-tracking (enabled FALSE))
-    ?wf <- (workpiece (id ?w-id) (latest-data TRUE))
-    (not (product-processed (mtype DS) (workpiece ?w-id)))
-    =>
-    (modify ?wf (latest-data FALSE) (end-time ?gt))
-    (printout t "Removing obsolete workpiece " ?w-id crlf)
-)
-
 (defrule workpiece-unique-order-prefixs
    "Warn if 'unique order prefix' assumption is violated. Assumption is
    necessary for sound order to workpiece assignment.
