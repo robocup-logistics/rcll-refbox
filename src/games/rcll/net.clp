@@ -145,6 +145,7 @@
 (defrule net-recv-beacon
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  (gamestate (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
@@ -199,8 +200,7 @@
                           (x (nth$ 1 ?pose))
                           (y (nth$ 2 ?pose))
                           (ori (nth$ 3 ?pose))
-                          (sec (nth$ 1 ?pose-time))
-                          (usec (nth$ 2 ?pose-time))))
+                          (time ?gt)))
 
     ; if agent task does not exist, create one
     (if (not (any-factp ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
@@ -263,8 +263,8 @@
                           (task-id ?task-id)
                           (robot-id ?robot-id)
                           (team-color ?team-color)
-                          (start-time ?time-sec ?time-usec)
-                          (end-time 0 0)
+                          (start-time ?gt)
+                          (end-time 0.0)
                           (order-id ?order-id)
                           (successful TRUE)
                           (processed FALSE)
@@ -284,15 +284,15 @@
                 (and (eq ?agent-task:team-color ?team-color)
                      (eq ?agent-task:task-id ?task-id)
                      (eq ?agent-task:robot-id ?robot-id)
-                     (eq ?agent-task:end-time (create$ 0 0))) then
-        (modify ?agent-task (end-time ?time-sec ?time-usec)))
+                     (eq ?agent-task:end-time 0.0)) then
+        (modify ?agent-task (end-time ?gt))
       )
       (do-for-fact ((?agent-task agent-task))
                 (and (eq ?agent-task:team-color ?team-color)
                      (eq ?agent-task:task-id ?task-id)
                      (eq ?agent-task:robot-id ?robot-id)
                      (neq ?agent-task:succesful ?success)) then
-        (modify ?agent-task (successful ?success)))
+        (modify ?agent-task (successful ?success))
       )
     )
   )
