@@ -148,7 +148,7 @@
                                               C-CS1 C-CS1
                                               C-CS2 C-CS2
                                               C-DS))
-  (slot next-side (type SYMBOL) (allowed-values INPUT OUTPUT))
+  (slot next-side (type SYMBOL) (allowed-values INPUT OUTPUT SHELF))
   (multislot vision-pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot vision-pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot maintenance-start-time (type FLOAT))
@@ -181,8 +181,8 @@
   (slot robot-id (type INTEGER))
   (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
 
-  (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
-  (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot start-time (type FLOAT))
+  (multislot end-time (type FLOAT))
 
   (slot order-id (type INTEGER))
 
@@ -206,8 +206,7 @@
   (slot y (type FLOAT))
   (slot ori (type FLOAT))
 
-  (slot sec (type INTEGER))
-  (slot usec (type INTEGER))
+  (slot time (type FLOAT))
 )
 
 (deftemplate signal
