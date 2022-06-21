@@ -213,8 +213,11 @@
       (if (pb-has-field ?at "move") then
         (bind ?t (pb-field-value ?at "move"))
         (bind ?task-type MOVE)
+        (bind ?machine-point nil)
+        (if (pb-has-field ?t "machine_point") then
+          (bind ?machine-point (pb-field-value ?t "machine_point")))
         (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
-                                        machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+                                        machine-point ?machine-point))
       )
       (if (pb-has-field ?at "retrieve") then
         (bind ?t (pb-field-value ?at "retrieve"))
@@ -231,15 +234,24 @@
       (if (pb-has-field ?at "buffer") then
         (bind ?t (pb-field-value ?at "buffer"))
         (bind ?task-type BUFFER)
+        (bind ?shelf-nr 0)
+        (if (pb-has-field ?t "shelf_number") then
+          (bind ?shelf-nr (pb-field-value ?t "shelf_number")))
         (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
-                                        shelf-number (pb-field-value ?t "shelf_number")))
+                                        shelf-number ?shelf-nr))
       )
       (if (pb-has-field ?at "explore_machine") then
         (bind ?t (pb-field-value ?at "explore_machine"))
         (bind ?task-type EXPLORE_MACHINE)
+        (bind ?machine-id nil)
+        (bind ?machine-point nil)
+        (if (pb-has-field ?t "machine_id") then
+          (bind ?machine-id (pb-field-value ?t "machine_id")))
+        (if (pb-has-field ?t "machine_point") then
+          (bind ?machine-point (pb-field-value ?t "machine_point")))
         (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
-                                        machine-id (sym-cat (pb-field-value ?t "machine_id"))
-                                        machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+                                        machine-id ?machine-id
+                                        machine-point ?machine-point))
       )
 
       ; bind wp description
@@ -250,12 +262,18 @@
         (bind ?wp-desc (pb-field-value ?at "workpiece_description"))
         (bind ?base-color (pb-field-value ?wp-desc "base_color"))
         (bind ?ring-color (pb-field-list ?wp-desc "ring_color"))
-        (bind ?cap-color (pb-field-value ?wp-desc "cap_color"))
+        (if (pb-has-field ?wp-desc "cap_color") then
+          (bind ?cap-color (pb-field-value ?wp-desc "cap_color")))
       )
 
       (bind ?order-id nil)
       (if (pb-has-field ?at "order_id") then
         (bind ?order-id (pb-field-value ?at "order_id"))
+      )
+
+      (bind ?successful TRUE)
+      (if (pb-has-field ?at "successful") then
+        (bind ?order-id (pb-field-value ?at "successful"))
       )
 
       (assert (agent-task (task-type ?task-type)
@@ -266,7 +284,7 @@
                           (start-time ?gt)
                           (end-time 0.0)
                           (order-id ?order-id)
-                          (successful TRUE)
+                          (successful ?successful)
                           (processed FALSE)
                           (base-color ?base-color)
                           (ring-color ?ring-color)
