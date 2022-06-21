@@ -74,7 +74,7 @@ message WorkpieceDescription {
         COMP_ID  = 8000;
         MSG_TYPE = 510;
     }
-    required BaseColor base_color  = 3;  // description fo the current workpiece the robot has gripped
-    repeated RingColor ring_colors = 4;  // description fo the current workpiece the robot has gripped
-    optional CapColor cap_color    = 5;  // description fo the current workpiece the robot has gripped
+    required BaseColor base_color  = 3;  // description of the current workpiece the robot has gripped
+    repeated RingColor ring_colors = 4;  // description of the current workpiece the robot has gripped
+    optional CapColor cap_color    = 5;  // description of the current workpiece the robot has gripped
 }
