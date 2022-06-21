@@ -82,7 +82,7 @@
 )
 
 (defrule agent-task-retrieve-received
-  "Processing RETRIEVE action send by the robot. Updating robots next position in
+  "Processing RETRIEVE action send by the robot. Updating workpiece fact in
   worldmodel."
   ?a <- (agent-task (task-type RETRIEVE)
                     (robot-id ?robot-id)
@@ -170,7 +170,7 @@
     (bind ?wp-name (gensym*))
     (if (eq (length$ $?ring-color) 0) then
       (assert (workpiece (latest-data TRUE)
-                         (unknown-action TRUE)
+                         (unknown-action FALSE)
                          (name ?wp-name)
                          (start-time ?gt)
                          (holding TRUE)
@@ -184,7 +184,7 @@
     else
       ; if workpiece has a ring already, create unknown-action instead
       (assert (workpiece (latest-data TRUE)
-                         (unknown-action FALSE)
+                         (unknown-action TRUE)
                          (name ?wp-name)
                          (start-time ?gt)
                          (holding TRUE)
@@ -200,5 +200,113 @@
   (modify ?a (workpiece-name ?wp-name) (processed TRUE))
 )
 
+
+(defrule agent-task-deliver-received
+  "Processing DELIVER action send by the robot. Updating workpiece fact in
+  worldmodel."
+  ?a <- (agent-task (task-type DELIVER)
+                    (robot-id ?robot-id)
+                    (processed FALSE)
+                    (team-color ?team-color)
+                    (task-parameters machine-id ?machine-id
+                                     machine-point ?machine-point)
+                    (order-id ?order-id)
+                    (base-color ?base-color)
+                    (ring-color $?ring-color)
+                    (cap-color ?cap-color))
+  ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
+  (gamestate (game-time ?gt))
+  =>
+  (printout warn "Deliver received" crlf)
+  (bind ?wp-name nil)
+
+  ; check if robot is supposedly not holding a workpiece and create fact
+  (if (not (any-factp ((?wp workpiece)) (and (eq ?wp:holding TRUE)
+                                             (eq ?wp:robot-holding ?robot-id)
+                                             (eq ?wp:latest-data TRUE)))) then
+    ; create workpiece with random id
+    (bind ?wp-name (gensym*))
+    (assert (workpiece (latest-data TRUE)
+                       (unknown-action FALSE)
+                       (name ?wp-name)
+                       (start-time ?gt)
+                       (holding TRUE)
+                       (robot-holding ?robot-id)
+                       (order ?order-id)
+                       (at-machine nil)
+                       (at-side nil)
+                       (base-color ?base-color)
+                       (ring-colors $?ring-color)
+                       (cap-color ?cap-color)))
+  )
+
+  ; if robot is not at the right place, ensure it with an unknown-action
+  (if (or (neq ?next-at ?machine-id)
+          (neq ?next-side ?machine-point)) then
+    (assert (agent-task (task-type MOVE)
+                        (unknown-action TRUE)
+                        (task-parameters waypoint ?machine-id machine-point ?machine-point)
+                        (task-id 0)
+                        (robot-id ?robot-id)
+                        (team-color ?team-color)
+                        (start-time ?gt)
+                        (end-time ?gt)
+                        (workpiece-name ?wp-name)
+                        (order-id ?order-id)
+                        (successful TRUE)
+                        (base-color ?base-color)
+                        (ring-color $?ring-color)
+                        (cap-color ?cap-color)))
+    (modify ?r (next-at ?machine-id) (next-side ?machine-point))
+  )
+
+  ; if a workpiece is supposedly at the target, modify its position
+  (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:holding FALSE)
+                                           (eq ?wp:at-machine ?machine-id)
+                                           (eq ?wp:at-side ?machine-point)
+                                           (eq ?wp:latest-data TRUE))
+    (duplicate ?wp (unknown-action TRUE) (start-time ?gt) (at-machine nil) (at-side nil))
+    (modify ?wp (end-time ?gt) (latest-data FALSE))
+  )
+
+  ; place workpiece at target
+  (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
+                                      (eq ?wp:robot-holding ?robot-id)
+                                      (eq ?wp:latest-data TRUE))
+    (bind ?wp-name ?wp:name)
+    ; check if colors match
+    (if (and (neq ?base-color nil)
+             (or (neq ?wp:base-color ?base-color)
+                 (neq ?wp:ring-colors $?ring-color)
+                 (neq ?wp:cap-color ?cap-color))) then
+      ; create unknown action for changing colors
+      (duplicate ?wp (latest-data FALSE)
+                     (start-time ?gt)
+                     (end-time ?gt)
+                     (unknown-action TRUE)
+                     (base-color ?base-color)
+                     (ring-colors $?ring-color)
+                     (cap-color ?cap-color))
+      (modify ?wp (latest-data TRUE)
+                  (start-time ?gt)
+                  (end-time ?gt)
+                  (unknown-action FALSE)
+                  (base-color ?base-color)
+                  (ring-colors $?ring-color)
+                  (cap-color ?cap-color)
+                  (at-machine ?machine-id)
+                  (at-side ?machine-point)
+                  (holding FALSE))
+    else
+      (duplicate ?wp (start-time ?gt)
+                     (at-machine ?machine-id)
+                     (at-side ?machine-point)
+                     (holding FALSE))
+      (modify ?wp (end-time ?gt) (latest-date FALSE))
+    )
+  )
+
+  (modify ?a (workpiece-name ?wp-name) (processed TRUE))
+)
 
 ;---------------------- receiving product-processed --------------------------
