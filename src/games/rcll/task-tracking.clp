@@ -9,12 +9,12 @@
 
 ;------------------------ receiving agent-tasks ----------------------------
 
-(defrule agent-task-move-received
+(defrule agent-task-move-explore-received
   "Processing MOVE action send by the robot. Updating robot next position in
   worldmodel."
-  ?a <- (agent-task (task-type MOVE)
+  ?a <- (agent-task (task-type ?task-type&MOVE|EXPLORE_MACHINE)
                     (robot-id ?robot-id)
-                    ;(unknown-action FALSE)
+                    (unknown-action FALSE)
                     (processed FALSE)
                     (team-color ?team-color)
                     (task-parameters waypoint ?waypoint
@@ -25,7 +25,7 @@
   ?r <- (robot (number ?robot-id) (team-color ?team-color))
   (gamestate (game-time ?gt))
   =>
-  (printout warn "Move received" crlf)
+  (printout warn ?task-type " received" crlf)
   (bind ?wp-name nil)
   (modify ?r (next-at ?waypoint) (next-side ?machine-point))
 
@@ -67,16 +67,6 @@
                          (ring-colors $?ring-color)
                          (cap-color ?cap-color)))
     )
-  ;else
-    ; check if robot is supposedly holding a workpiece and change fact
-  ;  (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
-  ;                                      (eq ?wp:robot-holding ?robot-id)
-  ;                                      (eq ?wp:latest-data TRUE))
-  ;    (duplicate ?wp (start-time ?gt)
-  ;                   (unknown-action TRUE)
-  ;                   (holding FALSE))
-  ;    (modify ?wp (latest-data FALSE) (end-time ?gt))
-  ;  )
   )
   (modify ?a (processed TRUE) (workpiece-name ?wp-name))
 )
@@ -86,6 +76,7 @@
   worldmodel."
   ?a <- (agent-task (task-type RETRIEVE)
                     (robot-id ?robot-id)
+                    (unknown-action FALSE)
                     (processed FALSE)
                     (team-color ?team-color)
                     (task-parameters machine-id ?machine-id
@@ -206,6 +197,7 @@
   worldmodel."
   ?a <- (agent-task (task-type DELIVER)
                     (robot-id ?robot-id)
+                    (unknown-action FALSE)
                     (processed FALSE)
                     (team-color ?team-color)
                     (task-parameters machine-id ?machine-id
@@ -314,6 +306,7 @@
   worldmodel."
   ?a <- (agent-task (task-type BUFFER)
                     (robot-id ?robot-id)
+                    (unknown-action FALSE)
                     (processed FALSE)
                     (team-color ?team-color)
                     (task-parameters machine-id ?machine-id
