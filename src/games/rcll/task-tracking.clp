@@ -67,16 +67,16 @@
                          (ring-colors $?ring-color)
                          (cap-color ?cap-color)))
     )
-  else
+  ;else
     ; check if robot is supposedly holding a workpiece and change fact
-    (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
-                                        (eq ?wp:robot-holding ?robot-id)
-                                        (eq ?wp:latest-data TRUE))
-      (duplicate ?wp (start-time ?gt)
-                     (unknown-action TRUE)
-                     (holding FALSE))
-      (modify ?wp (latest-data FALSE) (end-time ?gt))
-    )
+  ;  (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
+  ;                                      (eq ?wp:robot-holding ?robot-id)
+  ;                                      (eq ?wp:latest-data TRUE))
+  ;    (duplicate ?wp (start-time ?gt)
+  ;                   (unknown-action TRUE)
+  ;                   (holding FALSE))
+  ;    (modify ?wp (latest-data FALSE) (end-time ?gt))
+  ;  )
   )
   (modify ?a (processed TRUE) (workpiece-name ?wp-name))
 )
@@ -135,9 +135,10 @@
                                                (eq ?wp:latest-data TRUE))
         (bind ?wp-name ?wp:name)
         ; check if colors match
-        (if (or (neq ?wp:base-color ?base-color)
-                (neq ?wp:ring-colors $?ring-color)
-                (neq ?wp:cap-color ?cap-color)) then
+        (if (and (neq ?base-color nil)
+                 (or (neq ?wp:base-color ?base-color)
+                     (neq ?wp:ring-colors $?ring-color)
+                     (neq ?wp:cap-color ?cap-color))) then
           ; create unknown action for changing colors
           (duplicate ?wp (latest-data FALSE)
                          (start-time ?gt)
