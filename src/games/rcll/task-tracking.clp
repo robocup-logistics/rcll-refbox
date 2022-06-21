@@ -121,7 +121,10 @@
 
   ; check if a workpiece is at the target
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?machine-id)
-                                               (eq ?wp:at-side ?machine-point)
+                                               (or (eq ?wp:at-side ?machine-point)
+                                                   (and (or (eq ?machine-id C-BS)
+                                                            (eq ?machine-id M-BS))
+                                                        (eq ?wp:at-side nil)))
                                                (eq ?wp:holding FALSE)
                                                (eq ?wp:latest-data TRUE))
         (bind ?wp-name ?wp:name)
@@ -135,6 +138,7 @@
                          (start-time ?gt)
                          (end-time ?gt)
                          (unknown-action TRUE)
+                         (at-side ?machine-point)
                          (base-color ?base-color)
                          (ring-colors $?ring-color)
                          (cap-color ?cap-color))
@@ -145,14 +149,15 @@
                          (holding TRUE)
                          (robot-holding ?robot-id)
                          (unknown-action FALSE)
+                         (at-side ?machine-point)
                          (order ?order-id)
                          (base-color ?base-color)
                          (ring-colors $?ring-color)
                          (cap-color ?cap-color))
-          (modify ?wp (latest-data FALSE) (end-time ?gt))
+          (modify ?wp (latest-data FALSE) (at-side ?machine-point) (end-time ?gt))
         else
-          (duplicate ?wp (start-time ?gt) (holding TRUE) (robot-holding ?robot-id) (order ?order-id))
-          (modify ?wp (latest-data FALSE) (end-time ?gt))
+          (duplicate ?wp (start-time ?gt) (holding TRUE) (robot-holding ?robot-id) (at-side ?machine-point) (order ?order-id))
+          (modify ?wp (latest-data FALSE) (at-side ?machine-point) (end-time ?gt))
         )
       )
     )
@@ -379,3 +384,29 @@
 )
 
 ;---------------------- receiving product-processed --------------------------
+
+(defrule workpiece-at-bs-received
+  "When workpiece available at BS, create workpiece fact."
+  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (workpiece-tracking (enabled FALSE))
+  ?pf <- (product-processed (mtype BS)
+                            (confirmed FALSE)
+                            (workpiece ?wp-id)
+                            (at-machine ?m-name)
+                            (base-color ?base-color))
+  =>
+  (bind ?wp-name (gensym*))
+  (assert (workpiece (latest-data TRUE)
+                     (unknown-action FALSE)
+                     (name ?wp-name)
+                     (start-time ?gt)
+                     (holding FALSE)
+                     (robot-holding 0)
+                     (at-machine ?m-name)
+                     (at-side nil)
+                     (base-color ?base-color)
+                     (cap-color nil)))
+
+  (modify ?pf (confirmed TRUE))
+  (printout t "Workpiece " ?wp-name " created at " ?m-name crlf)
+)
