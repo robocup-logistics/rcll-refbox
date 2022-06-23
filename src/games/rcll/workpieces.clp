@@ -357,7 +357,7 @@
                 " not the tracked order " ?tracked-order-id crlf)
       (printout t "Conflict will be resolved upon referee confirmation!" crlf)
    )
-   (duplicate ?wf (start-time ?gt) (at-side SLIDE))
+   (duplicate ?wf (start-time ?gt) (at-side nil))
    (modify ?wf (latest-data FALSE) (end-time ?gt))
    (modify ?pf (workpiece ?id))
 )
