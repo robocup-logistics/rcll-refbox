@@ -126,20 +126,36 @@
     =>
     (retract ?mf)
     (printout t "Workpiece " ?id ": at " ?m-name ", available!"crlf)
-    (if (any-factp ((?wp workpiece)) (eq ?wp:id ?id)) then
-       ;Update existing
-       (do-for-fact ((?workpiece workpiece)) (and (eq ?workpiece:id ?id)
-                                                  (eq ?workpiece:latest-data TRUE))
-         (duplicate ?workpiece (start-time ?gt) (at-machine ?m-name)
-                               (state AVAILABLE) (visible ?gt) (holding FALSE))
-         (modify ?workpiece (latest-data FALSE) (end-time ?gt))
-       )
-    else
-       ;Learn new
-       (assert (workpiece (at-machine ?m-name) (at-side INPUT) (holding FALSE)
-                          (state AVAILABLE) (visible ?gt) (id ?id)
-                          (latest-data TRUE) (start-time ?gt)
-                          (team ?team) (base-color (workpiece-base-color-by-id ?id))))
+    (if (not (do-for-fact ((?workpiece workpiece)) (and (eq ?workpiece:id ?id)
+                                                        (eq ?workpiece:latest-data TRUE))
+          ;Update existing
+          (duplicate ?workpiece (unknown-action FALSE) (start-time ?gt) (at-machine ?m-name)
+                                (state AVAILABLE) (visible ?gt) (holding FALSE) (team ?team))
+          (modify ?workpiece (latest-data FALSE) (end-time ?gt))
+        )
+      )
+    then
+      ;Find unidentified workpiece at input
+      (if (not (do-for-fact ((?workpiece workpiece)) (and (eq ?workpiece:at-machine ?m-name)
+                                                          (eq ?workpiece:at-side INPUT)
+                                                          (eq ?workpiece:latest-data TRUE))
+            (duplicate ?workpiece (unknown-action FALSE) (id ?id) (start-time ?gt) (at-machine ?m-name)
+                                  (state AVAILABLE) (visible ?gt) (holding FALSE) (team ?team))
+            (modify ?workpiece (latest-data FALSE) (id ?id) (end-time ?gt))
+            ;Update all workpiece facts with same workpiece-name without id
+            (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:name ?workpiece:name)
+                                                     (eq ?wp:id 0))
+              (modify ?workpiece (id ?id))
+            )
+          )
+        )
+      then
+        ;Else create a new workpiece fact
+        (assert (workpiece (at-machine ?m-name) (at-side INPUT) (holding FALSE)
+                           (state AVAILABLE) (visible ?gt) (id ?id) (name (sym-cat WP- (gensym*)))
+                           (latest-data TRUE) (start-time ?gt) (unknown-action FALSE)
+                           (team ?team) (base-color (workpiece-base-color-by-id ?id))))
+      )
     )
 )
 
