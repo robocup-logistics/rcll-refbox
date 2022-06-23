@@ -59,7 +59,7 @@
       )
     else
       ; create unknown workpiece fact
-      (bind ?wp-name (gensym*))
+      (bind ?wp-name (sym-cat WP- (gensym*)))
       (assert (workpiece (latest-data TRUE)
                          (unknown-action TRUE)
                          (name ?wp-name)
@@ -176,7 +176,7 @@
     )
   then
     ; create workpiece with random id
-    (bind ?wp-name (gensym*))
+    (bind ?wp-name (sym-cat WP- (gensym*)))
     (if (eq (length$ $?ring-color) 0) then
       (assert (workpiece (latest-data TRUE)
                          (unknown-action FALSE)
@@ -237,7 +237,7 @@
                                              (eq ?wp:robot-holding ?robot-id)
                                              (eq ?wp:latest-data TRUE)))) then
     ; create workpiece with random id
-    (bind ?wp-name (gensym*))
+    (bind ?wp-name (sym-cat WP- (gensym*)))
     (assert (workpiece (latest-data TRUE)
                        (unknown-action FALSE)
                        (name ?wp-name)
@@ -386,7 +386,7 @@
   )
 
   ; create new workpiece and place it at target
-  (bind ?wp-name (gensym*))
+  (bind ?wp-name (sym-cat WP- (gensym*)))
   (assert (workpiece (latest-data TRUE)
                      (unknown-action FALSE)
                      (name ?wp-name)
@@ -416,7 +416,7 @@
                             (at-machine ?m-name)
                             (base-color ?base-color))
   =>
-  (bind ?wp-name (gensym*))
+  (bind ?wp-name (sym-cat WP- (gensym*)))
   (assert (workpiece (latest-data TRUE)
                      (unknown-action FALSE)
                      (name ?wp-name)
@@ -475,9 +475,10 @@
         )
         (modify ?wp (latest-data FALSE) (end-time ?gt))
       )
-    ) then
+    )
+  then
     ; create one if none is at the input
-    (bind ?wp-name (gensym*))
+    (bind ?wp-name (sym-cat WP- (gensym*)))
     (assert (workpiece (latest-data FALSE)
                        (unknown-action TRUE)
                        (name ?wp-name)
@@ -545,9 +546,10 @@
                        (at-side nil))
         (modify ?wp (latest-data FALSE) (end-time ?gt))
       )
-    ) then
+    )
+  then
     ; create one if none is at the input
-    (bind ?wp-name (gensym*))
+    (bind ?wp-name (sym-cat WP- (gensym*)))
     (assert (workpiece (latest-data FALSE)
                        (unknown-action TRUE)
                        (name ?wp-name)
