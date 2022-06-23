@@ -296,6 +296,7 @@
                   (holding FALSE))
     else
       (duplicate ?wp (start-time ?gt)
+                     (unknown-action FALSE)
                      (at-machine ?machine-id)
                      (at-side ?machine-point)
                      (holding FALSE))
@@ -391,7 +392,6 @@
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype BS)
                             (confirmed FALSE)
-                            (workpiece ?wp-id)
                             (at-machine ?m-name)
                             (base-color ?base-color))
   =>
@@ -409,4 +409,66 @@
 
   (modify ?pf (confirmed TRUE))
   (printout t "Workpiece " ?wp-name " created at " ?m-name crlf)
+)
+
+(defrule workpiece-at-rs-received
+  "Update workpiece available at an RS with the recent production operation."
+  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (workpiece-tracking (enabled FALSE))
+  ?pf <- (product-processed (mtype RS)
+                            (confirmed FALSE)
+                            (at-machine ?m-name)
+                            (ring-color ?r-color))
+  =>
+  ; if a workpiece is supposedly at the MPS's output, modify its position
+  (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:holding FALSE)
+                                           (eq ?wp:at-machine ?m-name)
+                                           (eq ?wp:at-side OUTPUT)
+                                           (eq ?wp:latest-data TRUE))
+    (duplicate ?wp (unknown-action TRUE) (start-time ?gt) (at-machine nil) (at-side nil))
+    (modify ?wp (end-time ?gt) (latest-data FALSE))
+  )
+
+  ; place workpiece at output
+  (bind ?wp-name nil)
+  (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
+                                               (eq ?wp:at-side INPUT)
+                                               (eq ?wp:holding FALSE)
+                                               (eq ?wp:latest-data TRUE))
+        (bind ?wp-name ?wp:name)
+        (duplicate ?wp (start-time ?gt)
+                       (unknown-action FALSE)
+                       (ring-colors (append$ ?wp:ring-colors ?r-color))
+                       (at-side OUTPUT))
+        (modify ?wp (latest-data FALSE) (end-time ?gt))
+        )
+      ) then
+    ; create one if none is at the input
+    (bind ?wp-name (gensym*))
+    (assert (workpiece (latest-data FALSE)
+                       (unknown-action TRUE)
+                       (name ?wp-name)
+                       (start-time ?gt)
+                       (end-time ?gt)
+                       (holding FALSE)
+                       (robot-holding 0)
+                       (at-machine ?m-name)
+                       (at-side INPUT)
+                       (base-color nil)
+                       (cap-color nil)))
+    (assert (workpiece (latest-data TRUE)
+                       (unknown-action FALSE)
+                       (name ?wp-name)
+                       (start-time ?gt)
+                       (holding FALSE)
+                       (robot-holding 0)
+                       (at-machine ?m-name)
+                       (at-side OUTPUT)
+                       (base-color nil)
+                       (ring-colors ?r-color)
+                       (cap-color nil)))
+  )
+
+  (modify ?pf (confirmed TRUE))
+  (printout t "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
 )
