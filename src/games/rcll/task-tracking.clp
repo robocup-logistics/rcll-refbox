@@ -411,14 +411,15 @@
   (printout t "Workpiece " ?wp-name " created at " ?m-name crlf)
 )
 
-(defrule workpiece-at-rs-received
-  "Update workpiece available at an RS with the recent production operation."
+(defrule workpiece-at-rs-cs-received
+  "Update workpiece available at an RS or CS with the recent production operation."
   (gamestate (phase PRODUCTION) (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
-  ?pf <- (product-processed (mtype RS)
+  ?pf <- (product-processed (mtype RS|CS)
                             (confirmed FALSE)
                             (at-machine ?m-name)
-                            (ring-color ?r-color))
+                            (ring-color ?r-color)
+                            (cap-color ?c-color))
   =>
   ; if a workpiece is supposedly at the MPS's output, modify its position
   (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:holding FALSE)
@@ -436,13 +437,24 @@
                                                (eq ?wp:holding FALSE)
                                                (eq ?wp:latest-data TRUE))
         (bind ?wp-name ?wp:name)
-        (duplicate ?wp (start-time ?gt)
-                       (unknown-action FALSE)
-                       (ring-colors (append$ ?wp:ring-colors ?r-color))
-                       (at-side OUTPUT))
-        (modify ?wp (latest-data FALSE) (end-time ?gt))
+        (if (and (neq ?r-color nil) (eq ?c-color nil)) then
+          (duplicate ?wp (start-time ?gt)
+                         (unknown-action FALSE)
+                         (ring-colors (append$ ?wp:ring-colors ?r-color))
+                         (at-side OUTPUT))
+        else
+          (if (and (eq ?r-color nil) (neq ?c-color nil)) then
+            (duplicate ?wp (start-time ?gt)
+                           (unknown-action FALSE)
+                           (cap-color ?c-color)
+                           (at-side OUTPUT))
+          else
+            (printout t ?m-name " processed workpiece" wp-name " without ring or cap infos!" crlf)
+          )
         )
-      ) then
+        (modify ?wp (latest-data FALSE) (end-time ?gt))
+      )
+    ) then
     ; create one if none is at the input
     (bind ?wp-name (gensym*))
     (assert (workpiece (latest-data FALSE)
@@ -456,17 +468,34 @@
                        (at-side INPUT)
                        (base-color nil)
                        (cap-color nil)))
-    (assert (workpiece (latest-data TRUE)
-                       (unknown-action FALSE)
-                       (name ?wp-name)
-                       (start-time ?gt)
-                       (holding FALSE)
-                       (robot-holding 0)
-                       (at-machine ?m-name)
-                       (at-side OUTPUT)
-                       (base-color nil)
-                       (ring-colors ?r-color)
-                       (cap-color nil)))
+    (if (and (neq ?r-color nil) (eq ?c-color nil)) then
+      (assert (workpiece (latest-data TRUE)
+                         (unknown-action FALSE)
+                         (name ?wp-name)
+                         (start-time ?gt)
+                         (holding FALSE)
+                         (robot-holding 0)
+                         (at-machine ?m-name)
+                         (at-side OUTPUT)
+                         (base-color nil)
+                         (ring-colors ?r-color)
+                         (cap-color nil)))
+    else
+      (if (and (eq ?r-color nil) (neq ?c-color nil)) then
+        (assert (workpiece (latest-data TRUE)
+                           (unknown-action FALSE)
+                           (name ?wp-name)
+                           (start-time ?gt)
+                           (holding FALSE)
+                           (robot-holding 0)
+                           (at-machine ?m-name)
+                           (at-side OUTPUT)
+                           (base-color nil)
+                           (cap-color ?c-color)))
+      else
+        (printout t ?m-name " processed workpiece" wp-name " without ring or cap infos!" crlf)
+      )
+    )
   )
 
   (modify ?pf (confirmed TRUE))
