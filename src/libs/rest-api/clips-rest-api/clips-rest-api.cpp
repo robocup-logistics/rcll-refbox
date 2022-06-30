@@ -22,7 +22,9 @@
 
 #include "clips-rest-api.h"
 
+extern "C" {
 #include <clips/clips.h>
+}
 #include <core/threading/mutex_locker.h>
 
 #include <type_traits>
@@ -171,7 +173,7 @@ ClipsRestApi::gen_fact(CLIPS::Fact::pointer &fact, bool formatted)
 		char tmp[16384];
 		tmp[16383] = 0;
 		OpenStringDestination(env_->cobj(), (char *)"ProcPPForm", tmp, 16383);
-		PrintFact(env_->cobj(), (char *)"ProcPPForm", (struct fact *)fact->cobj(), FALSE, FALSE);
+		PrintFact(env_->cobj(), (const char *)"ProcPPForm", (struct fact *)fact->cobj(), FALSE, FALSE);
 		CloseStringDestination(env_->cobj(), (char *)"ProcPPForm");
 		retf.set_formatted(tmp);
 	} else {
