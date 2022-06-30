@@ -162,8 +162,8 @@
   (bind ?free-ring-colors (create$))
   (delayed-do-for-all-facts ((?ring ring-spec))
     (or (eq ?ring:color (nth$ 2 ?ring-colors)) (eq ?ring:color (nth$ 4 ?ring-colors)))
-    (modify ?ring (req-bases 0))
     (bind ?free-ring-colors (append$ ?free-ring-colors ?ring:color))
+    (modify ?ring (req-bases 0))
   )
 
   ; Randomly assign an order to be a competitive order
