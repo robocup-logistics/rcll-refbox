@@ -613,11 +613,11 @@ public:
 	int                                           height_;
 	int                                           width_;
 	std::set<int>                                 machines_;
-	Gecode::DFS<MPSPlacing> *                     search_;
-	MPSPlacing *                                  solution;
+	Gecode::DFS<MPSPlacing>                      *search_;
+	MPSPlacing                                   *solution;
 	Gecode::Rnd                                   rg_;
 	Gecode::Search::Options                       options_;
-	Gecode::Search::TimeStop *                    stop_;
+	Gecode::Search::TimeStop                     *stop_;
 };
 
 #endif // MPS_PLACING_H

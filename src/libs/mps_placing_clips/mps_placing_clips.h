@@ -72,7 +72,7 @@ public:
 private:
 	void                setup_clips();
 	CLIPS::Environment *clips_;
-	fawkes::Mutex &     clips_mutex_;
+	fawkes::Mutex      &clips_mutex_;
 	std::set<int>       machines_;
 	int                 width_;
 	int                 height_;
