@@ -57,11 +57,11 @@ boost::asio::deadline_timer wait_refbox_timer_(io_service_);
 static bool                 wait_state_      = false;
 static unsigned int         wait_state_time_ = 0;
 boost::asio::deadline_timer wait_state_timer_(io_service_);
-ProtobufStreamClient *      client_ = NULL;
+ProtobufStreamClient       *client_ = NULL;
 static std::string          host_   = "localhost";
 static unsigned short int   port_   = 4444;
 
-llsf_msgs::SetTeamName * msg_team_cyan_ = NULL, *msg_team_magenta_ = NULL;
+llsf_msgs::SetTeamName  *msg_team_cyan_ = NULL, *msg_team_magenta_ = NULL;
 llsf_msgs::SetGamePhase *msg_phase_ = NULL;
 llsf_msgs::SetGameState *msg_state_ = NULL;
 

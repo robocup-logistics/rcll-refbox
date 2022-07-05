@@ -162,7 +162,7 @@ main(int argc, char **argv)
 
 	//MessageRegister & message_register = client_->message_register();
 
-	char *             host      = (char *)"localhost";
+	char              *host      = (char *)"localhost";
 	unsigned short int port      = 4444;
 	bool               free_host = argp.parse_hostport("R", &host, &port);
 
