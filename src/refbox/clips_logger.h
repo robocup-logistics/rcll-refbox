@@ -57,9 +57,9 @@ public:
 	void log(const char *logical_name, const char *str);
 
 private:
-	Logger *    logger_;
-	Logger *    trace_logger_;
-	char *      component_;
+	Logger     *logger_;
+	Logger     *trace_logger_;
+	char	     *component_;
 	std::string buffer_;
 };
 
