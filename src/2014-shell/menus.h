@@ -119,7 +119,7 @@ private:
 class MachineWithPuckMenu : public Menu
 {
 public:
-	MachineWithPuckMenu(NCursesWindow *                         parent,
+	MachineWithPuckMenu(NCursesWindow                          *parent,
 	                    Team                                    team,
 	                    std::shared_ptr<llsf_msgs::MachineInfo> minfo);
 
@@ -146,7 +146,7 @@ private:
 class RobotMaintenanceMenu : public Menu
 {
 public:
-	RobotMaintenanceMenu(NCursesWindow *                       parent,
+	RobotMaintenanceMenu(NCursesWindow                        *parent,
 	                     Team                                  team,
 	                     std::shared_ptr<llsf_msgs::RobotInfo> minfo);
 
@@ -174,7 +174,7 @@ private:
 class MachineThatCanTakePuckMenu : public Menu
 {
 public:
-	MachineThatCanTakePuckMenu(NCursesWindow *                         parent,
+	MachineThatCanTakePuckMenu(NCursesWindow                          *parent,
 	                           Team                                    team,
 	                           std::shared_ptr<llsf_msgs::MachineInfo> minfo);
 
@@ -198,11 +198,11 @@ private:
 class PuckForMachineMenu : public Menu
 {
 public:
-	PuckForMachineMenu(NCursesWindow *                         parent,
+	PuckForMachineMenu(NCursesWindow                          *parent,
 	                   Team                                    team,
 	                   std::shared_ptr<llsf_msgs::PuckInfo>    pinfo,
 	                   std::shared_ptr<llsf_msgs::MachineInfo> minfo,
-	                   const llsf_msgs::Machine &              machine);
+	                   const llsf_msgs::Machine               &machine);
 
 	const llsf_msgs::Puck &puck();
 	                       operator bool() const;
@@ -210,13 +210,13 @@ public:
 private:
 	void           puck_selected(int i);
 	virtual void   On_Menu_Init();
-	std::list<int> relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &   pinfo,
+	std::list<int> relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo>    &pinfo,
 	                              std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-	                              const llsf_msgs::Machine &               machine,
+	                              const llsf_msgs::Machine                &machine,
 	                              Team                                     team);
-	int            det_lines(std::shared_ptr<llsf_msgs::PuckInfo> &   pinfo,
+	int            det_lines(std::shared_ptr<llsf_msgs::PuckInfo>    &pinfo,
 	                         std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-	                         const llsf_msgs::Machine &               machine,
+	                         const llsf_msgs::Machine                &machine,
 	                         Team                                     team);
 
 private:

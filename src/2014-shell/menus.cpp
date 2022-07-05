@@ -163,7 +163,7 @@ GenericItemsMenu::max_cols(int n_items, NCursesMenuItem **items)
 	return rv;
 }
 
-MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow *                         parent,
+MachineWithPuckMenu::MachineWithPuckMenu(NCursesWindow                          *parent,
                                          Team                                    team,
                                          std::shared_ptr<llsf_msgs::MachineInfo> minfo)
 : Menu(det_lines(team, minfo) + 1 + 2,
@@ -276,7 +276,7 @@ MachineWithPuckMenu::det_lines(Team team, std::shared_ptr<llsf_msgs::MachineInfo
 }
 
 MachineThatCanTakePuckMenu::MachineThatCanTakePuckMenu(
-  NCursesWindow *                         parent,
+  NCursesWindow                          *parent,
   Team                                    team,
   std::shared_ptr<llsf_msgs::MachineInfo> minfo)
 : Menu(det_lines(team, minfo) + 1 + 2,
@@ -410,11 +410,11 @@ MachineThatCanTakePuckMenu::operator bool() const
 	return machine_selected_;
 }
 
-PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *                         parent,
+PuckForMachineMenu::PuckForMachineMenu(NCursesWindow                          *parent,
                                        Team                                    team,
                                        std::shared_ptr<llsf_msgs::PuckInfo>    pinfo,
                                        std::shared_ptr<llsf_msgs::MachineInfo> minfo,
-                                       const llsf_msgs::Machine &              machine)
+                                       const llsf_msgs::Machine               &machine)
 : Menu(det_lines(pinfo, minfo, machine, team) + 1 + 2,
        14 + 2,
        (parent->lines() - (det_lines(pinfo, minfo, machine, team) + 1)) / 2,
@@ -425,7 +425,7 @@ PuckForMachineMenu::PuckForMachineMenu(NCursesWindow *                         p
 	std::list<int> rel_pucks = relevant_pucks(pinfo, minfo, machine, team);
 	items_.resize(rel_pucks.size() + 1);
 	int                      ni     = 0;
-	NCursesMenuItem **       mitems = new NCursesMenuItem *[2 + rel_pucks.size()];
+	NCursesMenuItem        **mitems = new NCursesMenuItem *[2 + rel_pucks.size()];
 	std::list<int>::iterator i;
 	for (i = rel_pucks.begin(); i != rel_pucks.end(); ++i) {
 		const llsf_msgs::Puck &p = pinfo->pucks(*i);
@@ -473,9 +473,9 @@ PuckForMachineMenu::On_Menu_Init()
 }
 
 std::list<int>
-PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &   pinfo,
+PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo>    &pinfo,
                                    std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-                                   const llsf_msgs::Machine &               machine,
+                                   const llsf_msgs::Machine                &machine,
                                    Team                                     team)
 {
 	std::list<int> rv;
@@ -531,9 +531,9 @@ PuckForMachineMenu::relevant_pucks(std::shared_ptr<llsf_msgs::PuckInfo> &   pinf
 }
 
 int
-PuckForMachineMenu::det_lines(std::shared_ptr<llsf_msgs::PuckInfo> &   pinfo,
+PuckForMachineMenu::det_lines(std::shared_ptr<llsf_msgs::PuckInfo>    &pinfo,
                               std::shared_ptr<llsf_msgs::MachineInfo> &minfo,
-                              const llsf_msgs::Machine &               machine,
+                              const llsf_msgs::Machine                &machine,
                               Team                                     team)
 {
 	return relevant_pucks(pinfo, minfo, machine, team).size();
@@ -679,7 +679,7 @@ TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> &gameinfo)
 	return gameinfo->known_teams_size();
 }
 
-RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *                       parent,
+RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow                        *parent,
                                            Team                                  team,
                                            std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
 : Menu(det_lines(team, rinfo) + 1 + 2,
