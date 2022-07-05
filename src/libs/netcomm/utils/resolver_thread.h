@@ -61,8 +61,8 @@ public:
 	bool resolve_name_immediately(const char *name, struct sockaddr **addr, socklen_t *addr_len);
 	bool resolve_address_immediately(struct sockaddr *addr,
 	                                 socklen_t        addr_len,
-	                                 char **          name,
-	                                 bool *           namefound);
+	                                 char           **name,
+	                                 bool            *namefound);
 
 	virtual void resolved_name(char *name, struct sockaddr *addr, socklen_t addrlen);
 	virtual void resolved_address(struct sockaddr_in *addr, socklen_t addrlen, char *name);
@@ -85,7 +85,7 @@ private:
 	AvahiThread *__avahi_thread;
 #endif
 
-	Mutex *      __namesq_mutex;
+	Mutex       *__namesq_mutex;
 	unsigned int __namesq_active;
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)
 	typedef LockHashSet<char *, std::tr1::hash<char *>, StringEquality> NamesQMap;
@@ -96,12 +96,12 @@ private:
 	NamesQMap *__namesq;
 	NamesQMap *__namesq_proc;
 
-	Mutex *                                                             __addrq_mutex;
+	Mutex                                                              *__addrq_mutex;
 	unsigned int                                                        __addrq_active;
 	typedef std::map<uint32_t, std::pair<struct sockaddr *, socklen_t>> AddrQMap;
 	AddrQMap                                                            __addrqs[2];
-	AddrQMap *                                                          __addrq;
-	AddrQMap *                                                          __addrq_proc;
+	AddrQMap                                                           *__addrq;
+	AddrQMap                                                           *__addrq_proc;
 };
 
 } // end namespace fawkes

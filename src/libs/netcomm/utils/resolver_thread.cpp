@@ -57,7 +57,7 @@ namespace fawkes {
  * Avahi is not used.
  */
 NetworkNameResolverThread::NetworkNameResolverThread(NetworkNameResolver *resolver,
-                                                     AvahiThread *        avahi_thread)
+                                                     AvahiThread         *avahi_thread)
 : Thread("NetworkNameResolverThread", Thread::OPMODE_WAITFORWAKEUP)
 {
 	__resolver     = resolver;
@@ -83,13 +83,13 @@ NetworkNameResolverThread::~NetworkNameResolverThread()
 	__namesq_mutex->lock();
 	while (!__namesq->empty()) {
 		NamesQMap::iterator nqit = __namesq->begin();
-		char *              nqn  = (*nqit);
+		char               *nqn  = (*nqit);
 		__namesq->erase(nqit);
 		free(nqn);
 	}
 	while (!__namesq_proc->empty()) {
 		NamesQMap::iterator nqit = __namesq_proc->begin();
-		char *              nqn  = (*nqit);
+		char               *nqn  = (*nqit);
 		__namesq->erase(nqit);
 		free(nqn);
 	}
@@ -126,9 +126,9 @@ NetworkNameResolverThread::~NetworkNameResolverThread()
  * addr_len carry the result, false otherwise
  */
 bool
-NetworkNameResolverThread::resolve_name_immediately(const char *      name,
+NetworkNameResolverThread::resolve_name_immediately(const char       *name,
                                                     struct sockaddr **addr,
-                                                    socklen_t *       addr_len)
+                                                    socklen_t        *addr_len)
 {
 	bool found = false;
 
@@ -146,7 +146,7 @@ NetworkNameResolverThread::resolve_name_immediately(const char *      name,
 
 #ifdef HAVE_AVAHI
 	// resolve names in .local domain with Avahi if available
-	char *      n = (char *)name + strlen(name) - 6; // 6 == strlen(".local")
+	char	     *n = (char *)name + strlen(name) - 6; // 6 == strlen(".local")
 	const char *f = strstr(name, ".local");
 	if (__avahi_thread && f && (f == n)) {
 		__avahi_thread->resolve_name(name, this);
@@ -184,8 +184,8 @@ NetworkNameResolverThread::resolve_name_immediately(const char *      name,
 bool
 NetworkNameResolverThread::resolve_address_immediately(struct sockaddr *addr,
                                                        socklen_t        addr_len,
-                                                       char **          name,
-                                                       bool *           namefound)
+                                                       char           **name,
+                                                       bool            *namefound)
 {
 	bool found = false;
 	char hbuf[NI_MAXHOST];
