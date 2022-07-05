@@ -57,10 +57,10 @@ namespace fawkes {
  * @param host host of service
  * @param port port of service
  */
-NetworkService::NetworkService(const char *       name,
-                               const char *       type,
-                               const char *       domain,
-                               const char *       host,
+NetworkService::NetworkService(const char        *name,
+                               const char        *type,
+                               const char        *domain,
+                               const char        *host,
                                unsigned short int port)
 {
 	_name   = strdup(name);
@@ -86,12 +86,12 @@ NetworkService::NetworkService(const char *       name,
  * @param addr_size size in bytes of addr parameter
  * @param txt list of TXT records
  */
-NetworkService::NetworkService(const char *            name,
-                               const char *            type,
-                               const char *            domain,
-                               const char *            host,
+NetworkService::NetworkService(const char             *name,
+                               const char             *type,
+                               const char             *domain,
+                               const char             *host,
                                unsigned short int      port,
-                               const struct sockaddr * addr,
+                               const struct sockaddr  *addr,
                                const socklen_t         addr_size,
                                std::list<std::string> &txt)
 
@@ -145,8 +145,8 @@ NetworkService::NetworkService(const char *name, const char *type, unsigned shor
  * @param port port of service
  */
 NetworkService::NetworkService(NetworkNameResolver *nnresolver,
-                               const char *         name,
-                               const char *         type,
+                               const char          *name,
+                               const char          *type,
                                unsigned short int   port)
 {
 	std::string            s    = name;
