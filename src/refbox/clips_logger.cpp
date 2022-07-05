@@ -137,7 +137,7 @@ log_router_query(void *env, char *logical_name)
 static int
 log_router_print(void *env, char *logical_name, char *str)
 {
-	void *       rc     = GetEnvironmentRouterContext(env);
+	void        *rc     = GetEnvironmentRouterContext(env);
 	CLIPSLogger *logger = static_cast<CLIPSLogger *>(rc);
 	logger->log(logical_name, str);
 	return TRUE;

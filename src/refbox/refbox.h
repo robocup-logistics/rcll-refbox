@@ -136,9 +136,9 @@ private: // methods
 	void         clips_mongodb_update(std::string collection, void *bson, CLIPS::Value query);
 	void         clips_mongodb_replace(std::string collection, void *bson, CLIPS::Value query);
 	void         clips_mongodb_insert(std::string collection, void *bson);
-	void         mongodb_update(std::string &                  collection,
+	void         mongodb_update(std::string                   &collection,
 	                            const bsoncxx::document::view &doc,
-	                            CLIPS::Value &                 query,
+	                            CLIPS::Value                  &query,
 	                            bool                           upsert);
 	CLIPS::Value clips_mongodb_query_sort(std::string collection, void *bson, void *bson_sort);
 	CLIPS::Value clips_mongodb_query(std::string collection, void *bson);
@@ -189,7 +189,7 @@ private: // methods
 	                               uint16_t                                      component_id,
 	                               uint16_t                                      msg_type,
 	                               std::string                                   msg);
-	void handle_peer_msg(boost::asio::ip::udp::endpoint &           endpoint,
+	void handle_peer_msg(boost::asio::ip::udp::endpoint            &endpoint,
 	                     uint16_t                                   component_id,
 	                     uint16_t                                   msg_type,
 	                     std::shared_ptr<google::protobuf::Message> msg);
