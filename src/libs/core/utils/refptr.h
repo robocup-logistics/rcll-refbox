@@ -226,8 +226,8 @@ public:
 	}
 
 private:
-	T_CppObject *  __cpp_object;
-	mutable int *  __ref_count;
+	T_CppObject   *__cpp_object;
+	mutable int   *__ref_count;
 	mutable Mutex *__ref_mutex;
 };
 
@@ -235,13 +235,15 @@ private:
 // If it would come after them it wouldn't be inlined.
 
 template <class T_CppObject>
-inline T_CppObject *RefPtr<T_CppObject>::operator->() const
+inline T_CppObject *
+RefPtr<T_CppObject>::operator->() const
 {
 	return __cpp_object;
 }
 
 template <class T_CppObject>
-inline T_CppObject *RefPtr<T_CppObject>::operator*() const
+inline T_CppObject *
+RefPtr<T_CppObject>::operator*() const
 {
 	return __cpp_object;
 }
@@ -334,8 +336,8 @@ inline void
 RefPtr<T_CppObject>::swap(RefPtr<T_CppObject> &other)
 {
 	T_CppObject *const temp       = __cpp_object;
-	int *              temp_count = __ref_count;
-	Mutex *            temp_mutex = __ref_mutex;
+	int               *temp_count = __ref_count;
+	Mutex             *temp_mutex = __ref_mutex;
 
 	__cpp_object = other.__cpp_object;
 	__ref_count  = other.__ref_count;
