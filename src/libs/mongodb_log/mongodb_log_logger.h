@@ -70,7 +70,7 @@ public:
 	virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
 
 	virtual void
-	             vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
+	vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void vtlog_info(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void vtlog_warn(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void
@@ -81,14 +81,14 @@ private:
 	void insert_message(LogLevel ll, const char *component, fawkes::Exception &e);
 	void tlog_insert_message(LogLevel        ll,
 	                         struct timeval *t,
-	                         const char *    component,
-	                         const char *    format,
+	                         const char     *component,
+	                         const char     *format,
 	                         va_list         va);
 	void
 	tlog_insert_message(LogLevel ll, struct timeval *t, const char *component, fawkes::Exception &);
 
 private:
-	fawkes::Mutex *      mutex_;
+	fawkes::Mutex       *mutex_;
 	mongocxx::client     client_;
 	mongocxx::collection collection_;
 };
