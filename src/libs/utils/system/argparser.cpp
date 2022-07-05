@@ -295,7 +295,7 @@ long int
 ArgumentParser::parse_int(const char *argn)
 {
 	if ((__opts.count(argn) > 0) && (__opts[argn] != NULL)) {
-		char *   endptr;
+		char    *endptr;
 		long int rv = strtol(__opts[argn], &endptr, 10);
 		if (endptr[0] != 0) {
 			throw IllegalArgumentException("Supplied argument is not of type int");
@@ -318,7 +318,7 @@ double
 ArgumentParser::parse_float(const char *argn)
 {
 	if ((__opts.count(argn) > 0) && (__opts[argn] != NULL)) {
-		char * endptr;
+		char  *endptr;
 		double rv = strtod(__opts[argn], &endptr);
 		if (endptr[0] != 0) {
 			throw IllegalArgumentException("Supplied argument is not of type double");
@@ -341,7 +341,7 @@ long int
 ArgumentParser::parse_item_int(unsigned int index)
 {
 	if (index < __items.size()) {
-		char *   endptr;
+		char    *endptr;
 		long int rv = strtol(__items[index], &endptr, 10);
 		if (endptr[0] != 0) {
 			throw IllegalArgumentException("Supplied argument is not of type int");
@@ -364,7 +364,7 @@ double
 ArgumentParser::parse_item_float(unsigned int index)
 {
 	if (index < __items.size()) {
-		char * endptr;
+		char  *endptr;
 		double rv = strtod(__items[index], &endptr);
 		if (endptr[0] != 0) {
 			throw IllegalArgumentException("Supplied argument is not of type double");
