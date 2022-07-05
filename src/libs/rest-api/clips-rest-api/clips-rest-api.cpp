@@ -173,7 +173,11 @@ ClipsRestApi::gen_fact(CLIPS::Fact::pointer &fact, bool formatted)
 		char tmp[16384];
 		tmp[16383] = 0;
 		OpenStringDestination(env_->cobj(), (char *)"ProcPPForm", tmp, 16383);
+#ifdef CLIPS_OLD_63_API
+		PrintFact(env_->cobj(), (char *)"ProcPPForm", (struct fact *)fact->cobj(), FALSE, FALSE);
+#else
 		PrintFact(env_->cobj(), (const char *)"ProcPPForm", (struct fact *)fact->cobj(), FALSE, FALSE);
+#endif
 		CloseStringDestination(env_->cobj(), (char *)"ProcPPForm");
 		retf.set_formatted(tmp);
 	} else {
