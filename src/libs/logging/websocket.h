@@ -66,30 +66,30 @@ public:
 	virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
 
 	virtual void
-	             vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
+	vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void vtlog_info(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void vtlog_warn(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void
 	vtlog_error(struct timeval *t, const char *component, const char *format, va_list va);
 
 private:
-	struct ::tm *                    now_s;
-	fawkes::Mutex *                  mutex;
+	struct ::tm                     *now_s;
+	fawkes::Mutex                   *mutex;
 	std::shared_ptr<websocket::Data> data_;
 	boost::format                    fmt_time;
 	std::string                      formatter(const char *format, va_list va);
 	std::string                      formatter(const char *format, const char *text);
 	void                             build_document(rapidjson::Document *d,
-	                                                const char *         component,
+	                                                const char          *component,
 	                                                std::string          level,
 	                                                std::string          time,
 	                                                std::string          message,
 	                                                bool                 exception = false);
 	void                             build_document(rapidjson::Document *d,
-	                                                const char *         component,
+	                                                const char          *component,
 	                                                std::string          level,
 	                                                std::string          time,
-	                                                rapidjson::Value &   messages,
+	                                                rapidjson::Value    &messages,
 	                                                bool                 exception = false);
 };
 
