@@ -44,12 +44,12 @@ public:
 
 private:
 	void                              add_field(const ::google::protobuf::FieldDescriptor *field,
-	                                            const ::google::protobuf::Message &        m,
-	                                            bsoncxx::builder::basic::document *        doc);
+	                                            const ::google::protobuf::Message         &m,
+	                                            bsoncxx::builder::basic::document         *doc);
 	bsoncxx::builder::basic::document add_message(const google::protobuf::Message &m);
 
 private:
-	fawkes::Mutex *      mutex_;
+	fawkes::Mutex       *mutex_;
 	mongocxx::client     client_;
 	mongocxx::collection collection_;
 };
