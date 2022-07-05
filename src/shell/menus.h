@@ -122,7 +122,7 @@ private:
 class RobotMaintenanceMenu : public Menu
 {
 public:
-	RobotMaintenanceMenu(NCursesWindow *                       parent,
+	RobotMaintenanceMenu(NCursesWindow                        *parent,
 	                     llsf_msgs::Team                       team,
 	                     std::shared_ptr<llsf_msgs::RobotInfo> minfo);
 
@@ -151,7 +151,7 @@ private:
 class TeamSelectMenu : public Menu
 {
 public:
-	TeamSelectMenu(NCursesWindow *                       parent,
+	TeamSelectMenu(NCursesWindow                        *parent,
 	               llsf_msgs::Team                       team,
 	               std::shared_ptr<llsf_msgs::GameInfo>  gameinfo,
 	               std::shared_ptr<llsf_msgs::GameState> gstate);
@@ -164,7 +164,7 @@ public:
 
 private:
 	virtual void On_Menu_Init();
-	int          det_lines(std::shared_ptr<llsf_msgs::GameInfo> & gameinfo,
+	int          det_lines(std::shared_ptr<llsf_msgs::GameInfo>  &gameinfo,
 	                       std::shared_ptr<llsf_msgs::GameState> &gstate);
 	void         team_selected(std::string team_name);
 
@@ -260,7 +260,7 @@ private:
 class OrderDeliverMenu : public Menu
 {
 public:
-	OrderDeliverMenu(NCursesWindow *                       parent,
+	OrderDeliverMenu(NCursesWindow                        *parent,
 	                 llsf_msgs::Team                       team,
 	                 std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
 	                 std::shared_ptr<llsf_msgs::GameState> gstate);
@@ -291,7 +291,7 @@ private:
 class SelectOrderByIDMenu : public Menu
 {
 public:
-	SelectOrderByIDMenu(NCursesWindow *                       parent,
+	SelectOrderByIDMenu(NCursesWindow                        *parent,
 	                    llsf_msgs::Team                       team,
 	                    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
 	                    std::shared_ptr<llsf_msgs::GameState> gstate);
@@ -316,7 +316,7 @@ private:
 class DeliveryCorrectMenu : public Menu
 {
 public:
-	DeliveryCorrectMenu(NCursesWindow *                       parent,
+	DeliveryCorrectMenu(NCursesWindow                        *parent,
 	                    llsf_msgs::Team                       team,
 	                    unsigned int                          delivery,
 	                    std::shared_ptr<llsf_msgs::OrderInfo> oinfo);
