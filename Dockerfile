@@ -8,8 +8,10 @@
 #   (at your option) any later version.
 #
 
-FROM fedora:33 as buildenv
-RUN dnf install -y --nodocs \
+FROM fedora:35 as buildenv
+RUN   dnf install -y --nodocs 'dnf-command(copr)' && \
+      dnf -y copr enable thofmann/clips-6.31 && \
+      dnf install -y --nodocs \
       avahi-devel \
       boost-devel \
       clips-devel \
@@ -46,7 +48,7 @@ RUN shopt -s globstar; \
     /usr/lib/rpm/rpmdeps -P lib/** bin/** > provides.txt && \
     /usr/lib/rpm/rpmdeps -R lib/** bin/** | grep -v -f provides.txt > requires.txt
 
-FROM fedora:33
+FROM fedora:35
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
