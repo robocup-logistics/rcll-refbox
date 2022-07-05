@@ -71,7 +71,7 @@ private:
 
 private:
 	NetworkNameResolverThread *resolver_thread;
-	HostInfo *                 __host_info;
+	HostInfo                  *__host_info;
 	unsigned int               __cache_timeout;
 
 	LockHashMap<uint32_t, std::pair<char *, time_t>> addr2name_cache;
