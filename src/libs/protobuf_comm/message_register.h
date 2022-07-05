@@ -126,9 +126,9 @@ public:
 	void serialize(uint16_t                   component_id,
 	               uint16_t                   msg_type,
 	               google::protobuf::Message &msg,
-	               frame_header_t &           frame_header,
-	               message_header_t &         message_header,
-	               std::string &              data);
+	               frame_header_t            &frame_header,
+	               message_header_t          &message_header,
+	               std::string               &data);
 	std::shared_ptr<google::protobuf::Message>
 	deserialize(frame_header_t &frame_header, message_header_t &message_header, void *data);
 
@@ -159,8 +159,8 @@ private: // members
 	TypeNameMap message_by_typename_;
 
 	google::protobuf::compiler::DiskSourceTree *pb_srctree_;
-	google::protobuf::compiler::Importer *      pb_importer_;
-	google::protobuf::MessageFactory *          pb_factory_;
+	google::protobuf::compiler::Importer       *pb_importer_;
+	google::protobuf::MessageFactory           *pb_factory_;
 	std::multimap<std::string, std::string>     failed_to_load_types_;
 };
 

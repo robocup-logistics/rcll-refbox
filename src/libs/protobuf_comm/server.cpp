@@ -60,7 +60,7 @@ namespace protobuf_comm {
  * @param io_service ASIO I/O service to use for communication
  */
 ProtobufStreamServer::Session::Session(ClientID                 id,
-                                       ProtobufStreamServer *   parent,
+                                       ProtobufStreamServer    *parent,
                                        boost::asio::io_service &io_service)
 : id_(id), parent_(parent), socket_(io_service)
 {
@@ -354,7 +354,7 @@ ProtobufStreamServer::send(ClientID                                   client,
 void
 ProtobufStreamServer::send(ClientID client, google::protobuf::Message &m)
 {
-	const google::protobuf::Descriptor *    desc     = m.GetDescriptor();
+	const google::protobuf::Descriptor     *desc     = m.GetDescriptor();
 	const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
 	if (!enumdesc) {
 		throw std::logic_error("Message does not have CompType enum");

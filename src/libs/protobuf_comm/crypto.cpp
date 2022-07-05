@@ -216,7 +216,7 @@ size_t
 BufferDecryptor::decrypt(int         cipher,
                          const void *enc,
                          size_t      enc_size,
-                         void *      plain,
+                         void       *plain,
                          size_t      plain_size)
 {
 #ifdef HAVE_LIBCRYPTO
@@ -228,7 +228,7 @@ BufferDecryptor::decrypt(int         cipher,
 
 	const size_t         iv_size = EVP_CIPHER_iv_length(evp_cipher);
 	const unsigned char *iv      = (const unsigned char *)enc;
-	unsigned char *      enc_m   = (unsigned char *)enc + iv_size;
+	unsigned char       *enc_m   = (unsigned char *)enc + iv_size;
 	enc_size -= iv_size;
 
 	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();

@@ -64,7 +64,7 @@ handle_error(const boost::system::error_code &error)
 }
 
 void
-handle_message(boost::asio::ip::udp::endpoint &           sender,
+handle_message(boost::asio::ip::udp::endpoint            &sender,
                uint16_t                                   component_id,
                uint16_t                                   msg_type,
                std::shared_ptr<google::protobuf::Message> msg)

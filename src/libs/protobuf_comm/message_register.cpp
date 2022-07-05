@@ -79,7 +79,7 @@ MessageRegister::MessageRegister(std::vector<std::string> &proto_path)
 	pb_factory_  = new google::protobuf::DynamicMessageFactory(pb_importer_->pool());
 
 	for (size_t i = 0; i < proto_path.size(); ++i) {
-		DIR *          dir;
+		DIR           *dir;
 		struct dirent *ent;
 		if ((dir = opendir(proto_path[i].c_str())) != NULL) {
 			while ((ent = readdir(dir)) != NULL) {
@@ -264,9 +264,9 @@ void
 MessageRegister::serialize(uint16_t                   component_id,
                            uint16_t                   msg_type,
                            google::protobuf::Message &msg,
-                           frame_header_t &           frame_header,
-                           message_header_t &         message_header,
-                           std::string &              data)
+                           frame_header_t            &frame_header,
+                           message_header_t          &message_header,
+                           std::string               &data)
 {
 	if (msg.SerializeToString(&data)) {
 		message_header.component_id = htons(component_id);
@@ -288,9 +288,9 @@ MessageRegister::serialize(uint16_t                   component_id,
  * for the given component ID and message type.
  */
 std::shared_ptr<google::protobuf::Message>
-MessageRegister::deserialize(frame_header_t &  frame_header,
+MessageRegister::deserialize(frame_header_t   &frame_header,
                              message_header_t &message_header,
-                             void *            data)
+                             void             *data)
 {
 	uint16_t comp_id   = ntohs(message_header.component_id);
 	uint16_t msg_type  = ntohs(message_header.msg_type);

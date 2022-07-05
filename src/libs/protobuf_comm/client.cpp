@@ -93,7 +93,7 @@ ProtobufStreamClient::ProtobufStreamClient(std::vector<std::string> &proto_path)
  * @param mr message register to use to (de)serialize messages
  * @param header_version protobuf protocol frame header version to use,
  */
-ProtobufStreamClient::ProtobufStreamClient(MessageRegister *      mr,
+ProtobufStreamClient::ProtobufStreamClient(MessageRegister       *mr,
                                            frame_header_version_t header_version)
 : resolver_(io_service_),
   socket_(io_service_),
@@ -259,7 +259,7 @@ ProtobufStreamClient::handle_read_message(const boost::system::error_code &error
 	if (!error) {
 		frame_header_t   frame_header;
 		message_header_t message_header;
-		void *           data;
+		void            *data;
 
 		if (frame_header_version_ == PB_FRAME_V1) {
 			frame_header_v1_t *frame_header_v1 = (frame_header_v1_t *)in_frame_header_;
@@ -391,7 +391,7 @@ ProtobufStreamClient::send(uint16_t component_id, uint16_t msg_type, google::pro
 void
 ProtobufStreamClient::send(google::protobuf::Message &m)
 {
-	const google::protobuf::Descriptor *    desc     = m.GetDescriptor();
+	const google::protobuf::Descriptor     *desc     = m.GetDescriptor();
 	const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
 	if (!enumdesc) {
 		throw std::logic_error("Message does not have CompType enum");
