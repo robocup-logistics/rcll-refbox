@@ -367,7 +367,7 @@ OpcUaMachine::cancelAllSubscriptions(bool log)
 
 	for (SubscriptionClient::map::iterator it = subscriptions.begin(); it != subscriptions.end();) {
 		OpcUtils::MPSRegister reg = it->first;
-		SubscriptionClient *  sub = it->second;
+		SubscriptionClient   *sub = it->second;
 		sub->subscription->UnSubscribe(sub->handle);
 		logger->info("Unsubscribed from {} (name: {}, handle: {})",
 		             OpcUtils::REGISTER_NAMES[reg],

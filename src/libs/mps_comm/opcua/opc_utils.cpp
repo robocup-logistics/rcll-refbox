@@ -721,7 +721,7 @@ OpcUtils::logNodeValue(OpcUa::Node                     node,
 
 void
 OpcUtils::logNodeValue(OpcUa::Variant                  val,
-                       const char *                    msg,
+                       const char                     *msg,
                        std::string                     nodeName,
                        std::shared_ptr<spdlog::logger> logger,
                        int                             indent)
@@ -760,7 +760,7 @@ OpcUtils::logNodeValueArray(OpcUa::Node                     node,
 
 std::string
 OpcUtils::logNodeValueArray(OpcUa::Variant                  val,
-                            const char *                    msg,
+                            const char                     *msg,
                             std::string                     nodeName,
                             std::shared_ptr<spdlog::logger> logger,
                             int                             indent)
@@ -832,7 +832,7 @@ OpcUtils::logNodeValueArray(OpcUa::Variant                  val,
 }
 
 bool
-OpcUtils::logReturnValue(ReturnValue *                   val,
+OpcUtils::logReturnValue(ReturnValue                    *val,
                          std::shared_ptr<spdlog::logger> logger,
                          OpcUtils::MPSRegister           reg,
                          std::string                     msg)
