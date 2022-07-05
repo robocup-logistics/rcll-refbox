@@ -77,7 +77,7 @@ WebsocketLogger::~WebsocketLogger()
 std::string
 WebsocketLogger::formatter(const char *format, va_list va)
 {
-	char *      tmp;
+	char	     *tmp;
 	std::string str_message;
 	if (vasprintf(&tmp, format, va) != -1) {
 		str_message = std::string(tmp);
@@ -96,7 +96,7 @@ WebsocketLogger::formatter(const char *format, va_list va)
 std::string
 WebsocketLogger::formatter(const char *format, const char *text)
 {
-	char *      tmp;
+	char	     *tmp;
 	std::string str_message;
 	if (asprintf(&tmp, format, text) != -1) {
 		str_message = std::string(tmp);
@@ -117,7 +117,7 @@ WebsocketLogger::formatter(const char *format, const char *text)
  */
 void
 WebsocketLogger::build_document(rapidjson::Document *d,
-                                const char *         component,
+                                const char          *component,
                                 std::string          level,
                                 std::string          time,
                                 std::string          message,
@@ -158,10 +158,10 @@ WebsocketLogger::build_document(rapidjson::Document *d,
  */
 void
 WebsocketLogger::build_document(rapidjson::Document *d,
-                                const char *         component,
+                                const char          *component,
                                 std::string          level,
                                 std::string          time,
-                                rapidjson::Value &   messages,
+                                rapidjson::Value    &messages,
                                 bool                 exception)
 {
 	rapidjson::Document::AllocatorType &alloc = d->GetAllocator();
@@ -607,8 +607,8 @@ WebsocketLogger::tlog_error(struct timeval *t, const char *component, fawkes::Ex
 
 void
 WebsocketLogger::vtlog_debug(struct timeval *t,
-                             const char *    component,
-                             const char *    format,
+                             const char     *component,
+                             const char     *format,
                              va_list         va)
 {
 	if (log_level <= LL_DEBUG) {
@@ -632,8 +632,8 @@ WebsocketLogger::vtlog_debug(struct timeval *t,
 
 void
 WebsocketLogger::vtlog_info(struct timeval *t,
-                            const char *    component,
-                            const char *    format,
+                            const char     *component,
+                            const char     *format,
                             va_list         va)
 {
 	if (log_level <= LL_INFO) {
@@ -657,8 +657,8 @@ WebsocketLogger::vtlog_info(struct timeval *t,
 
 void
 WebsocketLogger::vtlog_warn(struct timeval *t,
-                            const char *    component,
-                            const char *    format,
+                            const char     *component,
+                            const char     *format,
                             va_list         va)
 {
 	if (log_level <= LL_WARN) {
@@ -682,8 +682,8 @@ WebsocketLogger::vtlog_warn(struct timeval *t,
 
 void
 WebsocketLogger::vtlog_error(struct timeval *t,
-                             const char *    component,
-                             const char *    format,
+                             const char     *component,
+                             const char     *format,
                              va_list         va)
 {
 	if (log_level <= LL_ERROR) {
