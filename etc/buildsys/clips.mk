@@ -34,10 +34,13 @@ ifneq ($(PKGCONFIG),)
 else
   CLIPS_ERROR = pkg-config not available
 endif
-
+OLD_CLIPS_OPTS=
+ifdef CLIPS_OLD_63_API
+  OLD_CLIPS_OPTS = -DCLIPS_OLD_63_API
+endif
 ifeq ($(HAVE_CLIPS),1)
   # Filter out "-std=c++0x" for clipsmm <=0.3.4 (it unnecessarily downgrades the std)
-  CFLAGS_CLIPS  = -DHAVE_CLIPS $(CFLAGS_CPP14) \
+  CFLAGS_CLIPS  = -DHAVE_CLIPS $(OLD_CLIPS_OPTS) $(CFLAGS_CPP14) \
                   $(filter-out -std=c++0x,$(shell $(PKGCONFIG) --cflags 'clipsmm-1.0'))
   LDFLAGS_CLIPS = $(shell $(PKGCONFIG) --libs 'clipsmm-1.0')
 

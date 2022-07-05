@@ -109,7 +109,11 @@ CLIPSLogger::log(const char *logical_name, const char *str)
 }
 
 static int
+#ifdef CLIPS_OLD_63_API
+log_router_query(void *env, char *logical_name)
+#else
 log_router_query(void *env, const char *logical_name)
+#endif
 {
 	if (strcmp(logical_name, "l") == 0)
 		return TRUE;
@@ -135,7 +139,11 @@ log_router_query(void *env, const char *logical_name)
 }
 
 static int
+#ifdef CLIPS_OLD_63_API
+log_router_print(void *env, char *logical_name, char *str)
+#else
 log_router_print(void *env, const char *logical_name, const char *str)
+#endif
 {
 	void        *rc     = GetEnvironmentRouterContext(env);
 	CLIPSLogger *logger = static_cast<CLIPSLogger *>(rc);
