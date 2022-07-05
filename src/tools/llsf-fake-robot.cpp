@@ -64,8 +64,8 @@ std::string                         name_;
 Team                                team_color_;
 std::string                         team_name_;
 unsigned long                       seq_          = 0;
-ProtobufBroadcastPeer *             peer_public_  = NULL;
-ProtobufBroadcastPeer *             peer_team_    = NULL;
+ProtobufBroadcastPeer              *peer_public_  = NULL;
+ProtobufBroadcastPeer              *peer_team_    = NULL;
 bool                                crypto_setup_ = false;
 
 llsfrb::Configuration *config_;
@@ -98,7 +98,7 @@ handle_send_error(std::string msg)
 }
 
 void
-handle_message(boost::asio::ip::udp::endpoint &           sender,
+handle_message(boost::asio::ip::udp::endpoint            &sender,
                uint16_t                                   component_id,
                uint16_t                                   msg_type,
                std::shared_ptr<google::protobuf::Message> msg)
@@ -233,7 +233,7 @@ handle_message(boost::asio::ip::udp::endpoint &           sender,
 		printf("MachineInfo received:\n");
 		for (int i = 0; i < mi->machines_size(); ++i) {
 			const Machine &m = mi->machines(i);
-			const Pose2D & p = m.pose();
+			const Pose2D  &p = m.pose();
 			printf("  %-3s|%2s|%s (%s) @ (%f, %f, %f)\n",
 			       m.name().c_str(),
 			       m.type().substr(0, 2).c_str(),
@@ -302,7 +302,7 @@ handle_timer(const boost::system::error_code &error)
 	if (!error) {
 		boost::posix_time::ptime               now(boost::posix_time::microsec_clock::universal_time());
 		std::shared_ptr<BeaconSignal>          signal(new BeaconSignal());
-		Time *                                 time        = signal->mutable_time();
+		Time                                  *time        = signal->mutable_time();
 		boost::posix_time::time_duration const since_epoch = now - boost::posix_time::from_time_t(0);
 
 		time->set_sec(static_cast<google::protobuf::int64>(since_epoch.total_seconds()));
