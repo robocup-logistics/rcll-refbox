@@ -684,7 +684,7 @@ Configuration::get_bools_or_defaults(const char *path, const std::vector<bool> &
 }
 
 std::vector<std::string>
-Configuration::get_strings_or_defaults(const char *                    path,
+Configuration::get_strings_or_defaults(const char                     *path,
                                        const std::vector<std::string> &default_val)
 {
 	try {
