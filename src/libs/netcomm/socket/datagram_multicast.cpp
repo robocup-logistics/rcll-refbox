@@ -47,7 +47,7 @@ namespace fawkes {
  * @param timeout timeout, if 0 all operationsare blocking, otherwise it
  * is tried for timeout seconds.
  */
-MulticastDatagramSocket::MulticastDatagramSocket(const char *   multicast_addr_s,
+MulticastDatagramSocket::MulticastDatagramSocket(const char    *multicast_addr_s,
                                                  unsigned short port,
                                                  float          timeout)
 : Socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, timeout)

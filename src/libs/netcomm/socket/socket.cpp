@@ -275,7 +275,7 @@ Socket::connect(const char *hostname, unsigned short int port)
 	if (sock_fd == -1)
 		throw SocketException("Trying to connect invalid socket");
 
-	struct hostent *     h;
+	struct hostent      *h;
 	struct ::sockaddr_in host;
 
 	h = gethostbyname(hostname);
@@ -323,7 +323,7 @@ Socket::bind(const unsigned short int port)
 void
 Socket::bind(const unsigned short int port, const char *hostname)
 {
-	struct hostent *     h;
+	struct hostent      *h;
 	struct ::sockaddr_in host;
 
 	h = gethostbyname(hostname);
