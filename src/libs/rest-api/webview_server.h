@@ -65,8 +65,8 @@ public:
 	              std::unique_ptr<fawkes::NetworkNameResolver>   nnresolver,
 	              std::shared_ptr<fawkes::ServicePublisher>      service_publisher,
 	              std::shared_ptr<fawkes::ServiceBrowser>        service_browser,
-	              Configuration *                                config,
-	              Logger *                                       logger);
+	              Configuration                                 *config,
+	              Logger                                        *logger);
 	~WebviewServer();
 
 	virtual void loop();
@@ -107,7 +107,7 @@ private:
 	std::shared_ptr<fawkes::ServiceBrowser>      service_browser_;
 
 	Configuration *config_;
-	Logger *       logger_;
+	Logger        *logger_;
 };
 } // namespace llsfrb
 
