@@ -106,7 +106,7 @@ public:
 	template <class T>
 	void get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
-	void get_workpiece_info_fact(T *                                 o,
+	void get_workpiece_info_fact(T                                  *o,
 	                             rapidjson::Document::AllocatorType &alloc,
 	                             CLIPS::Fact::pointer                fact);
 
@@ -125,7 +125,7 @@ private:
 	std::queue<std::string>                    logs;
 	std::vector<std::shared_ptr<Client>>       clients;
 	std::shared_ptr<CLIPS::Environment>        env_;
-	fawkes::Mutex &                            env_mutex_;
+	fawkes::Mutex                             &env_mutex_;
 	std::shared_ptr<rapidjson::SchemaDocument> load_schema(std::string path);
 };
 

@@ -725,7 +725,7 @@ Data::on_connect_info(std::string tmpl_name,
  */
 template <class T>
 void
-Data::get_known_teams_fact(T *                                 o,
+Data::get_known_teams_fact(T                                  *o,
                            rapidjson::Document::AllocatorType &alloc,
                            CLIPS::Fact::pointer                fact)
 {
@@ -757,7 +757,7 @@ Data::get_known_teams_fact(T *                                 o,
  */
 template <class T>
 void
-Data::get_machine_info_fact(T *                                 o,
+Data::get_machine_info_fact(T                                  *o,
                             rapidjson::Document::AllocatorType &alloc,
                             CLIPS::Fact::pointer                fact)
 {
@@ -826,7 +826,7 @@ Data::get_machine_info_fact(T *                                 o,
  */
 template <class T>
 void
-Data::get_order_info_fact(T *                                 o,
+Data::get_order_info_fact(T                                  *o,
                           rapidjson::Document::AllocatorType &alloc,
                           CLIPS::Fact::pointer                fact)
 {
@@ -939,7 +939,7 @@ Data::get_unconfirmed_delivery_fact(rapidjson::Document::AllocatorType &alloc, i
  */
 template <class T>
 void
-Data::get_robot_info_fact(T *                                 o,
+Data::get_robot_info_fact(T                                  *o,
                           rapidjson::Document::AllocatorType &alloc,
                           CLIPS::Fact::pointer                fact)
 {
@@ -1002,7 +1002,7 @@ Data::get_robot_info_fact(T *                                 o,
  */
 template <class T>
 void
-Data::get_game_state_fact(T *                                 o,
+Data::get_game_state_fact(T                                  *o,
                           rapidjson::Document::AllocatorType &alloc,
                           CLIPS::Fact::pointer                fact)
 {
@@ -1099,7 +1099,7 @@ Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
  */
 template <class T>
 void
-Data::get_workpiece_info_fact(T *                                 o,
+Data::get_workpiece_info_fact(T                                  *o,
                               rapidjson::Document::AllocatorType &alloc,
                               CLIPS::Fact::pointer                fact)
 {
