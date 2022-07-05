@@ -42,7 +42,7 @@ using namespace fawkes;
 namespace llsfrb {
 
 WebviewServiceBrowseHandler::WebviewServiceBrowseHandler(
-  Logger *                                logger,
+  Logger                                 *logger,
   std::shared_ptr<fawkes::NetworkService> webview_service)
 
 {
@@ -75,11 +75,11 @@ WebviewServiceBrowseHandler::browse_failed(const char *name, const char *type, c
 }
 
 void
-WebviewServiceBrowseHandler::service_added(const char *            name,
-                                           const char *            type,
-                                           const char *            domain,
-                                           const char *            host_name,
-                                           const struct sockaddr * addr,
+WebviewServiceBrowseHandler::service_added(const char             *name,
+                                           const char             *type,
+                                           const char             *domain,
+                                           const char             *host_name,
+                                           const struct sockaddr  *addr,
                                            const socklen_t         addr_size,
                                            uint16_t                port,
                                            std::list<std::string> &txt,

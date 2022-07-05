@@ -43,18 +43,18 @@ class Logger;
 class WebviewRESTRequestProcessor
 {
 public:
-	WebviewRESTRequestProcessor(fawkes::WebUrlManager *        url_manager,
+	WebviewRESTRequestProcessor(fawkes::WebUrlManager         *url_manager,
 	                            fawkes::WebviewRestApiManager *api_mgr,
-	                            llsfrb::Logger *               logger);
+	                            llsfrb::Logger                *logger);
 	~WebviewRESTRequestProcessor();
 
 private:
 	fawkes::WebReply *process_request(const fawkes::WebRequest *request);
 
 private:
-	fawkes::WebUrlManager *        url_mgr_;
+	fawkes::WebUrlManager         *url_mgr_;
 	fawkes::WebviewRestApiManager *api_mgr_;
-	llsfrb::Logger *               logger_;
+	llsfrb::Logger                *logger_;
 
 	std::vector<fawkes::WebRequest::Method> methods_;
 };
