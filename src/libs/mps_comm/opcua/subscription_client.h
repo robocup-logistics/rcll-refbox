@@ -37,7 +37,7 @@ public:
 	typedef std::pair<OpcUtils::MPSRegister, SubscriptionClient *> pair;
 	typedef std::map<OpcUtils::MPSRegister, SubscriptionClient *>  map;
 	OpcUa::Subscription::SharedPtr                                 subscription;
-	OpcUtils::ReturnValue *                                        mpsValue = nullptr;
+	OpcUtils::ReturnValue                                         *mpsValue = nullptr;
 	uint32_t                                                       handle;
 	OpcUtils::MPSRegister                                          reg;
 	OpcUa::Node                                                    node;
@@ -69,7 +69,7 @@ protected:
 
 	void
 	DataChange(uint32_t              handle,
-	           const OpcUa::Node &   node,
+	           const OpcUa::Node    &node,
 	           const OpcUa::Variant &val,
 	           OpcUa::AttributeId    attr) override
 	{

@@ -190,7 +190,7 @@ public:
 	                         int                             indent);
 	// Log node value by OPC UA Variant
 	static void logNodeValue(OpcUa::Variant                  val,
-	                         const char *                    msg,
+	                         const char                     *msg,
 	                         std::string                     nodeName,
 	                         std::shared_ptr<spdlog::logger> logger,
 	                         int                             indent = -1);
@@ -201,12 +201,12 @@ public:
 	                                     int                             indent);
 	// Log node array value
 	static std::string logNodeValueArray(OpcUa::Variant                  val,
-	                                     const char *                    msg,
+	                                     const char                     *msg,
 	                                     std::string                     nodeName,
 	                                     std::shared_ptr<spdlog::logger> logger,
 	                                     int                             indent = -1);
 	// Log return value
-	static bool logReturnValue(ReturnValue *                   val,
+	static bool logReturnValue(ReturnValue                    *val,
 	                           std::shared_ptr<spdlog::logger> logger,
 	                           MPSRegister                     reg,
 	                           std::string                     msg = "");
