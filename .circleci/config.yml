@@ -8,6 +8,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
+            dnf install -y --nodocs 'dnf-command(copr)' && \
+            dnf -y copr enable thofmann/clips-6.31 && \
             dnf install -y --nodocs \
               apr-util-devel \
               avahi-devel \
@@ -73,7 +75,7 @@ jobs:
               protobuf-compiler \
               rapidjson-dev
       - checkout
-      - run: make all FAIL_ON_WARNING=0
+      - run: make all FAIL_ON_WARNING=0 CLIPS_OLD_63_API=1
 workflows:
   version: 2
   build:
