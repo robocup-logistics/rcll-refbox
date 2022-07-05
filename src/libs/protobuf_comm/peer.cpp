@@ -134,7 +134,7 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string         address,
  */
 ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
                                              unsigned short    port,
-                                             MessageRegister * mr)
+                                             MessageRegister  *mr)
 : io_service_(),
   resolver_(io_service_),
   socket_(io_service_, ip::udp::endpoint(ip::udp::v4(), port)),
@@ -176,7 +176,7 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
 ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
                                              unsigned short    send_to_port,
                                              unsigned short    recv_on_port,
-                                             MessageRegister * mr,
+                                             MessageRegister  *mr,
                                              const std::string crypto_key,
                                              const std::string cipher)
 : io_service_(),
@@ -216,7 +216,7 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
  */
 ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
                                              unsigned short    port,
-                                             MessageRegister * mr,
+                                             MessageRegister  *mr,
                                              const std::string crypto_key,
                                              const std::string cipher)
 : io_service_(),
@@ -241,7 +241,7 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string address,
 ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string      address,
                                              unsigned short         send_to_port,
                                              unsigned short         recv_on_port,
-                                             MessageRegister *      mr,
+                                             MessageRegister       *mr,
                                              frame_header_version_t header_version)
 : io_service_(),
   resolver_(io_service_),
@@ -260,7 +260,7 @@ ProtobufBroadcastPeer::ProtobufBroadcastPeer(const std::string      address,
  * @þaram header_version which frame header version to send, use with caution
  */
 void
-ProtobufBroadcastPeer::ctor(const std::string &    address,
+ProtobufBroadcastPeer::ctor(const std::string     &address,
                             unsigned int           send_to_port,
                             const std::string      crypto_key,
                             const std::string      cipher,
@@ -478,7 +478,7 @@ ProtobufBroadcastPeer::handle_recv(const boost::system::error_code &error, size_
 				    || !std::binary_search(local_endpoints_.begin(),
 				                           local_endpoints_.end(),
 				                           in_endpoint_)) {
-					void *           data;
+					void            *data;
 					message_header_t message_header;
 
 					if (frame_header_version_ == PB_FRAME_V1) {
@@ -524,7 +524,7 @@ ProtobufBroadcastPeer::handle_recv(const boost::system::error_code &error, size_
 void
 ProtobufBroadcastPeer::handle_sent(const boost::system::error_code &error,
                                    size_t                           bytes_transferred,
-                                   QueueEntry *                     entry)
+                                   QueueEntry                      *entry)
 {
 	delete entry;
 
@@ -589,7 +589,7 @@ ProtobufBroadcastPeer::send(uint16_t component_id, uint16_t msg_type, google::pr
  */
 void
 ProtobufBroadcastPeer::send_raw(const frame_header_t &frame_header,
-                                const void *          data,
+                                const void           *data,
                                 size_t                data_size)
 {
 	QueueEntry *entry         = new QueueEntry();
@@ -637,7 +637,7 @@ ProtobufBroadcastPeer::send(std::shared_ptr<google::protobuf::Message> m)
 void
 ProtobufBroadcastPeer::send(google::protobuf::Message &m)
 {
-	const google::protobuf::Descriptor *    desc     = m.GetDescriptor();
+	const google::protobuf::Descriptor     *desc     = m.GetDescriptor();
 	const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
 	if (!enumdesc) {
 		throw std::logic_error("Message does not have CompType enum");
