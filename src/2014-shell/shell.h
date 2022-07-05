@@ -121,12 +121,12 @@ private: // methods
 	void log(llsf_log_msgs::LogMessage::LogLevel log_level,
 	         long int                            ts_sec,
 	         long int                            ts_nsec,
-	         const std::string &                 component,
-	         const std::string &                 message);
+	         const std::string                  &component,
+	         const std::string                  &message);
 
 	void log(llsf_log_msgs::LogMessage::LogLevel log_level,
-	         const std::string &                 component,
-	         const char *                        format,
+	         const std::string                  &component,
+	         const char                         *format,
 	         ...);
 
 	void logf(const char *format, ...);
