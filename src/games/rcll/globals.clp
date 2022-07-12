@@ -10,6 +10,14 @@
 ;---------------------------------------------------------------------------
 
 (defglobal
+	; indices used for field generator
+	?*BASE_STATION* = 1
+	?*CAP1_STATION* = 2
+	?*CAP2_STATION* = 3
+	?*RING1_STATION* = 4
+	?*RING2_STATION* = 5
+	?*STORAGE_STATION* = 6
+	?*DELIVERY_STATION* = 7
   ; network sending periods; seconds
   ?*BEACON-PERIOD* = 1.0
   ?*GAMESTATE-PERIOD* = 1.0
