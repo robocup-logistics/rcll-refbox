@@ -145,7 +145,7 @@
 
     (bind ?order-base-color (pick-random$ (deftemplate-slot-allowed-values order base-color)))
     (bind ?order-ring-colors (randomize-ring-colors ?order:complexity ?ring-colors))
-    (bind ?order-cap-color (pick-random$ (deftemplate-slot-allowed-values order cap-color)))
+    (bind ?order-cap-color CAP_BLACK)
 
     (modify ?order (active FALSE) (activate-at ?activate-at) (delivery-gate ?gate)
       (delivery-period ?deliver-start ?deliver-end) (base-color ?order-base-color)
@@ -283,6 +283,12 @@
   ?mg <- (machine-generation (state NOT-STARTED))
   (game-parameters (is-parameterized FALSE) (machine-positions RANDOM))
   =>
+  (printout t "starting the solver for the generation of the machine positions" crlf)
+	(foreach ?m (create$ ?*CAP1_STATION*
+	                     ?*STORAGE_STATION*
+	                     ?*DELIVERY_STATION*)
+		(mps-generator-remove-machine ?m)
+	)
   (printout t "starting the solver for the generation of the machine positions" crlf)
   (mps-generator-start)
   (modify ?mg (state STARTED) (generation-state-last-checked ?gt))
