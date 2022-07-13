@@ -718,6 +718,9 @@
 	 then
 		(printout t "Loading machine positions finished" crlf)
 		(modify ?gp (machine-positions STATIC))
+		(do-for-all-facts ((?m machine)) (eq ?m:zone TBD)
+		  (retract ?m)
+		)
 	 else
 		(printout error "Loading machines from database failed, fallback to random generation." crlf)
 		(modify ?gp (machine-positions RANDOM))
