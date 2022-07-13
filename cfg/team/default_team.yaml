@@ -5,6 +5,7 @@
 
 llsfrb:
   game:
-    teams: [Carologistics]
+    teams: [Carologistics, Solidus]
     crypto-keys:
       Carologistics: randomkey
+      Solidus: randomkey2
