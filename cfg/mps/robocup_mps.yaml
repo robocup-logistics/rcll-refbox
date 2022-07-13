@@ -1,0 +1,105 @@
+
+%YAML 1.2
+---
+---
+# Default settings, where all machines use plc connection
+# Copy this into your /etc/hosts file for convenience
+# C-BS 192.168.2.27
+# C-RS1 192.168.2.23
+# C-RS2 192.168.2.26
+# C-CS2 192.168.2.25
+#
+# M-BS 192.168.2.33
+# M-RS1 192.168.2.31
+# M-RS2 192.168.2.34
+# M-CS2 192.168.2.33
+
+
+llsfrb:
+  mps:
+    enable: true
+    stations:
+      C-BS:
+        active: true
+        type: BS
+        host: 192.168.2.27
+        port: !tcp-port 4840
+        connection: plc
+      C-CS1:
+        active: true
+        host: localhost
+        port: !tcp-port 4841
+        type: CS
+        connection: mockup
+      C-CS2:
+        active: true
+        host: 192.168.2.25
+        port: !tcp-port 4842
+        type: CS
+        connection: plc
+      C-RS1:
+        active: true
+        host: 192.168.2.23
+        port: !tcp-port 4843
+        type: RS
+        connection: plc
+      C-RS2:
+        active: true
+        host: 192.168.2.26
+        port: !tcp-port 4844
+        type: RS
+        connection: plc
+      C-DS:
+        active: true
+        host: localhost
+        port: !tcp-port 4845
+        type: DS
+        connection: mockup
+      C-SS:
+        active: true
+        host: localhost
+        port: !tcp-port 4846
+        type: SS
+        connection: mockup
+      M-BS:
+        active: true
+        host: 192.168.2.33
+        port: !tcp-port 4850
+        type: BS
+        connection: plc
+      M-CS1:
+        active: true
+        host: 192.168.2.30
+        port: !tcp-port 4851
+        type: CS
+        connection: plc
+      M-CS2:
+        active: true
+        host: localhost
+        port: !tcp-port 4852
+        type: CS
+        connection: mockup
+      M-RS1:
+        active: true
+        host: 192.168.2.31
+        port: !tcp-port 4853
+        type: RS
+        connection: plc
+      M-RS2:
+        active: true
+        host: 192.168.2.34
+        port: !tcp-port 4854
+        type: RS
+        connection: plc
+      M-DS:
+        active: true
+        host: localhost
+        port: !tcp-port 4855
+        type: DS
+        connection: mockup
+      M-SS:
+        active: true
+        host: localhost
+        port: !tcp-port 4840
+        type: SS
+        connection: mockup
