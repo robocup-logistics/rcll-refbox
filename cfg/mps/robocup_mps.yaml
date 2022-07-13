@@ -28,73 +28,73 @@ llsfrb:
       C-CS1:
         active: true
         host: localhost
-        port: !tcp-port 4841
+        port: !tcp-port 4840
         type: CS
         connection: mockup
       C-CS2:
         active: true
         host: 192.168.2.25
-        port: !tcp-port 4842
+        port: !tcp-port 4840
         type: CS
         connection: plc
       C-RS1:
         active: true
         host: 192.168.2.23
-        port: !tcp-port 4843
+        port: !tcp-port 4840
         type: RS
         connection: plc
       C-RS2:
         active: true
         host: 192.168.2.26
-        port: !tcp-port 4844
+        port: !tcp-port 4840
         type: RS
         connection: plc
       C-DS:
         active: true
         host: localhost
-        port: !tcp-port 4845
+        port: !tcp-port 4840
         type: DS
         connection: mockup
       C-SS:
         active: true
         host: localhost
-        port: !tcp-port 4846
+        port: !tcp-port 4840
         type: SS
         connection: mockup
       M-BS:
         active: true
         host: 192.168.2.33
-        port: !tcp-port 4850
+        port: !tcp-port 4840
         type: BS
         connection: plc
       M-CS1:
         active: true
         host: 192.168.2.30
-        port: !tcp-port 4851
+        port: !tcp-port 4840
         type: CS
         connection: plc
       M-CS2:
         active: true
         host: localhost
-        port: !tcp-port 4852
+        port: !tcp-port 4840
         type: CS
         connection: mockup
       M-RS1:
         active: true
         host: 192.168.2.31
-        port: !tcp-port 4853
+        port: !tcp-port 4840
         type: RS
         connection: plc
       M-RS2:
         active: true
         host: 192.168.2.34
-        port: !tcp-port 4854
+        port: !tcp-port 4840
         type: RS
         connection: plc
       M-DS:
         active: true
         host: localhost
-        port: !tcp-port 4855
+        port: !tcp-port 4840
         type: DS
         connection: mockup
       M-SS:
