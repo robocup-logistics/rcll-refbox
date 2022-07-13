@@ -163,7 +163,7 @@
     ?mf <- (mps-status-feedback ?machine BARCODE ?id)
 	=>
     (retract ?mf)
-    (printout warn "Received workpiece update for " ?id " but workpiece tracking is disabled" crlf)
+    ;(printout warn "Received workpiece update for " ?id " but workpiece tracking is disabled" crlf)
 )
 
 (defrule workpiece-update-retrieved
