@@ -50,7 +50,7 @@ namespace mps_comm {
 inline const std::chrono::milliseconds opcua_poll_rate_{40};
 
 const std::vector<OpcUtils::MPSRegister>
-  OpcUaMachine::SUB_REGISTERS({OpcUtils::MPSRegister::BARCODE_IN,
+  OpcUaMachine::SUB_REGISTERS({//OpcUtils::MPSRegister::BARCODE_IN,
                                OpcUtils::MPSRegister::ERROR_IN,
                                OpcUtils::MPSRegister::STATUS_BUSY_IN,
                                OpcUtils::MPSRegister::STATUS_ENABLE_IN,
@@ -152,10 +152,24 @@ OpcUaMachine::send_instruction(const Instruction &instruction)
 		setNodeValue(registerNodes[reg], (uint8_t)error, reg);
 	} catch (std::exception &e) {
 		logger->warn("Error while sending command: {}", e.what());
-		std::this_thread::sleep_for(opcua_poll_rate_);
+
+		//TODO maybe find nicer fix
+		auto current = std::chrono::system_clock::now();
+		auto end = current + opcua_poll_rate_;
+		while(current < end)
+		{
+			current = std::chrono::system_clock::now();
+		}
 		return false;
 	}
-	std::this_thread::sleep_for(opcua_poll_rate_);
+	
+	//TODO maybe find nicer fix
+	auto current = std::chrono::system_clock::now();
+	auto end = current + opcua_poll_rate_;
+	while(current < end)
+	{
+		current = std::chrono::system_clock::now();
+	}
 	return true;
 }
 
@@ -172,7 +186,13 @@ OpcUaMachine::connect()
 		return;
 	}
 	while (!reconnect()) {
-		std::this_thread::sleep_for(opcua_poll_rate_);
+		//TODO maybe find nicer fix
+		auto current = std::chrono::system_clock::now();
+		auto end = current + opcua_poll_rate_;
+		while(current < end)
+		{
+			current = std::chrono::system_clock::now();
+		}
 	}
 }
 
