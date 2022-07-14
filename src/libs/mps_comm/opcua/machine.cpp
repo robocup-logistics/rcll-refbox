@@ -50,7 +50,7 @@ namespace mps_comm {
 inline const std::chrono::milliseconds opcua_poll_rate_{40};
 
 const std::vector<OpcUtils::MPSRegister>
-  OpcUaMachine::SUB_REGISTERS({//OpcUtils::MPSRegister::BARCODE_IN,
+  OpcUaMachine::SUB_REGISTERS({OpcUtils::MPSRegister::BARCODE_IN,
                                OpcUtils::MPSRegister::ERROR_IN,
                                OpcUtils::MPSRegister::STATUS_BUSY_IN,
                                OpcUtils::MPSRegister::STATUS_ENABLE_IN,
