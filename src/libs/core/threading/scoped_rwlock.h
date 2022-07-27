@@ -52,7 +52,7 @@ private:
 	LockType              __lock_type;
 	bool                  __locked;
 	RefPtr<ReadWriteLock> __refrwlock;
-	ReadWriteLock *       __rawrwlock;
+	ReadWriteLock        *__rawrwlock;
 };
 
 } // end namespace fawkes

@@ -36,10 +36,10 @@ class NetworkAcceptorThread : public Thread
 public:
 	NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
 	                      unsigned short int                port,
-	                      const char *                      thread_name = "NetworkAcceptorThread");
+	                      const char                       *thread_name = "NetworkAcceptorThread");
 	NetworkAcceptorThread(NetworkIncomingConnectionHandler *handler,
-	                      StreamSocket *                    socket,
-	                      const char *                      thread_name = "NetworkAcceptorThread");
+	                      StreamSocket                     *socket,
+	                      const char                       *thread_name = "NetworkAcceptorThread");
 	~NetworkAcceptorThread();
 
 	virtual void loop();
@@ -54,7 +54,7 @@ protected:
 
 private:
 	unsigned short int __port;
-	StreamSocket *     __socket;
+	StreamSocket      *__socket;
 
 	NetworkIncomingConnectionHandler *__handler;
 };

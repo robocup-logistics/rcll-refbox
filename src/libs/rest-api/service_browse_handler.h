@@ -37,18 +37,18 @@ class Logger;
 class WebviewServiceBrowseHandler : public fawkes::ServiceBrowseHandler
 {
 public:
-	WebviewServiceBrowseHandler(Logger *                                logger,
+	WebviewServiceBrowseHandler(Logger                                 *logger,
 	                            std::shared_ptr<fawkes::NetworkService> webview_service);
 	~WebviewServiceBrowseHandler();
 
 	virtual void all_for_now();
 	virtual void cache_exhausted();
 	virtual void browse_failed(const char *name, const char *type, const char *domain);
-	virtual void service_added(const char *            name,
-	                           const char *            type,
-	                           const char *            domain,
-	                           const char *            host_name,
-	                           const struct sockaddr * addr,
+	virtual void service_added(const char             *name,
+	                           const char             *type,
+	                           const char             *domain,
+	                           const char             *host_name,
+	                           const struct sockaddr  *addr,
 	                           const socklen_t         addr_size,
 	                           uint16_t                port,
 	                           std::list<std::string> &txt,
@@ -63,7 +63,7 @@ public:
 	ServiceList &service_list();
 
 private:
-	Logger *                                logger_;
+	Logger                                 *logger_;
 	std::shared_ptr<fawkes::NetworkService> webview_service_;
 	ServiceList                             service_list_;
 };

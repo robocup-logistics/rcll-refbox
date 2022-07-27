@@ -59,9 +59,9 @@ MongoDBLogProtobuf::~MongoDBLogProtobuf()
 }
 
 void
-MongoDBLogProtobuf::add_field(const FieldDescriptor *            field,
+MongoDBLogProtobuf::add_field(const FieldDescriptor             *field,
                               const ::google::protobuf::Message &m,
-                              document *                         doc)
+                              document                          *doc)
 {
 	const Reflection *refl = m.GetReflection();
 

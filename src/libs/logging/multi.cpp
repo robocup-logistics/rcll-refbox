@@ -48,7 +48,7 @@ public:
 
 	fawkes::LockList<Logger *>           loggers;
 	fawkes::LockList<Logger *>::iterator logit;
-	fawkes::Mutex *                      mutex;
+	fawkes::Mutex                       *mutex;
 	fawkes::Thread::CancelState          old_state;
 };
 /// @endcond
@@ -574,8 +574,8 @@ MultiLogger::tlog_error(struct timeval *t, const char *component, fawkes::Except
 void
 MultiLogger::vtlog(LogLevel        level,
                    struct timeval *t,
-                   const char *    component,
-                   const char *    format,
+                   const char     *component,
+                   const char     *format,
                    va_list         va)
 {
 	data->mutex->lock();

@@ -62,7 +62,7 @@ static_assert(false, "__has_include not supported");
 #else
 #	if __cplusplus >= 201703L && __has_include(<filesystem>)
 #		include <filesystem>
-namespace fs = std::filesystem;
+namespace fs    = std::filesystem;
 #	elif __has_include(<experimental/filesystem>)
 #		include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
@@ -761,7 +761,7 @@ LLSFRefBox::handle_clips_periodic()
 		long int              index = to_erase.front();
 		CLIPS::Fact::pointer &f     = clips_msg_facts_[index];
 		CLIPS::Value          v     = f->slot_value("ptr")[0];
-		void *                ptr   = v.as_address();
+		void                 *ptr   = v.as_address();
 		delete static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
 		clips_msg_facts_.erase(index);
 		to_erase.pop();
@@ -1319,7 +1319,7 @@ LLSFRefBox::handle_server_client_msg(ProtobufStreamServer::ClientID             
  * @param msg the message
  */
 void
-LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint &           endpoint,
+LLSFRefBox::handle_peer_msg(boost::asio::ip::udp::endpoint            &endpoint,
                             uint16_t                                   component_id,
                             uint16_t                                   msg_type,
                             std::shared_ptr<google::protobuf::Message> msg)
@@ -1351,7 +1351,7 @@ LLSFRefBox::handle_server_client_fail(ProtobufStreamServer::ClientID client,
 void
 LLSFRefBox::add_comp_type(google::protobuf::Message &m, document *doc)
 {
-	const google::protobuf::Descriptor *    desc     = m.GetDescriptor();
+	const google::protobuf::Descriptor     *desc     = m.GetDescriptor();
 	const google::protobuf::EnumDescriptor *enumdesc = desc->FindEnumTypeByName("CompType");
 	if (!enumdesc)
 		return;
@@ -1692,9 +1692,9 @@ LLSFRefBox::clips_mongodb_insert(std::string collection, void *bson)
 }
 
 void
-LLSFRefBox::mongodb_update(std::string &                  collection,
+LLSFRefBox::mongodb_update(std::string                   &collection,
                            const bsoncxx::document::view &doc,
-                           CLIPS::Value &                 query,
+                           CLIPS::Value                  &query,
                            bool                           upsert)
 {
 	if (!cfg_mongodb_enabled_) {
@@ -2058,7 +2058,7 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::error,
 	                               boost::asio::placeholders::signal_number));
 #else
-	g_refbox = this;
+	g_refbox          = this;
 	signal(SIGINT, llsfrb::handle_signal);
 #endif
 

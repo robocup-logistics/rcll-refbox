@@ -131,7 +131,7 @@ private: // types
 private: // methods
 	void disconnect_nosig();
 	void run_asio();
-	void handle_resolve(const boost::system::error_code &        err,
+	void handle_resolve(const boost::system::error_code         &err,
 	                    boost::asio::ip::tcp::resolver::iterator endpoint_iterator);
 	void handle_connect(const boost::system::error_code &err);
 	void handle_write(const boost::system::error_code &error,
@@ -161,10 +161,10 @@ private: // members
 	std::mutex               outbound_mutex_;
 	bool                     outbound_active_;
 
-	void * in_frame_header_;
+	void  *in_frame_header_;
 	size_t in_frame_header_size_;
 	size_t in_data_size_;
-	void * in_data_;
+	void  *in_data_;
 
 	MessageRegister *message_register_;
 	bool             own_message_register_;

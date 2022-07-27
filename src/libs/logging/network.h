@@ -64,7 +64,7 @@ public:
 	virtual void tlog_error(struct timeval *t, const char *component, fawkes::Exception &e);
 
 	virtual void
-	             vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
+	vtlog_debug(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void vtlog_info(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void vtlog_warn(struct timeval *t, const char *component, const char *format, va_list va);
 	virtual void
@@ -72,16 +72,16 @@ public:
 
 private:
 	void send_message(Logger::LogLevel level,
-	                  struct timeval * t,
-	                  const char *     component,
+	                  struct timeval  *t,
+	                  const char      *component,
 	                  bool             is_exception,
-	                  const char *     format,
+	                  const char      *format,
 	                  va_list          va);
 	void send_message(Logger::LogLevel level,
-	                  struct timeval * t,
-	                  const char *     component,
+	                  struct timeval  *t,
+	                  const char      *component,
 	                  bool             is_exception,
-	                  const char *     message);
+	                  const char      *message);
 
 	protobuf_comm::ProtobufStreamServer *pb_server_;
 };

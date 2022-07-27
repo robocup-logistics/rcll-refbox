@@ -67,8 +67,8 @@ WebviewServer::WebviewServer(bool                                           enab
                              std::unique_ptr<fawkes::NetworkNameResolver>   nnresolver,
                              std::shared_ptr<fawkes::ServicePublisher>      service_publisher,
                              std::shared_ptr<fawkes::ServiceBrowser>        service_browser,
-                             Configuration *                                config,
-                             Logger *                                       logger)
+                             Configuration                                 *config,
+                             Logger                                        *logger)
 : fawkes::Thread("WebviewServer", Thread::OPMODE_CONTINUOUS),
   rest_api_manager_(rest_api_manager),
   nnresolver_(std::move(nnresolver)),

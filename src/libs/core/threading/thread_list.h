@@ -121,9 +121,9 @@ private:
 	void update_barrier();
 
 private:
-	char *                __name;
+	char                 *__name;
 	bool                  __sealed;
-	Mutex *               __finalize_mutex;
+	Mutex                *__finalize_mutex;
 	InterruptibleBarrier *__wnw_barrier;
 
 	std::list<std::pair<InterruptibleBarrier *, ThreadList>>           __wnw_bad_barriers;

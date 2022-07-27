@@ -57,10 +57,10 @@ NetworkLogger::~NetworkLogger()
 
 void
 NetworkLogger::send_message(Logger::LogLevel level,
-                            struct timeval * t,
-                            const char *     component,
+                            struct timeval  *t,
+                            const char      *component,
                             bool             is_exception,
-                            const char *     format,
+                            const char      *format,
                             va_list          va)
 {
 	struct timeval now;
@@ -92,10 +92,10 @@ NetworkLogger::send_message(Logger::LogLevel level,
 
 void
 NetworkLogger::send_message(Logger::LogLevel level,
-                            struct timeval * t,
-                            const char *     component,
+                            struct timeval  *t,
+                            const char      *component,
                             bool             is_exception,
-                            const char *     message)
+                            const char      *message)
 {
 	struct timeval now;
 	if (t == NULL) {

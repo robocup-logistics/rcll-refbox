@@ -547,7 +547,7 @@ void
 Exception::print_backtrace() const throw()
 {
 #ifdef HAVE_EXECINFO
-	void * array[25];
+	void  *array[25];
 	int    size    = backtrace(array, 25);
 	char **symbols = backtrace_symbols(array, size);
 
@@ -569,7 +569,7 @@ char *
 Exception::generate_backtrace() const throw()
 {
 #ifdef HAVE_BACKTRACE
-	void * array[25];
+	void  *array[25];
 	int    size    = backtrace(array, 25);
 	char **symbols = backtrace_symbols(array, size);
 
@@ -770,7 +770,8 @@ Exception::iterator::operator!=(const iterator &i) const
  * Get message at current position. Returns NULL for the invalid ieterator.
  * @return message or NULL if iterator is invalid
  */
-const char *Exception::iterator::operator*() const
+const char *
+Exception::iterator::operator*() const
 {
 	if (mlist != NULL) {
 		return mlist->msg;

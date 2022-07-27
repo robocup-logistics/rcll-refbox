@@ -76,7 +76,7 @@ public:
 	ProtobufBroadcastPeer(const std::string      address,
 	                      unsigned short         send_to_port,
 	                      unsigned short         recv_on_port,
-	                      MessageRegister *      mr,
+	                      MessageRegister       *mr,
 	                      frame_header_version_t header_version = PB_FRAME_V2);
 	ProtobufBroadcastPeer(const std::string address,
 	                      unsigned short    port,
@@ -84,7 +84,7 @@ public:
 	                      const std::string cipher = "aes-128-ecb");
 	ProtobufBroadcastPeer(const std::string address,
 	                      unsigned short    port,
-	                      MessageRegister * mr,
+	                      MessageRegister  *mr,
 	                      const std::string crypto_key,
 	                      const std::string cipher = "aes-128-ecb");
 	ProtobufBroadcastPeer(const std::string address,
@@ -95,7 +95,7 @@ public:
 	ProtobufBroadcastPeer(const std::string address,
 	                      unsigned short    send_to_port,
 	                      unsigned short    recv_on_port,
-	                      MessageRegister * mr,
+	                      MessageRegister  *mr,
 	                      const std::string crypto_key,
 	                      const std::string cipher = "aes-128-ecb");
 	~ProtobufBroadcastPeer();
@@ -187,7 +187,7 @@ private: // methods
 	void run_asio();
 	void start_send();
 	void start_recv();
-	void handle_resolve(const boost::system::error_code &        err,
+	void handle_resolve(const boost::system::error_code         &err,
 	                    boost::asio::ip::udp::resolver::iterator endpoint_iterator);
 	void handle_sent(const boost::system::error_code &error,
 	                 size_t /*bytes_transferred*/,
@@ -215,8 +215,8 @@ private: // members
 	boost::asio::ip::udp::endpoint outbound_endpoint_;
 	boost::asio::ip::udp::endpoint in_endpoint_;
 
-	void * in_data_;
-	void * enc_in_data_;
+	void  *in_data_;
+	void  *enc_in_data_;
 	size_t in_data_size_;
 	size_t enc_in_data_size_;
 

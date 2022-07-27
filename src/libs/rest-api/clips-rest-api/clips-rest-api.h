@@ -83,6 +83,6 @@ private:
 	CLIPS::Environment *env_;
 
 	fawkes::Mutex &env_mutex_;
-	Logger *       logger_;
+	Logger        *logger_;
 };
 } //end namespace llsfrb

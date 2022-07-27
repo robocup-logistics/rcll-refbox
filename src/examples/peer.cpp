@@ -76,7 +76,7 @@ private:
 	}
 
 	void
-	peer_msg(boost::asio::ip::udp::endpoint &           endpoint,
+	peer_msg(boost::asio::ip::udp::endpoint            &endpoint,
 	         uint16_t                                   comp_id,
 	         uint16_t                                   msg_type,
 	         std::shared_ptr<google::protobuf::Message> msg)
@@ -116,7 +116,7 @@ private:
 
 private:
 	std::string            host_;
-	MessageRegister *      mr_;
+	MessageRegister       *mr_;
 	ProtobufBroadcastPeer *peer_public_;
 	ProtobufBroadcastPeer *peer_team_;
 };

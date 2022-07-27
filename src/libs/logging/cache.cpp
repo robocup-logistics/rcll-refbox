@@ -289,8 +289,8 @@ CacheLogger::log_error(const char *component, fawkes::Exception &e)
 void
 CacheLogger::tlog_push_message(LogLevel        ll,
                                struct timeval *t,
-                               const char *    component,
-                               const char *    format,
+                               const char     *component,
+                               const char     *format,
                                va_list         va)
 {
 	if (log_level <= ll) {
@@ -334,8 +334,8 @@ CacheLogger::tlog_push_message(LogLevel        ll,
 
 void
 CacheLogger::tlog_push_message(LogLevel           ll,
-                               struct timeval *   t,
-                               const char *       component,
+                               struct timeval    *t,
+                               const char        *component,
                                fawkes::Exception &e)
 {
 	if (log_level <= ll) {

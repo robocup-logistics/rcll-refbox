@@ -79,7 +79,7 @@ public:
 	long int parse_item_int(unsigned int index);
 	double   parse_item_float(unsigned int index);
 
-	const std::vector<const char *> &    items() const;
+	const std::vector<const char *>     &items() const;
 	std::vector<const char *>::size_type num_items() const;
 
 	int          argc() const;
@@ -106,7 +106,7 @@ private:
 	std::map<std::string, const char *> __opts_cit;
 	std::vector<const char *>           __items;
 
-	char * __program_name;
+	char  *__program_name;
 	char **__argv;
 	int    __argc;
 

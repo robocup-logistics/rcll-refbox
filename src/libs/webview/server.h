@@ -70,10 +70,10 @@ private:
 	std::string read_file(const char *filename);
 
 private:
-	struct MHD_Daemon *   daemon_;
+	struct MHD_Daemon    *daemon_;
 	WebRequestDispatcher *dispatcher_;
-	WebRequestManager *   request_manager_;
-	llsfrb::Logger *      logger_;
+	WebRequestManager    *request_manager_;
+	llsfrb::Logger       *logger_;
 
 	unsigned short int port_;
 

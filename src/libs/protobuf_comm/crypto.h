@@ -68,7 +68,7 @@ public:
 	size_t encrypted_buffer_size(size_t plain_length);
 
 private:
-	unsigned char *        key_;
+	unsigned char         *key_;
 	long long unsigned int iv_;
 
 	const EVP_CIPHER *cipher_;

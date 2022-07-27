@@ -165,7 +165,7 @@ GenericItemsMenu::max_cols(int n_items, NCursesMenuItem **items)
 	return rv;
 }
 
-TeamSelectMenu::TeamSelectMenu(NCursesWindow *                       parent,
+TeamSelectMenu::TeamSelectMenu(NCursesWindow                        *parent,
                                llsf_msgs::Team                       team,
                                std::shared_ptr<llsf_msgs::GameInfo>  gameinfo,
                                std::shared_ptr<llsf_msgs::GameState> gstate)
@@ -237,7 +237,7 @@ TeamSelectMenu::On_Menu_Init()
 }
 
 int
-TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo> & gameinfo,
+TeamSelectMenu::det_lines(std::shared_ptr<llsf_msgs::GameInfo>  &gameinfo,
                           std::shared_ptr<llsf_msgs::GameState> &gstate)
 {
 	int rv = 0;
@@ -321,8 +321,8 @@ GameMenu::GameMenu(NCursesWindow *parent)
   menu_selected_(false)
 {
 	NCursesMenuItem **mitems         = new NCursesMenuItem *[3];
-	SignalItem *      randomize_item = new SignalItem(s_randomize_);
-	SignalItem *      cancel_item    = new SignalItem(s_cancel_);
+	SignalItem       *randomize_item = new SignalItem(s_randomize_);
+	SignalItem       *cancel_item    = new SignalItem(s_cancel_);
 	randomize_item->signal().connect([this]() {
 		next_menu_     = randomize;
 		menu_selected_ = true;
@@ -366,7 +366,7 @@ RandomizeFieldMenu::RandomizeFieldMenu(NCursesWindow *parent)
   confirmed_(false)
 {
 	NCursesMenuItem **mitems   = new NCursesMenuItem *[3];
-	SignalItem *      yes_item = new SignalItem(s_yes_);
+	SignalItem       *yes_item = new SignalItem(s_yes_);
 	yes_item->signal().connect([this]() { confirmed_ = true; });
 	SignalItem *no_item = new SignalItem(s_no_);
 	no_item->signal().connect([this]() { confirmed_ = false; });
@@ -390,7 +390,7 @@ RandomizeFieldMenu::On_Menu_Init()
 	refresh();
 }
 
-RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow *                       parent,
+RobotMaintenanceMenu::RobotMaintenanceMenu(NCursesWindow                        *parent,
                                            llsf_msgs::Team                       team,
                                            std::shared_ptr<llsf_msgs::RobotInfo> rinfo)
 : Menu(det_lines(team, rinfo) + 1 + 2,
@@ -529,7 +529,7 @@ RobotMaintenanceMenu::det_cols(std::shared_ptr<llsf_msgs::RobotInfo> &rinfo)
 	return cols;
 }
 
-OrderDeliverMenu::OrderDeliverMenu(NCursesWindow *                       parent,
+OrderDeliverMenu::OrderDeliverMenu(NCursesWindow                        *parent,
                                    llsf_msgs::Team                       team,
                                    std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
                                    std::shared_ptr<llsf_msgs::GameState> gstate)
@@ -697,7 +697,7 @@ OrderDeliverMenu::operator bool() const
 	return show_all_selected_ || delivery_selected_;
 }
 
-SelectOrderByIDMenu::SelectOrderByIDMenu(NCursesWindow *                       parent,
+SelectOrderByIDMenu::SelectOrderByIDMenu(NCursesWindow                        *parent,
                                          llsf_msgs::Team                       team,
                                          std::shared_ptr<llsf_msgs::OrderInfo> oinfo,
                                          std::shared_ptr<llsf_msgs::GameState> gstate)
@@ -840,7 +840,7 @@ SelectOrderByIDMenu::operator bool() const
 	return order_selected_;
 }
 
-DeliveryCorrectMenu::DeliveryCorrectMenu(NCursesWindow *                       parent,
+DeliveryCorrectMenu::DeliveryCorrectMenu(NCursesWindow                        *parent,
                                          llsf_msgs::Team                       team,
                                          unsigned int                          delivery,
                                          std::shared_ptr<llsf_msgs::OrderInfo> oinfo)
@@ -855,7 +855,7 @@ DeliveryCorrectMenu::DeliveryCorrectMenu(NCursesWindow *                       p
   s_cancel_("CANCEL")
 {
 	NCursesMenuItem **mitems   = new NCursesMenuItem *[4];
-	SignalItem *      yes_item = new SignalItem(s_yes_);
+	SignalItem       *yes_item = new SignalItem(s_yes_);
 	yes_item->signal().connect(boost::bind(&DeliveryCorrectMenu::correct_selected, this, true));
 	int idx             = 0;
 	mitems[idx++]       = yes_item;

@@ -264,9 +264,9 @@ public:
 	}
 
 private:
-	T_CppObject *  __cpp_object;
+	T_CppObject   *__cpp_object;
 	mutable Mutex *__obj_mutex;
-	mutable int *  __ref_count;
+	mutable int   *__ref_count;
 	mutable Mutex *__ref_mutex;
 };
 
@@ -274,13 +274,15 @@ private:
 // If it would come after them it wouldn't be inlined.
 
 template <class T_CppObject>
-inline T_CppObject *LockPtr<T_CppObject>::operator->() const
+inline T_CppObject *
+LockPtr<T_CppObject>::operator->() const
 {
 	return __cpp_object;
 }
 
 template <class T_CppObject>
-inline T_CppObject *LockPtr<T_CppObject>::operator*() const
+inline T_CppObject *
+LockPtr<T_CppObject>::operator*() const
 {
 	return __cpp_object;
 }
@@ -331,9 +333,9 @@ inline LockPtr<T_CppObject>::LockPtr(T_CppObject *cpp_object)
 //Used by cast_*() implementations:
 template <class T_CppObject>
 inline LockPtr<T_CppObject>::LockPtr(T_CppObject *cpp_object,
-                                     Mutex *      objmutex,
-                                     int *        refcount,
-                                     Mutex *      refmutex)
+                                     Mutex       *objmutex,
+                                     int         *refcount,
+                                     Mutex       *refmutex)
 : __cpp_object(cpp_object), __obj_mutex(objmutex), __ref_count(refcount), __ref_mutex(refmutex)
 {
 	if (__cpp_object && __obj_mutex && __ref_count && __ref_mutex) {
@@ -383,9 +385,9 @@ inline void
 LockPtr<T_CppObject>::swap(LockPtr<T_CppObject> &other)
 {
 	T_CppObject *const temp           = __cpp_object;
-	int *              temp_count     = __ref_count;
-	Mutex *            temp_ref_mutex = __ref_mutex;
-	Mutex *            temp_obj_mutex = __obj_mutex;
+	int               *temp_count     = __ref_count;
+	Mutex             *temp_ref_mutex = __ref_mutex;
+	Mutex             *temp_obj_mutex = __obj_mutex;
 
 	__cpp_object = other.__cpp_object;
 	__obj_mutex  = other.__obj_mutex;

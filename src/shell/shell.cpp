@@ -801,7 +801,7 @@ LLSFRefBoxShell::client_msg(uint16_t                                   comp_id,
 		last_minfo_ = minfo;
 		for (int i = 0; i < minfo->machines_size(); ++i) {
 			std::map<std::string, LLSFRefBoxShellMachine *>::iterator mpanel;
-			const llsf_msgs::Machine &                                mspec = minfo->machines(i);
+			const llsf_msgs::Machine                                 &mspec = minfo->machines(i);
 			//logf("Adding %s @ (%f, %f, %f)\n", mspec.name().c_str(),
 			//     mspec.pose().x(), mspec.pose().y(), mspec.pose().ori());
 			if ((mpanel = machines_.find(mspec.name())) != machines_.end()) {
@@ -845,7 +845,7 @@ LLSFRefBoxShell::client_msg(uint16_t                                   comp_id,
 		const size_t size = std::min((size_t)ordins->orders_size(), (size_t)orders_.size());
 		size_t       oidx = 0;
 		for (size_t i = 0; i < size; ++i) {
-			const llsf_msgs::Order &          ospec = ordins->orders(i);
+			const llsf_msgs::Order           &ospec = ordins->orders(i);
 			std::vector<llsf_msgs::RingColor> ring_colors(ospec.ring_colors_size());
 			for (int j = 0; j < ospec.ring_colors_size(); ++j) {
 				ring_colors[j] = ospec.ring_colors(j);
@@ -892,8 +892,8 @@ void
 LLSFRefBoxShell::log(llsf_log_msgs::LogMessage::LogLevel log_level,
                      long int                            ts_sec,
                      long int                            ts_nsec,
-                     const std::string &                 component,
-                     const std::string &                 message)
+                     const std::string                  &component,
+                     const std::string                  &message)
 {
 	rb_log_->standend();
 	rb_log_->attron(' ' | COLOR_PAIR(COLOR_DEFAULT));
@@ -927,8 +927,8 @@ LLSFRefBoxShell::log(llsf_log_msgs::LogMessage::LogLevel log_level,
 
 void
 LLSFRefBoxShell::log(llsf_log_msgs::LogMessage::LogLevel log_level,
-                     const std::string &                 component,
-                     const char *                        format,
+                     const std::string                  &component,
+                     const char                         *format,
                      ...)
 {
 	va_list arg;
@@ -1154,7 +1154,7 @@ LLSFRefBoxShell::run()
 	// State menu
 	const google::protobuf::EnumDescriptor *state_enum_desc = llsf_msgs::GameState_State_descriptor();
 	const int                               num_state_values = state_enum_desc->value_count() - 1;
-	NCursesMenuItem **                      state_items = new NCursesMenuItem *[2 + num_state_values];
+	NCursesMenuItem                       **state_items = new NCursesMenuItem *[2 + num_state_values];
 	int                                     item_i      = 0;
 	for (int i = 0; i < state_enum_desc->value_count(); ++i) {
 		if (state_enum_desc->value(i)->name() == "INIT")
@@ -1180,7 +1180,7 @@ LLSFRefBoxShell::run()
 	// Phase menu
 	const google::protobuf::EnumDescriptor *phase_enum_desc = llsf_msgs::GameState_Phase_descriptor();
 	const int                               num_phase_values = phase_enum_desc->value_count();
-	NCursesMenuItem **                      phase_items = new NCursesMenuItem *[2 + num_phase_values];
+	NCursesMenuItem                       **phase_items = new NCursesMenuItem *[2 + num_phase_values];
 	size_t                                  max_length  = 0;
 	for (int i = 0; i < phase_enum_desc->value_count(); ++i) {
 		SignalItem *item = new SignalItem(phase_enum_desc->value(i)->name());

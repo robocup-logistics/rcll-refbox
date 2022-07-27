@@ -71,7 +71,7 @@ public:
 	~ProtobufStreamServer();
 
 	void
-	     send(ClientID client, uint16_t component_id, uint16_t msg_type, google::protobuf::Message &m);
+	send(ClientID client, uint16_t component_id, uint16_t msg_type, google::protobuf::Message &m);
 	void send(ClientID                                   client,
 	          uint16_t                                   component_id,
 	          uint16_t                                   msg_type,
@@ -181,13 +181,13 @@ private:
 
 	private:
 		ClientID                       id_;
-		ProtobufStreamServer *         parent_;
+		ProtobufStreamServer          *parent_;
 		boost::asio::ip::tcp::socket   socket_;
 		boost::asio::ip::tcp::endpoint remote_endpoint_;
 
 		frame_header_t in_frame_header_;
 		size_t         in_data_size_;
-		void *         in_data_;
+		void          *in_data_;
 
 		std::queue<QueueEntry *> outbound_queue_;
 		std::mutex               outbound_mutex_;
