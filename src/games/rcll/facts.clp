@@ -86,6 +86,7 @@
 
   (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
   (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot cs-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
 )
 
 (deftemplate machine-mps-state
@@ -295,7 +296,7 @@
   (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK BASE_CLEAR))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
                          (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
   (slot visible (type FLOAT))
 )
