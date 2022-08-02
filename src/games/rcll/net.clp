@@ -287,29 +287,28 @@
                           (successful ?successful)
                           (processed FALSE)
                           (base-color ?base-color)
-                          (ring-color ?ring-color)
+                          (ring-color $?ring-color)
                           (cap-color ?cap-color)))
       (printout warn "agent-task: " ?task-type ?task-parameters crlf)
     )
 
     ; check if end time and succesful flag are set
     (progn$ (?ft (pb-field-list ?p "finished_tasks"))
-      (bind ?task-id (pb-field-value ?ft "task_id"))
-      (printout warn "task-done:" ?task-id crlf)
+      (bind ?f-task-id (pb-field-value ?ft "task_id"))
       (bind ?success (pb-field-value ?ft "successful"))
 
       (do-for-fact ((?agent-task agent-task))
                 (and (eq ?agent-task:team-color ?team-color)
-                     (eq ?agent-task:task-id ?task-id)
+                     (eq ?agent-task:task-id ?f-task-id)
                      (eq ?agent-task:robot-id ?robot-id)
-                     (eq ?agent-task:end-time 0.0)) then
+                     (= ?agent-task:end-time 0.0)) then
         (modify ?agent-task (end-time ?gt))
       )
       (do-for-fact ((?agent-task agent-task))
                 (and (eq ?agent-task:team-color ?team-color)
-                     (eq ?agent-task:task-id ?task-id)
+                     (eq ?agent-task:task-id ?f-task-id)
                      (eq ?agent-task:robot-id ?robot-id)
-                     (neq ?agent-task:succesful ?success)) then
+                     (neq ?agent-task:successful ?success)) then
         (modify ?agent-task (successful ?success))
       )
     )
