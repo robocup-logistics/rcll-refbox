@@ -350,7 +350,6 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE) (mps-busy FALSE)
                    (bs-side ?side) (bs-color ?bs-color) (team ?team))
-	(workpiece-tracking (enabled ?tracking-enabled))
 	=>
 	(printout t "Machine " ?n " moving base to " ?side crlf)
 	(assert (product-processed (at-machine ?n) (mtype BS) (team ?team)
@@ -509,12 +508,16 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (team ?team)
                    (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP) (mps-busy FALSE))
+	(workpiece-tracking (enabled ?wt-enabled))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
 	(if (eq ?cs-op RETRIEVE_CAP) then
 		(assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
 		                (points ?*PRODUCTION-POINTS-RETRIEVE-CAP*)
 		                (reason (str-cat "Retrieved cap at " ?n))))
+		(if (eq ?wt-enabled FALSE) then
+			(assert (product-processed (at-machine ?n) (mtype CS)
+			                           (team ?team) (game-time ?gt))))
 	else
 		(assert (product-processed (at-machine ?n) (mtype CS)
 		                           (team ?team) (game-time ?gt)))
