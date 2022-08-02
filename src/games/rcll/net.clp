@@ -256,12 +256,12 @@
 
       ; bind wp description
       (bind ?base-color nil)
-      (bind ?ring-color nil)
+      (bind $?ring-color (create$))
       (bind ?cap-color nil)
       (if (pb-has-field ?at "workpiece_description") then
         (bind ?wp-desc (pb-field-value ?at "workpiece_description"))
         (bind ?base-color (pb-field-value ?wp-desc "base_color"))
-        (bind ?ring-color (pb-field-list ?wp-desc "ring_color"))
+        (bind $?ring-color (pb-field-list ?wp-desc "ring_colors"))
         (if (pb-has-field ?wp-desc "cap_color") then
           (bind ?cap-color (pb-field-value ?wp-desc "cap_color")))
       )
