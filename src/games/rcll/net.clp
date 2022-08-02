@@ -215,7 +215,7 @@
         (bind ?task-type MOVE)
         (bind ?machine-point nil)
         (if (pb-has-field ?t "machine_point") then
-          (bind ?machine-point (pb-field-value ?t "machine_point")))
+          (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
         (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
                                         machine-point ?machine-point))
       )
@@ -228,8 +228,11 @@
       (if (pb-has-field ?at "deliver") then
         (bind ?t (pb-field-value ?at "deliver"))
         (bind ?task-type DELIVER)
-        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
-                                        machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+        (bind ?machine-point nil)
+        (if (pb-has-field ?t "machine_point") then
+          (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+        (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
+                                        machine-point ?machine-point))
       )
       (if (pb-has-field ?at "buffer") then
         (bind ?t (pb-field-value ?at "buffer"))
