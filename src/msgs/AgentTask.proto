@@ -52,8 +52,8 @@ message Retrieve {
 
 // Deliver the holding product to the given station
 message Deliver {
-    required string machine_id    = 1; // name of the machine 
-    required string machine_point = 2; // valid machine-points: input, slide
+    required string waypoint      = 1; // name of a machine or of the waypoint if you want to drop a piece
+    optional string machine_point = 2; // valid machine-points: input, slide
 }
 
 // Get product from shelf and place it immediately afterwards on the conveyor
