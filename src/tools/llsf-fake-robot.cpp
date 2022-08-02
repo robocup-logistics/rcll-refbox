@@ -64,6 +64,11 @@ static boost::asio::deadline_timer *timer_ = NULL;
 std::string                         name_;
 Team                                team_color_;
 std::string                         team_name_;
+int                                 robot_nr_;
+int                                 order_id_;
+std::string                         base_col_;
+std::array<std::string, 3>          ring_cols_;
+std::string                         cap_col_;
 int                                 task_id_;
 std::string                         task_type_;
 std::string                         waypoint_;
@@ -110,7 +115,6 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
                uint16_t                                   msg_type,
                std::shared_ptr<google::protobuf::Message> msg)
 {
-	printf("Got message \n");
 	std::shared_ptr<BeaconSignal> b;
 	if ((b = std::dynamic_pointer_cast<BeaconSignal>(msg))) {
 #if __WORDSIZE == 64
@@ -302,13 +306,11 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
 			printf("  %s %u\n", RingColor_Name(r.ring_color()).c_str(), r.raw_material());
 		}
 	}
-	printf("Leave message \n");
 }
 
 void
 handle_timer(const boost::system::error_code &error)
 {
-	printf("handle_time 1 \n");
 	if (!error) {
 		boost::posix_time::ptime               now(boost::posix_time::microsec_clock::universal_time());
 		std::shared_ptr<BeaconSignal>          signal(new BeaconSignal());
@@ -329,23 +331,58 @@ handle_timer(const boost::system::error_code &error)
 		pose_time->set_sec(4);
 		pose_time->set_nsec(5);
 
-		signal->set_number(1);
+		signal->set_number(robot_nr_);
 		signal->set_peer_name(name_);
 		signal->set_team_name(team_name_);
 		signal->set_team_color(team_color_);
 		signal->set_seq(++seq_);
 
 		task->set_task_id(task_id_);
-		task->set_robot_id(1);
+		task->set_robot_id(robot_nr_);
 		task->set_team_color(team_color_);
 
-		if (task_id_ > 0) {
-			FinishedTask *finished_task = signal->add_finished_tasks();
-			finished_task->set_taskid(task_id_ - 1);
-			finished_task->set_successful(true);
+		if (order_id_ != 0)
+			task->set_order_id(order_id_);
+
+		if (base_col_ != "NONE") {
+			WorkpieceDescription *wp_desc = task->mutable_workpiece_description();
+			if (base_col_ == "BASE_RED")
+				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_RED);
+			else if (base_col_ == "BASE_BLACK")
+				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_BLACK);
+			else if (base_col_ == "BASE_SILVER")
+				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_SILVER);
+			else if (base_col_ == "BASE_CLEAR")
+				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_CLEAR);
+			else
+				printf("%s is no legal base color!", base_col_.c_str());
+
+			for (std::string col : ring_cols_) {
+				if (col == "RING_BLUE")
+					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_BLUE);
+				else if (col == "RING_GREEN")
+					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_GREEN);
+				else if (col == "RING_ORANGE")
+					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_ORANGE);
+				else if (col == "RING_YELLOW")
+					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_YELLOW);
+				else if (col != "NONE")
+					printf("%s is no legal ring color!", col.c_str());
+			}
+
+			if (cap_col_ == "CAP_BLACK")
+				wp_desc->set_cap_color(llsf_msgs::CapColor::CAP_BLACK);
+			else if (cap_col_ == "CAP_GREY")
+				wp_desc->set_cap_color(llsf_msgs::CapColor::CAP_GREY);
+			else if (cap_col_ != "NONE")
+				printf("%s is no legal cap color!", cap_col_.c_str());
 		}
 
-		printf("handle_time 2 \n");
+		if (task_id_ > 1) {
+			FinishedTask *finished_task = signal->add_finished_tasks();
+			finished_task->set_task_id(task_id_ - 1);
+			finished_task->set_successful(true);
+		}
 
 		if (task_type_ == "Move") {
 			Move *move_task = task->mutable_move();
@@ -357,7 +394,7 @@ handle_timer(const boost::system::error_code &error)
 			retrieve_task->set_machine_point(machine_point_);
 		} else if (task_type_ == "Deliver") {
 			Deliver *deliver_task = task->mutable_deliver();
-			deliver_task->set_machine_id(machine_id_);
+			deliver_task->set_waypoint(waypoint_);
 			deliver_task->set_machine_point(machine_point_);
 		} else if (task_type_ == "BufferStation") {
 			BufferStation *buffer_task = task->mutable_buffer();
@@ -369,28 +406,30 @@ handle_timer(const boost::system::error_code &error)
 			explore_task->set_machine_id(machine_id_);
 			explore_task->set_machine_point(machine_point_);
 		}
-		printf("handle_time 3 \n");
 
 		peer_team_->send(signal);
 
-		printf("handle_time 4 \n");
-
 		timer_->expires_at(timer_->expires_at() + boost::posix_time::milliseconds(2000));
 		timer_->async_wait(handle_timer);
-
-		printf("handle_time 5 \n");
 	}
 }
 
 void
 usage(const char *progname)
 {
-	printf("Usage: %s <name> <team> <task-type> <task-id> <parameter>\n"
+	printf("Usage: %s <name> <team> <robot-nr> <order-id> <workpiece-colors> <task-type> <task-id> "
+	       "<parameter>\n"
+	       "\n"
+	       "set order-id to 0 if it should not be send"
+	       "\n"
+	       "workpiece-colors are specified as <base-color> <ring1-color> <ring2-color> <ring3-color> "
+	       "<cap-color>"
+	       "NONE can be used for any color"
 	       "\n"
 	       "parameter are specific for the agent-task type:\n"
 	       "Move:  <waypoint> <machine_point>\n"
 	       "Retrieve:  <machine_id> <machine_point>\n"
-	       "Deliver:  <machine_id> <machine_point>\n"
+	       "Deliver:  <waypoint> <machine_point>\n"
 	       "BufferStation:  <machine_id> <shelf_number>\n"
 	       "ExploreWaypoint:  <waypoint> <machine_id> <machine_point>\n",
 	       progname);
@@ -401,57 +440,64 @@ main(int argc, char **argv)
 {
 	ArgumentParser argp(argc, argv, "T:");
 
-	if (argp.num_items() < 4) {
+	if (argp.num_items() < 10) {
 		usage(argv[0]);
 		exit(1);
 	}
 
 	name_      = argp.items()[0];
 	team_name_ = argp.items()[1];
-	task_type_ = argp.items()[2];
-	task_id_   = argp.parse_item_int(3);
+	robot_nr_  = argp.parse_item_int(2);
+	order_id_  = argp.parse_item_int(3);
+	base_col_  = argp.items()[4];
+	for (int i = 0; i < 3; i++) {
+		ring_cols_[i] = argp.items()[5 + i];
+	}
+	cap_col_   = argp.items()[8];
+	task_type_ = argp.items()[9];
+	task_id_   = argp.parse_item_int(10);
 
 	if (task_type_ == "Move") {
-		if (argp.num_items() != 6) {
-			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+		if (argp.num_items() != 13) {
+			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
 			usage(argv[0]);
 			exit(-1);
 		}
-		waypoint_      = argp.items()[3];
-		machine_point_ = argp.items()[4];
+		waypoint_      = argp.items()[11];
+		machine_point_ = argp.items()[12];
 	} else if (task_type_ == "Retrieve") {
-		if (argp.num_items() != 6) {
-			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+		if (argp.num_items() != 13) {
+			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
 			usage(argv[0]);
 			exit(-1);
 		}
-		machine_id_    = argp.items()[4];
-		machine_point_ = argp.items()[5];
+		machine_id_    = argp.items()[11];
+		machine_point_ = argp.items()[12];
 	} else if (task_type_ == "Deliver") {
-		if (argp.num_items() != 6) {
-			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+		if (argp.num_items() != 13) {
+			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
 			usage(argv[0]);
 			exit(-1);
 		}
-		machine_id_    = argp.items()[4];
-		machine_point_ = argp.items()[5];
+		waypoint_      = argp.items()[11];
+		machine_point_ = argp.items()[12];
 	} else if (task_type_ == "BufferStation") {
-		if (argp.num_items() != 6) {
-			printf("Wrong number of arguments. Expected 6, got %zu\n", argp.num_items());
+		if (argp.num_items() != 13) {
+			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
 			usage(argv[0]);
 			exit(-1);
 		}
-		machine_id_   = argp.items()[3];
-		shelf_number_ = argp.parse_item_int(4);
+		machine_id_   = argp.items()[11];
+		shelf_number_ = argp.parse_item_int(12);
 	} else if (task_type_ == "ExploreWaypoint") {
-		if (argp.num_items() != 7) {
-			printf("Wrong number of arguments. Expected 7, got %zu\n", argp.num_items());
+		if (argp.num_items() != 14) {
+			printf("Wrong number of arguments. Expected 14, got %zu\n", argp.num_items());
 			usage(argv[0]);
 			exit(-1);
 		}
-		waypoint_      = argp.items()[4];
-		machine_id_    = argp.items()[5];
-		machine_point_ = argp.items()[6];
+		waypoint_      = argp.items()[11];
+		machine_id_    = argp.items()[12];
+		machine_point_ = argp.items()[13];
 	}
 
 	team_color_ = CYAN;
