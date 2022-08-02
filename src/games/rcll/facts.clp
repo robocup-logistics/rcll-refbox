@@ -181,8 +181,8 @@
   (slot robot-id (type INTEGER))
   (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
 
-  (multislot start-time (type FLOAT))
-  (multislot end-time (type FLOAT))
+  (slot start-time (type FLOAT))
+  (slot end-time (type FLOAT))
 
   (slot order-id (type INTEGER))
 
@@ -283,8 +283,8 @@
   (slot name (type SYMBOL))
   (slot order (type INTEGER))
   (slot latest-data (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
-  (multislot start-time (type FLOAT))
-  (multislot end-time (type FLOAT))
+  (slot start-time (type FLOAT))
+  (slot end-time (type FLOAT))
   (slot at-machine (type SYMBOL)
                    (allowed-values nil C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
   (slot at-side (type SYMBOL) (allowed-values nil INPUT OUTPUT SHELF SLIDE))
