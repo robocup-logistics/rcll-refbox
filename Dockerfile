@@ -9,7 +9,9 @@
 #
 
 FROM fedora:35 as buildenv
-RUN dnf install -y --nodocs \
+RUN   dnf install -y --nodocs 'dnf-command(copr)' && \
+      dnf -y copr enable thofmann/clips-6.31 && \
+      dnf install -y --nodocs \
       avahi-devel \
       boost-devel \
       clips-devel \
