@@ -331,6 +331,7 @@
 )
 
 (deffunction mongodb-create-game-report (?teams ?stime ?etime ?report-name)
+	;(printout error "Create game_report!" crlf)
 	(bind ?doc (bson-create))
 
 	(bson-append-array ?doc "start-timestamp" ?stime)
@@ -420,6 +421,24 @@
 		(bson-builder-destroy ?history-doc)
 	)
 	(bson-array-finish ?doc "machine-history" ?machine-history-arr)
+
+	(bind ?workpiece-arr (bson-array-start))
+	(do-for-all-facts ((?wp workpiece)) TRUE
+		(bson-array-append ?workpiece-arr (mongodb-fact-to-bson ?wp))
+	)
+	(bson-array-finish ?doc "workpiece-history" ?workpiece-arr)
+	
+	(bind ?agent-task-arr (bson-array-start))
+	(do-for-all-facts ((?at agent-task)) TRUE
+		(bson-array-append ?agent-task-arr (mongodb-fact-to-bson ?at))
+	)
+	(bson-array-finish ?doc "agent-task-history" ?agent-task-arr)
+	
+	(bind ?stamped-poses-arr (bson-array-start))
+	(do-for-all-facts ((?sp stamped-pose)) TRUE
+		(bson-array-append ?stamped-poses-arr (mongodb-fact-to-bson ?sp))
+	)
+	(bson-array-finish ?doc "robot-pose-history" ?stamped-poses-arr)
 
 	;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 	(return ?doc)
