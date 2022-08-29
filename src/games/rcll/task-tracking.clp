@@ -521,6 +521,7 @@
 
   ; place workpiece at output
   (bind ?wp-name nil)
+  (bind ?c-col CAP_UNKNOWN)
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
                                                (eq ?wp:at-side INPUT)
                                                (eq ?wp:holding FALSE)
@@ -548,7 +549,6 @@
                          (unknown-action FALSE)
                          (cap-color nil)
                          (at-side OUTPUT))
-          (bind ?c-col CAP_UNKNOWN)
           (if (or (eq ?wp:cap-color CAP_BLACK)
                   (eq ?wp:cap-color CAP_GREY)) then
             (bind ?c-col ?wp:cap-color))
