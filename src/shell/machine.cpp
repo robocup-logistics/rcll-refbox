@@ -308,6 +308,7 @@ LLSFRefBoxShellMachine::refresh()
 			case llsf_msgs::BASE_RED: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED)); break;
 			case llsf_msgs::BASE_SILVER: attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
 			case llsf_msgs::BASE_BLACK: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_BLACK)); break;
+			default: break;
 			}
 			addstr(0, 26, " ");
 
