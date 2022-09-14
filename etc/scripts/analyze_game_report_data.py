@@ -151,6 +151,7 @@ class MachineAction:
 teamColors = ['cyan', 'magenta', 'orange', 'lime', 'purple', 'red', 'gold', 'royalblue', 'lightgrey', 'yellowgreen']
 tasks = ['MOVE', 'RETRIEVE', 'DELIVER', 'BUFFER', 'EXPLORE_MACHINE']
 taskColors = ['cyan', 'yellow', 'lightcoral', 'orchid', 'lime', 'lightgrey']
+machines = ['C-BS', 'C-RS1', 'C-RS2', 'C-CS1', 'C-CS2', 'C-DS', 'C-SS', 'M-BS', 'M-RS1', 'M-RS2', 'M-CS1', 'M-CS2', 'M-DS', 'M-SS']
 
 def loadData(mongodb_uri,
              database='rcll',
@@ -275,30 +276,69 @@ def loadData(mongodb_uri,
         # get machine actions
         cyan_machine_actions = []
         magenta_machine_actions = []
-        machines = ['C-BS', 'C-RS1', 'C-RS2', 'C-CS1', 'C-CS2', 'C-DS', 'M-BS', 'M-RS1', 'M-RS2', 'M-CS1', 'M-RS2', 'M-DS']
-        actions = [[]] * len(machines)
+        actions = [[] for m in machines]
         if "machine-history" in report:
             for action in report["machine-history"]:
                 actions[machines.index(action["name"])].append(action)
-                # BS
-                for ind, action in enumerate(bs_actions):
-                    if action["state"] == 'PROCESSING' and report["machine-history"][ind]["name"] == action["name"] and report["machine-history"][ind]["state"] == 'READY-AT-OUTPUT':
+
+        # BS
+        for t in [0,7]:
+            for ind, action in enumerate(actions[t]):
+                    if (action["state"] == 'PROCESSING'
+                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSED'
+                          and actions[t][ind+2] and actions[t][ind+2]["state"] == 'READY-AT-OUTPUT'):
                         a = MachineAction(action["name"],
-                                         'DISPENCE_BASE',
-                                         action["game-time"],
-                                         report["machine-history"][ind]["game-time"])
-                        if points["team"] == "CYAN":
+                                          'DISPENCE_BASE',
+                                          action["game-time"],
+                                          actions[t][ind+2]["game-time"])
+                        if t < 7:
                             cyan_machine_actions.append(a)
                         else:
                             magenta_machine_actions.append(a)
-                # DS
-                for ind, action in enumerate(ds_actions):
-                    if action["state"] == 'PROCESSING' and report["machine-history"][ind]["name"] == action["name"] and report["machine-history"][ind]["state"] == 'PROCESSED':
+        # CS
+        for t in [3,4,10,11]:
+            for ind, action in enumerate(actions[t]):
+                    if (action["state"] == 'PREPARED'
+                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSING'
+                          and actions[t][ind+2] and actions[t][ind+2]["state"] == 'PROCESSED'
+                          and actions[t][ind+3] and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
+                        performed_task = 'RETRIEVED_CAP'
+                        if actions[t][ind+1]["machine-fact"]["cs-operation"] == 'MOUNT_CAP':
+                            performed_task = 'MOUNT_CAP'
+
                         a = MachineAction(action["name"],
-                                         'DISPENCE_BASE',
-                                         action["game-time"],
-                                         report["machine-history"][ind]["game-time"])
-                        if points["team"] == "CYAN":
+                                          performed_task,
+                                          action["game-time"],
+                                          actions[t][ind+3]["game-time"])
+                        if t < 7:
+                            cyan_machine_actions.append(a)
+                        else:
+                            magenta_machine_actions.append(a)
+        # RS
+        for t in [1,2,8,9]:
+            for ind, action in enumerate(actions[t]):
+                    if (action["state"] == 'PREPARED'
+                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSING'
+                          and actions[t][ind+2] and actions[t][ind+2]["state"] == 'PROCESSED'
+                          and actions[t][ind+3] and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
+                        a = MachineAction(action["name"],
+                                          'MOUNT_CAP',
+                                          action["game-time"],
+                                          actions[t][ind+3]["game-time"])
+                        if t < 7:
+                            cyan_machine_actions.append(a)
+                        else:
+                            magenta_machine_actions.append(a)
+        # DS
+        for t in [5,12]:
+            for ind, action in enumerate(actions[t]):
+                    if (action["state"] == 'PROCESSING'
+                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSED'):
+                        a = MachineAction(action["name"],
+                                          'DELIVER',
+                                          action["game-time"],
+                                          actions[t][ind+1]["game-time"])
+                        if t < 7:
                             cyan_machine_actions.append(a)
                         else:
                             magenta_machine_actions.append(a)
@@ -684,13 +724,16 @@ def drawTaskOverview(games):
             if not t: continue
             data_available = False
             agent_tasks = []
+            machine_actions = []
             if t == game.cyan_team_name:
                 agent_tasks = game.cyan_agent_tasks
+                machine_actions = game.cyan_machine_actions
             else:
                 agent_tasks = game.magenta_agent_tasks
+                machine_actions = game.magenta_machine_actions
 
             # figure with base blocks
-            fig, ax = plt.subplots(1, figsize=(62.5,4.4))
+            fig, ax = plt.subplots(1, figsize=(62.5,8.4))
             box1 = patches.Rectangle((0,24),20,10,edgecolor='black',fill=False)
             ax.add_patch(box1)
             ax.text(x=-0.4,y=28.25,s='Robotino 1', fontsize=15)
@@ -700,20 +743,81 @@ def drawTaskOverview(games):
             box3 = patches.Rectangle((0,0),20,10,edgecolor='black',fill=False)
             ax.add_patch(box3)
             ax.text(x=-0.4,y=4.25,s='Robotino 3', fontsize=15)
+            box4 = patches.Rectangle((0,-10),20,6,edgecolor='black',fill=False)
+            ax.add_patch(box4)
+            ax.text(x=-0.4,y=-7.75,s='BS', fontsize=15)
+            box5 = patches.Rectangle((0,-18),20,6,edgecolor='black',fill=False)
+            ax.add_patch(box5)
+            ax.text(x=-0.4,y=-15.75,s='RS1', fontsize=15)
+            box6 = patches.Rectangle((0,-26),20,6,edgecolor='black',fill=False)
+            ax.add_patch(box6)
+            ax.text(x=-0.4,y=-23.75,s='RS2', fontsize=15)
+            box7 = patches.Rectangle((0,-34),20,6,edgecolor='black',fill=False)
+            ax.add_patch(box7)
+            ax.text(x=-0.4,y=-31.75,s='CS1', fontsize=15)
+            box8 = patches.Rectangle((0,-42),20,6,edgecolor='black',fill=False)
+            ax.add_patch(box8)
+            ax.text(x=-0.4,y=-39.75,s='CS2', fontsize=15)
+            box9 = patches.Rectangle((0,-50),20,6,edgecolor='black',fill=False)
+            ax.add_patch(box9)
+            ax.text(x=-0.4,y=-47.75,s='DS', fontsize=15)
+
+
 
             for task in agent_tasks:
                 data_available = True
                 print_task(ax,task)
 
+            for action in machine_actions:
+                data_available = True
+                print_machine_action(ax,action)
+
             if not data_available: break
 
             ax.set_xlim(-0.46,20.018)
-            ax.set_ylim(-1,35)
+            ax.set_ylim(-51,35)
             ax.get_yaxis().set_visible(False)
             plt.xticks(ticks=range(0,21))
             plt.xlabel('Game Time (Minutes)')
             plt.tight_layout()
             plt.savefig('../analysis/' + 'task_overview_' + str(ind) + '_' + t + '.pdf')
+
+def print_machine_action(axis, action):
+    x = action.startTime / 60
+    width = (action.endTime - action.startTime) / 60
+    y = -10 - (machines.index(action.name) % 7) * 8
+
+    #draw action box
+    box = patches.Rectangle((x,y),width,6,edgecolor='black',fill=True,facecolor=taskColors[5])
+    axis.add_patch(box)
+    box = patches.Rectangle((x,y),width,2,edgecolor='black',fill=False)
+    axis.add_patch(box)
+
+    #draw task type
+    if(width > 0.2):
+        if action.actionType == 'DISPENCE_BASE':
+            axis.text(x=x+width/2,y=y+4.66,s='DISPENCE', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+            axis.text(x=x+width/2,y=y+3.33,s='BASE', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+        elif action.actionType == 'RETRIEVED_CAP':
+            axis.text(x=x+width/2,y=y+4.66,s='RETRIEVE', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+            axis.text(x=x+width/2,y=y+3.33,s='CAP', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+        elif action.actionType == 'MOUNT_CAP':
+            axis.text(x=x+width/2,y=y+4.66,s='MOUNT', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+            axis.text(x=x+width/2,y=y+3.33,s='CAP', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+        elif action.actionType == 'MOUNT_RING':
+            axis.text(x=x+width/2,y=y+4.66,s='MOUNT', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+            axis.text(x=x+width/2,y=y+3.33,s='RING', fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
+        else:
+            axis.text(x=x+width/2,y=y+4,s=action.actionType, fontsize=9,
+                      horizontalalignment='center', verticalalignment='center')
 
 def print_task(axis, task):
     x = task.startTime / 60
