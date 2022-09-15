@@ -197,9 +197,9 @@ def loadData(mongodb_uri,
                     elif task["task-parameters"][p*2] == "machine-id":
                         machine_id = task["task-parameters"][p*2+1]
                     elif task["task-parameters"][p*2] == "machine-point":
-                        machine_id = task["task-parameters"][p*2+1]
+                        machine_point = task["task-parameters"][p*2+1]
                     elif task["task-parameters"][p*2] == "shelf-number":
-                        machine_id = task["task-parameters"][p*2+1]
+                        shelf_id = task["task-parameters"][p*2+1]
                 aTask = AgentTask(task["task-type"],
                                 waypoint,
                                 machine_id,
@@ -844,37 +844,34 @@ def print_task(axis, task):
     
     #draw task type
     if(width > 0.2):
-        if task.taskType == 'ExploreWaypoint':
-            axis.text(x=x+width/2,y=y+8.66,s='Explore', fontsize=9,
+        if task.taskType == 'EXPLORE_MACHINE':
+            axis.text(x=x+width/2,y=y+8.66,s='EXPLORE', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
-            axis.text(x=x+width/2,y=y+7.33,s='Waypoint', fontsize=9,
-                      horizontalalignment='center', verticalalignment='center')
-        elif task.taskType == 'BufferStation':
-            axis.text(x=x+width/2,y=y+8.66,s='Buffer', fontsize=9,
-                      horizontalalignment='center', verticalalignment='center')
-            axis.text(x=x+width/2,y=y+7.33,s='Station', fontsize=9,
+            axis.text(x=x+width/2,y=y+7.33,s='MACHINE', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
         else:
             axis.text(x=x+width/2,y=y+8,s=task.taskType, fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
     #draw properties
     if(width > 0.12):
-        if task.taskType == 'ExploreWaypoint':
+        if task.taskType == 'EXPLORE_MACHINE':
             axis.text(x=x+width/2,y=y+4.5,s=task.machineID, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+3,s=task.machinePoint, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+1.5,s=task.waypoint, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
-        elif task.taskType == 'BufferStation':
+        elif task.taskType == 'BUFFER':
             axis.text(x=x+width/2,y=y+4.5,s=task.machineID, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+3,s='shelf-' + str(task.shelfNumber), fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+1.5,s='order-' + str(task.orderID), fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
+        elif task.taskType == 'WAIT':
+            return
         else:
-            if task.taskType == 'Retrieve':
+            if task.taskType == 'RETRIEVE':
                 axis.text(x=x+width/2,y=y+4.5,s=task.machineID, fontsize=7.5,
                           horizontalalignment='center', verticalalignment='center')
             else:
