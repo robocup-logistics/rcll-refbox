@@ -15,6 +15,7 @@ import math
 import textwrap
 import sys
 import pymongo
+import os
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -434,7 +435,18 @@ def getTeams(games):
         if not game.magenta_team_name in teams and game.magenta_team_name: teams.append(game.magenta_team_name)
     return teams
 
-def drawTaskTimes(games,teams):
+def createFolder():
+    if not os.path.isdir("../analysis"):
+        os.mkdir("../analysis")
+    i = 0
+    while True:
+        save_folder = "../analysis/analysis_" + str(i) + '/'
+        i += 1
+        if not os.path.isdir(save_folder):
+            os.mkdir(save_folder)
+            return save_folder
+
+def drawTaskTimes(games,teams,save_folder):
     # create times dict with an entry for each minute
     times = dict()
     data_available = False
@@ -478,10 +490,10 @@ def drawTaskTimes(games,teams):
         ax.set_ylabel('Task Time (Minutes)')
 
         plt.tight_layout()
-        plt.savefig('../analysis/' + team + '_task_times.pdf')
+        plt.savefig(save_folder + team + '_task_times.pdf')
         plt.close(fig)
 
-def drawExecutionTimes(games,teams):
+def drawExecutionTimes(games,teams,save_folder):
     times = dict()
     for team in teams:
         times[team] = dict()
@@ -518,11 +530,11 @@ def drawExecutionTimes(games,teams):
         ax.set_ylabel('Task Time (Seconds)')
 
         plt.tight_layout()
-        plt.savefig('../analysis/' + task + '_execution_times.pdf')
+        plt.savefig(save_folder + task + '_execution_times.pdf')
         plt.close(fig)
 
 
-def drawGamePoints(games,teams):
+def drawGamePoints(games,teams,save_folder):
     game_points = dict()
     data_available = False
     for team in teams:
@@ -566,10 +578,10 @@ def drawGamePoints(games,teams):
     ax.set_ylabel('Average Points')
 
     plt.tight_layout()
-    plt.savefig('../analysis/' + 'game_points.pdf')
+    plt.savefig(save_folder + 'game_points.pdf')
     plt.close(fig)
 
-def drawMoveTimes(games,teams):
+def drawMoveTimes(games,teams,save_folder):
     move_times = dict()
     data_available = False
     for team in teams:
@@ -621,14 +633,14 @@ def drawMoveTimes(games,teams):
     ax.set_ylabel('Time (Seconds)')
 
     plt.tight_layout()
-    plt.savefig('../analysis/' + 'move_times.pdf')
+    plt.savefig(save_folder + 'move_times.pdf')
     plt.close(fig)
 
-def drawMeanExecutionTimes(games,teams):
+def drawMeanExecutionTimes(games,teams,save_folder):
     data_available = False
     # define bar diagram appearance
     bar_width = 2
-    gab_between_teams = 0.4
+    gab_between_teams = 0.1
     gab_for_next_task = 0.75
     distance_next_task = bar_width + (gab_between_teams + bar_width) * (len(teams)-1) + gab_for_next_task
     task_start_x_values = np.linspace(0, distance_next_task*len(tasks), len(tasks))
@@ -678,7 +690,7 @@ def drawMeanExecutionTimes(games,teams):
     ax.set_ylabel('Mean Task Time (Seconds)')
 
     plt.tight_layout()
-    plt.savefig('../analysis/' + 'mean_task_times.pdf')
+    plt.savefig(save_folder + 'mean_task_times.pdf')
     plt.close(fig)
 
     # create bardiagram for mean times per 100 points
@@ -697,7 +709,7 @@ def drawMeanExecutionTimes(games,teams):
     ax.set_ylabel('Mean Task Time (Seconds)')
 
     plt.tight_layout()
-    plt.savefig('../analysis/' + 'mean_task_times_per_100_points.pdf')
+    plt.savefig(save_folder + 'mean_task_times_per_100_points.pdf')
     plt.close(fig)
     
     # create bardiagram for mean execution times
@@ -715,10 +727,10 @@ def drawMeanExecutionTimes(games,teams):
     ax.set_ylabel('Mean Task Time (Seconds)')
 
     plt.tight_layout()
-    plt.savefig('../analysis/' + 'mean_execution_times.pdf')
+    plt.savefig(save_folder + 'mean_execution_times.pdf')
     plt.close(fig)
 
-def drawTaskOverview(games):
+def drawTaskOverview(games, save_folder):
     for ind, game in enumerate(games):
         for t in [game.cyan_team_name, game.magenta_team_name]:
             if not t: continue
@@ -780,7 +792,7 @@ def drawTaskOverview(games):
             plt.xticks(ticks=range(0,21))
             plt.xlabel('Game Time (Minutes)')
             plt.tight_layout()
-            plt.savefig('../analysis/' + 'task_overview_' + str(ind) + '_' + t + '.pdf')
+            plt.savefig(save_folder + 'task_overview_' + str(ind) + '_' + t + '.pdf')
 
 def print_machine_action(axis, action):
     x = action.startTime / 60
@@ -956,20 +968,21 @@ def main():
                      use_all=args.use_all_reports)
     games = closeEndTimes(games)
     teams = getTeams(games)
+    save_folder = createFolder()
     if not args.disable_wait_tasks:
         addWaitTasks(games)
     if not args.disable_task_times:
-        drawTaskTimes(games, teams)
+        drawTaskTimes(games, teams, save_folder)
     if not args.disable_execution_times:
-        drawExecutionTimes(games, teams)
+        drawExecutionTimes(games, teams, save_folder)
     if not args.disable_game_points:
-        drawGamePoints(games, teams)
+        drawGamePoints(games, teams, save_folder)
     if not args.disable_move_times:
-        drawMoveTimes(games, teams)
+        drawMoveTimes(games, teams, save_folder)
     if not args.disable_mean_times:
-        drawMeanExecutionTimes(games, teams)
+        drawMeanExecutionTimes(games, teams, save_folder)
     if not args.disable_task_overview:
-        drawTaskOverview(games)
+        drawTaskOverview(games, save_folder)
 
 if __name__ == '__main__':
     main()
