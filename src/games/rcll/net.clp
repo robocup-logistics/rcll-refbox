@@ -301,10 +301,10 @@
       (bind ?success (pb-field-value ?ft "successful"))
 
       (do-for-fact ((?agent-task agent-task))
-                (and (eq ?agent-task:team-color ?team-color)
-                     (eq ?agent-task:task-id ?f-task-id)
-                     (eq ?agent-task:robot-id ?robot-id)
-                     (= ?agent-task:end-time 0.0)) then
+                    (and (eq ?agent-task:team-color ?team-color)
+                         (eq ?agent-task:task-id ?f-task-id)
+                         (eq ?agent-task:robot-id ?robot-id)
+                         (= ?agent-task:end-time 0.0)) then
         (modify ?agent-task (end-time ?gt))
       )
       (do-for-fact ((?agent-task agent-task))
@@ -314,6 +314,14 @@
                      (neq ?agent-task:successful ?success)) then
         (modify ?agent-task (successful ?success))
       )
+    )
+    ; check if previous tasks were not properly marked as finished and set end time
+    (do-for-fact ((?agent-task agent-task))
+                  (and (eq ?agent-task:team-color ?team-color)
+                       (neq ?agent-task:task-id ?task-id)
+                       (eq ?agent-task:robot-id ?robot-id)
+                       (= ?agent-task:end-time 0.0)) then
+      (modify ?agent-task (end-time ?gt))
     )
   )
 )
