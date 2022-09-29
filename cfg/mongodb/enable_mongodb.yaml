@@ -6,7 +6,7 @@
 llsfrb:
   mongodb:
     enable: true
-    hostport: localhost
+    hostport: localhost:27019
     collections:
       text-log: log
       clips-log: clipslog

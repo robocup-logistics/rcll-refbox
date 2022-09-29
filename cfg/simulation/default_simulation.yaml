@@ -15,7 +15,7 @@ llsfrb:
 
     # synchronize refbox time with the time of a simulation
     time-sync:
-      enable: true
+      enable: false
       # estimate time by using the last given simulation time speed
       # (helps reducing the amount of messages to send)
-      estimate-time: true
+      estimate-time: false

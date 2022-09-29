@@ -112,7 +112,7 @@
   ?*MAINTENANCE-GRACE-TIME*     =  15
   ; Game phase time; seconds
   ?*SETUP-TIME*           = 300
-  ?*EXPLORATION-TIME*     = (config-get-int "/llsfrb//game/exploration-time")
+  ?*EXPLORATION-TIME*     = 0
   ?*PRODUCTION-TIME*      = 1200
   ?*PRODUCTION-OVERTIME*  = 300
   ?*PRODUCTION-PREPARE-TIMEOUT*  = 5
