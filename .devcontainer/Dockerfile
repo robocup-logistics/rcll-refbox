@@ -34,6 +34,10 @@ RUN   dnf install -y --nodocs 'dnf-command(copr)' && \
       libmicrohttpd-devel \
       rapidjson-devel \
       apr-util-devel \
+      cmake \
+      open62541-devel \
+      net-tools \
+      iputils \
     && \
     dnf install -y --nodocs rpm-build && \
     dnf clean all
@@ -43,3 +47,11 @@ RUN useradd -u 1000 $USER_NAME
 #COPY /etc/group /etc/group 
 #COPY /etc/passwd /etc/passwd
 #COPY /etc/shadow /etc/shadow
+
+#RUN git clone git@github.com:open62541/open62541.git
+#RUN cd open62541 && mkdir build && cd build
+#RUN cmake ..
+#RUN install
+
+# trying a new OPCUA client software
+# RUN dnf -y install open62541

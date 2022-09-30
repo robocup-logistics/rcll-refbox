@@ -11,13 +11,14 @@
 		"dockerfile": "Dockerfile",
        	"context": "..",
 		"args": {
-			"USER_NAME": "${localEnv:USER}"
+			"USER_NAME": "${localEnv:USER}",
+			"network": "host"
 		}
 	},
 	"remoteUser": "${env:USER}",
-	"updateRemoteUserUID": true //,
+	"updateRemoteUserUID": true, //,
 	//"dockerFile": "Dockerfile",
-	//"runArgs": [ "--name", "refbox"],
+	"runArgs": [ "--network=host"], // [ "--name", "refbox"],
 	//"remoteUser": "${env:USER}",
 	//"updateRemoteUserUID": true,
 	//"containerUser": "${env:USER}", //"${UID}"remoteUser
@@ -25,22 +26,22 @@
 	//"updateRemoteUserUID": true,
 
 
-	//"customizations": {
-	//	"vscode": {
-	//		"extensions": [
-	//			"algono.clips-ide",
-	//			"ms-vscode.cpptools",
-	//			"ms-vscode.cpptools-extension-pack",
-//				"twxs.cmake",
-	//			"ms-vscode.cmake-tools",
-	//			"cschlosser.doxdocgen",
-	//			"jeff-hykin.better-cpp-syntax",
-	//			"ms-vscode.cpptools-themes",
-	//			"zxh404.vscode-proto3",
-	//			"ms-vscode.makefile-tools"
-//			]
-//		}
-	//}//,
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"algono.clips-ide",
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack",
+				"twxs.cmake",
+				"ms-vscode.cmake-tools",
+				"cschlosser.doxdocgen",
+				"jeff-hykin.better-cpp-syntax",
+				"ms-vscode.cpptools-themes",
+				"zxh404.vscode-proto3",
+				"ms-vscode.makefile-tools"
+			]
+		}
+	}//,
 	//"mounts": [	"source=/etc/passwd,target=/etc/passwd,type=bind",
 //				"source=/etc/group,target=/etc/group,type=bind",
 //				"source=/etc/shadow,target=/etc/shadow,type=bind" ]
