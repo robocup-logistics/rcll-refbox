@@ -38,6 +38,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <open62541.h>
 
 namespace llsfrb {
 #if 0
@@ -241,13 +242,31 @@ OpcUaMachine::initLogger(const std::string &log_path)
 bool
 OpcUaMachine::reconnect()
 {
+	UA_Client *client_test = UA_Client_new();
 	disconnect();
 	try {
 		OpcUa::EndpointDescription endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
-		logger->info("Connecting to: {}", endpoint.EndpointUrl);
 
-		client = std::make_unique<OpcUa::UaClient>(logger);
-		client->Connect(endpoint);
+
+		auto config = UA_Client_getConfig(client_test);
+		config->securityMode = UA_MESSAGESECURITYMODE_NONE;
+//		config->certificateVerification = 
+    	UA_ClientConfig_setDefault(config);
+		
+		logger->info("Connecting to: {}", endpoint.EndpointUrl);
+		std::cout << "Connecting to: " <<  endpoint.EndpointUrl << std::endl;
+		
+		UA_StatusCode status = UA_Client_connect(client_test, endpoint.EndpointUrl.c_str());
+
+
+		std::cout << "Hello from the connect?" << std::endl;
+    	if(status != UA_STATUSCODE_GOOD) {
+			throw std::invalid_argument("UA_Statuscode is not good!");;
+        	//UA_Client_delete(client_test);
+        	//return status;
+    	}
+		//client = std::make_unique<OpcUa::UaClient>(logger);
+		//client->Connect(endpoint);
 		connected_ = true;
 	} catch (const std::exception &exc) {
 		logger->error("OPC UA connection error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
@@ -258,6 +277,8 @@ OpcUaMachine::reconnect()
 	}
 
 	try {
+		
+
 		nodeBasic = OpcUtils::getBasicNode(client.get(), simulation_);
 		nodeIn    = OpcUtils::getInNode(client.get(), simulation_);
 
