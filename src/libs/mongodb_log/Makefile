@@ -22,7 +22,7 @@ include $(SRCDIR)/mongodb.mk
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-CFLAGS += $(CFLAGS_CPP11)
+CFLAGS += $(CFLAGS_CPP11) -Wno-deprecated-declarations
 
 LIBS_libllsf_mongodb_log = stdc++ m llsfrbcore llsfrblogging
 OBJS_libllsf_mongodb_log = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp $(SRCDIR)/*/*.cpp $(SRCDIR)/*/*/*.cpp)))))
