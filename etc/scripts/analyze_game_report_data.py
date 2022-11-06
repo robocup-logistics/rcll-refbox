@@ -143,16 +143,19 @@ class MachineAction:
                  name,
                  actionType,
                  startTime,
-                 endTime):
+                 endTime,
+                 raoTime):
         self.name = name
         self.actionType = actionType
         self.startTime = startTime
         self.endTime = endTime
+        self.readyAtOutputTime = raoTime
 
 teamColors = ['cyan', 'magenta', 'orange', 'lime', 'purple', 'red', 'gold', 'royalblue', 'lightgrey', 'yellowgreen']
 tasks = ['MOVE', 'RETRIEVE', 'DELIVER', 'BUFFER', 'EXPLORE_MACHINE']
 taskColors = ['cyan', 'yellow', 'lightcoral', 'orchid', 'lime', 'lightgrey']
-machines = ['C-BS', 'C-RS1', 'C-RS2', 'C-CS1', 'C-CS2', 'C-DS', 'C-SS', 'M-BS', 'M-RS1', 'M-RS2', 'M-CS1', 'M-CS2', 'M-DS', 'M-SS']
+machine_names = ['C-BS', 'C-RS1', 'C-RS2', 'C-CS1', 'C-CS2', 'C-DS', 'C-SS', 'M-BS', 'M-RS1', 'M-RS2', 'M-CS1', 'M-CS2', 'M-DS', 'M-SS']
+machine_types = ['BS', 'RS', 'CS', 'DS']
 
 def loadData(mongodb_uri,
              database='rcll',
@@ -277,10 +280,10 @@ def loadData(mongodb_uri,
         # get machine actions
         cyan_machine_actions = []
         magenta_machine_actions = []
-        actions = [[] for m in machines]
+        actions = [[] for m in machine_names]
         if "machine-history" in report:
             for action in report["machine-history"]:
-                actions[machines.index(action["name"])].append(action)
+                actions[machine_names.index(action["name"])].append(action)
 
         # BS
         for t in [0,7]:
@@ -291,7 +294,8 @@ def loadData(mongodb_uri,
                         a = MachineAction(action["name"],
                                           'DISPENCE_BASE',
                                           action["game-time"],
-                                          actions[t][ind+2]["game-time"])
+                                          actions[t][ind+2]["game-time"],
+                                          actions[t][ind+3]["game-time"] - actions[t][ind+2]["game-time"])
                         if t < 7:
                             cyan_machine_actions.append(a)
                         else:
@@ -310,7 +314,8 @@ def loadData(mongodb_uri,
                         a = MachineAction(action["name"],
                                           performed_task,
                                           action["game-time"],
-                                          actions[t][ind+3]["game-time"])
+                                          actions[t][ind+3]["game-time"],
+                                          actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"])
                         if t < 7:
                             cyan_machine_actions.append(a)
                         else:
@@ -325,7 +330,8 @@ def loadData(mongodb_uri,
                         a = MachineAction(action["name"],
                                           'MOUNT_CAP',
                                           action["game-time"],
-                                          actions[t][ind+3]["game-time"])
+                                          actions[t][ind+3]["game-time"],
+                                          actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"])
                         if t < 7:
                             cyan_machine_actions.append(a)
                         else:
@@ -338,7 +344,8 @@ def loadData(mongodb_uri,
                         a = MachineAction(action["name"],
                                           'DELIVER',
                                           action["game-time"],
-                                          actions[t][ind+1]["game-time"])
+                                          actions[t][ind+1]["game-time"],
+                                          0)
                         if t < 7:
                             cyan_machine_actions.append(a)
                         else:
@@ -527,6 +534,7 @@ def drawExecutionTimes(games,teams,save_folder):
         ax.legend(loc='upper left')
         ax.set_title('Time Spend for ' + task)
         ax.set_xlabel(task + ' Attempts')
+        ax.set_xticks([])
         ax.set_ylabel('Task Time (Seconds)')
 
         plt.tight_layout()
@@ -638,17 +646,11 @@ def drawMoveTimes(games,teams,save_folder):
 
 def drawMeanExecutionTimes(games,teams,save_folder):
     data_available = False
-    # define bar diagram appearance
-    bar_width = 2
-    gab_between_teams = 0.1
-    gab_for_next_task = 0.75
-    distance_next_task = bar_width + (gab_between_teams + bar_width) * (len(teams)-1) + gab_for_next_task
-    task_start_x_values = np.linspace(0, distance_next_task*len(tasks), len(tasks))
 
     name_tasks = tasks
     name_tasks[name_tasks.index('EXPLORE_MACHINE')] = 'EXPLORE'
 
-    # create times dict with an entry for each minute
+    # create times dict with an entry for each task
     times = dict()
     for team in teams:
         times[team] = dict()
@@ -679,14 +681,14 @@ def drawMeanExecutionTimes(games,teams,save_folder):
 
     # create bardiagram for mean task times per game
     fig, ax = plt.subplots()
-    for ind, team in enumerate(teams):
+    mean_times_game_per_team = []
+    for team in teams:
         mean_times_game = []
         for task in tasks:
             mean_times_game.append(times[team][task]['summed_times'] / times[team]['total_games'])
-        ax.bar(task_start_x_values + (bar_width + gab_between_teams)*ind, mean_times_game, label=team, color=teamColors[ind], alpha=0.8)
-    ax.legend(loc='upper left')
+        mean_times_game_per_team.append(mean_times_game)
+    createBarDiagram(ax, mean_times_game_per_team, name_tasks, teams)
     ax.set_title('Mean Time Spend per Game')
-    ax.set_xticks(task_start_x_values, name_tasks) # + (distance_next_task - gab_for_next_task) / 2, tasks)
     ax.set_ylabel('Mean Task Time (Seconds)')
 
     plt.tight_layout()
@@ -695,17 +697,17 @@ def drawMeanExecutionTimes(games,teams,save_folder):
 
     # create bardiagram for mean times per 100 points
     fig, ax = plt.subplots()
-    for ind, team in enumerate(teams):
+    mean_times_100_per_team = []
+    for team in teams:
         mean_times_100 = []
         for task in tasks:
             if times[team]['total_points'] == 0:
                 mean_times_100.append(0)
             else:
                 mean_times_100.append(100 * times[team][task]['summed_times'] / times[team]['total_points'])
-        ax.bar(task_start_x_values + (bar_width + gab_between_teams)*ind, mean_times_100, label=team, color=teamColors[ind], alpha=0.8)
-    ax.legend(loc='upper left')
+        mean_times_100_per_team.append(mean_times_100)
+    createBarDiagram(ax, mean_times_100_per_team, name_tasks, teams)
     ax.set_title('Mean Time Spend per 100 Points')
-    ax.set_xticks(task_start_x_values, name_tasks) # + (distance_next_task - gab_for_next_task) / 2, tasks)
     ax.set_ylabel('Mean Task Time (Seconds)')
 
     plt.tight_layout()
@@ -714,20 +716,111 @@ def drawMeanExecutionTimes(games,teams,save_folder):
     
     # create bardiagram for mean execution times
     fig, ax = plt.subplots()
-    for ind, team in enumerate(teams):
+    mean_times_per_team = []
+    for team in teams:
         mean_times = []
         for task in tasks:
             if times[team][task]['amount'] == 0: mean_times.append(0)
             else:
                 mean_times.append(times[team][task]['summed_times'] / times[team][task]['amount'])
-        ax.bar(task_start_x_values + (bar_width + gab_between_teams)*ind, mean_times, label=team, color=teamColors[ind], alpha=0.8)
-    ax.legend(loc='upper left')
+        mean_times_per_team.append(mean_times)
+    createBarDiagram(ax, mean_times_per_team, name_tasks, teams)
     ax.set_title('Mean Execution Times')
-    ax.set_xticks(task_start_x_values, name_tasks) # + (distance_next_task - gab_for_next_task) / 2, tasks)
     ax.set_ylabel('Mean Task Time (Seconds)')
 
     plt.tight_layout()
     plt.savefig(save_folder + 'mean_execution_times.pdf')
+    plt.close(fig)
+
+def createBarDiagram(ax, values_per_team, x_tick_label, teams):
+    # define bar diagram appearance
+    total_bar_width = 0.425
+    width = total_bar_width/len(values_per_team)  # the width of the bars
+    task_start_x_values = np.arange(0, len(values_per_team[0]))
+
+    for ind, values in enumerate(values_per_team):
+        rects = ax.bar(task_start_x_values + width*ind, values, width, label=teams[ind], color=teamColors[ind], alpha=0.8)
+
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate('{}'.format(int(height)),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        fontsize = 1.5/width,
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+    ax.legend(loc='upper left')
+    ax.set_xticks(task_start_x_values + total_bar_width/2 - width/2, x_tick_label)
+
+def drawMachineActions(games,teams,save_folder):
+    data_available = False
+    # create times dict with an entry for each task
+    times = dict()
+    for team in teams:
+        times[team] = dict()
+        for m_type in machine_types:
+            times[team][m_type] = dict()
+            times[team][m_type]['sum_processing_times'] = 0
+            times[team][m_type]['sum_rao_times'] = 0
+        times[team]['total_games'] = 0
+
+    for game in games:
+        for t in [game.cyan_team_name, game.magenta_team_name]:
+            if not t: continue
+            times[t]['total_games'] += 1
+            machine_actions = []
+            if t == game.cyan_team_name:
+                machine_actions = game.cyan_machine_actions
+            else:
+                machine_actions = game.magenta_machine_actions
+
+            for m_action in machine_actions:
+                m_type = ''
+                if 'BS' in m_action.name: m_type = 'BS'
+                elif 'RS' in m_action.name: m_type = 'RS'
+                elif 'CS' in m_action.name: m_type = 'CS'
+                elif 'DS' in m_action.name: m_type = 'DS'
+                else: continue
+
+                times[t][m_type]['sum_processing_times'] += m_action.endTime - m_action.startTime
+                times[t][m_type]['sum_rao_times'] += m_action.readyAtOutputTime
+                data_available = True
+
+    if not data_available: return
+
+    mean_processing_per_team = []
+    mean_rao_per_team = []
+    for team in teams:
+        mean_processing = []
+        mean_rao = []
+        if times[team]['total_games'] == 0:
+            mean_processing_per_team.append([0,0,0,0])
+            mean_rao_per_team.append([0,0,0])
+        else:
+            for m_type in machine_types:
+                mean_processing.append(times[team][m_type]['sum_processing_times'] / times[team]['total_games'])
+                if m_type != 'DS': mean_rao.append(times[team][m_type]['sum_rao_times'] / times[team]['total_games'])
+        mean_processing_per_team.append(mean_processing)
+        mean_rao_per_team.append(mean_rao)
+
+    # create bardiagram for mean processing times per game
+    fig, ax = plt.subplots()
+    createBarDiagram(ax, mean_processing_per_team, machine_types, teams)
+    ax.set_title('Machine Processing Times')
+    ax.set_ylabel('Processing Time (Seconds)')
+
+    plt.tight_layout()
+    plt.savefig(save_folder + 'processing_times.pdf')
+    plt.close(fig)
+
+    # create bardiagram for mean ready-at-output times per game
+    fig, ax = plt.subplots()
+    createBarDiagram(ax, mean_rao_per_team, ['BS', 'RS', 'CS'], teams)
+    ax.set_title('Ready-At-Output Times')
+    ax.set_ylabel('Ready-At-Output Time (Seconds)')
+
+    plt.tight_layout()
+    plt.savefig(save_folder + 'rao_times.pdf')
     plt.close(fig)
 
 def drawTaskOverview(games, save_folder):
@@ -797,7 +890,7 @@ def drawTaskOverview(games, save_folder):
 def print_machine_action(axis, action):
     x = action.startTime / 60
     width = (action.endTime - action.startTime) / 60
-    y = -10 - (machines.index(action.name) % 7) * 8
+    y = -10 - (machine_names.index(action.name) % 7) * 8
 
     #draw action box
     box = patches.Rectangle((x,y),width,6,edgecolor='black',fill=True,facecolor=taskColors[5])
@@ -957,6 +1050,11 @@ def main():
         default=False,
         action='store_true',
         help=textwrap.dedent('''disable task overview diagrams'''))
+    parser.add_argument(
+        '--disable-machine-actions',
+        default=False,
+        action='store_true',
+        help=textwrap.dedent('''disable machine action diagrams'''))
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     games = loadData(args.mongodb_uri,
                      database=args.database,
@@ -980,6 +1078,8 @@ def main():
         drawMeanExecutionTimes(games, teams, save_folder)
     if not args.disable_task_overview:
         drawTaskOverview(games, save_folder)
+    if not args.disable_machine_actions:
+        drawMachineActions(games, teams, save_folder)
 
 if __name__ == '__main__':
     main()
