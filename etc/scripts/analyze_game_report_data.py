@@ -289,13 +289,16 @@ def loadData(mongodb_uri,
         for t in [0,7]:
             for ind, action in enumerate(actions[t]):
                     if (action["state"] == 'PROCESSING'
-                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSED'
-                          and actions[t][ind+2] and actions[t][ind+2]["state"] == 'READY-AT-OUTPUT'):
+                          and len(actions[t]) > ind+2 and actions[t][ind+1]["state"] == 'PROCESSED'
+                          and actions[t][ind+2]["state"] == 'READY-AT-OUTPUT'):
+                        rao_stop = 1200 - actions[t][ind+2]["game-time"]
+                        if (len(actions[t]) > ind+3):
+                            rao_stop = actions[t][ind+3]["game-time"] - actions[t][ind+2]["game-time"]
                         a = MachineAction(action["name"],
                                           'DISPENCE_BASE',
                                           action["game-time"],
                                           actions[t][ind+2]["game-time"],
-                                          actions[t][ind+3]["game-time"] - actions[t][ind+2]["game-time"])
+                                          rao_stop)
                         if t < 7:
                             cyan_machine_actions.append(a)
                         else:
@@ -304,18 +307,21 @@ def loadData(mongodb_uri,
         for t in [3,4,10,11]:
             for ind, action in enumerate(actions[t]):
                     if (action["state"] == 'PREPARED'
-                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSING'
-                          and actions[t][ind+2] and actions[t][ind+2]["state"] == 'PROCESSED'
-                          and actions[t][ind+3] and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
+                          and len(actions[t]) > ind+3 and actions[t][ind+1]["state"] == 'PROCESSING'
+                          and actions[t][ind+2]["state"] == 'PROCESSED'
+                          and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
                         performed_task = 'RETRIEVED_CAP'
                         if actions[t][ind+1]["machine-fact"]["cs-operation"] == 'MOUNT_CAP':
                             performed_task = 'MOUNT_CAP'
+                        rao_stop = 1200 - actions[t][ind+3]["game-time"]
+                        if (len(actions[t]) > ind+4):
+                            rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
 
                         a = MachineAction(action["name"],
                                           performed_task,
                                           action["game-time"],
                                           actions[t][ind+3]["game-time"],
-                                          actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"])
+                                          rao_stop)
                         if t < 7:
                             cyan_machine_actions.append(a)
                         else:
@@ -324,14 +330,17 @@ def loadData(mongodb_uri,
         for t in [1,2,8,9]:
             for ind, action in enumerate(actions[t]):
                     if (action["state"] == 'PREPARED'
-                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSING'
-                          and actions[t][ind+2] and actions[t][ind+2]["state"] == 'PROCESSED'
-                          and actions[t][ind+3] and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
+                          and len(actions[t]) > ind+3 and actions[t][ind+1]["state"] == 'PROCESSING'
+                          and actions[t][ind+2]["state"] == 'PROCESSED'
+                          and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
+                        rao_stop = 1200 - actions[t][ind+3]["game-time"]
+                        if (len(actions[t]) > ind+4):
+                            rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
                         a = MachineAction(action["name"],
                                           'MOUNT_CAP',
                                           action["game-time"],
                                           actions[t][ind+3]["game-time"],
-                                          actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"])
+                                          rao_stop)
                         if t < 7:
                             cyan_machine_actions.append(a)
                         else:
@@ -340,7 +349,7 @@ def loadData(mongodb_uri,
         for t in [5,12]:
             for ind, action in enumerate(actions[t]):
                     if (action["state"] == 'PROCESSING'
-                          and actions[t][ind+1] and actions[t][ind+1]["state"] == 'PROCESSED'):
+                          and len(actions[t]) > ind+1 and actions[t][ind+1]["state"] == 'PROCESSED'):
                         a = MachineAction(action["name"],
                                           'DELIVER',
                                           action["game-time"],
