@@ -893,8 +893,8 @@ LLSFRefBox::clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields)
 		table_sep << std::left << std::setw(slot_value_length[slot_name]) << std::setfill('-') << "-"
 		          << "---";
 	}
-	logger_->log_info("C", table_header.str().c_str());
-	logger_->log_info("C", table_sep.str().c_str());
+	clips_logger_->log_info("C", table_header.str().c_str());
+	clips_logger_->log_info("C", table_sep.str().c_str());
 	for (auto &fact_id : fact_indices) {
 		std::stringstream row;
 		row << " | ";
@@ -906,7 +906,7 @@ LLSFRefBox::clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields)
 			row << std::left << std::setw(slot_value_length[slot_name]) << std::setfill(' ') << slot_str
 			    << " | ";
 		}
-		logger_->log_info("C", row.str().c_str());
+		clips_logger_->log_info("C", row.str().c_str());
 	}
 }
 
