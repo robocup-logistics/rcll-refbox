@@ -433,6 +433,7 @@
   ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
   (or (sim-time (enabled false))
       (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
+  (not (finalize))
   =>
   (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
   (modify ?gf (last-time ?now))
@@ -603,6 +604,14 @@
   else
     (game-summary)
   )
+)
+
+(defrule game-quit-after-finalize
+  (declare (salience ?*PRIORITY_LAST*))
+  (gamestate (phase POST_GAME))
+	(finalize)
+  =>
+  (exit)
 )
 
 (defrule game-over-on-finalize
