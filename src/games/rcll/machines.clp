@@ -11,9 +11,9 @@
 (defrule m-shutdown "Shutdown machines at the end"
   (finalize)
 	(gamestate (phase POST_GAME))
-  ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
+  ?ml <- (machine-lights (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
-  (modify ?mf (desired-lights))
+  (modify ?ml (desired-lights))
   (mps-reset (str-cat ?m))
 )
 
@@ -27,10 +27,10 @@
 )
 
 (defrule machine-lights "Set machines if desired lights differ from actual lights"
-  ?mf <- (machine (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
+  ?ml <- (machine-lights (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
   =>
   ;(printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
-  (modify ?mf (actual-lights ?dl))
+  (modify ?ml (actual-lights ?dl))
 	(if (member$ RED-ON ?dl) then (bind ?red-state ON)
 	 else (if (member$ RED-BLINK ?dl) then (bind ?red-state BLINK)
 	 else (bind ?red-state OFF)))

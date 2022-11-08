@@ -15,12 +15,6 @@
 	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 C-SS M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2 M-SS))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot mtype (type SYMBOL) (allowed-values BS DS RS CS SS))
-  (multislot actual-lights (type SYMBOL)
-	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
-	     (default) (cardinality 0 3))
-  (multislot desired-lights (type SYMBOL)
-	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
-	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
   (slot productions (type INTEGER) (default 0))
   ; Overall refbox machine state
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
@@ -60,7 +54,6 @@
   )
   (slot rotation (type INTEGER) (default -1))
 
-  (slot prep-blink-start (type FLOAT))
   (slot idle-since (type FLOAT))
   (slot wait-for-product-since (type FLOAT))
   (slot mps-base-counter (type INTEGER) (default 0))
@@ -80,14 +73,25 @@
   (slot ss-wp-description (type STRING))
 
   (slot rs-ring-color (type SYMBOL)
-	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+       (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
-	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+            (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
 
   (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
   (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (slot cs-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
 )
+
+(deftemplate machine-lights
+  (slot name (type SYMBOL))
+  (multislot actual-lights (type SYMBOL)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
+	     (default) (cardinality 0 3))
+  (multislot desired-lights (type SYMBOL)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
+	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
+)
+
 
 (deftemplate machine-mps-state
   (slot name (type SYMBOL))

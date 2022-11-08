@@ -271,7 +271,10 @@
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
 	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
 	             (ss-operation STORE)
-	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	             (proc-start 0.0))
+	)
+	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(delayed-do-for-all-facts ((?r challenges-route)) (retract ?r))
 	(assert (challanges-reset-back-in-setup))
@@ -296,7 +299,10 @@
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
 	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
 	             (ss-operation STORE)
-	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	             (proc-start 0.0))
+	)
+	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(if (eq ?m-positions RANDOM)
 	 then

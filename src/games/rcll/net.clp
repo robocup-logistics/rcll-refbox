@@ -644,7 +644,7 @@
 	)
 )
 
-(deffunction net-create-Machine (?mf ?add-restricted-info)
+(deffunction net-create-Machine (?mf ?mlf ?add-restricted-info)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (bind ?mtype (fact-slot-value ?mf mtype))
@@ -687,7 +687,7 @@
           (if (fact-slot-value ?mf cs-retrieved) then 1 else 0))
       )
 
-      (foreach ?l (fact-slot-value ?mf actual-lights)
+      (foreach ?l (fact-slot-value ?mlf actual-lights)
         (bind ?ls (pb-create "llsf_msgs.LightSpec"))
 	(bind ?dashidx (str-index "-" ?l))
 	(bind ?color (sub-string 1 (- ?dashidx 1) ?l))
@@ -769,8 +769,9 @@
   (modify ?sf (time ?now) (seq (+ ?seq 1)))
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
 
-  (do-for-all-facts ((?machine machine)) TRUE
-    (bind ?m (net-create-Machine ?machine TRUE))
+  (do-for-all-facts ((?machine machine) (?machine-lights machine-lights))
+    (eq ?machine:name ?machine-lights:name)
+    (bind ?m (net-create-Machine ?machine ?machine-lights TRUE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
@@ -784,8 +785,10 @@
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
   (pb-set-field ?s "team_color" ?team-color)
 
-  (do-for-all-facts ((?machine machine)) (eq ?machine:team ?team-color)
-    (bind ?m (net-create-Machine ?machine FALSE))
+  (do-for-all-facts ((?machine machine) (?machine-lights machine-lights))
+    (and (eq ?machine:name ?machine-lights:name)
+         (eq ?machine:team ?team-color))
+    (bind ?m (net-create-Machine ?machine ?machine-lights FALSE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 

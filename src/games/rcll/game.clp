@@ -319,7 +319,10 @@
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
 	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
 	             (ss-operation STORE)
-	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	             (proc-start 0.0))
+	)
+	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(if (eq ?m-positions RANDOM)
 	 then
@@ -429,8 +432,8 @@
   ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
   =>
   (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights GREEN-ON YELLOW-ON RED-ON))
+  (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+    (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
   ;(assert (reset-game))
 )
@@ -574,8 +577,8 @@
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
   (modify ?gs (prev-phase POST_GAME) (end-time (now)))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights RED-BLINK))
+  (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+    (modify ?ml (desired-lights RED-BLINK))
   )
   (do-for-all-facts ((?cfg confval) (?m machine))
       (and (eq ?m:mtype RS)

@@ -19,13 +19,33 @@ llsfrb:
     debug: true
     # debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
     debug-level: 2
-    unwatch-facts: [time, signal, gamestate]
+    unwatch-facts: [time, signal, gamestate, machine-lights]
     unwatch-rules: [retract-time,
                     game-update-gametime-points, game-update-last-time,
                     net-send-beacon, net-send-GameState, net-send-OrderInfo,
                     net-send-MachineInfo, net-send-RobotInfo,
                     exploration-send-MachineReportInfo,
-                    net-broadcast-MachineInfo, net-send-VersionInfo]
+                    net-broadcast-MachineInfo, net-send-VersionInfo,
+                    machine-lights-assert-missing-ml-fact,
+                    machine-lights-retract-ml-fact-no-machine,
+                    machine-lights-init,
+                    machine-lights-pause,
+                    machine-lights-unknown-report,
+                    machine-lights-partial-report,
+                    machine-lights-wrong-report-zone,
+                    machine-lights-wrong-report-rotation,
+                    machine-lights-idle,
+                    machine-lights-wait-idle,
+                    machine-lights-down,
+                    machine-lights-processing,
+                    machine-lights-prepared,
+                    machine-lights-ready-at-output,
+                    machine-lights,
+                    machine-lights-broken,
+                    setup-toggle-light,
+                    net-broadcast-RobotInfo,
+                    net-broadcast-RingInfo
+    ]
 
   shell:
     refbox-host: localhost
