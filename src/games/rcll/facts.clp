@@ -56,30 +56,6 @@
 
   (slot idle-since (type FLOAT))
   (slot wait-for-product-since (type FLOAT))
-  (slot mps-base-counter (type INTEGER) (default 0))
-  (slot bases-added (type INTEGER) (default 0))
-  (slot bases-used (type INTEGER) (default 0))
-
-  ; machine type specific slots
-  (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
-  (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
-
-  (slot ds-gate (type INTEGER))
-  (slot ds-last-gate (type INTEGER))
-  (slot ds-order (type INTEGER))
-
-  (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
-  (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
-  (slot ss-wp-description (type STRING))
-
-  (slot rs-ring-color (type SYMBOL)
-       (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
-            (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-
-  (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
-  (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
-  (slot cs-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
 )
 
 (deftemplate machine-lights
@@ -92,6 +68,43 @@
 	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
 )
 
+(deftemplate bs-meta
+  (slot name (type SYMBOL))
+  (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
+  (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
+)
+
+(deftemplate cs-meta
+  (slot name (type SYMBOL))
+  (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
+  (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot cs-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
+)
+
+(deftemplate rs-meta
+  (slot name (type SYMBOL))
+  (slot rs-ring-color (type SYMBOL)
+    (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
+    (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot mps-base-counter (type INTEGER) (default 0))
+  (slot bases-added (type INTEGER) (default 0))
+  (slot bases-used (type INTEGER) (default 0))
+)
+
+(deftemplate ds-meta
+  (slot name (type SYMBOL))
+  (slot ds-gate (type INTEGER))
+;  (slot ds-last-gate (type INTEGER))
+  (slot order-id (type INTEGER))
+)
+
+(deftemplate ss-meta
+  (slot name (type SYMBOL))
+  (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
+  (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
+  (slot ss-wp-description (type STRING))
+)
 
 (deftemplate machine-mps-state
   (slot name (type SYMBOL))

@@ -644,7 +644,7 @@
 	)
 )
 
-(deffunction net-create-Machine (?mf ?mlf ?add-restricted-info)
+(deffunction net-create-Machine (?mf ?meta-f ?mlf ?add-restricted-info)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (bind ?mtype (fact-slot-value ?mf mtype))
@@ -655,9 +655,9 @@
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
-	     (eq ?mtype RS) (> (length$ (fact-slot-value ?mf rs-ring-colors)) 0))
+             (eq ?mtype RS) (> (length$ (fact-slot-value ?meta-f rs-ring-colors)) 0))
      then
-     (foreach ?rc (fact-slot-value ?mf rs-ring-colors)
+     (foreach ?rc (fact-slot-value ?meta-f rs-ring-colors)
        (pb-add-list ?m "ring_colors" ?rc)
      )
     )
@@ -680,11 +680,11 @@
       (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
       (if (eq ?mtype RS) then
         (pb-set-field ?m "loaded_with"
-          (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
+          (- (fact-slot-value ?meta-f bases-added) (fact-slot-value ?meta-f bases-used)))
       )
       (if (eq ?mtype CS) then
         (pb-set-field ?m "loaded_with"
-          (if (fact-slot-value ?mf cs-retrieved) then 1 else 0))
+          (if (fact-slot-value ?meta-f cs-retrieved) then 1 else 0))
       )
 
       (foreach ?l (fact-slot-value ?mlf actual-lights)
@@ -701,33 +701,33 @@
 	(switch (fact-slot-value ?mf mtype)
 	  (case BS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionBS"))
-	    (pb-set-field ?pm "side" (fact-slot-value ?mf bs-side))
-	    (pb-set-field ?pm "color" (fact-slot-value ?mf bs-color))
-            (pb-set-field ?m "instruction_bs" ?pm)
-          )
+	    (pb-set-field ?pm "side" (fact-slot-value ?meta-f bs-side))
+	    (pb-set-field ?pm "color" (fact-slot-value ?meta-f bs-color))
+	          (pb-set-field ?m "instruction_bs" ?pm)
+	    )
 	  (case DS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
-	    (pb-set-field ?pm "gate" (fact-slot-value ?mf ds-gate))
-	    (pb-set-field ?pm "order_id" (fact-slot-value ?mf ds-order))
-            (pb-set-field ?m "instruction_ds" ?pm)
+	    (pb-set-field ?pm "gate" (fact-slot-value ?meta-f ds-gate))
+	    (pb-set-field ?pm "order_id" (fact-slot-value ?meta-f order-id))
+	    (pb-set-field ?m "instruction_ds" ?pm)
 	  )
 	  (case SS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?mf ss-operation))
-	    (bind ?shelf-slot (fact-slot-value ?mf ss-shelf-slot))
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f ss-operation))
+	    (bind ?shelf-slot (fact-slot-value ?meta-f ss-shelf-slot))
 	    (pb-set-field ?pm "shelf" (nth$ 1 ?shelf-slot))
 	    (pb-set-field ?pm "slot" (nth$ 2 ?shelf-slot))
-      (pb-set-field ?m "instruction_ss" ?pm)
+	    (pb-set-field ?m "instruction_ss" ?pm)
 	  )
 	  (case RS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionRS"))
-	    (pb-set-field ?pm "ring_color" (fact-slot-value ?mf rs-ring-color))
-            (pb-set-field ?m "instruction_rs" ?pm)
+	    (pb-set-field ?pm "ring_color" (fact-slot-value ?meta-f rs-ring-color))
+	    (pb-set-field ?m "instruction_rs" ?pm)
 	  )
 	  (case CS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionCS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?mf cs-operation))
-            (pb-set-field ?m "instruction_cs" ?pm)
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f cs-operation))
+	    (pb-set-field ?m "instruction_cs" ?pm)
 	  )
         )
       )
@@ -771,7 +771,7 @@
 
   (do-for-all-facts ((?machine machine) (?machine-lights machine-lights))
     (eq ?machine:name ?machine-lights:name)
-    (bind ?m (net-create-Machine ?machine ?machine-lights TRUE))
+    (bind ?m (net-create-Machine ?machine (get-machine-meta-fact ?machine) ?machine-lights TRUE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
@@ -784,11 +784,10 @@
 (deffunction net-create-broadcast-MachineInfo (?team-color)
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
   (pb-set-field ?s "team_color" ?team-color)
-
   (do-for-all-facts ((?machine machine) (?machine-lights machine-lights))
     (and (eq ?machine:name ?machine-lights:name)
          (eq ?machine:team ?team-color))
-    (bind ?m (net-create-Machine ?machine ?machine-lights FALSE))
+    (bind ?m (net-create-Machine ?machine (get-machine-meta-fact ?machine) ?machine-lights FALSE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 

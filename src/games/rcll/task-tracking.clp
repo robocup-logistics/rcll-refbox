@@ -502,7 +502,7 @@
                             (confirmed FALSE)
                             (at-machine ?m-name)
                             (ring-color ?r-color))
-  ?m <- (machine (name ?m-name) (cs-cap-color ?c-color))
+  ?m <- (machine (name ?m-name))
   =>
   ; if a workpiece is supposedly at the MPS's output, modify its position
   (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:holding FALSE)
@@ -522,6 +522,12 @@
   ; place workpiece at output
   (bind ?wp-name nil)
   (bind ?c-col CAP_UNKNOWN)
+  (bind ?c-color nil)
+	(bind ?cs-meta-fact nil)
+  (do-for-fact ((?cs-meta cs-meta)) (eq ?cs-meta:name ?m-name)
+    (bind ?c-color ?cs-meta:cs-cap-color)
+		(bind ?cs-meta-fact ?cs-meta)
+  )
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
                                                (eq ?wp:at-side INPUT)
                                                (eq ?wp:holding FALSE)
@@ -541,7 +547,7 @@
                          (unknown-action FALSE)
                          (cap-color ?c-color)
                          (at-side OUTPUT))
-          (modify ?m (cs-cap-color nil)))
+          (modify ?cs-meta-fact (cs-cap-color nil)))
         (if (and (eq ?r-color nil) (eq ?c-color nil)) then
           ; retrieved cap
           (printout t ?wp-name " retrieved a cap!" crlf)
@@ -552,7 +558,7 @@
           (if (or (eq ?wp:cap-color CAP_BLACK)
                   (eq ?wp:cap-color CAP_GREY)) then
             (bind ?c-col ?wp:cap-color))
-          (modify ?m (cs-cap-color ?c-col)))
+          (modify ?cs-meta-fact (cs-cap-color ?c-col)))
         (if (and (neq ?r-color nil) (neq ?c-color nil)) then
           (printout t ?m-name " processed workpiece" ?wp-name " with ring AND cap infos!" crlf))
         (modify ?wp (latest-data FALSE) (end-time ?gt))
@@ -610,7 +616,7 @@
                          (at-side OUTPUT)
                          (base-color nil)
                          (cap-color ?c-color)))
-      (modify ?m (cs-cap-color nil)))
+      (modify ?cs-meta-fact (cs-cap-color nil)))
     (if (and (eq ?r-color nil) (eq ?c-color nil)) then
       ; retrieved cap
       (printout t "unknown workpiece " ?wp-name " retrieved a cap!" crlf)
@@ -635,7 +641,7 @@
                          (at-side OUTPUT)
                          (base-color nil)
                          (cap-color nil)))
-      (modify ?m (cs-cap-color ?c-col)))
+      (modify ?cs-meta-fact (cs-cap-color ?c-col)))
     (if (and (neq ?r-color nil) (neq ?c-color nil)) then
       (printout t ?m-name " processed unknown workpiece " ?wp-name " with ring AND cap infos!" crlf))
   )
