@@ -1,0 +1,20 @@
+%YAML 1.2
+---
+---
+# Start a fresh game with reduced exloration time and and no machine downtimes
+
+llsfrb:
+  game:
+    random-field: true
+    random-machine-down-times: false
+    random-machine-setup: true
+    random-orders: true
+    default-storage: true
+    restore-gamestate:
+      enable: false
+      phase: PRODUCTION
+    # do not load reports
+    load-from-report: ""
+    store-to-report: ""
+
+    exploration-time: 60
