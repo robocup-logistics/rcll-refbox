@@ -586,6 +586,7 @@
 )
 
 (defrule game-goto-post-game
+  (declare (salience ?*PRIORITY_FIRST*))
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
   (modify ?gs (prev-phase POST_GAME) (end-time (now)))
@@ -607,15 +608,16 @@
 )
 
 (defrule game-quit-after-finalize
-  (declare (salience ?*PRIORITY_LAST*))
-  (gamestate (phase POST_GAME))
-	(finalize)
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (phase POST_GAME) (end-time $?end-time))
+  (finalize)
   =>
   (exit)
 )
 
 (defrule game-over-on-finalize
 	"Switch to post-game if the refbox is stopped"
+	(declare (salience ?*PRIORITY_HIGH*))
 	(finalize)
 	?gs <- (gamestate (phase ~POST_GAME))
 	=>
