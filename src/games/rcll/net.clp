@@ -231,7 +231,7 @@
         (bind ?machine-point nil)
         (if (pb-has-field ?t "machine_point") then
           (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
-        (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
+        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
                                         machine-point ?machine-point))
       )
       (if (pb-has-field ?at "buffer") then
@@ -297,7 +297,7 @@
 
     ; check if end time and succesful flag are set
     (progn$ (?ft (pb-field-list ?p "finished_tasks"))
-      (bind ?f-task-id (pb-field-value ?ft "task_id"))
+      (bind ?f-task-id (pb-field-value ?ft "TaskId"))
       (bind ?success (pb-field-value ?ft "successful"))
 
       (do-for-fact ((?agent-task agent-task))

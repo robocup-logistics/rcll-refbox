@@ -249,7 +249,7 @@
                     (unknown-action FALSE)
                     (processed FALSE)
                     (team-color ?team-color)
-                    (task-parameters waypoint ?waypoint
+                    (task-parameters machine-id ?machine-id
                                      machine-point ?machine-point)
                     (order-id ?order-id)
                     (base-color ?base-color)
@@ -283,13 +283,14 @@
   )
 
   ; if robot is not at the right place, ensure it with an unknown-action
-  (if (or (neq ?next-at ?waypoint)
+  (if (or (neq ?next-at ?machine-id)
           (and (neq ?next-side ?machine-point)
                (or (neq ?machine-point SHELF)
                    (neq ?next-side INPUT)))) then
+    (printout t "robot expected to be at ("?machine-id " " ?machine-point "), but is at (" ?next-at " " ?next-side ")" crlf)
     (assert (agent-task (task-type MOVE)
                         (unknown-action TRUE)
-                        (task-parameters waypoint ?waypoint machine-point ?machine-point)
+                        (task-parameters waypoint ?machine-id machine-point ?machine-point)
                         (task-id 0)
                         (robot-id ?robot-id)
                         (team-color ?team-color)
@@ -301,28 +302,28 @@
                         (base-color ?base-color)
                         (ring-color $?ring-color)
                         (cap-color ?cap-color)))
-    (modify ?r (next-at ?waypoint) (next-side ?machine-point))
+    (modify ?r (next-at ?machine-id) (next-side ?machine-point))
   )
 
   ; check target
   (bind ?target-loc nil)
-  (if (or (eq ?waypoint C-BS)
-          (eq ?waypoint C-DS)
-          (eq ?waypoint C-RS1)
-          (eq ?waypoint C-RS2)
-          (eq ?waypoint C-CS1)
-          (eq ?waypoint C-CS2)
-          (eq ?waypoint M-BS)
-          (eq ?waypoint M-DS)
-          (eq ?waypoint M-RS1)
-          (eq ?waypoint M-RS2)
-          (eq ?waypoint M-CS1)
-          (eq ?waypoint M-CS2)) then
-    (bind ?target-loc ?waypoint))
+  (if (or (eq ?machne-id C-BS)
+          (eq ?machne-id C-DS)
+          (eq ?machne-id C-RS1)
+          (eq ?machne-id C-RS2)
+          (eq ?machne-id C-CS1)
+          (eq ?machne-id C-CS2)
+          (eq ?machne-id M-BS)
+          (eq ?machne-id M-DS)
+          (eq ?machne-id M-RS1)
+          (eq ?machne-id M-RS2)
+          (eq ?machne-id M-CS1)
+          (eq ?machne-id M-CS2)) then
+    (bind ?target-loc ?machne-id))
 
   ; if a workpiece is supposedly at the target, modify its position
   (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:holding FALSE)
-                                           (eq ?wp:at-machine ?waypoint)
+                                           (eq ?wp:at-machine ?machine-id)
                                            (eq ?wp:at-side ?machine-point)
                                            (eq ?wp:latest-data TRUE)
                                            (neq ?target-loc nil)

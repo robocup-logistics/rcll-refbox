@@ -380,7 +380,7 @@ handle_timer(const boost::system::error_code &error)
 
 		if (task_id_ > 1) {
 			FinishedTask *finished_task = signal->add_finished_tasks();
-			finished_task->set_task_id(task_id_ - 1);
+			finished_task->set_taskid(task_id_ - 1);
 			finished_task->set_successful(true);
 		}
 
@@ -394,7 +394,7 @@ handle_timer(const boost::system::error_code &error)
 			retrieve_task->set_machine_point(machine_point_);
 		} else if (task_type_ == "Deliver") {
 			Deliver *deliver_task = task->mutable_deliver();
-			deliver_task->set_waypoint(waypoint_);
+			deliver_task->set_machine_point(waypoint_);
 			deliver_task->set_machine_point(machine_point_);
 		} else if (task_type_ == "BufferStation") {
 			BufferStation *buffer_task = task->mutable_buffer();
