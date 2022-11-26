@@ -190,7 +190,7 @@
       )
     )
   then
-    ; create workpiece with random id
+    ; create workpiece with random name
     (bind ?wp-name (sym-cat WP- (gensym*)))
     (if (eq (length$ $?ring-color) 0) then
       (assert (workpiece (latest-data TRUE)
@@ -307,19 +307,9 @@
 
   ; check target
   (bind ?target-loc nil)
-  (if (or (eq ?machne-id C-BS)
-          (eq ?machne-id C-DS)
-          (eq ?machne-id C-RS1)
-          (eq ?machne-id C-RS2)
-          (eq ?machne-id C-CS1)
-          (eq ?machne-id C-CS2)
-          (eq ?machne-id M-BS)
-          (eq ?machne-id M-DS)
-          (eq ?machne-id M-RS1)
-          (eq ?machne-id M-RS2)
-          (eq ?machne-id M-CS1)
-          (eq ?machne-id M-CS2)) then
-    (bind ?target-loc ?machne-id))
+  (if (member$ ?machine-id (deftemplate-slot-allowed-values machine name))
+   then
+    (bind ?target-loc ?machine-id))
 
   ; if a workpiece is supposedly at the target, modify its position
   (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:holding FALSE)
@@ -528,10 +518,10 @@
   (bind ?wp-name nil)
   (bind ?c-col CAP_UNKNOWN)
   (bind ?c-color nil)
-	(bind ?cs-meta-fact nil)
+  (bind ?cs-meta-fact nil)
   (do-for-fact ((?cs-meta cs-meta)) (eq ?cs-meta:name ?m-name)
     (bind ?c-color ?cs-meta:cs-cap-color)
-		(bind ?cs-meta-fact ?cs-meta)
+    (bind ?cs-meta-fact ?cs-meta)
   )
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
                                                (eq ?wp:at-side INPUT)
