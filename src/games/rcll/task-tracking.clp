@@ -475,12 +475,15 @@
   (gamestate (phase PRODUCTION) (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype BS)
+                            (workpiece 0)
                             (confirmed FALSE)
                             (at-machine ?m-name)
                             (base-color ?base-color))
   =>
   (bind ?wp-name (sym-cat WP- (gensym*)))
+  (bind ?wp-id (workpiece-gen-id-for-base-color ?base-color))
   (assert (workpiece (latest-data TRUE)
+                     (id ?wp-id)
                      (unknown-action FALSE)
                      (name ?wp-name)
                      (start-time ?gt)
@@ -491,7 +494,7 @@
                      (base-color ?base-color)
                      (cap-color nil)))
 
-  (modify ?pf (confirmed TRUE))
+  (modify ?pf (workpiece ?wp-id))
   (printout t "Workpiece " ?wp-name " created at " ?m-name crlf)
 )
 
@@ -501,6 +504,7 @@
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype RS|CS)
                             (confirmed FALSE)
+                            (workpiece 0)
                             (at-machine ?m-name)
                             (ring-color ?r-color))
   ?m <- (machine (name ?m-name))
@@ -534,6 +538,7 @@
                                                (eq ?wp:holding FALSE)
                                                (eq ?wp:latest-data TRUE))
         (bind ?wp-name ?wp:name)
+        (bind ?wp-id ?wp:id)
         (if (and (neq ?r-color nil) (eq ?c-color nil)) then
           ; mounted ring
           (printout t ?wp-name " is now mounting a ring!" crlf)
@@ -568,12 +573,14 @@
   then
     ; create one if none is at the input
     (bind ?wp-name (sym-cat WP- (gensym*)))
+    (bind ?wp-id (workpiece-gen-id-for-base-color BASE_UNKNOWN))
     (if (and (neq ?r-color nil) (eq ?c-color nil)) then
       ; mounted ring
       (printout t "unknown workpiece " ?wp-name " is now mounting a ring!" crlf)
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
                          (name ?wp-name)
+                         (id ?wp-id)
                          (start-time ?gt)
                          (end-time ?gt)
                          (holding FALSE)
@@ -585,6 +592,7 @@
       (assert (workpiece (latest-data TRUE)
                          (unknown-action FALSE)
                          (name ?wp-name)
+                         (id ?wp-id)
                          (start-time ?gt)
                          (holding FALSE)
                          (robot-holding 0)
@@ -599,6 +607,7 @@
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
                          (name ?wp-name)
+                         (id ?wp-id)
                          (start-time ?gt)
                          (end-time ?gt)
                          (holding FALSE)
@@ -610,6 +619,7 @@
       (assert (workpiece (latest-data TRUE)
                          (unknown-action FALSE)
                          (name ?wp-name)
+                         (id ?wp-id)
                          (start-time ?gt)
                          (holding FALSE)
                          (robot-holding 0)
@@ -624,6 +634,7 @@
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
                          (name ?wp-name)
+                         (id ?wp-id)
                          (start-time ?gt)
                          (end-time ?gt)
                          (holding FALSE)
@@ -635,6 +646,7 @@
       (assert (workpiece (latest-data TRUE)
                          (unknown-action FALSE)
                          (name ?wp-name)
+                         (id ?wp-id)
                          (start-time ?gt)
                          (holding FALSE)
                          (robot-holding 0)
@@ -647,7 +659,7 @@
       (printout t ?m-name " processed unknown workpiece " ?wp-name " with ring AND cap infos!" crlf))
   )
 
-  (modify ?pf (confirmed TRUE))
+  (modify ?pf (workpiece ?wp-id) (cap-color ?c-color))
   (printout t "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
 )
 
@@ -663,6 +675,7 @@
   =>
   ; change workpiece side to nil to indicate delivery
   (bind ?wp-name nil)
+  (bind ?wp-id (workpiece-gen-id-for-base-color BASE_UNKNOWN))
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
                                                (eq ?wp:at-side INPUT)
                                                (eq ?wp:holding FALSE)
@@ -681,6 +694,7 @@
     (assert (workpiece (latest-data FALSE)
                        (unknown-action TRUE)
                        (name ?wp-name)
+                       (id ?wp-id)
                        (start-time ?gt)
                        (end-time ?gt)
                        (holding FALSE)
@@ -692,6 +706,7 @@
     (assert (workpiece (latest-data TRUE)
                        (unknown-action FALSE)
                        (name ?wp-name)
+                       (id ?wp-id)
                        (start-time ?gt)
                        (holding FALSE)
                        (robot-holding 0)
@@ -701,6 +716,6 @@
                        (cap-color nil)))
   )
 
-  (modify ?pf (confirmed TRUE))
+  (modify ?pf (workpiece ?wp-id))
   (printout t "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
 )
