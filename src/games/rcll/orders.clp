@@ -231,7 +231,7 @@
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece ?workpiece-id) (game-time ?delivery-time))
-  ?wf <- (workpiece (id ?workpiece-id)
+  ?wf <- (workpiece (id ?workpiece-id&~0)
                     (latest-data TRUE)
                     (order ?workpiece-order)
                     (cap-color ?workpiece-cap)
@@ -249,25 +249,55 @@
             (neq $?workpiece-rings $?order-rings)))
   =>
   (printout t "Verifying operations performed on workpiece " ?workpiece-id  crlf)
+  ; rectify base color
+  ; information on workpiece is known:
   (if (neq ?workpiece-base ?order-base) then
+    (printout t "Rectifying workpiece " ?workpiece-id ": operation at BS [" ?workpiece-base
+                 "->" ?order-base "]"  crlf)
     (if (not (do-for-fact ((?pd product-processed))
                           (and (eq ?pd:mtype BS)
                                (eq ?pd:workpiece ?workpiece-id)
                                (eq ?pd:base-color ?workpiece-base))
                           (modify ?pd (base-color ?order-base) (confirmed TRUE))
                           TRUE))
-      then
-      (assert (product-processed (mtype BS)
-                                 (team ?team)
-                                 (order ?order)
-                                 (confirmed TRUE)
-                                 (workpiece ?workpiece-id)
-                                 (game-time ?delivery-time)
-                                 (base-color ?order-base)))
+      then ; Some unconfirmed and isolated operation dispensed a wp with the correct color
+      (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
+                 (and (eq ?pd:mtype BS)
+                      (eq ?o-wp:id ?pd:workpiece)
+                      (neq ?pd:workpiece ?workpiece-id)
+                      (eq ?pd:base-color ?order-base)
+                      (eq ?pd:confirmed FALSE)
+                      ?o-wp:latest-data
+                      (eq ?o-wp:base-color ?order-base)
+                      ; no other info is set
+                      ; ideally partial wp information could be used, but this
+                      ; gets complicated when the correct partial wp
+                      ; information should be chosen, so we only cover the
+                      ; simplest case
+                      (eq ?o-wp:cap-color nil)
+                      (eq ?o-wp:ring-colors (create$))
+                 )
+                 (printout t "Mapping unconfirmed operation: operation at BS [" ?o-wp:id "(" ?o-wp:name ")"
+                             "->" ?workpiece-id "]"  crlf)
+                 (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
+                   (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
+                 )
+                 (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
+                   (modify ?all-wp (id ?workpiece-id))
+                 )
+        TRUE))
+        then ; No known operation produced the wp, add it anyways as it was confirmed
+        (assert (product-processed (mtype BS)
+                                   (team ?team)
+                                   (order ?order)
+                                   (confirmed TRUE)
+                                   (workpiece ?workpiece-id)
+                                   (game-time ?delivery-time)
+                                   (base-color ?order-base)))
+      )
     )
-    (printout t "Rectifying workpiece " ?workpiece-id ": operation at BS [" ?workpiece-base
-                 "->" ?order-base "]"  crlf)
   )
+  ; rectify cap color
   (if (neq ?workpiece-cap ?order-cap) then
     (if (not (do-for-fact ((?pd product-processed))
                           (and
@@ -276,14 +306,40 @@
                                (eq ?pd:cap-color ?workpiece-cap))
                           (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
                           TRUE))
-      then
-      (assert (product-processed (mtype CS)
-                                 (team ?team)
-                                 (scored FALSE)
-                                 (confirmed TRUE)
-                                 (workpiece ?workpiece-id)
-                                 (game-time ?delivery-time)
-                                 (cap-color ?order-cap)))
+      then ; Some unconfirmed operation mounted a cap with matching ord unknown color
+      (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
+                 (and (eq ?pd:mtype CS)
+                      (eq ?o-wp:id ?pd:workpiece)
+                      (neq ?pd:workpiece ?workpiece-id)
+                      (or (eq ?pd:cap-color ?order-cap)
+                          (eq ?pd:cap-color CAP_UNKNOWN)
+                      )
+                      (eq ?pd:confirmed FALSE)
+                      ?o-wp:latest-data
+                      (eq ?o-wp:cap-color ?pd:cap-color)
+                      (eq ?o-wp:base-color nil)
+                      (eq (create$ ?o-wp:ring-colors) (create$))
+                 )
+                 (printout t "Mapping unconfirmed operation: operation at CS [" ?o-wp:id "(" ?o-wp:name ")"
+                             "->" ?workpiece-id "]"  crlf)
+                 (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
+                   (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
+                 )
+                 (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
+                   (modify ?all-wp (id ?workpiece-id))
+                 )
+        TRUE))
+        then ; No known operation produced the wp, add it anyways as it was confirmed
+          (assert (product-processed (mtype CS)
+                                     (team ?team)
+                                     (scored FALSE)
+                                     (confirmed TRUE)
+                                     (at-machine (sym-cat (sub-string 1 1 ?team) -CS1))
+                                     (workpiece ?workpiece-id)
+                                     (game-time ?delivery-time)
+                                     (base-color ?order-base)
+                                     (cap-color ?order-cap)))
+      )
     )
     (printout t "Rectifying workpiece " ?workpiece-id ": operation at CS [" ?workpiece-cap
                  "->" ?order-cap "]"  crlf)
@@ -298,14 +354,38 @@
                                (eq ?pd:ring-color ?workpiece-ring))
                           (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
                           TRUE))
-            then
-            (assert (product-processed (mtype RS)
-                                       (team ?team)
-                                       (scored FALSE)
-                                       (confirmed TRUE)
-                                       (workpiece ?workpiece-id)
-                                       (game-time ?delivery-time)
-                                       (ring-color ?order-ring)))
+            then ; Some unconfirmed operation mounted a cap with the correct color
+            (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
+                       (and (eq ?pd:mtype RS)
+                            (eq ?o-wp:id ?pd:workpiece)
+                            (neq ?pd:workpiece ?workpiece-id)
+                            (eq ?pd:ring-color ?order-ring)
+                            (eq ?pd:confirmed FALSE)
+                            ?o-wp:latest-data
+                            (eq (create$ ?o-wp:ring-colors) (create$ ?order-ring))
+                            (eq ?o-wp:base-color nil)
+                            (eq ?o-wp:cap-color nil)
+                            ; ring color matches
+                            (eq ?order-ring-index (nth$ 1 (create$ (member$ ?o-wp:ring-colors ?order-rings))))
+                       )
+                       (printout t "Mapping unconfirmed operation: operation at RS [" ?o-wp:id "(" ?o-wp:name ")"
+                                   "->" ?workpiece-id "]"  crlf)
+                       (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
+                         (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
+                       )
+                       (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
+                         (modify ?all-wp (id ?workpiece-id))
+                       )
+                       TRUE))
+        then ; No known operation produced the wp, add it anyways as it was confirmed
+          (assert (product-processed (mtype RS)
+                                     (team ?team)
+                                     (scored FALSE)
+                                     (confirmed TRUE)
+                                     (workpiece ?workpiece-id)
+                                     (game-time ?delivery-time)
+                                     (base-color ?order-base)
+                                     (ring-color ?order-ring)))
          )
          (printout t "Rectifying workpiece " ?workpiece-id ": operation at RS [" ?workpiece-ring
                      "->" ?order-ring "]"  crlf)
@@ -316,6 +396,7 @@
                                                      (eq ?pd:scored TRUE)
                                                      (eq ?pd:mtype RS))
                     (modify ?pd (scored FALSE)))
+    )
   )
   (if (neq ?workpiece-order ?order) then
      (printout t "Rectifying workpiece " ?workpiece-id ": order ID corrected [" ?workpiece-order
@@ -332,6 +413,7 @@
                  (order ?order)
                  (base-color ?order-base)
                  (cap-color ?order-cap)
+                 (team ?team)
                  (ring-colors ?order-rings))
   (modify ?wf (latest-data FALSE) (end-time ?gt))
 )
