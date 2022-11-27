@@ -544,6 +544,43 @@
 " After restarting a game, a new report should be created"
 	(declare (salience ?*PRIORITY_HIGH*))
 	?t <- (mongodb-new-report)
+	(game-parameters (is-parameterized TRUE))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (prev-phase PRE_GAME|SETUP) (start-time $?stime) (end-time $?etime))
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	=>
+	(retract ?t)
+	(delayed-do-for-all-facts ((?hist mongodb-machine-history)) TRUE
+	  (retract ?hist)
+	)
+	(mongodb-init-report ?teams ?stime ?etime ?report-name)
+)
+
+(defrule mongodb-game-report-begin
+	(declare (salience ?*PRIORITY_HIGH*))
+	?gp <- (game-parameters (is-parameterized TRUE))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	(not (mongodb-game-report (start $?stime) (name ?report-name)))
+	(game-parameters (is-parameterized TRUE))
+	=>
+	(mongodb-init-report ?teams ?stime ?etime ?report-name)
+)
+
+
+(defrule mongodb-silence-debug
+	(confval (path "/llsfrb/clips/debug") (type BOOL) (value true))
+	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
+	=>
+	(unwatch facts mongodb-machine-history)
+	(unwatch rules mongodb-create-next-machine-history)
+)
+
+(defrule mongodb-start-new-report
+" After restarting a game, a new report should be created"
+	(declare (salience ?*PRIORITY_HIGH*))
+	?t <- (mongodb-new-report)
 	?gp <- (game-parameters (is-parameterized TRUE))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (prev-phase PRE_GAME|SETUP) (start-time $?stime) (end-time $?etime))
@@ -563,18 +600,8 @@
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
 	(not (mongodb-game-report (start $?stime) (name ?report-name)))
- (game-parameters (is-parameterized TRUE))
 	=>
 	(mongodb-init-report ?teams ?stime ?etime ?report-name)
-)
-
-
-(defrule mongodb-silence-debug
-	(confval (path "/llsfrb/clips/debug") (type BOOL) (value true))
-	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
-	=>
-	(unwatch facts mongodb-machine-history)
-	(unwatch rules mongodb-create-next-machine-history)
 )
 
 (defrule mongodb-game-report-end
