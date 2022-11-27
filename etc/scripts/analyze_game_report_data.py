@@ -184,7 +184,7 @@ def loadData(mongodb_uri,
     for report in all_reports:
         cyan_team_name = report["teams"][0]
         magenta_team_name = report["teams"][1]
-        
+
         # get agent tasks
         cyan_agent_tasks = []
         magenta_agent_tasks = []
@@ -669,7 +669,7 @@ def drawMeanExecutionTimes(games,teams,save_folder):
             times[team][task]['amount'] = 0
         times[team]['total_games'] = 0
         times[team]['total_points'] = 0
-    
+
     # add times for each team for each task type
     for game in games:
         for t in [game.cyan_team_name, game.magenta_team_name]:
@@ -722,7 +722,7 @@ def drawMeanExecutionTimes(games,teams,save_folder):
     plt.tight_layout()
     plt.savefig(save_folder + 'mean_task_times_per_100_points.pdf')
     plt.close(fig)
-    
+
     # create bardiagram for mean execution times
     fig, ax = plt.subplots()
     mean_times_per_team = []
@@ -943,7 +943,7 @@ def print_task(axis, task):
     axis.add_patch(box)
     box = patches.Rectangle((x,y),width,6,edgecolor='black',fill=False)
     axis.add_patch(box)
-    
+
     #draw task type
     if(width > 0.2):
         if task.taskType == 'EXPLORE_MACHINE':
