@@ -16,6 +16,7 @@
   then (printout t "Enabling simulation" crlf) (load* (resolve-file simulation.clp)))
 (load* (resolve-file machines.clp))
 (load* (resolve-file workpieces.clp))
+(load* (resolve-file task-tracking.clp))
 (load* (resolve-file robots.clp))
 (load* (resolve-file orders.clp))
 (load* (resolve-file game.clp))
