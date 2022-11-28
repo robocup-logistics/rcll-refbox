@@ -528,10 +528,10 @@
   ; place workpiece at output
   (bind ?wp-name nil)
   (bind ?c-col CAP_UNKNOWN)
-  (bind ?c-color nil)
+  (bind ?cs-retrieved nil)
   (bind ?cs-meta-fact nil)
   (do-for-fact ((?cs-meta cs-meta)) (eq ?cs-meta:name ?m-name)
-    (bind ?c-color ?cs-meta:cs-cap-color)
+    (bind ?cs-retrieved ?cs-meta:cs-retrieved)
     (bind ?cs-meta-fact ?cs-meta)
   )
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
@@ -540,22 +540,22 @@
                                                (eq ?wp:latest-data TRUE))
         (bind ?wp-name ?wp:name)
         (bind ?wp-id ?wp:id)
-        (if (and (neq ?r-color nil) (eq ?c-color nil)) then
+        (if (and (neq ?r-color nil) (eq ?cs-meta-fact nil)) then
           ; mounted ring
           (printout t ?wp-name " is now mounting a ring!" crlf)
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
                          (ring-colors (append$ ?wp:ring-colors ?r-color))
                          (at-side OUTPUT)))
-        (if (and (eq ?r-color nil) (neq ?c-color nil)) then
+        (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
           ; mounted cap
           (printout t ?wp-name " is now mounting a cap!" crlf)
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
-                         (cap-color ?c-color)
+                         (cap-color ?c-col)
                          (at-side OUTPUT))
           (modify ?cs-meta-fact (cs-cap-color nil)))
-        (if (and (eq ?r-color nil) (eq ?c-color nil)) then
+        (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
           ; retrieved cap
           (printout t ?wp-name " retrieved a cap!" crlf)
           (duplicate ?wp (start-time ?gt)
@@ -566,7 +566,7 @@
                   (eq ?wp:cap-color CAP_GREY)) then
             (bind ?c-col ?wp:cap-color))
           (modify ?cs-meta-fact (cs-cap-color ?c-col)))
-        (if (and (neq ?r-color nil) (neq ?c-color nil)) then
+        (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
           (printout t ?m-name " processed workpiece" ?wp-name " with ring AND cap infos!" crlf))
         (modify ?wp (latest-data FALSE) (end-time ?gt))
       )
@@ -575,7 +575,7 @@
     ; create one if none is at the input
     (bind ?wp-name (sym-cat WP- (gensym*)))
     (bind ?wp-id (workpiece-gen-id-for-base-color BASE_UNKNOWN))
-    (if (and (neq ?r-color nil) (eq ?c-color nil)) then
+    (if (and (neq ?r-color nil) (eq ?cs-meta-fact nil)) then
       ; mounted ring
       (printout t "unknown workpiece " ?wp-name " is now mounting a ring!" crlf)
       (assert (workpiece (latest-data FALSE)
@@ -602,7 +602,7 @@
                          (base-color nil)
                          (ring-colors ?r-color)
                          (cap-color nil))))
-    (if (and (eq ?r-color nil) (neq ?c-color nil)) then
+    (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
       ; mounted cap
       (printout t "unknown workpiece " ?wp-name " is now mounting a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
@@ -627,9 +627,9 @@
                          (at-machine ?m-name)
                          (at-side OUTPUT)
                          (base-color nil)
-                         (cap-color ?c-color)))
+                         (cap-color ?c-col)))
       (modify ?cs-meta-fact (cs-cap-color nil)))
-    (if (and (eq ?r-color nil) (eq ?c-color nil)) then
+    (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
       ; retrieved cap
       (printout t "unknown workpiece " ?wp-name " retrieved a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
@@ -656,11 +656,11 @@
                          (base-color nil)
                          (cap-color nil)))
       (modify ?cs-meta-fact (cs-cap-color ?c-col)))
-    (if (and (neq ?r-color nil) (neq ?c-color nil)) then
+    (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
       (printout t ?m-name " processed unknown workpiece " ?wp-name " with ring AND cap infos!" crlf))
   )
 
-  (modify ?pf (workpiece ?wp-id) (cap-color ?c-color))
+  (modify ?pf (workpiece ?wp-id) (cap-color ?c-col))
   (printout t "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
 )
 
