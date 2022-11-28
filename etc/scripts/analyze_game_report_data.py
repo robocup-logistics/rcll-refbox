@@ -311,7 +311,7 @@ def loadData(mongodb_uri,
                           and actions[t][ind+2]["state"] == 'PROCESSED'
                           and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
                         performed_task = 'RETRIEVED_CAP'
-                        if actions[t][ind+1]["machine-fact"]["cs-operation"] == 'MOUNT_CAP':
+                        if actions[t][ind+1]["meta-fact"]["cs-operation"] == 'MOUNT_CAP':
                             performed_task = 'MOUNT_CAP'
                         rao_stop = 1200 - actions[t][ind+3]["game-time"]
                         if (len(actions[t]) > ind+4):
