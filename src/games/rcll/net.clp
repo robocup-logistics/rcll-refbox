@@ -188,7 +188,7 @@
                         (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
 
   (if (pb-has-field ?p "task") then
-    (printout warn "task received" crlf)
+    (printout ?*AGENT-TASK-ROUTER* "task received" crlf)
     (bind ?at (pb-field-value ?p "task"))
     (bind ?team-color (pb-field-value ?at "team_color"))
     (bind ?task-id (pb-field-value ?at "task_id"))
@@ -206,7 +206,7 @@
     (if (not (any-factp ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
                                                         (eq ?agent-task:task-id ?task-id)
                                                         (eq ?agent-task:robot-id ?robot-id)))) then
-      (printout warn "create agent-task" crlf)
+      (printout ?*AGENT-TASK-ROUTER* "create agent-task" crlf)
       ; bind task infos
       (bind ?task-type nil)
       (bind ?task-parameters (create$ waypoint nil))
@@ -292,7 +292,7 @@
                           (base-color ?base-color)
                           (ring-color $?ring-color)
                           (cap-color ?cap-color)))
-      (printout warn "agent-task: " ?task-type ?task-parameters crlf)
+      (printout ?*AGENT-TASK-ROUTER* "agent-task: " ?task-type ?task-parameters crlf)
     )
 
     ; check if end time and succesful flag are set

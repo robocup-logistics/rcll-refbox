@@ -26,7 +26,7 @@
   ?r <- (robot (number ?robot-id) (team-color ?team-color))
   (gamestate (game-time ?gt))
   =>
-  (printout warn ?task-type " received" crlf)
+  (printout ?*AGENT-TASK-ROUTER* ?task-type " received" crlf)
   (bind ?wp-name nil)
   (modify ?r (next-at ?waypoint) (next-side ?machine-point))
 
@@ -35,6 +35,7 @@
     (if (any-factp ((?wf workpiece)) (and (eq ?wf:holding TRUE)
                                           (eq ?wf:robot-holding ?robot-id)
                                           (eq ?wf:latest-data TRUE))) then
+      (printout ?*AGENT-TASK-ROUTER* "holding a workpiece"  crlf)
       ; check if colors match
       (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
                                           (eq ?wp:robot-holding ?robot-id)
@@ -42,6 +43,7 @@
                                           (or (neq ?wp:base-color ?base-color)
                                               (neq ?wp:ring-colors $?ring-color)
                                               (neq ?wp:cap-color ?cap-color)))
+        (printout ?*AGENT-TASK-ROUTER* "workpiece (" ?wp:base-color " " ?wp:ring-colors " " ?wp:cap-color ") " (fact-index ?wp) "  not matching (" ?base-color " " $?ring-color " " ?cap-color ")"  crlf)
         (bind ?wp-name ?wp:name)
         ; create unknown action for changing colors
         (duplicate ?wp (latest-data FALSE)
@@ -58,6 +60,7 @@
                     (team ?team-color))
       )
     else
+      (printout ?*AGENT-TASK-ROUTER* "robot claims to hold  (" ?base-color " " $?ring-color " " ?cap-color "), but no workpiece exists, create one."  crlf)
       ; create unknown workpiece fact
       (bind ?wp-name (sym-cat WP- (gensym*)))
       (bind ?wp-id (workpiece-gen-id-for-base-color ?base-color))
@@ -112,12 +115,13 @@
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
   (gamestate (game-time ?gt))
   =>
-  (printout warn "Retrieve received" crlf)
+  (printout ?*AGENT-TASK-ROUTER* "Retrieve received" crlf)
   (bind ?wp-name nil)
 
   ; if robot is not at the right place, ensure it with an unknown-action
   (if (or (neq ?next-at ?machine-id)
           (neq ?next-side ?machine-point)) then
+    (printout ?*AGENT-TASK-ROUTER* "robot expected to be at ("?machine-id " " ?machine-point "), but is at (" ?next-at " " ?next-side ")" crlf)
     (assert (agent-task (task-type MOVE)
                         (unknown-action TRUE)
                         (task-parameters waypoint ?machine-id machine-point ?machine-point)
@@ -137,6 +141,7 @@
   (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
                                       (eq ?wp:robot-holding ?robot-id)
                                       (eq ?wp:latest-data TRUE))
+    (printout ?*AGENT-TASK-ROUTER* "robot expected to hold nothing, but it holds a wp "(fact-index ?wp) crlf)
     (duplicate ?wp (latest-data FALSE)
                    (start-time ?gt)
                    (end-time ?gt)
@@ -160,6 +165,7 @@
                  (or (neq ?wp:base-color ?base-color)
                      (neq ?wp:ring-colors $?ring-color)
                      (neq ?wp:cap-color ?cap-color))) then
+          (printout ?*AGENT-TASK-ROUTER* "workpiece " ?wp-name " ("?wp:base-color " " ?wp:ring-colors " " ?wp:cap-color ") " (fact-index ?wp) "  not matching (" ?base-color " " $?ring-color " " ?cap-color ")"  crlf)
           ; create unknown action for changing colors
           (duplicate ?wp (latest-data FALSE)
                          (start-time ?gt)
@@ -193,6 +199,7 @@
       )
     )
   then
+    (printout ?*AGENT-TASK-ROUTER* "no workpiece at " ?machine-id " " ?machine-point  crlf)
     ; create workpiece with random name
     (bind ?wp-name (sym-cat WP- (gensym*)))
     (bind ?wp-id (workpiece-gen-id-for-base-color ?base-color))
@@ -265,7 +272,7 @@
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
   (gamestate (game-time ?gt))
   =>
-  (printout warn "Deliver received" crlf)
+  (printout ?*AGENT-TASK-ROUTER* "Deliver received" crlf)
   (bind ?wp-name nil)
 
   ; check if robot is supposedly not holding a workpiece and create fact
@@ -296,7 +303,7 @@
           (and (neq ?next-side ?machine-point)
                (or (neq ?machine-point SHELF)
                    (neq ?next-side INPUT)))) then
-    (printout t "robot expected to be at ("?machine-id " " ?machine-point "), but is at (" ?next-at " " ?next-side ")" crlf)
+    (printout ?*AGENT-TASK-ROUTER* "robot expected to be at ("?machine-id " " ?machine-point "), but is at (" ?next-at " " ?next-side ")" crlf)
     (assert (agent-task (task-type MOVE)
                         (unknown-action TRUE)
                         (task-parameters waypoint ?machine-id machine-point ?machine-point)
@@ -327,6 +334,7 @@
                                            (eq ?wp:latest-data TRUE)
                                            (neq ?target-loc nil)
                                            (neq ?machine-point SHELF))
+    (printout ?*AGENT-TASK-ROUTER* "unexpected workpiece " (fact-index ?wp) " at ("?wp:at-machine " " ?wp:at-side ")" crlf)
     (duplicate ?wp (latest-data FALSE)
                    (unknown-action TRUE)
                    (start-time ?gt)
@@ -338,7 +346,7 @@
   )
 
   ; place workpiece at target
-  (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
+  (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:holding TRUE)
                                       (eq ?wp:robot-holding ?robot-id)
                                       (eq ?wp:latest-data TRUE))
     (bind ?wp-name ?wp:name)
@@ -347,6 +355,7 @@
              (or (neq ?wp:base-color ?base-color)
                  (neq ?wp:ring-colors $?ring-color)
                  (neq ?wp:cap-color ?cap-color))) then
+      (printout ?*AGENT-TASK-ROUTER* "workpiece " ?wp-name " ("?wp:base-color " " ?wp:ring-colors " " ?wp:cap-color ") " (fact-index ?wp) "  not matching (" ?base-color " " $?ring-color " " ?cap-color ")"  crlf)
       ; create unknown action for changing colors
       (duplicate ?wp (latest-data FALSE)
                      (start-time ?gt)
@@ -375,6 +384,9 @@
                      (team ?team-color))
       (modify ?wp (end-time ?gt) (latest-data FALSE))
     )
+  ))
+    then
+    (printout ?*AGENT-TASK-ROUTER* "could not find workpiece that is currently being held" crlf)
   )
 
   (modify ?a (workpiece-name ?wp-name) (processed TRUE))
@@ -397,7 +409,7 @@
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
   (gamestate (game-time ?gt))
   =>
-  (printout warn "BufferStation received" crlf)
+  (printout ?*AGENT-TASK-ROUTER* "BufferStation received" crlf)
   (bind ?wp-name nil)
 
   ; if robot is not at the right place, ensure it with an unknown-action
@@ -496,7 +508,7 @@
                      (cap-color nil)))
 
   (modify ?pf (workpiece ?wp-id))
-  (printout t "Workpiece " ?wp-name " created at " ?m-name crlf)
+  (printout ?*AGENT-TASK-ROUTER* "Workpiece " ?wp-name " created at " ?m-name crlf)
 )
 
 (defrule workpiece-at-rs-cs-received
@@ -542,14 +554,14 @@
         (bind ?wp-id ?wp:id)
         (if (and (neq ?r-color nil) (eq ?cs-meta-fact nil)) then
           ; mounted ring
-          (printout t ?wp-name " is now mounting a ring!" crlf)
+          (printout ?*AGENT-TASK-ROUTER* ?wp-name " is now mounting a ring!" crlf)
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
                          (ring-colors (append$ ?wp:ring-colors ?r-color))
                          (at-side OUTPUT)))
         (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
           ; mounted cap
-          (printout t ?wp-name " is now mounting a cap!" crlf)
+          (printout ?*AGENT-TASK-ROUTER* ?wp-name " is now mounting a cap!" crlf)
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
                          (cap-color ?c-col)
@@ -557,7 +569,7 @@
           (modify ?cs-meta-fact (cs-cap-color nil)))
         (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
           ; retrieved cap
-          (printout t ?wp-name " retrieved a cap!" crlf)
+          (printout ?*AGENT-TASK-ROUTER* ?wp-name " retrieved a cap!" crlf)
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
                          (cap-color nil)
@@ -567,7 +579,7 @@
             (bind ?c-col ?wp:cap-color))
           (modify ?cs-meta-fact (cs-cap-color ?c-col)))
         (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
-          (printout t ?m-name " processed workpiece" ?wp-name " with ring AND cap infos!" crlf))
+          (printout ?*AGENT-TASK-ROUTER* ?m-name " processed workpiece" ?wp-name " with ring AND cap infos!" crlf))
         (modify ?wp (latest-data FALSE) (end-time ?gt))
       )
     )
@@ -577,7 +589,7 @@
     (bind ?wp-id (workpiece-gen-id-for-base-color BASE_UNKNOWN))
     (if (and (neq ?r-color nil) (eq ?cs-meta-fact nil)) then
       ; mounted ring
-      (printout t "unknown workpiece " ?wp-name " is now mounting a ring!" crlf)
+      (printout ?*AGENT-TASK-ROUTER* "unknown workpiece " ?wp-name " is now mounting a ring!" crlf)
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
                          (name ?wp-name)
@@ -604,7 +616,7 @@
                          (cap-color nil))))
     (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
       ; mounted cap
-      (printout t "unknown workpiece " ?wp-name " is now mounting a cap!" crlf)
+      (printout ?*AGENT-TASK-ROUTER* "unknown workpiece " ?wp-name " is now mounting a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
                          (name ?wp-name)
@@ -631,7 +643,7 @@
       (modify ?cs-meta-fact (cs-cap-color nil)))
     (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
       ; retrieved cap
-      (printout t "unknown workpiece " ?wp-name " retrieved a cap!" crlf)
+      (printout ?*AGENT-TASK-ROUTER* "unknown workpiece " ?wp-name " retrieved a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
                          (name ?wp-name)
@@ -657,11 +669,11 @@
                          (cap-color nil)))
       (modify ?cs-meta-fact (cs-cap-color ?c-col)))
     (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
-      (printout t ?m-name " processed unknown workpiece " ?wp-name " with ring AND cap infos!" crlf))
+      (printout ?*AGENT-TASK-ROUTER* ?m-name " processed unknown workpiece " ?wp-name " with ring AND cap infos!" crlf))
   )
 
   (modify ?pf (workpiece ?wp-id) (cap-color ?c-col))
-  (printout t "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
+  (printout ?*AGENT-TASK-ROUTER* "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
 )
 
 (defrule workpiece-at-ds-received
@@ -720,5 +732,5 @@
   )
 
   (modify ?pf (workpiece ?wp-id))
-  (printout t "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
+  (printout ?*AGENT-TASK-ROUTER* "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
 )
