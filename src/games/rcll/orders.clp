@@ -251,15 +251,18 @@
   (printout t "Verifying operations performed on workpiece " ?workpiece-id  crlf)
   ; rectify base color
   ; information on workpiece is known:
+  (bind ?base-needs-rectify TRUE)
+  (do-for-fact ((?pd product-processed))
+               (and (eq ?pd:mtype BS)
+                    (eq ?pd:workpiece ?workpiece-id)
+                    (eq ?pd:base-color ?workpiece-base))
+               (modify ?pd (base-color ?order-base) (confirmed TRUE))
+               (bind ?base-needs-rectify FALSE)
+  )
   (if (neq ?workpiece-base ?order-base) then
     (printout t "Rectifying workpiece " ?workpiece-id ": operation at BS [" ?workpiece-base
                  "->" ?order-base "]"  crlf)
-    (if (not (do-for-fact ((?pd product-processed))
-                          (and (eq ?pd:mtype BS)
-                               (eq ?pd:workpiece ?workpiece-id)
-                               (eq ?pd:base-color ?workpiece-base))
-                          (modify ?pd (base-color ?order-base) (confirmed TRUE))
-                          TRUE))
+    (if ?base-needs-rectify
       then ; Some unconfirmed and isolated operation dispensed a wp with the correct color
       (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
                  (and (eq ?pd:mtype BS)
@@ -298,15 +301,21 @@
     )
   )
   ; rectify cap color
+  ; information on workpiece is known:
+  (bind ?cap-needs-rectify TRUE)
+  (do-for-fact ((?pd product-processed))
+               (and
+                    (eq ?pd:mtype CS)
+                    (eq ?pd:workpiece ?workpiece-id)
+                    (eq ?pd:cap-color ?workpiece-cap))
+               (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
+               (bind ?cap-needs-rectify FALSE)
+  )
   (if (neq ?workpiece-cap ?order-cap) then
-    (if (not (do-for-fact ((?pd product-processed))
-                          (and
-                               (eq ?pd:mtype CS)
-                               (eq ?pd:workpiece ?workpiece-id)
-                               (eq ?pd:cap-color ?workpiece-cap))
-                          (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
-                          TRUE))
-      then ; Some unconfirmed operation mounted a cap with matching ord unknown color
+    (printout t "Rectifying workpiece " ?workpiece-id ": operation at CS [" ?workpiece-cap
+                 "->" ?order-cap "]"  crlf)
+    (if ?cap-needs-rectify then
+      ; Some unconfirmed operation mounted a cap with matching ord unknown color
       (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
                  (and (eq ?pd:mtype CS)
                       (eq ?o-wp:id ?pd:workpiece)
@@ -341,43 +350,47 @@
                                      (cap-color ?order-cap)))
       )
     )
-    (printout t "Rectifying workpiece " ?workpiece-id ": operation at CS [" ?workpiece-cap
-                 "->" ?order-cap "]"  crlf)
   )
-  (if (neq ?order-rings ?workpiece-rings) then
-    (progn$ (?order-ring ?order-rings)
-       (bind ?workpiece-ring (nth$ ?order-ring-index ?workpiece-rings))
-       (if (neq ?workpiece-ring ?order-ring) then
-         (if (not (do-for-fact ((?pd product-processed))
-                          (and (eq ?pd:mtype RS)
-                               (eq ?pd:workpiece ?workpiece-id)
-                               (eq ?pd:ring-color ?workpiece-ring))
-                          (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
-                          TRUE))
-            then ; Some unconfirmed operation mounted a cap with the correct color
-            (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
-                       (and (eq ?pd:mtype RS)
-                            (eq ?o-wp:id ?pd:workpiece)
-                            (neq ?pd:workpiece ?workpiece-id)
-                            (eq ?pd:ring-color ?order-ring)
-                            (eq ?pd:confirmed FALSE)
-                            ?o-wp:latest-data
-                            (eq (create$ ?o-wp:ring-colors) (create$ ?order-ring))
-                            (eq ?o-wp:base-color nil)
-                            (eq ?o-wp:cap-color nil)
-                            ; ring color matches
-                            (eq ?order-ring-index (nth$ 1 (create$ (member$ ?o-wp:ring-colors ?order-rings))))
-                       )
-                       (printout t "Mapping unconfirmed operation: operation at RS [" ?o-wp:id "(" ?o-wp:name ")"
-                                   "->" ?workpiece-id "]"  crlf)
-                       (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
-                         (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
-                       )
-                       (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
-                         (modify ?all-wp (id ?workpiece-id))
-                       )
-                       TRUE))
-        then ; No known operation produced the wp, add it anyways as it was confirmed
+  ; information on workpiece is known:
+  (progn$ (?order-ring ?order-rings)
+    (bind ?workpiece-ring (nth$ ?order-ring-index ?workpiece-rings))
+    (bind ?ring-needs-rectify TRUE)
+    (do-for-fact ((?pd product-processed))
+            (and (eq ?pd:mtype RS)
+                 (eq ?pd:workpiece ?workpiece-id)
+                 (eq ?pd:ring-color ?workpiece-ring)
+                 (not ?pd:confirmed))
+            (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
+            (bind ?ring-needs-rectify FALSE)
+    )
+    (if (neq ?workpiece-ring ?order-ring) then
+      (printout t "Rectifying workpiece " ?workpiece-id ": operation at RS [" ?workpiece-ring
+                  "->" ?order-ring "]"  crlf)
+      (if ?ring-needs-rectify
+        then ; Some unconfirmed operation mounted a cap with the correct color
+        (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
+                   (and (eq ?pd:mtype RS)
+                        (eq ?o-wp:id ?pd:workpiece)
+                        (neq ?pd:workpiece ?workpiece-id)
+                        (eq ?pd:ring-color ?order-ring)
+                        (eq ?pd:confirmed FALSE)
+                        ?o-wp:latest-data
+                        (eq (create$ ?o-wp:ring-colors) (create$ ?order-ring))
+                        (eq ?o-wp:base-color nil)
+                        (eq ?o-wp:cap-color nil)
+                        ; ring color matches
+                        (eq ?order-ring-index (nth$ 1 (create$ (member$ ?o-wp:ring-colors ?order-rings))))
+                   )
+                   (printout t "Mapping unconfirmed operation: operation at RS [" ?o-wp:id "(" ?o-wp:name ")"
+                               "->" ?workpiece-id "]"  crlf)
+                   (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
+                     (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
+                   )
+                   (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
+                     (modify ?all-wp (id ?workpiece-id))
+                   )
+                   TRUE))
+          then ; No known operation produced the wp, add it anyways as it was confirmed
           (assert (product-processed (mtype RS)
                                      (team ?team)
                                      (scored FALSE)
@@ -386,16 +399,14 @@
                                      (game-time ?delivery-time)
                                      (base-color ?order-base)
                                      (ring-color ?order-ring)))
-         )
-         (printout t "Rectifying workpiece " ?workpiece-id ": operation at RS [" ?workpiece-ring
-                     "->" ?order-ring "]"  crlf)
-       )
-    )
-    ;Retrigger all rings score calculation if a single one is worng
-    (do-for-all-facts ((?pd product-processed)) (and (eq ?pd:workpiece ?workpiece-id)
-                                                     (eq ?pd:scored TRUE)
-                                                     (eq ?pd:mtype RS))
-                    (modify ?pd (scored FALSE)))
+        )
+      )
+      ;Retrigger all rings score calculation if a single one is worng
+      (do-for-all-facts ((?pd product-processed)) (and (eq ?pd:workpiece ?workpiece-id)
+                                                       (eq ?pd:scored TRUE)
+                                                       (eq ?pd:mtype RS))
+                      (modify ?pd (scored FALSE))
+      )
     )
   )
   (if (neq ?workpiece-order ?order) then
