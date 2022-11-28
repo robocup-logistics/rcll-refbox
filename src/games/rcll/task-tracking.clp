@@ -60,8 +60,10 @@
     else
       ; create unknown workpiece fact
       (bind ?wp-name (sym-cat WP- (gensym*)))
+      (bind ?wp-id (workpiece-gen-id-for-base-color ?base-color))
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
+                         (id ?wp-id)
                          (name ?wp-name)
                          (start-time ?gt)
                          (end-time ?gt)
@@ -76,6 +78,7 @@
                          (cap-color ?cap-color)))
       (assert (workpiece (latest-data TRUE)
                          (unknown-action FALSE)
+                         (id ?wp-id)
                          (name ?wp-name)
                          (start-time ?gt)
                          (holding TRUE)
@@ -192,9 +195,11 @@
   then
     ; create workpiece with random name
     (bind ?wp-name (sym-cat WP- (gensym*)))
+    (bind ?wp-id (workpiece-gen-id-for-base-color ?base-color))
     (if (eq (length$ $?ring-color) 0) then
       (assert (workpiece (latest-data TRUE)
                          (unknown-action TRUE)
+                         (id ?wp-id)
                          (name ?wp-name)
                          (start-time ?gt)
                          (holding TRUE)
@@ -210,6 +215,7 @@
       ; if workpiece has a ring already, create additional unknown-action
       (assert (workpiece (latest-data FALSE)
                          (unknown-action TRUE)
+                         (id ?wp-id)
                          (name ?wp-name)
                          (start-time ?gt)
                          (end-time ?gt)
@@ -224,6 +230,7 @@
                          (cap-color ?cap-color)))
       (assert (workpiece (latest-data TRUE)
                          (unknown-action FALSE)
+                         (id ?wp-id)
                          (name ?wp-name)
                          (start-time ?gt)
                          (holding TRUE)
@@ -267,8 +274,10 @@
                                              (eq ?wp:latest-data TRUE)))) then
     ; create workpiece with random id
     (bind ?wp-name (sym-cat WP- (gensym*)))
+    (bind ?wp-id (workpiece-gen-id-for-base-color ?base-color))
     (assert (workpiece (latest-data TRUE)
                        (unknown-action FALSE)
+                       (id ?wp-id)
                        (name ?wp-name)
                        (start-time ?gt)
                        (holding TRUE)
@@ -440,8 +449,10 @@
 
   ; create new workpiece and place it at target
   (bind ?wp-name (sym-cat WP- (gensym*)))
+  (bind ?wp-id (workpiece-gen-id-for-base-color ?base-color))
   (assert (workpiece (latest-data TRUE)
                      (unknown-action FALSE)
+                     (id ?wp-id)
                      (name ?wp-name)
                      (start-time ?gt)
                      (holding FALSE)
@@ -665,12 +676,13 @@
   =>
   ; change workpiece side to nil to indicate delivery
   (bind ?wp-name nil)
-  (bind ?wp-id (workpiece-gen-id-for-base-color BASE_UNKNOWN))
+  (bind ?wp-id 0)
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
                                                (eq ?wp:at-side INPUT)
                                                (eq ?wp:holding FALSE)
                                                (eq ?wp:latest-data TRUE))
         (bind ?wp-name ?wp:name)
+        (bind ?wp-id ?wp:id)
         (duplicate ?wp (start-time ?gt)
                        (end-time ?gt)
                        (unknown-action FALSE)
@@ -679,6 +691,7 @@
       )
     )
   then
+    (bind ?wp-id (workpiece-gen-id-for-base-color BASE_UNKNOWN))
     ; create one if none is at the input
     (bind ?wp-name (sym-cat WP- (gensym*)))
     (assert (workpiece (latest-data FALSE)

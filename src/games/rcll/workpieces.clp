@@ -33,7 +33,7 @@
 		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-BLACK*) (nth$ 2 ?*WORKPIECE-RANGE-BLACK*))))
 	(if (eq ?base-color BASE_CLEAR)
 		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-CLEAR*) (nth$ 2  ?*WORKPIECE-RANGE-CLEAR*))))
-	(if (eq ?base-color BASE_UNKNOWN)
+	(if (or (eq ?base-color BASE_UNKNOWN) (eq ?base-color nil))
 		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-UNKNOWN*) (nth$ 2  ?*WORKPIECE-RANGE-UNKNOWN*))))
   (printout error "Invalid workpiece base-color" ?base-color  ". assign random id." crlf)
 	(return (random (nth$ 1 ?*WORKPIECE-RANGE-RED*) (nth$ 2 ?*WORKPIECE-RANGE-CLEAR*)))
