@@ -345,10 +345,16 @@
 
 (defrule net-recv-SetGameState
   ?sf <- (gamestate (state ?state))
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p) (rcvd-via STREAM))
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p) (rcvd-via ?via)
+           (rcvd-from ?host ?port))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (assert (net-SetGameState (sym-cat (pb-field-value ?p "state"))))
+  (if (or (eq ?via STREAM) (config-get-bool "/llsfrb/comm/control-via-broadcast"))
+   then
+    (assert (net-SetGameState (sym-cat (pb-field-value ?p "state"))))
+   else
+    (printout warn "Illegal SetGameState message received from host " ?host crlf)
+  )
 )
 
 (defrule net-proc-SetGameState
@@ -360,22 +366,18 @@
   (modify ?sf (state ?new-state) (prev-state ?old-state))
 )
 
-
-(defrule net-recv-SetGameState-illegal
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetGameState") (ptr ?p)
-		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
-  =>
-  (retract ?mf) ; message will be destroyed after rule completes
-  (printout warn "Illegal SetGameState message received from host " ?host crlf)
-)
-
-
 (defrule net-recv-SetGamePhase
   ?sf <- (gamestate (phase ?phase))
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p) (rcvd-via STREAM))
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p) (rcvd-via ?via)
+           (rcvd-from ?host ?port))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
-  (assert (net-SetGamePhase (sym-cat (pb-field-value ?p "phase"))))
+  (if (or (eq ?via STREAM) (config-get-bool "/llsfrb/comm/control-via-broadcast"))
+   then
+    (assert (net-SetGamePhase (sym-cat (pb-field-value ?p "phase"))))
+   else
+    (printout warn "Illegal SetGamePhase message received from host " ?host crlf)
+  )
 )
 
 (defrule net-proc-SetGamePhase
@@ -386,24 +388,22 @@
   (modify ?sf (phase ?new-phase) (prev-phase ?old-phase))
 )
 
-(defrule net-recv-SetGamePhase-illegal
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetGamePhase") (ptr ?p)
-		       (rcvd-via BROADCAST) (rcvd-from ?host ?port))
-  =>
-  (retract ?mf) ; message will be destroyed after rule completes
-  (printout warn "Illegal SetGamePhase message received from host " ?host crlf)
-)
-
 
 (defrule net-recv-SetTeamName
   ?sf <- (gamestate (phase ?phase) (teams $?old-teams))
-  ?mf <- (protobuf-msg (type "llsf_msgs.SetTeamName") (ptr ?p) (rcvd-via STREAM))
+  ?mf <- (protobuf-msg (type "llsf_msgs.SetTeamName") (ptr ?p) (rcvd-via ?via)
+           (rcvd-from ?host ?port))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
+  (if (or (eq ?via STREAM) (config-get-bool "/llsfrb/comm/control-via-broadcast"))
+   then
+    (bind ?team-color (sym-cat (pb-field-value ?p "team_color")))
+    (bind ?new-team (pb-field-value ?p "team_name"))
+    (assert (net-SetTeamName ?team-color ?new-team))
+   else
+    (printout warn "Illegal SetTeamName message received from host " ?host crlf)
+  )
 
-  (bind ?team-color (sym-cat (pb-field-value ?p "team_color")))
-  (bind ?new-team (pb-field-value ?p "team_name"))
-  (assert (net-SetTeamName ?team-color ?new-team))
 )
 
 (defrule net-proc-SetTeamName
