@@ -337,7 +337,7 @@ def loadData(mongodb_uri,
                         if (len(actions[t]) > ind+4):
                             rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
                         a = MachineAction(action["name"],
-                                          'MOUNT_CAP',
+                                          'MOUNT_RING',
                                           action["game-time"],
                                           actions[t][ind+3]["game-time"],
                                           rao_stop)
