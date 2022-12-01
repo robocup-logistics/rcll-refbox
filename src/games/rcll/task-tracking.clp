@@ -562,6 +562,7 @@
         (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
           ; mounted cap
           (printout ?*AGENT-TASK-ROUTER* ?wp-name " is now mounting a cap!" crlf)
+          (bind ?c-col (fact-slot-value ?cs-meta-fact cs-cap-color))
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
                          (cap-color ?c-col)
