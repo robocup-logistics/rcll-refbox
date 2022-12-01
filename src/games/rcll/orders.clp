@@ -255,7 +255,10 @@
   (do-for-fact ((?pd product-processed))
                (and (eq ?pd:mtype BS)
                     (eq ?pd:workpiece ?workpiece-id)
-                    (eq ?pd:base-color ?workpiece-base))
+               )
+               (if (neq ?pd:base-color ?order-base) then
+                 (printout warn "Product processed with " ?pd:base-color " but the workpiece needed " ?order-base  crlf)
+               )
                (modify ?pd (base-color ?order-base) (confirmed TRUE))
                (bind ?base-needs-rectify FALSE)
   )
@@ -307,7 +310,10 @@
                (and
                     (eq ?pd:mtype CS)
                     (eq ?pd:workpiece ?workpiece-id)
-                    (eq ?pd:cap-color ?workpiece-cap))
+               )
+               (if (neq ?pd:cap-color ?order-cap) then
+                 (printout warn "Product processed with " ?pd:cap-color " but the workpiece needed " ?order-cap  crlf)
+               )
                (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
                (bind ?cap-needs-rectify FALSE)
   )
@@ -358,8 +364,10 @@
     (do-for-fact ((?pd product-processed))
             (and (eq ?pd:mtype RS)
                  (eq ?pd:workpiece ?workpiece-id)
-                 (eq ?pd:ring-color ?workpiece-ring)
                  (not ?pd:confirmed))
+            (if (neq ?pd:ring-color ?order-ring) then
+              (printout warn "Product processed with " ?pd:ring-color " but the workpiece needed " ?order-ring " (ring " ?order-ring-index")"  crlf)
+            )
             (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
             (bind ?ring-needs-rectify FALSE)
     )
