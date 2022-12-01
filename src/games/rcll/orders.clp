@@ -242,11 +242,7 @@
                 (cap-color ?order-cap)
                 (base-color ?order-base)
                 (ring-colors $?order-rings))
-
-  (test (or (neq ?workpiece-order ?order)
-            (neq ?workpiece-cap ?order-cap)
-            (neq ?workpiece-base $?order-base)
-            (neq $?workpiece-rings $?order-rings)))
+  (not (rectified ?workpiece-id))
   =>
   (printout t "Verifying operations performed on workpiece " ?workpiece-id  crlf)
   ; rectify base color
@@ -428,13 +424,18 @@
      (printout t "Rectifying workpiece " ?workpiece-id ": removing old delivery operation for order " ?pd:order  crlf)
      (retract ?pd)
   )
-  (duplicate ?wf (start-time ?gt)
+  (if (duplicate ?wf (start-time ?gt)
                  (order ?order)
                  (base-color ?order-base)
                  (cap-color ?order-cap)
                  (team ?team)
                  (ring-colors ?order-rings))
-  (modify ?wf (latest-data FALSE) (end-time ?gt))
+   then
+     (modify ?wf (latest-data FALSE) (end-time ?gt))
+   else
+     (modify ?wf (end-time ?gt))
+  )
+  (assert (rectified ?workpiece-id))
 )
 
 (defrule order-delivery-confirmation-referee-confirmed-workpiece-verified
