@@ -244,7 +244,7 @@
                 (ring-colors $?order-rings))
   (not (rectified ?workpiece-id))
   =>
-  (printout t "Verifying operations performed on workpiece " ?workpiece-id  crlf)
+  (printout t "Verifying unconfirmed operations performed on workpiece " ?workpiece-id  crlf)
   ; rectify base color
   ; information on workpiece is known:
   (bind ?base-needs-rectify TRUE)
@@ -289,6 +289,7 @@
                  )
         TRUE))
         then ; No known operation produced the wp, add it anyways as it was confirmed
+        (printout warn "No prior unconfirmed processing step at BS, creating new one" crlf)
         (assert (product-processed (mtype BS)
                                    (team ?team)
                                    (order ?order)
@@ -341,6 +342,7 @@
                  )
         TRUE))
         then ; No known operation produced the wp, add it anyways as it was confirmed
+          (printout warn "No prior unconfirmed processing step at CS, creating new one" crlf)
           (assert (product-processed (mtype CS)
                                      (team ?team)
                                      (scored FALSE)
@@ -395,6 +397,7 @@
                    )
                    TRUE))
           then ; No known operation produced the wp, add it anyways as it was confirmed
+          (printout warn "No prior unconfirmed processing step at RS, creating new one" crlf)
           (assert (product-processed (mtype RS)
                                      (team ?team)
                                      (scored FALSE)
