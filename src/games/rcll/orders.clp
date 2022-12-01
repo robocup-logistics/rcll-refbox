@@ -658,20 +658,19 @@
                   (reason ?reason)))
   ; Production points for mounting the last ring (pre-cap points)
   (bind ?complexity-num (length$ ?r-colors))
+  (bind ?col-count 0)
+  (progn$ (?col ?r-colors)
+    (if (eq ?col ?step-r-color) then (bind ?col-count (+ ?col-count 1)))
+  )
   (if (and (eq (nth$ ?complexity-num ?r-colors) ?step-r-color)
            ; the ring color is unique
-           ; or the points for last rings were not awarded yet
+           ; or this is the last processing step of that color for this wp
            (or (eq ?complexity-num (member$ ?step-r-color ?wp-r-colors))
-               (not (any-factp ((?o-points points) (?o-pd product-processed))
-                      (and (eq ?o-pd:id ?o-points:product-step)
-                           (neq ?o-pd:id ?p-id)
+               (eq (- ?col-count 1) (length$ (find-all-facts ((?o-pd product-processed))
+                      (and (eq ?o-pd:workpiece ?w-id)
                            (eq ?o-pd:scored TRUE)
-                           (eq ?o-pd:ring-color ?step-r-color)
-                      )
-                    )
-               )
-           )
-      )
+                      )))
+      )))
    then
     (bind ?pre-cap-reason (str-cat "Mounted last ring for complexity "
                                    ?complexity " order " ?o-id))
