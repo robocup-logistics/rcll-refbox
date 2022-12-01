@@ -455,7 +455,7 @@
                 (ring-colors $?ring-colors))
    =>
   (printout t "Workpiece " ?wp-id  " verified for order " ?order crlf)
-  (modify ?pf (workpiece ?wp-id) (confirmed TRUE))
+  (modify ?pf (confirmed TRUE))
   (retract ?rf)
 )
 
