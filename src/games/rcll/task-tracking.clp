@@ -737,3 +737,62 @@
   (modify ?pf (workpiece ?wp-id))
   (printout ?*AGENT-TASK-ROUTER* "Workpiece " ?wp-name ": at " ?m-name ", processed" crlf)
 )
+
+(defrule order-rectify-bs-early
+  (confval (path "/llsfrb/assert-partial-points") (type BOOL) (value TRUE))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
+  ?pf <- (product-processed (id ?id) (team ?team) (confirmed FALSE)
+                            (mtype BS) (base-color ?base)
+                            (workpiece ?workpiece-id) (game-time ?delivery-time))
+  ?wf <- (workpiece (id ?workpiece-id&~0)
+                    (latest-data TRUE)
+                    (order ?order)
+                    (base-color ?base))
+  ?of <- (order (id ?order)
+                (active TRUE)
+                (base-color ?base))
+  =>
+  (printout t "Verifying " ?workpiece-id " is associated to " ?order crlf)
+  (modify ?pf (confirmed TRUE))
+)
+
+(defrule order-rectify-cs-early
+  (confval (path "/llsfrb/assert-partial-points") (type BOOL) (value TRUE))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
+  ?pf <- (product-processed (id ?id) (team ?team) (confirmed FALSE)
+                            (mtype CS) (cap-color ?cap)
+                            (workpiece ?workpiece-id) (game-time ?delivery-time))
+  ?wf <- (workpiece (id ?workpiece-id&~0)
+                    (latest-data TRUE)
+                    (order ?order)
+                    (cap-color ?cap))
+  ?of <- (order (id ?order)
+                (active TRUE)
+                (cap-color ?cap))
+  =>
+  (printout t "Verifying MOUNT_CAP performed on workpiece " ?workpiece-id  crlf)
+  (modify ?pf (confirmed TRUE))
+)
+
+(defrule order-rectify-rs-early
+  (confval (path "/llsfrb/assert-partial-points") (type BOOL) (value TRUE))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
+  ?pf <- (product-processed (id ?id) (team ?team) (confirmed FALSE)
+                            (mtype RS) (ring-color ?ring)
+                            (workpiece ?workpiece-id) (game-time ?delivery-time))
+  ?wf <- (workpiece (id ?workpiece-id&~0)
+                    (latest-data TRUE)
+                    (order ?order)
+                    (ring-colors $?wp-rings))
+  ?of <- (order (id ?order)
+                (active TRUE)
+                (ring-colors $?order-rings))
+  ; the wps latest ring matches the processed one and
+  ; it matches the
+  (test (and (eq (nth$ (length$ ?wp-rings) ?wp-rings) ?ring)
+             (eq (nth$ (length$ ?wp-rings) ?order-rings) ?ring)
+  ))
+  =>
+  (printout t "Verifying MOUNT_RING performed on workpiece " ?workpiece-id  crlf)
+  (modify ?pf (confirmed TRUE))
+)

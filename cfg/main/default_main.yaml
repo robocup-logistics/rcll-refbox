@@ -61,6 +61,10 @@ llsfrb:
   # unnecessary. 'Automatic' confirmation grants all delivery requests.
   auto-confirm-delivery: true
 
+  # Award points on completion of the production steps if information is given
+  # through agent task messages that allows to identify the correct step.
+  assert-partial-points: false
+
   webshop:
     enable: false
 
