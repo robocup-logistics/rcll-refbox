@@ -42,4 +42,4 @@ llsfrb:
     # Turn this on if messages to instruct the refbox
     # (SetTeamName, SetGameState, SetGamePhase)
     # are also accepted from broadcast clients (e.g., the robots)
-    control-via-broadcast: false
+    control-via-broadcast: true
