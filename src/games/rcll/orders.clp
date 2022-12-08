@@ -334,6 +334,7 @@
                  )
                  (printout t "Mapping unconfirmed operation: operation at CS [" ?o-wp:id "(" ?o-wp:name ")"
                              "->" ?workpiece-id "]"  crlf)
+                 (modify ?pd (cap-color ?order-cap))
                  (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
                    (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
                  )
