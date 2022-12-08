@@ -255,7 +255,7 @@
                (if (neq ?pd:base-color ?order-base) then
                  (printout warn "Product processed with " ?pd:base-color " but the workpiece needed " ?order-base  crlf)
                )
-               (modify ?pd (base-color ?order-base) (confirmed TRUE))
+               (modify ?pd (base-color ?order-base) (order ?order) (confirmed TRUE))
                (bind ?base-needs-rectify FALSE)
   )
   (if (neq ?workpiece-base ?order-base) then
@@ -282,10 +282,10 @@
                  (printout t "Mapping unconfirmed operation: operation at BS [" ?o-wp:id "(" ?o-wp:name ")"
                              "->" ?workpiece-id "]"  crlf)
                  (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
-                   (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
+                   (modify ?all-p (workpiece ?workpiece-id) (confirmed TRUE) (order ?order))
                  )
                  (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
-                   (modify ?all-wp (id ?workpiece-id))
+                   (modify ?all-wp (id ?workpiece-id) (order ?order) (latest-data FALSE))
                  )
         TRUE))
         then ; No known operation produced the wp, add it anyways as it was confirmed
@@ -336,10 +336,10 @@
                              "->" ?workpiece-id "]"  crlf)
                  (modify ?pd (cap-color ?order-cap))
                  (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
-                   (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
+                   (modify ?all-p (workpiece ?workpiece-id) (confirmed TRUE) (order ?order))
                  )
                  (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
-                   (modify ?all-wp (id ?workpiece-id))
+                   (modify ?all-wp (id ?workpiece-id) (order ?order) (latest-data FALSE))
                  )
         TRUE))
         then ; No known operation produced the wp, add it anyways as it was confirmed
@@ -348,6 +348,7 @@
                                      (team ?team)
                                      (scored FALSE)
                                      (confirmed TRUE)
+                                     (order ?order)
                                      (at-machine (sym-cat (sub-string 1 1 ?team) -CS1))
                                      (workpiece ?workpiece-id)
                                      (game-time ?delivery-time)
@@ -391,10 +392,10 @@
                    (printout t "Mapping unconfirmed operation: operation at RS [" ?o-wp:id "(" ?o-wp:name ")"
                                "->" ?workpiece-id "]"  crlf)
                    (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
-                     (modify ?all-p (id ?workpiece-id) (confirmed TRUE))
+                     (modify ?all-p (workpiece ?workpiece-id) (confirmed TRUE) (order ?order))
                    )
                    (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
-                     (modify ?all-wp (id ?workpiece-id))
+                     (modify ?all-wp (id ?workpiece-id) (order ?order) (latest-data FALSE))
                    )
                    TRUE))
           then ; No known operation produced the wp, add it anyways as it was confirmed
@@ -403,6 +404,7 @@
                                      (team ?team)
                                      (scored FALSE)
                                      (confirmed TRUE)
+                                     (order ?order)
                                      (workpiece ?workpiece-id)
                                      (game-time ?delivery-time)
                                      (base-color ?order-base)
