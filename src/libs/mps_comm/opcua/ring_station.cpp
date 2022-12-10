@@ -56,12 +56,12 @@ OpcUaRingStation::mount_ring(unsigned int feeder, llsf_msgs::RingColor color)
 void
 OpcUaRingStation::register_slide_callback(std::function<void(unsigned int)> callback)
 {
-	if (callback) {
+	/*if (callback) {
 		callbacks_[OpcUtils::MPSRegister::SLIDECOUNT_IN] = [=](OpcUtils::ReturnValue *ret) {
 			callback(ret->uint16_s);
 		};
 	}
-	update_callbacks();
+	update_callbacks();*/
 }
 
 } // namespace mps_comm
