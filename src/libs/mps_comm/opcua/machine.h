@@ -25,8 +25,7 @@
 #include "../machine.h"
 #include "mps_io_mapping.h"
 #include "opc_utils.h"
-#include "subscription_client.h"
-
+#include <thread>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -35,6 +34,9 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <open62541.h>
+#include <boost/any.hpp>
+#include <spdlog/spdlog.h>
 
 namespace llsfrb {
 namespace mps_comm {
@@ -91,8 +93,6 @@ protected:
 	bool send_instruction(const Instruction &instruction);
 	void dispatch_command_queue();
 	void update_callbacks();
-	void register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
-	                           OpcUtils::MPSRegister                   reg);
 
 	// OPC UA related methods
 	// Connect to OPC UA Server using IP and PORT
@@ -103,21 +103,20 @@ protected:
 	// std::cout, else they are saved to the in log_path specified file
 	void initLogger(const std::string &log_path);
 	// Helper function to set OPC UA Node value correctly
-	bool setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg);
+	bool setNodeValue(UA_Client* client, UA_NodeId node, boost::any val, OpcUtils::MPSRegister reg);
 	// Helper function to get ReturnValue correctly
 	OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
 
-	// Subscribe to a specified MPSRegister; If ReturnValue is set, the
-	// SubscriptionClient internal ReturnValue is overridden
-	SubscriptionClient *subscribe(OpcUtils::MPSRegister reg, bool simulation = false);
+
 	// Subscribe to multiple specified MPSRegisters; If ReturnValues are set, the
 	// SubscriptionClients internal ReturnValues are overridden
 	void subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simulation = false);
+	void subscribe(OpcUtils::MPSRegister reg, bool simulation);
 	// Subscribe to all existing MPSRegisters
 	void subscribeAll(bool simulation = false);
 	// Cancel a subscription given a specific MPSRegister; If default argument is
 	// true, final subscription value will be printed before deleting
-	SubscriptionClient::map::iterator cancelSubscription(OpcUtils::MPSRegister reg, bool log = false);
+	void cancelSubscription(OpcUtils::MPSRegister reg, bool log = false);
 	// Cancel all existing subscriptions; If default argument is true, final
 	// subscription values will be printed before deleting
 	void cancelAllSubscriptions(bool log = false);
@@ -140,7 +139,7 @@ protected:
 	bool connected_;
 	bool simulation_;
 
-	std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
+	//std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
 
 	// OPC UA related variables
 
@@ -151,15 +150,15 @@ protected:
 	// OPC UA logger
 	std::shared_ptr<spdlog::logger> logger;
 	// OPC UA Client pointer
-	std::unique_ptr<OpcUa::UaClient> client;
+	UA_Client *client;
 	// OPC UA Nodes for each subscribable MPSRegister
-	OpcUa::Node registerNodes[OpcUtils::MPSRegister::LAST];
+	UA_NodeId registerNodes[OpcUtils::MPSRegister::LAST];
 	// OPC UA Input Register for station Jobs
-	OpcUa::Node nodeIn;
+	UA_NodeId nodeIn;
 	// OPC UA Input Register for Basic Jobs
-	OpcUa::Node nodeBasic;
+	UA_NodeId nodeBasic;
 	// All subscriptions to MPSRegisters in form map<MPSRegister, Subscription>
-	SubscriptionClient::map subscriptions;
+	//SubscriptionClient::map subscriptions;
 };
 
 } // namespace mps_comm

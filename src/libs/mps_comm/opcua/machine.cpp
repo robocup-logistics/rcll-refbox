@@ -72,6 +72,12 @@ OpcUaMachine::OpcUaMachine(Station            machine_type,
   simulation_(connection_mode == SIMULATION)
 {
 	initLogger(log_path);
+	if(!simulation_)
+	{
+		client = UA_Client_new();
+		std::cout << "Creating new Client!" << std::endl;
+	}
+
 	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
 }
 
@@ -85,14 +91,17 @@ OpcUaMachine::dispatch_command_queue()
 	std::unique_lock<std::mutex> lock(command_queue_mutex_);
 	while (!shutdown_) {
 		if (!command_queue_.empty()) {
+			std::cout << "Non Empty Queue?!" << std::endl;
 			auto instruction = command_queue_.front();
 			command_queue_.pop();
 			lock.unlock();
 			while (!send_instruction(instruction)) {
+				std::cout << "Reconnect?!" << std::endl;
 				reconnect();
 			};
 			lock.lock();
 		} else {
+			std::cout << "Empty Queue?!" << std::endl;
 			if (!queue_condition_.wait_for(lock, std::chrono::seconds(1), [&] {
 				    return !command_queue_.empty();
 			    })) {
@@ -130,6 +139,7 @@ OpcUaMachine::send_instruction(const Instruction &instruction)
 	const int            timeout  = std::get<3>(instruction);
 	const unsigned char  status   = std::get<4>(instruction);
 	const unsigned char  error    = std::get<5>(instruction);
+	std::cout << "Sending instruction " << command << " " << payload1 << " " << payload2 << " " << timeout << " " <<status <<" "<< error << std::endl;
 	logger->info(
 	  "Sending instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 	try {
@@ -142,15 +152,16 @@ OpcUaMachine::send_instruction(const Instruction &instruction)
 		bool                  statusBit = (bool)(status & Status::STATUS_BUSY);
 		OpcUtils::MPSRegister reg;
 		reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
-		setNodeValue(registerNodes[reg], (uint16_t)command, reg);
+		std::cout << "Setting register nr " + reg << std::endl;
+		setNodeValue(client, registerNodes[reg], (uint16_t)command, reg);
 		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-		setNodeValue(registerNodes[reg].GetChildren()[0], (uint16_t)payload1, reg);
+		setNodeValue(client, registerNodes[reg], (uint16_t)payload1, reg);
 		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-		setNodeValue(registerNodes[reg].GetChildren()[1], (uint16_t)payload2, reg);
+		setNodeValue(client, registerNodes[reg], (uint16_t)payload2, reg);
 		reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
-		setNodeValue(registerNodes[reg], statusBit, reg);
+		setNodeValue(client, registerNodes[reg], statusBit, reg);
 		reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
-		setNodeValue(registerNodes[reg], (uint8_t)error, reg);
+		setNodeValue(client, registerNodes[reg], (uint8_t)error, reg);
 	} catch (std::exception &e) {
 		logger->warn("Error while sending command: {}", e.what());
 		std::this_thread::sleep_for(opcua_poll_rate_);
@@ -169,6 +180,8 @@ OpcUaMachine::reset()
 void
 OpcUaMachine::connect()
 {
+	logger->warn("Trying to connect for machine");
+
 	if (connection_mode_ == MOCKUP) {
 		return;
 	}
@@ -242,34 +255,33 @@ OpcUaMachine::initLogger(const std::string &log_path)
 bool
 OpcUaMachine::reconnect()
 {
-	UA_Client *client_test = UA_Client_new();
+
+	std::cout << "starting the reconnect!";
 	disconnect();
 	try {
-		OpcUa::EndpointDescription endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
-
-
-		auto config = UA_Client_getConfig(client_test);
+		auto endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
+		auto config = UA_Client_getConfig(client);
 		config->securityMode = UA_MESSAGESECURITYMODE_NONE;
 //		config->certificateVerification = 
     	UA_ClientConfig_setDefault(config);
+		logger->error("Connecting to: {}", endpoint);
+		std::cout << "Connecting to: " <<  endpoint << std::endl;
 		
-		logger->info("Connecting to: {}", endpoint.EndpointUrl);
-		std::cout << "Connecting to: " <<  endpoint.EndpointUrl << std::endl;
-		
-		UA_StatusCode status = UA_Client_connect(client_test, endpoint.EndpointUrl.c_str());
-
-
+		UA_StatusCode status = UA_Client_connect(client, endpoint.c_str());
 		std::cout << "Hello from the connect?" << std::endl;
     	if(status != UA_STATUSCODE_GOOD) {
-			throw std::invalid_argument("UA_Statuscode is not good!");;
-        	//UA_Client_delete(client_test);
-        	//return status;
+			std::cout << "UA_STATUSCODE != GOOD?!" << std::endl;
+			UA_Client_delete(client);
+			client = UA_Client_new();
+			throw std::invalid_argument("UA_Statuscode is not good!");
+			return false;
     	}
-		//client = std::make_unique<OpcUa::UaClient>(logger);
-		//client->Connect(endpoint);
+		// TODO Service_CreateSession();
+		std::cout << "Was able to connect!" << std::endl;
 		connected_ = true;
 	} catch (const std::exception &exc) {
 		logger->error("OPC UA connection error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
+		UA_Client_delete(client);
 		return false;
 	} catch (...) {
 		logger->error("Unknown error.");
@@ -278,15 +290,18 @@ OpcUaMachine::reconnect()
 
 	try {
 		
+		logger->error("Starting the subscription process!");
+		//UA_NodeId basicNode = OpcUtils::getBasicNode(client, simulation_);
 
-		nodeBasic = OpcUtils::getBasicNode(client.get(), simulation_);
-		nodeIn    = OpcUtils::getInNode(client.get(), simulation_);
-
+		//nodeIn    = OpcUtils::getInNode(client, simulation_);
+		
 		for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
-			registerNodes[i] = OpcUtils::getNode(client.get(), (OpcUtils::MPSRegister)i, simulation_);
+			registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i, simulation_);
+		
 		subscribe(SUB_REGISTERS, simulation_);
 		identify();
 		update_callbacks();
+		logger->error("Finished the subscriptions successfully!");
 		return true;
 	} catch (const std::exception &exc) {
 		logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
@@ -308,39 +323,39 @@ OpcUaMachine::disconnect()
 	} catch (std::exception &e) {
 		logger->warn("Error while cancelling subscriptions: {}", e.what());
 	}
-	subscriptions.clear();
+	//subscriptions.clear();
 
 	logger->info("Disconnecting");
 	try {
-		client->Disconnect();
+		//client->Disconnect();
 		logger->info("Disconnected");
 		logger->flush();
 		connected_ = false;
-		client.reset();
+		//client.reset();
 		return;
 	} catch (std::exception &e) {
 		logger->warn("Failed to disconnect: {}", e.what());
 		try {
 			logger->info("Aborting the connection");
-			client->Abort();
+			//client->Abort();
 			logger->info("Aborted the connection");
 			logger->flush();
 			connected_ = false;
-			client.reset();
+			//client.reset();
 			return;
 		} catch (std::exception &e) {
 			logger->warn("Failed to abort: {}", e.what());
 			try {
 				logger->flush();
 				connected_ = false;
-				client.reset();
+				//client.reset();
 				return;
 			} catch (...) {
 			}
 		}
 	}
 	connected_ = false;
-	client.reset();
+	//client.reset();
 	return;
 }
 
@@ -358,26 +373,26 @@ OpcUaMachine::subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simul
 		subscribe(reg, simulation);
 }
 
-SubscriptionClient *
+void
 OpcUaMachine::subscribe(OpcUtils::MPSRegister reg, bool simulation)
 {
-	auto it = subscriptions.end();
+	/*auto it = subscriptions.end();
 	if ((it = subscriptions.find(reg)) != subscriptions.end())
 		return it->second;
-	OpcUa::Node         node = OpcUtils::getNode(client.get(), reg, simulation);
+	//OpcUa::Node         node = OpcUtils::getNode(client.get(), reg, simulation);
 	SubscriptionClient *sub  = new SubscriptionClient(logger);
 	sub->reg                 = reg;
-	sub->node                = node;
+	//sub->node                = node;
 
-	int response_timeout = 100;
-	sub->subscription    = client->CreateSubscription(response_timeout, *sub);
+	//int response_timeout = 100;
+	//sub->subscription    = client->CreateSubscription(response_timeout, *sub);
 	sub->handle          = sub->subscription->SubscribeDataChange(node);
 	logger->info("Subscribed to {} (name: {}, handle: {})",
 	             OpcUtils::REGISTER_NAMES[reg],
 	             node.GetBrowseName().Name,
 	             sub->handle);
 	subscriptions.insert(SubscriptionClient::pair(reg, sub));
-	return sub;
+	return sub;*/
 }
 
 void
@@ -386,6 +401,7 @@ OpcUaMachine::cancelAllSubscriptions(bool log)
 	if (log)
 		printFinalSubscribtions();
 
+	/*
 	for (SubscriptionClient::map::iterator it = subscriptions.begin(); it != subscriptions.end();) {
 		OpcUtils::MPSRegister reg = it->first;
 		SubscriptionClient   *sub = it->second;
@@ -396,12 +412,13 @@ OpcUaMachine::cancelAllSubscriptions(bool log)
 		             sub->handle);
 		it = subscriptions.erase(it);
 	}
+	*/
 }
 
-SubscriptionClient::map::iterator
+void
 OpcUaMachine::cancelSubscription(OpcUtils::MPSRegister reg, bool log)
 {
-	auto it = subscriptions.find(reg);
+	/*auto it = subscriptions.find(reg);
 	if (it != subscriptions.end()) {
 		SubscriptionClient *sub = it->second;
 		sub->subscription->UnSubscribe(sub->handle);
@@ -409,50 +426,60 @@ OpcUaMachine::cancelSubscription(OpcUtils::MPSRegister reg, bool log)
 		             OpcUtils::REGISTER_NAMES[reg],
 		             sub->node.GetBrowseName().Name,
 		             sub->handle);
-		if (log)
-			OpcUtils::logReturnValue(getReturnValue(reg), logger, reg);
 		return subscriptions.erase(it);
 	}
-	return it;
+	return it;*/
 }
 
 OpcUtils::ReturnValue *
 OpcUaMachine::getReturnValue(OpcUtils::MPSRegister reg)
 {
-	auto it = subscriptions.find(reg);
-	if (it != subscriptions.end())
-		return it->second->mpsValue;
 	return nullptr;
 }
 
 bool
-OpcUaMachine::setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg)
+OpcUaMachine::setNodeValue(UA_Client* client, UA_NodeId node, boost::any val, OpcUtils::MPSRegister reg)
 {
-	SubscriptionClient::map::iterator it = subscriptions.find(reg);
+	/*SubscriptionClient::map::iterator it = subscriptions.find(reg);
 	if (it != subscriptions.end())
 		return OpcUtils::setNodeValue(node, val, it->second->mpsValue);
-	return OpcUtils::setNodeValue(node, val);
+	return OpcUtils::setNodeValue(node, val);*/
+	std::cout << "Trying to set node, connected = " << (connected_ ? "True" : "False") << std::endl;
+	if(!connected_)
+	{
+		throw std::invalid_argument("Client not yet connected!");
+	}
+	std::cout << "In Set Node VAlue for " << node.identifierType << node.namespaceIndex << "!" << std::endl;
+	UA_UInt16 value = boost::any_cast<uint16_t>(val);
+	std::cout << "Casted" << std::endl;
+	UA_Variant *newValue = UA_Variant_new();
+	std::cout << "Created new variant" << std::endl;
+	UA_Variant_setScalarCopy(newValue, &value, &UA_TYPES[UA_TYPES_UINT16]);
+	std::cout << "Set variant value to " << boost::any_cast<uint16_t>(val) <<"!" << std::endl;
+	UA_StatusCode ret =  UA_Client_writeValueAttribute(client, node, newValue);
+	std::cout << "Writing value to server!" << std::endl;
+	if(ret != UA_STATUSCODE_GOOD)
+	{
+		std::cout << "Writing of variable failed with value " << std::hex << ret << std::endl;
+		throw std::invalid_argument("SetNodeValue - Something went wrong!"); 
+	}
+	return false;
 }
 
 void
 OpcUaMachine::printFinalSubscribtions()
 {
-	if (subscriptions.size() > 0)
-		logger->info("Final values of subscribed registers:");
-	for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
-		OpcUtils::logReturnValue(getReturnValue((OpcUtils::MPSRegister)i),
-		                         logger,
-		                         (OpcUtils::MPSRegister)i);
+	logger->info("Final values of subscribed registers:");
 }
 
-void
-OpcUaMachine::register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
+/*void
+OpcUaMachine::register_opc_callback( callback,
                                     OpcUtils::MPSRegister                   reg)
 {
 	logger->info("Registering callback for register {}", reg);
 	SubscriptionClient *sub = subscribe(reg, simulation_);
 	sub->add_callback(callback);
-}
+}*/
 
 void
 OpcUaMachine::update_callbacks()
@@ -460,48 +487,48 @@ OpcUaMachine::update_callbacks()
 	if (!connected_) {
 		return;
 	}
-	for (const auto &cb : callbacks_) {
+	/*for (const auto &cb : callbacks_) {
 		register_opc_callback(cb.second, cb.first);
-	}
+	}*/
 }
 
 void
 OpcUaMachine::register_busy_callback(std::function<void(bool)> callback)
 {
-	if (callback) {
+	/*if (callback) {
 		callbacks_[OpcUtils::MPSRegister::STATUS_BUSY_IN] = [=](OpcUtils::ReturnValue *ret) {
 			callback(ret->bool_s);
 		};
 	} else {
 		callbacks_.erase(OpcUtils::MPSRegister::STATUS_BUSY_IN);
 	}
-	update_callbacks();
+	update_callbacks();*/
 }
 
 void
 OpcUaMachine::register_ready_callback(std::function<void(bool)> callback)
 {
-	if (callback) {
+	/*if (callback) {
 		callbacks_[OpcUtils::MPSRegister::STATUS_READY_IN] = [=](OpcUtils::ReturnValue *ret) {
 			callback(ret->bool_s);
 		};
 	} else {
 		callbacks_.erase(OpcUtils::MPSRegister::STATUS_READY_IN);
 	}
-	update_callbacks();
+	update_callbacks();*/
 }
 
 void
 OpcUaMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
-	if (callback) {
+	/*if (callback) {
 		callbacks_[OpcUtils::MPSRegister::BARCODE_IN] = [=](OpcUtils::ReturnValue *ret) {
 			callback(ret->bool_s);
 		};
 	} else {
 		callbacks_.erase(OpcUtils::MPSRegister::BARCODE_IN);
 	}
-	update_callbacks();
+	update_callbacks();*/
 }
 
 void
