@@ -8,8 +8,8 @@
 #   (at your option) any later version.
 #
 
-FROM fedora:35 as buildenv
-RUN   dnf install -y --nodocs 'dnf-command(copr)' && \
+FROM fedora:35 as builder
+RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
       dnf install -y --nodocs \
       avahi-devel \
@@ -37,6 +37,8 @@ RUN   dnf install -y --nodocs 'dnf-command(copr)' && \
     && \
     dnf install -y --nodocs rpm-build && \
     dnf clean all
+
+FROM builder as buildenv
 COPY . /buildenv/
 SHELL ["/usr/bin/bash", "-c"]
 WORKDIR /buildenv
@@ -48,7 +50,7 @@ RUN shopt -s globstar; \
     /usr/lib/rpm/rpmdeps -P lib/** bin/** > provides.txt && \
     /usr/lib/rpm/rpmdeps -R lib/** bin/** | grep -v -f provides.txt > requires.txt
 
-FROM fedora:35
+FROM fedora:35 as refbox
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
@@ -59,3 +61,8 @@ COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
 CMD ["llsf-refbox"]
+
+FROM builder as devcontainer
+ARG USER_NAME 
+ENV USER_NAME=$USER_NAME
+RUN useradd -u 1000 $USER_NAME
