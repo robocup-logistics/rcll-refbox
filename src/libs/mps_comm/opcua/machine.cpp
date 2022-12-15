@@ -77,7 +77,7 @@ OpcUaMachine::OpcUaMachine(Station            machine_type,
 		client = UA_Client_new();
 		std::cout << "Creating new Client!" << std::endl;
 	}
-
+	subscribed_ = false;
 	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
 }
 
@@ -298,7 +298,7 @@ OpcUaMachine::reconnect()
 		for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
 			registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i, simulation_);
 		
-		subscribe(SUB_REGISTERS, simulation_);
+		subscribe((OpcUtils::MPSRegister) 0, simulation_);
 		identify();
 		update_callbacks();
 		logger->error("Finished the subscriptions successfully!");
@@ -376,6 +376,32 @@ OpcUaMachine::subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simul
 void
 OpcUaMachine::subscribe(OpcUtils::MPSRegister reg, bool simulation)
 {
+	std::cout << "Called the Subscribe!" << std::endl;
+	if(subscribed_)
+		return;
+	auto subRequest = UA_CreateSubscriptionRequest_default();
+	auto context = UA_Client_getContext(client);
+	auto subResponse =  UA_Client_Subscriptions_create(client, subRequest, context, NULL, NULL); // DeleteCallback);
+	if (!UA_StatusCode_isBad(subResponse.responseHeader.serviceResult))
+	{
+		subscribed_ = true;
+		std::cout << "[OpcUaClient StateCallback]: Subscription created successfully." << std::endl;
+		auto _subscriptionId = subResponse.subscriptionId;
+		auto nodeId = OpcUtils::getNode(client, reg, simulation_);
+		std::cout << "Register = " << reg << std::endl;
+		auto monitorRequest = UA_MonitoredItemCreateRequest_default(nodeId);
+
+		auto monitorResponse = UA_Client_MonitoredItems_createDataChange(client, _subscriptionId, UA_TIMESTAMPSTORETURN_BOTH,
+																			monitorRequest, this, NULL, NULL);
+		if(!UA_StatusCode_isBad(monitorResponse.statusCode))
+		{
+			std::cout << "Monitore Created successfully!" << std::endl;
+		}
+		else{
+			std::cout << "Monitor Response = " << std::hex << monitorResponse.statusCode << std::endl;
+		}
+	}
+	//std::cout << "SubResponse == " << subResponse << std::endl;
 	/*auto it = subscriptions.end();
 	if ((it = subscriptions.find(reg)) != subscriptions.end())
 		return it->second;
@@ -393,6 +419,16 @@ OpcUaMachine::subscribe(OpcUtils::MPSRegister reg, bool simulation)
 	             sub->handle);
 	subscriptions.insert(SubscriptionClient::pair(reg, sub));
 	return sub;*/
+}
+
+void OpcUaMachine::ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_StatusChangeNotification *notification)
+{
+	std::cout << "Value Change Callback?!" << std::endl;
+}
+
+void OpcUaMachine::DeleteCallback(UA_Client *client, UA_UInt32 subId, void *subContext)
+{
+	std::cout << "Delete Callback?!" << std::endl;
 }
 
 void
