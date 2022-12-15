@@ -123,6 +123,9 @@ protected:
 	// Print the final subscription values
 	void printFinalSubscribtions();
 
+	void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_StatusChangeNotification *notification);
+	void DeleteCallback(UA_Client *client, UA_UInt32 subId, void *subContext);
+
 	const Station     machine_type_;
 	const std::string ip_;
 	unsigned short    port_;
@@ -138,7 +141,8 @@ protected:
 
 	bool connected_;
 	bool simulation_;
-
+	bool subscribed_;
+	
 	//std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
 
 	// OPC UA related variables
