@@ -128,7 +128,7 @@ public:
 	// Get OPC UA Endpoint given by IP and port
 	static std::string getEndpoint(const char *ip, unsigned short port);
 	// Get OPC UA node using MPSRegister
-	static UA_NodeId getNode(UA_Client *client, MPSRegister reg, bool simulation = false);
+	static std::string getNode(UA_Client *client, MPSRegister reg, bool simulation = false);
 	// Get OPC UA Node value as OPC UA Variant with the needed type
 	static void getNodeValueWithCorrectType(UA_NodeId node, boost::any val);
 	// Get "basic" OPC UA node

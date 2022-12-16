@@ -143,7 +143,7 @@ OpcUtils::getEndpoint(const char *ip, unsigned short port)
 	return endpoint;
 }
 
-UA_NodeId
+std::string
 OpcUtils::getNode(UA_Client *client, MPSRegister reg, bool simulation)
 {
 	char cstring[1024];
@@ -159,12 +159,14 @@ OpcUtils::getNode(UA_Client *client, MPSRegister reg, bool simulation)
 		{
 			fullpath = in_path + relativePath;
 		}
-		//std::cout << "GetNode Result = " << fullpath << std::endl;		
+		std::cout << "GetNode Result = " << fullpath << std::endl;		
 		strcpy(cstring, fullpath.c_str());
-		return UA_NODEID_STRING(4, cstring);
+		return fullpath;
 	}
 	strcpy(cstring, basic_sim_path.c_str());
-	return UA_NODEID_STRING(4, cstring);
+	//return UA_NODEID_STRING(4, cstring);
+	return basic_sim_path;
+
 }
 
 void
