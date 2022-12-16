@@ -76,11 +76,15 @@ public:
 
 	// Reset: send the reset command (which is different for each machine type)
 	void reset() override;
-	void register_busy_callback(std::function<void(bool)>) override;
-	void register_ready_callback(std::function<void(bool)>) override;
-	void register_barcode_callback(std::function<void(unsigned long)>) override;
+	void register_busy_callback(std::function<void(bool)> callback) override;
+	void register_ready_callback(std::function<void(bool)> callback) override;
+	void register_barcode_callback(std::function<void(unsigned long)> callback) override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify();
+	static std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>> callbacks_;
+	static std::unordered_map<UA_UInt32,OpcUtils::MPSRegister> monitorMap;
+	static bool start_sending_instructions;
+	static std::shared_ptr<spdlog::logger> logger;
 
 protected:
 	void connect();
@@ -92,7 +96,6 @@ protected:
 	                         unsigned char  error    = 0);
 	bool send_instruction(const Instruction &instruction);
 	void dispatch_command_queue();
-	void update_callbacks();
 
 	// OPC UA related methods
 	// Connect to OPC UA Server using IP and PORT
@@ -103,28 +106,17 @@ protected:
 	// std::cout, else they are saved to the in log_path specified file
 	void initLogger(const std::string &log_path);
 	// Helper function to set OPC UA Node value correctly
-	bool setNodeValue(UA_Client* client, UA_NodeId node, boost::any val, OpcUtils::MPSRegister reg);
+	bool setNodeValue(UA_Client* client, std::string node_name, boost::any val, OpcUtils::MPSRegister reg);
 	// Helper function to get ReturnValue correctly
 	OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
 
 
-	// Subscribe to multiple specified MPSRegisters; If ReturnValues are set, the
-	// SubscriptionClients internal ReturnValues are overridden
-	void subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simulation = false);
-	void subscribe(OpcUtils::MPSRegister reg, bool simulation);
-	// Subscribe to all existing MPSRegisters
-	void subscribeAll(bool simulation = false);
-	// Cancel a subscription given a specific MPSRegister; If default argument is
-	// true, final subscription value will be printed before deleting
-	void cancelSubscription(OpcUtils::MPSRegister reg, bool log = false);
-	// Cancel all existing subscriptions; If default argument is true, final
-	// subscription values will be printed before deleting
-	void cancelAllSubscriptions(bool log = false);
-	// Print the final subscription values
-	void printFinalSubscribtions();
-
-	void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_StatusChangeNotification *notification);
-	void DeleteCallback(UA_Client *client, UA_UInt32 subId, void *subContext);
+	static void stopHandler(int sign);
+	static void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_UInt32 monId, void *monContext, UA_DataValue *value);
+	static void deleteSubscriptionCallback(UA_Client *client, UA_UInt32 subscriptionId, void *subscriptionContext);
+	static void subscriptionInactivityCallback (UA_Client *client, UA_UInt32 subId, void *subContext);
+	static void stateCallback(UA_Client *client, UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode recoveryStatus);
+	static bool registerMonitoredItem(UA_Client *client, UA_UInt32 subscriptionId, OpcUtils::MPSRegister reg);
 
 	const Station     machine_type_;
 	const std::string ip_;
@@ -142,8 +134,7 @@ protected:
 	bool connected_;
 	bool simulation_;
 	bool subscribed_;
-	
-	//std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
+	bool running;
 
 	// OPC UA related variables
 
@@ -152,11 +143,11 @@ protected:
 	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
 
 	// OPC UA logger
-	std::shared_ptr<spdlog::logger> logger;
+
 	// OPC UA Client pointer
 	UA_Client *client;
 	// OPC UA Nodes for each subscribable MPSRegister
-	UA_NodeId registerNodes[OpcUtils::MPSRegister::LAST];
+	std::string registerNodes[OpcUtils::MPSRegister::LAST];
 	// OPC UA Input Register for station Jobs
 	UA_NodeId nodeIn;
 	// OPC UA Input Register for Basic Jobs
