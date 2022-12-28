@@ -150,7 +150,16 @@ void OpcUaMachine::ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void 
 		UA_Boolean raw_data = *(UA_Boolean *) value->value.data;
 		logger->info("Callback = %d for id %d", raw_data, monId);
 		OpcUaMachine::callbacks_[OpcUaMachine::monitorMap[monId]]((bool)raw_data);
+		return;
 	}
+	if(UA_Variant_hasScalarType(&value->value, &UA_TYPES[UA_TYPES_UINT16]))
+	{
+		UA_UInt16 raw_data = *(UA_UInt16 *) value->value.data;
+		logger->info("Callback = %d for id %d", raw_data, monId);
+		OpcUaMachine::callbacks_[OpcUaMachine::monitorMap[monId]]((short)raw_data);
+		return;
+	}
+	logger->error("Callback for unsupported type?");
 }
 
 void OpcUaMachine::deleteSubscriptionCallback(UA_Client *client, UA_UInt32 subscriptionId, void *subscriptionContext) {
@@ -346,7 +355,7 @@ void OpcUaMachine::initLogger(const std::string &log_path)
 	if (log_path.empty()) {
 		// stdout redirected logging
 		logger = spdlog::stdout_logger_mt(name_);
-		logger->set_level(spdlog::level::warn);
+		logger->set_level(spdlog::level::info);
 	} else /* ... or logging to file */ {
 		logger = spdlog::basic_logger_mt(name_, log_path);
 		logger->flush_on(spdlog::level::info);
@@ -463,11 +472,11 @@ OpcUaMachine::setNodeValue(UA_Client* client, std::string node_name, boost::any 
 	UA_Variant_delete(newValue);
 	if(ret == UA_STATUSCODE_GOOD)
 	{
-		std::cout << "The setNode was successfull" << std::endl;
+		logger->info("The setNode was successfull");
 	}
 	else
 	{
-		std::cout << "Writing of variable failed with value " << std::hex << ret << std::endl;
+		logger->info("Writing of variable failed with value {}", ret);
 	}
 	return false;
 }

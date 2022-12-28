@@ -154,6 +154,8 @@ protected:
 	UA_NodeId nodeBasic;
 	// All subscriptions to MPSRegisters in form map<MPSRegister, Subscription>
 	//SubscriptionClient::map subscriptions;
+	typedef void (OpcUaMachine::*OpcUaMachineGeneralCallback)(UA_Client*, UA_UInt32, void*);  // Please do this!
+	typedef void (OpcUaMachine::*OpcUaMachineValueCallback)(char x, float y);  // Please do this!
 };
 
 } // namespace mps_comm
