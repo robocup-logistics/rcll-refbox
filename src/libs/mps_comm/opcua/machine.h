@@ -41,11 +41,21 @@
 namespace llsfrb {
 namespace mps_comm {
 
+void stateCallback(UA_Client *client, UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode recoveryStatus);
+void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_UInt32 monId, void *monContext, UA_DataValue *value);
+void deleteSubscriptionCallback(UA_Client *client, UA_UInt32 subscriptionId, void *subscriptionContext);
+void subscriptionInactivityCallback (UA_Client *client, UA_UInt32 subId, void *subContext);
+bool registerMonitoredItem(UA_Client *client, UA_UInt32 subscriptionId,  OpcUtils::MPSRegister reg);
+void stopHandler(int sign);
+void deleteMonitoredItemCallback(UA_Client *client,unsigned int subId,void *subContext, unsigned int monId, void *monContext);
 enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
 
 enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
+
 class MachineFactory;
+
+
 
 class OpcUaMachine : public virtual Machine
 {
@@ -81,11 +91,17 @@ public:
 	void register_barcode_callback(std::function<void(unsigned long)> callback) override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify();
-	static std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>> callbacks_;
-	static std::unordered_map<UA_UInt32,OpcUtils::MPSRegister> monitorMap;
-	static bool start_sending_instructions;
-	static std::shared_ptr<spdlog::logger> logger;
-
+	std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>> callbacks_;
+	std::unordered_map<UA_UInt32, OpcUtils::MPSRegister> monitorMap;
+	bool start_sending_instructions;
+	std::shared_ptr<spdlog::logger> logger;
+	UA_UInt32 subscriptionId;
+	void SetupClient();
+	bool connected_;
+	const Station machine_type_;
+	std::mutex command_queue_mutex_;
+	std::mutex client_mutex_;
+	
 protected:
 	void connect();
 	void enqueue_instruction(unsigned short command,
@@ -95,6 +111,7 @@ protected:
 	                         unsigned char  status   = 1,
 	                         unsigned char  error    = 0);
 	bool send_instruction(const Instruction &instruction);
+	void client_keep_alive();
 	void dispatch_command_queue();
 
 	// OPC UA related methods
@@ -111,27 +128,22 @@ protected:
 	OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
 
 
-	static void stopHandler(int sign);
-	static void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_UInt32 monId, void *monContext, UA_DataValue *value);
-	static void deleteSubscriptionCallback(UA_Client *client, UA_UInt32 subscriptionId, void *subscriptionContext);
-	static void subscriptionInactivityCallback (UA_Client *client, UA_UInt32 subId, void *subContext);
-	static void stateCallback(UA_Client *client, UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode recoveryStatus);
-	static bool registerMonitoredItem(UA_Client *client, UA_UInt32 subscriptionId, OpcUtils::MPSRegister reg);
 
-	const Station     machine_type_;
+
+
 	const std::string ip_;
 	unsigned short    port_;
 
 	const ConnectionMode connection_mode_;
 
 	bool                    shutdown_;
-	std::mutex              command_queue_mutex_;
+
 	std::mutex              command_mutex_;
 	std::condition_variable queue_condition_;
 	std::queue<Instruction> command_queue_;
 	std::thread             worker_thread_;
+	std::thread             dispatcher_thread_;
 
-	bool connected_;
 	bool simulation_;
 	bool subscribed_;
 	bool running;
@@ -154,8 +166,9 @@ protected:
 	UA_NodeId nodeBasic;
 	// All subscriptions to MPSRegisters in form map<MPSRegister, Subscription>
 	//SubscriptionClient::map subscriptions;
-	typedef void (OpcUaMachine::*OpcUaMachineGeneralCallback)(UA_Client*, UA_UInt32, void*);  // Please do this!
-	typedef void (OpcUaMachine::*OpcUaMachineValueCallback)(char x, float y);  // Please do this!
+
+	//typedef void (OpcUaMachine::*OpcUaMachineGeneralCallback)(UA_Client*, UA_UInt32, void*);  // Please do this!
+	//typedef void (OpcUaMachine::*OpcUaMachineValueCallback)(char x, float y);  // Please do this!
 };
 
 } // namespace mps_comm

@@ -159,7 +159,6 @@ OpcUtils::getNode(UA_Client *client, MPSRegister reg, bool simulation)
 		{
 			fullpath = in_path + relativePath;
 		}
-		std::cout << "GetNode Result = " << fullpath << std::endl;		
 		strcpy(cstring, fullpath.c_str());
 		return fullpath;
 	}
@@ -225,6 +224,10 @@ OpcUtils::getNodeRelativePath(MPSRegister reg)
 	case MPSRegister::BARCODE_BASIC: return "/p/BarCode";
 	case MPSRegister::DATA_IN:
 	case MPSRegister::DATA_BASIC: return "/p/Data";
+	case MPSRegister::DATA0_IN:
+	case MPSRegister::DATA0_BASIC: return "/p/Data/Data[0]";
+	case MPSRegister::DATA1_IN:
+	case MPSRegister::DATA1_BASIC: return "/p/Data/Data[1]";
 	case MPSRegister::ERROR_IN:
 	case MPSRegister::ERROR_BASIC: return "/p/Error";
 	case MPSRegister::SLIDECOUNT_IN:

@@ -63,41 +63,30 @@ OpcUaMachine::OpcUaMachine(Station            machine_type,
                            unsigned short     port,
                            const std::string &log_path,
                            ConnectionMode     connection_mode)
-: machine_type_(machine_type),
+: connected_(false),
+  machine_type_(machine_type),
   ip_(ip),
   port_(port),
   connection_mode_(connection_mode),
   shutdown_(false),
-  connected_(false),
   simulation_(connection_mode == SIMULATION)
 {
 	initLogger(log_path);
-	if(!simulation_)
-	{
-		client = UA_Client_new();
-		logger->info( "Creating new OPCUA Client!");
-		auto config = UA_Client_getConfig(client);
-		config->logger = UA_Log_Stdout_withLevel(UA_LOGLEVEL_FATAL);
-	}
-
+	callbacks_ = std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>>();
+	monitorMap = std::unordered_map<UA_UInt32, OpcUtils::MPSRegister>();
 	subscribed_ = false;
-	worker_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
-}
-
-std::shared_ptr<spdlog::logger> OpcUaMachine::logger = std::shared_ptr<spdlog::logger>(nullptr);
-
-
-void
-OpcUaMachine::dispatch_command_queue()
-{
-
-    UA_ClientConfig *cc = UA_Client_getConfig(client);
-    UA_ClientConfig_setDefault(cc);
-
-    /* Set stateCallback */
-    cc->stateCallback = stateCallback;
-    cc->subscriptionInactivityCallback = subscriptionInactivityCallback;
+	start_sending_instructions = false;
 	running = true;
+	worker_thread_ = std::thread(&OpcUaMachine::client_keep_alive, this);
+	dispatcher_thread_ = std::thread(&OpcUaMachine::dispatch_command_queue, this);
+}
+void
+OpcUaMachine::client_keep_alive()
+{
+	client_mutex_.lock();
+	SetupClient();
+	client_mutex_.unlock();
+	auto url = "opc.tcp://" + ip_  + ":" + std::to_string(port_);
 	for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
 		registerNodes[i] = OpcUtils::getNode(client, (OpcUtils::MPSRegister)i, simulation_);
     /* Endless loop runAsync */
@@ -105,139 +94,79 @@ OpcUaMachine::dispatch_command_queue()
         /* if already connected, this will return GOOD and do nothing */
         /* if the connection is closed/errored, the connection will be reset and then reconnected */
         /* Alternatively you can also use UA_Client_getState to get the current state */
-        UA_StatusCode retval = UA_Client_connect(client, "opc.tcp://localhost:4840");
-        if(retval != UA_STATUSCODE_GOOD) {
-			logger->info( "Not connected. Retrying to connect in 1 second!");
-
-            //UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,"Not connected. Retrying to connect in 1 second");
-            /* The connect may timeout after 1 second (see above) or it may fail immediately on network errors */
-            /* E.g. name resolution errors or unreachable network. Thus there should be a small sleep here */
-            UA_sleep_ms(1000);
-            continue;
-        }
-        UA_Client_run_iterate(client, 1000);
-		if(start_sending_instructions)
+		logger->info("Connecting to : " + url);
+		client_mutex_.lock();
+        UA_StatusCode retval = UA_Client_connect(client, url.c_str());
+		switch(retval)
 		{
-			std::unique_lock<std::mutex> lock(command_queue_mutex_);
-			if(!command_queue_.empty())
-			{
-				auto instruction = command_queue_.front();
-				lock.unlock();
-				send_instruction(instruction);
-				command_queue_.pop();
-			}
-			else{
-				logger->info( "No Commands in the queue!");
-			}
+			case UA_STATUSCODE_BADSERVERHALTED:
+				logger->warn("Deleting client to retry!");
+				UA_Client_delete(client);
+				SetupClient();
+				client_mutex_.unlock();
+				continue;
+			case UA_STATUSCODE_GOOD:
+				break;
+			default: 
+				logger->warn( "Not connected. Retrying to connect in 1 second! Statuscode [{:x}]",retval);
+				//UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,"Not connected. Retrying to connect in 1 second");
+				/* The connect may timeout after 1 second (see above) or it may fail immediately on network errors */
+				/* E.g. name resolution errors or unreachable network. Thus there should be a small sleep here */
+				UA_sleep_ms(1000);
+				client_mutex_.unlock();
+				continue;
 		}
+        UA_Client_run_iterate(client, 1000);
+		client_mutex_.unlock();
+		UA_sleep_ms(40);
     };
-
     /* Clean up */
     UA_Client_delete(client); /* Disconnects the client internally */
 }
 
-std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>> OpcUaMachine::callbacks_ = std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>>();
-std::unordered_map<UA_UInt32,OpcUtils::MPSRegister > OpcUaMachine::monitorMap = std::unordered_map<UA_UInt32, OpcUtils::MPSRegister>();
-bool OpcUaMachine::start_sending_instructions = false;
-
-void OpcUaMachine::stopHandler(int sign) {
-	logger->info("Received Ctrl-C");
-}
-
-void OpcUaMachine::ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_UInt32 monId, void *monContext, UA_DataValue *value) {
-    logger->info("ValueChangeCallback has been called!");
-	if(UA_Variant_hasScalarType(&value->value, &UA_TYPES[UA_TYPES_BOOLEAN])){
-		UA_Boolean raw_data = *(UA_Boolean *) value->value.data;
-		logger->info("Callback = %d for id %d", raw_data, monId);
-		OpcUaMachine::callbacks_[OpcUaMachine::monitorMap[monId]]((bool)raw_data);
-		return;
-	}
-	if(UA_Variant_hasScalarType(&value->value, &UA_TYPES[UA_TYPES_UINT16]))
-	{
-		UA_UInt16 raw_data = *(UA_UInt16 *) value->value.data;
-		logger->info("Callback = %d for id %d", raw_data, monId);
-		OpcUaMachine::callbacks_[OpcUaMachine::monitorMap[monId]]((short)raw_data);
-		return;
-	}
-	logger->error("Callback for unsupported type?");
-}
-
-void OpcUaMachine::deleteSubscriptionCallback(UA_Client *client, UA_UInt32 subscriptionId, void *subscriptionContext) {
-    logger->info("Subscription Id %u was deleted", subscriptionId);
-}
-
-void OpcUaMachine::subscriptionInactivityCallback (UA_Client *client, UA_UInt32 subId, void *subContext) {
-    logger->info("Inactivity for subscription %u", subId);
-}
-
-void OpcUaMachine::stateCallback(UA_Client *client, UA_SecureChannelState channelState,
-              UA_SessionState sessionState, UA_StatusCode recoveryStatus) {
-    switch(channelState) {
-    case UA_SECURECHANNELSTATE_FRESH:
-    case UA_SECURECHANNELSTATE_CLOSED:
-        logger->info("The client is disconnected");
-        break;
-    case UA_SECURECHANNELSTATE_HEL_SENT:
-        logger->info( "Waiting for ack");
-        break;
-    case UA_SECURECHANNELSTATE_OPN_SENT:
-        logger->info("Waiting for OPN Response");
-        break;
-    case UA_SECURECHANNELSTATE_OPEN:
-        logger->info("A SecureChannel to the server is open");
-        break;
-    default:
-        break;
-    }
-
-    switch(sessionState) {
-    case UA_SESSIONSTATE_ACTIVATED: {
-        logger->info("A session with the server is activated");
-        /* A new session was created. We need to create the subscription. */
-        /* Create a subscription */
-        UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
-        UA_CreateSubscriptionResponse response =
-            UA_Client_Subscriptions_create(client, request, NULL, NULL, deleteSubscriptionCallback);
-            if(response.responseHeader.serviceResult == UA_STATUSCODE_GOOD)
-			{
-               logger->info("Create subscription succeeded, id %u",response.subscriptionId);
-			}
-            else
-			{
-				logger->info("Couldn't create subscription?");
-                return;
-			}
-            /* Add a MonitoredItem */
-			registerMonitoredItem(client, response.subscriptionId, OpcUtils::MPSRegister::STATUS_BUSY_IN);
-			registerMonitoredItem(client, response.subscriptionId, OpcUtils::MPSRegister::STATUS_READY_IN);
-        }
-        break;
-    case UA_SESSIONSTATE_CLOSED:
-        logger->info("Session disconnected");
-        break;
-    default:
-        break;
-    }
-}
-
-bool OpcUaMachine::registerMonitoredItem(UA_Client *client, UA_UInt32 subscriptionId,  OpcUtils::MPSRegister reg)
+void
+OpcUaMachine::dispatch_command_queue()
 {
-	auto nodeName = OpcUtils::getNode(client, OpcUtils::MPSRegister::STATUS_BUSY_IN, false);
-	char cstring[1024];
-	strcpy(cstring, nodeName.c_str());
-	UA_NodeId subscribeNode = UA_NODEID_STRING(4, cstring);
-	UA_MonitoredItemCreateRequest monRequest = UA_MonitoredItemCreateRequest_default(subscribeNode);
-	UA_MonitoredItemCreateResult monResponse =  UA_Client_MonitoredItems_createDataChange(client, subscriptionId, UA_TIMESTAMPSTORETURN_BOTH, monRequest, NULL, ValueChangeCallback, NULL);
-	if(monResponse.statusCode == UA_STATUSCODE_GOOD)
-	{
-		logger->info("Subscribed to %s with id %u", nodeName.c_str(), monResponse.monitoredItemId);
-		start_sending_instructions = true;
-		monitorMap[monResponse.monitoredItemId] = reg;
-		return true;
+	logger->info("Starting the dispatching thread!");
+    while(running) {
+		{
+			command_queue_mutex_.lock();
+			if(start_sending_instructions)
+			{
+				if(!command_queue_.empty())
+				{
+					auto instruction = command_queue_.front();
+					command_queue_mutex_.unlock();
+					if(send_instruction(instruction)){
+						command_queue_.pop();
+					}
+					else
+					{
+						std::lock_guard<std::mutex> lg(client_mutex_);
+						logger->warn("Wasn't able to send we recreate the client!");
+						start_sending_instructions = false;	
+						UA_Client_delete(client);
+						SetupClient();
+					}
+					// not able to send maybe new client
+					UA_sleep_ms(40);
+				}
+				else{
+					command_queue_mutex_.unlock();
+					logger->info("Nothing in the Command Queue!");
+					UA_sleep_ms(200);
+				}
+			}
+			else{
+				command_queue_mutex_.unlock();
+				logger->info("Not yet ready to send instructions!");
+				UA_sleep_ms(1000);
+			}
+		}
 	}
-	logger->info("Monitoring failed with error code %x",monResponse.statusCode);
-	return false;		
 }
+
+
 
 void OpcUaMachine::enqueue_instruction(unsigned short command,
                                   unsigned short payload1,
@@ -259,7 +188,6 @@ bool OpcUaMachine::send_instruction(const Instruction &instruction)
 	const int            timeout  = std::get<3>(instruction);
 	const unsigned char  status   = std::get<4>(instruction);
 	const unsigned char  error    = std::get<5>(instruction);
-	std::cout << "Sending instruction " << command << " " << payload1 << " " << payload2 << " " << timeout << " " <<status <<" "<< error << std::endl;
 	logger->info(
 	  "Sending instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 	try {
@@ -271,22 +199,49 @@ bool OpcUaMachine::send_instruction(const Instruction &instruction)
 
 		bool                  statusBit = (bool)(status & Status::STATUS_BUSY);
 		OpcUtils::MPSRegister reg;
+
 		reg = registerOffset + OpcUtils::MPSRegister::ACTION_ID_IN;
-		setNodeValue(client, registerNodes[reg], (uint16_t)command, reg);
-		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-		setNodeValue(client, registerNodes[reg], (uint16_t)payload1, reg);
-		reg = registerOffset + OpcUtils::MPSRegister::DATA_IN;
-		setNodeValue(client, registerNodes[reg], (uint16_t)payload2, reg);
+		if(!setNodeValue(client, registerNodes[reg], (uint16_t)command, reg))
+			throw std::invalid_argument( "Couldn't set Node value" );
+		//logger->info("Action ID got set to {}!",(uint16_t)command);
+		reg = registerOffset + OpcUtils::MPSRegister::DATA0_IN;
+		if(!setNodeValue(client, registerNodes[reg], (uint16_t)payload1, reg))
+			throw std::invalid_argument( "Couldn't set Node value" );
+		//logger->info("DATA_IN0 got set to {}!",(uint16_t)payload1);
+		reg = registerOffset + OpcUtils::MPSRegister::DATA1_IN;
+		if(!setNodeValue(client, registerNodes[reg], (uint16_t)payload2, reg))
+			throw std::invalid_argument( "Couldn't set Node value" );
+		//logger->info("DATA_IN1 got set to {}!",(uint16_t)payload2);
 		reg = registerOffset + OpcUtils::MPSRegister::STATUS_ENABLE_IN;
-		setNodeValue(client, registerNodes[reg], statusBit, reg);
+		if(!setNodeValue(client, registerNodes[reg], statusBit, reg))
+			throw std::invalid_argument( "Couldn't set Node value" );
+		//logger->info("StatusEnable got set to {}!", statusBit ? "True": "False");
 		reg = registerOffset + OpcUtils::MPSRegister::ERROR_IN;
-		setNodeValue(client, registerNodes[reg], (uint8_t)error, reg);
+		if(!setNodeValue(client, registerNodes[reg], (uint8_t)error, reg))
+			throw std::invalid_argument( "Couldn't set Node value" );
+		//logger->info("ErrorIn got set to {}!",(uint8_t)error);
 	} catch (std::exception &e) {
 		logger->warn("Error while sending command: {}", e.what());
 		std::this_thread::sleep_for(opcua_poll_rate_);
 		return false;
 	}
+	logger->info("send_instruction finished succesfull!");
 	return true;
+}
+
+void OpcUaMachine::SetupClient()
+{
+
+	logger->info( "Setting up a new OPCUA Client!");
+	client = UA_Client_new();
+	auto config = UA_Client_getConfig(client);
+	config->logger = UA_Log_Stdout_withLevel(UA_LOGLEVEL_FATAL);
+    UA_ClientConfig *cc = UA_Client_getConfig(client);
+    UA_ClientConfig_setDefault(cc);
+	cc->clientContext = (void *) this;
+    /* Set stateCallback */
+    cc->stateCallback = mps_comm::stateCallback;
+    cc->subscriptionInactivityCallback = mps_comm::subscriptionInactivityCallback;
 }
 
 void OpcUaMachine::reset()
@@ -310,6 +265,7 @@ OpcUaMachine::~OpcUaMachine()
 {
 	std::unique_lock<std::mutex> lock(command_queue_mutex_);
 	shutdown_ = true;
+	running = false;
 	lock.unlock();
 	queue_condition_.notify_all();
 	if (worker_thread_.joinable()) {
@@ -400,7 +356,6 @@ bool OpcUaMachine::reconnect()
 	}
 
 	try {
-		
 		logger->error("Starting the subscription process!");
 		//UA_NodeId basicNode = OpcUtils::getBasicNode(client, simulation_);
 
@@ -465,18 +420,35 @@ OpcUaMachine::setNodeValue(UA_Client* client, std::string node_name, boost::any 
 {
 	char cstring[1024];
 	strcpy(cstring, node_name.c_str());
-	UA_UInt16 value = boost::any_cast<uint16_t>(val);
 	UA_Variant *newValue = UA_Variant_new();
-	UA_Variant_setScalarCopy(newValue, &value, &UA_TYPES[UA_TYPES_UINT16]);
+	//logger->info("Setting the value of {}",  node_name);
+	if((reg >= OpcUtils::MPSRegister::STATUS_BUSY_IN && reg <= OpcUtils::MPSRegister::STATUS_ERROR_IN) ||  (reg >= OpcUtils::MPSRegister::STATUS_BUSY_BASIC && reg <= OpcUtils::MPSRegister::STATUS_ERROR_BASIC)) {
+		//logger->info("Boolean value!");
+		UA_Boolean bvalue = boost::any_cast<bool>(val);
+		UA_Variant_setScalarCopy(newValue, &bvalue, &UA_TYPES[UA_TYPES_BOOLEAN]);
+	}
+	else if(reg == OpcUtils::MPSRegister::ERROR_BASIC || reg == OpcUtils::MPSRegister::ERROR_IN)
+	{
+		//logger->info("uint8_t value!");
+		UA_Byte bytevalue = boost::any_cast<uint8_t>(val);
+		UA_Variant_setScalarCopy(newValue, &bytevalue, &UA_TYPES[UA_TYPES_BYTE]);
+	}
+	else {
+		//logger->info("Uint16 value!");
+		UA_UInt16 ivalue = boost::any_cast<uint16_t>(val);
+		UA_Variant_setScalarCopy(newValue, &ivalue, &UA_TYPES[UA_TYPES_UINT16]);
+	}
+
 	UA_StatusCode ret = UA_Client_writeValueAttribute(client, UA_NODEID_STRING(4, cstring) , newValue);
 	UA_Variant_delete(newValue);
-	if(ret == UA_STATUSCODE_GOOD)
+	switch(ret)
 	{
-		logger->info("The setNode was successfull");
-	}
-	else
-	{
-		logger->info("Writing of variable failed with value {}", ret);
+		case UA_STATUSCODE_GOOD:
+			logger->info("The setNode was successfull ({:x})",ret);
+			return true;
+		default:
+			logger->warn("Writing of variable failed with value {:x}",ret);
+			return false;
 	}
 	return false;
 }
@@ -486,6 +458,7 @@ OpcUaMachine::setNodeValue(UA_Client* client, std::string node_name, boost::any 
 void
 OpcUaMachine::register_busy_callback(std::function<void(bool)> callback)
 {
+	logger->info("Registering the busy callback!");
 	if (callback) {
 		OpcUaMachine::callbacks_[OpcUtils::MPSRegister::STATUS_BUSY_IN] = callback;
 	} else {
@@ -496,6 +469,7 @@ OpcUaMachine::register_busy_callback(std::function<void(bool)> callback)
 void
 OpcUaMachine::register_ready_callback(std::function<void(bool)> callback)
 {
+	logger->info("Registering the Ready callback!");
 	if (callback) {
 		OpcUaMachine::callbacks_[OpcUtils::MPSRegister::STATUS_READY_IN] = callback;
 	} else {
@@ -506,6 +480,7 @@ OpcUaMachine::register_ready_callback(std::function<void(bool)> callback)
 void
 OpcUaMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
+	logger->info("Registering the barcode callback!");
 	if (callback) {
 		OpcUaMachine::callbacks_[OpcUtils::MPSRegister::BARCODE_IN] = callback;
 	} else {
@@ -518,6 +493,165 @@ OpcUaMachine::identify()
 {
 	send_instruction(
 	  std::make_tuple(Command::COMMAND_SET_TYPE, get_type_from_station(machine_type_), 0, 0, 1, 0));
+}
+
+void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
+              UA_SessionState sessionState, UA_StatusCode recoveryStatus) {
+	auto machine = (OpcUaMachine *) UA_Client_getContext(client);
+    switch(channelState) {
+    case UA_SECURECHANNELSTATE_FRESH:
+	    machine->logger->info("The client is not yet connected");
+		break;
+    case UA_SECURECHANNELSTATE_CLOSED:
+        machine->logger->info("The client is disconnected");
+        break;
+    case UA_SECURECHANNELSTATE_HEL_SENT:
+        machine->logger->info( "Waiting for ack");
+        break;
+    case UA_SECURECHANNELSTATE_OPN_SENT:
+        machine->logger->info("Waiting for OPN Response");
+        break;
+    case UA_SECURECHANNELSTATE_OPEN:
+        machine->logger->info("A SecureChannel to the server is open");
+        break;
+    default:
+        break;
+    }
+
+    switch(sessionState) {
+    case UA_SESSIONSTATE_ACTIVATED: {
+        machine->logger->info("A session with the server is activated");
+        /* A new session was created. We need to create the subscription. */
+        /* Create a subscription */
+        UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
+        UA_CreateSubscriptionResponse response =
+            UA_Client_Subscriptions_create(client, request, NULL, NULL, deleteSubscriptionCallback);
+            if(response.responseHeader.serviceResult == UA_STATUSCODE_GOOD)
+			{
+               machine->logger->info("Create subscription succeeded, id  {}", response.subscriptionId);
+			   machine->subscriptionId = response.subscriptionId;
+			}
+            else
+			{
+				machine->logger->info("Couldn't create subscription?");
+                return;
+			}
+            /* Add a MonitoredItem */
+			if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::STATUS_BUSY_IN))
+			{
+				return;
+			}
+			if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::STATUS_READY_IN))
+			{
+				return;
+			}
+			if((StationType)(machine->machine_type_ / 100) == StationType::STATION_TYPE_RS)
+			{
+				if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::SLIDECOUNT_IN))
+				{
+					return;
+				}
+			}
+			machine->logger->info("All subscriptions done, starting with sending tasks!");
+			machine->command_queue_mutex_.lock();
+			machine->logger->info("Got mutex setting start_sending_instructions!");
+			machine->start_sending_instructions = true;
+			machine->command_queue_mutex_.unlock();
+        }
+        break;
+
+    case UA_SESSIONSTATE_CREATE_REQUESTED:
+			machine->logger->info("UA_SESSIONSTATE_CREATE_REQUESTED!");
+		break;
+    case UA_SESSIONSTATE_CREATED:
+		machine->logger->info("UA_SESSIONSTATE_CREATED!");
+		break;
+    case UA_SESSIONSTATE_ACTIVATE_REQUESTED:
+		machine->logger->info("UA_SESSIONSTATE_ACTIVATE_REQUESTED!");
+		break;
+    case UA_SESSIONSTATE_CLOSING:
+		machine->logger->info("UA_SESSIONSTATE_CLOSING!");
+		break;
+    case UA_SESSIONSTATE_CLOSED:
+        machine->logger->info("Session disconnected");
+        break;
+    default:
+        break;
+    }
+}
+
+void stopHandler(int sign) {
+	
+}
+
+void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_UInt32 monId, void *monContext, UA_DataValue *value) {
+    auto machine = (OpcUaMachine *) UA_Client_getContext(client);
+    machine->logger->info("ValueChangeCallback has been called!");
+	auto iter = machine->callbacks_.find(machine->monitorMap[monId]);
+	if( iter == machine->callbacks_.end())
+	{
+		machine->logger->info("No Callback for this monitored object is registered!");
+		return;
+	}
+	if(UA_Variant_hasScalarType(&value->value, &UA_TYPES[UA_TYPES_BOOLEAN])){
+		UA_Boolean raw_data = *(UA_Boolean *) value->value.data;
+		machine->logger->info("Callback = {} for id {}", raw_data, monId);
+		machine->callbacks_[machine->monitorMap[monId]]((bool)raw_data);
+		return;
+	}
+	if(UA_Variant_hasScalarType(&value->value, &UA_TYPES[UA_TYPES_UINT16]))
+	{
+		UA_UInt16 raw_data = *(UA_UInt16 *) value->value.data;
+		machine->logger->info("Callback = {} for id {}", raw_data, monId);
+		machine->callbacks_[machine->monitorMap[monId]]((short)raw_data);
+		return;
+	}
+	machine->logger->error("Callback for unsupported type?");
+}
+
+void deleteSubscriptionCallback(UA_Client *client, UA_UInt32 subscriptionId, void *subscriptionContext) {
+    auto machine = (OpcUaMachine *) UA_Client_getContext(client);
+    machine->logger->info("Subscription Id %u was deleted", subscriptionId);
+}
+
+void subscriptionInactivityCallback (UA_Client *client, UA_UInt32 subId, void *subContext) {
+	auto machine = (OpcUaMachine *) UA_Client_getContext(client);
+    machine->logger->info("Inactivity for subscription {} trying to renew!", subId);
+	return;
+	auto reg = machine->monitorMap[subId];
+	auto result = registerMonitoredItem(client, machine->subscriptionId, reg);
+	
+	if(result)
+	{
+		machine->logger->info("Succesfull resubscribe!");
+		return;
+	}
+	machine->logger->info("Couldn't resubscribe!");
+}
+
+void deleteMonitoredItemCallback(UA_Client *client, unsigned int subId, void *subContext, unsigned int monId, void *monContext)
+{
+	auto machine = (OpcUaMachine *) UA_Client_getContext(client);
+	machine->logger->info("Delete for Monitored Item [{}]-[{}] is called!", subId, monId);
+}
+
+bool registerMonitoredItem(UA_Client *client, UA_UInt32 subscriptionId,  OpcUtils::MPSRegister reg)
+{
+	auto nodeName = OpcUtils::getNode(client, reg, false);
+	auto machine = (OpcUaMachine *) UA_Client_getContext(client);
+	char cstring[1024];
+	strcpy(cstring, nodeName.c_str());
+	UA_NodeId subscribeNode = UA_NODEID_STRING(4, cstring);
+	UA_MonitoredItemCreateRequest monRequest = UA_MonitoredItemCreateRequest_default(subscribeNode);
+	UA_MonitoredItemCreateResult monResponse =  UA_Client_MonitoredItems_createDataChange(client, subscriptionId, UA_TIMESTAMPSTORETURN_BOTH, monRequest, NULL, ValueChangeCallback, deleteMonitoredItemCallback);
+	if(monResponse.statusCode == UA_STATUSCODE_GOOD)
+	{
+		machine->logger->info("Subscribed to {} with id {}", nodeName.c_str(), monResponse.monitoredItemId);
+		machine->monitorMap[monResponse.monitoredItemId] = reg;
+		return true;
+	}
+	machine->logger->info("Monitoring failed with error code {:x}",monResponse.statusCode);
+	return false;		
 }
 
 } // namespace mps_comm
