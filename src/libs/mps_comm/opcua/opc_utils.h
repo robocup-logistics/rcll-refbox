@@ -28,6 +28,7 @@
 #include <boost/any.hpp>
 #include <iostream>
 
+
 namespace llsfrb {
 #if 0
 }
@@ -85,6 +86,8 @@ public:
 		ACTION_ID_IN = 0,
 		BARCODE_IN,
 		DATA_IN,
+		DATA0_IN,
+		DATA1_IN,
 		ERROR_IN,
 		SLIDECOUNT_IN,
 		STATUS_BUSY_IN,
@@ -94,6 +97,8 @@ public:
 		ACTION_ID_BASIC,
 		BARCODE_BASIC,
 		DATA_BASIC,
+		DATA0_BASIC,
+		DATA1_BASIC,
 		ERROR_BASIC,
 		SLIDECOUNT_BASIC,
 		STATUS_BUSY_BASIC,
