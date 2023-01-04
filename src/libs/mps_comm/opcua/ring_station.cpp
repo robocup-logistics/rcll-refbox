@@ -57,7 +57,7 @@ void
 OpcUaRingStation::register_slide_callback(std::function<void(unsigned int)> callback)
 {
   if (callback) {
-    		callbacks_[OpcUtils::MPSRegister::STATUS_READY_IN] = callback;
+    		callbacks_[OpcUtils::MPSRegister::SLIDECOUNT_IN] = callback;
 	}
 }
 
