@@ -83,6 +83,7 @@ OpcUaMachine::OpcUaMachine(Station            machine_type,
 void
 OpcUaMachine::client_keep_alive()
 {
+	std::string prefix = "[client_keep_alive]";
 	client_mutex_.lock();
 	SetupClient();
 	client_mutex_.unlock();
@@ -94,30 +95,35 @@ OpcUaMachine::client_keep_alive()
         /* if already connected, this will return GOOD and do nothing */
         /* if the connection is closed/errored, the connection will be reset and then reconnected */
         /* Alternatively you can also use UA_Client_getState to get the current state */
-		logger->info("Connecting to : " + url);
+		logger->info("{} Connecting to : " + url, prefix);
+		logger->info("{} waiting on client_mutex!", prefix);
 		client_mutex_.lock();
         UA_StatusCode retval = UA_Client_connect(client, url.c_str());
 		switch(retval)
 		{
 			case UA_STATUSCODE_BADSERVERHALTED:
-				logger->warn("Deleting client to retry!");
+				/*logger->warn("Deleting client to retry!");
 				UA_Client_delete(client);
-				SetupClient();
+				SetupClient();*/
 				client_mutex_.unlock();
+				UA_sleep_ms(1000);
+				logger->info("{} releasing client_mutex!", prefix);
 				continue;
 			case UA_STATUSCODE_GOOD:
 				break;
 			default: 
-				logger->warn( "Not connected. Retrying to connect in 1 second! Statuscode [{:x}]",retval);
+				logger->warn( "{} Not connected. Retrying to connect in 1 second! Statuscode [{:x}]", prefix,retval);
 				//UA_LOG_ERROR(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND,"Not connected. Retrying to connect in 1 second");
 				/* The connect may timeout after 1 second (see above) or it may fail immediately on network errors */
 				/* E.g. name resolution errors or unreachable network. Thus there should be a small sleep here */
-				UA_sleep_ms(1000);
 				client_mutex_.unlock();
+				UA_sleep_ms(1000);
+				logger->info("{} releasing client_mutex!", prefix);
 				continue;
 		}
-        UA_Client_run_iterate(client, 1000);
+        UA_Client_run_iterate(client, 300);
 		client_mutex_.unlock();
+		logger->info("{} releasing client_mutex!", prefix);
 		UA_sleep_ms(40);
     };
     /* Clean up */
@@ -127,41 +133,44 @@ OpcUaMachine::client_keep_alive()
 void
 OpcUaMachine::dispatch_command_queue()
 {
-	logger->info("Starting the dispatching thread!");
+	std::string prefix = "[Dispatcher]";
+	logger->info("{} Starting the dispatching thread!", prefix);
     while(running) {
+		logger->info("{} waiting on command_queue_mutex_!", prefix);
+		if(start_sending_instructions)
 		{
 			command_queue_mutex_.lock();
-			if(start_sending_instructions)
+			if(!command_queue_.empty())
 			{
-				if(!command_queue_.empty())
+				auto instruction = command_queue_.front();
+				command_queue_mutex_.unlock();
+				logger->info("{} releasing command_queue_mutex_!", prefix);
+				if(send_instruction(instruction)){
+					command_queue_.pop();
+				}
+				else
 				{
-					auto instruction = command_queue_.front();
-					command_queue_mutex_.unlock();
-					if(send_instruction(instruction)){
-						command_queue_.pop();
-					}
-					else
-					{
-						std::lock_guard<std::mutex> lg(client_mutex_);
-						logger->warn("Wasn't able to send we recreate the client!");
-						start_sending_instructions = false;	
-						UA_Client_delete(client);
-						SetupClient();
-					}
-					// not able to send maybe new client
-					UA_sleep_ms(40);
+					/*std::lock_guard<std::mutex> lg(client_mutex_);
+					logger->warn("Wasn't able to send we recreate the client!");
+					start_sending_instructions = false;	
+					UA_Client_delete(client);
+					SetupClient();*/
+					UA_sleep_ms(1000);
 				}
-				else{
-					command_queue_mutex_.unlock();
-					logger->info("Nothing in the Command Queue!");
-					UA_sleep_ms(200);
-				}
+				// not able to send maybe new client
+				UA_sleep_ms(40);
 			}
 			else{
 				command_queue_mutex_.unlock();
-				logger->info("Not yet ready to send instructions!");
-				UA_sleep_ms(1000);
+				logger->info("{} releasing command_queue_mutex_!", prefix);
+				logger->info("{} Nothing in the Command Queue!",prefix);
+				UA_sleep_ms(200);
 			}
+		}
+		else{
+
+			logger->info("Not yet ready to send instructions!");
+			UA_sleep_ms(1000);
 		}
 	}
 }
@@ -177,6 +186,7 @@ void OpcUaMachine::enqueue_instruction(unsigned short command,
 {
 	std::lock_guard<std::mutex> lg(command_queue_mutex_);
 	command_queue_.push(std::make_tuple(command, payload1, payload2, timeout, status, error));
+	logger->info("Enqueued a instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 }
 
 bool OpcUaMachine::send_instruction(const Instruction &instruction)
@@ -191,6 +201,8 @@ bool OpcUaMachine::send_instruction(const Instruction &instruction)
 	logger->info(
 	  "Sending instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 	try {
+		logger->info("[send_instruction] Waiting on the Client_mutex_!");
+		client_mutex_.lock();
 		OpcUtils::MPSRegister registerOffset;
 		if (command < Station::STATION_BASE)
 			registerOffset = OpcUtils::MPSRegister::ACTION_ID_BASIC;
@@ -222,9 +234,13 @@ bool OpcUaMachine::send_instruction(const Instruction &instruction)
 		//logger->info("ErrorIn got set to {}!",(uint8_t)error);
 	} catch (std::exception &e) {
 		logger->warn("Error while sending command: {}", e.what());
+		client_mutex_.unlock();
+		logger->info("[send_instruction] released the client_mutex_!");
 		std::this_thread::sleep_for(opcua_poll_rate_);
 		return false;
 	}
+	client_mutex_.unlock();
+	logger->info("[send_instruction] released the client_mutex_!");
 	logger->info("send_instruction finished succesfull!");
 	return true;
 }
@@ -239,6 +255,7 @@ void OpcUaMachine::SetupClient()
     UA_ClientConfig *cc = UA_Client_getConfig(client);
     UA_ClientConfig_setDefault(cc);
 	cc->clientContext = (void *) this;
+	cc->timeout = 6000000;
     /* Set stateCallback */
     cc->stateCallback = mps_comm::stateCallback;
     cc->subscriptionInactivityCallback = mps_comm::subscriptionInactivityCallback;
@@ -264,6 +281,8 @@ void OpcUaMachine::connect()
 OpcUaMachine::~OpcUaMachine()
 {
 	std::unique_lock<std::mutex> lock(command_queue_mutex_);
+	connected_ = false;
+	start_sending_instructions = false;
 	shutdown_ = true;
 	running = false;
 	lock.unlock();
@@ -444,7 +463,7 @@ OpcUaMachine::setNodeValue(UA_Client* client, std::string node_name, boost::any 
 	switch(ret)
 	{
 		case UA_STATUSCODE_GOOD:
-			logger->info("The setNode was successfull ({:x})",ret);
+			//logger->info("The setNode was successfull ({:x})",ret);
 			return true;
 		default:
 			logger->warn("Writing of variable failed with value {:x}",ret);
@@ -498,21 +517,44 @@ OpcUaMachine::identify()
 void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
               UA_SessionState sessionState, UA_StatusCode recoveryStatus) {
 	auto machine = (OpcUaMachine *) UA_Client_getContext(client);
+	std::string prefix = "[stateCallback]";
+	machine->logger->info("recoveryStatus = {:x}", recoveryStatus);
+	switch(recoveryStatus)
+	{
+		case UA_STATUSCODE_BADTIMEOUT:
+		case UA_STATUSCODE_BADSERVERHALTED:
+			machine->logger->info("{} Recreating the client as recoveryStatus is {:x} which is fatal",prefix, recoveryStatus);
+			machine->logger->info("{} waiting on client_mutex!", prefix);
+			machine->client_mutex_.lock();
+			UA_Client_delete(client);
+			machine->SetupClient();
+			machine->client_mutex_.unlock();
+			machine->logger->info("{} releasing client_mutex!", prefix);
+			return;
+			break;
+		case UA_STATUSCODE_GOOD:
+
+			break;
+		default: 
+			machine->logger->info("{} Skipping the stateCallback with recoveryStatus {:x}", prefix, recoveryStatus);
+			return;
+	}
     switch(channelState) {
     case UA_SECURECHANNELSTATE_FRESH:
-	    machine->logger->info("The client is not yet connected");
+	    machine->logger->info("{} The client is not yet connected", prefix);
 		break;
     case UA_SECURECHANNELSTATE_CLOSED:
-        machine->logger->info("The client is disconnected");
+        machine->logger->info("{} The client is disconnected", prefix);
+		machine->start_sending_instructions = false;
         break;
     case UA_SECURECHANNELSTATE_HEL_SENT:
-        machine->logger->info( "Waiting for ack");
+        machine->logger->info("{} Waiting for ack", prefix);
         break;
     case UA_SECURECHANNELSTATE_OPN_SENT:
-        machine->logger->info("Waiting for OPN Response");
+        machine->logger->info("{} Waiting for OPN Response", prefix);
         break;
     case UA_SECURECHANNELSTATE_OPEN:
-        machine->logger->info("A SecureChannel to the server is open");
+        machine->logger->info("{} A SecureChannel to the server is open", prefix);
         break;
     default:
         break;
@@ -520,20 +562,22 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 
     switch(sessionState) {
     case UA_SESSIONSTATE_ACTIVATED: {
-        machine->logger->info("A session with the server is activated");
+        machine->logger->info("{} A session with the server is activated", prefix);
         /* A new session was created. We need to create the subscription. */
         /* Create a subscription */
-        UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
-        UA_CreateSubscriptionResponse response =
-            UA_Client_Subscriptions_create(client, request, NULL, NULL, deleteSubscriptionCallback);
+        	UA_CreateSubscriptionRequest request = UA_CreateSubscriptionRequest_default();
+			request.requestedLifetimeCount = -1;
+			//request.requestedPublishingInterval = 300;
+			request.requestedMaxKeepAliveCount = -1;
+        	UA_CreateSubscriptionResponse response = UA_Client_Subscriptions_create(client, request, NULL, NULL, deleteSubscriptionCallback);
             if(response.responseHeader.serviceResult == UA_STATUSCODE_GOOD)
 			{
-               machine->logger->info("Create subscription succeeded, id  {}", response.subscriptionId);
+               machine->logger->info("{} Create subscription {} succeeded!", prefix, response.subscriptionId);
 			   machine->subscriptionId = response.subscriptionId;
 			}
             else
 			{
-				machine->logger->info("Couldn't create subscription?");
+				machine->logger->info("{} Couldn't create subscription?", prefix);
                 return;
 			}
             /* Add a MonitoredItem */
@@ -552,11 +596,8 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 					return;
 				}
 			}
-			machine->logger->info("All subscriptions done, starting with sending tasks!");
-			machine->command_queue_mutex_.lock();
-			machine->logger->info("Got mutex setting start_sending_instructions!");
+			machine->logger->info("{} All subscriptions done, starting with sending tasks!", prefix);
 			machine->start_sending_instructions = true;
-			machine->command_queue_mutex_.unlock();
         }
         break;
 
@@ -643,7 +684,8 @@ bool registerMonitoredItem(UA_Client *client, UA_UInt32 subscriptionId,  OpcUtil
 	strcpy(cstring, nodeName.c_str());
 	UA_NodeId subscribeNode = UA_NODEID_STRING(4, cstring);
 	UA_MonitoredItemCreateRequest monRequest = UA_MonitoredItemCreateRequest_default(subscribeNode);
-	UA_MonitoredItemCreateResult monResponse =  UA_Client_MonitoredItems_createDataChange(client, subscriptionId, UA_TIMESTAMPSTORETURN_BOTH, monRequest, NULL, ValueChangeCallback, deleteMonitoredItemCallback);
+	
+	UA_MonitoredItemCreateResult monResponse =  UA_Client_MonitoredItems_createDataChange(client, subscriptionId, UA_TIMESTAMPSTORETURN_SOURCE, monRequest, NULL, ValueChangeCallback, deleteMonitoredItemCallback);
 	if(monResponse.statusCode == UA_STATUSCODE_GOOD)
 	{
 		machine->logger->info("Subscribed to {} with id {}", nodeName.c_str(), monResponse.monitoredItemId);
