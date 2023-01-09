@@ -93,11 +93,12 @@ public:
 	virtual void identify();
 	std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>> callbacks_;
 	std::unordered_map<UA_UInt32, OpcUtils::MPSRegister> monitorMap;
-	bool start_sending_instructions;
+
 	std::shared_ptr<spdlog::logger> logger;
 	UA_UInt32 subscriptionId;
 	void SetupClient();
-	bool connected_;
+	std::atomic<bool> start_sending_instructions;
+	std::atomic<bool> connected_;
 	const Station machine_type_;
 	std::mutex command_queue_mutex_;
 	std::mutex client_mutex_;
