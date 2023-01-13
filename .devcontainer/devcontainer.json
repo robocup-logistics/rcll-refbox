@@ -1,0 +1,64 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.0/containers/docker-existing-dockerfile
+{
+	"name": "Refbox Development",
+
+	// Sets the run context to one level up instead of the .devcontainer folder.
+	//"context": "..",
+
+	// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+	"build": {
+		"dockerfile": "../Dockerfile",
+       	"context": "..",
+		"target": "devcontainer",
+		"args": {
+			"USER_NAME": "${localEnv:USER}",
+			"network": "host"
+		}
+	},
+	"remoteUser": "${env:USER}",
+	"updateRemoteUserUID": true, //,
+	//"dockerFile": "Dockerfile",
+	"runArgs": [ "--network=host"], // [ "--name", "refbox"],
+	//"remoteUser": "${env:USER}",
+	//"updateRemoteUserUID": true,
+	//"containerUser": "${env:USER}", //"${UID}"remoteUser
+	//"remoteUser": "${env:USER}", //"${UID}"remoteUser
+	//"updateRemoteUserUID": true,
+
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"algono.clips-ide",
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack",
+				"twxs.cmake",
+				"ms-vscode.cmake-tools",
+				"cschlosser.doxdocgen",
+				"jeff-hykin.better-cpp-syntax",
+				"ms-vscode.cpptools-themes",
+				"zxh404.vscode-proto3",
+				"ms-vscode.makefile-tools"
+			]
+		}
+	}//,
+	//"mounts": [	"source=/etc/passwd,target=/etc/passwd,type=bind",
+//				"source=/etc/group,target=/etc/group,type=bind",
+//				"source=/etc/shadow,target=/etc/shadow,type=bind" ]
+
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Uncomment the next line to run commands after the container is created - for example installing curl.
+	// "postCreateCommand": "apt-get update && apt-get install -y curl",
+
+	// Uncomment when using a ptrace-based debugger like C++, Go, and Rust
+	// "runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
+
+	// Uncomment to use the Docker CLI from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker.
+	
+	// Uncomment to connect as a non-root user if you've added one. See https://aka.ms/vscode-remote/containers/non-root.
+	// "remoteUser": "vscode"
+}
