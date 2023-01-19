@@ -8,7 +8,7 @@
 #   (at your option) any later version.
 #
 
-FROM fedora:35 as builder
+FROM fedora:37 as builder
 RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
       dnf install -y --nodocs \
