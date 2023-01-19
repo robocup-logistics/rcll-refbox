@@ -296,13 +296,13 @@ public:
 						// reserve top and bottom zones
 						if (angle != ANGLE_0 && angle != ANGLE_180) {
 							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || angle < ANGLE_180) {
+							    || angle > ANGLE_180) {
 								Gecode::rel(*this,
 								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 								              >> (mps_resource_[x][y - 1][t - 1] == 1));
 							}
 							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || angle > ANGLE_180) {
+							    || angle < ANGLE_180) {
 								Gecode::rel(*this,
 								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 								              >> (mps_resource_[x][y + 1][t - 1] == 1));
