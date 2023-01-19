@@ -311,16 +311,16 @@ public:
 						// reserve left and right zone
 						if (angle != ANGLE_90 && angle != ANGLE_270) {
 							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || angle < ANGLE_90 || angle > 270) {
-								Gecode::rel(*this,
-								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
-								              >> (mps_resource_[x - 1][y][t - 1] == 1));
-							}
-							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || (angle > ANGLE_90 && angle < 270)) {
+							    || angle < ANGLE_90 || angle > ANGLE_270) {
 								Gecode::rel(*this,
 								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 								              >> (mps_resource_[x + 1][y][t - 1] == 1));
+							}
+							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
+							    || (angle > ANGLE_90 && angle < ANGLE_270)) {
+								Gecode::rel(*this,
+								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
+								              >> (mps_resource_[x - 1][y][t - 1] == 1));
 							}
 						}
 					}
