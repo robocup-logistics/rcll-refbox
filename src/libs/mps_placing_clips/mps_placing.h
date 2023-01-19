@@ -324,7 +324,7 @@ public:
 							}
 						}
 					}
-					// reserve top left and bottom right zone
+					// reserve top right and bottom left zone
 					for (int angle : {ANGLE_45, ANGLE_225}) {
 						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
 						    || angle != ANGLE_225) {
@@ -339,7 +339,7 @@ public:
 							              >> (mps_resource_[x - 1][y - 1][t - 1] == 1));
 						}
 					}
-					// reserve top right and bottom left zone
+					// reserve top left and bottom right zone
 					for (int angle : {ANGLE_135, ANGLE_315}) {
 						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
 						    || angle != ANGLE_135) {
