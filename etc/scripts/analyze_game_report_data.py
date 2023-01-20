@@ -16,148 +16,95 @@ import textwrap
 import sys
 import pymongo
 import os
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
-class Game:
-    def __init__(self,
-                 cyan_team_name,
-                 magenta_team_name,
-                 cyan_agent_tasks,
-                 magenta_agent_tasks,
-                 cyan_stamped_poses,
-                 magenta_stamped_poses,
-                 cyan_workpiece_facts,
-                 magenta_workpiece_facts,
-                 cyan_points,
-                 magenta_points,
-                 cyan_machine_actions,
-                 magenta_machine_actions):
-        self.cyan_team_name = cyan_team_name
-        self.magenta_team_name = magenta_team_name
-        self.cyan_agent_tasks = cyan_agent_tasks
-        self.magenta_agent_tasks = magenta_agent_tasks
-        self.cyan_stamped_poses = cyan_stamped_poses
-        self.magenta_stamped_poses = magenta_stamped_poses
-        self.cyan_workpiece_facts = cyan_workpiece_facts
-        self.magenta_workpiece_facts = magenta_workpiece_facts
-        self.cyan_points = cyan_points
-        self.magenta_points = magenta_points
-        self.cyan_machine_actions = cyan_machine_actions
-        self.magenta_machine_actions = magenta_machine_actions
-
+# default = wait action
+@dataclass
 class AgentTask:
-    def __init__(self,
-                 taskType,
-                 waypoint,
-                 machineID,
-                 machinePoint,
-                 shelfNumber,
-                 taskID,
-                 robotID,
-                 startTime,
-                 endTime,
-                 orderID,
-                 worpieceName,
-                 unknownAction,
-                 successful,
-                 baseColor,
-                 ringColors,
-                 capColor):
-        self.taskType = taskType
-        self.waypoint = waypoint
-        self.machineID = machineID
-        self.machinePoint = machinePoint
-        self.shelfNumber = shelfNumber
-        self.taskID = taskID
-        self.robotID = robotID
-        self.startTime = startTime
-        self.endTime = endTime
-        self.orderID = orderID
-        self.worpieceName = worpieceName
-        self.unknownAction = unknownAction
-        self.successful = successful
-        self.baseColor = baseColor
-        self.ringColors = ringColors
-        self.capColor = capColor
+    robot_id: int
+    start_time: float
+    end_time: float
+    task_type: str = 'WAIT'
+    waypoint: str = None
+    machine_id: int = None
+    machine_point: str = None
+    shelf_number: int = None
+    task_id: int = 0
+    order_id: int = None
+    worpiece_name: str = None
+    unknown_action: bool = False
+    successful: bool = True
+    base_color: str = None
+    ring_colors: str = None
+    cap_color: str = None
 
+@dataclass
 class StampedPose:
-    def __init__(self,
-                 taskID,
-                 robotID,
-                 x,
-                 y,
-                 ori,
-                 time):
-        self.taskID = taskID
-        self.robotID = robotID
-        self.x = x
-        self.y = y
-        self.ori = ori
-        self.time = time
+    task_id: int
+    robot_id: int
+    x: float
+    y: float
+    ori: float
+    time: float
 
+@dataclass
 class WorkpieceFact:
-    def __init__(self,
-                 ID,
-                 name,
-                 order,
-                 startTime,
-                 endTime,
-                 atMachine,
-                 atSide,
-                 holding,
-                 robotHolding,
-                 unknownAction,
-                 baseColor,
-                 ringColors,
-                 capColor):
-        self.ID = ID
-        self.name = name
-        self.order = order
-        self.startTime = startTime
-        self.endTime = endTime
-        self.atMachine = atMachine
-        self.atSide = atSide
-        self.holding = holding
-        self.robotHolding = robotHolding
-        self.unknownAction = unknownAction
-        self.baseColor = baseColor
-        self.ringColors = ringColors
-        self.capColor = capColor
+    id: int
+    name: str
+    order: int
+    start_time: float
+    end_time: float
+    at_machine: str
+    at_side: str
+    holding: bool
+    robot_holding: int
+    unknown_action: int
+    base_color: int
+    ring_colors: int
+    cap_color: int
 
+@dataclass
 class Points:
-    def __init__(self,
-                 amount,
-                 phase,
-                 reason,
-                 time):
-        self.amount = amount
-        self.phase = phase
-        self.reason = reason
-        self.time = time
+    amount: int
+    phase: str
+    reason: str
+    time: float
 
+@dataclass
 class MachineAction:
-    def __init__(self,
-                 name,
-                 actionType,
-                 startTime,
-                 endTime,
-                 raoTime):
-        self.name = name
-        self.actionType = actionType
-        self.startTime = startTime
-        self.endTime = endTime
-        self.readyAtOutputTime = raoTime
+    name: str
+    action_type: str
+    start_time: float
+    end_time: float
+    ready_at_output_time: float
 
-teamColors = ['cyan', 'magenta', 'orange', 'lime', 'purple', 'red', 'gold', 'royalblue', 'lightgrey', 'yellowgreen']
+@dataclass
+class Game:
+    cyan_team_name: str
+    magenta_team_name: str
+    cyan_agent_tasks: list[AgentTask]
+    magenta_agent_tasks: list[AgentTask]
+    cyan_stamped_poses: list[StampedPose]
+    magenta_stamped_poses: list[StampedPose]
+    cyan_workpiece_facts: list[WorkpieceFact]
+    magenta_workpiece_facts: list[WorkpieceFact]
+    cyan_points: list[Points]
+    magenta_points: list[Points]
+    cyan_machine_actions: list[MachineAction]
+    magenta_machine_actions: list[MachineAction]
+
+team_colors = ['cyan', 'magenta', 'orange', 'lime', 'purple', 'red', 'gold', 'royalblue', 'lightgrey', 'yellowgreen']
 tasks = ['MOVE', 'RETRIEVE', 'DELIVER', 'BUFFER', 'EXPLORE_MACHINE']
-taskColors = ['cyan', 'yellow', 'lightcoral', 'orchid', 'lime', 'lightgrey']
+task_colors = ['cyan', 'yellow', 'lightcoral', 'orchid', 'lime', 'lightgrey']
 machine_names = ['C-BS', 'C-RS1', 'C-RS2', 'C-CS1', 'C-CS2', 'C-DS', 'C-SS', 'M-BS', 'M-RS1', 'M-RS2', 'M-CS1', 'M-CS2', 'M-DS', 'M-SS']
 machine_types = ['BS', 'RS', 'CS', 'DS']
+game_length = 1200 # 20min = 1200sek
 
-def loadData(mongodb_uri,
+def load_data(mongodb_uri,
              database='rcll',
              collection='game_report',
              reports=[],
@@ -168,17 +115,15 @@ def loadData(mongodb_uri,
 
     all_reports = []
     if use_all:
-        query={}
+        all_reports = collection.find({})
     else:
         if not reports:
-            # TODO: find last report and query it
-            query={}
+            all_reports = collection.find().limit(1).sort([('$natural',-1)])
         else:
             query= {"$or": []}
             for report in reports:
                 query["$or"].append({"report-name":report})
-    #print(query)
-    all_reports = collection.find(query)
+            all_reports = collection.find(query)
 
     games = []
     for report in all_reports:
@@ -203,42 +148,42 @@ def loadData(mongodb_uri,
                         machine_point = task["task-parameters"][p*2+1]
                     elif task["task-parameters"][p*2] == "shelf-number":
                         shelf_id = task["task-parameters"][p*2+1]
-                aTask = AgentTask(task["task-type"],
-                                waypoint,
-                                machine_id,
-                                machine_point,
-                                shelf_id,
-                                task["task-id"],
-                                task["robot-id"],
-                                task["start-time"],
-                                task["end-time"],
-                                task["order-id"],
-                                task["workpiece-name"],
-                                task["unknown-action"],
-                                task["successful"],
-                                task["base-color"],
-                                task["ring-color"],
-                                task["cap-color"])
+                a_task = AgentTask(task["robot-id"],
+                                   task["start-time"],
+                                   task["end-time"],
+                                   task["task-type"],
+                                   waypoint,
+                                   machine_id,
+                                   machine_point,
+                                   shelf_id,
+                                   task["task-id"],
+                                   task["order-id"],
+                                   task["workpiece-name"],
+                                   task["unknown-action"],
+                                   task["successful"],
+                                   task["base-color"],
+                                   task["ring-color"],
+                                   task["cap-color"])
                 if task["team-color"] == "CYAN":
-                    cyan_agent_tasks.append(aTask)
+                    cyan_agent_tasks.append(a_task)
                 else:
-                    magenta_agent_tasks.append(aTask)
+                    magenta_agent_tasks.append(a_task)
 
         # get stamped poses:
         cyan_stamped_poses = []
         magenta_stamped_poses = []
         if "robot-pose-history" in report:
             for pose in report["robot-pose-history"]:
-                sPose = StampedPose(pose["task-id"],
-                                    pose["robot-id"],
-                                    pose["x"],
-                                    pose["y"],
-                                    pose["ori"],
-                                    pose["time"])
+                s_pose = StampedPose(pose["task-id"],
+                                     pose["robot-id"],
+                                     pose["x"],
+                                     pose["y"],
+                                     pose["ori"],
+                                     pose["time"])
                 if pose["team-color"] == "CYAN":
-                    cyan_stamped_poses.append(sPose)
+                    cyan_stamped_poses.append(s_pose)
                 else:
-                    magenta_stamped_poses.append(sPose)
+                    magenta_stamped_poses.append(s_pose)
 
         # get workpiece facts:
         cyan_workpiece_facts = []
@@ -267,12 +212,12 @@ def loadData(mongodb_uri,
         cyan_points = []
         magenta_points = []
         if "points" in report:
-            for points in report["points"]:
-                p = Points(points["points"],
-                        points["phase"],
-                        points["reason"],
-                        points["game-time"])
-                if points["team"] == "CYAN":
+            for points_entry in report["points"]:
+                p = Points(points_entry["points"],
+                           points_entry["phase"],
+                           points_entry["reason"],
+                           points_entry["game-time"])
+                if points_entry["team"] == "CYAN":
                     cyan_points.append(p)
                 else:
                     magenta_points.append(p)
@@ -280,40 +225,44 @@ def loadData(mongodb_uri,
         # get machine actions
         cyan_machine_actions = []
         magenta_machine_actions = []
-        actions = [[] for m in machine_names]
+        actions = dict()
+        for mps_name in machine_names:
+            actions[mps_name] = []
         if "machine-history" in report:
             for action in report["machine-history"]:
-                actions[machine_names.index(action["name"])].append(action)
+                actions[action["name"]].append(action)
 
         # BS
-        for t in [0,7]:
+        for t in ['C-BS', 'M-BS']:
             for ind, action in enumerate(actions[t]):
-                    if (action["state"] == 'PROCESSING'
-                          and len(actions[t]) > ind+2 and actions[t][ind+1]["state"] == 'PROCESSED'
-                          and actions[t][ind+2]["state"] == 'READY-AT-OUTPUT'):
-                        rao_stop = 1200 - actions[t][ind+2]["game-time"]
-                        if (len(actions[t]) > ind+3):
-                            rao_stop = actions[t][ind+3]["game-time"] - actions[t][ind+2]["game-time"]
-                        a = MachineAction(action["name"],
-                                          'DISPENCE_BASE',
-                                          action["game-time"],
-                                          actions[t][ind+2]["game-time"],
-                                          rao_stop)
-                        if t < 7:
-                            cyan_machine_actions.append(a)
-                        else:
-                            magenta_machine_actions.append(a)
+                if (action["state"] == 'PROCESSING'
+                      and len(actions[t]) > ind+2 and actions[t][ind+1]["state"] == 'PROCESSED'
+                      and actions[t][ind+2]["state"] == 'READY-AT-OUTPUT'):
+                    rao_stop = game_length - actions[t][ind+2]["game-time"]
+                    if (len(actions[t]) > ind+3):
+                        rao_stop = actions[t][ind+3]["game-time"] - actions[t][ind+2]["game-time"]
+                    a = MachineAction(action["name"],
+                                      'DISPENSE_BASE',
+                                      action["game-time"],
+                                      actions[t][ind+2]["game-time"],
+                                      rao_stop)
+                    if t == 'C-BS':
+                        cyan_machine_actions.append(a)
+                    else:
+                        magenta_machine_actions.append(a)
         # CS
-        for t in [3,4,10,11]:
+        for t in ['C-CS1', 'C-CS2', 'M-CS1', 'M-CS2']:
             for ind, action in enumerate(actions[t]):
                     if (action["state"] == 'PREPARED'
                           and len(actions[t]) > ind+3 and actions[t][ind+1]["state"] == 'PROCESSING'
                           and actions[t][ind+2]["state"] == 'PROCESSED'
                           and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
                         performed_task = 'RETRIEVED_CAP'
-                        if actions[t][ind+1]["meta-fact"]["cs-operation"] == 'MOUNT_CAP':
+                        if "meta-fact" in actions[t][ind+1] and actions[t][ind+1]["meta-fact"]["cs-operation"] == 'MOUNT_CAP':
                             performed_task = 'MOUNT_CAP'
-                        rao_stop = 1200 - actions[t][ind+3]["game-time"]
+                        elif "machine-fact" in actions[t][ind+1] and actions[t][ind+1]["machine-fact"]["cs-operation"] == 'MOUNT_CAP':
+                            performed_task = 'MOUNT_CAP'
+                        rao_stop = game_length - actions[t][ind+3]["game-time"]
                         if (len(actions[t]) > ind+4):
                             rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
 
@@ -322,43 +271,43 @@ def loadData(mongodb_uri,
                                           action["game-time"],
                                           actions[t][ind+3]["game-time"],
                                           rao_stop)
-                        if t < 7:
+                        if t in ['C-CS1', 'C-CS2']:
                             cyan_machine_actions.append(a)
                         else:
                             magenta_machine_actions.append(a)
         # RS
-        for t in [1,2,8,9]:
+        for t in ['C-RS1', 'C-RS2', 'M-RS1', 'M-RS2']:
             for ind, action in enumerate(actions[t]):
-                    if (action["state"] == 'PREPARED'
-                          and len(actions[t]) > ind+3 and actions[t][ind+1]["state"] == 'PROCESSING'
-                          and actions[t][ind+2]["state"] == 'PROCESSED'
-                          and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
-                        rao_stop = 1200 - actions[t][ind+3]["game-time"]
-                        if (len(actions[t]) > ind+4):
-                            rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
-                        a = MachineAction(action["name"],
-                                          'MOUNT_RING',
-                                          action["game-time"],
-                                          actions[t][ind+3]["game-time"],
-                                          rao_stop)
-                        if t < 7:
-                            cyan_machine_actions.append(a)
-                        else:
-                            magenta_machine_actions.append(a)
+                if (action["state"] == 'PREPARED'
+                      and len(actions[t]) > ind+3 and actions[t][ind+1]["state"] == 'PROCESSING'
+                      and actions[t][ind+2]["state"] == 'PROCESSED'
+                      and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
+                    rao_stop = game_length - actions[t][ind+3]["game-time"]
+                    if (len(actions[t]) > ind+4):
+                        rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
+                    a = MachineAction(action["name"],
+                                      'MOUNT_RING',
+                                      action["game-time"],
+                                      actions[t][ind+3]["game-time"],
+                                      rao_stop)
+                    if t in ['C-RS1', 'C-RS2']:
+                        cyan_machine_actions.append(a)
+                    else:
+                        magenta_machine_actions.append(a)
         # DS
-        for t in [5,12]:
+        for t in ['C-DS', 'M-DS']:
             for ind, action in enumerate(actions[t]):
-                    if (action["state"] == 'PROCESSING'
-                          and len(actions[t]) > ind+1 and actions[t][ind+1]["state"] == 'PROCESSED'):
-                        a = MachineAction(action["name"],
-                                          'DELIVER',
-                                          action["game-time"],
-                                          actions[t][ind+1]["game-time"],
-                                          0)
-                        if t < 7:
-                            cyan_machine_actions.append(a)
-                        else:
-                            magenta_machine_actions.append(a)
+                if (action["state"] == 'PROCESSING'
+                      and len(actions[t]) > ind+1 and actions[t][ind+1]["state"] == 'PROCESSED'):
+                    a = MachineAction(action["name"],
+                                      'DELIVER',
+                                      action["game-time"],
+                                      actions[t][ind+1]["game-time"],
+                                      0)
+                    if t == 'C-DS':
+                        cyan_machine_actions.append(a)
+                    else:
+                        magenta_machine_actions.append(a)
 
         # save game
         games.append(Game(cyan_team_name,
@@ -375,83 +324,57 @@ def loadData(mongodb_uri,
                           magenta_machine_actions))
     return games
 
-def closeEndTimes(games):
+def close_end_times(games):
     for i, game in enumerate(games):
         for ind, task in enumerate(game.cyan_agent_tasks):
-            if task.startTime > 0 and task.endTime == 0:  # if end time was not set because the game ended
-                games[i].cyan_agent_tasks[ind].endTime = 1200 # set time to game end
+            if task.start_time > 0 and task.end_time == 0:  # if end time was not set because the game ended
+                games[i].cyan_agent_tasks[ind].end_time = game_length # set time to game end
         for ind, task in enumerate(game.magenta_agent_tasks):
-            if task.startTime > 0 and task.endTime == 0:  # same for magenta
-                games[i].magenta_agent_tasks[ind].endTime = 1200
+            if task.start_time > 0 and task.end_time == 0:  # same for magenta
+                games[i].magenta_agent_tasks[ind].end_time = game_length
     return games
 
-def appendWaitTasks(task_arr):
+def append_wait_tasks(task_arr):
     bot_tasks = dict()
     bot_tasks[1] = []
     bot_tasks[2] = []
     bot_tasks[3] = []
 
     for task in task_arr:
-        bot_tasks[task.robotID].append((task.startTime, task.endTime))
+        bot_tasks[task.robot_id].append((task.start_time, task.end_time))
 
-    # add wait tasks to fill gabs between tasks for each robot
+    # add wait tasks to fill gaps between tasks for each robot
     for bot in [1,2,3]:
         bot_tasks[bot].sort(key=lambda p: p[0])
         last_task_end = 0
         for task in bot_tasks[bot]:
             if task[0] > last_task_end:
-                task_arr.append(AgentTask('WAIT',
-                                          None,
-                                          None,
-                                          None,
-                                          None,
-                                          0,
-                                          bot,
-                                          last_task_end,
-                                          task[0],
-                                          None,
-                                          None,
-                                          False,
-                                          True,
-                                          None,
-                                          None,
-                                          None))
+                task_arr.append(AgentTask(robot_id = bot,
+                                          start_time = last_task_end,
+                                          end_time = task[0]))
             if task[1] > last_task_end:
                 last_task_end = task[1]
-        if last_task_end < 1200:                  # 20 min * 60 s
-            task_arr.append(AgentTask('WAIT',
-                                      None,
-                                      None,
-                                      None,
-                                      None,
-                                      0,
-                                      bot,
-                                      last_task_end,
-                                      1200,
-                                      None,
-                                      None,
-                                      False,
-                                      True,
-                                      None,
-                                      None,
-                                      None))
+        if last_task_end < game_length:
+            task_arr.append(AgentTask(robot_id = bot,
+                                      start_time = last_task_end,
+                                      end_time = game_length))
 
     return task_arr
 
-def addWaitTasks(games):
+def add_wait_tasks(games):
     tasks.append('WAIT')
     for game in games:
-        game.cyan_agent_tasks = appendWaitTasks(game.cyan_agent_tasks)
-        game.magenta_agent_tasks = appendWaitTasks(game.magenta_agent_tasks)
+        game.cyan_agent_tasks = append_wait_tasks(game.cyan_agent_tasks)
+        game.magenta_agent_tasks = append_wait_tasks(game.magenta_agent_tasks)
 
-def getTeams(games):
+def get_teams(games):
     teams = []
     for game in games:
         if not game.cyan_team_name in teams and game.cyan_team_name: teams.append(game.cyan_team_name)
         if not game.magenta_team_name in teams and game.magenta_team_name: teams.append(game.magenta_team_name)
     return teams
 
-def createFolder():
+def create_folder():
     if not os.path.isdir("../analysis"):
         os.mkdir("../analysis")
     i = 0
@@ -462,7 +385,7 @@ def createFolder():
             os.mkdir(save_folder)
             return save_folder
 
-def drawTaskTimes(games,teams,save_folder):
+def draw_task_times(games,teams,save_folder):
     # create times dict with an entry for each minute
     times = dict()
     data_available = False
@@ -485,7 +408,7 @@ def drawTaskTimes(games,teams,save_folder):
                 data_available = True
                 for i in range(20):
                     # add overlap between time range and task execution time
-                    times[t][task.taskType][i+1] += max(0, min(task.endTime/60, i+1) - max(task.startTime/60, i))
+                    times[t][task.task_type][i+1] += max(0, min(task.end_time/60, i+1) - max(task.start_time/60, i))
     if not data_available: return
     # normalize times
     for team in teams:
@@ -499,7 +422,7 @@ def drawTaskTimes(games,teams,save_folder):
     for team in teams:
         fig, ax = plt.subplots()
         ax.stackplot(range(21), [times[team][task] for task in tasks],
-                    labels=tasks, alpha=0.8, colors = taskColors)
+                    labels=tasks, alpha=0.8, colors = task_colors)
         ax.legend(loc='upper left')
         ax.set_title('Time Spend per Task')
         ax.set_xlabel('Minute')
@@ -509,7 +432,7 @@ def drawTaskTimes(games,teams,save_folder):
         plt.savefig(save_folder + team + '_task_times.pdf')
         plt.close(fig)
 
-def drawExecutionTimes(games,teams,save_folder):
+def draw_execution_times(games,teams,save_folder):
     times = dict()
     for team in teams:
         times[team] = dict()
@@ -526,7 +449,7 @@ def drawExecutionTimes(games,teams,save_folder):
             else:
                 agent_tasks = game.magenta_agent_tasks
             for task in agent_tasks:
-                times[t][task.taskType].append(task.endTime - task.startTime)
+                times[t][task.task_type].append(task.end_time - task.start_time)
 
     # create scatter plot for each task
     for task in tasks:
@@ -537,7 +460,7 @@ def drawExecutionTimes(games,teams,save_folder):
             if len(times[team][task]) > 0:
                 data_available = True
             times[team][task].sort()
-            ax.scatter(equal_space, times[team][task], color = teamColors[ind], label = team)
+            ax.scatter(equal_space, times[team][task], color = team_colors[ind], label = team)
         if not data_available: return
 
         ax.legend(loc='upper left')
@@ -550,8 +473,7 @@ def drawExecutionTimes(games,teams,save_folder):
         plt.savefig(save_folder + task + '_execution_times.pdf')
         plt.close(fig)
 
-
-def drawGamePoints(games,teams,save_folder):
+def draw_game_points(games,teams,save_folder):
     game_points = dict()
     data_available = False
     for team in teams:
@@ -587,7 +509,7 @@ def drawGamePoints(games,teams,save_folder):
     # plot point graph over time for each team
     fig, ax = plt.subplots()
     for ind, team in enumerate(teams):
-        ax.plot(*zip(*game_points[team]["points"]), color = teamColors[ind], label = team)
+        ax.plot(*zip(*game_points[team]["points"]), color = team_colors[ind], label = team)
 
     ax.legend(loc='upper left')
     ax.set_title('Points per Team')
@@ -598,7 +520,7 @@ def drawGamePoints(games,teams,save_folder):
     plt.savefig(save_folder + 'game_points.pdf')
     plt.close(fig)
 
-def drawMoveTimes(games,teams,save_folder):
+def draw_move_times(games,teams,save_folder):
     move_times = dict()
     data_available = False
     for team in teams:
@@ -617,7 +539,7 @@ def drawMoveTimes(games,teams,save_folder):
                 agent_tasks = game.magenta_agent_tasks
                 poses = game.magenta_stamped_poses
             for task in agent_tasks:
-                if task.taskType == "MOVE":
+                if task.task_type == "MOVE":
                     data_available = True
                     x_before = 0
                     y_before = 0
@@ -626,23 +548,23 @@ def drawMoveTimes(games,teams,save_folder):
                     y_after = 0
                     time_after = 1000000
                     for pose in poses:
-                        if pose.time > time_before and pose.time <= task.startTime:
+                        if pose.time > time_before and pose.time <= task.start_time:
                             x_before = pose.x
                             y_before = pose.y
                             time_before = pose.time
-                        elif pose.time < time_after and pose.time >= task.endTime:
+                        elif pose.time < time_after and pose.time >= task.end_time:
                             x_after = pose.x
                             y_after = pose.y
                             time_after = pose.time
                     dist = math.sqrt((x_after - x_before)**2 + (y_after - y_before)**2)
-                    move_times[t].append((dist, task.endTime - task.startTime))
+                    move_times[t].append((dist, task.end_time - task.start_time))
     if not data_available: return
     # TODO: line fitting for each team
 
     # plot move times scatter over distance for each team
     fig, ax = plt.subplots()
     for ind, team in enumerate(teams):
-        ax.scatter(*zip(*move_times[team]), color = teamColors[ind], label = team)
+        ax.scatter(*zip(*move_times[team]), color = team_colors[ind], label = team)
 
     ax.legend(loc='upper left')
     ax.set_title('Move Execution Times per Team')
@@ -653,7 +575,7 @@ def drawMoveTimes(games,teams,save_folder):
     plt.savefig(save_folder + 'move_times.pdf')
     plt.close(fig)
 
-def drawMeanExecutionTimes(games,teams,save_folder):
+def draw_mean_execution_times(games,teams,save_folder):
     data_available = False
 
     name_tasks = tasks
@@ -684,8 +606,8 @@ def drawMeanExecutionTimes(games,teams,save_folder):
                 times[t]['total_points'] += np.sum([points.amount for points in game.magenta_points])
             for task in agent_tasks:
                 data_available = True
-                times[t][task.taskType]['summed_times'] += task.endTime - task.startTime
-                times[t][task.taskType]['amount'] += 1
+                times[t][task.task_type]['summed_times'] += task.end_time - task.start_time
+                times[t][task.task_type]['amount'] += 1
     if not data_available: return
 
     # create bardiagram for mean task times per game
@@ -696,7 +618,7 @@ def drawMeanExecutionTimes(games,teams,save_folder):
         for task in tasks:
             mean_times_game.append(times[team][task]['summed_times'] / times[team]['total_games'])
         mean_times_game_per_team.append(mean_times_game)
-    createBarDiagram(ax, mean_times_game_per_team, name_tasks, teams)
+    create_bar_diagram(ax, mean_times_game_per_team, name_tasks, teams)
     ax.set_title('Mean Time Spend per Game')
     ax.set_ylabel('Mean Task Time (Seconds)')
 
@@ -715,7 +637,7 @@ def drawMeanExecutionTimes(games,teams,save_folder):
             else:
                 mean_times_100.append(100 * times[team][task]['summed_times'] / times[team]['total_points'])
         mean_times_100_per_team.append(mean_times_100)
-    createBarDiagram(ax, mean_times_100_per_team, name_tasks, teams)
+    create_bar_diagram(ax, mean_times_100_per_team, name_tasks, teams)
     ax.set_title('Mean Time Spend per 100 Points')
     ax.set_ylabel('Mean Task Time (Seconds)')
 
@@ -733,7 +655,7 @@ def drawMeanExecutionTimes(games,teams,save_folder):
             else:
                 mean_times.append(times[team][task]['summed_times'] / times[team][task]['amount'])
         mean_times_per_team.append(mean_times)
-    createBarDiagram(ax, mean_times_per_team, name_tasks, teams)
+    create_bar_diagram(ax, mean_times_per_team, name_tasks, teams)
     ax.set_title('Mean Execution Times')
     ax.set_ylabel('Mean Task Time (Seconds)')
 
@@ -741,14 +663,14 @@ def drawMeanExecutionTimes(games,teams,save_folder):
     plt.savefig(save_folder + 'mean_execution_times.pdf')
     plt.close(fig)
 
-def createBarDiagram(ax, values_per_team, x_tick_label, teams):
+def create_bar_diagram(ax, values_per_team, x_tick_label, teams):
     # define bar diagram appearance
     total_bar_width = 0.425
     width = total_bar_width/len(values_per_team)  # the width of the bars
     task_start_x_values = np.arange(0, len(values_per_team[0]))
 
     for ind, values in enumerate(values_per_team):
-        rects = ax.bar(task_start_x_values + width*ind, values, width, label=teams[ind], color=teamColors[ind], alpha=0.8)
+        rects = ax.bar(task_start_x_values + width*ind, values, width, label=teams[ind], color=team_colors[ind], alpha=0.8)
 
         for rect in rects:
             height = rect.get_height()
@@ -761,7 +683,7 @@ def createBarDiagram(ax, values_per_team, x_tick_label, teams):
     ax.legend(loc='upper left')
     ax.set_xticks(task_start_x_values + total_bar_width/2 - width/2, x_tick_label)
 
-def drawMachineActions(games,teams,save_folder):
+def draw_machine_actions(games,teams,save_folder):
     data_available = False
     # create times dict with an entry for each task
     times = dict()
@@ -791,8 +713,8 @@ def drawMachineActions(games,teams,save_folder):
                 elif 'DS' in m_action.name: m_type = 'DS'
                 else: continue
 
-                times[t][m_type]['sum_processing_times'] += m_action.endTime - m_action.startTime
-                times[t][m_type]['sum_rao_times'] += m_action.readyAtOutputTime
+                times[t][m_type]['sum_processing_times'] += m_action.end_time - m_action.start_time
+                times[t][m_type]['sum_rao_times'] += m_action.ready_at_output_time
                 data_available = True
 
     if not data_available: return
@@ -814,7 +736,7 @@ def drawMachineActions(games,teams,save_folder):
 
     # create bardiagram for mean processing times per game
     fig, ax = plt.subplots()
-    createBarDiagram(ax, mean_processing_per_team, machine_types, teams)
+    create_bar_diagram(ax, mean_processing_per_team, machine_types, teams)
     ax.set_title('Machine Processing Times')
     ax.set_ylabel('Processing Time (Seconds)')
 
@@ -824,7 +746,7 @@ def drawMachineActions(games,teams,save_folder):
 
     # create bardiagram for mean ready-at-output times per game
     fig, ax = plt.subplots()
-    createBarDiagram(ax, mean_rao_per_team, ['BS', 'RS', 'CS'], teams)
+    create_bar_diagram(ax, mean_rao_per_team, ['BS', 'RS', 'CS'], teams)
     ax.set_title('Ready-At-Output Times')
     ax.set_ylabel('Ready-At-Output Time (Seconds)')
 
@@ -832,7 +754,7 @@ def drawMachineActions(games,teams,save_folder):
     plt.savefig(save_folder + 'rao_times.pdf')
     plt.close(fig)
 
-def drawTaskOverview(games, save_folder):
+def draw_task_overview(games, save_folder):
     for ind, game in enumerate(games):
         for t in [game.cyan_team_name, game.magenta_team_name]:
             if not t: continue
@@ -876,8 +798,6 @@ def drawTaskOverview(games, save_folder):
             ax.add_patch(box9)
             ax.text(x=-0.4,y=-47.75,s='DS', fontsize=15)
 
-
-
             for task in agent_tasks:
                 data_available = True
                 print_task(ax,task)
@@ -897,91 +817,91 @@ def drawTaskOverview(games, save_folder):
             plt.savefig(save_folder + 'task_overview_' + str(ind) + '_' + t + '.pdf')
 
 def print_machine_action(axis, action):
-    x = action.startTime / 60
-    width = (action.endTime - action.startTime) / 60
+    x = action.start_time / 60
+    width = (action.end_time - action.start_time) / 60
     y = -10 - (machine_names.index(action.name) % 7) * 8
 
     #draw action box
-    box = patches.Rectangle((x,y),width,6,edgecolor='black',fill=True,facecolor=taskColors[5])
+    box = patches.Rectangle((x,y),width,6,edgecolor='black',fill=True,facecolor=task_colors[5])
     axis.add_patch(box)
     box = patches.Rectangle((x,y),width,2,edgecolor='black',fill=False)
     axis.add_patch(box)
 
     #draw task type
     if(width > 0.2):
-        if action.actionType == 'DISPENCE_BASE':
+        if action.action_type == 'DISPENCE_BASE':
             axis.text(x=x+width/2,y=y+4.66,s='DISPENCE', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+3.33,s='BASE', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
-        elif action.actionType == 'RETRIEVED_CAP':
+        elif action.action_type == 'RETRIEVED_CAP':
             axis.text(x=x+width/2,y=y+4.66,s='RETRIEVE', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+3.33,s='CAP', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
-        elif action.actionType == 'MOUNT_CAP':
+        elif action.action_type == 'MOUNT_CAP':
             axis.text(x=x+width/2,y=y+4.66,s='MOUNT', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+3.33,s='CAP', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
-        elif action.actionType == 'MOUNT_RING':
+        elif action.action_type == 'MOUNT_RING':
             axis.text(x=x+width/2,y=y+4.66,s='MOUNT', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+3.33,s='RING', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
         else:
-            axis.text(x=x+width/2,y=y+4,s=action.actionType, fontsize=9,
+            axis.text(x=x+width/2,y=y+4,s=action.action_type, fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
 
 def print_task(axis, task):
-    x = task.startTime / 60
-    width = (task.endTime - task.startTime) / 60
-    y = 24 - (task.robotID - 1) * 12
+    x = task.start_time / 60
+    width = (task.end_time - task.start_time) / 60
+    y = 24 - (task.robot_id - 1) * 12
 
     #draw task box
-    box = patches.Rectangle((x,y),width,10,edgecolor='black',fill=True,facecolor=taskColors[tasks.index(task.taskType)])
+    box = patches.Rectangle((x,y),width,10,edgecolor='black',fill=True,facecolor=task_colors[tasks.index(task.task_type)])
     axis.add_patch(box)
     box = patches.Rectangle((x,y),width,6,edgecolor='black',fill=False)
     axis.add_patch(box)
 
     #draw task type
     if(width > 0.2):
-        if task.taskType == 'EXPLORE_MACHINE':
+        if task.task_type == 'EXPLORE_MACHINE':
             axis.text(x=x+width/2,y=y+8.66,s='EXPLORE', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+7.33,s='MACHINE', fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
         else:
-            axis.text(x=x+width/2,y=y+8,s=task.taskType, fontsize=9,
+            axis.text(x=x+width/2,y=y+8,s=task.task_type, fontsize=9,
                       horizontalalignment='center', verticalalignment='center')
     #draw properties
     if(width > 0.12):
-        if task.taskType == 'EXPLORE_MACHINE':
-            axis.text(x=x+width/2,y=y+4.5,s=task.machineID, fontsize=7.5,
+        if task.task_type == 'EXPLORE_MACHINE':
+            axis.text(x=x+width/2,y=y+4.5,s=task.machine_id, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
-            axis.text(x=x+width/2,y=y+3,s=task.machinePoint, fontsize=7.5,
+            axis.text(x=x+width/2,y=y+3,s=task.machine_point, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
             axis.text(x=x+width/2,y=y+1.5,s=task.waypoint, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
-        elif task.taskType == 'BUFFER':
-            axis.text(x=x+width/2,y=y+4.5,s=task.machineID, fontsize=7.5,
+        elif task.task_type == 'BUFFER':
+            axis.text(x=x+width/2,y=y+4.5,s=task.machine_id, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
-            axis.text(x=x+width/2,y=y+3,s='shelf-' + str(task.shelfNumber), fontsize=7.5,
+            axis.text(x=x+width/2,y=y+3,s='shelf-' + str(task.shelf_number), fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
-            axis.text(x=x+width/2,y=y+1.5,s='order-' + str(task.orderID), fontsize=7.5,
+            axis.text(x=x+width/2,y=y+1.5,s='order-' + str(task.order_id), fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
-        elif task.taskType == 'WAIT':
+        elif task.task_type == 'WAIT':
             return
         else:
-            if task.taskType == 'RETRIEVE':
-                axis.text(x=x+width/2,y=y+4.5,s=task.machineID, fontsize=7.5,
+            if task.task_type == 'RETRIEVE':
+                axis.text(x=x+width/2,y=y+4.5,s=task.machine_id, fontsize=7.5,
                           horizontalalignment='center', verticalalignment='center')
             else:
                 axis.text(x=x+width/2,y=y+4.5,s=task.waypoint, fontsize=7.5,
                           horizontalalignment='center', verticalalignment='center')
-            axis.text(x=x+width/2,y=y+3,s=task.machinePoint, fontsize=7.5,
+            axis.text(x=x+width/2,y=y+3,s=task.machine_point, fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
-            axis.text(x=x+width/2,y=y+1.5,s='order-' + str(task.orderID), fontsize=7.5,
+            axis.text(x=x+width/2,y=y+1.5,s='order-' + str(task.order_id), fontsize=7.5,
                       horizontalalignment='center', verticalalignment='center')
 
 def main():
@@ -1065,30 +985,30 @@ def main():
         action='store_true',
         help=textwrap.dedent('''disable machine action diagrams'''))
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    games = loadData(args.mongodb_uri,
-                     database=args.database,
-                     collection=args.collection,
-                     reports=args.report_names,
-                     use_all=args.use_all_reports)
-    games = closeEndTimes(games)
-    teams = getTeams(games)
-    save_folder = createFolder()
+    games = load_data(args.mongodb_uri,
+                      database=args.database,
+                      collection=args.collection,
+                      reports=args.report_names,
+                      use_all=args.use_all_reports)
+    games = close_end_times(games)
+    teams = get_teams(games)
+    save_folder = create_folder()
     if not args.disable_wait_tasks:
-        addWaitTasks(games)
+        add_wait_tasks(games)
     if not args.disable_task_times:
-        drawTaskTimes(games, teams, save_folder)
+        draw_task_times(games, teams, save_folder)
     if not args.disable_execution_times:
-        drawExecutionTimes(games, teams, save_folder)
+        draw_execution_times(games, teams, save_folder)
     if not args.disable_game_points:
-        drawGamePoints(games, teams, save_folder)
+        draw_game_points(games, teams, save_folder)
     if not args.disable_move_times:
-        drawMoveTimes(games, teams, save_folder)
+        draw_move_times(games, teams, save_folder)
     if not args.disable_mean_times:
-        drawMeanExecutionTimes(games, teams, save_folder)
+        draw_mean_execution_times(games, teams, save_folder)
     if not args.disable_task_overview:
-        drawTaskOverview(games, save_folder)
+        draw_task_overview(games, save_folder)
     if not args.disable_machine_actions:
-        drawMachineActions(games, teams, save_folder)
+        draw_machine_actions(games, teams, save_folder)
 
 if __name__ == '__main__':
     main()
