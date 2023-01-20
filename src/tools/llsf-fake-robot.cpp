@@ -331,80 +331,88 @@ handle_timer(const boost::system::error_code &error)
 		pose_time->set_sec(4);
 		pose_time->set_nsec(5);
 
-		signal->set_number(robot_nr_);
 		signal->set_peer_name(name_);
 		signal->set_team_name(team_name_);
 		signal->set_team_color(team_color_);
 		signal->set_seq(++seq_);
 
-		task->set_task_id(task_id_);
-		task->set_robot_id(robot_nr_);
-		task->set_team_color(team_color_);
+		if (robot_nr_ >= 0) {
+			signal->set_number(robot_nr_);
 
-		if (order_id_ != 0)
-			task->set_order_id(order_id_);
+			task->set_task_id(task_id_);
+			task->set_robot_id(robot_nr_);
+			task->set_team_color(team_color_);
 
-		if (base_col_ != "NONE") {
-			WorkpieceDescription *wp_desc = task->mutable_workpiece_description();
-			if (base_col_ == "BASE_RED")
-				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_RED);
-			else if (base_col_ == "BASE_BLACK")
-				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_BLACK);
-			else if (base_col_ == "BASE_SILVER")
-				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_SILVER);
-			else if (base_col_ == "BASE_CLEAR")
-				wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_CLEAR);
-			else
-				printf("%s is no legal base color!", base_col_.c_str());
+			if (order_id_ != 0)
+				task->set_order_id(order_id_);
 
-			for (std::string col : ring_cols_) {
-				if (col == "RING_BLUE")
-					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_BLUE);
-				else if (col == "RING_GREEN")
-					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_GREEN);
-				else if (col == "RING_ORANGE")
-					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_ORANGE);
-				else if (col == "RING_YELLOW")
-					wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_YELLOW);
-				else if (col != "NONE")
-					printf("%s is no legal ring color!", col.c_str());
+			if (base_col_ != "NONE") {
+				WorkpieceDescription *wp_desc = task->mutable_workpiece_description();
+				if (base_col_ == "BASE_RED")
+					wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_RED);
+				else if (base_col_ == "BASE_BLACK")
+					wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_BLACK);
+				else if (base_col_ == "BASE_SILVER")
+					wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_SILVER);
+				else if (base_col_ == "BASE_CLEAR")
+					wp_desc->set_base_color(llsf_msgs::BaseColor::BASE_CLEAR);
+				else
+					printf("%s is no legal base color!", base_col_.c_str());
+
+				for (std::string col : ring_cols_) {
+					if (col == "RING_BLUE")
+						wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_BLUE);
+					else if (col == "RING_GREEN")
+						wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_GREEN);
+					else if (col == "RING_ORANGE")
+						wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_ORANGE);
+					else if (col == "RING_YELLOW")
+						wp_desc->add_ring_colors(llsf_msgs::RingColor::RING_YELLOW);
+					else if (col != "NONE")
+						printf("%s is no legal ring color!", col.c_str());
+				}
+
+				if (cap_col_ == "CAP_BLACK")
+					wp_desc->set_cap_color(llsf_msgs::CapColor::CAP_BLACK);
+				else if (cap_col_ == "CAP_GREY")
+					wp_desc->set_cap_color(llsf_msgs::CapColor::CAP_GREY);
+				else if (cap_col_ != "NONE")
+					printf("%s is no legal cap color!", cap_col_.c_str());
 			}
 
-			if (cap_col_ == "CAP_BLACK")
-				wp_desc->set_cap_color(llsf_msgs::CapColor::CAP_BLACK);
-			else if (cap_col_ == "CAP_GREY")
-				wp_desc->set_cap_color(llsf_msgs::CapColor::CAP_GREY);
-			else if (cap_col_ != "NONE")
-				printf("%s is no legal cap color!", cap_col_.c_str());
-		}
+			if (task_id_ > 1) {
+				FinishedTask *finished_task = signal->add_finished_tasks();
+				finished_task->set_taskid(task_id_ - 1);
+				finished_task->set_successful(true);
+			}
 
-		if (task_id_ > 1) {
-			FinishedTask *finished_task = signal->add_finished_tasks();
-			finished_task->set_taskid(task_id_ - 1);
-			finished_task->set_successful(true);
-		}
-
-		if (task_type_ == "Move") {
-			Move *move_task = task->mutable_move();
-			move_task->set_waypoint(waypoint_);
-			move_task->set_machine_point(machine_point_);
-		} else if (task_type_ == "Retrieve") {
-			Retrieve *retrieve_task = task->mutable_retrieve();
-			retrieve_task->set_machine_id(machine_id_);
-			retrieve_task->set_machine_point(machine_point_);
-		} else if (task_type_ == "Deliver") {
-			Deliver *deliver_task = task->mutable_deliver();
-			deliver_task->set_machine_point(waypoint_);
-			deliver_task->set_machine_point(machine_point_);
-		} else if (task_type_ == "BufferStation") {
-			BufferStation *buffer_task = task->mutable_buffer();
-			buffer_task->set_machine_id(machine_id_);
-			buffer_task->set_shelf_number(shelf_number_);
-		} else if (task_type_ == "ExploreWaypoint") {
-			ExploreWaypoint *explore_task = task->mutable_explore_machine();
-			explore_task->set_waypoint(waypoint_);
-			explore_task->set_machine_id(machine_id_);
-			explore_task->set_machine_point(machine_point_);
+			if (task_type_ == "Move") {
+				Move *move_task = task->mutable_move();
+				move_task->set_waypoint(waypoint_);
+				move_task->set_machine_point(machine_point_);
+			} else if (task_type_ == "Retrieve") {
+				Retrieve *retrieve_task = task->mutable_retrieve();
+				retrieve_task->set_machine_id(waypoint_); // waypoint = machine_id, in this case
+				retrieve_task->set_machine_point(machine_point_);
+			} else if (task_type_ == "Deliver") {
+				Deliver *deliver_task = task->mutable_deliver();
+				deliver_task->set_machine_id(waypoint_);
+				deliver_task->set_machine_point(machine_point_);
+			} else if (task_type_ == "BufferStation") {
+				BufferStation *buffer_task = task->mutable_buffer();
+				buffer_task->set_machine_id(machine_id_);
+				buffer_task->set_shelf_number(shelf_number_);
+			} else if (task_type_ == "ExploreWaypoint") {
+				ExploreWaypoint *explore_task = task->mutable_explore_machine();
+				explore_task->set_waypoint(waypoint_);
+				explore_task->set_machine_id(machine_id_);
+				explore_task->set_machine_point(machine_point_);
+			}
+		} else {
+			signal->set_number(1);
+			task->set_task_id(0);
+			task->set_robot_id(1);
+			task->set_team_color(team_color_);
 		}
 
 		peer_team_->send(signal);
@@ -419,6 +427,9 @@ usage(const char *progname)
 {
 	printf("Usage: %s <name> <team> <robot-nr> <order-id> <workpiece-colors> <task-type> <task-id> "
 	       "<parameter>\n"
+	       "\n"
+	       " Only <name> <team> are required."
+		   "If AgentTask messages should be send, everything is required."
 	       "\n"
 	       "set order-id to 0 if it should not be send"
 	       "\n"
@@ -440,64 +451,52 @@ main(int argc, char **argv)
 {
 	ArgumentParser argp(argc, argv, "T:");
 
-	if (argp.num_items() < 10) {
+	if (argp.num_items() < 10 && argp.num_items() != 2) {
 		usage(argv[0]);
 		exit(1);
 	}
 
 	name_      = argp.items()[0];
 	team_name_ = argp.items()[1];
-	robot_nr_  = argp.parse_item_int(2);
-	order_id_  = argp.parse_item_int(3);
-	base_col_  = argp.items()[4];
-	for (int i = 0; i < 3; i++) {
-		ring_cols_[i] = argp.items()[5 + i];
-	}
-	cap_col_   = argp.items()[8];
-	task_type_ = argp.items()[9];
-	task_id_   = argp.parse_item_int(10);
+	if (argp.num_items() > 2) {
+		robot_nr_  = argp.parse_item_int(2);
+		order_id_  = argp.parse_item_int(3);
+		base_col_  = argp.items()[4];
+		for (int i = 0; i < 3; i++) {
+			ring_cols_[i] = argp.items()[5 + i];
+		}
+		cap_col_   = argp.items()[8];
+		task_type_ = argp.items()[9];
+		task_id_   = argp.parse_item_int(10);
 
-	if (task_type_ == "Move") {
-		if (argp.num_items() != 13) {
-			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
-			usage(argv[0]);
-			exit(-1);
+		if (task_type_ == "Move" || task_type_ == "Retrieve" || task_type_ == "Deliver") {
+			if (argp.num_items() != 13) {
+				printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
+				usage(argv[0]);
+				exit(-1);
+			}
+			waypoint_      = argp.items()[11];
+			machine_point_ = argp.items()[12];
+		} else if (task_type_ == "BufferStation") {
+			if (argp.num_items() != 13) {
+				printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
+				usage(argv[0]);
+				exit(-1);
+			}
+			machine_id_   = argp.items()[11];
+			shelf_number_ = argp.parse_item_int(12);
+		} else if (task_type_ == "ExploreWaypoint") {
+			if (argp.num_items() != 14) {
+				printf("Wrong number of arguments. Expected 14, got %zu\n", argp.num_items());
+				usage(argv[0]);
+				exit(-1);
+			}
+			waypoint_      = argp.items()[11];
+			machine_id_    = argp.items()[12];
+			machine_point_ = argp.items()[13];
 		}
-		waypoint_      = argp.items()[11];
-		machine_point_ = argp.items()[12];
-	} else if (task_type_ == "Retrieve") {
-		if (argp.num_items() != 13) {
-			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
-			usage(argv[0]);
-			exit(-1);
-		}
-		machine_id_    = argp.items()[11];
-		machine_point_ = argp.items()[12];
-	} else if (task_type_ == "Deliver") {
-		if (argp.num_items() != 13) {
-			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
-			usage(argv[0]);
-			exit(-1);
-		}
-		waypoint_      = argp.items()[11];
-		machine_point_ = argp.items()[12];
-	} else if (task_type_ == "BufferStation") {
-		if (argp.num_items() != 13) {
-			printf("Wrong number of arguments. Expected 13, got %zu\n", argp.num_items());
-			usage(argv[0]);
-			exit(-1);
-		}
-		machine_id_   = argp.items()[11];
-		shelf_number_ = argp.parse_item_int(12);
-	} else if (task_type_ == "ExploreWaypoint") {
-		if (argp.num_items() != 14) {
-			printf("Wrong number of arguments. Expected 14, got %zu\n", argp.num_items());
-			usage(argv[0]);
-			exit(-1);
-		}
-		waypoint_      = argp.items()[11];
-		machine_id_    = argp.items()[12];
-		machine_point_ = argp.items()[13];
+	} else {
+		robot_nr_ = -1; // indicates missing AgentTasks
 	}
 
 	team_color_ = CYAN;
@@ -528,7 +527,6 @@ main(int argc, char **argv)
 
 	MessageRegister &message_register = peer_public_->message_register();
 	message_register.add_message_type<BeaconSignal>();
-	//message_register.add_message_type<AgentTask>();
 	message_register.add_message_type<OrderInfo>();
 	message_register.add_message_type<GameState>();
 	message_register.add_message_type<VersionInfo>();
