@@ -296,13 +296,13 @@ public:
 						// reserve top and bottom zones
 						if (angle != ANGLE_0 && angle != ANGLE_180) {
 							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || angle < ANGLE_180) {
+							    || angle > ANGLE_180) {
 								Gecode::rel(*this,
 								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 								              >> (mps_resource_[x][y - 1][t - 1] == 1));
 							}
 							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || angle > ANGLE_180) {
+							    || angle < ANGLE_180) {
 								Gecode::rel(*this,
 								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 								              >> (mps_resource_[x][y + 1][t - 1] == 1));
@@ -311,46 +311,46 @@ public:
 						// reserve left and right zone
 						if (angle != ANGLE_90 && angle != ANGLE_270) {
 							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || angle < ANGLE_90 || angle > 270) {
-								Gecode::rel(*this,
-								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
-								              >> (mps_resource_[x - 1][y][t - 1] == 1));
-							}
-							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-							    || (angle > ANGLE_90 && angle < 270)) {
+							    || angle < ANGLE_90 || angle > ANGLE_270) {
 								Gecode::rel(*this,
 								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 								              >> (mps_resource_[x + 1][y][t - 1] == 1));
 							}
-						}
-					}
-					// reserve top left and bottom right zone
-					for (int angle : {ANGLE_45, ANGLE_225}) {
-						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-						    || angle != ANGLE_225) {
-							Gecode::rel(*this,
-							            ((mps_angle_[index(x, y)] == ANGLE_45) && (mps_type_[index(x, y)] == t))
-							              >> (mps_resource_[x + 1][y + 1][t - 1] == 1));
-						}
-						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-						    || angle != ANGLE_45) {
-							Gecode::rel(*this,
-							            ((mps_angle_[index(x, y)] == ANGLE_45) && (mps_type_[index(x, y)] == t))
-							              >> (mps_resource_[x - 1][y - 1][t - 1] == 1));
+							if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
+							    || (angle > ANGLE_90 && angle < ANGLE_270)) {
+								Gecode::rel(*this,
+								            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
+								              >> (mps_resource_[x - 1][y][t - 1] == 1));
+							}
 						}
 					}
 					// reserve top right and bottom left zone
+					for (int angle : {ANGLE_45, ANGLE_225}) {
+						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
+						    || angle == ANGLE_45) {
+							Gecode::rel(*this,
+							            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
+							              >> (mps_resource_[x + 1][y + 1][t - 1] == 1));
+						}
+						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
+						    || angle == ANGLE_225) {
+							Gecode::rel(*this,
+							            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
+							              >> (mps_resource_[x - 1][y - 1][t - 1] == 1));
+						}
+					}
+					// reserve top left and bottom right zone
 					for (int angle : {ANGLE_135, ANGLE_315}) {
 						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-						    || angle != ANGLE_135) {
+						    || angle == ANGLE_315) {
 							Gecode::rel(*this,
-							            ((mps_angle_[index(x, y)] == ANGLE_45) && (mps_type_[index(x, y)] == t))
+							            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 							              >> (mps_resource_[x - 1][y + 1][t - 1] == 1));
 						}
 						if (std::find(input_only_mps.begin(), input_only_mps.end(), t) == input_only_mps.end()
-						    || angle != ANGLE_315) {
+						    || angle == ANGLE_135) {
 							Gecode::rel(*this,
-							            ((mps_angle_[index(x, y)] == ANGLE_45) && (mps_type_[index(x, y)] == t))
+							            ((mps_angle_[index(x, y)] == angle) && (mps_type_[index(x, y)] == t))
 							              >> (mps_resource_[x + 1][y - 1][t - 1] == 1));
 						}
 					}
