@@ -118,7 +118,7 @@ def load_data(mongodb_uri,
         all_reports = collection.find({})
     else:
         if not reports:
-            all_reports = collection.find().limit(1).sort([('$natural',-1)])
+            all_reports = collection.find({}).sort('start-time', pymongo.DESCENDING).limit(1)
         else:
             query= {"$or": []}
             for report in reports:
@@ -258,9 +258,13 @@ def load_data(mongodb_uri,
                           and actions[t][ind+2]["state"] == 'PROCESSED'
                           and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
                         performed_task = 'RETRIEVED_CAP'
-                        if "meta-fact" in actions[t][ind+1] and actions[t][ind+1]["meta-fact"]["cs-operation"] == 'MOUNT_CAP':
+                        if ("meta-fact" in actions[t][ind+1]
+                          and "cs-operation" in actions[t][ind+1]["meta-fact"]
+                          and actions[t][ind+1]["meta-fact"]["cs-operation"] == 'MOUNT_CAP'):
                             performed_task = 'MOUNT_CAP'
-                        elif "machine-fact" in actions[t][ind+1] and actions[t][ind+1]["machine-fact"]["cs-operation"] == 'MOUNT_CAP':
+                        elif ("machine-fact" in actions[t][ind+1]
+                          and "cs-operation" in actions[t][ind+1]["machine-fact"]
+                          and actions[t][ind+1]["machine-fact"]["cs-operation"] == 'MOUNT_CAP'):
                             performed_task = 'MOUNT_CAP'
                         rao_stop = game_length - actions[t][ind+3]["game-time"]
                         if (len(actions[t]) > ind+4):
