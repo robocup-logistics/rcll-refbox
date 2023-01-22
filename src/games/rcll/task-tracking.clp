@@ -43,7 +43,9 @@
                                           (or (neq ?wp:base-color ?base-color)
                                               (neq ?wp:ring-colors $?ring-color)
                                               (neq ?wp:cap-color ?cap-color)))
-        (printout ?*AGENT-TASK-ROUTER* "workpiece (" ?wp:base-color " " ?wp:ring-colors " " ?wp:cap-color ") " (fact-index ?wp) "  not matching (" ?base-color " " $?ring-color " " ?cap-color ")"  crlf)
+        (printout ?*AGENT-TASK-ROUTER* "workpiece (" ?wp:base-color " " ?wp:ring-colors " "
+                  ?wp:cap-color ") " (fact-index ?wp) "  not matching (" ?base-color " "
+                  $?ring-color " " ?cap-color ")"  crlf)
         (bind ?wp-name ?wp:name)
         ; create unknown action for changing colors
         (duplicate ?wp (latest-data FALSE)
@@ -118,7 +120,7 @@
   (printout ?*AGENT-TASK-ROUTER* "Retrieve received" crlf)
   (bind ?wp-name nil)
 
-  ; if robot is not at the right place, ensure it with an unknown-action
+  ; if robot is not at the right place, fill in the gab in the action trace with an unknown move action
   (if (or (neq ?next-at ?machine-id)
           (neq ?next-side ?machine-point)) then
     (printout ?*AGENT-TASK-ROUTER* "robot expected to be at ("?machine-id " " ?machine-point "), but is at (" ?next-at " " ?next-side ")" crlf)
