@@ -506,6 +506,7 @@
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
 	(not (mongodb-game-report (start $?stime) (name ?report-name)))
+	(game-parameters (is-parameterized TRUE))
 	=>
 	(assert (mongodb-game-report (start ?stime) (name ?report-name)))
 	(bind ?doc (mongodb-create-game-report ?teams ?stime ?etime ?report-name))
@@ -517,6 +518,18 @@
 		(bson-builder-destroy ?ring-spec-doc)
 	)
 	(bson-array-finish ?doc "ring-specs" ?m-arr)
+	(bind ?m-arr (bson-array-start))
+	(foreach ?m-type (deftemplate-slot-allowed-values machine mtype)
+		; for some reason clips crashes, if the meta-fact-name is passed
+		; on-the-fly. Therefore, store it via bind first.
+		(bind ?meta-fact-name (sym-cat (lowcase ?m-type -meta)))
+		(do-for-all-facts ((?meta-f ?meta-fact-name)) TRUE
+			(bind ?meta-doc (mongodb-fact-to-bson ?meta-f))
+			(bson-array-append ?m-arr ?meta-doc)
+			(bson-builder-destroy ?meta-doc)
+		)
+	)
+	(bson-array-finish ?doc "machine-meta" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine-ss-shelf-slot)) TRUE
 		(bind ?ss-doc (mongodb-fact-to-bson ?m))
@@ -757,11 +770,15 @@
 	                                              "machines"
 	                                              machine
 	                                              name
-	                                              (create$ down-period rs-ring-colors))
+	                                              (create$ down-period))
 	         (mongodb-load-facts-from-game-report ?report-name
 	                                              "ring-specs"
 	                                              ring-spec
 	                                              color))
+	         (mongodb-load-facts-from-game-report ?report-name
+	                                              "machine-meta"
+	                                              rs-meta
+	                                              name))
 	 then
 		(printout t "Loading machine-setup finished" crlf)
 		(modify ?gp (machine-setup STATIC))
