@@ -16,6 +16,25 @@
 #
 #  Read the full text in the LICENSE.GPL file in the doc directory.
 
+# This script is used to simulate an agent building a C1 by sending Protobuf messages (Beacon Signals) including
+# Agent Task messages, which inform the Refbox about the currently executing tasks by the simulated agent, and
+# prepare-machine actions. It uses the fake-robot script for sending the Protobuf messages. The script can be
+# found in /src/tools.
+
+# The input parameters are the following:
+#   <name> <team> <robot-nr> <order-id> <workpiece-colors> <task-type> <task-id> where
+#   workpiece-colors are specified as <base-color> <ring1-color> <ring2-color> <ring3-color> <cap-color>
+# parameter are specific for the agent-task type:
+#   Move:  <waypoint> <machine_point>
+#   Retrieve:  <machine_id> <machine_point>
+#   Deliver:  <waypoint> <machine_point>
+#   BufferStation:  <machine_id> <shelf_number>
+#   ExploreWaypoint:  <waypoint> <machine_id> <machine_point>
+
+# This script may help to understand how to build a C1, which messages to send to do so, and when to send Agent Task
+# messages.
+
+
 #R1 prepare cap
 ./llsf-fake-robot bot-1 Carologistics 1 3 NONE NONE NONE NONE NONE Move 1 C-CS1 INPUT & sleep 8 ; kill $!
 ./llsf-fake-robot bot-1 Carologistics 1 3 BASE_CLEAR NONE NONE NONE CAP_GREY BufferStation 2 C-CS1 1 & sleep 8 ; kill $!
