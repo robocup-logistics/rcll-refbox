@@ -154,6 +154,8 @@
   (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+   ; next-at and next-side show the position of the bot after the current AgentTask is
+   ; finished successfully
   (slot next-at (type SYMBOL) (allowed-values M-BS M-BS
                                               M-RS1 M-RS1
                                               M-RS2 M-RS2
