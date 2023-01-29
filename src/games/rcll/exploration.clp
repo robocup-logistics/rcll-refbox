@@ -266,6 +266,7 @@
 	       (time $?t&:(timeout ?now ?t ?*BC-MACHINE-REPORT-INFO-PERIOD*)) (seq ?seq))
 	(network-peer (group CYAN) (id ?peer-id-cyan))
 	(network-peer (group MAGENTA) (id ?peer-id-magenta))
+	(machine-generation (state FINISHED))
 	=>
 	(modify ?sf (time ?now) (seq (+ ?seq 1)))
 
