@@ -569,7 +569,7 @@
   ; the actual order we are delivering
   (order (id ?o-id) (active TRUE) (delivery-period $?dp&:(< ?game-time (nth$ 1 ?dp))))
 	=>
-  (modify ?pf (scored TRUE))
+	(modify ?pf (scored TRUE))
 	(printout warn "Delivered item for order " ?o-id " (too soon, before time window)" crlf)
 
 	(assert (points (game-time ?game-time) (points 0)
