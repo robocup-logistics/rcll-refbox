@@ -133,6 +133,7 @@
   (slot state (type SYMBOL) (default NOT-STARTED)
     (allowed-values NOT-STARTED STARTED FINISHED ABORTED))
   (slot generation-state-last-checked (type FLOAT))
+  (slot generation-state-check-count (type INTEGER) (default 0))
 )
 
 (deftemplate mirror-orientation

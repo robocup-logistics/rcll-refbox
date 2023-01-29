@@ -291,7 +291,9 @@
 (defrule game-mps-solver-check
   "check if the solver is finished"
   (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME) (game-time ?gt))
-  ?mg <- (machine-generation (state STARTED) (generation-state-last-checked ?gs&:(timeout-sec ?gt ?gs ?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE*)))
+  ?mg <- (machine-generation (state STARTED)
+         (generation-state-last-checked ?gs&:(timeout-sec ?gt ?gs ?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE*))
+         (generation-state-check-count ?gc))
   =>
   (if (and (not (mps-generator-running)) (mps-generator-field-generated))
    then
@@ -299,8 +301,18 @@
     (modify ?mg (state FINISHED))
    else
     (printout warn "waiting for the generation of the machine positions" crlf)
-    (modify ?mg (generation-state-last-checked ?gt))
+    (modify ?mg (generation-state-last-checked ?gt) (generation-state-check-count (+ ?gc 1)))
   )
+)
+
+(defrule game-mps-solver-abort
+  "Tried for five time-out durations, assume generation failed, reset."
+  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME) (game-time ?gt))
+  (machine-generation (state STARTED)
+         (generation-state-check-count ?gc&:(> ?gc 5)))
+  =>
+  (printout warn "couldn't generate machine positions, resetting" crlf)
+  (assert (game-reset))
 )
 
 (defrule game-parameterize
@@ -637,7 +649,7 @@
 	(assert (game-parameters))
 	; Reset machine generation
 	(do-for-fact ((?mg machine-generation)) TRUE
-		(modify ?mg (state NOT-STARTED))
+		(modify ?mg (state NOT-STARTED) (generation-state-check-count 0))
 	)
 	; Print machines again
 	(do-for-fact ((?mp machines-printed)) TRUE
