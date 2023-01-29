@@ -192,6 +192,7 @@
                 (base-color ?base-color)
                 (ring-colors $?ring-colors))
   (workpiece (id ?wp-id)
+             (latest-data TRUE)
              (team ?team)
              (base-color ?base-color)
              (ring-colors $?ring-colors))
@@ -199,9 +200,10 @@
   (workpiece-tracking (enabled TRUE))
   (not (and
       (workpiece (team ?team)
-                  (base-color ?base-color)
-                  (ring-colors $?ring-colors)
-                  (id ?wpp-id&:(neq ?wpp-id ?wp-id)))
+                 (latest-data TRUE)
+                 (base-color ?base-color)
+                 (ring-colors $?ring-colors)
+                 (id ?wpp-id&:(neq ?wpp-id ?wp-id)))
       (product-processed (workpiece ?wpp-id) (mtype CS) (confirmed FALSE)))
   )
   =>
@@ -225,11 +227,12 @@
 
 
 (defrule order-delivery-confirmation-referee-confirmed-workpiece-rectify
-  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece ?workpiece-id) (game-time ?delivery-time))
-  ?wf <- (workpiece (id ?workpiece-id)
+  ?wf <- (workpiece (id ?workpiece-id&~0)
+                    (latest-data TRUE)
                     (order ?workpiece-order)
                     (cap-color ?workpiece-cap)
                     (base-color ?workpiece-base)
@@ -237,82 +240,184 @@
   ?of <- (order (id ?order)
                 (active TRUE)
                 (cap-color ?order-cap)
-	           (base-color ?order-base)
+                (base-color ?order-base)
                 (ring-colors $?order-rings))
-
-  (test (or (neq ?workpiece-order ?order)
-            (neq ?workpiece-cap ?order-cap)
-            (neq ?workpiece-base $?order-base)
-            (neq $?workpiece-rings $?order-rings)))
+  (not (rectified ?workpiece-id))
   =>
-  (printout t "Verifying operations performed on workpiece " ?workpiece-id  crlf)
+  (printout t "Verifying unconfirmed operations performed on workpiece " ?workpiece-id  crlf)
+  ; rectify base color
+  ; information on workpiece is known:
+  (bind ?base-needs-rectify TRUE)
+  (do-for-fact ((?pd product-processed))
+               (and (eq ?pd:mtype BS)
+                    (eq ?pd:workpiece ?workpiece-id)
+               )
+               (if (neq ?pd:base-color ?order-base) then
+                 (printout warn "Product processed with " ?pd:base-color " but the workpiece needed " ?order-base  crlf)
+               )
+               (modify ?pd (base-color ?order-base) (order ?order) (confirmed TRUE))
+               (bind ?base-needs-rectify FALSE)
+  )
   (if (neq ?workpiece-base ?order-base) then
-    (if (not (do-for-fact ((?pd product-processed))
-                          (and (eq ?pd:mtype BS)
-                               (eq ?pd:workpiece ?workpiece-id)
-                               (eq ?pd:base-color ?workpiece-base))
-                          (modify ?pd (base-color ?order-base) (confirmed TRUE))
-                          TRUE))
-      then
-      (assert (product-processed (mtype BS)
-                                 (team ?team)
-                                 (order ?order)
-                                 (confirmed TRUE)
-                                 (workpiece ?workpiece-id)
-                                 (game-time ?delivery-time)
-                                 (base-color ?order-base)))
-    )
     (printout t "Rectifying workpiece " ?workpiece-id ": operation at BS [" ?workpiece-base
                  "->" ?order-base "]"  crlf)
+    (if ?base-needs-rectify
+      then ; Some unconfirmed and isolated operation dispensed a wp with the correct color
+      (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
+                 (and (eq ?pd:mtype BS)
+                      (eq ?o-wp:id ?pd:workpiece)
+                      (neq ?pd:workpiece ?workpiece-id)
+                      (eq ?pd:base-color ?order-base)
+                      (eq ?pd:confirmed FALSE)
+                      ?o-wp:latest-data
+                      (eq ?o-wp:base-color ?order-base)
+                      ; no other info is set
+                      ; ideally partial wp information could be used, but this
+                      ; gets complicated when the correct partial wp
+                      ; information should be chosen, so we only cover the
+                      ; simplest case
+                      (eq ?o-wp:cap-color nil)
+                      (eq ?o-wp:ring-colors (create$))
+                 )
+                 (printout t "Mapping unconfirmed operation: operation at BS [" ?o-wp:id "(" ?o-wp:name ")"
+                             "->" ?workpiece-id "]"  crlf)
+                 (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
+                   (modify ?all-p (workpiece ?workpiece-id) (confirmed TRUE) (order ?order))
+                 )
+                 (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
+                   (modify ?all-wp (id ?workpiece-id) (order ?order) (latest-data FALSE))
+                 )
+        TRUE))
+        then ; No known operation produced the wp, add it anyways as it was confirmed
+        (printout warn "No prior unconfirmed processing step at BS, creating new one" crlf)
+        (assert (product-processed (mtype BS)
+                                   (team ?team)
+                                   (order ?order)
+                                   (confirmed TRUE)
+                                   (workpiece ?workpiece-id)
+                                   (game-time ?delivery-time)
+                                   (base-color ?order-base)))
+      )
+    )
+  )
+  ; rectify cap color
+  ; information on workpiece is known:
+  (bind ?cap-needs-rectify TRUE)
+  (do-for-fact ((?pd product-processed))
+               (and
+                    (eq ?pd:mtype CS)
+                    (eq ?pd:workpiece ?workpiece-id)
+               )
+               (if (neq ?pd:cap-color ?order-cap) then
+                 (printout warn "Product processed with " ?pd:cap-color " but the workpiece needed " ?order-cap  crlf)
+               )
+               (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
+               (bind ?cap-needs-rectify FALSE)
   )
   (if (neq ?workpiece-cap ?order-cap) then
-    (if (not (do-for-fact ((?pd product-processed))
-                          (and
-                               (eq ?pd:mtype CS)
-                               (eq ?pd:workpiece ?workpiece-id)
-                               (eq ?pd:cap-color ?workpiece-cap))
-                          (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
-                          TRUE))
-      then
-      (assert (product-processed (mtype CS)
-                                 (team ?team)
-                                 (scored FALSE)
-                                 (confirmed TRUE)
-                                 (workpiece ?workpiece-id)
-                                 (game-time ?delivery-time)
-                                 (cap-color ?order-cap)))
-    )
     (printout t "Rectifying workpiece " ?workpiece-id ": operation at CS [" ?workpiece-cap
                  "->" ?order-cap "]"  crlf)
-  )
-  (if (neq ?order-rings ?workpiece-rings) then
-    (progn$ (?order-ring ?order-rings)
-       (bind ?workpiece-ring (nth$ ?order-ring-index ?workpiece-rings))
-       (if (neq ?workpiece-ring ?order-ring) then
-         (if (not (do-for-fact ((?pd product-processed))
-                          (and (eq ?pd:mtype RS)
-                               (eq ?pd:workpiece ?workpiece-id)
-                               (eq ?pd:ring-color ?workpiece-ring))
-                          (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
-                          TRUE))
-            then
-            (assert (product-processed (mtype RS)
-                                       (team ?team)
-                                       (scored FALSE)
-                                       (confirmed TRUE)
-                                       (workpiece ?workpiece-id)
-                                       (game-time ?delivery-time)
-                                       (ring-color ?order-ring)))
-         )
-         (printout t "Rectifying workpiece " ?workpiece-id ": operation at RS [" ?workpiece-ring
-                     "->" ?order-ring "]"  crlf)
-       )
+    (if ?cap-needs-rectify then
+      ; Some unconfirmed operation mounted a cap with matching ord unknown color
+      (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
+                 (and (eq ?pd:mtype CS)
+                      (eq ?o-wp:id ?pd:workpiece)
+                      (neq ?pd:workpiece ?workpiece-id)
+                      (or (eq ?pd:cap-color ?order-cap)
+                          (eq ?pd:cap-color CAP_UNKNOWN)
+                      )
+                      (eq ?pd:confirmed FALSE)
+                      ?o-wp:latest-data
+                      (eq ?o-wp:cap-color ?pd:cap-color)
+                      (eq ?o-wp:base-color nil)
+                      (eq (create$ ?o-wp:ring-colors) (create$))
+                 )
+                 (printout t "Mapping unconfirmed operation: operation at CS [" ?o-wp:id "(" ?o-wp:name ")"
+                             "->" ?workpiece-id "]"  crlf)
+                 (modify ?pd (cap-color ?order-cap))
+                 (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
+                   (modify ?all-p (workpiece ?workpiece-id) (confirmed TRUE) (order ?order))
+                 )
+                 (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
+                   (modify ?all-wp (id ?workpiece-id) (order ?order) (latest-data FALSE))
+                 )
+        TRUE))
+        then ; No known operation produced the wp, add it anyways as it was confirmed
+          (printout warn "No prior unconfirmed processing step at CS, creating new one" crlf)
+          (assert (product-processed (mtype CS)
+                                     (team ?team)
+                                     (scored FALSE)
+                                     (confirmed TRUE)
+                                     (order ?order)
+                                     (at-machine (sym-cat (sub-string 1 1 ?team) -CS1))
+                                     (workpiece ?workpiece-id)
+                                     (game-time ?delivery-time)
+                                     (base-color ?order-base)
+                                     (cap-color ?order-cap)))
+      )
     )
-    ;Retrigger all rings score calculation if a single one is worng
-    (do-for-all-facts ((?pd product-processed)) (and (eq ?pd:workpiece ?workpiece-id)
-                                                     (eq ?pd:scored TRUE)
-                                                     (eq ?pd:mtype RS))
-                    (modify ?pd (scored FALSE)))
+  )
+  ; information on workpiece is known:
+  (progn$ (?order-ring ?order-rings)
+    (bind ?workpiece-ring (nth$ ?order-ring-index ?workpiece-rings))
+    (bind ?ring-needs-rectify TRUE)
+    (do-for-fact ((?pd product-processed))
+            (and (eq ?pd:mtype RS)
+                 (eq ?pd:workpiece ?workpiece-id)
+                 (not ?pd:confirmed))
+            (if (neq ?pd:ring-color ?order-ring) then
+              (printout warn "Product processed with " ?pd:ring-color " but the workpiece needed " ?order-ring " (ring " ?order-ring-index")"  crlf)
+            )
+            (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
+            (bind ?ring-needs-rectify FALSE)
+    )
+    (if (neq ?workpiece-ring ?order-ring) then
+      (printout t "Rectifying workpiece " ?workpiece-id ": operation at RS [" ?workpiece-ring
+                  "->" ?order-ring "]"  crlf)
+      (if ?ring-needs-rectify
+        then ; Some unconfirmed operation mounted a cap with the correct color
+        (if (not (do-for-fact ((?pd product-processed) (?o-wp workpiece))
+                   (and (eq ?pd:mtype RS)
+                        (eq ?o-wp:id ?pd:workpiece)
+                        (neq ?pd:workpiece ?workpiece-id)
+                        (eq ?pd:ring-color ?order-ring)
+                        (eq ?pd:confirmed FALSE)
+                        ?o-wp:latest-data
+                        (eq (create$ ?o-wp:ring-colors) (create$ ?order-ring))
+                        (eq ?o-wp:base-color nil)
+                        (eq ?o-wp:cap-color nil)
+                        ; ring color matches
+                        (eq ?order-ring-index (nth$ 1 (create$ (member$ ?o-wp:ring-colors ?order-rings))))
+                   )
+                   (printout t "Mapping unconfirmed operation: operation at RS [" ?o-wp:id "(" ?o-wp:name ")"
+                               "->" ?workpiece-id "]"  crlf)
+                   (delayed-do-for-all-facts ((?all-p product-processed)) (eq ?all-p:workpiece ?o-wp:id)
+                     (modify ?all-p (workpiece ?workpiece-id) (confirmed TRUE) (order ?order))
+                   )
+                   (delayed-do-for-all-facts ((?all-wp workpiece)) (eq ?all-wp:id ?o-wp:id)
+                     (modify ?all-wp (id ?workpiece-id) (order ?order) (latest-data FALSE))
+                   )
+                   TRUE))
+          then ; No known operation produced the wp, add it anyways as it was confirmed
+          (printout warn "No prior unconfirmed processing step at RS, creating new one" crlf)
+          (assert (product-processed (mtype RS)
+                                     (team ?team)
+                                     (scored FALSE)
+                                     (confirmed TRUE)
+                                     (order ?order)
+                                     (workpiece ?workpiece-id)
+                                     (game-time ?delivery-time)
+                                     (base-color ?order-base)
+                                     (ring-color ?order-ring)))
+        )
+      )
+      ;Retrigger all rings score calculation if a single one is worng
+      (do-for-all-facts ((?pd product-processed)) (and (eq ?pd:workpiece ?workpiece-id)
+                                                       (eq ?pd:scored TRUE)
+                                                       (eq ?pd:mtype RS))
+                      (modify ?pd (scored FALSE))
+      )
+    )
   )
   (if (neq ?workpiece-order ?order) then
      (printout t "Rectifying workpiece " ?workpiece-id ": order ID corrected [" ?workpiece-order
@@ -325,7 +430,18 @@
      (printout t "Rectifying workpiece " ?workpiece-id ": removing old delivery operation for order " ?pd:order  crlf)
      (retract ?pd)
   )
-  (modify ?wf (order ?order) (base-color ?order-base) (cap-color ?order-cap) (ring-colors ?order-rings))
+  (if (duplicate ?wf (start-time ?gt)
+                 (order ?order)
+                 (base-color ?order-base)
+                 (cap-color ?order-cap)
+                 (team ?team)
+                 (ring-colors ?order-rings))
+   then
+     (modify ?wf (latest-data FALSE) (end-time ?gt))
+   else
+     (modify ?wf (end-time ?gt))
+  )
+  (assert (rectified ?workpiece-id))
 )
 
 (defrule order-delivery-confirmation-referee-confirmed-workpiece-verified
@@ -334,6 +450,7 @@
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece ?wp-id) (game-time ?delivery-time))
   ?wf <- (workpiece (id ?wp-id)
+                    (latest-data TRUE)
                     (order ?order)
                     (cap-color ?cap-color)
                     (base-color ?base-color)
@@ -341,11 +458,11 @@
   ?of <- (order (id ?order)
                 (active TRUE)
                 (cap-color ?cap-color)
-	           (base-color ?base-color)
+                (base-color ?base-color)
                 (ring-colors $?ring-colors))
    =>
   (printout t "Workpiece " ?wp-id  " verified for order " ?order crlf)
-  (modify ?pf (workpiece ?wp-id) (confirmed TRUE))
+  (modify ?pf (confirmed TRUE))
   (retract ?rf)
 )
 
@@ -358,7 +475,7 @@
 	                          (confirmed TRUE))
 	(not (product-processed (game-time ?other-delivery&:(< ?other-delivery ?delivery-time))
 	                        (scored FALSE) (mtype DS)))
-  (workpiece (id ?wp-id) (order ?id))
+  (workpiece (id ?wp-id) (order ?id) (latest-data TRUE))
   ; the actual order we are delivering
   ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (competitive ?competitive)
 	        (delivery-gate ?dgate&:(or (eq ?gate 0) (eq ?gate ?dgate)))
@@ -425,7 +542,7 @@
                             (id ?p-id)  (workpiece ?wp-id) (order ?o-id)
                             (scored FALSE) (confirmed TRUE)
                             (delivery-gate ?gate))
-  (workpiece (id ?wp-id) (order ?o-id))
+  (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
   ; the actual order we are delivering
   (order (id ?o-id) (active TRUE) (delivery-gate ?dgate&~?gate&:(neq ?gate 0)))
 	=>
@@ -443,7 +560,7 @@
   ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
                             (id ?p-id) (order ?o-id) (workpiece ?wp-id)
                             (scored FALSE) (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?o-id))
+  (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
   ; the actual order we are delivering
   (order (id ?o-id) (active TRUE) (delivery-period $?dp&:(< ?game-time (nth$ 1 ?dp))))
 	=>
@@ -461,7 +578,7 @@
   ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
                             (id ?p-id) (order ?o-id) (workpiece ?wp-id)
                             (scored FALSE) (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?o-id))
+  (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
   ; the actual order we are delivering
   ?of <- (order (id ?o-id) (active TRUE) (quantity-requested ?q-req)
 								(quantity-delivered $?q-del&:(>= (order-q-del-team ?q-del ?team) ?q-req)))
@@ -514,6 +631,7 @@
                             (cap-color ?step-c-color)
                             (ring-color ?step-r-color&~nil))
   (workpiece (id ?w-id)
+             (latest-data TRUE)
              (team ?team)
              (order ?o-id)
              (base-color ?base-color)
@@ -522,7 +640,7 @@
   (order (id ?o-id)
          (complexity ?complexity)
          (quantity-requested ?q-req)
-         (delivery-period $?dp &:(<= ?g-time (nth$ 2 ?dp)))
+         (delivery-period $?dp)
          (base-color ?base-color)
          (ring-colors $?r-colors&:(eq ?wp-r-colors
                                       (subseq$ ?r-colors 1 (length$ ?wp-r-colors)))))
@@ -532,76 +650,96 @@
    =>
   ; Production points for ring color complexities
   (bind ?points 0)
-    (switch ?cc
-        (case 0 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC0-STEP*))
-        (case 1 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC1-STEP*))
-        (case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*)))
-    (assert (points (phase PRODUCTION) (game-time ?g-time) (team ?team)
-                    (points ?points) (product-step ?p-id)
-                    (reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
-                                       " for order " ?o-id))))
-    ; Production points for mounting the last ring (pre-cap points)
-    (bind ?complexity-num (length$ ?r-colors))
-    (if (eq (nth$ ?complexity-num ?r-colors) ?step-r-color)
-    then
-    (bind ?pre-cap-points 0)
+  (bind ?reason (str-cat "Mounted CC" ?cc " ring of CC" ?cc
+                                     " for order " ?o-id))
+  (switch ?cc
+      (case 0 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC0-STEP*))
+      (case 1 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC1-STEP*))
+      (case 2 then (bind ?points ?*PRODUCTION-POINTS-FINISH-CC2-STEP*)))
+  (if (> ?g-time (nth$ 2 ?dp)) then
+    (if (config-get-bool "/llsfrb/workpiece-tracking/enable") then (bind ?points 0))
+    (bind ?reason (str-cat ?reason " Late (deadline: " (nth$ 2 ?dp) ")"))
+  )
+  (assert (points (phase PRODUCTION) (game-time ?g-time) (team ?team)
+                  (points ?points) (product-step ?p-id)
+                  (reason ?reason)))
+  ; Production points for mounting the last ring (pre-cap points)
+  (bind ?complexity-num (length$ ?r-colors))
+  (bind ?col-count 0)
+  (progn$ (?col ?r-colors)
+    (if (eq ?col ?step-r-color) then (bind ?col-count (+ ?col-count 1)))
+  )
+  (if (and (eq (nth$ ?complexity-num ?r-colors) ?step-r-color)
+           ; the ring color is unique
+           ; or this is the last processing step of that color for this wp
+           (or (eq ?complexity-num (member$ ?step-r-color ?wp-r-colors))
+               (eq (- ?col-count 1) (length$ (find-all-facts ((?o-pd product-processed))
+                      (and (eq ?o-pd:workpiece ?w-id)
+                           (eq ?o-pd:scored TRUE)
+                      )))
+      )))
+   then
+    (bind ?pre-cap-reason (str-cat "Mounted last ring for complexity "
+                                   ?complexity " order " ?o-id))
     (switch ?complexity
       (case C1 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C1-PRECAP*))
       (case C2 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C2-PRECAP*))
       (case C3 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C3-PRECAP*))
     )
-        (assert (points (game-time ?g-time) (points ?pre-cap-points)
-                        (team ?team) (phase PRODUCTION) (product-step ?p-id)
-                        (reason (str-cat "Mounted last ring for complexity "
-                                          ?complexity " order " ?o-id))))
+    (if (> ?g-time (nth$ 2 ?dp)) then
+      (if (config-get-bool "/llsfrb/workpiece-tracking/enable") then (bind ?pre-cap-points 0))
+      (bind ?pre-cap-reason (str-cat ?pre-cap-reason " Late (deadline: " (nth$ 2 ?dp) ")"))
+    )
+    (assert (points (game-time ?g-time) (points ?pre-cap-points)
+                    (team ?team) (phase PRODUCTION) (product-step ?p-id)
+                    (reason ?pre-cap-reason)))
   )
   (modify ?pf (scored TRUE) (order ?o-id))
 )
 
 (defrule order-step-mount-cap
-    "Production points for mounting a cap on an intermediate product "
-    ?pf <- (product-processed (id ?p-id)
-                              (mtype CS)
-                              (team ?team)
-                              (scored FALSE)
-                              (confirmed TRUE)
-                              (workpiece ?w-id)
-                              (game-time ?g-time)
-                              (at-machine ?m-name)
-                              (base-color ?step-b-color)
-                              (ring-color ?step-r-color)
-                              (cap-color ?step-c-color&~nil))
-    (workpiece (id ?w-id)
-               (team ?team)
-               (order ?o-id)
-               (base-color ?base-color)
-               (ring-colors $?ring-colors)
-               (cap-color ?cap-color&:(eq ?cap-color ?step-c-color)))
-    (order (id ?o-id)
-           (complexity ?complexity)
-           (quantity-requested ?q-req)
-           (delivery-period $?dp)
-           (base-color ?base-color)
-           (ring-colors $?ring-colors)
-           (cap-color ?cap-color))
-    (not (points (product-step ?p-id)))
-    (test (order-step-scoring-allowed ?o-id ?team ?q-req CS ?step-b-color ?step-r-color ?step-c-color))
-     =>
-     ; Production points for mounting the cap
-     (bind ?reason "")
-     (bind ?points 0)
-     (if (<= ?g-time (nth$ 2 ?dp)) then
-       (bind ?reason (str-cat "Mounted cap for order " ?o-id))
-       (bind ?points ?*PRODUCTION-POINTS-MOUNT-CAP*)
-      else
-       (bind ?reason (str-cat "Late cap mount for order " ?o-id " (deadline: " (nth$ 2 ?dp) ")"))
-       (bind ?points 0)
-     )
-     (assert (points (game-time ?g-time) (team ?team)
-                     (points ?points)
-                     (phase PRODUCTION) (product-step ?p-id)
-                     (reason ?reason)))
-     (modify ?pf (scored TRUE) (order ?o-id))
+  "Production points for mounting a cap on an intermediate product "
+  ?pf <- (product-processed (id ?p-id)
+                            (mtype CS)
+                            (team ?team)
+                            (scored FALSE)
+                            (confirmed TRUE)
+                            (workpiece ?w-id)
+                            (game-time ?g-time)
+                            (at-machine ?m-name)
+                            (base-color ?step-b-color)
+                            (ring-color ?step-r-color)
+                            (cap-color ?step-c-color&~nil))
+  (workpiece (id ?w-id)
+             (latest-data TRUE)
+             (team ?team)
+             (order ?o-id)
+             (base-color ?base-color)
+             (ring-colors $?ring-colors)
+             (cap-color ?cap-color&:(eq ?cap-color ?step-c-color)))
+  (order (id ?o-id)
+         (complexity ?complexity)
+         (quantity-requested ?q-req)
+         (delivery-period $?dp)
+         (base-color ?base-color)
+         (ring-colors $?ring-colors)
+         (cap-color ?cap-color))
+  (not (points (product-step ?p-id)))
+  (test (order-step-scoring-allowed ?o-id ?team ?q-req CS ?step-b-color ?step-r-color ?step-c-color))
+  =>
+  ; Production points for mounting the cap
+  (bind ?reason (str-cat "Mounted cap for order " ?o-id))
+  (bind ?points 0)
+  (bind ?points ?*PRODUCTION-POINTS-MOUNT-CAP*)
+  (if (> ?g-time (nth$ 2 ?dp)) then
+    (bind ?reason (str-cat ?reason " Late (deadline: " (nth$ 2 ?dp) ")"))
+    (if (config-get-bool "/llsfrb/workpiece-tracking/enable") then (bind ?points 0))
+  )
+  (assert (points (game-time ?g-time) (team ?team)
+                  (points ?points)
+                  (phase PRODUCTION) (product-step ?p-id)
+                  (reason ?reason)))
+  (modify ?pf (scored TRUE) (order ?o-id))
 )
 
 
@@ -611,7 +749,7 @@
     ?pf <- (product-processed (id ?id) (workpiece ?w-id&~0)
                               (confirmed TRUE) (scored TRUE)
                               (mtype ~DS) (team ?team))
-    (not (workpiece (id ?w-id)))
+    (not (workpiece (id ?w-id) (latest-data TRUE)))
     =>
     (retract ?pf)
 )
@@ -640,6 +778,7 @@
                               (ring-color ?operation-ring)
                               (cap-color ?operation-cap))
     (workpiece (id ?w-id)
+               (latest-data TRUE)
                (team ?team)
                (order ?order)
                (base-color ?base-color)
@@ -667,8 +806,9 @@
                               (base-color ?operation-base)
                               (ring-color ?operation-ring)
                               (cap-color ?operation-cap)
-						(order ?operation-order))
+                              (order ?operation-order))
     (workpiece (id ?w-id)
+               (latest-data TRUE)
                (team ?team)
                (order ?order)
                (cap-color ?cap-color)

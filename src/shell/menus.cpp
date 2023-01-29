@@ -647,6 +647,7 @@ OrderDeliverMenu::On_Menu_Init()
 		case llsf_msgs::BASE_RED: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED)); break;
 		case llsf_msgs::BASE_SILVER: attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
 		case llsf_msgs::BASE_BLACK: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_BLACK)); break;
+		default: break;
 		}
 		addstr(i + 1, 15, " ");
 
@@ -794,6 +795,7 @@ SelectOrderByIDMenu::On_Menu_Init()
 		case llsf_msgs::BASE_RED: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED)); break;
 		case llsf_msgs::BASE_SILVER: attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
 		case llsf_msgs::BASE_BLACK: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_BLACK)); break;
+		default: break;
 		}
 		addstr(i + 1, 18, " ");
 
@@ -908,6 +910,7 @@ DeliveryCorrectMenu::On_Menu_Init()
 	case llsf_msgs::BASE_RED: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_RED)); break;
 	case llsf_msgs::BASE_SILVER: attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_WHITE)); break;
 	case llsf_msgs::BASE_BLACK: attron(' ' | COLOR_PAIR(COLOR_WHITE_ON_BLACK)); break;
+	default: break;
 	}
 	addstr(2, 14, " ");
 

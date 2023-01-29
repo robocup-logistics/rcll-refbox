@@ -18,6 +18,8 @@
 		then (return BASE_SILVER))
 	(if (and (>= ?id (nth$ 1 ?*WORKPIECE-RANGE-CLEAR*)) (<= ?id (nth$ 2 ?*WORKPIECE-RANGE-CLEAR*)))
 			then (return BASE_CLEAR))
+	(if (and (>= ?id (nth$ 1 ?*WORKPIECE-RANGE-UNKNOWN*)) (<= ?id (nth$ 2 ?*WORKPIECE-RANGE-UNKNOWN*)))
+			then (return BASE_UNKNOWN))
 	(printout t "Invalid workpiece ID " ?id ". Cannot determine base color." crlf)
 	(return BASE_INVALID)
 )
@@ -31,6 +33,8 @@
 		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-BLACK*) (nth$ 2 ?*WORKPIECE-RANGE-BLACK*))))
 	(if (eq ?base-color BASE_CLEAR)
 		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-CLEAR*) (nth$ 2  ?*WORKPIECE-RANGE-CLEAR*))))
+	(if (or (eq ?base-color BASE_UNKNOWN) (eq ?base-color nil))
+		then (return (random (nth$ 1 ?*WORKPIECE-RANGE-UNKNOWN*) (nth$ 2  ?*WORKPIECE-RANGE-UNKNOWN*))))
   (printout error "Invalid workpiece base-color" ?base-color  ". assign random id." crlf)
 	(return (random (nth$ 1 ?*WORKPIECE-RANGE-RED*) (nth$ 2 ?*WORKPIECE-RANGE-CLEAR*)))
 )
@@ -45,6 +49,8 @@
                             (state IDLE)
                             (id ?workpiece-id)
                             (order ?order-id)
+                            (latest-data TRUE)
+                            (holding FALSE)
                             (at-machine ?m:name)
                             (base-color ?order:base-color)
                             (ring-colors ?order:ring-colors)
@@ -124,14 +130,36 @@
     =>
     (retract ?mf)
     (printout t "Workpiece " ?id ": at " ?m-name ", available!"crlf)
-    (if (any-factp ((?wp workpiece)) (eq ?wp:id ?id)) then
-       ;Update existing
-       (do-for-fact ((?workpiece workpiece)) (eq ?workpiece:id ?id)
-         (modify ?workpiece (at-machine ?m-name) (state AVAILABLE) (visible ?gt)))
-      else
-        ;Learn new
-        (assert (workpiece (at-machine ?m-name) (state AVAILABLE) (visible ?gt) (id ?id)
+    (if (not (do-for-fact ((?workpiece workpiece)) (and (eq ?workpiece:id ?id)
+                                                        (eq ?workpiece:latest-data TRUE))
+          ;Update existing
+          (duplicate ?workpiece (unknown-action FALSE) (start-time ?gt) (at-machine ?m-name)
+                                (state AVAILABLE) (visible ?gt) (holding FALSE) (team ?team))
+          (modify ?workpiece (latest-data FALSE) (end-time ?gt))
+        )
+      )
+    then
+      ;Find unidentified workpiece at input
+      (if (not (do-for-fact ((?workpiece workpiece)) (and (eq ?workpiece:at-machine ?m-name)
+                                                          (eq ?workpiece:at-side INPUT)
+                                                          (eq ?workpiece:latest-data TRUE))
+            (duplicate ?workpiece (unknown-action FALSE) (id ?id) (start-time ?gt) (at-machine ?m-name)
+                                  (state AVAILABLE) (visible ?gt) (holding FALSE) (team ?team))
+            (modify ?workpiece (latest-data FALSE) (id ?id) (end-time ?gt))
+            ;Update all workpiece facts with same workpiece-name without id
+            (do-for-all-facts ((?wp workpiece)) (and (eq ?wp:name ?workpiece:name)
+                                                     (eq ?wp:id 0))
+              (modify ?workpiece (id ?id))
+            )
+          )
+        )
+      then
+        ;Else create a new workpiece fact
+        (assert (workpiece (at-machine ?m-name) (at-side INPUT) (holding FALSE)
+                           (state AVAILABLE) (visible ?gt) (id ?id) (name (sym-cat WP- (gensym*)))
+                           (latest-data TRUE) (start-time ?gt) (unknown-action FALSE)
                            (team ?team) (base-color (workpiece-base-color-by-id ?id))))
+      )
     )
 )
 
@@ -170,20 +198,24 @@
     "Workpiece no longer at machine"
     (workpiece-tracking (enabled TRUE))
     (machine (name ?m-name) (state WAIT-IDLE|BROKEN))
-    (workpiece (id ?id) (at-machine ?m-name) (state AVAILABLE))
+    (workpiece (id ?id) (at-machine ?m-name) (holding FALSE) (state AVAILABLE) (latest-data TRUE))
+    (gamestate (game-time ?gt))
     =>
     (do-for-all-facts ((?workpiece workpiece)) (and (eq ?workpiece:at-machine ?m-name)
+                                               (eq ?workpiece:latest-data TRUE)
+                                               (eq ?workpiece:holding FALSE)
                                                (eq ?workpiece:state AVAILABLE))
       (printout t "Workpiece " ?workpiece:id ": at " ?m-name ", retrieved!" crlf)
-      (modify ?workpiece (state RETRIEVED))
+      (duplicate ?workpiece (start-time ?gt) (state RETRIEVED))
+      (modify ?workpiece (latest-data FALSE) (end-time ?gt))
     )
 )
 
 (defrule workpiece-mps-waiting-in-processed
   "Print a message if the MPS is in state PROCESSED but has not seen a workpiece yet."
-	(machine (name ?n) (state PROCESSED))
+  (machine (name ?n) (state PROCESSED))
   (workpiece-tracking (enabled TRUE))
-  (not (workpiece (at-machine ?n) (state AVAILABLE)))
+  (not (workpiece (at-machine ?n) (latest-data TRUE) (state AVAILABLE)))
   =>
   (printout warn "Machine " ?n " is waiting to detect a workpiece" crlf)
 )
@@ -195,12 +227,13 @@
    the color of the first ring fully determines the complexity class. Furthermore
    we assume that there is only a single order of complexity >0 each. Hence, knowing
    the first ring will immediately determine the order of the workpiece."
-   (gamestate (phase PRODUCTION))
-   (workpiece-tracking (enabled TRUE))
-   ?wf <- (workpiece (id ?id) (order 0) (team ?r-team)
-                    (cap-color ?cap-color)
-                    (base-color ?base-color)
-                    (ring-colors $?ring-colors))
+    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (workpiece-tracking (enabled TRUE))
+    ?wf <- (workpiece (id ?id) (order 0) (team ?r-team)
+                      (latest-data TRUE)
+                      (cap-color ?cap-color)
+                      (base-color ?base-color)
+                      (ring-colors $?ring-colors))
     (order (id ?order-id)
            (active TRUE)
            (base-color ?base-color)
@@ -213,15 +246,17 @@
               (and (> (length$ ?ring-colors) 0)
                    (eq ?ring-colors (subseq$ ?order-ring-colors 1 (length$ ?ring-colors))))))
     =>
-    (modify ?wf (order ?order-id))
+    (duplicate ?wf (start-time ?gt) (order ?order-id))
+    (modify ?wf (latest-data FALSE) (end-time ?gt))
     (printout t "Workpiece " ?id ": order assigned " ?order-id crlf)
 )
 
 (defrule workpiece-resign-order
     "Resign order from workpiece, if they became inconsistent"
-    (gamestate (phase PRODUCTION))
+    (gamestate (phase PRODUCTION) (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
+                      (latest-data TRUE)
                       (order ?order-id)
                       (team ?r-team)
                       (base-color ?base-color)
@@ -237,7 +272,8 @@
               (and (neq ?cap-color nil)
                    (neq ?cap-color ?order-cap-color))))
     =>
-    (modify ?wf (order 0))
+    (duplicate ?wf (start-time ?gt) (order 0))
+    (modify ?wf (latest-data FALSE) (end-time ?gt))
     (printout t "Workpiece " ?id ": order resigned " ?order-id  crlf)
 )
 
@@ -245,34 +281,39 @@
 (defrule workpiece-at-bs
     "When workpiece available at BS, confirm generated base-color against
     prepared base-color."
-    (gamestate (phase PRODUCTION))
+    (gamestate (phase PRODUCTION) (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
+                      (latest-data TRUE)
                       (state AVAILABLE)
                       (at-machine ?m-name)
+                      (holding FALSE)
                       (base-color ?base-color))
-  ?pf <- (product-processed (mtype BS)
-                            (confirmed FALSE)
-                            (workpiece ?wp-id)
-                            (at-machine ?m-name)
-                            (base-color ?bs-color))
-  =>
-  (printout t "Workpiece " ?id ": at " ?m-name ", processed"crlf)
-  (if (neq ?bs-color ?base-color)
-    then (printout t "Workpiece correction ["
-                     ?base-color  "->" ?bs-color "]" crlf)
-  )
-  (modify ?pf (workpiece ?id) (confirmed TRUE))
-  (modify ?wf (base-color ?bs-color))
+    ?pf <- (product-processed (mtype BS)
+                              (confirmed FALSE)
+                              (workpiece ?wp-id)
+                              (at-machine ?m-name)
+                              (base-color ?bs-color))
+    =>
+    (printout t "Workpiece " ?id ": at " ?m-name ", processed"crlf)
+    (if (neq ?bs-color ?base-color)
+      then (printout t "Workpiece correction ["
+                       ?base-color  "->" ?bs-color "]" crlf)
+    )
+    (duplicate ?wf (start-time ?gt) (base-color ?bs-color))
+    (modify ?wf (latest-data FALSE) (end-time ?gt))
+    (modify ?pf (workpiece ?id) (confirmed TRUE))
 )
 
 (defrule workpiece-processed-at-rs
     "Update workpiece available at an RS with the recent production operation.
     Link the production operation to the workpiece"
-    (gamestate (phase PRODUCTION))
+    (gamestate (phase PRODUCTION) (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
+                      (latest-data TRUE)
                       (state AVAILABLE)
+                      (holding FALSE)
                       (at-machine ?m-name)
                       (ring-colors $?ring-colors))
     ?pf <- (product-processed (mtype RS)
@@ -282,39 +323,45 @@
                               (ring-color ?r-color))
     =>
     (printout t "Workpiece " ?id ": at " ?m-name ", processed" crlf)
+    (duplicate ?wf (start-time ?gt) (ring-colors (append$ ?ring-colors ?r-color)) (at-side OUTPUT))
+    (modify ?wf (latest-data FALSE) (end-time ?gt))
     (modify ?pf (workpiece ?id) (confirmed TRUE))
-    (modify ?wf (ring-colors (append$ ?ring-colors ?r-color)))
 )
 
 (defrule workpiece-processed-at-cs
     "Update the available workpiece at CS with the recent production operation.
     Like the production operation to the workpiece."
-    (gamestate (phase PRODUCTION))
+    (gamestate (phase PRODUCTION) (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
+                      (latest-data TRUE)
                       (state AVAILABLE)
+                      (holding FALSE)
                       (at-machine ?m-name)
                       (cap-color nil))
- ?pf <- (product-processed (mtype CS)
-                           (workpiece 0)
-                           (confirmed FALSE)
-                           (at-machine ?m-name)
-                           (cap-color ?c-color))
-  (not (product-processed (workpiece ?id) (mtype CS) (confirmed TRUE)))
-   =>
-  (printout t "Workpiece " ?id ": at  " ?m-name ", processed" crlf)
-  (modify ?pf (workpiece ?id))
-  (modify ?wf (cap-color ?c-color))
-  ;Cap-color info needs to be confirmed by the referee (latest on delivery)
+    ?pf <- (product-processed (mtype CS)
+                              (workpiece 0)
+                              (confirmed FALSE)
+                              (at-machine ?m-name)
+                              (cap-color ?c-color))
+    (not (product-processed (workpiece ?id) (mtype CS) (confirmed TRUE)))
+    =>
+    (printout t "Workpiece " ?id ": at  " ?m-name ", processed" crlf)
+    (duplicate ?wf (start-time ?gt) (cap-color ?c-color) (at-side OUTPUT))
+    (modify ?wf (latest-data FALSE) (end-time ?gt))
+    (modify ?pf (workpiece ?id))
+    ;Cap-color info needs to be confirmed by the referee (latest on delivery)
 )
 
 (defrule workpiece-processed-at-ds
     "Update the available workpiece with the recent production operation.
     Link the delivery to the available workpiece"
-    (gamestate (phase PRODUCTION))
+    (gamestate (phase PRODUCTION) (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
+                      (latest-data TRUE)
                       (state AVAILABLE)
+                      (holding FALSE)
                       (at-machine ?m-name)
                       (order ?tracked-order-id))
     ?pf <- (product-processed (mtype DS)
@@ -330,24 +377,31 @@
                 " not the tracked order " ?tracked-order-id crlf)
       (printout t "Conflict will be resolved upon referee confirmation!" crlf)
    )
+   (duplicate ?wf (start-time ?gt) (at-side nil))
+   (modify ?wf (latest-data FALSE) (end-time ?gt))
    (modify ?pf (workpiece ?id))
 )
 
 ;------------------------------Sanity Checks
 (defrule workpiece-available-twice
     "Error different workpieces available at same  machines"
-    (gamestate (phase PRODUCTION))
+    (gamestate (phase PRODUCTION) (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf1 <- (workpiece (id ?first-id)
+                       (latest-data TRUE)
                        (visible ?first-last-seen)
+                       (holding FALSE)
                        (at-machine ?at-machine)
                        (state AVAILABLE))
     ?wf2 <- (workpiece (id ?second-id&:(neq ?first-id ?second-id))
+                       (latest-data TRUE)
                        (visible ?second-last-seen&:(>= ?second-last-seen ?first-last-seen))
+                       (holding FALSE)
                        (at-machine ?at-machine)
                        (state AVAILABLE))
     =>
-    (modify ?wf1 (state RETRIEVED))
+    (duplicate ?wf1 (start-time ?gt) (state RETRIEVED))
+    (modify ?wf1 (latest-data FALSE) (end-time ?gt))
     (printout warn "Workpiece " ?second-id " detected at " ?at-machine
                    " while workpiece " ?first-id " is still available..retrieving the oldest!"crlf)
 )
@@ -370,16 +424,6 @@
      ; Recovering from CS|DS failure could be attempted upon confirmation.
      (modify ?wf (enabled FALSE) (reason (str-cat " Fail-safe reader at " ?at-machine)))
     )
-)
-
-(defrule workpiece-tracking-disabled-remove-undelivered-workpiece
-    "If tracking was disabled for any reason, remove any undelivered workpieces."
-    (workpiece-tracking (enabled FALSE))
-    ?wf <- (workpiece (id ?w-id))
-    (not (product-processed (mtype DS) (workpiece ?w-id)))
-    =>
-    (retract ?wf)
-    (printout t "Removing obsolete workpiece " ?w-id crlf)
 )
 
 (defrule workpiece-unique-order-prefixs

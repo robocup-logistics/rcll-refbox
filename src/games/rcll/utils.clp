@@ -399,3 +399,19 @@
 	(progn$ (?m-f ?fact-addresses) (bind ?indices (append$ ?indices (fact-index ?m-f))))
 	(return ?indices)
 )
+
+(deffunction get-machine-meta-fact (?machine-f)
+" For a given machine fact return the corresponding meta fact or nil if it does
+  not exist.
+"
+  (bind ?meta-f (eval
+    (str-cat "(find-fact ((?meta " (sym-cat (lowcase (fact-slot-value ?machine-f mtype)) -meta) "))"
+    "(eq " (fact-slot-value ?machine-f name) " ?meta:name))")
+  ))
+  (if (= (length$ ?meta-f) 1)
+   then (return (nth$ 1 ?meta-f))
+   else
+    (printout error "get-machine-meta-fact failed to find the meta fact for " ?machine-f crlf)
+    (return nil)
+  )
+)

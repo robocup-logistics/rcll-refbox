@@ -12,7 +12,8 @@
 (defglobal
 	; Mongodb Game Report Version,
 	; 1.1 -> includes config
-	?*MONGODB-REPORT-VERSION* = 1.1
+	; 1.2 -> mps meta facts, workpiece and agent-task info
+	?*MONGODB-REPORT-VERSION* = 1.2
 	; Update rate in seconds
 	?*MONGODB-REPORT-UPDATE-FREQUENCY* = 10
 )
@@ -32,6 +33,7 @@
 	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
 	(multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
 	(slot fact-string (type STRING))
+	(slot meta-fact-string (type STRING))
 )
 
 (deffunction mongodb-time-as-ms (?time)
@@ -121,24 +123,40 @@
 
 (defrule mongodb-create-first-machine-history
 	?m <- (machine (name ?n) (state ?s))
+	(or ?mf <- (bs-meta (name ?n))
+	    ?mf <- (rs-meta (name ?n))
+	    ?mf <- (cs-meta (name ?n))
+	    ?mf <- (ds-meta (name ?n))
+	    ?mf <- (ss-meta (name ?n))
+	)
 	(gamestate (game-time ?gt))
 	(time $?now)
 	(not (mongodb-machine-history (name ?n)))
 	=>
 	(assert (mongodb-machine-history (name ?n) (game-time ?gt) (time ?now)
-	          (state ?s) (fact-string (fact-to-string ?m))))
+	          (state ?s) (fact-string (fact-to-string ?m))
+	          (meta-fact-string (fact-to-string ?mf))
+	))
 )
 
 (defrule mongodb-create-next-machine-history
 	?m <- (machine (name ?n) (state ?s))
 	?hist <- (mongodb-machine-history (name ?n) (state ?s-last&:(neq ?s ?s-last))
 	           (time $?last) (is-latest TRUE))
+	(or ?mf <- (bs-meta (name ?n))
+	    ?mf <- (rs-meta (name ?n))
+	    ?mf <- (cs-meta (name ?n))
+	    ?mf <- (ds-meta (name ?n))
+	    ?mf <- (ss-meta (name ?n))
+	)
 	(gamestate (game-time ?gt))
 	(time $?now)
 	=>
 	(modify ?hist (is-latest FALSE))
 	(assert (mongodb-machine-history (name ?n) (game-time ?gt)
-	          (time ?now) (state ?s) (fact-string (fact-to-string ?m))))
+	          (time ?now) (state ?s) (fact-string (fact-to-string ?m))
+	          (meta-fact-string (fact-to-string ?mf))
+	))
 )
 
 
@@ -394,6 +412,7 @@
 	)
 	(bson-array-finish ?doc "config" ?cfg-arr)
 	(bind ?machine-history-arr (bson-array-start))
+	(unwatch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
 	(do-for-all-facts ((?mh mongodb-machine-history)) TRUE
 		(bind ?history-doc (mongodb-fact-to-bson ?mh))
 		(bind ?temp-fact (assert-string ?mh:fact-string))
@@ -415,11 +434,53 @@
 		(if ?temp-fact then
 			(retract ?temp-fact)
 		)
+		(bind ?temp-fact FALSE)
+		(bind ?temp-fact (assert-string ?mh:meta-fact-string))
+		(bind ?machine-meta-doc FALSE)
+		(if ?temp-fact
+		 then
+			(bind ?machine-meta-doc (mongodb-fact-to-bson ?temp-fact))
+		 else
+			; for some reason clips crashes, if the meta-fact-name is passed
+			; on-the-fly. Therefore, store it via bind first.
+			(bind ?meta-fact-name (sym-cat (lowcase (sub-string 3 4 ?mh:name)) -meta))
+			(bind ?machine-meta-facts (find-fact ((?m ?meta-fact-name)) (eq ?mh:name ?m:name)))
+			(if ?machine-meta-facts then
+				(bind ?machine-meta-doc (mongodb-fact-to-bson (nth$ 1 ?machine-meta-facts)))
+			)
+		)
+		(if ?machine-meta-doc then
+			(bson-append ?history-doc "meta-fact" ?machine-meta-doc)
+		 else
+			(printout warn "mongodb: machine history fact " ?mh:name " without machine meta fact!" crlf)
+		)
+		(if ?temp-fact then
+			(retract ?temp-fact)
+		)
 		(bson-array-append ?machine-history-arr ?history-doc)
 		(bson-builder-destroy ?machine-doc)
 		(bson-builder-destroy ?history-doc)
 	)
+	(watch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
 	(bson-array-finish ?doc "machine-history" ?machine-history-arr)
+
+	(bind ?workpiece-arr (bson-array-start))
+	(do-for-all-facts ((?wp workpiece)) TRUE
+		(bson-array-append ?workpiece-arr (mongodb-fact-to-bson ?wp))
+	)
+	(bson-array-finish ?doc "workpiece-history" ?workpiece-arr)
+
+	(bind ?agent-task-arr (bson-array-start))
+	(do-for-all-facts ((?at agent-task)) TRUE
+		(bson-array-append ?agent-task-arr (mongodb-fact-to-bson ?at))
+	)
+	(bson-array-finish ?doc "agent-task-history" ?agent-task-arr)
+
+	(bind ?stamped-poses-arr (bson-array-start))
+	(do-for-all-facts ((?sp stamped-pose)) TRUE
+		(bson-array-append ?stamped-poses-arr (mongodb-fact-to-bson ?sp))
+	)
+	(bson-array-finish ?doc "robot-pose-history" ?stamped-poses-arr)
 
 	;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 	(return ?doc)
@@ -445,6 +506,7 @@
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
 	(not (mongodb-game-report (start $?stime) (name ?report-name)))
+	(game-parameters (is-parameterized TRUE))
 	=>
 	(assert (mongodb-game-report (start ?stime) (name ?report-name)))
 	(bind ?doc (mongodb-create-game-report ?teams ?stime ?etime ?report-name))
@@ -456,6 +518,18 @@
 		(bson-builder-destroy ?ring-spec-doc)
 	)
 	(bson-array-finish ?doc "ring-specs" ?m-arr)
+	(bind ?m-arr (bson-array-start))
+	(foreach ?m-type (deftemplate-slot-allowed-values machine mtype)
+		; for some reason clips crashes, if the meta-fact-name is passed
+		; on-the-fly. Therefore, store it via bind first.
+		(bind ?meta-fact-name (sym-cat (lowcase ?m-type -meta)))
+		(do-for-all-facts ((?meta-f ?meta-fact-name)) TRUE
+			(bind ?meta-doc (mongodb-fact-to-bson ?meta-f))
+			(bson-array-append ?m-arr ?meta-doc)
+			(bson-builder-destroy ?meta-doc)
+		)
+	)
+	(bson-array-finish ?doc "machine-meta" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine-ss-shelf-slot)) TRUE
 		(bind ?ss-doc (mongodb-fact-to-bson ?m))
@@ -472,6 +546,14 @@
 	(bson-array-finish ?doc "machines" ?m-arr)
 	(mongodb-write-game-report ?doc ?stime ?report-name)
 	(assert (mongodb-phase-change))
+)
+
+(defrule mongodb-silence-debug
+	(confval (path "/llsfrb/clips/debug") (type BOOL) (value true))
+	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
+	=>
+	(unwatch facts mongodb-machine-history)
+	(unwatch rules mongodb-create-next-machine-history)
 )
 
 (defrule mongodb-game-report-end
@@ -688,11 +770,15 @@
 	                                              "machines"
 	                                              machine
 	                                              name
-	                                              (create$ down-period rs-ring-colors))
+	                                              (create$ down-period))
 	         (mongodb-load-facts-from-game-report ?report-name
 	                                              "ring-specs"
 	                                              ring-spec
 	                                              color))
+	         (mongodb-load-facts-from-game-report ?report-name
+	                                              "machine-meta"
+	                                              rs-meta
+	                                              name))
 	 then
 		(printout t "Loading machine-setup finished" crlf)
 		(modify ?gp (machine-setup STATIC))

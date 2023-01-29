@@ -778,42 +778,68 @@ Data::get_machine_info_fact(T                                  *o,
 	(*o).AddMember("state", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "zone")).c_str(), alloc);
 	(*o).AddMember("zone", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "bs-side")).c_str(), alloc);
-	(*o).AddMember("bs_side", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "bs-color")).c_str(), alloc);
-	(*o).AddMember("bs_color", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "rs-ring-color")).c_str(), alloc);
-	(*o).AddMember("rs_ring_color", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "cs-operation")).c_str(), alloc);
-	(*o).AddMember("cs_operation", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "rotation")));
 	(*o).AddMember("rotation", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "bases-added")));
-	(*o).AddMember("bases_added", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "bases-used")));
-	(*o).AddMember("bases_used", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "ds-order")));
-	(*o).AddMember("ds_order", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "cs-retrieved")));
-	(*o).AddMember("cs_retrieved", json_string, alloc);
 
-	rapidjson::Value lights_array(rapidjson::kArrayType);
-	lights_array.Reserve(get_values(fact, "actual-lights").size(), alloc);
-	for (const auto &e : get_values(fact, "actual-lights")) {
-		rapidjson::Value v;
-		v.SetString(e, alloc);
-		lights_array.PushBack(v, alloc);
+	CLIPS::Fact::pointer meta_fact = env_->get_facts();
+	while (meta_fact) {
+		if (match(meta_fact, "cs-meta")
+		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
+			json_string.SetString((get_value<std::string>(meta_fact, "cs-operation")).c_str(), alloc);
+			(*o).AddMember("cs_operation", json_string, alloc);
+			json_string.SetBool((get_value<bool>(meta_fact, "cs-retrieved")));
+			(*o).AddMember("cs_retrieved", json_string, alloc);
+			break;
+		}
+		if (match(meta_fact, "rs-meta")
+		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
+			json_string.SetString((get_value<std::string>(meta_fact, "rs-ring-color")).c_str(), alloc);
+			(*o).AddMember("rs_ring_color", json_string, alloc);
+			rapidjson::Value ring_array(rapidjson::kArrayType);
+			ring_array.Reserve(get_values(meta_fact, "rs-ring-colors").size(), alloc);
+			for (const auto &e : get_values(meta_fact, "rs-ring-colors")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				ring_array.PushBack(v, alloc);
+			}
+			(*o).AddMember("rs_ring_colors", ring_array, alloc);
+			json_string.SetInt((get_value<int64_t>(meta_fact, "bases-added")));
+			(*o).AddMember("bases_added", json_string, alloc);
+			json_string.SetInt((get_value<int64_t>(meta_fact, "bases-used")));
+			(*o).AddMember("bases_used", json_string, alloc);
+		}
+		if (match(meta_fact, "bs-meta")
+		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
+			json_string.SetString((get_value<std::string>(meta_fact, "bs-side")).c_str(), alloc);
+			(*o).AddMember("bs_side", json_string, alloc);
+			json_string.SetString((get_value<std::string>(meta_fact, "bs-color")).c_str(), alloc);
+			(*o).AddMember("bs_color", json_string, alloc);
+			break;
+		}
+		if (match(meta_fact, "ds-meta")
+		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
+			json_string.SetInt((get_value<int64_t>(meta_fact, "order-id")));
+			(*o).AddMember("ds_order", json_string, alloc);
+			break;
+		}
+		meta_fact = meta_fact->next();
 	}
-	(*o).AddMember("actual_lights", lights_array, alloc);
-
-	rapidjson::Value ring_array(rapidjson::kArrayType);
-	ring_array.Reserve(get_values(fact, "rs-ring-colors").size(), alloc);
-	for (const auto &e : get_values(fact, "rs-ring-colors")) {
-		rapidjson::Value v;
-		v.SetString(e, alloc);
-		ring_array.PushBack(v, alloc);
+	CLIPS::Fact::pointer lights_fact = env_->get_facts();
+	while (lights_fact) {
+		if (match(lights_fact, "machine-lights")
+		    && get_value<std::string>(fact, "name") == get_value<std::string>(lights_fact, "name")) {
+			rapidjson::Value lights_array(rapidjson::kArrayType);
+			lights_array.Reserve(get_values(fact, "actual-lights").size(), alloc);
+			for (const auto &e : get_values(fact, "actual-lights")) {
+				rapidjson::Value v;
+				v.SetString(e, alloc);
+				lights_array.PushBack(v, alloc);
+			}
+			(*o).AddMember("actual_lights", lights_array, alloc);
+			break;
+		}
+		lights_fact = lights_fact->next();
 	}
-	(*o).AddMember("rs_ring_colors", ring_array, alloc);
 }
 
 /**

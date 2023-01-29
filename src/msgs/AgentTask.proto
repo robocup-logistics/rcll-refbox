@@ -11,13 +11,13 @@ option java_outer_classname = "AgentTasksProtos";
 message AgentTask {
     enum CompType {
         COMP_ID = 8000;  // COMPONENT 8000 is Simulation
-        MSG_TYPE = 502; 
+        MSG_TYPE = 502;
     }
 
     // general infos
     required Team team_color = 1;    // Color of the team
     required uint32 task_id  = 2;    // identifier for the tasks
-    required uint32 robot_id = 3;    
+    required uint32 robot_id = 3;
 
     // Tasks
     optional Move move = 4;
@@ -25,11 +25,11 @@ message AgentTask {
     optional Deliver deliver = 6;
     optional BufferStation buffer = 7;
     optional ExploreWaypoint explore_machine = 8;
-     
+
     // additional info for the refbox
     optional WorkpieceDescription workpiece_description = 9;
-    optional uint32 order_id = 10;   
-    
+    optional uint32 order_id = 10;
+
     // flags and result of the current task
     optional bool cancel_task = 11; // cancels current task
     optional bool pause_task = 12; // if true current task is paused, if false again task is continued
@@ -46,13 +46,13 @@ message Move {
 
 // Get a workpiece at the given station and hold the product in the gripper
 message Retrieve {
-    required string machine_id    = 1; // name of the machine 
-    required string machine_point = 2; // valid machine-points: input, output
+    required string machine_id    = 1; // name of the machine
+    required string machine_point = 2; // valid machine-points: input, output, shelf
 }
 
 // Deliver the holding product to the given station
 message Deliver {
-    required string machine_id    = 1; // name of the machine 
+    required string machine_id    = 1; // name of the machine
     required string machine_point = 2; // valid machine-points: input, slide
 }
 
@@ -64,17 +64,17 @@ message BufferStation {
 
 // Move to the given machine (if position already detected), else move to given waypoint (=zone on the playing field)
 message ExploreWaypoint {
-    required string machine_id    = 1;  // name of the machine 
+    required string machine_id    = 1;  // name of the machine
     required string machine_point = 2;  // valid machine-points: input, output
     required string waypoint      = 3;
 }
 
-message WorkpieceDescription {                                                  
-	enum CompType {                                                               
-		COMP_ID  = 8000;                                                            
-		MSG_TYPE = 510;                                                             
-	}                                                                                                                   
-	required BaseColor base_color = 3; // description fo the current workpiece the robot has gripped                                                                  
-	repeated RingColor ring_colors = 4; // description fo the current workpiece the robot has gripped                                                    
-	optional CapColor cap_color = 5;  // description fo the current workpiece the robot has gripped                                                                                  
-}     
+message WorkpieceDescription {
+	enum CompType {
+		COMP_ID  = 8000;
+		MSG_TYPE = 510;
+	}
+	required BaseColor base_color = 3; // description fo the current workpiece the robot has gripped
+	repeated RingColor ring_colors = 4; // description fo the current workpiece the robot has gripped
+	optional CapColor cap_color = 5;  // description fo the current workpiece the robot has gripped
+}

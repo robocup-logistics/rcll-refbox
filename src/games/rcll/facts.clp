@@ -15,12 +15,6 @@
 	(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 C-SS M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2 M-SS))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
   (slot mtype (type SYMBOL) (allowed-values BS DS RS CS SS))
-  (multislot actual-lights (type SYMBOL)
-	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
-	     (default) (cardinality 0 3))
-  (multislot desired-lights (type SYMBOL)
-	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
-	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
   (slot productions (type INTEGER) (default 0))
   ; Overall refbox machine state
   (slot state (type SYMBOL) (allowed-values IDLE BROKEN PREPARED PROCESSING
@@ -60,32 +54,56 @@
   )
   (slot rotation (type INTEGER) (default -1))
 
-  (slot prep-blink-start (type FLOAT))
   (slot idle-since (type FLOAT))
   (slot wait-for-product-since (type FLOAT))
+)
+
+(deftemplate machine-lights
+  (slot name (type SYMBOL))
+  (multislot actual-lights (type SYMBOL)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
+	     (default) (cardinality 0 3))
+  (multislot desired-lights (type SYMBOL)
+	     (allowed-values RED-ON RED-BLINK YELLOW-ON YELLOW-BLINK GREEN-ON GREEN-BLINK)
+	     (default GREEN-ON YELLOW-ON RED-ON) (cardinality 0 3))
+)
+
+(deftemplate bs-meta
+  (slot name (type SYMBOL))
+  (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
+  (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
+)
+
+(deftemplate cs-meta
+  (slot name (type SYMBOL))
+  (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
+  (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot cs-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
+)
+
+(deftemplate rs-meta
+  (slot name (type SYMBOL))
+  (slot rs-ring-color (type SYMBOL)
+    (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
+    (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot mps-base-counter (type INTEGER) (default 0))
   (slot bases-added (type INTEGER) (default 0))
   (slot bases-used (type INTEGER) (default 0))
+)
 
-  ; machine type specific slots
-  (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
-  (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
-
+(deftemplate ds-meta
+  (slot name (type SYMBOL))
   (slot ds-gate (type INTEGER))
-  (slot ds-last-gate (type INTEGER))
-  (slot ds-order (type INTEGER))
+;  (slot ds-last-gate (type INTEGER))
+  (slot order-id (type INTEGER))
+)
 
+(deftemplate ss-meta
+  (slot name (type SYMBOL))
   (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
   (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
   (slot ss-wp-description (type STRING))
-
-  (slot rs-ring-color (type SYMBOL)
-	(allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
-	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-
-  (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
-  (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
 )
 
 (deftemplate machine-mps-state
@@ -136,6 +154,21 @@
   (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+   ; next-at and next-side show the position of the bot after the current AgentTask is
+   ; finished successfully
+  (slot next-at (type SYMBOL) (allowed-values M-BS M-BS
+                                              M-RS1 M-RS1
+                                              M-RS2 M-RS2
+                                              M-CS1 M-CS1
+                                              M-CS2 M-CS2
+                                              M-DS
+                                              C-BS C-BS
+                                              C-RS1 C-RS1
+                                              C-RS2 C-RS2
+                                              C-CS1 C-CS1
+                                              C-CS2 C-CS2
+                                              C-DS))
+  (slot next-side (type SYMBOL) (allowed-values INPUT OUTPUT SHELF))
   (multislot vision-pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot vision-pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot maintenance-start-time (type FLOAT))
@@ -158,6 +191,44 @@
   (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (multislot pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+)
+
+(deftemplate agent-task
+  (slot task-type (type SYMBOL) (allowed-values nil MOVE RETRIEVE DELIVER BUFFER EXPLORE_MACHINE))
+  (multislot task-parameters)
+
+  (slot task-id (type INTEGER))
+  (slot robot-id (type INTEGER))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+
+  (slot start-time (type FLOAT))
+  (slot end-time (type FLOAT))
+
+  (slot order-id (type INTEGER))
+
+  (slot processed (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+
+  (slot workpiece-name (type SYMBOL))
+
+  (slot unknown-action (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+
+  (slot successful (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+
+  (slot base-color (type SYMBOL) (allowed-values nil BASE_BLACK BASE_CLEAR BASE_RED BASE_SILVER))
+  (multislot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+)
+
+(deftemplate stamped-pose
+  (slot task-id (type INTEGER))
+  (slot robot-id (type INTEGER))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+
+  (slot x (type FLOAT))
+  (slot y (type FLOAT))
+  (slot ori (type FLOAT))
+
+  (slot time (type FLOAT))
 )
 
 (deftemplate signal
@@ -228,15 +299,23 @@
 )
 
 (deftemplate workpiece
-	(slot id (type INTEGER))
-	(slot order (type INTEGER))
-	(slot at-machine (type SYMBOL)
-				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot id (type INTEGER))
+  (slot name (type SYMBOL))
+  (slot order (type INTEGER))
+  (slot latest-data (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (slot start-time (type FLOAT))
+  (slot end-time (type FLOAT))
+  (slot at-machine (type SYMBOL)
+                   (allowed-values nil C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot at-side (type SYMBOL) (allowed-values nil INPUT OUTPUT SHELF SLIDE))
+  (slot holding (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot robot-holding (type INTEGER))
+  (slot unknown-action (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
   (slot state (type SYMBOL) (allowed-values IDLE AVAILABLE RETRIEVED) (default IDLE))
   (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK BASE_CLEAR))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
-						 (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
+                         (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN))
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
   (slot visible (type FLOAT))
 )
@@ -270,14 +349,14 @@
   (slot team (type SYMBOL) (allowed-values nil CYAN MAGENTA))
   (slot mtype (type SYMBOL) (allowed-values BS DS RS CS SS))
   (slot at-machine (type SYMBOL)
-				(allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
-	(slot delivery-gate (type INTEGER))
+                   (allowed-values C-BS C-DS C-RS1 C-RS2 C-CS1 C-CS2 M-BS M-DS M-RS1 M-RS2 M-CS1 M-CS2))
+  (slot delivery-gate (type INTEGER))
   (slot confirmed (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot base-color (type SYMBOL) (allowed-values nil BASE_RED BASE_SILVER BASE_BLACK))
   (slot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
   (slot scored (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
-	(slot order (type INTEGER) (default 0))
+  (slot order (type INTEGER) (default 0))
 )
 
 

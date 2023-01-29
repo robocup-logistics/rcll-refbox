@@ -145,6 +145,7 @@
 (defrule net-recv-beacon
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  (gamestate (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
@@ -176,14 +177,153 @@
   (bind ?time-usec (integer (/ (pb-field-value ?time "nsec") 1000)))
   (pb-destroy ?time)
 
-  (assert (robot-beacon (seq (pb-field-value ?p "seq")) (time ?time-sec ?time-usec)
-			(rcvd-at ?rcvd-at)
-			(number (pb-field-value ?p "number"))
-			(team-name (pb-field-value ?p "team_name"))
-			(team-color (sym-cat (pb-field-value ?p "team_color")))
-			(peer-name (pb-field-value ?p "peer_name"))
-			(host ?from-host) (port ?from-port)
-			(has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
+  (assert (robot-beacon (seq (pb-field-value ?p "seq"))
+                        (time ?time-sec ?time-usec)
+                        (rcvd-at ?rcvd-at)
+                        (number (pb-field-value ?p "number"))
+                        (team-name (pb-field-value ?p "team_name"))
+                        (team-color (sym-cat (pb-field-value ?p "team_color")))
+                        (peer-name (pb-field-value ?p "peer_name"))
+                        (host ?from-host) (port ?from-port)
+                        (has-pose ?has-pose) (pose ?pose) (pose-time ?pose-time)))
+
+  (if (pb-has-field ?p "task") then
+    (printout ?*AGENT-TASK-ROUTER* "task received" crlf)
+    (bind ?at (pb-field-value ?p "task"))
+    (bind ?team-color (pb-field-value ?at "team_color"))
+    (bind ?task-id (pb-field-value ?at "task_id"))
+    (bind ?robot-id (pb-field-value ?at "robot_id"))
+
+    (assert (stamped-pose (task-id ?task-id)
+                          (robot-id ?robot-id)
+                          (team-color ?team-color)
+                          (x (nth$ 1 ?pose))
+                          (y (nth$ 2 ?pose))
+                          (ori (nth$ 3 ?pose))
+                          (time ?gt)))
+
+    ; if agent task does not exist, create one
+    (if (not (any-factp ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
+                                                        (eq ?agent-task:task-id ?task-id)
+                                                        (eq ?agent-task:robot-id ?robot-id)))) then
+      (printout ?*AGENT-TASK-ROUTER* "create agent-task" crlf)
+      ; bind task infos
+      (bind ?task-type nil)
+      (bind ?task-parameters (create$ waypoint nil))
+      (if (pb-has-field ?at "move") then
+        (bind ?t (pb-field-value ?at "move"))
+        (bind ?task-type MOVE)
+        (bind ?machine-point nil)
+        (if (pb-has-field ?t "machine_point") then
+          (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+        (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
+                                        machine-point ?machine-point))
+      )
+      (if (pb-has-field ?at "retrieve") then
+        (bind ?t (pb-field-value ?at "retrieve"))
+        (bind ?task-type RETRIEVE)
+        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
+                                        machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+      )
+      (if (pb-has-field ?at "deliver") then
+        (bind ?t (pb-field-value ?at "deliver"))
+        (bind ?task-type DELIVER)
+        (bind ?machine-point nil)
+        (if (pb-has-field ?t "machine_point") then
+          (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
+                                        machine-point ?machine-point))
+      )
+      (if (pb-has-field ?at "buffer") then
+        (bind ?t (pb-field-value ?at "buffer"))
+        (bind ?task-type BUFFER)
+        (bind ?shelf-nr 0)
+        (if (pb-has-field ?t "shelf_number") then
+          (bind ?shelf-nr (pb-field-value ?t "shelf_number")))
+        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
+                                        shelf-number ?shelf-nr))
+      )
+      (if (pb-has-field ?at "explore_machine") then
+        (bind ?t (pb-field-value ?at "explore_machine"))
+        (bind ?task-type EXPLORE_MACHINE)
+        (bind ?machine-id nil)
+        (bind ?machine-point nil)
+        (if (pb-has-field ?t "machine_id") then
+          (bind ?machine-id (pb-field-value ?t "machine_id")))
+        (if (pb-has-field ?t "machine_point") then
+          (bind ?machine-point (pb-field-value ?t "machine_point")))
+        (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
+                                        machine-id ?machine-id
+                                        machine-point ?machine-point))
+      )
+
+      ; bind wp description
+      (bind ?base-color nil)
+      (bind $?ring-color (create$))
+      (bind ?cap-color nil)
+      (if (pb-has-field ?at "workpiece_description") then
+        (bind ?wp-desc (pb-field-value ?at "workpiece_description"))
+        (bind ?base-color (pb-field-value ?wp-desc "base_color"))
+        (bind $?ring-color (pb-field-list ?wp-desc "ring_colors"))
+        (if (pb-has-field ?wp-desc "cap_color") then
+          (bind ?cap-color (pb-field-value ?wp-desc "cap_color")))
+      )
+
+      (bind ?order-id nil)
+      (if (pb-has-field ?at "order_id") then
+        (bind ?order-id (pb-field-value ?at "order_id"))
+      )
+
+      (bind ?successful TRUE)
+      (if (pb-has-field ?at "successful") then
+        (bind ?order-id (pb-field-value ?at "successful"))
+      )
+
+      (assert (agent-task (task-type ?task-type)
+                          (task-parameters ?task-parameters)
+                          (task-id ?task-id)
+                          (robot-id ?robot-id)
+                          (team-color ?team-color)
+                          (start-time ?gt)
+                          (end-time 0.0)
+                          (order-id ?order-id)
+                          (successful ?successful)
+                          (processed FALSE)
+                          (base-color ?base-color)
+                          (ring-color $?ring-color)
+                          (cap-color ?cap-color)))
+      (printout ?*AGENT-TASK-ROUTER* "agent-task: " ?task-type ?task-parameters crlf)
+    )
+
+    ; check if end time and succesful flag are set
+    (progn$ (?ft (pb-field-list ?p "finished_tasks"))
+      (bind ?f-task-id (pb-field-value ?ft "TaskId"))
+      (bind ?success (pb-field-value ?ft "successful"))
+
+      (do-for-fact ((?agent-task agent-task))
+                    (and (eq ?agent-task:team-color ?team-color)
+                         (eq ?agent-task:task-id ?f-task-id)
+                         (eq ?agent-task:robot-id ?robot-id)
+                         (= ?agent-task:end-time 0.0)) then
+        (modify ?agent-task (end-time ?gt))
+      )
+      (do-for-fact ((?agent-task agent-task))
+                (and (eq ?agent-task:team-color ?team-color)
+                     (eq ?agent-task:task-id ?f-task-id)
+                     (eq ?agent-task:robot-id ?robot-id)
+                     (neq ?agent-task:successful ?success)) then
+        (modify ?agent-task (successful ?success))
+      )
+    )
+    ; check if previous tasks were not properly marked as finished and set end time
+    (do-for-fact ((?agent-task agent-task))
+                  (and (eq ?agent-task:team-color ?team-color)
+                       (neq ?agent-task:task-id ?task-id)
+                       (eq ?agent-task:robot-id ?robot-id)
+                       (= ?agent-task:end-time 0.0)) then
+      (modify ?agent-task (end-time ?gt))
+    )
+  )
 )
 
 (defrule send-attmsg
@@ -331,6 +471,7 @@
 (defrule net-recv-WorkpieceAddRing
   ?mf <- (protobuf-msg (type "llsf_msgs.WorkpieceAddRing") (ptr ?p) (rcvd-at $?rcvd-at)
 											 (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
+  (gamestate (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
 
@@ -339,9 +480,10 @@
 
 	(printout t "Add ring " ?ring-color " to workpiece " ?id crlf)
 
-	(do-for-fact ((?wp workpiece)) (eq ?wp:id ?id)
+	(do-for-fact ((?wp workpiece)) (and (eq ?wp:id ?id) (eq ?wp:latest-data TRUE))
 		(printout t "Add ring " ?ring-color " to workpiece " ?id " *** " crlf)
-	  (modify ?wp (ring-colors (append$ ?wp:ring-colors ?ring-color)))
+	  (duplicate ?wp (start-time ?gt) (ring-colors (append$ ?wp:ring-colors ?ring-color)))
+	  (modify ?wp (latest-data FALSE) (end-time ?gt))
 	)
 )
 
@@ -349,7 +491,7 @@
   (bind ?wi (pb-create "llsf_msgs.WorkpieceInfo"))
 
   (do-for-all-facts
-    ((?wp workpiece)) TRUE
+    ((?wp workpiece)) (eq ?wp:latest-data TRUE)
 
     (bind ?w (pb-create "llsf_msgs.Workpiece"))
 		(pb-set-field ?w "id" ?wp:id)
@@ -510,7 +652,7 @@
 	)
 )
 
-(deffunction net-create-Machine (?mf ?add-restricted-info)
+(deffunction net-create-Machine (?mf ?meta-f ?mlf ?add-restricted-info)
     (bind ?m (pb-create "llsf_msgs.Machine"))
 
     (bind ?mtype (fact-slot-value ?mf mtype))
@@ -521,9 +663,9 @@
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
-	     (eq ?mtype RS) (> (length$ (fact-slot-value ?mf rs-ring-colors)) 0))
+             (eq ?mtype RS) (> (length$ (fact-slot-value ?meta-f rs-ring-colors)) 0))
      then
-     (foreach ?rc (fact-slot-value ?mf rs-ring-colors)
+     (foreach ?rc (fact-slot-value ?meta-f rs-ring-colors)
        (pb-add-list ?m "ring_colors" ?rc)
      )
     )
@@ -546,14 +688,14 @@
       (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
       (if (eq ?mtype RS) then
         (pb-set-field ?m "loaded_with"
-          (- (fact-slot-value ?mf bases-added) (fact-slot-value ?mf bases-used)))
+          (- (fact-slot-value ?meta-f bases-added) (fact-slot-value ?meta-f bases-used)))
       )
       (if (eq ?mtype CS) then
         (pb-set-field ?m "loaded_with"
-          (if (fact-slot-value ?mf cs-retrieved) then 1 else 0))
+          (if (fact-slot-value ?meta-f cs-retrieved) then 1 else 0))
       )
 
-      (foreach ?l (fact-slot-value ?mf actual-lights)
+      (foreach ?l (fact-slot-value ?mlf actual-lights)
         (bind ?ls (pb-create "llsf_msgs.LightSpec"))
 	(bind ?dashidx (str-index "-" ?l))
 	(bind ?color (sub-string 1 (- ?dashidx 1) ?l))
@@ -567,33 +709,33 @@
 	(switch (fact-slot-value ?mf mtype)
 	  (case BS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionBS"))
-	    (pb-set-field ?pm "side" (fact-slot-value ?mf bs-side))
-	    (pb-set-field ?pm "color" (fact-slot-value ?mf bs-color))
-            (pb-set-field ?m "instruction_bs" ?pm)
-          )
+	    (pb-set-field ?pm "side" (fact-slot-value ?meta-f bs-side))
+	    (pb-set-field ?pm "color" (fact-slot-value ?meta-f bs-color))
+	          (pb-set-field ?m "instruction_bs" ?pm)
+	    )
 	  (case DS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
-	    (pb-set-field ?pm "gate" (fact-slot-value ?mf ds-gate))
-	    (pb-set-field ?pm "order_id" (fact-slot-value ?mf ds-order))
-            (pb-set-field ?m "instruction_ds" ?pm)
+	    (pb-set-field ?pm "gate" (fact-slot-value ?meta-f ds-gate))
+	    (pb-set-field ?pm "order_id" (fact-slot-value ?meta-f order-id))
+	    (pb-set-field ?m "instruction_ds" ?pm)
 	  )
 	  (case SS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?mf ss-operation))
-	    (bind ?shelf-slot (fact-slot-value ?mf ss-shelf-slot))
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f ss-operation))
+	    (bind ?shelf-slot (fact-slot-value ?meta-f ss-shelf-slot))
 	    (pb-set-field ?pm "shelf" (nth$ 1 ?shelf-slot))
 	    (pb-set-field ?pm "slot" (nth$ 2 ?shelf-slot))
-      (pb-set-field ?m "instruction_ss" ?pm)
+	    (pb-set-field ?m "instruction_ss" ?pm)
 	  )
 	  (case RS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionRS"))
-	    (pb-set-field ?pm "ring_color" (fact-slot-value ?mf rs-ring-color))
-            (pb-set-field ?m "instruction_rs" ?pm)
+	    (pb-set-field ?pm "ring_color" (fact-slot-value ?meta-f rs-ring-color))
+	    (pb-set-field ?m "instruction_rs" ?pm)
 	  )
 	  (case CS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionCS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?mf cs-operation))
-            (pb-set-field ?m "instruction_cs" ?pm)
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f cs-operation))
+	    (pb-set-field ?m "instruction_cs" ?pm)
 	  )
         )
       )
@@ -635,8 +777,9 @@
   (modify ?sf (time ?now) (seq (+ ?seq 1)))
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
 
-  (do-for-all-facts ((?machine machine)) TRUE
-    (bind ?m (net-create-Machine ?machine TRUE))
+  (do-for-all-facts ((?machine machine) (?machine-lights machine-lights))
+    (eq ?machine:name ?machine-lights:name)
+    (bind ?m (net-create-Machine ?machine (get-machine-meta-fact ?machine) ?machine-lights TRUE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 
@@ -649,9 +792,10 @@
 (deffunction net-create-broadcast-MachineInfo (?team-color)
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
   (pb-set-field ?s "team_color" ?team-color)
-
-  (do-for-all-facts ((?machine machine)) (eq ?machine:team ?team-color)
-    (bind ?m (net-create-Machine ?machine FALSE))
+  (do-for-all-facts ((?machine machine) (?machine-lights machine-lights))
+    (and (eq ?machine:name ?machine-lights:name)
+         (eq ?machine:team ?team-color))
+    (bind ?m (net-create-Machine ?machine (get-machine-meta-fact ?machine) ?machine-lights FALSE))
     (pb-add-list ?s "machines" ?m) ; destroys ?m
   )
 

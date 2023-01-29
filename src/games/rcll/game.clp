@@ -314,12 +314,25 @@
 	=>
 	(modify ?gp (is-parameterized TRUE))
 
+	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
+	; do not delete rs-meta as the ring-colors are set later in this rule
+	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
+	  (modify ?rs-meta (mps-base-counter 0)
+	                   (bases-added 0)
+	                   (bases-used 0)
+	  )
+	)
+	(delayed-do-for-all-facts ((?cs-meta cs-meta)) TRUE (retract ?cs-meta))
+	(delayed-do-for-all-facts ((?ds-meta ds-meta)) TRUE (retract ?ds-meta))
+	(delayed-do-for-all-facts ((?ss-meta ss-meta)) TRUE (retract ?ss-meta))
 	; reset machines
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
-	             (ss-operation STORE)
-	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	  (modify ?machine (state IDLE))
+	)
+
+	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(if (eq ?m-positions RANDOM)
 	 then
@@ -378,8 +391,9 @@
   )
 
   ; Print required additional bases
-  (do-for-all-facts ((?m machine)) (eq ?m:mtype RS)
-    (printout t "RS " ?m:name " has colors " ?m:rs-ring-colors crlf)
+  (do-for-all-facts ((?m machine) (?meta rs-meta))
+    (and (eq ?m:mtype RS) (eq ?m:name ?meta:name))
+    (printout t "RS " ?meta:name " has colors " ?meta:rs-ring-colors crlf)
   )
 
 	; Print machine swapping info
@@ -429,8 +443,8 @@
   ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
   =>
   (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights GREEN-ON YELLOW-ON RED-ON))
+  (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+    (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
   ;(assert (reset-game))
 )
@@ -574,8 +588,8 @@
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
   (modify ?gs (prev-phase POST_GAME) (end-time (now)))
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (modify ?machine (desired-lights RED-BLINK))
+  (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+    (modify ?ml (desired-lights RED-BLINK))
   )
   (do-for-all-facts ((?cfg confval) (?m machine))
       (and (eq ?m:mtype RS)

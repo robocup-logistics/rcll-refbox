@@ -35,17 +35,16 @@
   (assert (setup-light-toggle ?next-m))
 
   ; Turn on previous machines again
-  (delayed-do-for-all-facts ((?machine machine))
-    (or (eq ?machine:name (sym-cat C- ?m)) (eq ?machine:name (sym-cat M- ?m)))
-
-    (modify ?machine (desired-lights RED-ON YELLOW-ON GREEN-ON))
+  (delayed-do-for-all-facts ((?ml machine-lights))
+    (or (eq ?ml:name (sym-cat C- ?m)) (eq ?ml:name (sym-cat M- ?m)))
+    (modify ?ml (desired-lights RED-ON YELLOW-ON GREEN-ON))
   )
 
   ; Turn off current machines
-  (delayed-do-for-all-facts ((?machine machine))
-    (or (eq ?machine:name (sym-cat C- ?next-m))
-	(eq ?machine:name (sym-cat M- ?next-m)))
+  (delayed-do-for-all-facts ((?ml machine-lights))
+    (or (eq ?ml:name (sym-cat C- ?next-m))
+	(eq ?ml:name (sym-cat M- ?next-m)))
 
-    (modify ?machine (desired-lights))
+    (modify ?ml (desired-lights))
   )
 )

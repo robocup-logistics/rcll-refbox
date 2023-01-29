@@ -16,6 +16,7 @@
   then (printout t "Enabling simulation" crlf) (load* (resolve-file simulation.clp)))
 (load* (resolve-file machines.clp))
 (load* (resolve-file workpieces.clp))
+(load* (resolve-file task-tracking.clp))
 (load* (resolve-file robots.clp))
 (load* (resolve-file orders.clp))
 (load* (resolve-file game.clp))
@@ -51,7 +52,9 @@
   (confval (path "/llsfrb/clips/unwatch-rules") (type STRING) (is-list TRUE) (list-value $?lv))
   =>
   (printout t "Disabling watching of the following rules: " ?lv crlf)
-  (foreach ?v ?lv (unwatch rules (sym-cat ?v)))
+  (foreach ?v ?lv
+    (printout t "Disabling watching of " ?v crlf)
+    (unwatch rules (sym-cat ?v)))
 )
 
 (defrule load-mongodb

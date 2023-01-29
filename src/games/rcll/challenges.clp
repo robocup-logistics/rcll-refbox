@@ -237,7 +237,9 @@
 			(bind ?ring-colors (create$))
 			(progn$ (?str-color ?rc:list-value)
 				(bind ?ring-colors (append$ ?ring-colors (sym-cat ?str-color))))
-			(modify ?m (rs-ring-colors ?ring-colors))
+			(do-for-fact ((?rs-meta rs-meta)) (eq ?rs-meta:name ?m:name)
+				(modify ?rs-meta (rs-ring-colors ?ring-colors))
+			)
 		)
 		(bind ?spec-prefix "/llsfrb/challenges/machine-setup/ring-specs/")
 		(delayed-do-for-all-facts ((?spec confval))
@@ -271,7 +273,10 @@
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
 	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
 	             (ss-operation STORE)
-	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	             (proc-start 0.0))
+	)
+	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(delayed-do-for-all-facts ((?r challenges-route)) (retract ?r))
 	(assert (challanges-reset-back-in-setup))
@@ -292,11 +297,23 @@
 	(bind ?mirror (config-get-bool "/llsfrb/challenges/field/mirror"))
 
 	; reset machines
+	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
+	; do not delete rs-meta as the ring-colors are set later in this rule
+	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
+	  (modify ?rs-meta (mps-base-counter 0)
+	                   (bases-added 0)
+	                   (bases-used 0)
+	  )
+	)
+	(delayed-do-for-all-facts ((?cs-meta cs-meta)) TRUE (retract ?cs-meta))
+	(delayed-do-for-all-facts ((?ds-meta ds-meta)) TRUE (retract ?ds-meta))
+	(delayed-do-for-all-facts ((?ss-meta ss-meta)) TRUE (retract ?ss-meta))
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
-	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
-	             (ss-operation STORE)
-	             (proc-start 0.0) (desired-lights GREEN-ON YELLOW-ON RED-ON))
+	(if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
+		(modify ?machine (state IDLE))
+	)
+	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
 	(if (eq ?m-positions RANDOM)
 	 then

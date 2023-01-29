@@ -11,9 +11,9 @@
 (defrule m-shutdown "Shutdown machines at the end"
   (finalize)
 	(gamestate (phase POST_GAME))
-  ?mf <- (machine (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
+  ?ml <- (machine-lights (name ?m) (desired-lights $?dl&:(> (length$ ?dl) 0)))
   =>
-  (modify ?mf (desired-lights))
+  (modify ?ml (desired-lights))
   (mps-reset (str-cat ?m))
 )
 
@@ -26,11 +26,36 @@
   )
 )
 
+(defrule machine-meta-init
+  (declare (salience ?*PRIORITY_HIGH*))
+  (machine (name ?n) (mtype ?type))
+  (not (bs-meta (name ?n)))
+  (not (rs-meta (name ?n)))
+  (not (cs-meta (name ?n)))
+  (not (ds-meta (name ?n)))
+  (not (ss-meta (name ?n)))
+  =>
+  (str-assert (str-cat "(" (lowcase ?type) "-meta (name " ?n "))"))
+)
+
+(defrule machine-meta-retract
+  (declare (salience ?*PRIORITY_HIGH*))
+  (or ?mf <- (bs-meta (name ?n))
+      ?mf <- (rs-meta (name ?n))
+      ?mf <- (cs-meta (name ?n))
+      ?mf <- (ds-meta (name ?n))
+      ?mf <- (ss-meta (name ?n))
+  )
+  (not (machine (name ?n)))
+  =>
+  (retract ?mf)
+)
+
 (defrule machine-lights "Set machines if desired lights differ from actual lights"
-  ?mf <- (machine (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
+  ?ml <- (machine-lights (name ?m) (actual-lights $?al) (desired-lights $?dl&:(neq ?al ?dl)))
   =>
   ;(printout t ?m " actual lights: " ?al "  desired: " ?dl crlf)
-  (modify ?mf (actual-lights ?dl))
+  (modify ?ml (actual-lights ?dl))
 	(if (member$ RED-ON ?dl) then (bind ?red-state ON)
 	 else (if (member$ RED-BLINK ?dl) then (bind ?red-state BLINK)
 	 else (bind ?red-state OFF)))
@@ -158,12 +183,12 @@
 	;)
 	; No need to randomize color assignment, the color costs are randomized
 	; anyways
-	(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+	(do-for-fact ((?m-cyan rs-meta) (?m-magenta rs-meta))
 	  (and (eq ?m-cyan:name C-RS1) (eq ?m-magenta:name M-RS1))
 	  (modify ?m-cyan    (rs-ring-colors RING_ORANGE RING_GREEN))
 	  (modify ?m-magenta (rs-ring-colors RING_ORANGE RING_GREEN))
 	)
-	(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+	(do-for-fact ((?m-cyan rs-meta) (?m-magenta rs-meta))
 	  (and (eq ?m-cyan:name C-RS2) (eq ?m-magenta:name M-RS2))
 	  (modify ?m-cyan    (rs-ring-colors RING_BLUE RING_YELLOW))
 	  (modify ?m-magenta (rs-ring-colors RING_BLUE RING_YELLOW))
