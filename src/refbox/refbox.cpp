@@ -190,6 +190,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		logger_->add_logger(new FileLogger(logfile.c_str(), log_level_));
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
+	clips_ = std::make_unique<CLIPS::Environment>();
+	setup_clips();
 
 	cfg_machine_assignment_ = ASSIGNMENT_2014;
 	try {
@@ -212,9 +214,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	                  "Using %s machine assignment",
 	                  (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
 
-	clips_ = std::make_unique<CLIPS::Environment>();
 	setup_protobuf_comm();
-	setup_clips();
 
 #ifdef HAVE_WEBSOCKETS
 	//launch websocket backend and add websocket logger
@@ -638,6 +638,10 @@ LLSFRefBox::setup_clips()
 		clips_logger_->add_logger(new FileLogger(logfile.c_str(), Logger::LL_DEBUG));
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
+	if (config_->get_bool_or_default("/llsfrb/clips/debug", false)) {
+		clips_->evaluate("(watch rules)");
+		clips_->evaluate("(watch facts)");
+	}
 
 	bool simulation = false;
 	try {
@@ -889,8 +893,8 @@ LLSFRefBox::clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields)
 		table_sep << std::left << std::setw(slot_value_length[slot_name]) << std::setfill('-') << "-"
 		          << "---";
 	}
-	logger_->log_info("C", table_header.str().c_str());
-	logger_->log_info("C", table_sep.str().c_str());
+	clips_logger_->log_info("C", table_header.str().c_str());
+	clips_logger_->log_info("C", table_sep.str().c_str());
 	for (auto &fact_id : fact_indices) {
 		std::stringstream row;
 		row << " | ";
@@ -902,7 +906,7 @@ LLSFRefBox::clips_print_fact_list(CLIPS::Values facts, CLIPS::Values fields)
 			row << std::left << std::setw(slot_value_length[slot_name]) << std::setfill(' ') << slot_str
 			    << " | ";
 		}
-		logger_->log_info("C", row.str().c_str());
+		clips_logger_->log_info("C", row.str().c_str());
 	}
 }
 

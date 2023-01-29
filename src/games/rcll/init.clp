@@ -60,18 +60,6 @@
   (batch* (resolve-file (str-cat ?v ".clp")))
 )
 
-(defrule enable-debug
-  (init)
-  (confval (path "/llsfrb/clips/debug") (type BOOL) (value ?v))
-  =>
-  (if (eq ?v true) then
-    (printout t "CLIPS debugging enabled, watching facts and rules" crlf)
-    (watch facts)
-    (watch rules)
-    ;(dribble-on "trace.txt")
-  )
-)
-
 (defrule debug-level
   (init)
   (confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v))

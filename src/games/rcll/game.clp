@@ -433,20 +433,10 @@
   ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
   (or (sim-time (enabled false))
       (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
+  (not (finalize))
   =>
   (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
   (modify ?gf (last-time ?now))
-)
-
-
-(defrule game-switch-to-pre-game
-  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
-  =>
-  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
-  (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
-    (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
-  )
-  ;(assert (reset-game))
 )
 
 (defrule game-start-training
@@ -585,6 +575,7 @@
 )
 
 (defrule game-goto-post-game
+  (declare (salience ?*PRIORITY_FIRST*))
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
   (modify ?gs (prev-phase POST_GAME) (end-time (now)))
@@ -605,8 +596,17 @@
   )
 )
 
+(defrule game-quit-after-finalize
+  (declare (salience ?*PRIORITY_HIGH*))
+  (gamestate (phase POST_GAME) (end-time $?end-time))
+  (finalize)
+  =>
+  (exit)
+)
+
 (defrule game-over-on-finalize
 	"Switch to post-game if the refbox is stopped"
+	(declare (salience ?*PRIORITY_HIGH*))
 	(finalize)
 	?gs <- (gamestate (phase ~POST_GAME))
 	=>
@@ -621,32 +621,92 @@
   (game-summary)
 )
 
+(deffunction game-restart ()
+	; Retract all delivery periods
+	(delayed-do-for-all-facts ((?dp delivery-period)) TRUE
+		(retract ?dp)
+	)
+	; reset machine progression
+	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
+	; do not delete rs-meta as the ring-colors are set later in this rule
+	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
+	  (modify ?rs-meta (mps-base-counter 0)
+	                   (bases-added 0)
+	                   (bases-used 0)
+	  )
+	)
+	(delayed-do-for-all-facts ((?cs-meta cs-meta)) TRUE (retract ?cs-meta))
+	(delayed-do-for-all-facts ((?ds-meta ds-meta)) TRUE (retract ?ds-meta))
+	(delayed-do-for-all-facts ((?ss-meta ss-meta)) TRUE (retract ?ss-meta))
+
+	; delete workpieces
+	(delayed-do-for-all-facts ((?wp workpiece)) TRUE (retract ?wp))
+
+	; retract points
+	(delayed-do-for-all-facts ((?points points)) TRUE (retract ?points))
+
+	; reset orders
+	(delayed-do-for-all-facts ((?o order)) TRUE
+	  (modify ?o (active FALSE) (quantity-delivered (create$ 0 0)))
+	)
+
+	; create a fresh game report if mongodb is active
+	(assert (mongodb-new-report))
+)
+
 (deffunction game-reset ()
 	; Retract all delivery periods
 	(delayed-do-for-all-facts ((?dp delivery-period)) TRUE
 		(retract ?dp)
 	)
+
 	; Reset all down periods
 	(delayed-do-for-all-facts ((?m machine)) TRUE
 		(modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
 	)
+
 	; Reset game parameterization
 	(delayed-do-for-all-facts ((?gp game-parameters)) TRUE
 		(retract ?gp)
 	)
+
 	(assert (game-parameters))
 	; Reset machine generation
 	(do-for-fact ((?mg machine-generation)) TRUE
 		(modify ?mg (state NOT-STARTED))
 	)
+
 	; Print machines again
 	(do-for-fact ((?mp machines-printed)) TRUE
 		(retract ?mp)
 	)
+
 	; Print game info again
 	(do-for-fact ((?gp game-printed)) TRUE
 		(retract ?gp)
 	)
+
+	(game-restart)
+)
+
+(defrule game-switch-back-to-setup
+  ?gs <- (gamestate (phase SETUP) (prev-phase ~PRE_GAME))
+  =>
+  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
+  (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+    (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
+  )
+  (game-restart)
+)
+
+(defrule game-switch-back-to-pre-game
+  ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
+  =>
+  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
+  (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
+    (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
+  )
+  (assert (reset-game))
 )
 
 (defrule game-reset

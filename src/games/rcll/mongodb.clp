@@ -486,28 +486,20 @@
 	(return ?doc)
 )
 
-
-(defrule mongodb-reset
-	(reset-game)
-	?f1 <- (mongodb-game-report)
-	=>
-	(modify ?f1 (points 0 0) (end 0 0))
-)
-
 (deftemplate mongodb-phase-change
 	(multislot registered-phases (type SYMBOL) (default (create$)))
 )
 
-
-(defrule mongodb-game-report-begin
-	(declare (salience ?*PRIORITY_HIGH*))
-	?gp <- (game-parameters (is-parameterized TRUE))
-	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
-	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
-	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
-	(not (mongodb-game-report (start $?stime) (name ?report-name)))
-	(game-parameters (is-parameterized TRUE))
-	=>
+(deffunction mongodb-init-report (?teams ?stime ?etime ?report-name)
+	(do-for-all-facts ((?game-report mongodb-game-report)) TRUE
+		(retract ?game-report)
+	)
+	(do-for-all-facts ((?phase-change mongodb-phase-change)) TRUE
+		(retract ?phase-change)
+	)
+	(do-for-all-facts ((?machine-history mongodb-machine-history)) TRUE
+		(retract ?machine-history)
+	)
 	(assert (mongodb-game-report (start ?stime) (name ?report-name)))
 	(bind ?doc (mongodb-create-game-report ?teams ?stime ?etime ?report-name))
 	; store information describing the game setup only once
@@ -522,7 +514,7 @@
 	(foreach ?m-type (deftemplate-slot-allowed-values machine mtype)
 		; for some reason clips crashes, if the meta-fact-name is passed
 		; on-the-fly. Therefore, store it via bind first.
-		(bind ?meta-fact-name (sym-cat (lowcase ?m-type -meta)))
+		(bind ?meta-fact-name (sym-cat (lowcase ?m-type) -meta))
 		(do-for-all-facts ((?meta-f ?meta-fact-name)) TRUE
 			(bind ?meta-doc (mongodb-fact-to-bson ?meta-f))
 			(bson-array-append ?m-arr ?meta-doc)
@@ -548,12 +540,68 @@
 	(assert (mongodb-phase-change))
 )
 
+(defrule mongodb-start-new-report
+" After restarting a game, a new report should be created"
+	(declare (salience ?*PRIORITY_HIGH*))
+	?t <- (mongodb-new-report)
+	(game-parameters (is-parameterized TRUE))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (prev-phase PRE_GAME|SETUP) (start-time $?stime) (end-time $?etime))
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	=>
+	(retract ?t)
+	(delayed-do-for-all-facts ((?hist mongodb-machine-history)) TRUE
+	  (retract ?hist)
+	)
+	(mongodb-init-report ?teams ?stime ?etime ?report-name)
+)
+
+(defrule mongodb-game-report-begin
+	(declare (salience ?*PRIORITY_HIGH*))
+	?gp <- (game-parameters (is-parameterized TRUE))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	(not (mongodb-game-report (start $?stime) (name ?report-name)))
+	(game-parameters (is-parameterized TRUE))
+	=>
+	(mongodb-init-report ?teams ?stime ?etime ?report-name)
+)
+
+
 (defrule mongodb-silence-debug
 	(confval (path "/llsfrb/clips/debug") (type BOOL) (value true))
 	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
 	=>
 	(unwatch facts mongodb-machine-history)
 	(unwatch rules mongodb-create-next-machine-history)
+)
+
+(defrule mongodb-start-new-report
+" After restarting a game, a new report should be created"
+	(declare (salience ?*PRIORITY_HIGH*))
+	?t <- (mongodb-new-report)
+	?gp <- (game-parameters (is-parameterized TRUE))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (prev-phase PRE_GAME|SETUP) (start-time $?stime) (end-time $?etime))
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	=>
+	(retract ?t)
+	(delayed-do-for-all-facts ((?hist mongodb-machine-history)) TRUE
+	  (retract ?hist)
+	)
+	(mongodb-init-report ?teams ?stime ?etime ?report-name)
+)
+
+(defrule mongodb-game-report-begin
+	(declare (salience ?*PRIORITY_HIGH*))
+	?gp <- (game-parameters (is-parameterized TRUE))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	(not (mongodb-game-report (start $?stime) (name ?report-name)))
+	=>
+	(mongodb-init-report ?teams ?stime ?etime ?report-name)
 )
 
 (defrule mongodb-game-report-end
@@ -774,7 +822,7 @@
 	         (mongodb-load-facts-from-game-report ?report-name
 	                                              "ring-specs"
 	                                              ring-spec
-	                                              color))
+	                                              color)
 	         (mongodb-load-facts-from-game-report ?report-name
 	                                              "machine-meta"
 	                                              rs-meta

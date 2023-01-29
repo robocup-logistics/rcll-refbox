@@ -92,3 +92,24 @@
   =>
   (ws-create-RingInfo)
 )
+
+(defrule ws-unwatch-all
+  (init)
+  =>
+  (bind ?ws-rules (create$
+    ws-send-attention-message
+    ws-reset-machine-by-team
+    ws-update-gamestate
+    ws-update-order
+    ws-update-unconfirmed-delivery
+    ws-update-order-external
+    ws-update-robot
+    ws-update-workpiece
+    ws-update-machine
+    ws-update-points
+    ws-update-ringspec
+  ))
+  (foreach ?r ?ws-rules
+    (unwatch rules ?r)
+  )
+)
