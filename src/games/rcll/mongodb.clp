@@ -514,7 +514,7 @@
 	(foreach ?m-type (deftemplate-slot-allowed-values machine mtype)
 		; for some reason clips crashes, if the meta-fact-name is passed
 		; on-the-fly. Therefore, store it via bind first.
-		(bind ?meta-fact-name (sym-cat (lowcase ?m-type -meta)))
+		(bind ?meta-fact-name (sym-cat (lowcase ?m-type) -meta))
 		(do-for-all-facts ((?meta-f ?meta-fact-name)) TRUE
 			(bind ?meta-doc (mongodb-fact-to-bson ?meta-f))
 			(bson-array-append ?m-arr ?meta-doc)
@@ -822,7 +822,7 @@
 	         (mongodb-load-facts-from-game-report ?report-name
 	                                              "ring-specs"
 	                                              ring-spec
-	                                              color))
+	                                              color)
 	         (mongodb-load-facts-from-game-report ?report-name
 	                                              "machine-meta"
 	                                              rs-meta
