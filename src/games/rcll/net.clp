@@ -802,6 +802,28 @@
   (return ?s)
 )
 
+(defrule net-broadcast-MachineInfo-on-state-change
+  (declare (salience ?*PRIORITY_HIGH*))
+  (time $?now)
+  (gamestate (phase PRODUCTION))
+  ?sf <- (signal (type machine-info-bc) (seq ?seq) (count ?count))
+  (network-peer (group CYAN) (id ?peer-id-cyan))
+  (network-peer (group MAGENTA) (id ?peer-id-magenta))
+  ?smu <- (send-machine-update)
+  =>
+  (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
+
+  (bind ?s (net-create-broadcast-MachineInfo CYAN))
+  (pb-broadcast ?peer-id-cyan ?s)
+  (pb-destroy ?s)
+
+  (bind ?s (net-create-broadcast-MachineInfo MAGENTA))
+  (pb-broadcast ?peer-id-magenta ?s)
+  (pb-destroy ?s)
+  (retract ?smu)
+)
+
+
 (defrule net-broadcast-MachineInfo
   (time $?now)
   (gamestate (phase PRODUCTION))

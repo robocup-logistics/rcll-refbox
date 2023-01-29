@@ -206,6 +206,7 @@
   (modify ?mf (state DOWN) (prev-state ?state)
               (proc-start (+ ?proc-start ?down-time))
               (wait-for-product-since (+ ?wait-since ?down-time)))
+  (assert (send-machine-update))
 )
 
 (defrule production-machine-up
@@ -215,6 +216,7 @@
   =>
 	(printout t "Machine " ?name " is up again" crlf)
 	(modify ?mf (state ?prev-state))
+  (assert (send-machine-update))
 )
 
 (defrule production-machine-prepare
@@ -285,6 +287,7 @@
 			)
 		)
 	)
+  (assert (send-machine-update))
 )
 
 (defrule production-machine-reset-by-team
@@ -314,6 +317,7 @@
       )
     )
   )
+  (assert (send-machine-update))
 )
 
 
@@ -364,6 +368,7 @@
   (printout t "Machine " ?n " dispensing " ?color " base" crlf)
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task DISPENSE) (mps-busy WAIT))
   (mps-bs-dispense (str-cat ?n) (str-cat ?color))
+  (assert (send-machine-update))
 )
 
 (defrule production-bs-move-conveyor
@@ -398,6 +403,7 @@
   (modify ?m (state BROKEN)
 	  (broken-reason (str-cat ?n ": insufficient bases ("
 				  (- ?ba ?bu) " < " ?req-bases ")")))
+  (assert (send-machine-update))
 )
 
 (defrule production-rs-ignore-insufficient-bases
@@ -446,6 +452,7 @@
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task MOUNT-RING) (mps-busy WAIT))
 	(modify ?meta (bases-used (+ ?bu ?req-bases)))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors) (str-cat ?ring-color))
+  (assert (send-machine-update))
 )
 
 (defrule production-rs-move-to-output
@@ -459,6 +466,7 @@
 	(assert (product-processed (at-machine ?n) (mtype RS) (team ?team)
 		                       (game-time ?gt) (ring-color ?ring-color)))
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
+  (assert (send-machine-update))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
@@ -495,6 +503,7 @@
 		 else
 			(modify ?m (state BROKEN)
 			           (broken-reason (str-cat ?n ": too many additional bases loaded")))
+			(assert (send-machine-update))
 		)
 	)
 )
@@ -515,9 +524,10 @@
 	 on the instructed task."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE))
-  (cs-meta (name ?n) (cs-operation ?cs-op))
+	(cs-meta (name ?n) (cs-operation ?cs-op))
 	=>
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?cs-op) (mps-busy WAIT))
+	(assert (send-machine-update))
 	(if (eq ?cs-op RETRIEVE_CAP)
 	 then
 		(mps-cs-retrieve-cap (str-cat ?n))
@@ -549,6 +559,7 @@
 		                           (team ?team) (game-time ?gt)))
 	)
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
+	(assert (send-machine-update))
 	(modify ?cs-meta (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
@@ -562,6 +573,7 @@
 	    (workpiece (at-machine ?n) (state AVAILABLE)))
 	=>
 	(modify ?m (state READY-AT-OUTPUT) (task nil))
+	(assert (send-machine-update))
 )
 
 (defrule production-mps-product-retrieved
@@ -571,6 +583,7 @@
 	=>
 	(printout t "Machine " ?n ": workpiece has been picked up" crlf)
 	(modify ?m (state WAIT-IDLE) (idle-since ?gt))
+	(assert (send-machine-update))
 )
 
 (defrule production-ds-start-processing
@@ -582,6 +595,7 @@
 	=>
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task DELIVER) (mps-busy WAIT))
+	(assert (send-machine-update))
   (mps-ds-process (str-cat ?n) ?gate)
 )
 
@@ -599,6 +613,7 @@
 	(assert (attention-message (team ?team)
 	                           (text (str-cat "Please confirm delivery for order " ?order))))
 	(modify ?m (state PROCESSED) (task nil))
+	(assert (send-machine-update))
 )
 
 (defrule production-ds-processed
@@ -609,6 +624,7 @@
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
   (modify ?m (state WAIT-IDLE) (idle-since ?gt))
+	(assert (send-machine-update))
 )
 
 (defrule production-ss-simple-relocate-start
@@ -697,6 +713,7 @@
 		(modify ?m (state BROKEN)
 		  (broken-reason (str-cat "Prepare received for " ?n " for inaccessible slot while the storage is full.")))
 	)
+	(assert (send-machine-update))
 )
 
 (defrule production-ss-relocate-completed
@@ -737,6 +754,7 @@
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible TRUE) (is-filled TRUE))
 	=>
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op) (mps-busy WAIT))
+	(assert (send-machine-update))
 	(mps-ss-retrieve (str-cat ?n) ?shelf ?slot)
 )
 
@@ -749,6 +767,7 @@
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible TRUE) (is-filled FALSE))
 	=>
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op) (mps-busy WAIT))
+	(assert (send-machine-update))
 	(mps-ss-store (str-cat ?n) ?shelf ?slot)
 )
 
@@ -769,6 +788,7 @@
 	  (str-cat "Payment for retrieving (" ?shelf "," ?slot ") from " ?n)
 	  ?*PRODUCTION-POINTS-SS-RETRIEVAL*
 	  ?gt ?team)
+	(assert (send-machine-update))
 	(modify ?s (is-filled FALSE) (description ""))
 )
 
@@ -782,6 +802,7 @@
 	=>
 	(printout t "Machine " ?n " finished storage at (" ?shelf ", " ?slot ")" crlf)
 	(modify ?m (state PROCESSED) (proc-start ?gt))
+	(assert (send-machine-update))
 	(modify ?s (is-filled TRUE) (num-payments 0) (description ?description)
 	           (last-payed (+ ?gt ?*SS-STORAGE-GRACE-PERIOD*)))
 	(ss-update-accessible-slots ?n ?shelf ?slot FALSE)
@@ -799,6 +820,7 @@
 	=>
 	(printout t "Machine " ?n " finished processing" crlf)
 	(modify ?m (state WAIT-IDLE) (idle-since ?gt) (task nil))
+	(assert (send-machine-update))
 )
 
 (defrule production-mps-idle
@@ -808,6 +830,7 @@
 	               (idle-since ?it&:(timeout-sec ?gt ?it ?*WAIT-IDLE-TIME*)))
 	=>
 	(modify ?m (state IDLE))
+	(assert (send-machine-update))
 	(mps-reset (str-cat ?n))
 )
 
@@ -849,6 +872,7 @@
 	=>
 	(printout t "Machine " ?n " recovered" crlf)
 	(modify ?m (state IDLE) (broken-since 0.0))
+	(assert (send-machine-update))
 	(do-for-fact ((?meta rs-meta)) (eq ?meta:name ?n)
 		(modify ?meta (bases-used ?meta:bases-added))
 	)
@@ -866,6 +890,7 @@
   =>
   (modify ?m (state BROKEN)
              (broken-reason (str-cat "MPS " ?n " prepared, but no product fed in time")))
+	(assert (send-machine-update))
 )
 
 (defrule production-timeout-while-processing
@@ -878,6 +903,7 @@
 	(printout error "Machine " ?n " timed out while processing" crlf)
 	(modify ?m (state BROKEN) (task nil)
 	           (broken-reason (str-cat "MPS " ?n " timed out while processing")))
+	(assert (send-machine-update))
 	(mps-reset (str-cat ?n))
 )
 
@@ -901,6 +927,7 @@
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
     (modify ?m (state ?state))
   )
+	(assert (send-machine-update))
 )
 
 (defrule production-pb-recv-MachineAddBase
