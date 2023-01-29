@@ -488,28 +488,34 @@
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
 
   (modify ?of (quantity-delivered ?q-del-new))
-  (if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
-
+	(bind ?points 0)
+	(if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
 		; Delivery points
-		(bind ?points 0)
-		(bind ?reason "")
-		(if (<= ?delivery-time (nth$ 2 ?dp)) then
-			(bind ?points ?*PRODUCTION-POINTS-DELIVERY*)
-			(bind ?reason (str-cat "Delivered item for order " ?id))
-		else
-			(if (< (- ?delivery-time (nth$ 2 ?dp))
-			       ?*PRODUCTION-DELIVER-MAX-LATENESS-TIME*)
-			 then
-				; 15 - floor(T_d - T_e) * 1.5 + 5
-				(bind ?points (integer (+ (- 15 (* (floor (- ?delivery-time (nth$ 2 ?dp))) 1.5)) 5)))
-				(bind ?reason (str-cat "Delivered item for order " ?id " (late delivery grace time)"))
-			else
-				(bind ?points ?*PRODUCTION-POINTS-DELIVERY-TOO-LATE*)
-				(bind ?reason (str-cat "Delivered item for order " ?id " (too late delivery)"))
-			)
+		(switch ?complexity
+		  (case C0 then (bind ?points ?*PRODUCTION-POINTS-DELIVER-C0*))
+		  (case C1 then (bind ?points ?*PRODUCTION-POINTS-DELIVER-C1*))
+		  (case C2 then (bind ?points ?*PRODUCTION-POINTS-DELIVER-C2*))
+		  (case C3 then (bind ?points ?*PRODUCTION-POINTS-DELIVER-C3*))
 		)
 		(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-		                (points ?points) (product-step ?p-id) (reason ?reason)))
+			                (points ?points) (product-step ?p-id) (reason "Delivered item for order")))
+		(bind ?delivery-overtime (- ?delivery-time (nth$ 2 ?dp)))
+		(bind ?overtime-percentile 0.0)
+		(bind ?delivery-length (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
+		(while  (and (< ?overtime-percentile 1.0)
+		             (> ?delivery-overtime (* ?overtime-percentile ?delivery-length))
+		             (> ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-STEPS* 0)
+		        )
+			(bind ?overtime-percentile (+ ?overtime-percentile
+			      (/ 1 ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-STEPS*)))
+		)
+		(if (> ?overtime-percentile 0.0)
+		 then
+			(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+			  (points (- 0 (integer (* ?overtime-percentile
+			                  (* ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-DEDUCTION-REL* ?points)))))
+			  (product-step ?p-id) (reason (str-cat "Late delivery of order (>" ?overtime-percentile "% )"))))
+		)
 		(if ?competitive
 		 then
 			(if (> (nth$ (order-q-del-other-index ?team) ?q-del) (nth$ ?q-del-idx ?q-del))
@@ -527,12 +533,11 @@
 				                (reason (str-cat "First delivery for competitive order " ?id))))
 			)
 		)
-
-   else
-    (assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-		    (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
-		    (product-step ?p-id)
-		    (reason (str-cat "Delivered item for order " ?id))))
+	 else
+		(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+		  (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
+		  (product-step ?p-id)
+		  (reason (str-cat "Delivered item for order " ?id))))
   )
 )
 
@@ -663,37 +668,6 @@
   (assert (points (phase PRODUCTION) (game-time ?g-time) (team ?team)
                   (points ?points) (product-step ?p-id)
                   (reason ?reason)))
-  ; Production points for mounting the last ring (pre-cap points)
-  (bind ?complexity-num (length$ ?r-colors))
-  (bind ?col-count 0)
-  (progn$ (?col ?r-colors)
-    (if (eq ?col ?step-r-color) then (bind ?col-count (+ ?col-count 1)))
-  )
-  (if (and (eq (nth$ ?complexity-num ?r-colors) ?step-r-color)
-           ; the ring color is unique
-           ; or this is the last processing step of that color for this wp
-           (or (eq ?complexity-num (member$ ?step-r-color ?wp-r-colors))
-               (eq (- ?col-count 1) (length$ (find-all-facts ((?o-pd product-processed))
-                      (and (eq ?o-pd:workpiece ?w-id)
-                           (eq ?o-pd:scored TRUE)
-                      )))
-      )))
-   then
-    (bind ?pre-cap-reason (str-cat "Mounted last ring for complexity "
-                                   ?complexity " order " ?o-id))
-    (switch ?complexity
-      (case C1 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C1-PRECAP*))
-      (case C2 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C2-PRECAP*))
-      (case C3 then (bind ?pre-cap-points ?*PRODUCTION-POINTS-FINISH-C3-PRECAP*))
-    )
-    (if (> ?g-time (nth$ 2 ?dp)) then
-      (if (config-get-bool "/llsfrb/workpiece-tracking/enable") then (bind ?pre-cap-points 0))
-      (bind ?pre-cap-reason (str-cat ?pre-cap-reason " Late (deadline: " (nth$ 2 ?dp) ")"))
-    )
-    (assert (points (game-time ?g-time) (points ?pre-cap-points)
-                    (team ?team) (phase PRODUCTION) (product-step ?p-id)
-                    (reason ?pre-cap-reason)))
-  )
   (modify ?pf (scored TRUE) (order ?o-id))
 )
 
