@@ -429,7 +429,7 @@ usage(const char *progname)
 	       "<parameter>\n"
 	       "\n"
 	       " Only <name> <team> are required."
-		   "If AgentTask messages should be send, everything is required."
+	       "If AgentTask messages should be send, everything is required."
 	       "\n"
 	       "set order-id to 0 if it should not be send"
 	       "\n"
@@ -459,9 +459,9 @@ main(int argc, char **argv)
 	name_      = argp.items()[0];
 	team_name_ = argp.items()[1];
 	if (argp.num_items() > 2) {
-		robot_nr_  = argp.parse_item_int(2);
-		order_id_  = argp.parse_item_int(3);
-		base_col_  = argp.items()[4];
+		robot_nr_ = argp.parse_item_int(2);
+		order_id_ = argp.parse_item_int(3);
+		base_col_ = argp.items()[4];
 		for (int i = 0; i < 3; i++) {
 			ring_cols_[i] = argp.items()[5 + i];
 		}
