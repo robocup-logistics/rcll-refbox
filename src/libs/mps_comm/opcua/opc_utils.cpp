@@ -39,11 +39,17 @@ operator+(const OpcUtils::MPSRegister a, const OpcUtils::MPSRegister b)
 }
 
 // OpcUtils related stuff
+
+// TODO change from this paths
 const std::string in_path = "DeviceSet/CPX-E-CEC-C1-PN/Resources/Application/GlobalVars/G/In";
 const std::string basic_path = "DeviceSet/CPX-E-CEC-C1-PN/Resources/Application/GlobalVars/G/Basic";
 const std::string in_sim_path = "DeviceSet/CODESYS Control Win V3 x64/Resources/Application/GlobalVars/G/In"; 
 const std::string basic_sim_path = "DeviceSet/CODESYS Control Win V3 x64/Resources/Application/GlobalVars/G/Basic";
-
+// to 
+/*
+const std::string in_path = "|var|CPX-E-CEC-C1-PN.Application.G.In";
+const std::string basic_path = "|var|CPX-E-CEC-C1-PN.Application.G.Basic";
+*/
 // Static values
 
 const std::vector<std::string> OpcUtils::REGISTER_NAMES({"ACTION_ID_IN",
@@ -217,6 +223,8 @@ OpcUtils::getInNode(UA_Client *client, bool simulation)
 const std::string
 OpcUtils::getNodeRelativePath(MPSRegister reg)
 {
+
+	// TODO change from /p/xxx => .p.xxx
 	switch (reg) {
 	case MPSRegister::ACTION_ID_IN:
 	case MPSRegister::ACTION_ID_BASIC: return "/p/ActionId";
