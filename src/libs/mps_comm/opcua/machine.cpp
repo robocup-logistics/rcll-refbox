@@ -263,7 +263,7 @@ void OpcUaMachine::SetupClient()
 
 void OpcUaMachine::reset()
 {
-	enqueue_instruction(machine_type_ | Command::COMMAND_RESET);
+	enqueue_instruction(Command::COMMAND_SET_TYPE, machine_type_ / 100);
 }
 
 void OpcUaMachine::connect()
@@ -589,6 +589,10 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 			{
 				return;
 			}
+			if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::BARCODE_IN))
+			{
+				return;
+			}
 			if((StationType)(machine->machine_type_ / 100) == StationType::STATION_TYPE_RS)
 			{
 				if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::SLIDECOUNT_IN))
@@ -597,8 +601,11 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 				}
 			}
 			machine->logger->info("{} All subscriptions done, starting with sending tasks!", prefix);
+			machine->reset();
+
 			machine->start_sending_instructions = true;
-        }
+
+	        }
         break;
 
     case UA_SESSIONSTATE_CREATE_REQUESTED:
@@ -647,6 +654,14 @@ void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, U
 		machine->callbacks_[machine->monitorMap[monId]]((short)raw_data);
 		return;
 	}
+	if(UA_Variant_hasScalarType(&value->value, &UA_TYPES[UA_TYPES_UINT32]))
+	{
+		UA_UInt32 raw_data = *(UA_UInt32 *) value->value.data;
+		machine->logger->info("Callback = {} for id {}", raw_data, monId);
+		machine->callbacks_[machine->monitorMap[monId]]((uint)raw_data);
+		return;
+	}
+
 	machine->logger->error("Callback for unsupported type?");
 }
 
