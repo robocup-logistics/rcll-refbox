@@ -589,10 +589,11 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 			{
 				return;
 			}
-			if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::BARCODE_IN))
+			//TODO activate once we fix everything up for real machines: 
+			/*if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::BARCODE_IN))
 			{
 				return;
-			}
+			}*/
 			if((StationType)(machine->machine_type_ / 100) == StationType::STATION_TYPE_RS)
 			{
 				if(!registerMonitoredItem(client, machine->subscriptionId, OpcUtils::MPSRegister::SLIDECOUNT_IN))
@@ -601,8 +602,7 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 				}
 			}
 			machine->logger->info("{} All subscriptions done, starting with sending tasks!", prefix);
-			machine->reset();
-
+			//TODO activate once we fix everything up for real machines: machine->reset();
 			machine->start_sending_instructions = true;
 
 	        }
