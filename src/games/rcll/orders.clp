@@ -533,11 +533,6 @@
 				                (reason (str-cat "First delivery for competitive order " ?id))))
 			)
 		)
-	 else
-		(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-		  (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
-		  (product-step ?p-id)
-		  (reason (str-cat "Delivered item for order " ?id))))
   )
 )
 
@@ -553,11 +548,6 @@
 	=>
   (modify ?pf (scored TRUE))
 	(printout warn "Delivered item for order " ?o-id " (wrong delivery gate, got " ?gate ", expected " ?dgate ")" crlf)
-
-	(assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
-									(team ?team) (phase PRODUCTION) (product-step ?p-id)
-									(reason (str-cat "Delivered item for order " ?o-id
-																	 " (wrong delivery gate)"))))
 )
 
 (defrule order-delivered-wrong-too-soon
