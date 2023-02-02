@@ -298,8 +298,8 @@
     (printout t "the machine generation is finished" crlf)
     (modify ?mg (state FINISHED))
    else
-    (printout warn "waiting for the generation of the machine positions" crlf)
-    (modify ?mg (generation-state-last-checked ?gt))
+    (printout warn "time-out for the generation of the machine positions, resetting game" crlf)
+    (assert (game-reset))
   )
 )
 

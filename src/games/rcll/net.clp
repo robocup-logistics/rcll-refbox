@@ -773,6 +773,7 @@
   (gamestate (phase ?phase))
   ?sf <- (signal (type machine-info)
 		 (time $?t&:(timeout ?now ?t ?*MACHINE-INFO-PERIOD*)) (seq ?seq))
+  (machine-generation (state FINISHED))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)))
   (bind ?s (pb-create "llsf_msgs.MachineInfo"))
@@ -810,6 +811,7 @@
   (network-peer (group CYAN) (id ?peer-id-cyan))
   (network-peer (group MAGENTA) (id ?peer-id-magenta))
   ?smu <- (send-machine-update)
+  (machine-generation (state FINISHED))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
@@ -833,6 +835,7 @@
 					       else ?*BC-MACHINE-INFO-BURST-PERIOD*))))
   (network-peer (group CYAN) (id ?peer-id-cyan))
   (network-peer (group MAGENTA) (id ?peer-id-magenta))
+  (machine-generation (state FINISHED))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 
@@ -865,6 +868,7 @@
 								 (time $?t&:(timeout ?now ?t ?*BC-MACHINE-INFO-PERIOD*)))
   (network-peer (group CYAN) (id ?peer-id-cyan))
   (network-peer (group MAGENTA) (id ?peer-id-magenta))
+  (machine-generation (state FINISHED))
   =>
   (modify ?sf (time ?now) (seq (+ ?seq 1)) (count (+ ?count 1)))
 

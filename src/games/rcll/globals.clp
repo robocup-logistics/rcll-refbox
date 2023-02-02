@@ -121,7 +121,7 @@
   ?*RANDOMIZE-GAME* = TRUE
 	?*RANDOMIZE-STEPS-MACHINES* = 2
 	?*RANDOMIZE-ACTIVATE-ALL-AT-START* = FALSE
-	?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE* = 1
+	?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE* = 2
 	; Incremental randomization probability for switching the machines across
 	; field halfs. A value from 0 to 10, 0 no change, 10, always change
 	?*RANDOMIZE-INTER-SIDE-SWAP-PROB* = 3
