@@ -65,14 +65,18 @@ ifneq ($(PROTOBUF_all),)
   )
 endif
 
+ifeq ($(PROTODIR),)
+	PROTODIR=$(SRCDIR)
+endif
+
 ifeq ($(OBJSSUBMAKE),1)
 
 $(PROTOBUF_SRCS): $(SRCDIR)/%.pb.cpp: $(SRCDIR)/$(OBJDIR)/%.pb.touch
 $(PROTOBUF_HDRS): $(SRCDIR)/%.pb.h: $(SRCDIR)/$(OBJDIR)/%.pb.touch
 
-$(SRCDIR)/$(OBJDIR)/%.pb.touch: $(SRCDIR)/%.proto
+$(SRCDIR)/$(OBJDIR)/%.pb.touch: $(PROTODIR)/%.proto
 	$(SILENTSYMB) echo "$(INDENT_PRINT)--> Generating $* (Protobuf Message)"
-	$(SILENT)$(PROTOBUF_PROTOC) --cpp_out $(SRCDIR) --proto_path $(SRCDIR) $<
+	$(SILENT)$(PROTOBUF_PROTOC) --cpp_out $(SRCDIR) --proto_path $(PROTODIR) $<
 	$(SILENT) mv $(SRCDIR)/$*.pb.cc $(SRCDIR)/$*.pb.cpp
 	$(SILENT) mkdir -p $(@D)
 	$(SILENT) touch $@
