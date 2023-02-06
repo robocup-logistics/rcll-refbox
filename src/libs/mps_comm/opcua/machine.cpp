@@ -263,7 +263,8 @@ void OpcUaMachine::SetupClient()
 
 void OpcUaMachine::reset()
 {
-	enqueue_instruction(machine_type_ | Command::COMMAND_RESET);
+	//enqueue_instruction(machine_type_ | Command::COMMAND_RESET);
+	enqueue_instruction(Command::COMMAND_SET_TYPE, machine_type_ / 100);
 }
 
 void OpcUaMachine::connect()
@@ -597,6 +598,7 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 				}
 			}
 			machine->logger->info("{} All subscriptions done, starting with sending tasks!", prefix);
+			machine->reset();
 			machine->start_sending_instructions = true;
         }
         break;

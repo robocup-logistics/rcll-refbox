@@ -39,8 +39,8 @@ operator+(const OpcUtils::MPSRegister a, const OpcUtils::MPSRegister b)
 }
 
 // OpcUtils related stuff
-const std::string in_path = "DeviceSet/CPX-E-CEC-C1-PN/Resources/Application/GlobalVars/G/In";
-const std::string basic_path = "DeviceSet/CPX-E-CEC-C1-PN/Resources/Application/GlobalVars/G/Basic";
+const std::string in_path = "|var|CPX-E-CEC-C1-PN.Application.G.In";
+const std::string basic_path = "|var|CPX-E-CEC-C1-PN.Application.G.Basic";
 const std::string in_sim_path = "DeviceSet/CODESYS Control Win V3 x64/Resources/Application/GlobalVars/G/In"; 
 const std::string basic_sim_path = "DeviceSet/CODESYS Control Win V3 x64/Resources/Application/GlobalVars/G/Basic";
 
@@ -219,27 +219,27 @@ OpcUtils::getNodeRelativePath(MPSRegister reg)
 {
 	switch (reg) {
 	case MPSRegister::ACTION_ID_IN:
-	case MPSRegister::ACTION_ID_BASIC: return "/p/ActionId";
+	case MPSRegister::ACTION_ID_BASIC: return ".p.ActionId";
 	case MPSRegister::BARCODE_IN:
-	case MPSRegister::BARCODE_BASIC: return "/p/BarCode";
+	case MPSRegister::BARCODE_BASIC: return ".p.BarCode";
 	case MPSRegister::DATA_IN:
-	case MPSRegister::DATA_BASIC: return "/p/Data";
+	case MPSRegister::DATA_BASIC: return ".p.Data";
 	case MPSRegister::DATA0_IN:
-	case MPSRegister::DATA0_BASIC: return "/p/Data/Data[0]";
+	case MPSRegister::DATA0_BASIC: return ".p.Data[0]";
 	case MPSRegister::DATA1_IN:
-	case MPSRegister::DATA1_BASIC: return "/p/Data/Data[1]";
+	case MPSRegister::DATA1_BASIC: return ".p.Data[1]";
 	case MPSRegister::ERROR_IN:
-	case MPSRegister::ERROR_BASIC: return "/p/Error";
+	case MPSRegister::ERROR_BASIC: return ".p.Error";
 	case MPSRegister::SLIDECOUNT_IN:
-	case MPSRegister::SLIDECOUNT_BASIC: return "/p/SlideCnt";
+	case MPSRegister::SLIDECOUNT_BASIC: return ".p.SlideCnt";
 	case MPSRegister::STATUS_BUSY_IN:
-	case MPSRegister::STATUS_BUSY_BASIC: return "/p/Status/Busy";
+	case MPSRegister::STATUS_BUSY_BASIC: return ".p.Status.Busy";
 	case MPSRegister::STATUS_ENABLE_IN:
-	case MPSRegister::STATUS_ENABLE_BASIC: return "/p/Status/Enable";
+	case MPSRegister::STATUS_ENABLE_BASIC: return ".p.Status.Enable";
 	case MPSRegister::STATUS_ERROR_IN:
-	case MPSRegister::STATUS_ERROR_BASIC: return "/p/Status/Error";
+	case MPSRegister::STATUS_ERROR_BASIC: return ".p.Status.Error";
 	case MPSRegister::STATUS_READY_IN:
-	case MPSRegister::STATUS_READY_BASIC: return "/p/Status/Ready";
+	case MPSRegister::STATUS_READY_BASIC: return ".p.Status.Ready";
 	default: return "";
 	}
 }
