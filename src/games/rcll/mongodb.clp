@@ -842,8 +842,10 @@
 	(not (confval (path "/llsfrb/game/random-field") (type BOOL) (value true)))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	?gp <- (game-parameters (machine-positions PENDING))
+	?mg <- (machine-generation (state NOT-STARTED))
 	=>
-		(printout t "Loading machine positions from database" crlf)
+	(modify ?mg (state FINISHED))
+	(printout t "Loading machine positions from database" crlf)
 	(if (mongodb-load-facts-from-game-report ?report-name
 	                                         "machines"
 	                                         machine
