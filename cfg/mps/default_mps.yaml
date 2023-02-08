@@ -11,83 +11,83 @@ llsfrb:
         active: true
         type: BS
         host: localhost
-        port: !tcp-port 4841
+        port: !tcp-port 4840
         connection: plc
       C-CS1:
         active: true
         host: localhost
         port: !tcp-port 4841
         type: CS
-        connection: mockup
+        connection: plc
       C-CS2:
         active: true
         host: localhost
         port: !tcp-port 4842
         type: CS
-        connection: mockup
+        connection: plc
       C-RS1:
         active: true
         host: localhost
         port: !tcp-port 4843
         type: RS
-        connection: mockup
+        connection: plc
       C-RS2:
         active: true
         host: localhost
         port: !tcp-port 4844
         type: RS
-        connection: mockup
+        connection: plc
       C-DS:
         active: true
         host: localhost
         port: !tcp-port 4845
         type: DS
-        connection: mockup
+        connection: plc
       C-SS:
         active: true
         host: localhost
         port: !tcp-port 4846
         type: SS
-        connection: mockup
+        connection: plc
       M-BS:
         active: true
         host: localhost
         port: !tcp-port 4850
         type: BS
-        connection: mockup
+        connection: plc
       M-CS1:
         active: true
         host: localhost
         port: !tcp-port 4851
         type: CS
-        connection: mockup
+        connection: plc
       M-CS2:
         active: true
         host: localhost
         port: !tcp-port 4852
         type: CS
-        connection: mockup
+        connection: plc
       M-RS1:
         active: true
         host: localhost
         port: !tcp-port 4853
         type: RS
-        connection: mockup
+        connection: plc
       M-RS2:
         active: true
         host: localhost
         port: !tcp-port 4854
         type: RS
-        connection: mockup
+        connection: plc
       M-DS:
         active: true
         host: localhost
         port: !tcp-port 4855
         type: DS
-        connection: mockup
+        connection: plc
       M-SS:
         active: true
         host: localhost
         port: !tcp-port 4840
         type: SS
-        connection: mockup
+        connection: plc
