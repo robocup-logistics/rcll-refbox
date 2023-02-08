@@ -34,6 +34,7 @@ RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && 
       libmicrohttpd-devel \
       rapidjson-devel \
       apr-util-devel \
+      open62541-devel \
     && \
     dnf install -y --nodocs rpm-build && \
     dnf clean all
@@ -63,6 +64,6 @@ RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /require
 CMD ["llsf-refbox"]
 
 FROM builder as devcontainer
-ARG USER_NAME 
+ARG USER_NAME
 ENV USER_NAME=$USER_NAME
 RUN useradd -u 1000 $USER_NAME

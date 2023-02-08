@@ -25,8 +25,7 @@
 #include "../machine.h"
 #include "mps_io_mapping.h"
 #include "opc_utils.h"
-#include "subscription_client.h"
-
+#include <thread>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -35,15 +34,28 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <open62541.h>
+#include <boost/any.hpp>
+#include <spdlog/spdlog.h>
 
 namespace llsfrb {
 namespace mps_comm {
 
+void stateCallback(UA_Client *client, UA_SecureChannelState channelState, UA_SessionState sessionState, UA_StatusCode recoveryStatus);
+void ValueChangeCallback(UA_Client *client, UA_UInt32 subId, void *subContext, UA_UInt32 monId, void *monContext, UA_DataValue *value);
+void deleteSubscriptionCallback(UA_Client *client, UA_UInt32 subscriptionId, void *subscriptionContext);
+void subscriptionInactivityCallback (UA_Client *client, UA_UInt32 subId, void *subContext);
+bool registerMonitoredItem(UA_Client *client, UA_UInt32 subscriptionId,  OpcUtils::MPSRegister reg);
+void stopHandler(int sign);
+void deleteMonitoredItemCallback(UA_Client *client,unsigned int subId,void *subContext, unsigned int monId, void *monContext);
 enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
 
 enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
+
 class MachineFactory;
+
+
 
 class OpcUaMachine : public virtual Machine
 {
@@ -74,12 +86,23 @@ public:
 
 	// Reset: send the reset command (which is different for each machine type)
 	void reset() override;
-	void register_busy_callback(std::function<void(bool)>) override;
-	void register_ready_callback(std::function<void(bool)>) override;
-	void register_barcode_callback(std::function<void(unsigned long)>) override;
+	void register_busy_callback(std::function<void(bool)> callback) override;
+	void register_ready_callback(std::function<void(bool)> callback) override;
+	void register_barcode_callback(std::function<void(unsigned long)> callback) override;
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify();
+	std::unordered_map<OpcUtils::MPSRegister, std::function<void(bool)>> callbacks_;
+	std::unordered_map<UA_UInt32, OpcUtils::MPSRegister> monitorMap;
 
+	std::shared_ptr<spdlog::logger> logger;
+	UA_UInt32 subscriptionId;
+	void SetupClient();
+	std::atomic<bool> start_sending_instructions;
+	std::atomic<bool> connected_;
+	const Station machine_type_;
+	std::mutex command_queue_mutex_;
+	std::mutex client_mutex_;
+	
 protected:
 	void connect();
 	void enqueue_instruction(unsigned short command,
@@ -89,10 +112,8 @@ protected:
 	                         unsigned char  status   = 1,
 	                         unsigned char  error    = 0);
 	bool send_instruction(const Instruction &instruction);
+	void client_keep_alive();
 	void dispatch_command_queue();
-	void update_callbacks();
-	void register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
-	                           OpcUtils::MPSRegister                   reg);
 
 	// OPC UA related methods
 	// Connect to OPC UA Server using IP and PORT
@@ -103,44 +124,30 @@ protected:
 	// std::cout, else they are saved to the in log_path specified file
 	void initLogger(const std::string &log_path);
 	// Helper function to set OPC UA Node value correctly
-	bool setNodeValue(OpcUa::Node node, boost::any val, OpcUtils::MPSRegister reg);
+	bool setNodeValue(UA_Client* client, std::string node_name, boost::any val, OpcUtils::MPSRegister reg);
 	// Helper function to get ReturnValue correctly
 	OpcUtils::ReturnValue *getReturnValue(OpcUtils::MPSRegister reg);
 
-	// Subscribe to a specified MPSRegister; If ReturnValue is set, the
-	// SubscriptionClient internal ReturnValue is overridden
-	SubscriptionClient *subscribe(OpcUtils::MPSRegister reg, bool simulation = false);
-	// Subscribe to multiple specified MPSRegisters; If ReturnValues are set, the
-	// SubscriptionClients internal ReturnValues are overridden
-	void subscribe(std::vector<OpcUtils::MPSRegister> registers, bool simulation = false);
-	// Subscribe to all existing MPSRegisters
-	void subscribeAll(bool simulation = false);
-	// Cancel a subscription given a specific MPSRegister; If default argument is
-	// true, final subscription value will be printed before deleting
-	SubscriptionClient::map::iterator cancelSubscription(OpcUtils::MPSRegister reg, bool log = false);
-	// Cancel all existing subscriptions; If default argument is true, final
-	// subscription values will be printed before deleting
-	void cancelAllSubscriptions(bool log = false);
-	// Print the final subscription values
-	void printFinalSubscribtions();
 
-	const Station     machine_type_;
+
+
+
 	const std::string ip_;
 	unsigned short    port_;
 
 	const ConnectionMode connection_mode_;
 
 	bool                    shutdown_;
-	std::mutex              command_queue_mutex_;
+
 	std::mutex              command_mutex_;
 	std::condition_variable queue_condition_;
 	std::queue<Instruction> command_queue_;
 	std::thread             worker_thread_;
+	std::thread             dispatcher_thread_;
 
-	bool connected_;
 	bool simulation_;
-
-	std::unordered_map<OpcUtils::MPSRegister, SubscriptionClient::ReturnValueCallback> callbacks_;
+	bool subscribed_;
+	bool running;
 
 	// OPC UA related variables
 
@@ -149,17 +156,20 @@ protected:
 	static const std::vector<OpcUtils::MPSRegister> SUB_REGISTERS;
 
 	// OPC UA logger
-	std::shared_ptr<spdlog::logger> logger;
+
 	// OPC UA Client pointer
-	std::unique_ptr<OpcUa::UaClient> client;
+	UA_Client *client;
 	// OPC UA Nodes for each subscribable MPSRegister
-	OpcUa::Node registerNodes[OpcUtils::MPSRegister::LAST];
+	std::string registerNodes[OpcUtils::MPSRegister::LAST];
 	// OPC UA Input Register for station Jobs
-	OpcUa::Node nodeIn;
+	UA_NodeId nodeIn;
 	// OPC UA Input Register for Basic Jobs
-	OpcUa::Node nodeBasic;
+	UA_NodeId nodeBasic;
 	// All subscriptions to MPSRegisters in form map<MPSRegister, Subscription>
-	SubscriptionClient::map subscriptions;
+	//SubscriptionClient::map subscriptions;
+
+	//typedef void (OpcUaMachine::*OpcUaMachineGeneralCallback)(UA_Client*, UA_UInt32, void*);  // Please do this!
+	//typedef void (OpcUaMachine::*OpcUaMachineValueCallback)(char x, float y);  // Please do this!
 };
 
 } // namespace mps_comm
