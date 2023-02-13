@@ -96,7 +96,7 @@ OpcUaMachine::client_keep_alive()
         /* if the connection is closed/errored, the connection will be reset and then reconnected */
         /* Alternatively you can also use UA_Client_getState to get the current state */
 		logger->info("{} Connecting to : " + url, prefix);
-		logger->info("{} waiting on client_mutex!", prefix);
+		//logger->info("{} waiting on client_mutex!", prefix);
 		client_mutex_.lock();
         UA_StatusCode retval = UA_Client_connect(client, url.c_str());
 		switch(retval)
@@ -107,7 +107,7 @@ OpcUaMachine::client_keep_alive()
 				SetupClient();*/
 				client_mutex_.unlock();
 				UA_sleep_ms(1000);
-				logger->info("{} releasing client_mutex!", prefix);
+				//logger->info("{} releasing client_mutex!", prefix);
 				continue;
 			case UA_STATUSCODE_GOOD:
 				break;
@@ -118,12 +118,12 @@ OpcUaMachine::client_keep_alive()
 				/* E.g. name resolution errors or unreachable network. Thus there should be a small sleep here */
 				client_mutex_.unlock();
 				UA_sleep_ms(1000);
-				logger->info("{} releasing client_mutex!", prefix);
+				//logger->info("{} releasing client_mutex!", prefix);
 				continue;
 		}
         UA_Client_run_iterate(client, 300);
 		client_mutex_.unlock();
-		logger->info("{} releasing client_mutex!", prefix);
+		//logger->info("{} releasing client_mutex!", prefix);
 		UA_sleep_ms(40);
     };
     /* Clean up */
@@ -136,7 +136,7 @@ OpcUaMachine::dispatch_command_queue()
 	std::string prefix = "[Dispatcher]";
 	logger->info("{} Starting the dispatching thread!", prefix);
     while(running) {
-		logger->info("{} waiting on command_queue_mutex_!", prefix);
+		//logger->info("{} waiting on command_queue_mutex_!", prefix);
 		if(start_sending_instructions)
 		{
 			command_queue_mutex_.lock();
@@ -144,7 +144,7 @@ OpcUaMachine::dispatch_command_queue()
 			{
 				auto instruction = command_queue_.front();
 				command_queue_mutex_.unlock();
-				logger->info("{} releasing command_queue_mutex_!", prefix);
+				//logger->info("{} releasing command_queue_mutex_!", prefix);
 				if(send_instruction(instruction)){
 					command_queue_.pop();
 				}
@@ -162,7 +162,7 @@ OpcUaMachine::dispatch_command_queue()
 			}
 			else{
 				command_queue_mutex_.unlock();
-				logger->info("{} releasing command_queue_mutex_!", prefix);
+				//logger->info("{} releasing command_queue_mutex_!", prefix);
 				logger->info("{} Nothing in the Command Queue!",prefix);
 				UA_sleep_ms(200);
 			}
@@ -201,7 +201,7 @@ bool OpcUaMachine::send_instruction(const Instruction &instruction)
 	logger->info(
 	  "Sending instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 	try {
-		logger->info("[send_instruction] Waiting on the Client_mutex_!");
+		//logger->info("[send_instruction] Waiting on the Client_mutex_!");
 		client_mutex_.lock();
 		OpcUtils::MPSRegister registerOffset;
 		if (command < Station::STATION_BASE)
@@ -235,12 +235,12 @@ bool OpcUaMachine::send_instruction(const Instruction &instruction)
 	} catch (std::exception &e) {
 		logger->warn("Error while sending command: {}", e.what());
 		client_mutex_.unlock();
-		logger->info("[send_instruction] released the client_mutex_!");
+		//logger->info("[send_instruction] released the client_mutex_!");
 		std::this_thread::sleep_for(opcua_poll_rate_);
 		return false;
 	}
 	client_mutex_.unlock();
-	logger->info("[send_instruction] released the client_mutex_!");
+	//logger->info("[send_instruction] released the client_mutex_!");
 	logger->info("send_instruction finished succesfull!");
 	return true;
 }
@@ -525,12 +525,12 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
 		case UA_STATUSCODE_BADTIMEOUT:
 		case UA_STATUSCODE_BADSERVERHALTED:
 			machine->logger->info("{} Recreating the client as recoveryStatus is {:x} which is fatal",prefix, recoveryStatus);
-			machine->logger->info("{} waiting on client_mutex!", prefix);
+			//machine->logger->info("{} waiting on client_mutex!", prefix);
 			machine->client_mutex_.lock();
 			UA_Client_delete(client);
 			machine->SetupClient();
 			machine->client_mutex_.unlock();
-			machine->logger->info("{} releasing client_mutex!", prefix);
+			//machine->logger->info("{} releasing client_mutex!", prefix);
 			return;
 			break;
 		case UA_STATUSCODE_GOOD:
@@ -558,6 +558,7 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
         machine->logger->info("{} A SecureChannel to the server is open", prefix);
         break;
     default:
+		machine->logger->info("{} recoveryStatus = {:x}",prefix,recoveryStatus);
         break;
     }
 
@@ -619,6 +620,7 @@ void stateCallback(UA_Client *client, UA_SecureChannelState channelState,
         machine->logger->info("Session disconnected");
         break;
     default:
+		machine->logger->info("{} SessionState = {:x}",prefix,sessionState);
         break;
     }
 }
