@@ -42,8 +42,14 @@
 			(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			))
 		 then
-			(modify ?m (state BROKEN)
-			  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
+			(if (eq (pb-field-value ?prepmsg "order_id") 0) then
+				(printout t "Prepared " ?mname " to consume product not belonging to any order (id 0)" crlf)
+				(modify ?meta (order-id ?order-id) (ds-gate 1))
+				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+			 else
+				(modify ?m (state BROKEN)
+				  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
+			)
 		 else
 			(return TRUE)
 		)
@@ -586,6 +592,19 @@
 	(assert (send-machine-update))
 )
 
+(defrule production-ds-start-processing-consumption
+  "DS is prepared for order id 0."
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil))
+	(ds-meta (name ?n) (order-id 0) (ds-gate ?gate))
+	=>
+  (printout t "Machine " ?n " processing consumption" crlf)
+	(assert (send-machine-update))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (wait-for-product-since ?gt)
+	  (task DELIVER) (mps-busy WAIT))
+  (mps-ds-process (str-cat ?n) ?gate)
+)
+
 (defrule production-ds-start-processing
   "DS is prepared, start processing the delivered workpiece."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
@@ -609,9 +628,11 @@
 	(bind ?p-id (gen-int-id))
 	(assert (product-processed (at-machine ?n) (mtype DS) (team ?team) (game-time ?gt)
 	                           (id ?p-id) (order ?order) (confirmed FALSE)))
-	(assert (referee-confirmation (process-id ?p-id) (state REQUIRED)))
-	(assert (attention-message (team ?team)
-	                           (text (str-cat "Please confirm delivery for order " ?order))))
+	(if (neq ?order 0) then
+		(assert (referee-confirmation (process-id ?p-id) (state REQUIRED)))
+		(assert (attention-message (team ?team)
+		                           (text (str-cat "Please confirm delivery for order " ?order))))
+	)
 	(modify ?m (state PROCESSED) (task nil))
 	(assert (send-machine-update))
 )

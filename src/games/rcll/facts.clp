@@ -262,7 +262,7 @@
 )
 
 (deftemplate order
-  (slot id (type INTEGER))
+  (slot id (type INTEGER) (range 1 ?VARIABLE))
 
   ; Product specification
   (slot complexity (type SYMBOL) (allowed-values C0 C1 C2 C3))
