@@ -474,7 +474,7 @@
 	                          (scored FALSE) (mtype DS)
 	                          (confirmed TRUE))
 	(not (product-processed (game-time ?other-delivery&:(< ?other-delivery ?delivery-time))
-	                        (scored FALSE) (mtype DS)))
+	                        (scored FALSE) (mtype DS) (order ?o-id&:(> ?o-id 0))))
   (workpiece (id ?wp-id) (order ?id) (latest-data TRUE))
   ; the actual order we are delivering
   ?of <- (order (id ?id) (active TRUE) (complexity ?complexity) (competitive ?competitive)
