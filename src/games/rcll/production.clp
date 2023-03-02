@@ -610,11 +610,13 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil))
 	(ds-meta (name ?n) (order-id ?order))
-  (order (id ?order) (delivery-gate ?gate))
+	(order (id ?order) (delivery-gate ?gate)
+	  (delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))))
 	=>
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
-	(modify ?m (state PROCESSING) (proc-start ?gt) (task DELIVER) (mps-busy WAIT))
 	(assert (send-machine-update))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (wait-for-product-since ?gt)
+	  (task DELIVER) (mps-busy WAIT))
   (mps-ds-process (str-cat ?n) ?gate)
 )
 
@@ -906,7 +908,8 @@
   "The machine has been prepared but has never received a workpiece. Set it to BROKEN."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype ?type&~BS) (state ?state
-	                 &:(or (and (eq ?type DS) (eq ?state PROCESSING)) (eq ?state PREPARED)))
+	                 &:(or (and (eq ?type DS) (eq ?state PROCESSING))
+	                       (and (neq ?type DS) (eq ?state PREPARED))))
 	               (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
   =>
   (modify ?m (state BROKEN)
