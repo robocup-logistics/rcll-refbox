@@ -16,6 +16,7 @@
                     (robot-id ?robot-id)
                     (unknown-action FALSE)
                     (processed FALSE)
+                    (end-time ~0.0)
                     (team-color ?team-color)
                     (task-parameters waypoint ?waypoint
                                      machine-point ?machine-point)
@@ -107,6 +108,7 @@
                     (robot-id ?robot-id)
                     (unknown-action FALSE)
                     (processed FALSE)
+                    (end-time ~0.0)
                     (team-color ?team-color)
                     (task-parameters machine-id ?machine-id
                                      machine-point ?machine-point)
@@ -264,6 +266,7 @@
                     (robot-id ?robot-id)
                     (unknown-action FALSE)
                     (processed FALSE)
+                    (end-time ~0.0)
                     (team-color ?team-color)
                     (task-parameters machine-id ?machine-id
                                      machine-point ?machine-point)
@@ -401,6 +404,7 @@
                     (robot-id ?robot-id)
                     (unknown-action FALSE)
                     (processed FALSE)
+                    (end-time ~0.0)
                     (team-color ?team-color)
                     (task-parameters machine-id ?machine-id
                                      shelf-number ?shelf-number)
