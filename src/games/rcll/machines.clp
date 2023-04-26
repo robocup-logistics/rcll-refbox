@@ -107,7 +107,7 @@
 			(bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
 			(bind ?rot (nth$ (+ (member$ ?m:name ?machines) 2) ?machines))
 			(printout t ?m:name ": " ?zone " with " ?rot crlf)
-			(modify ?m (zone ?zone) (rotation ?rot))
+			(modify ?m (zone (mirror-zone ?zone)) (rotation ?rot))
 		 else
 			(printout t ?m:name " not found in generation, skipping" crlf)
 			(retract ?m)

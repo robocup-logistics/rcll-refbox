@@ -224,7 +224,7 @@ MPSPlacingGenerator::get_generated_field()
 		default: type = "NOT-SET";
 		}
 		machines.push_back(CLIPS::Value(type.c_str(), CLIPS::TYPE_SYMBOL));
-		std::string zone = "M_Z" + std::to_string(pose.x_) + std::to_string(pose.y_);
+		std::string zone = "C_Z" + std::to_string(pose.x_) + std::to_string(pose.y_);
 		machines.push_back(CLIPS::Value(zone.c_str(), CLIPS::TYPE_SYMBOL));
 
 		int rotation = -2;
