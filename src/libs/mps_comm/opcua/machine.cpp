@@ -440,7 +440,7 @@ OpcUaMachine::setNodeValue(UA_Client* client, std::string node_name, boost::any 
 	char cstring[1024];
 	strcpy(cstring, node_name.c_str());
 	UA_Variant *newValue = UA_Variant_new();
-	//logger->info("Setting the value of {}",  node_name);
+	logger->info("Setting the value of {}",  node_name);
 	if((reg >= OpcUtils::MPSRegister::STATUS_BUSY_IN && reg <= OpcUtils::MPSRegister::STATUS_ERROR_IN) ||  (reg >= OpcUtils::MPSRegister::STATUS_BUSY_BASIC && reg <= OpcUtils::MPSRegister::STATUS_ERROR_BASIC)) {
 		//logger->info("Boolean value!");
 		UA_Boolean bvalue = boost::any_cast<bool>(val);
