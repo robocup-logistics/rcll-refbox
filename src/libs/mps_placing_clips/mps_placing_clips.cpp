@@ -214,17 +214,17 @@ MPSPlacingGenerator::get_generated_field()
 	for (MPSPlacingPlacing pose : poses) {
 		std::string type = "";
 		switch (pose.type_) {
-		case BASE: type = "M-BS"; break;
-		case DELIVERY: type = "M-DS"; break;
-		case STORAGE: type = "M-SS"; break;
-		case CAP1: type = "M-CS1"; break;
-		case CAP2: type = "M-CS2"; break;
-		case RING1: type = "M-RS1"; break;
-		case RING2: type = "M-RS2"; break;
+		case BASE: type = "C-BS"; break;
+		case DELIVERY: type = "C-DS"; break;
+		case STORAGE: type = "C-SS"; break;
+		case CAP1: type = "C-CS1"; break;
+		case CAP2: type = "C-CS2"; break;
+		case RING1: type = "C-RS1"; break;
+		case RING2: type = "C-RS2"; break;
 		default: type = "NOT-SET";
 		}
 		machines.push_back(CLIPS::Value(type.c_str(), CLIPS::TYPE_SYMBOL));
-		std::string zone = "M_Z" + std::to_string(pose.x_) + std::to_string(pose.y_);
+		std::string zone = "C_Z" + std::to_string(pose.x_) + std::to_string(pose.y_);
 		machines.push_back(CLIPS::Value(zone.c_str(), CLIPS::TYPE_SYMBOL));
 
 		int rotation = -2;
