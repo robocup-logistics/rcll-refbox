@@ -11,6 +11,13 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deftemplate cs-interaction-timer
+  (slot machine (type SYMBOL))
+  (slot operation (type SYMBOL))
+  (slot start-time (type FLOAT))
+)
+
+
 ; Functions to process instructions for the different machine types.
 ; @param ?p: Pointer to PrepareMachine message
 ; @param ?m: machine fact index
@@ -516,13 +523,14 @@
 
 (defrule production-cs-move-to-mid
   "Start moving the workpiece to the middle if the CS is PREPARED."
-  (gamestate (state RUNNING) (phase PRODUCTION))
+  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task nil))
   (cs-meta (name ?n) (cs-operation ?cs-op))
   =>
   (printout t "Machine " ?n " prepared for " ?cs-op crlf)
   (modify ?m (task MOVE-MID) (mps-busy WAIT))
   (mps-move-conveyor (str-cat ?n) "MIDDLE" "FORWARD")
+  (assert (cs-interaction-timer (machine ?n) (operation ?cs-op) (start-time ?gt)))
 )
 
 (defrule production-cs-main-op
@@ -531,6 +539,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE))
 	(cs-meta (name ?n) (cs-operation ?cs-op))
+	?timer <- (cs-interaction-timer (machine ?n) (start-time ?st&:(> ?gt (+ 5 ?st))))
 	=>
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?cs-op) (mps-busy WAIT))
 	(assert (send-machine-update))
@@ -542,6 +551,7 @@
 		(mps-cs-mount-cap (str-cat ?n))
 		(printout t "Machine " ?n " mounting a cap" crlf)
 	)
+	(retract ?timer)
 )
 
 (defrule production-cs-move-to-output
