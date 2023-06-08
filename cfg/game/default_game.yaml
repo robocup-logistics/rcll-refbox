@@ -25,3 +25,9 @@ llsfrb:
     store-to-report: ""
 
     exploration-time: 180
+
+    # the size of the field (7x8 default) and whether it should be mirrored
+    field:
+      width: 7
+      height: 8
+      mirrored: true

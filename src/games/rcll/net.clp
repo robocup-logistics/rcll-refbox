@@ -545,6 +545,9 @@
   (if (neq ?team_magenta "") then
     (pb-set-field ?gamestate "team_magenta"  ?team_magenta))
 
+  (pb-set-field ?gamestate "field_width"  ?*FIELD-WIDTH*)
+  (pb-set-field ?gamestate "field_height" ?*FIELD-HEIGHT*)
+  (pb-set-field ?gamestate "field_mirrored" ?*FIELD-MIRRORED*)
   (return ?gamestate)
 )
 

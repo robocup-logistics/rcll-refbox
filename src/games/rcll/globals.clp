@@ -145,6 +145,8 @@
 
   ?*FIELD-WIDTH*  = (config-get-int "/llsfrb/game/field/width")
   ?*FIELD-HEIGHT* = (config-get-int "/llsfrb/game/field/height")
+  ?*FIELD-MIRRORED* = (config-get-bool "/llsfrb/game/field/mirrored")
+
 
   ?*ORDER-PRODUCTION-WINDOW-START-C0*  = 60
   ?*ORDER-PRODUCTION-WINDOW-START-C1*  = 120
