@@ -143,8 +143,8 @@
     M_Z12 M_Z22 M_Z32 M_Z42 M_Z52 M_Z62 M_Z72
     M_Z11 M_Z21 M_Z31 M_Z41)
 
-  ?*FIELD-WIDTH*  = 7
-  ?*FIELD-HEIGHT* = 8
+  ?*FIELD-WIDTH*  = (config-get-int "/llsfrb/game/field/width")
+  ?*FIELD-HEIGHT* = (config-get-int "/llsfrb/game/field/height")
 
   ?*ORDER-PRODUCTION-WINDOW-START-C0*  = 60
   ?*ORDER-PRODUCTION-WINDOW-START-C1*  = 120

@@ -142,7 +142,7 @@
 	)
 	; randomly assigned machines to zones using the external generator
 	(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
-	(machine-retrieve-generated-mps TRUE)
+	(machine-retrieve-generated-mps (config-get-bool "/llsfrb/game/field/mirror"))
 
 
   ; Swap machines
