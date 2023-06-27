@@ -603,7 +603,7 @@ OpcUtils::logNodeInfo(OpcUa::Node                     node,
 		const int   lvl[3] = logIndent(indent);
 		std::string tmp;
 
-		logger->info("{}>{}", std::string(lvl[0], ' '), node);
+		logger->info("{}>{}", std::string(lvl[0], ' '), fmt::streamed(node));
 
 		try {
 			tmp = "Not defined";
