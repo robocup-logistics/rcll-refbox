@@ -149,7 +149,7 @@
 	?mf <- (machine (name ?name) (team ?team) (rotation ?erotation&~?rotation))
 	(gamestate (phase ?phase))
 	=>
-	(modify ?er (rotation ?rotation) (rotation-state WRONG_REPORT))
+	(modify ?er (rotation ?rotation) (rotation-state WRONG_REPORT) (correctly-reported FALSE))
 	(printout t "Wrong partial report: " ?name " (rotation " ?rotation "). "
 	          "Awarding " ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ROTATION-POINTS*)
@@ -189,7 +189,7 @@
 	(not (machine (zone ?zone) (mtype ?type)))
 	(gamestate (phase ?phase))
 	=>
-	(modify ?er (type-state WRONG_REPORT))
+	(modify ?er (type-state WRONG_REPORT) (correctly-reported FALSE))
 	(printout t "Wrong partial report: " ?type " in zone " ?zone "). "
 	          "Awarding " ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS* " points" crlf)
 	(assert (points (points ?*EXPLORATION-WRONG-REPORT-ZONE-POINTS*)
@@ -238,17 +238,6 @@
 	?mf <- (machine (name ?name) (team ?team) (zone ?zone) (rotation ?rotation))
 	=>
 	(modify ?er (correctly-reported TRUE))
-)
-
-(defrule exploration-report-complete-zone-wrong
-	?er <- (exploration-report (rtype RECORD) (correctly-reported UNKNOWN)
-	                           (name ?name) (zone ?zone&~NOT-REPORTED))
-	?mf <- (machine (name ?name))
-	(or
-		(machine (name ?name) (team ?team) (zone ~?zone))
-	)
-	=>
-	(modify ?er (correctly-reported FALSE))
 )
 
 (defrule exploration-cleanup-report
