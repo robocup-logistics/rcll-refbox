@@ -97,23 +97,31 @@
   (retract ?cmd) ; message will be destroyed after rule completes
   (do-for-fact ((?robot robot))
     (and (eq ?robot:number ?robot-number)
-	 (eq ?robot:team-color ?team-color))
+         (eq ?robot:team-color ?team-color))
+  ; save the old state of the robot
+  (bind ?state ?robot:state)
+  (bind ?maintenance-cycles ?robot:maintenance-cycles)
+  (bind ?maintenance-warning-sent ?robot:maintenance-warning-sent)
+  (bind ?maintenance-start-time ?robot:maintenance-start-time)
 
     (if (eq ?maintenance TRUE)
     then
       (if (eq ?robot:state ACTIVE) then
-	(bind ?cycle (+ ?robot:maintenance-cycles 1))
-	(printout t "Robot " ?robot:number " scheduled for maintenance cycle " ?cycle crlf)
-	(modify ?robot (state MAINTENANCE) (maintenance-start-time ?ctime)
-		(maintenance-cycles ?cycle) (maintenance-warning-sent FALSE))
-	(bind ?cycle-cost (nth$ ?cycle ?*MAINTENANCE-COST*))
-	(if (neq ?cycle-cost nil)
-	 then
-		(assert (points (game-time ?game-time)
-		                (points (* -1 ?cycle-cost))
-		                (team ?robot:team-color) (phase ?phase)
-		                (reason (str-cat "Maintenance of robot " ?robot:number))))
-	)
+        (bind ?cycle (+ ?robot:maintenance-cycles 1))
+        (printout t "Robot " ?robot:number " scheduled for maintenance cycle " ?cycle crlf)
+        ; update the maintenance state
+        (bind ?state MAINTENANCE)
+        (bind ?maintenance-start-time ?ctime)
+        (bind ?maintenance-cycles ?cycle)
+        (bind ?maintenance-warning-sent FALSE)
+        (bind ?cycle-cost (nth$ ?cycle ?*MAINTENANCE-COST*))
+        (if (neq ?cycle-cost nil)
+         then
+          (assert (points (game-time ?game-time)
+                          (points (* -1 ?cycle-cost))
+                          (team ?robot:team-color) (phase ?phase)
+                          (reason (str-cat "Maintenance of robot " ?robot:number))))
+        )
       )
     else
       (bind ?maint-time (- ?ctime ?robot:maintenance-start-time))
@@ -121,16 +129,21 @@
       then
         (printout t "Robot " ?robot:number " back from maintenance" crlf)
         (if (> ?maint-time ?*MAINTENANCE-ALLOWED-TIME*)
-	  then (printout t "Robot maintenance grace time granted" crlf))
-	(if (> ?robot:maintenance-cycles ?*MAINTENANCE-ALLOWED-CYCLES*)
-	  then (printout t "Reviving disqualified robot" crlf))
-        (modify ?robot (state ACTIVE)
-		(maintenance-cycles (min ?*MAINTENANCE-ALLOWED-CYCLES* ?robot:maintenance-cycles)))
+   then (printout t "Robot maintenance grace time granted" crlf))
+  (if (> ?robot:maintenance-cycles ?*MAINTENANCE-ALLOWED-CYCLES*)
+   then (printout t "Reviving disqualified robot" crlf))
+        (bind ?state ACTIVE)
+        (bind ?maintenance-cycles (min ?*MAINTENANCE-ALLOWED-CYCLES* ?robot:maintenance-cycles))
       else
         (printout t "Denying re-entering of robot " ?robot:number
-		  " (maintenance time exceeded over grace time)" crlf)
+    " (maintenance time exceeded over grace time)" crlf)
       )
     )
+    (modify ?robot (state ?state)
+                   (maintenance-start-time ?maintenance-start-time)
+                   (maintenance-cycles ?maintenance-cycles)
+                   (maintenance-warning-sent ?maintenance-warning-sent))
+
   )
 )
 
