@@ -254,7 +254,7 @@
 			 else
 				(if (not (any-factp ((?exp exploration-report)) (and (eq ?exp:name ?mname)
 				                                                     (eq ?exp:rtype RECORD)
-				                                                     ?exp:correctly-reported)))
+				                                                     (eq ?exp:correctly-reported TRUE))))
 				 then
 						(assert (attention-message (team ?team)
 						        (text (str-cat "Prepare received for machine that was not correctly reported yet: " ?mname))))
