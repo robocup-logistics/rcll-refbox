@@ -20,6 +20,6 @@ llsfrb:
       phase: PRODUCTION
     # load data from latest game report with a given name
     # leave empty to always load from latest stored report
-    load-from-report: "GraspingChallenge"
+    load-from-report: "GraspingChallengeNew"
     # store game report under a name for later reference
     store-to-report: ""
