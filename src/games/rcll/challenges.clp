@@ -269,12 +269,7 @@
 	(gamestate (phase SETUP) (prev-phase PRODUCTION|POST_GAME|EXPLORATION))
 	(not (challanges-reset-back-in-setup))
 	=>
-	(delayed-do-for-all-facts ((?machine machine)) TRUE
-	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
-	             (ss-operation STORE)
-	             (proc-start 0.0))
-	)
+	(game-restart)
 	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
 	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
