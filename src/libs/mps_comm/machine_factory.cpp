@@ -26,6 +26,8 @@
 #	include "opcua/stations.h"
 #endif
 
+#include "mqtt/stations.h"
+
 #include <core/exception.h>
 
 namespace llsfrb {
@@ -94,6 +96,30 @@ MachineFactory::create_machine(const std::string &name,
 			  connection_mode.c_str());
 		}
 	}
+	if (connection_mode == "mqtt")
+	{
+		std::unique_ptr<MqttMachine> mps;
+		if (type == "BS") {
+			std::cout << "Name: " << name << std::endl;
+			mps = std::make_unique<MqttBaseStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+			return std::move(mps);
+		} else if (type == "CS") {
+			return std::make_unique<MqttCapStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else if (type == "DS") {
+			return std::make_unique<MqttDeliveryStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else if (type == "RS") {
+			return std::make_unique<MqttRingStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else if (type == "SS") {
+			return std::make_unique<MqttStorageStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else {
+			throw fawkes::Exception(
+			  "Unexpected machine type '%s' for machine '%s' and connection mode '%s'",
+			  type.c_str(),
+			  name.c_str(),
+			  connection_mode.c_str());
+		}
+	}
+
 #endif
 	throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
 	                        connection_mode.c_str(),

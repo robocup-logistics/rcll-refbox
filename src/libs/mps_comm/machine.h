@@ -35,6 +35,7 @@ public:
 		MOCKUP,
 		SIMULATION,
 		PLC,
+		MQTT,
 	};
 
 	enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };

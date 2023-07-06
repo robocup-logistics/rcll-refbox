@@ -34,21 +34,21 @@ namespace mps_comm {
 }
 #endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
+MqttDeliveryStation::MqttDeliveryStation(const std::string &name,
                                            const std::string &ip,
                                            unsigned short     port,
                                            const std::string &log_path,
                                            ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
+: Machine(name), MqttMachine(name, Station::STATION_DELIVERY, ip, port, log_path, mode)
 {
 }
 
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
+MqttDeliveryStation::~MqttDeliveryStation()
 {
 }
 
 void
-OpcUaDeliveryStation::deliver_product(int slot)
+MqttDeliveryStation::deliver_product(int slot)
 {
 	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
 }

@@ -20,17 +20,20 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 include $(BASEDIR)/src/libs/mps_comm/freeopcua.mk
 
-LIBS_libmps_comm = stdc++ m llsfrbcore llsfrbconfig pthread
+LIBS_libmps_comm = stdc++ m llsfrbcore llsfrbconfig pthread paho-mqtt3cs paho-mqtt3c paho-mqtt3as paho-mqtt3a paho-mqttpp3
 OBJS_opcua = opcua/opc_utils.o opcua/machine.o opcua/base_station.o \
 						 opcua/cap_station.o opcua/delivery_station.o opcua/ring_station.o \
              opcua/storage_station.o
 OBJS_mockup = mockup/machine.o mockup/base_station.o mockup/cap_station.o \
 							mockup/delivery_station.o mockup/ring_station.o \
               mockup/storage_station.o
+OBJS_mqtt = mqtt/machine.o mqtt/base_station.o mqtt/mqtt_utils.o mqtt/mqtt_callback.o mqtt/mqtt_action_listener.o \
+            mqtt/mqtt_client_wrapper.o mqtt/cap_station.o mqtt/delivery_station.o mqtt/ring_station.o mqtt/storage_station.o
 OBJS_libmps_comm = time_utils.o machine_factory.o
 
 ifeq ($(HAVE_CPP17),1)
   OBJS_libmps_comm += $(OBJS_mockup)
+  OBJS_libmps_comm += $(OBJS_mqtt)
   CFLAGS += $(CFLAGS_CPP17) -DHAVE_MOCKUP
 else
   WARN_TARGETS += warning_cpp17

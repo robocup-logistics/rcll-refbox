@@ -34,29 +34,29 @@ namespace mps_comm {
 }
 #endif
 
-OpcUaStorageStation::OpcUaStorageStation(const std::string &name,
+MqttStorageStation::MqttStorageStation(const std::string &name,
                                          const std::string &ip,
                                          unsigned short     port,
                                          const std::string &log_path,
                                          ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_STORAGE, ip, port, log_path, mode)
+: Machine(name), MqttMachine(name, Station::STATION_STORAGE, ip, port, log_path, mode)
 {
 }
 
 void
-OpcUaStorageStation::retrieve(unsigned int shelf, unsigned int slot)
+MqttStorageStation::retrieve(unsigned int shelf, unsigned int slot)
 {
 	enqueue_instruction(Operation::OPERATION_RETRIEVE + machine_type_, shelf, slot);
 }
 
 void
-OpcUaStorageStation::store(unsigned int shelf, unsigned int slot)
+MqttStorageStation::store(unsigned int shelf, unsigned int slot)
 {
 	enqueue_instruction(Operation::OPERATION_STORE + machine_type_, shelf, slot);
 }
 
 void
-OpcUaStorageStation::relocate(unsigned int shelf,
+MqttStorageStation::relocate(unsigned int shelf,
                               unsigned int slot,
                               unsigned int target_shelf,
                               unsigned int target_slot)

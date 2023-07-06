@@ -36,6 +36,8 @@ RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && 
       libmicrohttpd-devel \
       rapidjson-devel \
       apr-util-devel \
+      gcc \
+      cmake \
     && \
     dnf install -y --nodocs rpm-build && \
     dnf clean all
@@ -66,3 +68,9 @@ COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
 CMD ["llsf-refbox"]
+
+FROM builder as devcontainer
+ARG USER_NAME
+ENV USER_NAME=$USER_NAME
+RUN useradd -u 1000 $USER_NAME
+RUN usermod -aG wheel $USER_NAME && ( echo "$USER_NAME:refbox" | chpasswd )

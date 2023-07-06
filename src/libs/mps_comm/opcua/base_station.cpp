@@ -22,7 +22,7 @@
 #include "base_station.h"
 
 #include "core/exception.h"
-#include "mps_io_mapping.h"
+#include "../mps_io_mapping.h"
 
 #include <iostream>
 

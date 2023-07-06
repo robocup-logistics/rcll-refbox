@@ -1,5 +1,5 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  ring_station.h - OPC-UA communication with the RS
  *
  *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
  *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
@@ -19,39 +19,31 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "delivery_station.h"
+// The ring station mounts rings on bases
+#pragma once
 
-#include "../mps_io_mapping.h"
-
-#include <iostream>
+#include "../ring_station.h"
+#include "machine.h"
+#include "mqtt_callback.h"
+#include "mqtt_client_wrapper.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
-                                           const std::string &ip,
-                                           unsigned short     port,
-                                           const std::string &log_path,
-                                           ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
+class MqttRingStation : public virtual MqttMachine, public virtual RingStation
 {
-}
 
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
-{
-}
 
-void
-OpcUaDeliveryStation::deliver_product(int slot)
-{
-	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
-}
+public:
+	MqttRingStation(const std::string &name,
+	                 const std::string &ip,
+	                 unsigned short     port,
+	                 const std::string &log_path = "",
+	                 ConnectionMode     mode     = PLC);
+
+	void mount_ring(unsigned int feeder, llsf_msgs::RingColor color) override;
+	void register_slide_callback(std::function<void(unsigned int)>) override;
+};
 
 } // namespace mps_comm
 } // namespace llsfrb

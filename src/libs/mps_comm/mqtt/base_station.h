@@ -1,5 +1,5 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  base_station.h - OPC-UA communication with the BS
  *
  *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
  *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
@@ -19,39 +19,28 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "delivery_station.h"
+// This file contains the BaseStation class.
+// At a base station a robot can pick up a base
+#pragma once
 
-#include "../mps_io_mapping.h"
-
-#include <iostream>
+#include "../base_station.h"
+#include "machine.h"
+#include "mqtt_utils.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
-                                           const std::string &ip,
-                                           unsigned short     port,
-                                           const std::string &log_path,
-                                           ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
+class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
 {
-}
+public:
+	MqttBaseStation(const std::string &name,
+	                 const std::string &ip,
+	                 unsigned short     port,
+	                 const std::string &log_path = "",
+	                 ConnectionMode     mode     = PLC);
 
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
-{
-}
-
-void
-OpcUaDeliveryStation::deliver_product(int slot)
-{
-	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
-}
+	void get_base(llsf_msgs::BaseColor slot) override;
+};
 
 } // namespace mps_comm
 } // namespace llsfrb

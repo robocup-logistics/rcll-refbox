@@ -1,5 +1,5 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  storage_station.h - OPC-UA communication with the SS
  *
  *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
  *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
@@ -19,39 +19,32 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "delivery_station.h"
+// Storage Station
+// The storage station can be used to store products.
+// It will not work as intended, because protocols do not match yet.
+#pragma once
 
-#include "../mps_io_mapping.h"
-
-#include <iostream>
+#include "../storage_station.h"
+#include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
-                                           const std::string &ip,
-                                           unsigned short     port,
-                                           const std::string &log_path,
-                                           ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
+class MqttStorageStation : public virtual MqttMachine, public virtual StorageStation
 {
-}
-
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
-{
-}
-
-void
-OpcUaDeliveryStation::deliver_product(int slot)
-{
-	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
-}
+public:
+	MqttStorageStation(const std::string &name,
+	                    const std::string &ip,
+	                    unsigned short     port,
+	                    const std::string &log_path = "",
+	                    ConnectionMode     mode     = PLC);
+	void retrieve(unsigned int shelf, unsigned int slot) override;
+	void store(unsigned int shelf, unsigned int slot) override;
+	void relocate(unsigned int shelf,
+	              unsigned int slot,
+	              unsigned int target_shelf,
+	              unsigned int target_slot) override;
+};
 
 } // namespace mps_comm
 } // namespace llsfrb

@@ -1,5 +1,5 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  delivery_station.h - OPC-UA communication with the DS
  *
  *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
  *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
@@ -19,39 +19,30 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "delivery_station.h"
+// This file implements the delivery station
+#pragma once
 
-#include "../mps_io_mapping.h"
-
-#include <iostream>
+#include "../delivery_station.h"
+#include "machine.h"
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
-                                           const std::string &ip,
-                                           unsigned short     port,
-                                           const std::string &log_path,
-                                           ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
+class MqttDeliveryStation : public virtual MqttMachine, public virtual DeliveryStation
 {
-}
+public:
+	MqttDeliveryStation(const std::string &name,
+	                     const std::string &ip,
+	                     unsigned short     port,
+	                     const std::string &log_path = "",
+	                     ConnectionMode     mode     = PLC);
+	virtual ~MqttDeliveryStation();
 
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
-{
-}
-
-void
-OpcUaDeliveryStation::deliver_product(int slot)
-{
-	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
-}
+	// Send command to deliver a product
+	// slot is between 1 and 3
+	// Deprecated
+	void deliver_product(int slot);
+};
 
 } // namespace mps_comm
 } // namespace llsfrb

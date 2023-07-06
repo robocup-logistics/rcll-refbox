@@ -1,5 +1,5 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  cap_station.cpp - OPC-UA communication with the CS
  *
  *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
  *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
@@ -19,7 +19,7 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "delivery_station.h"
+#include "cap_station.h"
 
 #include "../mps_io_mapping.h"
 
@@ -34,23 +34,31 @@ namespace mps_comm {
 }
 #endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
-                                           const std::string &ip,
-                                           unsigned short     port,
-                                           const std::string &log_path,
-                                           ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
+MqttCapStation::MqttCapStation(const std::string &name,
+                                 const std::string &ip,
+                                 unsigned short     port,
+                                 const std::string &log_path,
+                                 ConnectionMode     mode)
+: Machine(name), MqttMachine(name, Station::STATION_CAP, ip, port, log_path, mode)
 {
 }
 
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
+MqttCapStation::~MqttCapStation()
 {
 }
 
 void
-OpcUaDeliveryStation::deliver_product(int slot)
+MqttCapStation::retrieve_cap()
 {
-	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
+	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
+	                    Operation::OPERATION_CAP_RETRIEVE);
+}
+
+void
+MqttCapStation::mount_cap()
+{
+	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
+	                    Operation::OPERATION_CAP_MOUNT);
 }
 
 } // namespace mps_comm
