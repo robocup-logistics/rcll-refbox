@@ -11,6 +11,11 @@
 ;  Licensed under BSD license, cf. LICENSE file
 ;---------------------------------------------------------------------------
 
+(deftemplate state-timer
+	(slot machine) (slot op) (slot starttime)
+)
+
+
 ; Functions to process instructions for the different machine types.
 ; @param ?p: Pointer to PrepareMachine message
 ; @param ?m: machine fact index
@@ -336,6 +341,51 @@
 	(modify ?m (mps-ready ?ready))
 )
 
+(defrule production-mps-feedback-state-busy-start-overwrite-timeout
+	?m <- (machine (name ?name&:(member$ ?name (create$ C-RS1 C-CS1))) (mps-busy WAIT))
+	(not (state-timer (machine ?name) (op BUSY)))
+	(gamestate (game-time ?gt))
+	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?name "/connection")))
+	         (value "plc"))
+	=>
+	(modify ?m (mps-busy TRUE))
+	(assert (state-timer (machine ?name) (op BUSY) (starttime ?gt)))
+)
+
+(defrule production-mps-feedback-state-busy-end-overwrite-timeout
+	?m <- (machine (name ?name&:(member$ ?name (create$ C-RS1 C-CS1)))
+	               (mps-busy TRUE)
+				   (state ?state)
+				   (task ?task))
+	?t <- (state-timer (machine ?name) (op BUSY) (starttime ?st))
+	(gamestate (game-time ?gt))
+	(test (> ?gt (+ ?st 5)))
+	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?name "/connection")))
+	         (value "plc"))
+	=>
+	(retract ?t)
+	(if (and (eq ?state PROCESSED) (eq ?task MOVE-OUT)) then
+		(modify ?m (mps-busy FALSE) (mps-ready TRUE))
+		(assert (state-timer (machine ?name) (op READY) (starttime ?gt)))
+	else
+		(modify ?m (mps-busy FALSE))
+	)
+)
+
+(defrule production-mps-feedback-state-ready-end-overwrite-timeout
+	?m <- (machine (name ?name&:(member$ ?name (create$ C-RS1 C-CS1)))
+	               (mps-busy FALSE)
+				   (mps-ready TRUE))
+	?t <- (state-timer (machine ?name) (op READY) (starttime ?st))
+	(gamestate (game-time ?gt))
+	(test (> ?gt (+ ?st 10)))
+	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?name "/connection")))
+	         (value "plc"))
+	=>
+	(retract ?t)
+	(modify ?m (mps-ready FALSE))
+)
+
 (defrule production-mps-feedback-state-busy
 	?m <- (machine (name ?n))
   ?mps-status <- (mps-status-feedback ?n BUSY ?busy)
@@ -424,8 +474,10 @@
   (ring-spec (color ?ring-color)
              (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
   (not (mps-status-feedback ?n SLIDE-COUNTER ?))
-	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?n "/connection")))
+  (or (confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?n "/connection")))
 	         (type STRING) (is-list FALSE) (value "mockup"))
+	  (test (eq ?n C-RS1))
+  )
 	(not (mps-add-base-on-slide ?n))
   =>
   (printout warn "Simulating "(str-cat ?n) " base payment feedback. "
