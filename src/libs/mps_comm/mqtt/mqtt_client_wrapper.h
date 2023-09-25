@@ -6,6 +6,12 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <sstream>
+
+#if HAVE_SYSTEM_SPDLOG
+#	include <spdlog/sinks/basic_file_sink.h>
+#	include <spdlog/sinks/stdout_sinks.h>
+#endif
 
 namespace llsfrb {
 #if 0
@@ -31,9 +37,11 @@ class mqtt_client_wrapper
     mqtt::async_client *cli;
     mqtt_action_listener *subListener_;
 	mqtt_callback* callback_handler;
+	std::shared_ptr<spdlog::logger> logger_;
+
 public:
 	std::atomic<bool> connected;
-	mqtt_client_wrapper(const std::string& client_id);
+	mqtt_client_wrapper(const std::string& client_id, std::shared_ptr<spdlog::logger> logger);
 	~mqtt_client_wrapper();
     bool SetNodeValue(std::string topic, std::string value);
     void SubscribeToTopic(std::string topic);

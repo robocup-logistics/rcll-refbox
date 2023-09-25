@@ -94,7 +94,7 @@ public:
 	const Station machine_type_;
 	std::mutex command_queue_mutex_;
 	std::mutex client_mutex_;
-	mqtt_client_wrapper mqtt_client_;
+	mqtt_client_wrapper* mqtt_client_;
 protected:
 	void enqueue_instruction(unsigned short command,
 	                         unsigned short payload1 = 0,

@@ -60,7 +60,6 @@ MqttMachine::MqttMachine(const std::string &name,
 : connected_(false),
   client_id_(name),
   machine_type_(machine_type),
-  mqtt_client_(mqtt_client_wrapper(client_id_)),
   ip_(ip),
   port_(port),
   connection_mode_(connection_mode),
@@ -68,6 +67,7 @@ MqttMachine::MqttMachine(const std::string &name,
   simulation_(connection_mode == SIMULATION)
 {
 	initLogger(log_path);
+	mqtt_client_ = new mqtt_client_wrapper(client_id_, logger);
 	subscribed_ = false;
 	start_sending_instructions = false;
 	running = true;
@@ -81,8 +81,8 @@ MqttMachine::dispatch_command_queue()
 {
 	while(running)
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        if(!mqtt_client_.connected)
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        if(!mqtt_client_->connected)
         {
             continue;
         }
@@ -90,9 +90,10 @@ MqttMachine::dispatch_command_queue()
         if(command_queue_.empty())
         {
             command_queue_mutex_.unlock();
+			std::this_thread::sleep_for(std::chrono::milliseconds(180));
             continue;
         }
-        if(mqtt_client_.dispatch_command(command_queue_.front()))
+        if(mqtt_client_->dispatch_command(command_queue_.front()))
         {
             command_queue_.pop();
         }
@@ -111,7 +112,7 @@ void MqttMachine::enqueue_instruction(unsigned short command,
 {
 	std::lock_guard<std::mutex> lock(command_queue_mutex_);
     command_queue_.push(std::make_tuple(command, payload1, payload2, timeout, status, error));
-	logger->info("Enqueued a instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
+	//logger->info("Enqueued a instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 }
 
 
@@ -123,7 +124,7 @@ void MqttMachine::reset()
 
 MqttMachine::~MqttMachine()
 {
-	
+	delete mqtt_client_;
 }
 
 void MqttMachine::set_light(llsf_msgs::LightColor color,
@@ -176,19 +177,19 @@ void MqttMachine::initLogger(const std::string &log_path)
 void
 MqttMachine::register_busy_callback(std::function<void(bool)> callback)
 {
-	mqtt_client_.register_busy_callback(callback);
+	mqtt_client_->register_busy_callback(callback);
 }
 
 void
 MqttMachine::register_ready_callback(std::function<void(bool)> callback)
 {
-	mqtt_client_.register_ready_callback(callback);
+	mqtt_client_->register_ready_callback(callback);
 }
 
 void
 MqttMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
-	mqtt_client_.register_barcode_callback(callback);	
+	mqtt_client_->register_barcode_callback(callback);	
 }
 
 void

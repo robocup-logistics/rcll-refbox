@@ -309,10 +309,14 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 								throw Exception("Expected MPS %s to be of type RingStation", cfg_name.c_str());
 							}
 							rs->register_slide_callback([this, cfg_name](unsigned int counter) {
+								std::cout << "SlideCount called 1" << std::endl;
 								fawkes::MutexLocker clips_lock(&clips_mutex_);
+								std::cout << "SlideCount called with " << counter << std::endl;
+
 								clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
 								                      cfg_name.c_str(),
 								                      counter);
+								std::cout << "SlideCount finished" << std::endl;
 							});
 						}
 						mps_[cfg_name] = std::move(mps);
@@ -396,7 +400,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	avahi_thread_            = std::make_shared<AvahiThread>();
 	service_publisher        = avahi_thread_;
 	service_browser          = avahi_thread_;
-
 	avahi_thread_->start();
 	nnresolver      = std::make_unique<fawkes::NetworkNameResolver>(avahi_thread_.get());
 	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver.get(),

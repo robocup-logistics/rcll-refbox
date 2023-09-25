@@ -47,7 +47,7 @@ MqttRingStation::mount_ring(unsigned int feeder, llsf_msgs::RingColor color)
 void
 MqttRingStation::register_slide_callback(std::function<void(unsigned int)> callback)
 {
- 	mqtt_client_.register_slide_callback(callback);	
+ 	mqtt_client_->register_slide_callback(callback);	
 }
 
 } // namespace mps_comm

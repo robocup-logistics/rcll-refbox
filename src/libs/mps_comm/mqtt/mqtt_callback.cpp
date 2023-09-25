@@ -10,8 +10,8 @@ namespace mps_comm {
 }
 #endif
 
-mqtt_callback::mqtt_callback(mqtt::async_client& cli, mqtt::connect_options& connOpts)
-            : nretry_(0), cli_(cli), connOpts_(connOpts), subListener_("Subscription") 
+mqtt_callback::mqtt_callback(mqtt::async_client& cli, mqtt::connect_options& connOpts, std::shared_ptr<spdlog::logger> logger)
+            : nretry_(0), logger_(logger), cli_(cli), connOpts_(connOpts), subListener_("Subscription", logger) 
 {}
 
 mqtt_callback::~mqtt_callback()
@@ -22,15 +22,15 @@ void mqtt_callback::reconnect() {
     try {
         cli_.connect(connOpts_, nullptr, *this);
     }
-    catch (const mqtt::exception& exc) {
-        std::cerr << "Error: " << exc.what() << std::endl;
+    catch (const mqtt::exception& exec) {
+        logger_->error( "Error: {}", exec.what());
         exit(1);
     }
 }
 
 
 void mqtt_callback::on_failure(const mqtt::token& tok) {
-    std::cout << "Connection attempt failed" << std::endl;
+    logger_->info("Connection attempt failed");
     if (++nretry_ > MqttUtils::N_RETRY_ATTEMPTS)
         exit(1);
     reconnect();
@@ -41,59 +41,65 @@ void mqtt_callback::on_success(const mqtt::token& tok) {
 
 
 void mqtt_callback::connected(const std::string& cause)  {
-    std::cout << "\nConnection success" << std::endl;
+    logger_->info("Connection success");
 }
 
 void mqtt_callback::connection_lost(const std::string& cause)  {
-    std::cout << "\nConnection lost" << std::endl;
-    if (!cause.empty())
-        std::cout << "\tcause: " << cause << std::endl;
-
-    std::cout << "Reconnecting..." << std::endl;
+    if (cause.empty())
+    {
+        logger_->info("Connection lost with unknown reason!");
+    }
+    else
+    {
+        logger_->info("Connection lost with cause: {}!", cause);
+    }
+    logger_->info("Reconnecting...");
     nretry_ = 0;
     reconnect();
 }
 
 void mqtt_callback::message_arrived(mqtt::const_message_ptr msg) {
-    std::cout << "Message arrived" << std::endl;
-    std::cout << "\ttopic: '" << msg->get_topic() << "'" << std::endl;
-    std::cout << "\tpayload: '" << msg->to_string() << "'\n" << std::endl;
+    //std::cout << "Message arrived" << std::endl;
+    //std::cout << "\ttopic: '" << msg->get_topic() << "'" << std::endl;
+    //std::cout << "\tpayload: '" << msg->to_string() << "'\n" << std::endl;
     std::string topic = msg->get_topic();
     std::string value = msg->to_string();
     switch(MqttUtils::ParseTopic(topic))
     {
         case Topic::BasicNodes_Busy:
-            std::cout << "MPS sent a BasicBusy update with value " << value << std::endl;
+            //std::cout << "MPS sent a BasicBusy update with value " << value << std::endl;
             break;
         case Topic::BasicNodes_Ready:
-            std::cout << "MPS sent a BasicEnabled update with value " << value << std::endl;
+            //std::cout << "MPS sent a BasicEnabled update with value " << value << std::endl;
             break;
         case Topic::InNodes_Busy:
         {
-            std::cout << "MPS sent a InBusy update with value [" << value << "]" << std::endl;
+            //std::cout << "MPS sent a InBusy update with value [" << value << "]" << std::endl;
             bool val = false;
-            if(value.compare("true"))
+            if(boost::algorithm::to_lower_copy(value).compare("true"))
                 val = true;
             callbacks_[MqttUtils::bits[0]](val);
             break;
         }
         case Topic::InNodes_Ready:
         {
-            std::cout << "MPS sent a InEnabled update with value [" << value << "]" << std::endl;
+            //std::cout << "MPS sent a InEnabled update with value [" << value << "]" << std::endl;
             bool val = false;
-            if(value.compare("true"))
+            if(boost::algorithm::to_lower_copy(value).compare("true"))
                 val = true;
             callbacks_[MqttUtils::bits[1]](val);
             break;
         }
         case Topic::InNodes_Sldcnt:
         {
-            std::cout << "MPS sent a InSlideCnt update with value [" << value << "]" << std::endl;
-            callbacks_[MqttUtils::bits[1]](std::stoi(value));
+            logger_->info("MPS sent a InSlideCnt update with value [{}]",value);
+            unsigned int count = std::stoul(value);
+            callbacks_[MqttUtils::registers[5]](count);
+            // TODO maybe fix and use this instead with std::any in the map std::any_cast <int (*) (int)> (mapIter->second) (5)
             break;
         }
         default:
-            std::cout << "Not a known topic" << std::endl;
+            logger_->info("Not a known topic");
     }
 }
 

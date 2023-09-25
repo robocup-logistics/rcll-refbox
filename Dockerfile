@@ -12,6 +12,7 @@ FROM fedora:38 as builder
 RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
       dnf -y copr enable tavie/clips_protobuf && \
+      dnf -y copr enable tavie/paho-mqtt-cpp && \
       dnf install -y --nodocs \
       avahi-devel \
       boost-devel \
@@ -38,6 +39,8 @@ RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && 
       apr-util-devel \
       gcc \
       cmake \
+      paho-mqtt-cpp \
+      paho-mqtt-cpp-devel \
     && \
     dnf install -y --nodocs rpm-build && \
     dnf clean all

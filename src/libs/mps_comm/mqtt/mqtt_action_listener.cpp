@@ -11,25 +11,20 @@ namespace mps_comm {
 #endif
 
 void mqtt_action_listener::on_failure(const mqtt::token& tok) {
-    std::cout << "mqtt_action_listener::on_failure" << std::endl;
-    std::cout << name_ << " failure";
-    if (tok.get_message_id() != 0)
-        std::cout << " for token: [" << tok.get_message_id() << "]" << std::endl;
-    std::cout << std::endl;
+    logger_->info("Failure for token: [{}]",  std::to_string(tok.get_message_id()));
+
 }
 
 void mqtt_action_listener::on_success(const mqtt::token& tok) {
-    std::cout << "mqtt_action_listener::on_success" << std::endl;
-    std::cout << name_ << " success";
-    if (tok.get_message_id() != 0)
-        std::cout << " for token: [" << tok.get_message_id() << "]" << std::endl;
     auto top = tok.get_topics();
     if (top && !top->empty())
-        std::cout << "\ttoken topic: '" << (*top)[0] << "', ..." << std::endl;
-    std::cout << std::endl;
+    {
+        return;
+    }
+    logger_->info("Success for token: [{}] with topic {}",std::to_string(tok.get_message_id()),(*top)[0]);
 }
 
-mqtt_action_listener::mqtt_action_listener(const std::string& name) : name_(name)
+mqtt_action_listener::mqtt_action_listener(const std::string& name, std::shared_ptr<spdlog::logger> logger) : name_(name), logger_(logger)
 {
 
 }

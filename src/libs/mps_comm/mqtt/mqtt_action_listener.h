@@ -1,5 +1,6 @@
 #pragma once
 #include <mqtt/async_client.h>
+#include <spdlog/logger.h>
 
 namespace llsfrb {
 #if 0
@@ -20,11 +21,12 @@ namespace mps_comm {
 class mqtt_action_listener : public virtual mqtt::iaction_listener
 {
 	std::string name_;
+	std::shared_ptr<spdlog::logger> logger_;
 	void on_failure(const mqtt::token& tok) override;
 	void on_success(const mqtt::token& tok) override;
 
 public:
-	mqtt_action_listener(const std::string& name);
+	mqtt_action_listener(const std::string& name, std::shared_ptr<spdlog::logger> logger);
 	~mqtt_action_listener();
 };
 

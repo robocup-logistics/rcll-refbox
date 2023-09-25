@@ -1,5 +1,10 @@
 #include "mqtt_client_wrapper.h"
 
+#if HAVE_SYSTEM_SPDLOG
+#	include <spdlog/sinks/basic_file_sink.h>
+#	include <spdlog/sinks/stdout_sinks.h>
+#endif
+#include <spdlog/logger.h>
 
 namespace llsfrb {
 #if 0
@@ -11,51 +16,50 @@ namespace mps_comm {
 #endif
 
 
-mqtt_client_wrapper::mqtt_client_wrapper(const std::string& client_id)
+mqtt_client_wrapper::mqtt_client_wrapper(const std::string& client_id, std::shared_ptr<spdlog::logger> logger)
 {
+	logger_ = logger;
 	name_ = client_id;
 	connected = false;
     cli = new mqtt::async_client(MqttUtils::BROKER_ADDRESS, name_);
-    subListener_ = new mqtt_action_listener(name_);
+    subListener_ = new mqtt_action_listener(name_, logger_);
     mqtt::connect_options connOpts;
 	connOpts.set_clean_session(false);
 	// Install the callback(s) before connecting.
 	
-	callback_handler = new mqtt_callback(*cli, connOpts);
+	callback_handler = new mqtt_callback(*cli, connOpts, logger_);
 	cli->set_callback(*callback_handler);
 
 	// Start the connection.
 	// When completed, the callback will subscribe to topic.
-
 	try {
-		std::cout << "Connecting to the MQTT server..." << std::flush;
+		logger_->info("Connecting to the MQTT server...");
 		cli->connect(connOpts, nullptr, *callback_handler)->wait_for(std::chrono::seconds(10));
 	}
 	catch (const mqtt::exception& exc) {
-		std::cerr << "\nERROR: Unable to connect to MQTT server: '"
-			<< MqttUtils::BROKER_ADDRESS << "'" << exc << std::endl;
+		logger_->error("ERROR: Unable to connect to MQTT server: '{}' {}",MqttUtils::BROKER_ADDRESS, exc.to_string());
 		return;
 	}
-    SubscribeToTopic("MPS/C-BS/In/Status/Ready");
-	SubscribeToTopic("MPS/C-BS/In/Status/Busy");
-	SubscribeToTopic("MPS/C-BS/Basic/Status/Ready");
-	SubscribeToTopic("MPS/C-BS/Basic/Status/Busy");
-    //SetNodeValue("TestPublishfromRefbox");
-    //std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    SubscribeToTopic(MqttUtils::TOPIC_PREFIX + "/" + name_ + "/In/Status/Ready");
+	SubscribeToTopic(MqttUtils::TOPIC_PREFIX + "/" + name_ + "/In/Status/Busy");
+	if(name_ == "C-RS1" || name_ == "C-RS2" || name_ == "M-RS1" || name_ == "M-RS2")
+	{
+		logger_->info("Subscribing to the slidecounter!");
+		SubscribeToTopic(MqttUtils::TOPIC_PREFIX + "/" + name_ + "/In/" + MqttUtils::registers[5]);
+	}
 	connected = true;
 }
 
 bool mqtt_client_wrapper::SetNodeValue(std::string topic, std::string value)
 {
     try {
-        //std::cout << "Setting node value!" << std::endl;
+        logger_->info("Setting node value for {} to {}", topic, value);
 		mqtt::message_ptr pubmsg = mqtt::make_message(topic, value);
         pubmsg->set_qos(MqttUtils::QOS);
         cli->publish(pubmsg)->wait_for(std::chrono::seconds(10));
 	}
 	catch (const mqtt::exception& exc) {
-		std::cerr << "\nERROR: Unable to publish to MQTT server: '"
-			<< MqttUtils::BROKER_ADDRESS << "' " << exc << std::endl;
+		logger_->error("ERROR: Unable to publish to MQTT server: '{}' {}",MqttUtils::BROKER_ADDRESS,exc.to_string());
 		return false;
 	}
 	return true;
@@ -64,13 +68,11 @@ bool mqtt_client_wrapper::SetNodeValue(std::string topic, std::string value)
 void mqtt_client_wrapper::SubscribeToTopic(std::string topic)
 {
     try {
-        std::cout << "Subscribing to topic [" << topic << "]" << std::endl;
+        logger_->info("Subscribing to topic [{}]", topic);
         cli->subscribe(topic, MqttUtils::QOS, nullptr, *subListener_)->wait_for(std::chrono::seconds(5));
-        //cli->subscribe();
-        std::cout << "Subscribed to topic" << std::endl;
     }
 	catch (const mqtt::exception& exc) {
-        std::cerr << "\nERROR: Unable to publish to MQTT server: '" << MqttUtils::BROKER_ADDRESS << "' " << exc << std::endl;
+        logger_->error( "ERROR: Unable to Subscribe to MQTT topic: '{}' {}", topic, exc.to_string());
 		return;
 	}
 }
@@ -78,12 +80,12 @@ void mqtt_client_wrapper::SubscribeToTopic(std::string topic)
 mqtt_client_wrapper::~mqtt_client_wrapper()
 {
     try {
-		std::cout << "\nDisconnecting from the MQTT server..." << std::flush;
+		logger_->info("Disconnecting from the MQTT server...");
 		cli->disconnect()->wait();
-		std::cout << "OK" << std::endl;
+		logger_->info("OK");
 	}
 	catch (const mqtt::exception& exc) {
-		std::cerr << exc << std::endl;
+		logger_->error("{}", exc.to_string());
 		return;
 	}
 }
@@ -102,10 +104,10 @@ bool mqtt_client_wrapper::dispatch_command(Instruction command)
 	if(!SetNodeValue(MqttUtils::BuildTopic(name_,MqttUtils::registers[3],in), std::to_string(std::get<2>(command))))
 		return false;
 	// Enabled with payload 3
-	if(!SetNodeValue(MqttUtils::BuildTopic(name_,MqttUtils::registers[6] + "/" + MqttUtils::bits[3],in), std::to_string((bool)std::get<3>(command))))
+	if(!SetNodeValue(MqttUtils::BuildTopic(name_,MqttUtils::registers[6] + "/" + MqttUtils::bits[2],in), std::to_string((bool)std::get<5>(command))))
 		return false;
 	// Enabled with payload 4
-	if(!SetNodeValue(MqttUtils::BuildTopic(name_,MqttUtils::registers[6] + "/" + MqttUtils::bits[2],in), std::to_string((bool)std::get<4>(command))))
+	if(!SetNodeValue(MqttUtils::BuildTopic(name_,MqttUtils::registers[6] + "/" + MqttUtils::bits[3],in), std::to_string((bool)std::get<4>(command))))
 		return false;
 
 	return true;

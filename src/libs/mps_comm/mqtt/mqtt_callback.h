@@ -2,6 +2,8 @@
 #include <mqtt/async_client.h>
 #include "mqtt_action_listener.h"
 #include "mqtt_utils.h"
+#include <boost/algorithm/string.hpp>
+#include <spdlog/logger.h>
 
 namespace llsfrb {
 #if 0
@@ -24,6 +26,7 @@ class mqtt_callback : public virtual mqtt::callback,
 {
 	// Counter for the number of connection retries
 	int nretry_;
+	std::shared_ptr<spdlog::logger> logger_;
 	// The MQTT client
 	mqtt::async_client& cli_;
 	// Options to use if we need to reconnect
@@ -57,7 +60,7 @@ class mqtt_callback : public virtual mqtt::callback,
 
 	void delivery_complete(mqtt::delivery_token_ptr token) override;
 
-	std::unordered_map<std::string, std::function<void(bool)>> callbacks_;
+	std::unordered_map<std::string, std::function<void(unsigned int)>> callbacks_;
 
 
 	public:
@@ -66,7 +69,7 @@ class mqtt_callback : public virtual mqtt::callback,
 	void register_barcode_callback(std::function<void(unsigned long)> callback);
 	void register_slide_callback(std::function<void(unsigned int)> callback);
 	
-	mqtt_callback(mqtt::async_client& cli, mqtt::connect_options& connOpts);
+	mqtt_callback(mqtt::async_client& cli, mqtt::connect_options& connOpts, std::shared_ptr<spdlog::logger> logger);
 
 				//: nretry_(0), cli_(cli), connOpts_(connOpts), subListener_("Subscription") {};
 
