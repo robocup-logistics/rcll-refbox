@@ -39,6 +39,7 @@ RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && 
       apr-util-devel \
       gcc \
       cmake \
+      paho-c-devel \
       paho-mqtt-cpp \
       paho-mqtt-cpp-devel \
     && \
@@ -69,7 +70,11 @@ COPY --from=buildenv /buildenv/src/libs/websocket/message_schemas/*.json /usr/lo
 COPY --from=buildenv /buildenv/cfg /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
-RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
+RUN dnf install -y --nodocs 'dnf-command(copr)' && \
+ 	dnf -y copr enable tavie/paho-mqtt-cpp && \
+    dnf install -y --nodocs $(cat /requires.txt) && \
+    dnf clean all && \
+    rm /requires.txt
 CMD ["llsf-refbox"]
 
 FROM builder as devcontainer
