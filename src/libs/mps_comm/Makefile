@@ -33,11 +33,17 @@ OBJS_libmps_comm = time_utils.o machine_factory.o
 
 ifeq ($(HAVE_CPP17),1)
   OBJS_libmps_comm += $(OBJS_mockup)
-  OBJS_libmps_comm += $(OBJS_mqtt)
   CFLAGS += $(CFLAGS_CPP17) -DHAVE_MOCKUP
 else
   WARN_TARGETS += warning_cpp17
 endif
+
+HAVE_MQTT = 1
+ifeq ($(HAVE_MQTT),1)
+  OBJS_libmps_comm += $(OBJS_mqtt)
+CFLAGS += $(CFLAGS_CPP17) -DHAVE_MQTT
+endif
+
 
 ifeq ($(HAVE_FREEOPCUA),1)
   OBJS_libmps_comm += $(OBJS_opcua)

@@ -26,7 +26,9 @@
 #	include "opcua/stations.h"
 #endif
 
-#include "mqtt/stations.h"
+#ifdef HAVE_MQTT
+# include "mqtt/stations.h"
+#endif
 
 #include <core/exception.h>
 
@@ -96,6 +98,8 @@ MachineFactory::create_machine(const std::string &name,
 			  connection_mode.c_str());
 		}
 	}
+#endif
+#ifdef HAVE_MOCKUP
 	if (connection_mode == "mqtt")
 	{
 		std::unique_ptr<MqttMachine> mps;
@@ -119,7 +123,6 @@ MachineFactory::create_machine(const std::string &name,
 			  connection_mode.c_str());
 		}
 	}
-
 #endif
 	throw fawkes::Exception("Unexpected connection mode '%s' for machine '%s'",
 	                        connection_mode.c_str(),
