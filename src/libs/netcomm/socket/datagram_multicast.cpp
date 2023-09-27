@@ -127,7 +127,7 @@ MulticastDatagramSocket::clone()
  * @param buf_len length of buffer, number of bytes to write to stream
  */
 void
-MulticastDatagramSocket::send(void *buf, unsigned int buf_len)
+MulticastDatagramSocket::send(void *buf, size_t buf_len)
 {
 	try {
 		Socket::send(buf, buf_len, (struct ::sockaddr *)multicast_addr, sizeof(struct ::sockaddr_in));
