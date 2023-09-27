@@ -40,7 +40,7 @@ public:
 
 	virtual void bind();
 
-	virtual void send(void *buf, unsigned int buf_len);
+	virtual void send(void *buf, size_t buf_len);
 
 	void set_loop(bool loop);
 	void set_ttl(int ttl);

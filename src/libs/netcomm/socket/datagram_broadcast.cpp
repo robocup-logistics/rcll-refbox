@@ -127,7 +127,7 @@ BroadcastDatagramSocket::clone()
  * @param buf_len length of buffer, number of bytes to write to stream
  */
 void
-BroadcastDatagramSocket::send(void *buf, unsigned int buf_len)
+BroadcastDatagramSocket::send(void *buf, size_t buf_len)
 {
 	try {
 		Socket::send(buf, buf_len, (struct ::sockaddr *)broadcast_addr, sizeof(struct ::sockaddr_in));
