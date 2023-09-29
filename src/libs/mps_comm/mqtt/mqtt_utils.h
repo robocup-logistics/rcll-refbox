@@ -28,7 +28,7 @@ enum Topic {
 class MqttUtils
 {
 public:
-	const inline static std::string BROKER_ADDRESS = "tcp://localhost:1883";
+	const inline static std::string BROKER_ADDRESS = "tcp://mosquitto:1883";
 	const inline static std::string TOPIC_PREFIX = "MPS";
 	const inline static std::string TOPIC = "MPS/{0}/{1}/{2}";
 	const inline static std::vector<std::string> folders = {"In","Basic"};

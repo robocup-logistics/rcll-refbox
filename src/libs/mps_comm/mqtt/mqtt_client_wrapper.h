@@ -38,10 +38,11 @@ class mqtt_client_wrapper
     mqtt_action_listener *subListener_;
 	mqtt_callback* callback_handler;
 	std::shared_ptr<spdlog::logger> logger_;
+	std::string broker_address;
 
 public:
 	std::atomic<bool> connected;
-	mqtt_client_wrapper(const std::string& client_id, std::shared_ptr<spdlog::logger> logger);
+	mqtt_client_wrapper(const std::string& client_id, std::shared_ptr<spdlog::logger> logger, std::string broker_address_);
 	~mqtt_client_wrapper();
     bool SetNodeValue(std::string topic, std::string value);
     void SubscribeToTopic(std::string topic);

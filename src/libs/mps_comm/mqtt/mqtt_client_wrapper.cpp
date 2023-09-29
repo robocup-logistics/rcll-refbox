@@ -16,17 +16,18 @@ namespace mps_comm {
 #endif
 
 
-mqtt_client_wrapper::mqtt_client_wrapper(const std::string& client_id, std::shared_ptr<spdlog::logger> logger)
+mqtt_client_wrapper::mqtt_client_wrapper(const std::string& client_id, std::shared_ptr<spdlog::logger> logger, std::string broker_address_)
 {
 	logger_ = logger;
 	name_ = client_id;
 	connected = false;
-    cli = new mqtt::async_client(MqttUtils::BROKER_ADDRESS, name_);
+	broker_address = broker_address_;
+    cli = new mqtt::async_client(broker_address, name_);
     subListener_ = new mqtt_action_listener(name_, logger_);
     mqtt::connect_options connOpts;
 	connOpts.set_clean_session(false);
 	// Install the callback(s) before connecting.
-	
+
 	callback_handler = new mqtt_callback(*cli, connOpts, logger_);
 	cli->set_callback(*callback_handler);
 
@@ -37,7 +38,7 @@ mqtt_client_wrapper::mqtt_client_wrapper(const std::string& client_id, std::shar
 		cli->connect(connOpts, nullptr, *callback_handler)->wait_for(std::chrono::seconds(10));
 	}
 	catch (const mqtt::exception& exc) {
-		logger_->error("ERROR: Unable to connect to MQTT server: '{}' {}",MqttUtils::BROKER_ADDRESS, exc.to_string());
+		logger_->error("ERROR: Unable to connect to MQTT server: '{}' {}",broker_address, exc.to_string());
 		return;
 	}
     SubscribeToTopic(MqttUtils::TOPIC_PREFIX + "/" + name_ + "/In/Status/Ready");
@@ -59,7 +60,7 @@ bool mqtt_client_wrapper::SetNodeValue(std::string topic, std::string value)
         cli->publish(pubmsg)->wait_for(std::chrono::seconds(10));
 	}
 	catch (const mqtt::exception& exc) {
-		logger_->error("ERROR: Unable to publish to MQTT server: '{}' {}",MqttUtils::BROKER_ADDRESS,exc.to_string());
+		logger_->error("ERROR: Unable to publish to MQTT server: '{}' {}", broker_address,exc.to_string());
 		return false;
 	}
 	return true;

@@ -99,7 +99,7 @@ MachineFactory::create_machine(const std::string &name,
 		}
 	}
 #endif
-#ifdef HAVE_MOCKUP
+#ifdef HAVE_MQTT
 	if (connection_mode == "mqtt")
 	{
 		std::unique_ptr<MqttMachine> mps;
