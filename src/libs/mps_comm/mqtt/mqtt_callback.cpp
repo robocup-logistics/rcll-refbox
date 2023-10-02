@@ -62,19 +62,23 @@ void mqtt_callback::message_arrived(mqtt::const_message_ptr msg) {
     //std::cout << "Message arrived" << std::endl;
     //std::cout << "\ttopic: '" << msg->get_topic() << "'" << std::endl;
     //std::cout << "\tpayload: '" << msg->to_string() << "'\n" << std::endl;
+ 
     std::string topic = msg->get_topic();
     std::string value = msg->to_string();
     switch(MqttUtils::ParseTopic(topic))
     {
         case Topic::BasicNodes_Busy:
             //std::cout << "MPS sent a BasicBusy update with value " << value << std::endl;
+            logger_->info("Received an updated for Basic/Busy with value " + value);
             break;
         case Topic::BasicNodes_Ready:
             //std::cout << "MPS sent a BasicEnabled update with value " << value << std::endl;
+            logger_->info("Received an updated for Basic/Ready with value " + value);
             break;
         case Topic::InNodes_Busy:
         {
             //std::cout << "MPS sent a InBusy update with value [" << value << "]" << std::endl;
+            logger_->info("Received an updated for In/Busy with value " + value);
             bool val = false;
             if(boost::algorithm::to_lower_copy(value).compare("true"))
                 val = true;
@@ -84,6 +88,7 @@ void mqtt_callback::message_arrived(mqtt::const_message_ptr msg) {
         case Topic::InNodes_Ready:
         {
             //std::cout << "MPS sent a InEnabled update with value [" << value << "]" << std::endl;
+            logger_->info("Received an updated for In/Ready with value " + value);
             bool val = false;
             if(boost::algorithm::to_lower_copy(value).compare("true"))
                 val = true;

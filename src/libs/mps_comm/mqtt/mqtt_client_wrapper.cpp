@@ -22,12 +22,15 @@ mqtt_client_wrapper::mqtt_client_wrapper(const std::string& client_id, std::shar
 	name_ = client_id;
 	connected = false;
 	broker_address = broker_address_;
-    cli = new mqtt::async_client(broker_address, name_);
+	std::string full_name = "Refbox_" + name_;
+    cli = new mqtt::async_client(broker_address, full_name);
+	
     subListener_ = new mqtt_action_listener(name_, logger_);
     mqtt::connect_options connOpts;
 	connOpts.set_clean_session(false);
+	connOpts.set_keep_alive_interval(std::chrono::seconds(1200));
 	// Install the callback(s) before connecting.
-
+	//connOpts.set_keep_alive_interval(0);
 	callback_handler = new mqtt_callback(*cli, connOpts, logger_);
 	cli->set_callback(*callback_handler);
 
@@ -61,8 +64,10 @@ bool mqtt_client_wrapper::SetNodeValue(std::string topic, std::string value)
 	}
 	catch (const mqtt::exception& exc) {
 		logger_->error("ERROR: Unable to publish to MQTT server: '{}' {}", broker_address,exc.to_string());
+		std::this_thread::sleep_for(MqttUtils::mqtt_delay_);
 		return false;
 	}
+	std::this_thread::sleep_for(MqttUtils::mqtt_delay_);
 	return true;
 }
 
