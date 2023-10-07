@@ -35,7 +35,7 @@ public:
 	const inline static std::vector<std::string> registers = { "ActionId", "BarCode", "Data/Data[0]", "Data/Data[1]", "Error", "SlideCnt", "Status" };
 	const inline static std::vector<std::string> bits = { "Busy", "Ready", "Error", "Enable", "unused0", "unused1", "inSensor", "outSensor" };
 	const inline static int N_RETRY_ATTEMPTS = 5;
-	const inline static int QOS = 1;
+	const inline static int QOS = 0;
 	const inline static std::chrono::milliseconds mqtt_delay_ {20};
 
 	
