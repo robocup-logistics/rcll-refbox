@@ -990,6 +990,8 @@ Data::get_robot_info_fact(T                                  *o,
 	(*o).AddMember("number", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "port")));
 	(*o).AddMember("port", json_string, alloc);
+	json_string.SetBool((get_value<bool>(fact, "warning-sent")));
+	(*o).AddMember("warning_sent", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "maintenance-start-time")));
 	(*o).AddMember("maintenance_start-time", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "maintenance-cycles")));
