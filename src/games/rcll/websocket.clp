@@ -118,7 +118,7 @@
     ws-update-machine
     ws-update-points
     ws-update-ringspec
-    ws-udpate-known-teams
+    ws-update-known-teams
   ))
   (foreach ?r ?ws-rules
     (unwatch rules ?r)

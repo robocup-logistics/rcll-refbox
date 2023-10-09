@@ -1069,6 +1069,12 @@ Data::get_game_state_fact(T                                  *o,
 	(*o).AddMember("points_cyan", json_string, alloc);
 	json_string.SetString((get_values(fact, "points")[1]).c_str(), alloc);
 	(*o).AddMember("points_magenta", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "field-height")));
+	(*o).AddMember("field_height", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "field-width")));
+	(*o).AddMember("field_width", json_string, alloc);
+	json_string.SetBool((get_value<bool>(fact, "field-mirrored")));
+	(*o).AddMember("field_mirrored", json_string, alloc);
 }
 
 /**

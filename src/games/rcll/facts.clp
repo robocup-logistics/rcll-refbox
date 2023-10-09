@@ -383,6 +383,10 @@
   (multislot teams (type STRING) (cardinality 2 2) (default "" ""))
 
   (slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+
+  (slot field-height (type INTEGER) (default 8))
+  (slot field-width (type INTEGER) (default 7))
+  (slot field-mirrored (type SYMBOL) (allowed-values FALSE TRUE) (default TRUE))
 )
 
 (deftemplate exploration-report
