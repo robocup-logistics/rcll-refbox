@@ -96,6 +96,13 @@
   (ws-create-RingInfo)
 )
 
+(defrule ws-update-known-teams
+  "send udpate of known teams whenever the known teams fact changes"
+  ?sf <- (known-teams $?)
+  =>
+  (ws-create-KnownTeams)
+)
+
 (defrule ws-unwatch-all
   (init)
   =>
@@ -111,6 +118,7 @@
     ws-update-machine
     ws-update-points
     ws-update-ringspec
+    ws-udpate-known-teams
   ))
   (foreach ?r ?ws-rules
     (unwatch rules ?r)

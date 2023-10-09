@@ -550,6 +550,16 @@ Data::log_push_workpiece_info(int id)
 }
 
 /**
+ * @brief Gets all known teams facts from CLIPS and pushes them to the send queue as an array
+ *
+ */
+void
+Data::log_push_known_teams()
+{
+	log_push(on_connect_known_teams());
+}
+
+/**
  * @brief Create a string of a JSON array containing the data of all current known teams facts
  *
  * @return std::string
@@ -1111,7 +1121,7 @@ Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
 	(*o).AddMember("reason", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
 	(*o).AddMember("team", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "order")), alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "order")));
 	(*o).AddMember("order", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "points")));
 	(*o).AddMember("points", json_string, alloc);
