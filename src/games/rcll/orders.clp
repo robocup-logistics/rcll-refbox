@@ -498,7 +498,7 @@
 		  (case C3 then (bind ?points ?*PRODUCTION-POINTS-DELIVER-C3*))
 		)
 		(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-			                (points ?points) (product-step ?p-id) (reason "Delivered item for order")))
+			                (points ?points) (order ?id) (product-step ?p-id) (reason "Delivered item for order")))
 		(bind ?delivery-overtime (- ?delivery-time (nth$ 2 ?dp)))
 		(bind ?overtime-percentile 0.0)
 		(bind ?delivery-length (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
@@ -511,7 +511,7 @@
 		)
 		(if (> ?overtime-percentile 0.0)
 		 then
-			(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+			(assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
 			  (points (- 0 (integer (* ?overtime-percentile
 			                  (* ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-DEDUCTION-REL* ?points)))))
 			  (product-step ?p-id) (reason (str-cat "Late delivery of order (>" ?overtime-percentile "% )"))))
@@ -522,12 +522,12 @@
 			 then
 				; the other team delivered first
 				(bind ?deduction (min ?points ?*PRODUCTION-POINTS-COMPETITIVE-SECOND-DEDUCTION*))
-				(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+				(assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
 				                (points (* -1 ?deduction)) (product-step ?p-id)
 				                (reason (str-cat "Second delivery for competitive order " ?id))))
 			 else
 				; this team delivered first
-				(assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
+				(assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
 				                (points ?*PRODUCTION-POINTS-COMPETITIVE-FIRST-BONUS*)
 				                (product-step ?p-id)
 				                (reason (str-cat "First delivery for competitive order " ?id))))
@@ -562,7 +562,7 @@
 	(modify ?pf (scored TRUE))
 	(printout warn "Delivered item for order " ?o-id " (too soon, before time window)" crlf)
 
-	(assert (points (game-time ?game-time) (points 0)
+	(assert (points (game-time ?game-time) (order ?o-id) (points 0)
 									(team ?team) (phase PRODUCTION) (product-step ?p-id)
 									(reason (str-cat "Delivered item for order " ?o-id
 																	 " (too soon, before time window)"))))
@@ -585,7 +585,7 @@
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
   (modify ?of (quantity-delivered ?q-del-new))
 
-	(assert (points (game-time ?game-time) (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
+	(assert (points (game-time ?game-time) (order ?o-id) (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
 									(team ?team) (phase PRODUCTION) (product-step ?p-id)
 									(reason (str-cat "Delivered item for order " ?o-id
 																	 " (too many)"))))
@@ -655,7 +655,7 @@
     (if (config-get-bool "/llsfrb/workpiece-tracking/enable") then (bind ?points 0))
     (bind ?reason (str-cat ?reason " Late (deadline: " (nth$ 2 ?dp) ")"))
   )
-  (assert (points (phase PRODUCTION) (game-time ?g-time) (team ?team)
+  (assert (points (phase PRODUCTION) (order ?o-id) (game-time ?g-time) (team ?team)
                   (points ?points) (product-step ?p-id)
                   (reason ?reason)))
   (modify ?pf (scored TRUE) (order ?o-id))
@@ -699,7 +699,7 @@
     (bind ?reason (str-cat ?reason " Late (deadline: " (nth$ 2 ?dp) ")"))
     (if (config-get-bool "/llsfrb/workpiece-tracking/enable") then (bind ?points 0))
   )
-  (assert (points (game-time ?g-time) (team ?team)
+  (assert (points (game-time ?g-time) (order ?o-id) (team ?team)
                   (points ?points)
                   (phase PRODUCTION) (product-step ?p-id)
                   (reason ?reason)))

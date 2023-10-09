@@ -1111,6 +1111,8 @@ Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
 	(*o).AddMember("reason", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
 	(*o).AddMember("team", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "order")), alloc);
+	(*o).AddMember("order", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "points")));
 	(*o).AddMember("points", json_string, alloc);
 	json_string.SetFloat((get_value<float>(fact, "game-time")));

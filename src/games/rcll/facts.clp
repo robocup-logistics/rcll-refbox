@@ -424,6 +424,7 @@
 (deftemplate points
   (slot points (type INTEGER))
   (slot team (type SYMBOL) (allowed-values CYAN MAGENTA))
+  (slot order (type INTEGER) (default 0))
   (slot game-time (type FLOAT))
   (slot phase (type SYMBOL) (allowed-values EXPLORATION PRODUCTION))
   (slot reason (type STRING))
