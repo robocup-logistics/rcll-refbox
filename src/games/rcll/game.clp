@@ -443,14 +443,16 @@
 (defrule game-start-training
   ?gs <- (gamestate (teams "" "") (phase PRE_GAME) (state RUNNING))
   =>
-  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (game-time 0.0) (start-time (now)))
+  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (game-time 0.0) (start-time (now))
+    (field-height ?*FIELD-HEIGHT*) (field-width ?*FIELD-WIDTH*) (field-mirrored ?*FIELD-MIRRORED*))
   (assert (attention-message (text "Starting  *** TRAINING ***  game")))
 )
 
 (defrule game-start
   ?gs <- (gamestate (teams ?team_cyan ?team_magenta) (phase PRE_GAME) (state RUNNING))
   =>
-  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now)))
+  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now))
+    (field-height ?*FIELD-HEIGHT*) (field-width ?*FIELD-WIDTH*) (field-mirrored ?*FIELD-MIRRORED*))
   (assert (attention-message (text "Starting setup phase") (time 15)))
 )
 

@@ -39,6 +39,7 @@
 (defrule ws-update-order
   "send update of an order, whenever the order fact changes"
   ?sf <- (order (id ?id))
+  (gamestate (phase PRODUCTION))
   =>
   (ws-create-OrderInfo ?id)
 )
@@ -46,6 +47,7 @@
 (defrule ws-update-unconfirmed-delivery
   "send update of an order, whenever the unconfirmed delivery information changes"
   ?sf <- (product-processed (order ?id))
+  (gamestate (phase PRODUCTION))
   =>
   (ws-create-OrderInfo ?id)
 )
@@ -53,6 +55,7 @@
 (defrule ws-update-order-external
   "send an update when the fact ws-update-order-cmd is asserted by an external rule or function"
   ?cmd <- (ws-update-order-cmd ?id)
+  (gamestate (phase PRODUCTION))
   =>
   (retract ?cmd)
   (ws-create-OrderInfo-via-delivery ?id)
@@ -93,6 +96,13 @@
   (ws-create-RingInfo)
 )
 
+(defrule ws-update-known-teams
+  "send udpate of known teams whenever the known teams fact changes"
+  ?sf <- (known-teams $?)
+  =>
+  (ws-create-KnownTeams)
+)
+
 (defrule ws-unwatch-all
   (init)
   =>
@@ -108,6 +118,7 @@
     ws-update-machine
     ws-update-points
     ws-update-ringspec
+    ws-update-known-teams
   ))
   (foreach ?r ?ws-rules
     (unwatch rules ?r)

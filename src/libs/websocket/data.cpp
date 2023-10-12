@@ -550,6 +550,16 @@ Data::log_push_workpiece_info(int id)
 }
 
 /**
+ * @brief Gets all known teams facts from CLIPS and pushes them to the send queue as an array
+ *
+ */
+void
+Data::log_push_known_teams()
+{
+	log_push(on_connect_known_teams());
+}
+
+/**
  * @brief Create a string of a JSON array containing the data of all current known teams facts
  *
  * @return std::string
@@ -990,6 +1000,8 @@ Data::get_robot_info_fact(T                                  *o,
 	(*o).AddMember("number", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "port")));
 	(*o).AddMember("port", json_string, alloc);
+	json_string.SetBool((get_value<bool>(fact, "warning-sent")));
+	(*o).AddMember("warning_sent", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "maintenance-start-time")));
 	(*o).AddMember("maintenance_start-time", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "maintenance-cycles")));
@@ -1057,6 +1069,12 @@ Data::get_game_state_fact(T                                  *o,
 	(*o).AddMember("points_cyan", json_string, alloc);
 	json_string.SetString((get_values(fact, "points")[1]).c_str(), alloc);
 	(*o).AddMember("points_magenta", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "field-height")));
+	(*o).AddMember("field_height", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "field-width")));
+	(*o).AddMember("field_width", json_string, alloc);
+	json_string.SetBool((get_value<bool>(fact, "field-mirrored")));
+	(*o).AddMember("field_mirrored", json_string, alloc);
 }
 
 /**
@@ -1109,6 +1127,8 @@ Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
 	(*o).AddMember("reason", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
 	(*o).AddMember("team", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "order")));
+	(*o).AddMember("order", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "points")));
 	(*o).AddMember("points", json_string, alloc);
 	json_string.SetFloat((get_value<float>(fact, "game-time")));
