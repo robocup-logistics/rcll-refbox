@@ -247,7 +247,10 @@ Data::clients_send_all(rapidjson::Document &d)
  * @param time
  */
 void
-Data::log_push_attention_message(std::string text, std::string team, std::string time)
+Data::log_push_attention_message(std::string text,
+                                 std::string team,
+                                 std::string time_to_display,
+                                 float       game_time)
 {
 	rapidjson::Document d;
 	d.SetObject();
@@ -260,8 +263,10 @@ Data::log_push_attention_message(std::string text, std::string team, std::string
 	d.AddMember("text", json_string, alloc);
 	json_string.SetString((team).c_str(), alloc);
 	d.AddMember("team", json_string, alloc);
-	json_string.SetString((time).c_str(), alloc);
-	d.AddMember("time", json_string, alloc);
+	json_string.SetString((time_to_display).c_str(), alloc);
+	d.AddMember("time_to_display", json_string, alloc);
+	json_string.SetFloat(game_time);
+	d.AddMember("game_time", json_string, alloc);
 
 	log_push(d);
 }

@@ -10,9 +10,10 @@
 (defrule ws-send-attention-message
   "forward attention messages to the websocket backend"
   ?msg <- (ws-attention-message ?text ?team ?time-to-show)
+  (gamestate (game-time ?gt))
   =>
   (retract ?msg)
-  (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show))
+  (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show) ?gt)
 )
 
 (defrule ws-reset-machine-by-team

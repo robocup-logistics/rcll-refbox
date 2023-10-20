@@ -2084,7 +2084,7 @@ LLSFRefBox::setup_clips_websocket()
 	//define the functions called by CLIPS
 
 	clips_->add_function("ws-send-attention-message",
-	                     sigc::slot<void, std::string, std::string, std::string>(
+	                     sigc::slot<void, std::string, std::string, std::string, float>(
 	                       sigc::mem_fun(*(backend_->get_data()),
 	                                     &websocket::Data::log_push_attention_message)));
 
