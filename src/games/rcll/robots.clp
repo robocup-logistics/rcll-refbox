@@ -44,10 +44,10 @@
 )
 
 (defrule robot-maintenance-warning
-  (gamestate (cont-time ?ctime))
+  (gamestate (cont-time ?ctime) (game-time ?game-time))
   ?rf <- (robot (state MAINTENANCE) (number ?number) (name ?name) (team ?team)
 		(maintenance-warning-sent FALSE)
-		(maintenance-start-time ?st&:(timeout-sec ?ctime ?st ?*MAINTENANCE-WARN-TIME*)))
+		(maintenance-start-time ?st&:(timeout-sec ?game-time ?st ?*MAINTENANCE-WARN-TIME*)))
 
   =>
   (modify ?rf (maintenance-warning-sent TRUE))
@@ -57,9 +57,9 @@
 )
 
 (defrule robot-disqualify-maintenance-timeout
-  (gamestate (cont-time ?ctime))
+  (gamestate (cont-time ?ctime) (game-time ?game-time))
   ?rf <- (robot (state MAINTENANCE) (number ?number) (name ?name) (team ?team)
-		(maintenance-start-time ?st&:(timeout-sec ?ctime ?st (+ ?*MAINTENANCE-ALLOWED-TIME* ?*MAINTENANCE-GRACE-TIME*))))
+		(maintenance-start-time ?st&:(timeout-sec ?game-time ?st (+ ?*MAINTENANCE-ALLOWED-TIME* ?*MAINTENANCE-GRACE-TIME*))))
 
   =>
   (modify ?rf (state DISQUALIFIED))
@@ -111,7 +111,7 @@
         (printout t "Robot " ?robot:number " scheduled for maintenance cycle " ?cycle crlf)
         ; update the maintenance state
         (bind ?state MAINTENANCE)
-        (bind ?maintenance-start-time ?ctime)
+        (bind ?maintenance-start-time ?game-time)
         (bind ?maintenance-cycles ?cycle)
         (bind ?maintenance-warning-sent FALSE)
         (bind ?cycle-cost (nth$ ?cycle ?*MAINTENANCE-COST*))
