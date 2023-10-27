@@ -45,15 +45,18 @@ class Data
 {
 public:
 	Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex);
-	std::string log_pop();
-	void        log_push(std::string log);
-	void        log_push(rapidjson::Document &d);
-	bool        log_empty();
-	void        log_wait();
-	void        clients_add(std::shared_ptr<Client> client);
-	void        clients_send_all(std::string msg);
-	void        clients_send_all(rapidjson::Document &d);
-	void        log_push_attention_message(std::string text, std::string team, std::string time);
+	std::string                                      log_pop();
+	void                                             log_push(std::string log);
+	void                                             log_push(rapidjson::Document &d);
+	bool                                             log_empty();
+	void                                             log_wait();
+	void                                             clients_add(std::shared_ptr<Client> client);
+	void                                             clients_send_all(std::string msg);
+	void                                             clients_send_all(rapidjson::Document &d);
+	void                                             log_push_attention_message(std::string text,
+	                                                                            std::string team,
+	                                                                            std::string time_to_display,
+	                                                                            float       game_time);
 	std::function<void(std::string)>                 clips_set_gamestate;
 	std::function<void(std::string)>                 clips_set_gamephase;
 	std::function<void()>                            clips_randomize_field;
