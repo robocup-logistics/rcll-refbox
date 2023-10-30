@@ -892,6 +892,8 @@ Data::get_order_info_fact(T                                  *o,
 	(*o).AddMember("delivery_gate", json_string, alloc);
 	json_string.SetBool((get_value<bool>(fact, "competitive")));
 	(*o).AddMember("competitive", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "activate-at")));
+	(*o).AddMember("activate_at", json_string, alloc);
 	rapidjson::Value delivery_array(rapidjson::kArrayType);
 	delivery_array.Reserve(get_values(fact, "delivery-period").size(), alloc);
 	for (const auto &e : get_values(fact, "delivery-period")) {
