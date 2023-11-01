@@ -24,22 +24,25 @@ HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
 CFLAGS += $(CFLAGS_CPP11)
 
-LIBS_libllsf_protobuf_clips = stdc++ m llsfrbcore llsf_protobuf_comm
+LIBS_libllsf_protobuf_clips = stdc++ m llsfrbcore
 OBJS_libllsf_protobuf_clips = $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp)))))
 HDRS_libllsf_protobuf_clips = $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h))
 
 OBJS_all = $(OBJS_libllsf_protobuf_clips)
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),111)
-  CFLAGS  += $(CFLAGS_PROTOBUF)  $(CFLAGS_CLIPS) \
+ifeq ($(HAVE_PROTOBUF)$(HAVE_CLIPS)$(HAVE_PROTOBUF_COMM)$(HAVE_BOOST_LIBS),1111)
+  CFLAGS  += $(CFLAGS_PROTOBUF)  $(CFLAGS_CLIPS) $(CFLAGS_PROTOBUF_COMM) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_CLIPS) \
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_CLIPS) $(LDFLAGS_PROTOBUF_COMM) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   LIBS_all  = $(LIBDIR)/libllsf_protobuf_clips.so
 else
   ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
+  endif
+  ifneq ($(HAVE_PROTOBUF_COMM),1)
+    WARN_TARGETS += warning_protobuf_comm
   endif
   ifneq ($(HAVE_CLIPS),1)
     WARN_TARGETS = warning_clips
@@ -54,6 +57,8 @@ all: $(WARN_TARGETS)  $(WARN_TARGETS_BOOST)
 .PHONY: $(WARN_TARGETS)
 warning_protobuf:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_clips library$(TNORMAL) (protobuf not found)"
+warning_protobuf_comm:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_clips library$(TNORMAL) (protobuf_comm not found)"
 
 warning_clips:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_clips library$(TNORMAL) (clipsmm not found)"

@@ -24,30 +24,33 @@ CFLAGS += $(CFLAGS_CPP11)
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_example_client = stdc++ llsf_protobuf_comm llsf_msgs
+LIBS_example_client = stdc++ llsf_msgs
 OBJS_example_client = client.o
 
-LIBS_example_peer = stdc++ llsf_protobuf_comm llsf_msgs
+LIBS_example_peer = stdc++ llsf_msgs
 OBJS_example_peer = peer.o
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
+ifeq ($(HAVE_PROTOBUF)$(HAVE_PROTOBUF_COMM)$(HAVE_BOOST_LIBS),111)
   OBJS_all += $(OBJS_example_client) $(OBJS_example_peer)
   BINS_all += $(BINDIR)/example-client $(BINDIR)/example-peer
 
-  CFLAGS_example_client  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_example_client  += $(CLFAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) \
 	     		    $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_example_client += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_example_client += $(LDLFAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     		    $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  CFLAGS_example_peer  += $(CFLAGS_PROTOBUF) \
+  CFLAGS_example_peer  += $(CLFAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) \
 	     		    $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS_example_peer += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS_example_peer += $(LDLFAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     		    $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
 else
   ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
+  endif
+  ifneq ($(HAVE_PROTOBUF_COMM),1)
+    WARN_TARGETS += warning_protobuf_comm
   endif
   ifneq ($(HAVE_BOOST_LIBS),1)
     WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))

@@ -11,6 +11,7 @@
 FROM fedora:38 as builder
 RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
+      dnf -y copr enable tavie/clips_protobuf && \
       dnf install -y --nodocs \
       avahi-devel \
       boost-devel \
@@ -29,6 +30,7 @@ RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && 
       openssl-devel \
       protobuf-compiler \
       protobuf-devel \
+      protobuf_comm-devel \
       which \
       yaml-cpp-devel \
       libmicrohttpd-devel \
@@ -63,6 +65,6 @@ RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /require
 CMD ["llsf-refbox"]
 
 FROM builder as devcontainer
-ARG USER_NAME 
+ARG USER_NAME
 ENV USER_NAME=$USER_NAME
 RUN useradd -u 1000 $USER_NAME

@@ -21,7 +21,7 @@ include $(BUILDCONFDIR)/websocket/websocket.mk
 include $(BUILDSYSDIR)/clips.mk
 
 
-REQ_BOOST_LIBS = system asio 
+REQ_BOOST_LIBS = system asio
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 HAVE_BOOST_LIBS_OPT = $(call boost-have-libs,$(OPT_BOOST_LIBS))
 
@@ -31,14 +31,14 @@ HDRS_WEBSOCKET = websocket.h
 PRESUBDIRS = llsf_log_msgs
 CFLAGS += $(CFLAGS_CPP11)
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
+ifeq ($(HAVE_PROTOBUF_COMM)$(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),111)
 
-  CFLAGS  += $(CFLAGS_PROTOBUF) \
+  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
-  LDFLAGS += $(LDFLAGS_PROTOBUF) \
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_PROTOBUF_COMM) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
 
-  LIBS_libllsfrblogging = stdc++ llsfrbcore llsf_protobuf_comm llsf_log_msgs 
+  LIBS_libllsfrblogging = stdc++ llsfrbcore llsf_log_msgs
   OBJS_libllsfrblogging = $(filter-out $(OBJS_WEBSOCKET), $(patsubst %.cpp,%.o,$(patsubst qa/%,,$(subst $(SRCDIR)/,,$(realpath $(wildcard $(SRCDIR)/*.cpp))))))
   HDRS_libllsfrblogging = $(filter-out $(HDRS_WEBSOCKET), $(subst $(SRCDIR)/,,$(wildcard $(SRCDIR)/*.h)))
 
@@ -58,6 +58,9 @@ ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS),11)
 else
   ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
+  endif
+  ifneq ($(HAVE_PROTOBUF_COMM),1)
+    WARN_TARGETS += warning_protobuf_comm
   endif
   ifneq ($(HAVE_BOOST_LIBS),1)
     WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
