@@ -3,13 +3,14 @@ version: 2
 jobs:
   build_fedora:
     docker:
-      - image: fedora:37
+      - image: fedora:38
     steps:
       - run:
           name: Install dependencies
           command: |
             dnf install -y --nodocs 'dnf-command(copr)' && \
             dnf -y copr enable thofmann/clips-6.31 && \
+            dnf -y copr enable tavie/clips_protobuf && \
             dnf install -y --nodocs \
               apr-util-devel \
               avahi-devel \
@@ -34,6 +35,7 @@ jobs:
               openssl-devel \
               protobuf-compiler \
               protobuf-devel \
+              protobuf_comm-devel \
               rapidjson-devel \
               which \
               yaml-cpp-devel \
