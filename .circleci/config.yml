@@ -43,44 +43,8 @@ jobs:
       - checkout
       - run: make quick-check
       - run: make all FAIL_ON_WARNING=1
-  build_ubuntu:
-    docker:
-      - image: ubuntu:bionic
-    steps:
-      - run:
-          name: Install dependencies
-          command: |
-            apt-get update
-            apt-get -y install software-properties-common
-            add-apt-repository -y ppa:timn/clips
-            apt-get update
-            apt-get -y install \
-              libboost-all-dev \
-              clips \
-              diffutils \
-              git \
-              libaprutil1-dev \
-              libavahi-client-dev \
-              libclips-dev \
-              libclipsmm-dev \
-              libgecode-dev \
-              libglibmm-2.4-dev \
-              libgtkmm-3.0-dev \
-              libmicrohttpd-dev \
-              libmongoclient-dev \
-              libncurses5-dev \
-              libncursesw5-dev \
-              libprotobuf-dev \
-              libprotoc-dev \
-              libssl-dev \
-              libyaml-cpp-dev \
-              protobuf-compiler \
-              rapidjson-dev
-      - checkout
-      - run: make all FAIL_ON_WARNING=0 CLIPS_OLD_63_API=1
 workflows:
   version: 2
   build:
     jobs:
       - build_fedora
-      - build_ubuntu
