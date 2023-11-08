@@ -312,14 +312,7 @@
   @return TRUE if the game report has a field name ?facts, FALSE otherwise.
 "
 	(bind ?success FALSE)
-	(bind ?t-query (bson-parse "{}"))
-	(if (neq ?report-name "")
-	 then
-		(bind ?t-query (bson-parse (str-cat "{\"report_name\": \"" ?report-name "\"}")))
-	)
-	(bind ?t-sort  (bson-parse "{\"start_timestamp\": -1}"))
-	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
-	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(bind ?t-doc (mongodb-retrieve-report ?report-name))
 	(if (neq ?t-doc FALSE) then
 	 then
 		(if (bind ?m-p (bson-get ?t-doc ?fact))
@@ -330,14 +323,32 @@
 		 else
 			(printout error "Specified game report does not contain field " ?fact crlf)
 		)
+		(bson-destroy ?t-doc)
 	 else
 		(printout error "Empty result in mongoDB from game_report for fact " ?template crlf)
 	)
-	(bson-destroy ?t-doc)
-	(mongodb-cursor-destroy ?t-cursor)
-	(bson-builder-destroy ?t-query)
-	(bson-builder-destroy ?t-sort)
 	(return ?success)
+)
+(deffunction mongodb-retrieve-report (?report-name)
+" Get the latest game report matching the given name.
+  The caller of this function is responsible to call bson-destroy on the
+  returned doc.
+  @param ?report-name: report name to fetch
+  @return: bson document of the latest report matching this name or FALSE if it
+           does not exist
+"
+	(bind ?t-query (bson-parse "{}"))
+	(if (neq ?report-name "")
+	 then
+		(bind ?t-query (bson-parse (str-cat "{\"report_name\": \"" ?report-name "\"}")))
+	)
+	(bind ?t-sort  (bson-parse "{\"start_timestamp\": -1}"))
+	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
+	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(bson-builder-destroy ?t-query)
+	(mongodb-cursor-destroy ?t-cursor)
+	(bson-builder-destroy ?t-sort)
+	(return ?t-doc)
 )
 
 (deffunction mongodb-load-facts-from-game-report (?report-name ?facts ?template ?id-slot $?only-slots)
@@ -355,14 +366,7 @@
   @return TRUE if the game report has a field name ?facts, FALSE otherwise.
 "
 	(bind ?success FALSE)
-	(bind ?t-query (bson-parse "{}"))
-	(if (neq ?report-name "")
-	 then
-		(bind ?t-query (bson-parse (str-cat "{\"report_name\": \"" ?report-name "\"}")))
-	)
-	(bind ?t-sort  (bson-parse "{\"start_timestamp\": -1}"))
-	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
-	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(bind ?t-doc (mongodb-retrieve-report ?report-name))
 	(if (neq ?t-doc FALSE) then
 	 then
 		(if (bind ?m-arr (bson-get-array ?t-doc ?facts))
@@ -379,9 +383,6 @@
 	 else
 		(printout error "Empty result in mongoDB from game_report" crlf)
 	)
-	(mongodb-cursor-destroy ?t-cursor)
-	(bson-builder-destroy ?t-query)
-	(bson-builder-destroy ?t-sort)
 	(return ?success)
 )
 
@@ -775,14 +776,7 @@
 	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
 	=>
 	(bind ?success FALSE)
-	(bind ?t-query (bson-parse "{}"))
-	(if (neq ?report-name "")
-	 then
-		(bind ?t-query (bson-parse (str-cat "{\"report_name\": \"" ?report-name "\"}")))
-	)
-	(bind ?t-sort  (bson-parse "{\"start_timestamp\": -1}"))
-	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
-	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
+	(bind ?t-doc (mongodb-retrieve-report ?report-name))
 	(if (neq ?t-doc FALSE) then
 	 then
 		(if (bind ?points-arr (bson-get-array ?t-doc "points"))
@@ -794,13 +788,10 @@
 		 else
 			(printout error "Couldn't read points array" crlf)
 		)
+		(bson-destroy ?t-doc)
 	 else
 		(printout error "Empty result in mongoDB from game_report" crlf)
 	)
-	(bson-destroy ?t-doc)
-	(mongodb-cursor-destroy ?t-cursor)
-	(bson-builder-destroy ?t-query)
-	(bson-builder-destroy ?t-sort)
 )
 
 (defrule mongodb-load-storage-status
