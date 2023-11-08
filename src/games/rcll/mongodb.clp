@@ -65,9 +65,9 @@
 		(bind ?slot-value (fact-slot-value ?fact-id ?slot))
 		(if ?is-multislot
 		 then
-			(bson-append-array ?doc (str-cat ?slot) ?slot-value)
+			(bson-append-array ?doc (snake-case ?slot) ?slot-value)
 		 else
-			(bson-append ?doc (str-cat ?slot) ?slot-value)
+			(bson-append ?doc (snake-case ?slot) ?slot-value)
 		)
 	)
 	(return ?doc)
@@ -179,7 +179,7 @@
 	=>
 	(assert (mongodb-gamestate-history (state ?state) (phase ?phase)
 	  (game-time ?gt)
-	  (cont-time ?ct) (over-time ?ot) (fact-string (fact-to-string ?gs)))
+	  (cont-time ?ct) (over-time ?ot) (fact-string (fact-to-string ?gs))))
 )
 
 (defrule mongodb-create-next-gamestate-history
@@ -194,7 +194,7 @@
 	(modify ?gsh (is-latest FALSE))
 	(assert (mongodb-gamestate-history (state ?curr-state) (phase ?curr-phase)
 	  (game-time ?gt) (cont-time ?ct) (over-time ?curr-ot)
-	  (fact-string (fact-to-string ?gs)))
+	  (fact-string (fact-to-string ?gs))))
 )
 
 (deffunction mongodb-update-fact-from-bson (?doc ?template ?id-slots $?only-slots)
@@ -229,7 +229,7 @@
 			(bind ?type (nth$ 1 ?type-candidates))
 			(bind ?curr-value (mongodb-retrieve-value-from-doc
 			                    ?doc
-			                    ?curr-slot
+			                    (snake-case ?curr-slot)
 			                    ?type
 			                    (deftemplate-slot-multip ?template ?curr-slot)))
 			; filter out candidates that do not match the current id field
@@ -272,7 +272,7 @@
 			(bind ?type (nth$ 1 ?types))
 			(if (member$ ?slot ?slots)
 			 then
-				(bind ?value (mongodb-retrieve-value-from-doc ?doc ?slot ?type ?is-multislot))
+				(bind ?value (mongodb-retrieve-value-from-doc ?doc (snake-case ?slot) ?type ?is-multislot))
 			 else
 				(bind ?value (fact-slot-value ?f ?slot))
 			)
@@ -293,7 +293,7 @@
   @param ?stime start time of the report
 "
 	(mongodb-upsert "game_report" ?doc
-	  (str-cat "{\"start-timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "], \"report-name\": \"" ?report-name "\"}"))
+	  (str-cat "{\"start_timestamp\": [" (nth$ 1 ?stime) ", " (nth$ 2 ?stime) "], \"report_name\": \"" ?report-name "\"}"))
 	(bson-builder-destroy ?doc)
 )
 
@@ -315,9 +315,9 @@
 	(bind ?t-query (bson-parse "{}"))
 	(if (neq ?report-name "")
 	 then
-		(bind ?t-query (bson-parse (str-cat "{\"report-name\": \"" ?report-name "\"}")))
+		(bind ?t-query (bson-parse (str-cat "{\"report_name\": \"" ?report-name "\"}")))
 	)
-	(bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
+	(bind ?t-sort  (bson-parse "{\"start_timestamp\": -1}"))
 	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
 	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
 	(if (neq ?t-doc FALSE) then
@@ -358,9 +358,9 @@
 	(bind ?t-query (bson-parse "{}"))
 	(if (neq ?report-name "")
 	 then
-		(bind ?t-query (bson-parse (str-cat "{\"report-name\": \"" ?report-name "\"}")))
+		(bind ?t-query (bson-parse (str-cat "{\"report_name\": \"" ?report-name "\"}")))
 	)
-	(bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
+	(bind ?t-sort  (bson-parse "{\"start_timestamp\": -1}"))
 	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
 	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
 	(if (neq ?t-doc FALSE) then
@@ -388,14 +388,14 @@
 (deffunction mongodb-create-game-report (?teams ?stime ?etime ?report-name)
 	(bind ?doc (bson-create))
 
-	(bson-append-array ?doc "start-timestamp" ?stime)
-	(bson-append-time  ?doc "start-time" ?stime)
+	(bson-append-array ?doc "start_timestamp" ?stime)
+	(bson-append-time  ?doc "start_time" ?stime)
 	(bson-append-array ?doc "teams" ?teams)
-	(bson-append ?doc "report-name" ?report-name)
-	(bson-append ?doc "report-version" ?*MONGODB-REPORT-VERSION*)
+	(bson-append ?doc "report_name" ?report-name)
+	(bson-append ?doc "report_version" ?*MONGODB-REPORT-VERSION*)
 
 	(if (time-nonzero ?etime) then
-		(bson-append-time ?doc "end-time" ?etime)
+		(bson-append-time ?doc "end_time" ?etime)
 	)
 
 	(do-for-fact ((?p gamestate)) TRUE
@@ -405,7 +405,7 @@
 	)
 
 	(bind ?gamestate-arr (bson-array-start))
-	(do-for-all-facts ((?mh mongodb-gamestate-history)) TRUE
+	(do-for-all-facts ((?gsh mongodb-gamestate-history)) TRUE
 		(bind ?history-doc (mongodb-fact-to-bson ?gsh))
 		(bind ?temp-fact (assert-string ?gsh:fact-string))
 		(bind ?gs-doc FALSE)
@@ -419,7 +419,7 @@
 			)
 		)
 		(if ?gs-doc then
-			(bson-append ?history-doc "gs-fact" ?gs-doc)
+			(bson-append ?history-doc "gamestate_fact" ?gs-doc)
 		 else
 			(printout warn "mongodb: machine history fact without machine fact!" crlf)
 		)
@@ -433,35 +433,14 @@
 	(bson-array-finish ?doc "gamestate_history" ?gamestate-arr)
 
 	(bind ?points-arr (bson-array-start))
-	(bind ?phase-points-doc-cyan (bson-create))
-	(bind ?phase-points-doc-magenta (bson-create))
 
-	(bind ?points-cyan 0)
-	(bind ?points-magenta 0)
-	(foreach ?phase (deftemplate-slot-allowed-values points phase)
-		(bind ?phase-points-cyan 0)
-		(bind ?phase-points-magenta 0)
-		(do-for-all-facts ((?p points)) (eq ?p:phase ?phase)
-			(bind ?point-doc (mongodb-fact-to-bson ?p))
-			(if (eq ?p:team CYAN)
-			 then (bind ?phase-points-cyan (+ ?phase-points-cyan ?p:points))
-			 else (bind ?phase-points-magenta (+ ?phase-points-magenta ?p:points))
-			)
-			(bson-array-append ?points-arr ?point-doc)
-			(bson-builder-destroy ?point-doc)
-		)
-		(bson-append ?phase-points-doc-cyan ?phase ?phase-points-cyan)
-		(bson-append ?phase-points-doc-magenta ?phase ?phase-points-magenta)
-		(bind ?points-cyan (+ ?points-cyan ?phase-points-cyan))
-		(bind ?points-magenta (+ ?points-magenta ?phase-points-magenta))
+	(do-for-all-facts ((?p points)) TRUE
+		(bind ?point-doc (mongodb-fact-to-bson ?p))
+		(bson-array-append ?points-arr ?point-doc)
+		(bson-builder-destroy ?point-doc)
 	)
 
 	(bson-array-finish ?doc "points" ?points-arr)
-	(bson-append ?doc "phase-points-cyan" ?phase-points-doc-cyan)
-	(bson-append ?doc "phase-points-magenta" ?phase-points-doc-magenta)
-	(bson-append-array ?doc "total-points" (create$ ?points-cyan ?points-magenta))
-	(bson-builder-destroy ?phase-points-doc-cyan)
-	(bson-builder-destroy ?phase-points-doc-magenta)
 
 	(bind ?o-arr (bson-array-start))
 	(do-for-all-facts ((?o order)) TRUE
@@ -493,7 +472,7 @@
 			)
 		)
 		(if ?machine-doc then
-			(bson-append ?history-doc "machine-fact" ?machine-doc)
+			(bson-append ?history-doc "machine_fact" ?machine-doc)
 		 else
 			(printout warn "mongodb: machine history fact without machine fact!" crlf)
 		)
@@ -516,7 +495,7 @@
 			)
 		)
 		(if ?machine-meta-doc then
-			(bson-append ?history-doc "meta-fact" ?machine-meta-doc)
+			(bson-append ?history-doc "meta_fact" ?machine-meta-doc)
 		 else
 			(printout warn "mongodb: machine history fact " ?mh:name " without machine meta fact!" crlf)
 		)
@@ -528,25 +507,25 @@
 		(bson-builder-destroy ?history-doc)
 	)
 	(watch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
-	(bson-array-finish ?doc "machine-history" ?machine-history-arr)
+	(bson-array-finish ?doc "machine_history" ?machine-history-arr)
 
 	(bind ?workpiece-arr (bson-array-start))
 	(do-for-all-facts ((?wp workpiece)) TRUE
 		(bson-array-append ?workpiece-arr (mongodb-fact-to-bson ?wp))
 	)
-	(bson-array-finish ?doc "workpiece-history" ?workpiece-arr)
+	(bson-array-finish ?doc "workpiece_history" ?workpiece-arr)
 
 	(bind ?agent-task-arr (bson-array-start))
 	(do-for-all-facts ((?at agent-task)) TRUE
 		(bson-array-append ?agent-task-arr (mongodb-fact-to-bson ?at))
 	)
-	(bson-array-finish ?doc "agent-task-history" ?agent-task-arr)
+	(bson-array-finish ?doc "agent_task_history" ?agent-task-arr)
 
 	(bind ?stamped-poses-arr (bson-array-start))
 	(do-for-all-facts ((?sp stamped-pose)) TRUE
 		(bson-array-append ?stamped-poses-arr (mongodb-fact-to-bson ?sp))
 	)
-	(bson-array-finish ?doc "robot-pose-history" ?stamped-poses-arr)
+	(bson-array-finish ?doc "robot_pose_history" ?stamped-poses-arr)
 
 	;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 	(return ?doc)
@@ -575,7 +554,7 @@
 		(bson-array-append ?m-arr ?ring-spec-doc)
 		(bson-builder-destroy ?ring-spec-doc)
 	)
-	(bson-array-finish ?doc "ring-specs" ?m-arr)
+	(bson-array-finish ?doc "ring_specs" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(foreach ?m-type (deftemplate-slot-allowed-values machine mtype)
 		; for some reason clips crashes, if the meta-fact-name is passed
@@ -587,14 +566,14 @@
 			(bson-builder-destroy ?meta-doc)
 		)
 	)
-	(bson-array-finish ?doc "machine-meta" ?m-arr)
+	(bson-array-finish ?doc "machine_meta" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine-ss-shelf-slot)) TRUE
 		(bind ?ss-doc (mongodb-fact-to-bson ?m))
 		(bson-array-append ?m-arr ?ss-doc)
 		(bson-builder-destroy ?ss-doc)
 	)
-	(bson-array-finish ?doc "machine-ss-shelf-slots" ?m-arr)
+	(bson-array-finish ?doc "machine_ss_shelf_slots" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine)) TRUE
 		(bind ?machine-doc (mongodb-fact-to-bson ?m))
@@ -728,8 +707,8 @@
   =>
   (bind ?client-doc (bson-create))
   (bson-append-time ?client-doc "session" ?*START-TIME*)
-  (bson-append-time ?client-doc "connect-time" (now))
-  (bson-append ?client-doc "client-id" ?client-id)
+  (bson-append-time ?client-doc "connect_time" (now))
+  (bson-append ?client-doc "client_id" ?client-id)
   (bson-append ?client-doc "host" ?host)
   (bson-append ?client-doc "port" ?port)
   (mongodb-insert "clients" ?client-doc)
@@ -741,11 +720,11 @@
   (protobuf-server-client-disconnected ?client-id)
   =>
   (bind ?client-update-doc (bson-create))
-  (bson-append-time ?client-update-doc "disconnect-time" (now))
+  (bson-append-time ?client-update-doc "disconnect_time" (now))
 
   (bind ?update-query (bson-create))
   (bson-append-time ?update-query "session" ?*START-TIME*)
-  (bson-append ?update-query "client-id" ?client-id)
+  (bson-append ?update-query "client_id" ?client-id)
 
   (mongodb-update "clients" ?client-update-doc ?update-query)
   (bson-builder-destroy ?client-update-doc)
@@ -799,9 +778,9 @@
 	(bind ?t-query (bson-parse "{}"))
 	(if (neq ?report-name "")
 	 then
-		(bind ?t-query (bson-parse (str-cat "{\"report-name\": \"" ?report-name "\"}")))
+		(bind ?t-query (bson-parse (str-cat "{\"report_name\": \"" ?report-name "\"}")))
 	)
-	(bind ?t-sort  (bson-parse "{\"start-timestamp\": -1}"))
+	(bind ?t-sort  (bson-parse "{\"start_timestamp\": -1}"))
 	(bind ?t-cursor (mongodb-query-sort "game_report" ?t-query ?t-sort))
 	(bind ?t-doc (mongodb-cursor-next ?t-cursor))
 	(if (neq ?t-doc FALSE) then
@@ -809,7 +788,7 @@
 		(if (bind ?points-arr (bson-get-array ?t-doc "points"))
 		 then
 			(foreach ?point ?points-arr
-				(assert (points (points (bson-get ?point "points")) (team (bson-get ?point "team")) (game-time (bson-get ?point "game-time")) (phase (bson-get ?point "phase")) (reason (bson-get ?point "reason"))))
+				(assert (points (points (bson-get ?point "points")) (team (bson-get ?point "team")) (game-time (bson-get ?point "game_time")) (phase (bson-get ?point "phase")) (reason (bson-get ?point "reason"))))
 				(bson-destroy ?point)
 			)
 		 else
@@ -833,7 +812,7 @@
 	=>
 	(printout t "Loading storage from database" crlf)
 	(if (mongodb-load-facts-from-game-report ?report-name
-	                                         "machine-ss-shelf-slots"
+	                                         "machiness_shelf_slots"
 	                                         machine-ss-shelf-slot
 	                                         (create$ name position))
 	 then
@@ -886,11 +865,11 @@
 	                                              name
 	                                              (create$ down-period))
 	         (mongodb-load-facts-from-game-report ?report-name
-	                                              "ring-specs"
+	                                              "ring_specs"
 	                                              ring-spec
 	                                              color)
 	         (mongodb-load-facts-from-game-report ?report-name
-	                                              "machine-meta"
+	                                              "machine_meta"
 	                                              rs-meta
 	                                              name))
 	 then
