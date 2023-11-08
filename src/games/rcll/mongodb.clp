@@ -183,7 +183,7 @@
 )
 
 (defrule mongodb-create-next-gamestate-history
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	?gsh <- (mongodb-gamestate-history (is-latest TRUE) (state ?state)
 	  (phase ?phase) (over-time ?ot) )
 	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (game-time ?gt)
@@ -717,7 +717,7 @@
 )
 
 (defrule mongodb-game-report-begin
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	?gp <- (game-parameters (is-parameterized TRUE))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
@@ -728,6 +728,7 @@
 )
 
 (defrule mongodb-game-report-end
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	  (phase POST_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
@@ -739,7 +740,7 @@
 )
 
 (defrule mongodb-game-report-new-phase-update
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(time $?now)
 	(gamestate (phase ?p) (state RUNNING)
 	     (teams $?teams&:(neq ?teams (create$ "" "")))
@@ -754,7 +755,7 @@
 
 
 (defrule mongodb-game-report-update
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(time $?now)
 	(gamestate (state RUNNING)
 	     (teams $?teams&:(neq ?teams (create$ "" "")))
@@ -770,7 +771,7 @@
 )
 
 (defrule mongodb-game-report-finalize
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (start-time $?stime) (end-time $?etime))
 	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
@@ -780,7 +781,7 @@
 )
 
 (defrule mongodb-net-client-connected
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY_HIGHER*))
   (protobuf-server-client-connected ?client-id ?host ?port)
   =>
   (bind ?client-doc (bson-create))
@@ -794,7 +795,7 @@
 )
 
 (defrule mongodb-net-client-disconnected
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY_HIGHER*))
   (protobuf-server-client-disconnected ?client-id)
   =>
   (bind ?client-update-doc (bson-create))
@@ -976,7 +977,7 @@
 )
 
 (defrule mongodb-print-machine-history
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(finalize)
 	=>
 	; machine history
