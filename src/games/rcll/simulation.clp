@@ -29,7 +29,7 @@
 
 (defrule sim-net-recv-SimTimeSync
   ?pf <- (protobuf-msg (type "llsf_msgs.SimTimeSync") (ptr ?p) (rcvd-via STREAM))
-  ?st <- (sim-time (enabled true) (estimate ?estimate) (now $?old-sim-time)
+  ?st <- (sim-time (enabled TRUE) (estimate ?estimate) (now $?old-sim-time)
 		   (real-time-factor ?old-rtf) (last-recv-time $?lrt))
   (time $?now)
   =>
@@ -39,9 +39,9 @@
   (bind ?sim-time-usec (/ (pb-field-value ?time-msg "nsec") 1000))
   (bind ?new-sim-time (create$ ?sim-time-sec ?sim-time-usec))
   ;if the time should be estimated, make sure it stays monoton
-  (if (eq ?estimate true)
+  (if (eq ?estimate TRUE)
     then
-    (bind ?current-time (get-time true ?estimate ?now ?old-sim-time ?lrt ?old-rtf))
+    (bind ?current-time (get-time TRUE ?estimate ?now ?old-sim-time ?lrt ?old-rtf))
     (bind ?new-sim-time (time-max ?new-sim-time ?current-time))
   )
   (bind ?rtf (pb-field-value ?p "real_time_factor"))

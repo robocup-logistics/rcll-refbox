@@ -105,9 +105,9 @@
   (confval (path "/llsfrb/workpiece-tracking/broadcast") (type BOOL) (value ?send-info))
   (not (workpiece-tracking))
   =>
-  (if (eq ?tracking true) then (bind ?enabled TRUE) else (bind ?enabled FALSE))
-  (if (eq ?disable-on-failure true) then (bind ?fail-safe TRUE) else (bind ?fail-safe FALSE))
-  (if (eq ?send-info true) then (bind ?broadcast TRUE) else (bind ?broadcast FALSE))
+  (if (eq ?tracking TRUE) then (bind ?enabled TRUE) else (bind ?enabled FALSE))
+  (if (eq ?disable-on-failure TRUE) then (bind ?fail-safe TRUE) else (bind ?fail-safe FALSE))
+  (if (eq ?send-info TRUE) then (bind ?broadcast TRUE) else (bind ?broadcast FALSE))
   (assert (workpiece-tracking (enabled ?enabled) (fail-safe ?fail-safe) (reason "by config") (broadcast ?broadcast)))
 )
 

@@ -116,7 +116,7 @@
   if auto-confirm enabled"
   (gamestate (phase PRODUCTION|POST_GAME))
   (confval (path "/llsfrb/auto-confirm-delivery")
-           (type BOOL) (value true))
+           (type BOOL) (value TRUE))
   ?rf <- (referee-confirmation (process-id ?p-id) (state REQUIRED))
   (product-processed (id ?p-id) (at-machine ?mname) (mtype DS) (order ?o-id))
   (machine (name ?mname) (state IDLE))

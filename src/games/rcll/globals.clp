@@ -84,7 +84,7 @@
   ?*PRODUCTION-POINTS-SS-STORAGE* = -5
   ?*PRODUCTION-POINTS-SS-RELOCATION* = 0
   ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME* = 0
-  ; Set to true to cap the number of points deducted at the storage station
+  ; Set to TRUE to cap the number of points deducted at the storage station
   ?*PRODUCTION-POINTS-SS-USE-MAX-POINT-LIMIT* = FALSE
   ?*PRODUCTION-POINTS-SS-MAX-TOTAL-POINTS* = -20
   ?*SS-PAYMENT-INTERVAL* = 60.

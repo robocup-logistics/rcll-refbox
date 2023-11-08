@@ -443,9 +443,9 @@
 )
 
 (deftemplate sim-time
-  (slot enabled (type SYMBOL) (allowed-values false true) (default false))
+  (slot enabled (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot speedup (type FLOAT) (default 1.0))
-  (slot estimate (type SYMBOL) (allowed-values false true) (default false))
+  (slot estimate (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (multislot now (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot last-recv-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot real-time-factor (type FLOAT) (default 0.0))

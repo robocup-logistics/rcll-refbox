@@ -570,7 +570,7 @@
 
 
 (defrule mongodb-silence-debug
-	(confval (path "/llsfrb/clips/debug") (type BOOL) (value true))
+	(confval (path "/llsfrb/clips/debug") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
 	=>
 	(unwatch facts mongodb-machine-history)
@@ -692,7 +692,7 @@
 	(time $?now)
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
 	?gp <- (game-parameters (gamestate PENDING) (is-parameterized TRUE))
 	=>
@@ -726,7 +726,7 @@
 	(declare (salience ?*PRIORITY_FIRST*))
 	?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
 	=>
 	(bind ?success FALSE)
@@ -762,7 +762,7 @@
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	(confval (path "/llsfrb/game/default-storage") (type BOOL) (value false))
+	(confval (path "/llsfrb/game/default-storage") (type BOOL) (value FALSE))
 	?gp <- (game-parameters (storage-status PENDING))
 	=>
 	(printout t "Loading storage from database" crlf)
@@ -783,7 +783,7 @@
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	(confval (path "/llsfrb/game/random-orders") (type BOOL) (value false))
+	(confval (path "/llsfrb/game/random-orders") (type BOOL) (value FALSE))
 	?gp <- (game-parameters (orders PENDING))
 	=>
 	(printout t "Loading orders from database" crlf)
@@ -810,7 +810,7 @@
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value false))
+	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value FALSE))
 	?gp <- (game-parameters (machine-setup PENDING))
 	=>
 	(printout t "Loading machine setup from database" crlf)
@@ -839,7 +839,7 @@
 (defrule mongodb-load-machine-zones
 	(declare (salience ?*PRIORITY_FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
-	(not (confval (path "/llsfrb/game/random-field") (type BOOL) (value true)))
+	(not (confval (path "/llsfrb/game/random-field") (type BOOL) (value TRUE)))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	?gp <- (game-parameters (machine-positions PENDING))
 	?mg <- (machine-generation (state NOT-STARTED))
