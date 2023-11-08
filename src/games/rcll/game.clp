@@ -516,6 +516,10 @@
 	(return (> (fact-slot-value ?o1-fact id) (fact-slot-value ?o2-fact id)))
 )
 
+(deffunction cont-time> (?o1-fact ?o2-fact)
+	(return (> (fact-slot-value ?o1-fact cont-time) (fact-slot-value ?o2-fact cont-time)))
+)
+
 (deffunction points> (?p1-fact ?p2-fact)
 	(return (> (fact-slot-value ?p1-fact game-time) (fact-slot-value ?p2-fact game-time)))
 )
