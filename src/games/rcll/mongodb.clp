@@ -197,23 +197,14 @@
 	  (fact-string (fact-to-string ?gs))))
 )
 
-(deffunction mongodb-update-fact-from-bson (?doc ?template ?id-slots $?only-slots)
-" Update a fact by the content of a bson document.
+(deffunction mongodb-get-fact-from-bson (?doc ?template ?id-slots)
+" Get a unique fact by the content of a bson document, if it exists.
   @param ?doc bson document
   @param ?template Template name of the fact that is encoded in ?doc
   @param ?id-slots Name of the slot(s) that uniquely determines the ?template fact
                   that is updated
-  @param $?only-slots optional list of slots within ?template that are updated
-                      by the values contained in ?doc. If unspecified all slots
-                      are updated.
+  @return: Unique fact matching the document or FALSE if it cannot be found.
 "
-	; determine all slots that are updated
-	(bind ?slots ?only-slots)
-	(if (eq (length$ ?slots) 0)
-	 then
-		(bind ?slots (deftemplate-slot-names ?template))
-	)
-
 	; retrieve fact matching the document
 	(bind ?f-list (find-all-facts ((?x ?template)) TRUE))
 	(if (neq (type ?id-slots) MULTIFIELD) then (bind ?id-slots (create$ ?id-slots)))
@@ -222,9 +213,9 @@
 		(bind ?type-candidates (deftemplate-slot-types ?template ?curr-slot))
 		(if (neq (length$ ?type-candidates) 1)
 		 then
-			(printout error "mongodb-update-fact-from-bson: Type of identifier slot "
+			(printout error "mongodb-get-fact-from-bson: Type of identifier slot "
 			                ?curr-slot " not uniquely determined: " ?type-candidates crlf)
-			(return)
+			(return FALSE)
 		 else
 			(bind ?type (nth$ 1 ?type-candidates))
 			(bind ?curr-value (mongodb-retrieve-value-from-doc
@@ -248,16 +239,44 @@
 	)
 	; check if a single fact is identified for modification
 	(if (<= 1 (length$ ?f-list))
-		then (bind ?f (nth$ 1 ?f-list))
+	then
+		(bind ?f (nth$ 1 ?f-list))
 		(if (< 1 (length$ ?f-list)) then
-			(printout warn "mongodb-update-fact-from-bson: Ambiguous Fact match" crlf)
+			(printout debug "mongodb-get-fact-from-bson: Ambiguous Fact match" crlf)
+			(return FALSE)
 		)
+		(return ?f)
 	 else
-		(printout error "mongodb-update-fact-from-bson: No " ?template
+		(printout debug "mongodb-get-fact-from-bson: No " ?template
 		                " fact with identifiers " ?id-slots
 		                " found that matches doc values" crlf)
-		(return)
+		(return FALSE)
 	)
+)
+
+(deffunction mongodb-update-fact-from-bson (?doc ?fact $?only-slots)
+" Update a fact by the content of a bson document.
+  @param ?doc bson document
+  @param ?fact fact to be updated
+  @param $?only-slots optional list of slots within ?fact that are updated
+                      by the values contained in ?doc. If unspecified all slots
+                      are updated.
+"
+	; determine all slots that are updated
+	(bind ?slots ?only-slots)
+	(if (eq (length$ ?slots) 0)
+	 then
+		(bind ?slots (fact-slot-names ?fact))
+	)
+	(bind ?doc-slots (bson-field-names ?doc))
+	(foreach ?slot ?slots
+		(if (not (member$ (str-cat (snake-case ?slot)) ?doc-slots))
+		then
+			(printout error "mongodb-update-fact-from-bson: Skipping document, missing slot " (snake-case ?slot) crlf)
+			(return FALSE)
+		)
+	)
+	(bind ?template (fact-relation ?fact))
 
 	; build string of the updated fact
 	(bind ?update-str (str-cat "(" ?template))
@@ -266,7 +285,7 @@
 		(bind ?types (deftemplate-slot-types ?template ?slot))
 		(if (neq (length$ ?types) 1)
 		 then
-			(printout error "mongodb-bson-to-fact: type of slot " ?slot
+			(printout error "mongodb-update-fact-from-bson: type of slot " ?slot
 			                " of template "  ?template " cannot be determined, skipping." crlf)
 		 else
 			(bind ?type (nth$ 1 ?types))
@@ -274,7 +293,7 @@
 			 then
 				(bind ?value (mongodb-retrieve-value-from-doc ?doc (snake-case ?slot) ?type ?is-multislot))
 			 else
-				(bind ?value (fact-slot-value ?f ?slot))
+				(bind ?value (fact-slot-value ?fact ?slot))
 			)
 			(bind ?value (mongodb-pack-value-to-string ?value ?type))
 			(bind ?update-str (str-cat ?update-str " (" ?slot " " ?value ")"))
@@ -283,7 +302,7 @@
 	(bind ?update-str (str-cat ?update-str ")"))
 
 	; update the fact
-	(retract ?f)
+	(retract ?fact)
 	(assert-string ?update-str)
 )
 
@@ -297,38 +316,6 @@
 	(bson-builder-destroy ?doc)
 )
 
-(deffunction mongodb-load-fact-from-game-report (?report-name ?fact ?template ?id-slot $?only-slots)
-" Update fact with values from a game report.
-  @param ?report-name Name of the report from which data is loaded. In case
-                      Multiple reports have the same name the newest one is
-                      chosen.
-  @param ?fact field name within game reports that contains the fact
-  @param ?template Template name of the fact that is encoded in ?facts
-  @param ?slot-id Name of the slot that uniquely determines the ?template fact
-                  that is updated
-  @param $?only-slots optional list of slots within ?template that are updated
-                      by the values contained in ?doc. If unspecified all slots
-                      are updated.
-  @return TRUE if the game report has a field name ?facts, FALSE otherwise.
-"
-	(bind ?success FALSE)
-	(bind ?t-doc (mongodb-retrieve-report ?report-name))
-	(if (neq ?t-doc FALSE) then
-	 then
-		(if (bind ?m-p (bson-get ?t-doc ?fact))
-		 then
-			(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
-			(bson-destroy ?m-p)
-			(bind ?success TRUE)
-		 else
-			(printout error "Specified game report does not contain field " ?fact crlf)
-		)
-		(bson-destroy ?t-doc)
-	 else
-		(printout error "Empty result in mongoDB from game_report for fact " ?template crlf)
-	)
-	(return ?success)
-)
 (deffunction mongodb-retrieve-report (?report-name)
 " Get the latest game report matching the given name.
   The caller of this function is responsible to call bson-destroy on the
@@ -351,12 +338,12 @@
 	(return ?t-doc)
 )
 
-(deffunction mongodb-load-facts-from-game-report (?report-name ?facts ?template ?id-slot $?only-slots)
-" Update facts with values from a game report.
+(deffunction mongodb-load-fact-from-game-report (?report-name ?fact ?template ?id-slot $?only-slots)
+" Update fact with values from a game report.
   @param ?report-name Name of the report from which data is loaded. In case
                       Multiple reports have the same name the newest one is
                       chosen.
-  @param ?facts field name within game reports that contains the facts
+  @param ?fact field name within game reports that contains the fact
   @param ?template Template name of the fact that is encoded in ?facts
   @param ?slot-id Name of the slot that uniquely determines the ?template fact
                   that is updated
@@ -369,13 +356,103 @@
 	(bind ?t-doc (mongodb-retrieve-report ?report-name))
 	(if (neq ?t-doc FALSE) then
 	 then
+		(if (bind ?m-p (bson-get ?t-doc ?fact))
+		 then
+			(mongodb-update-fact-from-bson ?m-p (mongodb-get-fact-from-bson ?m-p ?template ?id-slot) ?only-slots)
+			(bson-destroy ?m-p)
+			(bind ?success TRUE)
+		 else
+			(printout error "Specified game report does not contain field " ?fact crlf)
+		)
+	(bson-destroy ?t-doc)
+	 else
+		(printout error "Empty result in mongoDB from game_report for fact " ?template crlf)
+	)
+	(return ?success)
+)
+
+(deffunction mongodb-load-some-facts-from-game-report (?report-name ?facts ?template ?id-slot $?only-slots)
+" Update facts with values from a game report.
+  Expects for least one document in the ?facts array that there exists a
+  corresponding fact that should be updated.
+
+  @param ?report-name Name of the report from which data is loaded. In case
+                      Multiple reports have the same name the newest one is
+                      chosen.
+  @param ?facts field name within game reports that contains the facts
+  @param ?template Template name of the fact that is encoded in ?facts
+  @param ?slot-id Name of the slot that uniquely determines the ?template fact
+                  that is updated
+  @param $?only-slots optional list of slots within ?template that are updated
+                      by the values contained in ?doc. If unspecified all slots
+                      are updated.
+  @return TRUE if at least one fact was updated, FALSE otherwise.
+"
+	(bind ?success FALSE)
+	(bind ?t-doc (mongodb-retrieve-report ?report-name))
+	(if (neq ?t-doc FALSE) then
+	 then
 		(if (bind ?m-arr (bson-get-array ?t-doc ?facts))
 		 then
+			(bind ?success FALSE)
 			(foreach ?m-p ?m-arr
-				(mongodb-update-fact-from-bson ?m-p ?template ?id-slot ?only-slots)
+				(bind ?f (mongodb-get-fact-from-bson ?m-p ?template ?id-slot))
+				(if ?f
+					then
+					(if (mongodb-update-fact-from-bson ?m-p ?f ?only-slots)
+					then
+						(bind ?success TRUE)
+					)
+				)
 				(bson-destroy ?m-p)
 			)
+		 else
+			(printout error "Specified game report does not contain field " ?facts crlf)
+		)
+		(bson-destroy ?t-doc)
+	 else
+		(printout error "Empty result in mongoDB from game_report" crlf)
+	)
+	(return ?success)
+)
+
+(deffunction mongodb-load-all-facts-from-game-report (?report-name ?facts ?template ?id-slot $?only-slots)
+" Update facts with values from a game report.
+  Expects for each document in the ?facts array that there exists a
+  corresponding fact that should be updated.
+
+  @param ?report-name Name of the report from which data is loaded. In case
+                      Multiple reports have the same name the newest one is
+                      chosen.
+  @param ?facts field name within game reports that contains the facts
+  @param ?template Template name of the fact that is encoded in ?facts
+  @param ?slot-id Name of the slot that uniquely determines the ?template fact
+                  that is updated
+  @param $?only-slots optional list of slots within ?template that are updated
+                      by the values contained in ?doc. If unspecified all slots
+                      are updated.
+  @return TRUE if each fact from the database is updated, FALSE otherwise.
+"
+	(bind ?success FALSE)
+	(bind ?t-doc (mongodb-retrieve-report ?report-name))
+	(if (neq ?t-doc FALSE) then
+	 then
+		(if (bind ?m-arr (bson-get-array ?t-doc ?facts))
+		 then
 			(bind ?success TRUE)
+			(foreach ?m-p ?m-arr
+				(bind ?f (mongodb-get-fact-from-bson ?m-p ?template ?id-slot))
+				(if ?f
+				then
+					(if (not (mongodb-update-fact-from-bson ?m-p ?f ?only-slots))
+					then
+						(bind ?success FALSE)
+					)
+				else
+					(bind ?success FALSE)
+				)
+				(bson-destroy ?m-p)
+			)
 		 else
 			(printout error "Specified game report does not contain field " ?facts crlf)
 		)
@@ -802,7 +879,7 @@
 	?gp <- (game-parameters (storage-status PENDING))
 	=>
 	(printout t "Loading storage from database" crlf)
-	(if (mongodb-load-facts-from-game-report ?report-name
+	(if (mongodb-load-all-facts-from-game-report ?report-name
 	                                         "machiness_shelf_slots"
 	                                         machine-ss-shelf-slot
 	                                         (create$ name position))
@@ -823,7 +900,7 @@
 	?gp <- (game-parameters (orders PENDING))
 	=>
 	(printout t "Loading orders from database" crlf)
-	(if (mongodb-load-facts-from-game-report ?report-name
+	(if (mongodb-load-all-facts-from-game-report ?report-name
 	                                         "orders"
 	                                          order
 	                                          id
@@ -850,16 +927,18 @@
 	?gp <- (game-parameters (machine-setup PENDING))
 	=>
 	(printout t "Loading machine setup from database" crlf)
-	(if (and (mongodb-load-facts-from-game-report ?report-name
+	(if (and (mongodb-load-all-facts-from-game-report ?report-name
 	                                              "machines"
 	                                              machine
 	                                              name
 	                                              (create$ down-period))
-	         (mongodb-load-facts-from-game-report ?report-name
+	         (mongodb-load-all-facts-from-game-report ?report-name
 	                                              "ring_specs"
 	                                              ring-spec
 	                                              color)
-	         (mongodb-load-facts-from-game-report ?report-name
+	         ; the machine_meta array contains meta facts for all machines,
+	         ; loading all facts to rs-meta facts would fail
+	         (mongodb-load-some-facts-from-game-report ?report-name
 	                                              "machine_meta"
 	                                              rs-meta
 	                                              name))
@@ -882,7 +961,7 @@
 	=>
 	(modify ?mg (state FINISHED))
 	(printout t "Loading machine positions from database" crlf)
-	(if (mongodb-load-facts-from-game-report ?report-name
+	(if (mongodb-load-all-facts-from-game-report ?report-name
 	                                         "machines"
 	                                         machine
 	                                         name
