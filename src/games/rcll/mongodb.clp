@@ -36,6 +36,19 @@
 	(slot meta-fact-string (type STRING))
 )
 
+(deftemplate mongodb-gamestate-history
+	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+	(slot state (type SYMBOL)
+	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
+	(slot phase (type SYMBOL)
+	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
+	(default PRE_GAME))
+	(slot game-time (type FLOAT) (default 0.0))
+	(slot cont-time (type FLOAT) (default 0.0))
+	(slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+	(slot fact-string (type STRING))
+)
+
 (deffunction mongodb-time-as-ms (?time)
 	(return (+ (* (nth$ 1 ?time) 1000) (div (nth$ 2 ?time) 1000)))
 )
@@ -159,6 +172,30 @@
 	))
 )
 
+(defrule mongodb-create-first-gamestate-history
+	(not (mongodb-gamestate-history))
+	?gs <- (gamestate (state ?state) (phase ?phase) (game-time ?gt)
+	  (cont-time ?ct) (over-time ?ot))
+	=>
+	(assert (mongodb-gamestate-history (state ?state) (phase ?phase)
+	  (game-time ?gt)
+	  (cont-time ?ct) (over-time ?ot) (fact-string (fact-to-string ?gs)))
+)
+
+(defrule mongodb-create-next-gamestate-history
+	(declare (salience ?*PRIORITY_HIGH*))
+	?gsh <- (mongodb-gamestate-history (is-latest TRUE) (state ?state)
+	  (phase ?phase) (over-time ?ot) )
+	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (game-time ?gt)
+	  (cont-time ?ct) (over-time ?curr-ot))
+	(test (or (neq ?curr-state ?state) (neq ?curr-phase ?phase)
+	  (neq ?curr-ot ?ot)))
+	=>
+	(modify ?gsh (is-latest FALSE))
+	(assert (mongodb-gamestate-history (state ?curr-state) (phase ?curr-phase)
+	  (game-time ?gt) (cont-time ?ct) (over-time ?curr-ot)
+	  (fact-string (fact-to-string ?gs)))
+)
 
 (deffunction mongodb-update-fact-from-bson (?doc ?template ?id-slots $?only-slots)
 " Update a fact by the content of a bson document.
@@ -362,10 +399,39 @@
 	)
 
 	(do-for-fact ((?p gamestate)) TRUE
-		(bind ?gamestate-doc (mongodb-fact-to-bson ?p))
-		(bson-append ?doc (str-cat "gamestate/" ?p:phase) ?gamestate-doc)
-		(bson-builder-destroy ?gamestate-doc)
+-		(bind ?gamestate-doc (mongodb-fact-to-bson ?p))
+-		(bson-append ?doc "gamestate" ?gamestate-doc)
+-		(bson-builder-destroy ?gamestate-doc)
 	)
+
+	(bind ?gamestate-arr (bson-array-start))
+	(do-for-all-facts ((?mh mongodb-gamestate-history)) TRUE
+		(bind ?history-doc (mongodb-fact-to-bson ?gsh))
+		(bind ?temp-fact (assert-string ?gsh:fact-string))
+		(bind ?gs-doc FALSE)
+		(if ?temp-fact
+		 then
+			(bind ?gs-doc (mongodb-fact-to-bson ?temp-fact))
+		 else
+			(bind ?gs-facts (find-fact ((?m machine)) (eq ?gsh:name ?m:name)))
+			(if ?gs-facts then
+				(bind ?gs-doc (mongodb-fact-to-bson (nth$ 1 ?machine-facts)))
+			)
+		)
+		(if ?gs-doc then
+			(bson-append ?history-doc "gs-fact" ?gs-doc)
+		 else
+			(printout warn "mongodb: machine history fact without machine fact!" crlf)
+		)
+		(if ?temp-fact then
+			(retract ?temp-fact)
+		)
+		(bson-array-append ?gamestate-arr ?history-doc)
+		(bson-builder-destroy ?gs-doc)
+		(bson-builder-destroy ?history-doc)
+	)
+	(bson-array-finish ?doc "gamestate_history" ?gamestate-arr)
+
 	(bind ?points-arr (bson-array-start))
 	(bind ?phase-points-doc-cyan (bson-create))
 	(bind ?phase-points-doc-magenta (bson-create))
