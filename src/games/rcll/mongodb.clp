@@ -13,7 +13,7 @@
 	; Mongodb Game Report Version,
 	; 1.1 -> includes config
 	; 1.2 -> mps meta facts, workpiece and agent-task info
-	?*MONGODB-REPORT-VERSION* = 1.2
+	?*MONGODB-REPORT-VERSION* = 2.0
 	; Update rate in seconds
 	?*MONGODB-REPORT-UPDATE-FREQUENCY* = 10
 )
