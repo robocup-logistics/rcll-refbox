@@ -440,3 +440,47 @@
     (return nil)
   )
 )
+
+(deffunction pack-value-to-string (?value ?type)
+" Convert a value or list of values to a string, such that CLIPS can retrieve
+  the type later on.
+  Useful helper when using 'assert-string'.
+  @param ?value Value or list of values
+  @param ?type Type of the value(s) of ?value
+  @return string packed with the value(s)
+"
+	(bind ?raw-val ?value)
+	(bind ?is-list (eq (type ?value) MULTIFIELD))
+	(if ?is-list
+	 then
+		(bind ?tmp ?raw-val)
+		(progn$ (?f ?tmp) (bind ?raw-val (replace$ ?raw-val ?f-index ?f-index (type-cast ?f ?type))))
+		(bind ?typed-string (implode$ ?raw-val))
+	 else
+		(bind ?typed-string (str-cat (type-cast ?value ?type)))
+		(if (eq ?type STRING) then (bind ?typed-string (str-cat "\"" ?typed-string "\"")))
+	)
+	(return ?typed-string)
+)
+
+
+(deffunction fact-to-string (?fact)
+	(bind ?template (fact-relation ?fact))
+	(bind ?update-str (str-cat "(" ?template))
+	(foreach ?slot (deftemplate-slot-names ?template)
+		(bind ?is-multislot (deftemplate-slot-multip ?template ?slot))
+		(bind ?types (deftemplate-slot-types ?template ?slot))
+		(if (neq (length$ ?types) 1)
+		 then
+			(printout error "fact-to-string: type of slot " ?slot
+			                " of template "  ?template " cannot be determined, skipping." crlf)
+		 else
+			(bind ?type (nth$ 1 ?types))
+			(bind ?value (fact-slot-value ?fact ?slot))
+			(bind ?value (pack-value-to-string ?value ?type))
+			(bind ?update-str (str-cat ?update-str " (" ?slot " " ?value ")"))
+		)
+	)
+	(bind ?update-str (str-cat ?update-str ")"))
+  (return ?update-str)
+)

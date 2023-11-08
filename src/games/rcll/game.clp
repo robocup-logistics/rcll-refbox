@@ -723,3 +723,96 @@
 	(retract ?gr)
 	(game-reset)
 )
+
+(defrule game-create-first-machine-history
+	?m <- (machine (name ?n) (state ?s))
+	(or ?mf <- (bs-meta (name ?n))
+	    ?mf <- (rs-meta (name ?n))
+	    ?mf <- (cs-meta (name ?n))
+	    ?mf <- (ds-meta (name ?n))
+	    ?mf <- (ss-meta (name ?n))
+	)
+	(gamestate (game-time ?gt))
+	(time $?now)
+	(not (machine-history (name ?n)))
+	=>
+	(assert (machine-history (name ?n) (game-time ?gt) (time ?now)
+	          (state ?s) (fact-string (fact-to-string ?m))
+	          (meta-fact-string (fact-to-string ?mf))
+	))
+)
+
+(defrule game-create-next-machine-history
+	?m <- (machine (name ?n) (state ?s))
+	?hist <- (machine-history (name ?n) (state ?s-last&:(neq ?s ?s-last))
+	           (time $?last) (is-latest TRUE))
+	(or ?mf <- (bs-meta (name ?n))
+	    ?mf <- (rs-meta (name ?n))
+	    ?mf <- (cs-meta (name ?n))
+	    ?mf <- (ds-meta (name ?n))
+	    ?mf <- (ss-meta (name ?n))
+	)
+	(gamestate (game-time ?gt))
+	(time $?now)
+	=>
+	(modify ?hist (is-latest FALSE))
+	(assert (machine-history (name ?n) (game-time ?gt)
+	          (time ?now) (state ?s) (fact-string (fact-to-string ?m))
+	          (meta-fact-string (fact-to-string ?mf))
+	))
+)
+
+(defrule game-create-first-gamestate-history
+	(not (gamestate-history))
+	?gs <- (gamestate (state ?state) (phase ?phase) (game-time ?gt)
+	  (cont-time ?ct) (over-time ?ot))
+	=>
+	(assert (gamestate-history (state ?state) (phase ?phase)
+	  (game-time ?gt)
+	  (cont-time ?ct) (over-time ?ot) (fact-string (fact-to-string ?gs))))
+)
+
+(defrule game-create-next-gamestate-history
+	(declare (salience ?*PRIORITY_HIGHER*))
+	?gsh <- (gamestate-history (is-latest TRUE) (state ?state)
+	  (phase ?phase) (over-time ?ot) )
+	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (game-time ?gt)
+	  (cont-time ?ct) (over-time ?curr-ot))
+	(test (or (neq ?curr-state ?state) (neq ?curr-phase ?phase)
+	  (neq ?curr-ot ?ot)))
+	=>
+	(modify ?gsh (is-latest FALSE))
+	(assert (gamestate-history (state ?curr-state) (phase ?curr-phase)
+	  (game-time ?gt) (cont-time ?ct) (over-time ?curr-ot)
+	  (fact-string (fact-to-string ?gs))))
+)
+
+(defrule silence-debug
+	(confval (path "/llsfrb/clips/debug") (type BOOL) (value TRUE))
+	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
+	=>
+	(unwatch facts machine-history gamestate-history)
+	(unwatch rules game-create-next-machine-history game-create-next-gamestate-history)
+)
+(defrule game-print-machine-history
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(finalize)
+	=>
+	; machine history
+	(foreach ?curr-mps (deftemplate-slot-allowed-values machine name)
+		(print-sep (str-cat ?curr-mps " states"))
+		(bind ?history (find-all-facts ((?h machine-history)) (eq ?h:name ?curr-mps)))
+		(bind ?history (sort history> ?history))
+		(print-fact-list (fact-indices ?history) (create$ game-time time name state))
+	)
+)
+
+(defrule game-print-gamestates-from-mongodb-report
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(finalize)
+	=>
+	(bind ?history (find-all-facts ((?h gamestate-history)) TRUE))
+	(bind ?history (sort cont-time> ?history))
+	(print-fact-list (fact-indices ?history)
+	                 (create$ phase prev-phase game-time cont-time))
+)

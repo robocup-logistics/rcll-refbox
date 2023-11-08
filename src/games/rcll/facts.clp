@@ -461,6 +461,29 @@
 	(slot storage-status (type SYMBOL) (allowed-values PENDING DEFAULT STATIC) (default PENDING))
 )
 
+(deftemplate machine-history
+	(slot name (type SYMBOL))
+	(slot state (type SYMBOL))
+	(slot game-time (type FLOAT) (default 0.0))
+	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+	(multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+	(slot fact-string (type STRING))
+	(slot meta-fact-string (type STRING))
+)
+
+(deftemplate gamestate-history
+	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+	(slot state (type SYMBOL)
+	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
+	(slot phase (type SYMBOL)
+	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
+	(default PRE_GAME))
+	(slot game-time (type FLOAT) (default 0.0))
+	(slot cont-time (type FLOAT) (default 0.0))
+	(slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+	(slot fact-string (type STRING))
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg

@@ -26,29 +26,6 @@
 	(multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
-(deftemplate mongodb-machine-history
-	(slot name (type SYMBOL))
-	(slot state (type SYMBOL))
-	(slot game-time (type FLOAT) (default 0.0))
-	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
-	(multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
-	(slot fact-string (type STRING))
-	(slot meta-fact-string (type STRING))
-)
-
-(deftemplate mongodb-gamestate-history
-	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
-	(slot state (type SYMBOL)
-	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
-	(slot phase (type SYMBOL)
-	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
-	(default PRE_GAME))
-	(slot game-time (type FLOAT) (default 0.0))
-	(slot cont-time (type FLOAT) (default 0.0))
-	(slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
-	(slot fact-string (type STRING))
-)
-
 (deffunction mongodb-time-as-ms (?time)
 	(return (+ (* (nth$ 1 ?time) 1000) (div (nth$ 2 ?time) 1000)))
 )
@@ -73,28 +50,6 @@
 	(return ?doc)
 )
 
-(deffunction mongodb-pack-value-to-string (?value ?type)
-" Convert a value or list of values to a string, such that CLIPS can retrieve
-  the type later on.
-  Useful helper when using 'assert-string'.
-  @param ?value Value or list of values
-  @param ?type Type of the value(s) of ?value
-  @return string packed with the value(s)
-"
-	(bind ?raw-val ?value)
-	(bind ?is-list (eq (type ?value) MULTIFIELD))
-	(if ?is-list
-	 then
-		(bind ?tmp ?raw-val)
-		(progn$ (?f ?tmp) (bind ?raw-val (replace$ ?raw-val ?f-index ?f-index (type-cast ?f ?type))))
-		(bind ?typed-string (implode$ ?raw-val))
-	 else
-		(bind ?typed-string (str-cat (type-cast ?value ?type)))
-		(if (eq ?type STRING) then (bind ?typed-string (str-cat "\"" ?typed-string "\"")))
-	)
-	(return ?typed-string)
-)
-
 (deffunction mongodb-retrieve-value-from-doc (?doc ?field ?type ?is-list)
 " Retrieve the value(s) with a given type from a field of a bson document.
   @param ?doc bson document
@@ -113,89 +68,6 @@
 	)
 )
 
-(deffunction fact-to-string (?fact)
-	(bind ?template (fact-relation ?fact))
-	(bind ?update-str (str-cat "(" ?template))
-	(foreach ?slot (deftemplate-slot-names ?template)
-		(bind ?is-multislot (deftemplate-slot-multip ?template ?slot))
-		(bind ?types (deftemplate-slot-types ?template ?slot))
-		(if (neq (length$ ?types) 1)
-		 then
-			(printout error "fact-to-string: type of slot " ?slot
-			                " of template "  ?template " cannot be determined, skipping." crlf)
-		 else
-			(bind ?type (nth$ 1 ?types))
-			(bind ?value (fact-slot-value ?fact ?slot))
-			(bind ?value (mongodb-pack-value-to-string ?value ?type))
-			(bind ?update-str (str-cat ?update-str " (" ?slot " " ?value ")"))
-		)
-	)
-	(bind ?update-str (str-cat ?update-str ")"))
-  (return ?update-str)
-)
-
-(defrule mongodb-create-first-machine-history
-	?m <- (machine (name ?n) (state ?s))
-	(or ?mf <- (bs-meta (name ?n))
-	    ?mf <- (rs-meta (name ?n))
-	    ?mf <- (cs-meta (name ?n))
-	    ?mf <- (ds-meta (name ?n))
-	    ?mf <- (ss-meta (name ?n))
-	)
-	(gamestate (game-time ?gt))
-	(time $?now)
-	(not (mongodb-machine-history (name ?n)))
-	=>
-	(assert (mongodb-machine-history (name ?n) (game-time ?gt) (time ?now)
-	          (state ?s) (fact-string (fact-to-string ?m))
-	          (meta-fact-string (fact-to-string ?mf))
-	))
-)
-
-(defrule mongodb-create-next-machine-history
-	?m <- (machine (name ?n) (state ?s))
-	?hist <- (mongodb-machine-history (name ?n) (state ?s-last&:(neq ?s ?s-last))
-	           (time $?last) (is-latest TRUE))
-	(or ?mf <- (bs-meta (name ?n))
-	    ?mf <- (rs-meta (name ?n))
-	    ?mf <- (cs-meta (name ?n))
-	    ?mf <- (ds-meta (name ?n))
-	    ?mf <- (ss-meta (name ?n))
-	)
-	(gamestate (game-time ?gt))
-	(time $?now)
-	=>
-	(modify ?hist (is-latest FALSE))
-	(assert (mongodb-machine-history (name ?n) (game-time ?gt)
-	          (time ?now) (state ?s) (fact-string (fact-to-string ?m))
-	          (meta-fact-string (fact-to-string ?mf))
-	))
-)
-
-(defrule mongodb-create-first-gamestate-history
-	(not (mongodb-gamestate-history))
-	?gs <- (gamestate (state ?state) (phase ?phase) (game-time ?gt)
-	  (cont-time ?ct) (over-time ?ot))
-	=>
-	(assert (mongodb-gamestate-history (state ?state) (phase ?phase)
-	  (game-time ?gt)
-	  (cont-time ?ct) (over-time ?ot) (fact-string (fact-to-string ?gs))))
-)
-
-(defrule mongodb-create-next-gamestate-history
-	(declare (salience ?*PRIORITY_HIGHER*))
-	?gsh <- (mongodb-gamestate-history (is-latest TRUE) (state ?state)
-	  (phase ?phase) (over-time ?ot) )
-	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (game-time ?gt)
-	  (cont-time ?ct) (over-time ?curr-ot))
-	(test (or (neq ?curr-state ?state) (neq ?curr-phase ?phase)
-	  (neq ?curr-ot ?ot)))
-	=>
-	(modify ?gsh (is-latest FALSE))
-	(assert (mongodb-gamestate-history (state ?curr-state) (phase ?curr-phase)
-	  (game-time ?gt) (cont-time ?ct) (over-time ?curr-ot)
-	  (fact-string (fact-to-string ?gs))))
-)
 
 (deffunction mongodb-get-fact-from-bson (?doc ?template ?id-slots)
 " Get a unique fact by the content of a bson document, if it exists.
@@ -295,7 +167,7 @@
 			 else
 				(bind ?value (fact-slot-value ?fact ?slot))
 			)
-			(bind ?value (mongodb-pack-value-to-string ?value ?type))
+			(bind ?value (pack-value-to-string ?value ?type))
 			(bind ?update-str (str-cat ?update-str " (" ?slot " " ?value ")"))
 		)
 	)
@@ -483,7 +355,7 @@
 	)
 
 	(bind ?gamestate-arr (bson-array-start))
-	(do-for-all-facts ((?gsh mongodb-gamestate-history)) TRUE
+	(do-for-all-facts ((?gsh gamestate-history)) TRUE
 		(bind ?history-doc (mongodb-fact-to-bson ?gsh))
 		(bind ?temp-fact (assert-string ?gsh:fact-string))
 		(bind ?gs-doc FALSE)
@@ -536,7 +408,7 @@
 	(bson-array-finish ?doc "config" ?cfg-arr)
 	(bind ?machine-history-arr (bson-array-start))
 	(unwatch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
-	(do-for-all-facts ((?mh mongodb-machine-history)) TRUE
+	(do-for-all-facts ((?mh machine-history)) TRUE
 		(bind ?history-doc (mongodb-fact-to-bson ?mh))
 		(bind ?temp-fact (assert-string ?mh:fact-string))
 		(bind ?machine-doc FALSE)
@@ -620,7 +492,7 @@
 	(do-for-all-facts ((?phase-change mongodb-phase-change)) TRUE
 		(retract ?phase-change)
 	)
-	(do-for-all-facts ((?machine-history mongodb-machine-history)) TRUE
+	(do-for-all-facts ((?machine-history machine-history)) TRUE
 		(retract ?machine-history)
 	)
 	(assert (mongodb-game-report (start ?stime) (name ?report-name)))
@@ -673,7 +545,7 @@
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
 	=>
 	(retract ?t)
-	(delayed-do-for-all-facts ((?hist mongodb-machine-history)) TRUE
+	(delayed-do-for-all-facts ((?hist machine-history)) TRUE
 	  (retract ?hist)
 	)
 	(mongodb-init-report ?teams ?stime ?etime ?report-name)
@@ -691,15 +563,6 @@
 	(mongodb-init-report ?teams ?stime ?etime ?report-name)
 )
 
-
-(defrule mongodb-silence-debug
-	(confval (path "/llsfrb/clips/debug") (type BOOL) (value TRUE))
-	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
-	=>
-	(unwatch facts mongodb-machine-history)
-	(unwatch rules mongodb-create-next-machine-history)
-)
-
 (defrule mongodb-start-new-report
 " After restarting a game, a new report should be created"
 	(declare (salience ?*PRIORITY_HIGH*))
@@ -710,7 +573,7 @@
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
 	=>
 	(retract ?t)
-	(delayed-do-for-all-facts ((?hist mongodb-machine-history)) TRUE
+	(delayed-do-for-all-facts ((?hist machine-history)) TRUE
 	  (retract ?hist)
 	)
 	(mongodb-init-report ?teams ?stime ?etime ?report-name)
@@ -976,25 +839,3 @@
 	)
 )
 
-(defrule mongodb-print-machine-history
-	(declare (salience ?*PRIORITY_HIGHER*))
-	(finalize)
-	=>
-	; machine history
-	(foreach ?curr-mps (deftemplate-slot-allowed-values machine name)
-		(print-sep (str-cat ?curr-mps " states"))
-		(bind ?history (find-all-facts ((?h mongodb-machine-history)) (eq ?h:name ?curr-mps)))
-		(bind ?history (sort history> ?history))
-		(print-fact-list (fact-indices ?history) (create$ game-time time name state))
-	)
-)
-
-(defrule mongodb-print-gamestates-from-mongodb-report
-	(declare (salience ?*PRIORITY_HIGHER*))
-	(finalize)
-	=>
-	(bind ?history (find-all-facts ((?h mongodb-gamestate-history)) TRUE))
-	(bind ?history (sort cont-time> ?history))
-	(print-fact-list (fact-indices ?history)
-	                 (create$ phase prev-phase game-time cont-time))
-)
