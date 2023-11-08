@@ -924,9 +924,10 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
 			type = "INT";
 		else if (v->is_float())
 			type = "FLOAT";
-		else if (v->is_bool())
-			type = "BOOL";
-		else if (v->is_string()) {
+		else if (v->is_bool()) {
+			type  = "BOOL";
+			value = v->get_bool() ? "TRUE" : "FALSE";
+		} else if (v->is_string()) {
 			type = "STRING";
 			if (!v->is_list()) {
 				value = std::string("\"") + value + "\"";
@@ -1555,6 +1556,14 @@ LLSFRefBox::clips_bson_append(void *bson, std::string field_name, CLIPS::Value v
 			break;
 
 		case CLIPS::TYPE_SYMBOL:
+			if (value == "FALSE") {
+				b->append(kvp(field_name, false));
+				break;
+			}
+			if (value == "TRUE") {
+				b->append(kvp(field_name, true));
+				break;
+			}
 		case CLIPS::TYPE_INSTANCE_NAME:
 		case CLIPS::TYPE_STRING: b->append(kvp(field_name, value.as_string())); break;
 		case CLIPS::TYPE_EXTERNAL_ADDRESS: {
