@@ -114,7 +114,7 @@
   ; Game phase time; seconds
   ?*SETUP-TIME*           = 300
   ?*EXPLORATION-TIME*     = (config-get-int "/llsfrb//game/exploration-time")
-  ?*PRODUCTION-TIME*      = 1200
+  ?*PRODUCTION-TIME*      = 3600
   ?*PRODUCTION-OVERTIME*  = 300
   ?*PRODUCTION-PREPARE-TIMEOUT*  = 5
   ; Machine distribution

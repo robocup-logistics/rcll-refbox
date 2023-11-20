@@ -5,17 +5,17 @@
 
 llsfrb:
   simulation:
-    enable: false
+    enable: true
 
     # factor by which the game time should elapse per second. Also affects
     # mockup machine process durations. However, every single step will
     # take at least 1s (2s in case of the delvery station) to prevent
     # unobservable state changes.
-    speedup: 1.0
+    speedup: 4.0
 
     # synchronize refbox time with the time of a simulation
     time-sync:
-      enable: true
+      enable: false
       # estimate time by using the last given simulation time speed
       # (helps reducing the amount of messages to send)
-      estimate-time: true
+      estimate-time: false
