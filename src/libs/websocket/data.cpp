@@ -410,6 +410,35 @@ Data::log_push_order_info(int id)
 }
 
 /**
+ * @brief Gets a specific order-info fact from CLIPS and pushes it to the send queue
+ *
+ */
+void
+Data::log_push_product_info(int pid)
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "product")) {
+			try {
+				if (get_value<int64_t>(fact, "pid") == pid) {
+					rapidjson::Document d;
+					d.SetObject();
+					rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+					get_product_info_fact(&d, alloc, fact);
+					//send it off
+					log_push(d);
+				}
+			} catch (Exception &e) {
+				logger_->log_error("Websocket", "can't access value(s) of fact of type product");
+			}
+		}
+		fact = fact->next();
+	}
+}
+
+/**
  * @brief
  *
  * @param delivery_id
@@ -834,6 +863,7 @@ Data::get_machine_info_fact(T                                  *o,
 		if (match(meta_fact, "ds-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
 			json_string.SetInt((get_value<int64_t>(meta_fact, "order-id")));
+			json_string.SetInt((get_value<int64_t>(meta_fact, "product-id")));
 			(*o).AddMember("ds_order", json_string, alloc);
 			break;
 		}
@@ -878,12 +908,6 @@ Data::get_order_info_fact(T                                  *o,
 	json_string.SetString("order-info", alloc);
 	(*o).AddMember("type", json_string, alloc);
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "complexity")).c_str(), alloc);
-	(*o).AddMember("complexity", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
-	(*o).AddMember("base_color", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
-	(*o).AddMember("cap_color", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "id")));
 	(*o).AddMember("id", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "quantity-requested")));
@@ -910,6 +934,41 @@ Data::get_order_info_fact(T                                  *o,
 	}
 	(*o).AddMember("quantity_delivered", quantity_array, alloc);
 
+	(*o).AddMember("unconfirmed_deliveries",
+	               get_unconfirmed_delivery_fact(alloc, get_value<int64_t>(fact, "id")),
+	               alloc);
+}
+
+/**
+ * @brief Gets data of a product-info fact and packs into into a rapidjson object
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
+ */
+template <class T>
+void
+Data::get_product_info_fact(T                                  *o,
+                          rapidjson::Document::AllocatorType &alloc,
+                          CLIPS::Fact::pointer                fact)
+{
+	//generic type information
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	(*o).AddMember("level", json_string, alloc);
+	json_string.SetString("product-info", alloc);
+	(*o).AddMember("type", json_string, alloc);
+	//value fields
+	json_string.SetString((get_value<std::string>(fact, "complexity")).c_str(), alloc);
+	(*o).AddMember("complexity", json_string, alloc);
+	json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
+	(*o).AddMember("base_color", json_string, alloc);
+	json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
+	(*o).AddMember("cap_color", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "pid")));
+	(*o).AddMember("pid", json_string, alloc);
+
 	rapidjson::Value ring_array(rapidjson::kArrayType);
 	ring_array.Reserve(get_values(fact, "ring-colors").size(), alloc);
 	for (const auto &e : get_values(fact, "ring-colors")) {
@@ -920,9 +979,10 @@ Data::get_order_info_fact(T                                  *o,
 	(*o).AddMember("ring_colors", ring_array, alloc);
 
 	(*o).AddMember("unconfirmed_deliveries",
-	               get_unconfirmed_delivery_fact(alloc, get_value<int64_t>(fact, "id")),
+	               get_unconfirmed_delivery_fact(alloc, get_value<int64_t>(fact, "pid")),
 	               alloc);
 }
+
 
 /**
  * @brief Creates a rapidjson array of unconfirmed delivery objects for the given order id

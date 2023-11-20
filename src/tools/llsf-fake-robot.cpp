@@ -185,30 +185,38 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
 			unsigned int            end_min   = o.delivery_period_end() / 60;
 			unsigned int            end_sec   = o.delivery_period_end() - end_min * 60;
 
-			std::list<std::string> rings;
-			for (int j = 0; j < o.ring_colors_size(); ++j) {
-				rings.push_back(llsf_msgs::RingColor_Name(o.ring_colors(j)));
-				;
-			}
+			std::shared_ptr<Order> pi;
+			if ((pi = std::dynamic_pointer_cast<Order>(msg))) {
+				printf("Product Info received:\n");
+				for (int k = 0; k < pi->products_size(); ++k) {
+					const llsf_msgs::ProductInfo &p = pi->products(k);
+					std::list<std::string> rings;
+					for (int j = 0; j < p.ring_colors_size(); ++j) {
+						rings.push_back(llsf_msgs::RingColor_Name(p.ring_colors(j)));
+						;
+					}
 
-			printf("  %u (%s): %s%u%s/%s%u%s/%u of %s|%s|%s from %02u:%02u to %02u:%02u at gate %u\n",
-			       o.id(),
-			       llsf_msgs::Order::Complexity_Name(o.complexity()).c_str(),
-			       c_cyan,
-			       o.quantity_delivered_cyan(),
-			       c_normal,
-			       c_purple,
-			       o.quantity_delivered_magenta(),
-			       c_normal,
-			       o.quantity_requested(),
-			       llsf_msgs::BaseColor_Name(o.base_color()).c_str(),
-			       str_join(rings, "-").c_str(),
-			       llsf_msgs::CapColor_Name(o.cap_color()).c_str(),
-			       begin_min,
-			       begin_sec,
-			       end_min,
-			       end_sec,
-			       o.delivery_gate());
+					printf("  %u prod %u (%s): %s%u%s/%s%u%s/%u of %s|%s|%s from %02u:%02u to %02u:%02u at gate %u\n",
+						o.id(),
+						p.pid(),
+						llsf_msgs::ProductInfo::Complexity_Name(p.complexity()).c_str(),
+						c_cyan,
+						o.quantity_delivered_cyan(),
+						c_normal,
+						c_purple,
+						o.quantity_delivered_magenta(),
+						c_normal,
+						o.quantity_requested(),
+						llsf_msgs::BaseColor_Name(p.base_color()).c_str(),
+						str_join(rings, "-").c_str(),
+						llsf_msgs::CapColor_Name(p.cap_color()).c_str(),
+						begin_min,
+						begin_sec,
+						end_min,
+						end_sec,
+						o.delivery_gate());
+				}
+			}
 		}
 	}
 

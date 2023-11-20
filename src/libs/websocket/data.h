@@ -77,6 +77,8 @@ public:
 	void        log_push_machine_info(std::string name);
 	void        log_push_workpiece_info(int id);
 	void        log_push_order_info_via_delivery(int delivery_id);
+	void        log_push_product_info(int pid);
+
 	void        log_push_known_teams();
 	std::string on_connect_known_teams();
 	std::string on_connect_machine_info();
@@ -98,6 +100,9 @@ public:
 	template <class T>
 	void
 	get_order_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_product_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void
 	get_robot_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);

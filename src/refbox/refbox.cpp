@@ -2124,6 +2124,10 @@ LLSFRefBox::setup_clips_websocket()
 	                       sigc::mem_fun(*(backend_->get_data()),
 	                                     &websocket::Data::log_push_order_info_via_delivery)));
 
+	clips_->add_function("ws-create-ProductInfo",
+	                     sigc::slot<void, int>(sigc::mem_fun(*(backend_->get_data()),
+	                                                         &websocket::Data::log_push_product_info)));									 
+
 	clips_->add_function("ws-create-KnownTeams",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_known_teams)));
