@@ -29,6 +29,8 @@ message AgentTask {
     // additional info for the refbox
     optional WorkpieceDescription workpiece_description = 9;
     optional uint32 order_id = 10;
+    optional uint32 product_id = 16;
+    optional uint32 product_oid = 17;
 
     // flags and result of the current task
     optional bool cancel_task = 11; // cancels current task

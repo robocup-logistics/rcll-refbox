@@ -62,21 +62,16 @@ message Order {
     MSG_TYPE = 42;
   }
 
-  // Ordered product type
-  enum Complexity {
-    C0 = 0;
-    C1 = 1;
-    C2 = 2;
-    C3 = 3;
-  }
-
   // ID and requested product of this order
   required uint32       id = 1;
-  required Complexity   complexity = 2;
 
-  required BaseColor    base_color = 3;
-  repeated RingColor    ring_colors = 4;
-  required CapColor     cap_color = 5;
+  // List of all products with same order-id
+  repeated ProductInfo  products = 14;
+
+  reserved 2; // Complexity
+  reserved 3; // BaseColor
+  reserved 4; // RingColor
+  reserved 5; // CapColor
 
   // Quantity requested and delivered
   required uint32 quantity_requested = 6;
@@ -96,6 +91,29 @@ message Order {
 
   required bool competitive = 13;
 }
+
+message ProductInfo {
+  enum CompType {
+    COMP_ID  = 2000;
+    MSG_TYPE = 47;
+  }
+  
+  // Ordered product type
+  enum Complexity {
+    C0 = 0;
+    C1 = 1;
+    C2 = 2;
+    C3 = 3;
+  }
+
+  required uint32       pid = 1;
+  required uint32       oid = 2;
+  required Complexity   complexity = 3;
+  required BaseColor    base_color = 4;
+  repeated RingColor    ring_colors = 5;
+  required CapColor     cap_color = 6;
+}
+
 
 message OrderInfo {
   enum CompType {
