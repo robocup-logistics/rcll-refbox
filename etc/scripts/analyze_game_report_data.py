@@ -56,6 +56,8 @@ class WorkpieceFact:
     id: int
     name: str
     order: int
+    product: int
+    product_oid: int 
     start_time: float
     end_time: float
     at_machine: str
@@ -193,6 +195,8 @@ def load_data(mongodb_uri,
                 wp_fact = WorkpieceFact(wp["id"],
                                         wp["name"],
                                         wp["order"],
+                                        wp["product"],
+                                        wp["product-oid"]
                                         wp["start-time"],
                                         wp["end-time"],
                                         wp["at-machine"],
