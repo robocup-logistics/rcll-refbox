@@ -277,15 +277,6 @@
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
 	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
-
-    ; Time window in which the order should start, used for
-  ; randomizing delivery-period's first element (start time)
-  (multislot start-range (type INTEGER) (cardinality 2 2))
-  ; Time the production should take, used for randomizing the second
-  ; element of delivery-period (end time)
-  (multislot duration-range (type INTEGER) (cardinality 2 2) (default 60 180))
-  ; Time window in which it must be delivered, set during initial randomization
-  (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
 )
 
 
