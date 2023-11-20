@@ -40,8 +40,7 @@ public:
 
 	virtual void bind();
 
-	using Socket::send;
-	virtual void send(void *buf, size_t buf_len);
+	virtual void send(void *buf, unsigned int buf_len);
 
 private:
 	struct ::sockaddr_in *broadcast_addr;
