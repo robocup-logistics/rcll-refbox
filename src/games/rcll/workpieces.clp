@@ -39,11 +39,11 @@
 	(return (random (nth$ 1 ?*WORKPIECE-RANGE-RED*) (nth$ 2 ?*WORKPIECE-RANGE-CLEAR*)))
 )
 
-(deffunction workpiece-simulate-tracking (?order-id ?team ?delivery-time)
+(deffunction workpiece-simulate-tracking (?order-id ?product-id ?team ?delivery-time)
   (bind ?workpiece-id 0)
-  (do-for-fact ((?order order)) (eq ?order:id ?order-id)
+  ;(do-for-fact ((?order order)) (eq ?order:id ?order-id) ;raus
 
-    (do-for-fact ((?product product)) (eq ?order:id ?product:oid)
+    (do-for-fact ((?product product)) (and (eq ?product:pid ?product-id) (eq ?order-id ?product:oid))
 
       ;Create a workpiece
       (bind ?workpiece-id (workpiece-gen-id-for-base-color ?product:base-color))
@@ -100,7 +100,7 @@
      ;                               (game-time ?delivery-time)
      ;                               (delivery-gate ?order:delivery-gate))))
     )
-   )
+   ;)
   return ?workpiece-id
 )
 
