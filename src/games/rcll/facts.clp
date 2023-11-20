@@ -97,6 +97,7 @@
   (slot ds-gate (type INTEGER))
 ;  (slot ds-last-gate (type INTEGER))
   (slot order-id (type INTEGER))
+  (slot product-id (type INTEGER))
 )
 
 (deftemplate ss-meta
@@ -205,6 +206,8 @@
   (slot end-time (type FLOAT))
 
   (slot order-id (type INTEGER))
+  (slot product (type INTEGER))
+  (slot product-oid (type INTEGER)) 
 
   (slot processed (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
 
@@ -261,20 +264,47 @@
   (multislot phases (type SYMBOL) (allowed-values nil PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME) (default nil))
 )
 
-(deftemplate order
-  (slot id (type INTEGER) (range 1 ?VARIABLE))
+(deftemplate product
+  (slot pid (type INTEGER) (range 1 ?VARIABLE))
+  (slot oid (type INTEGER) (range 0 ?VARIABLE))
+  
 
   ; Product specification
   (slot complexity (type SYMBOL) (allowed-values C0 C1 C2 C3))
-  (slot competitive (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+  
   ; the following is auto-generated based on the previously defined complexity
   (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
 	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
 
+    ; Time window in which the order should start, used for
+  ; randomizing delivery-period's first element (start time)
+  (multislot start-range (type INTEGER) (cardinality 2 2))
+  ; Time the production should take, used for randomizing the second
+  ; element of delivery-period (end time)
+  (multislot duration-range (type INTEGER) (cardinality 2 2) (default 60 180))
+  ; Time window in which it must be delivered, set during initial randomization
+  (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
+)
+
+
+(deftemplate order
+  (slot id (type INTEGER) (range 1 ?VARIABLE))
+
+  ; ; Product specification
+  ; (slot complexity (type SYMBOL) (allowed-values C0 C1 C2 C3))
+  
+  ; ; the following is auto-generated based on the previously defined complexity
+  ; (slot base-color (type SYMBOL) (allowed-values BASE_RED BASE_SILVER BASE_BLACK))
+  ; (multislot ring-colors (type SYMBOL) (cardinality 0 3)
+	;      (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  ; (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
+
+
+
+  (slot competitive (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot quantity-requested (type INTEGER) (default 1))
-  ; Quantity delivered for both teams in the order C,M
   (multislot quantity-delivered (type INTEGER) (cardinality 2 2) (default 0 0))
   ; Time window in which the order should start, used for
   ; randomizing delivery-period's first element (start time)
@@ -302,6 +332,8 @@
   (slot id (type INTEGER))
   (slot name (type SYMBOL))
   (slot order (type INTEGER))
+  (slot product (type INTEGER))
+  (slot product-oid (type INTEGER))
   (slot latest-data (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (slot start-time (type FLOAT))
   (slot end-time (type FLOAT))
@@ -357,6 +389,8 @@
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
   (slot scored (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot order (type INTEGER) (default 0))
+  (slot product (type INTEGER) (default 0))
+  (slot product-oid (type INTEGER) (default 0))
 )
 
 
@@ -568,6 +602,31 @@
   (order (id  11) (start-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
                   (activation-range 0 0) (competitive TRUE)
                   (duration-range ?*PRODUCTION-OVERTIME* ?*PRODUCTION-OVERTIME*)
-                  (complexity C0) (allow-overtime TRUE))
+                  (allow-overtime TRUE))
 )
 
+(deffacts product
+  ; standing product
+  (product (pid  1))
+  (product (pid  2))
+  (product (pid  3))
+  (product (pid  4))
+  (product (pid  5))
+  (product (pid  6))
+  (product (pid  7))
+  (product (pid  8))
+  (product (pid  9))
+  (product (pid  10))
+  (product (pid  11))
+  (product (pid  12)) 
+  (product (pid  13))
+  (product (pid  14))
+  (product (pid  15))
+  (product (pid  16))
+  (product (pid  17))
+  (product (pid  18))
+  (product (pid  19))
+  (product (pid  20))
+  (product (pid  21))
+  (product (pid  22) (complexity C0))
+)
