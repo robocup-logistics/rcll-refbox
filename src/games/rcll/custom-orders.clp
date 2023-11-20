@@ -56,11 +56,11 @@
 
   ;-- compose and insert order fact
   (assert (order (id ?custom-order-id)
-                 (complexity ?complexity)
+                 ;(complexity ?complexity)
                  (competitive FALSE)
-                 (base-color ?base-color)
-                 (ring-colors ?ring-colors)
-                 (cap-color ?cap-color)
+                ;  (base-color ?base-color)
+                ;  (ring-colors ?ring-colors)
+                ;  (cap-color ?cap-color)
                  (quantity-requested ?quantity)
                  (quantity-delivered 0 0)
                  (start-range 0 0)
