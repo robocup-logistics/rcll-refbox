@@ -274,6 +274,16 @@
         (bind ?order-id (pb-field-value ?at "order_id"))
       )
 
+      (bind ?product-id nil)
+      (if (pb-has-field ?at "product_id") then
+        (bind ?product-id (pb-field-value ?at "product_id"))
+      )
+
+      (bind ?product-oid nil)
+      (if (pb-has-field ?at "product_id") then
+        (bind ?product-oid (pb-field-value ?at "product_oid"))
+      )
+
       (bind ?successful TRUE)
       (if (pb-has-field ?at "successful") then
         (bind ?order-id (pb-field-value ?at "successful"))
@@ -287,6 +297,8 @@
                           (start-time ?gt)
                           (end-time 0.0)
                           (order-id ?order-id)
+                          (product ?product-id)
+                          (product-oid ?product-oid)
                           (successful ?successful)
                           (processed FALSE)
                           (base-color ?base-color)
@@ -899,14 +911,17 @@
   (bind ?o (pb-create "llsf_msgs.Order"))
 
   (pb-set-field ?o "id" (fact-slot-value ?order-fact id))
+
+  ;product
   (pb-set-field ?o "complexity" (fact-slot-value ?order-fact complexity))
-  (pb-set-field ?o "competitive" (fact-slot-value ?order-fact competitive))
   (pb-set-field ?o "base_color" (fact-slot-value ?order-fact base-color))
   (foreach ?rc (fact-slot-value ?order-fact ring-colors)
     (pb-add-list ?o "ring_colors" ?rc)
   )
   (pb-set-field ?o "cap_color" (fact-slot-value ?order-fact cap-color))
 
+
+  (pb-set-field ?o "competitive" (fact-slot-value ?order-fact competitive))
   (pb-set-field ?o "quantity_requested" (fact-slot-value ?order-fact quantity-requested))
   (pb-set-field ?o "quantity_delivered_cyan"
 		(nth$ 1 (fact-slot-value ?order-fact quantity-delivered)))
