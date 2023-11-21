@@ -45,6 +45,13 @@
   (ws-create-OrderInfo ?id)
 )
 
+(defrule ws-update-product
+  "send update of an product, whenever the product fact changes"
+  ?sf <- (product (pid ?pid))
+  =>
+  (ws-create-ProductInfo ?pid)
+)
+
 (defrule ws-update-unconfirmed-delivery
   "send update of an order, whenever the unconfirmed delivery information changes"
   ?sf <- (product-processed (order ?id))
