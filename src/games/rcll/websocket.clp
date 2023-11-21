@@ -40,7 +40,7 @@
 (defrule ws-update-order
   "send update of an order, whenever the order fact changes"
   ?sf <- (order (id ?id))
-  (gamestate (phase PRODUCTION))
+  (gamestate (phase PRODUCTION|POST_GAME))
   =>
   (ws-create-OrderInfo ?id)
 )
@@ -48,7 +48,7 @@
 (defrule ws-update-unconfirmed-delivery
   "send update of an order, whenever the unconfirmed delivery information changes"
   ?sf <- (product-processed (order ?id))
-  (gamestate (phase PRODUCTION))
+  (gamestate (phase PRODUCTION|POST_GAME))
   =>
   (ws-create-OrderInfo ?id)
 )
@@ -56,7 +56,7 @@
 (defrule ws-update-order-external
   "send an update when the fact ws-update-order-cmd is asserted by an external rule or function"
   ?cmd <- (ws-update-order-cmd ?id)
-  (gamestate (phase PRODUCTION))
+  (gamestate (phase PRODUCTION|POST_GAME))
   =>
   (retract ?cmd)
   (ws-create-OrderInfo-via-delivery ?id)
