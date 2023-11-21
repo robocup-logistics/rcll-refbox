@@ -4,7 +4,7 @@
 
 llsfrb:
   log:
-    level: info
+    level: debug
     general: refbox_$time.log
     clips: refbox-debug_$time.log
     game: game_$time.log
@@ -18,8 +18,8 @@ llsfrb:
     main: refbox
     debug: true
     # debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
-    debug-level: 2
-    unwatch-facts: [time, signal, gamestate, machine-lights]
+    debug-level: 3
+    unwatch-facts: [time, signal, machine-lights]
     unwatch-rules: [retract-time,
                     game-update-gametime-points, game-update-last-time,
                     net-send-beacon, net-send-GameState, net-send-OrderInfo,
