@@ -36,15 +36,22 @@
 	 then
 		(bind ?prepmsg (pb-field-value ?p "instruction_ds"))
 		(bind ?order-id (pb-field-value ?prepmsg "order_id"))
+		(bind ?product-id (pb-field-value ?prepmsg "product_id"))
 		(if (not (do-for-fact ((?order order)) (eq ?order:id ?order-id)
 			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
 			(modify ?meta (order-id ?order-id) (ds-gate ?order:delivery-gate))
+			
+			(do-for-fact ((?product product)) (and (eq ?product:pid ?product-id) (eq ?product:oid ?order-id))
+				(printout t "Prepared " ?mname " (order: " ?order-id "), (product: " ?product-id ")" crlf)
+				(modify ?meta (product-id ?product-id))
+			)
+
 			(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			))
 		 then
 			(if (eq (pb-field-value ?prepmsg "order_id") 0) then
 				(printout t "Prepared " ?mname " to consume product not belonging to any order (id 0)" crlf)
-				(modify ?meta (order-id ?order-id) (ds-gate 1))
+				(modify ?meta (order-id ?order-id) (product-id ?product-id) (ds-gate 1))
 				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			 else
 				(modify ?m (state BROKEN)
@@ -609,11 +616,12 @@
   "DS is prepared, start processing the delivered workpiece."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil))
-	(ds-meta (name ?n) (order-id ?order))
+	(ds-meta (name ?n) (order-id ?order) (product-id ?product))
 	(order (id ?order) (delivery-gate ?gate)
 	  (delivery-period $?dp&:(>= ?gt (nth$ 1 ?dp))))
+	(product (pid ?product) (oid ?order))
 	=>
-  (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
+  (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order " with product " ?product crlf)
 	(assert (send-machine-update))
 	(modify ?m (state PROCESSING) (proc-start ?gt) (wait-for-product-since ?gt)
 	  (task DELIVER) (mps-busy WAIT))
@@ -625,15 +633,16 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER)
 	               (mps-busy FALSE) (team ?team))
-	(ds-meta (name ?n) (order-id ?order))
+	(ds-meta (name ?n) (order-id ?order) (product-id ?product))
+	(product (pid ?product) (oid ?order) )
   =>
 	(bind ?p-id (gen-int-id))
 	(assert (product-processed (at-machine ?n) (mtype DS) (team ?team) (game-time ?gt)
-	                           (id ?p-id) (order ?order) (confirmed FALSE)))
+	                           (id ?p-id) (order ?order) (product ?product) (product-oid ?order) (confirmed FALSE)))
 	(if (neq ?order 0) then
 		(assert (referee-confirmation (process-id ?p-id) (state REQUIRED)))
 		(assert (attention-message (team ?team)
-		                           (text (str-cat "Please confirm delivery for order " ?order))))
+		                           (text (str-cat "Please confirm delivery for order " ?order " with product " ?product))))
 	)
 	(modify ?m (state PROCESSED) (task nil))
 	(assert (send-machine-update))
