@@ -34,8 +34,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __PROTOBUF_CLIPS_COMMUNICATOR_H_
-#define __PROTOBUF_CLIPS_COMMUNICATOR_H_
+#ifndef _PROTOBUF_CLIPS_COMMUNICATOR_H_
+#define _PROTOBUF_CLIPS_COMMUNICATOR_H_
 
 #include <core/threading/mutex.h>
 #include <protobuf_comm/server.h>
@@ -50,17 +50,17 @@ class ProtobufBroadcastPeer;
 } // namespace protobuf_comm
 
 namespace protobuf_clips {
-#if 0 /* just to make Emacs auto-indent happy */
-}
-#endif
 
 class ClipsProtobufCommunicator
 {
 public:
-	ClipsProtobufCommunicator(CLIPS::Environment *env, fawkes::Mutex &env_mutex);
+	ClipsProtobufCommunicator(CLIPS::Environment *env,
+	                          fawkes::Mutex      &env_mutex,
+	                          llsfrb::Logger     *logger = NULL);
 	ClipsProtobufCommunicator(CLIPS::Environment       *env,
 	                          fawkes::Mutex            &env_mutex,
-	                          std::vector<std::string> &proto_path);
+	                          std::vector<std::string> &proto_path,
+	                          llsfrb::Logger           *logger = NULL);
 	~ClipsProtobufCommunicator();
 
 	void enable_server(int port);
@@ -113,7 +113,7 @@ public:
 	/** Signal invoked for a message that has been sent via broadcast.
    * @return signal
    */
-	boost::signals2::signal<void(long int, std::shared_ptr<google::protobuf::Message>)> &
+	boost::signals2::signal<void(long, std::shared_ptr<google::protobuf::Message>)> &
 	signal_peer_sent()
 	{
 		return sig_peer_sent_;
@@ -122,20 +122,21 @@ public:
 private:
 	void setup_clips();
 
-	bool          clips_pb_register_type(std::string full_name);
+	CLIPS::Value  clips_pb_register_type(std::string full_name);
 	CLIPS::Values clips_pb_field_names(void *msgptr);
-	bool          clips_pb_has_field(void *msgptr, std::string field_name);
+	CLIPS::Value  clips_pb_has_field(void *msgptr, std::string field_name);
 	CLIPS::Value  clips_pb_field_value(void *msgptr, std::string field_name);
 	CLIPS::Value  clips_pb_field_type(void *msgptr, std::string field_name);
 	CLIPS::Value  clips_pb_field_label(void *msgptr, std::string field_name);
 	CLIPS::Values clips_pb_field_list(void *msgptr, std::string field_name);
-	bool          clips_pb_field_is_list(void *msgptr, std::string field_name);
+	CLIPS::Value  clips_pb_field_is_list(void *msgptr, std::string field_name);
 	CLIPS::Value  clips_pb_create(std::string full_name);
 	CLIPS::Value  clips_pb_ref(void *msgptr);
 	void          clips_pb_destroy(void *msgptr);
 	void          clips_pb_set_field(void *msgptr, std::string field_name, CLIPS::Value value);
 	void          clips_pb_add_list(void *msgptr, std::string field_name, CLIPS::Value value);
 	void          clips_pb_send(long int client_id, void *msgptr);
+	std::string   clips_pb_tostring(void *msgptr);
 	long int      clips_pb_client_connect(std::string host, int port);
 	void          clips_pb_disconnect(long int client_id);
 	void          clips_pb_broadcast(long int peer_id, void *msgptr);
@@ -154,8 +155,6 @@ private:
 	                                           std::string cipher     = "");
 	void     clips_pb_peer_destroy(long int peer_id);
 	void     clips_pb_peer_setup_crypto(long int peer_id, std::string crypto_key, std::string cipher);
-
-	CLIPS::Value clips_pb_connect(std::string host, int port);
 
 	typedef enum { CT_SERVER, CT_CLIENT, CT_PEER } ClientType;
 	void clips_assert_message(std::pair<std::string, unsigned short>     &endpoint,
@@ -200,9 +199,13 @@ private:
 	                                uint16_t    msg_type,
 	                                std::string msg);
 
+	static std::string to_string(const CLIPS::Value &v);
+
 private:
 	CLIPS::Environment *clips_;
 	fawkes::Mutex      &clips_mutex_;
+
+	llsfrb::Logger *logger_;
 
 	protobuf_comm::MessageRegister      *message_register_;
 	protobuf_comm::ProtobufStreamServer *server_;
@@ -217,7 +220,7 @@ private:
 	  sig_peer_sent_;
 
 	fawkes::Mutex map_mutex_;
-	long int      next_client_id_ = 0;
+	long int      next_client_id_;
 
 	std::map<long int, protobuf_comm::ProtobufStreamServer::ClientID>         server_clients_;
 	typedef std::map<protobuf_comm::ProtobufStreamServer::ClientID, long int> RevServerClientMap;
@@ -226,8 +229,6 @@ private:
 	std::map<long int, protobuf_comm::ProtobufBroadcastPeer *>                peers_;
 
 	std::map<long int, std::pair<std::string, unsigned short>> client_endpoints_;
-
-	std::map<long int, CLIPS::Fact::pointer> msg_facts_;
 
 	std::list<std::string> functions_;
 	CLIPS::Fact::pointer   avail_fact_;

@@ -35,23 +35,26 @@ ifeq ($(HAVE_NCURSES),1)
   LDFLAGS_NCURSES = $(shell $(PKGCONFIG) --libs '$(REQ_NCURSES_LIBS)') -lncurses++w
 endif
 
-LIBS_llsf_refbox_shell = m stdc++ llsfrbcore llsfrbconfig llsf_protobuf_comm \
+LIBS_llsf_refbox_shell = m stdc++ llsfrbcore llsfrbconfig \
 			 llsf_msgs llsf_log_msgs
 OBJS_llsf_refbox_shell = main.o shell.o machine.o robot.o order.o menus.o colors.o
 
-ifeq ($(HAVE_PROTOBUF)$(HAVE_BOOST_LIBS)$(HAVE_NCURSES),111)
+ifeq ($(HAVE_PROTOBUF)$(HAVE_PROTOBUF_COMM)$(HAVE_BOOST_LIBS)$(HAVE_NCURSES),111)
   OBJS_all =	$(OBJS_llsf_refbox_shell)
   BINS_all =	$(BINDIR)/llsf-refbox-shell
 
-  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_NCURSES) \
+  CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_PROTOBUF_COMM) $(CFLAGS_NCURSES) \
 	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS)) \
 	     -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG
-  LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_NCURSES) \
+  LDFLAGS += $(LDFLAGS_PROTOBUF) $(CFLAGS_PROTOVUF_COMM) $(LDFLAGS_NCURSES) \
 	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   #MANPAGES_all =  $(MANDIR)/man1/refbox-llsf.1
 else
   ifneq ($(HAVE_PROTOBUF),1)
     WARN_TARGETS += warning_protobuf
+  endif
+  ifneq ($(HAVE_PROTOBUF_COMM),1)
+    WARN_TARGETS += warning_protobuf_comm
   endif
   ifneq ($(HAVE_BOOST_LIBS),1)
     WARN_TARGETS_BOOST = $(foreach l,$(REQ_BOOST_LIBS),$(if $(call boost-have-lib,$l),, warning_boost_$l))
