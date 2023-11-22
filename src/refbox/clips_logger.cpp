@@ -89,7 +89,7 @@ CLIPSLogger::~CLIPSLogger()
 void
 CLIPSLogger::log(const char *logical_name, const char *str)
 {
-	if (strcmp(str, "\n") == 0) {
+	if (strcmp(str, "\n") == 0 || strcmp(str, ".\n") == 0) {
 		if (strcmp(logical_name, "debug") == 0) {
 			logger_->log_debug(component_ ? component_ : "CLIPS", "%s", buffer_.c_str());
 		} else if (strcmp(logical_name, WTRACE) == 0) {
