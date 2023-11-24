@@ -908,18 +908,31 @@
   (return ?msg)
 )
 
+(deffunction net-create-Product (?product-fact)
+  (bind ?p (pb-create "llsf_msgs.ProductInfo"))
+
+  (pb-set-field ?p "pid" (fact-slot-value ?product-fact pid))
+  (pb-set-field ?p "oid" (fact-slot-value ?product-fact oid))
+  (pb-set-field ?p "complexity" (fact-slot-value ?product-fact complexity))
+  (pb-set-field ?p "base_color" (fact-slot-value ?product-fact base-color))
+  (foreach ?rc (fact-slot-value ?product-fact ring-colors)
+    (pb-add-list ?p "ring_colors" ?rc)
+  )
+  (pb-set-field ?p "cap_color" (fact-slot-value ?product-fact cap-color))
+
+  (return ?p)
+)
+
 (deffunction net-create-Order (?order-fact)
   (bind ?o (pb-create "llsf_msgs.Order"))
 
   (pb-set-field ?o "id" (fact-slot-value ?order-fact id))
 
-  ;product
-  (pb-set-field ?o "complexity" (fact-slot-value ?order-fact complexity))
-  (pb-set-field ?o "base_color" (fact-slot-value ?order-fact base-color))
-  (foreach ?rc (fact-slot-value ?order-fact ring-colors)
-    (pb-add-list ?o "ring_colors" ?rc)
+  (do-for-all-facts
+    ((?product product)) (eq (fact-slot-value ?order-fact id) ?product:oid)
+    (bind ?op (net-create-Product ?product))
+    (pb-add-list ?o "products" ?op)
   )
-  (pb-set-field ?o "cap_color" (fact-slot-value ?order-fact cap-color))
 
 
   (pb-set-field ?o "competitive" (fact-slot-value ?order-fact competitive))
@@ -945,6 +958,7 @@
   )
   (return ?o)
 )
+
 
 (deffunction net-create-OrderInfo ()
   (bind ?oi (pb-create "llsf_msgs.OrderInfo"))
