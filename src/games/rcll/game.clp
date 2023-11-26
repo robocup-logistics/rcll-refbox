@@ -44,25 +44,23 @@
   )
 
 =>
+  ; ensure every order has a product
+  (do-for-all-facts ((?order order) (?product product)) (eq ?order:id ?product:pid)
+      (modify ?product (oid ?order:id))
+  )
+  
   (bind ?order-ids (create$))
   (do-for-all-facts ((?o order)) TRUE
     (bind ?order-ids (append$ ?order-ids ?o:id))
   )  ; Find all 'order' facts and create a list with order ids
+
   (bind ?random-index (random 0 (length$ ?order-ids)))  ; Generate a random index
   (bind ?randOid (nth$ ?random-index ?order-ids)) ; Get the 'id' from the random 'order' fact
   (modify ?product-oid (oid ?randOid)) ; Assign the random 'id' to 'oid' in the product fact
-  ;  (bind ?foo (eq ?oid ?product-oid  ))
-  ;  (printout t "oid " ?oid "poid " ?product-oid)
-  ;  (printout t "isOidId: " ?foo crlf)
+ 
 )
 
 (deffunction game-randomize-orders ()
-
-  ;(assign-order-id-product-oid)
-; (delayed-do-for-all-facts ((?product product)) TRUE
-;   (printout t "first oid " ?product:oid crlf)
-    
-;   )
 
   (bind ?ring-colors (create$))
   (do-for-all-facts ((?rs ring-spec)) TRUE
@@ -502,6 +500,10 @@
         ?product:complexity " (" ?product:base-color "|" (implode$ ?product:ring-colors)
 	      "|" ?product:cap-color crlf))
   )
+   (do-for-all-facts ((?product product)) TRUE
+    (printout t "Product pid: " ?product:pid " Oid: "
+      ?product:oid crlf))
+  
 
   ; Print required additional bases
   (do-for-all-facts ((?ring ring-spec)) TRUE
