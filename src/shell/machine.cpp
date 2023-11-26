@@ -327,6 +327,9 @@ LLSFRefBoxShellMachine::refresh()
 			addstr(0,
 			       26,
 			       (boost::str(boost::format("%u") % minfo_->instruction_ds().order_id())).c_str());
+			addstr(0,
+			       26,
+			       (boost::str(boost::format("%u") % minfo_->instruction_ds().product_id())).c_str());	   
 		} else {
 			attron(' ' | COLOR_PAIR(COLOR_BLACK_ON_BACK));
 			addstr(0, 26, "  ");

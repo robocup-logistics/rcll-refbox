@@ -56,6 +56,7 @@ std::string            machine_type_;
 llsf_msgs::MachineSide bs_side_;
 llsf_msgs::BaseColor   bs_color_;
 int                    ds_order_id_;
+int                    ds_product_id_;
 llsf_msgs::SSOp        ss_op_;
 unsigned int           ss_shelf_;
 unsigned int           ss_slot_;
@@ -178,6 +179,7 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
 			} else if (machine_type_ == "DS") {
 				llsf_msgs::PrepareInstructionDS *prep_ds = prep.mutable_instruction_ds();
 				prep_ds->set_order_id(ds_order_id_);
+				prep_ds->set_product_id(ds_product_id_);
 			} else if (machine_type_ == "SS") {
 				llsf_msgs::PrepareInstructionSS *prep_ss = prep.mutable_instruction_ss();
 				printf("prep message built with %d, %d %d\n", ss_op_, ss_shelf_, ss_slot_);
@@ -203,7 +205,7 @@ usage(const char *progname)
 	       "\n"
 	       "instructions are specific for the machine type:\n"
 	       "BS:  (INPUT|OUTPUT) (BASE_RED|BASE_BLACK|BASE_SILVER)\n"
-	       "DS:  <order_id>\n"
+	       "DS:  <order_id> <product_id>\n"
 	       "SS:  (RETRIEVE|STORE) <shelf-num> <slot-num>\n"
 	       "RS:  (RING_BLUE|RING_GREEN|RING_ORANGE|RING_YELLOW)\n"
 	       "CS:  (RETRIEVE_CAP|MOUNT_CAP)\n",
@@ -239,12 +241,13 @@ main(int argc, char **argv)
 			exit(-2);
 		}
 	} else if (machine_type_ == "DS") {
-		if (argp.num_items() != 3) {
+		if (argp.num_items() != 4) {
 			printf("Wrong number of arguments. Expected 3, got %zu\n", argp.num_items());
 			usage(argv[0]);
 			exit(-1);
 		}
 		ds_order_id_ = argp.parse_item_int(2);
+		ds_product_id_ = argp.parse_item_int(3);
 	} else if (machine_type_ == "SS") {
 		if (argp.num_items() != 5) {
 			printf("Wrong number of arguments. Expected 5, got %zu\n", argp.num_items());
