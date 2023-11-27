@@ -45,12 +45,12 @@
 
 =>
   ; ensure every order has a product
-  (do-for-all-facts ((?order order) (?product product)) (eq ?order:id ?product:pid)
+  (do-for-all-facts ((?order order) (?product product)) (and (eq ?order:id ?product:pid) (neq ?order:id 11))
       (modify ?product (oid ?order:id))
   )
   
   (bind ?order-ids (create$))
-  (do-for-all-facts ((?o order)) TRUE
+  (do-for-all-facts ((?o order)) (neq ?o:id 11)
     (bind ?order-ids (append$ ?order-ids ?o:id))
   )  ; Find all 'order' facts and create a list with order ids
 
