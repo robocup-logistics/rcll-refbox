@@ -528,16 +528,18 @@
   ?prodf <- (product (pid ?product-id)
                      (oid ?product-oid)
                      (complexity ?complexity) 
-                     (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)) 
+                     (base-color ?base-color) (ring-colors $?ring-colors) (cap-color ?cap-color)
+                     (product-delivered FALSE))
   (test (eq ?id ?product-oid))
 	=>
   (modify ?pf (scored TRUE))
+  (modify ?prodf (product-delivered TRUE))
 	(bind ?q-del-idx (order-q-del-index ?team))
   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
 
   (modify ?of (quantity-delivered ?q-del-new))
 	; (bind ?points 0)
-	(if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
+	; (if (< (nth$ ?q-del-idx ?q-del) ?q-req) then
     ; Delivery points
     (switch ?complexity
       (case C0 then (bind ?*PRODUCTION-POINTS-DELIVER-SUM* (+ ?*PRODUCTION-POINTS-DELIVER-SUM* ?*PRODUCTION-POINTS-DELIVER-C0*)))
@@ -547,62 +549,59 @@
     )
     ; if not all products of an order scored yet, stack up points and set scored to true for the specific product
     ; ?*PRODUCTION-POINTS-DELIVER-SUM*) -> using the global var for accumulating product points in order
-    (if (not (do-for-all-facts ((?product product) (?product-processed product-processed)) 
-              (and (eq ?product:oid ?id)
-                   (eq ?product-processed:team ?team) 
-                   (eq ?product-processed:product ?product:pid) 
-                   (eq ?product-processed:order ?id) 
-                   (eq ?product-processed:delivery-date ?gate) 
-                   (eq ?product-processed:mtype DS) 
-                   (eq ?product-processed:scored FALSE) 
-                   (eq ?product-processed:confirmed TRUE))))
+    (if (not (do-for-all-facts ((?product product))
+                (and (eq ?product:oid ?id)
+                     (eq ?product:product-delivered FALSE)) 
+        (printout t "Missing product: " ?product:pid ", complexity: " ?product:complexity " for order: " ?product:oid " since product-delivered: " ?product:product-delivered crlf) ; comment missing products to fulfill order
+                     TRUE))
       then
+
       (assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
-                    (points ?*PRODUCTION-POINTS-DELIVER-SUM*) (order ?id) (product-step ?p-id) (reason "Delivered item for order")))
+                    (points ?*PRODUCTION-POINTS-DELIVER-SUM*) (order ?id) (product-step ?p-id) (reason "Delivered all items for order")))
       
       (bind ?points ?*PRODUCTION-POINTS-DELIVER-SUM*)
       (bind ?*PRODUCTION-POINTS-DELIVER-SUM* 0)
 		
-    (bind ?delivery-overtime (- ?delivery-time (nth$ 2 ?dp)))
-		(bind ?overtime-percentile 0.0)
-		(bind ?delivery-length (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
-		(while  (and (< ?overtime-percentile 1.0)
-		             (> ?delivery-overtime (* ?overtime-percentile ?delivery-length))
-		             (> ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-STEPS* 0)
-		        )
-			(bind ?overtime-percentile (+ ?overtime-percentile
-			      (/ 1 ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-STEPS*)))
-		)
-		(if (> ?overtime-percentile 0.0)
-		 then
-			(assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
-			  (points (- 0 (integer (* ?overtime-percentile
-			                  (* ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-DEDUCTION-REL* ?points)))))
-			  (product-step ?p-id) (reason (str-cat "Late delivery of order (>" ?overtime-percentile "% )"))))
-		)
-		(if ?competitive
-		 then
-			(if (> (nth$ (order-q-del-other-index ?team) ?q-del) (nth$ ?q-del-idx ?q-del))
-			 then
-				; the other team delivered first
-				(bind ?deduction (min ?points ?*PRODUCTION-POINTS-COMPETITIVE-SECOND-DEDUCTION*))
-				(assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
-				                (points (* -1 ?deduction)) (product-step ?p-id)
-				                (reason (str-cat "Second delivery for competitive order " ?id))))
-			 else
-				; this team delivered first
-				(assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
-				                (points ?*PRODUCTION-POINTS-COMPETITIVE-FIRST-BONUS*)
-				                (product-step ?p-id)
-				                (reason (str-cat "First delivery for competitive order " ?id))))
-			)
-		)
+      (bind ?delivery-overtime (- ?delivery-time (nth$ 2 ?dp)))
+      (bind ?overtime-percentile 0.0)
+      (bind ?delivery-length (- (nth$ 2 ?dp) (nth$ 1 ?dp)))
+      (while  (and (< ?overtime-percentile 1.0)
+                  (> ?delivery-overtime (* ?overtime-percentile ?delivery-length))
+                  (> ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-STEPS* 0)
+              )
+        (bind ?overtime-percentile (+ ?overtime-percentile
+              (/ 1 ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-STEPS*)))
+      )
+      (if (> ?overtime-percentile 0.0)
+      then
+        (assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
+          (points (- 0 (integer (* ?overtime-percentile
+                          (* ?*PRODUCTION-POINTS-DELIVER-LATE-POINTS-DEDUCTION-REL* ?points)))))
+          (product-step ?p-id) (reason (str-cat "Late delivery of order (>" ?overtime-percentile "% )"))))
+      )
+      (if ?competitive
+      then
+        (if (> (nth$ (order-q-del-other-index ?team) ?q-del) (nth$ ?q-del-idx ?q-del))
+        then
+          ; the other team delivered first
+          (bind ?deduction (min ?points ?*PRODUCTION-POINTS-COMPETITIVE-SECOND-DEDUCTION*))
+          (assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
+                          (points (* -1 ?deduction)) (product-step ?p-id)
+                          (reason (str-cat "Second delivery for competitive order " ?id))))
+        else
+          ; this team delivered first
+          (assert (points (game-time ?delivery-time) (order ?id) (team ?team) (phase PRODUCTION)
+                          (points ?*PRODUCTION-POINTS-COMPETITIVE-FIRST-BONUS*)
+                          (product-step ?p-id)
+                          (reason (str-cat "First delivery for competitive order " ?id))))
+        )
+      )
 
     else
     (assert (points (game-time ?delivery-time) (team ?team) (phase PRODUCTION)
                     (points 0) (product-step ?p-id) (reason "Delivered item for order but order not complete yet")))
     )
-  )
+  ;)
 )
 
 (defrule order-delivered-wrong-delivgate ; TODO adapt to changed layout (product)
@@ -637,28 +636,28 @@
 																	 " (too soon, before time window)"))))
 )
 
-(defrule order-delivered-wrong-too-many ; TODO adapt to changed layout (product) 
-  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-  ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
-                            (id ?p-id) (order ?o-id) (workpiece ?wp-id)
-                            (scored FALSE) (confirmed TRUE))
-  (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
-  ; the actual order we are delivering
-  ?of <- (order (id ?o-id) (active TRUE) (quantity-requested ?q-req)
-								(quantity-delivered $?q-del&:(>= (order-q-del-team ?q-del ?team) ?q-req)))
-  =>
-  (modify ?pf (scored TRUE))
-	(printout warn "Delivered item for order " ?o-id " (too many)" crlf)
+; (defrule order-delivered-wrong-too-many ; TODO adapt to changed layout (product) 
+;   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+;   ?pf <- (product-processed (game-time ?game-time) (team ?team) (mtype DS)
+;                             (id ?p-id) (order ?o-id) (workpiece ?wp-id)
+;                             (scored FALSE) (confirmed TRUE))
+;   (workpiece (id ?wp-id) (order ?o-id) (latest-data TRUE))
+;   ; the actual order we are delivering
+;   ?of <- (order (id ?o-id) (active TRUE) (quantity-requested ?q-req)
+; 								(quantity-delivered $?q-del&:(>= (order-q-del-team ?q-del ?team) ?q-req)))
+;   =>
+;   (modify ?pf (scored TRUE))
+; 	(printout warn "Delivered item for order " ?o-id " (too many)" crlf)
 
-	(bind ?q-del-idx (order-q-del-index ?team))
-  (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
-  (modify ?of (quantity-delivered ?q-del-new))
+; 	(bind ?q-del-idx (order-q-del-index ?team))
+;   (bind ?q-del-new (replace$ ?q-del ?q-del-idx ?q-del-idx (+ (nth$ ?q-del-idx ?q-del) 1)))
+;   (modify ?of (quantity-delivered ?q-del-new))
 
-	(assert (points (game-time ?game-time) (order ?o-id) (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
-									(team ?team) (phase PRODUCTION) (product-step ?p-id)
-									(reason (str-cat "Delivered item for order " ?o-id
-																	 " (too many)"))))
-)
+; 	(assert (points (game-time ?game-time) (order ?o-id) (points ?*PRODUCTION-POINTS-DELIVERY-WRONG*)
+; 									(team ?team) (phase PRODUCTION) (product-step ?p-id)
+; 									(reason (str-cat "Delivered item for order " ?o-id
+; 																	 " (too many)"))))
+; )
 
 (defrule order-print-points
   (points (game-time ?gt) (points ?points) (team ?team) (phase ?phase) (reason ?reason))

@@ -277,6 +277,8 @@
   (multislot ring-colors (type SYMBOL) (cardinality 0 3)
 	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
+
+  (slot product-delivered (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
 
@@ -619,5 +621,5 @@
   (product (pid  19))
   (product (pid  20))
   (product (pid  21))
-  (product (pid  22) (complexity C0))
+  (product (pid  22))
 )

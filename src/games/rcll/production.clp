@@ -37,14 +37,11 @@
 		(bind ?prepmsg (pb-field-value ?p "instruction_ds"))
 		(bind ?order-id (pb-field-value ?prepmsg "order_id"))
 		(bind ?product-id (pb-field-value ?prepmsg "product_id"))
-		(if (not (do-for-fact ((?order order)) (eq ?order:id ?order-id)
-			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
-			(modify ?meta (order-id ?order-id) (ds-gate ?order:delivery-gate))
-			
-			(do-for-fact ((?product product)) (and (eq ?product:pid ?product-id) (eq ?product:oid ?order-id))
-				(printout t "Prepared " ?mname " (order: " ?order-id "), (product: " ?product-id ")" crlf)
-				(modify ?meta (product-id ?product-id))
-			)
+		(if (not (do-for-fact ((?order order) (?product product)) 
+					(and (eq ?product:pid ?product-id) (eq ?product:oid ?order-id) (eq ?order:id ?order-id))
+
+			(printout t "Prepared " ?mname " (order: " ?order-id "), (product: " ?product-id ")" crlf)
+			(modify ?meta (order-id ?order-id) (product-id ?product-id) (ds-gate ?order:delivery-gate))
 
 			(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			))
