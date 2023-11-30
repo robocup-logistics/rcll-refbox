@@ -24,7 +24,7 @@ llsfrb:
     # store game report under a name for later reference
     store-to-report: ""
 
-    exploration-time: 180
+    exploration-time: 0
 
     # the size of the field (7x8 default) and whether it should be mirrored
     field:
