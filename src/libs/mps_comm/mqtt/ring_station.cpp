@@ -1,9 +1,9 @@
 /***************************************************************************
- *  ring_station.cpp - OPC-UA communication with the RS
+ *  ring_station.cpp - MQTT communication with the RS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -29,10 +29,10 @@ namespace llsfrb {
 namespace mps_comm {
 
 MqttRingStation::MqttRingStation(const std::string &name,
-                                   const std::string &ip,
-                                   unsigned short     port,
-                                   const std::string &log_path,
-                                   ConnectionMode     mode)
+                                 const std::string &ip,
+                                 unsigned short     port,
+                                 const std::string &log_path,
+                                 ConnectionMode     mode)
 : Machine(name), MqttMachine(name, Station::STATION_RING, ip, port, log_path, mode)
 {
 }
@@ -47,7 +47,7 @@ MqttRingStation::mount_ring(unsigned int feeder, llsf_msgs::RingColor color)
 void
 MqttRingStation::register_slide_callback(std::function<void(unsigned int)> callback)
 {
- 	mqtt_client_->register_slide_callback(callback);	
+	mqtt_client_->register_slide_callback(callback);
 }
 
 } // namespace mps_comm

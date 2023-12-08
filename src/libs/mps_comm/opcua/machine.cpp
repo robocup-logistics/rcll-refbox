@@ -22,8 +22,8 @@
 #include "machine.h"
 
 #include "../exceptions.h"
-#include "../time_utils.h"
 #include "../mps_io_mapping.h"
+#include "../time_utils.h"
 
 #if HAVE_SYSTEM_SPDLOG
 #	include <spdlog/sinks/basic_file_sink.h>

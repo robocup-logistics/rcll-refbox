@@ -1,9 +1,9 @@
 /***************************************************************************
- *  delivery_station.h - OPC-UA communication with the DS
+ *  delivery_station.h - MQTT communication with the DS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -32,10 +32,10 @@ class MqttDeliveryStation : public virtual MqttMachine, public virtual DeliveryS
 {
 public:
 	MqttDeliveryStation(const std::string &name,
-	                     const std::string &ip,
-	                     unsigned short     port,
-	                     const std::string &log_path = "",
-	                     ConnectionMode     mode     = PLC);
+	                    const std::string &ip,
+	                    unsigned short     port,
+	                    const std::string &log_path = "",
+	                    ConnectionMode     mode     = PLC);
 	virtual ~MqttDeliveryStation();
 
 	// Send command to deliver a product

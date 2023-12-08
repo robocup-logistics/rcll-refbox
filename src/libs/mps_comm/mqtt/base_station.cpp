@@ -1,9 +1,9 @@
 /***************************************************************************
- *  base_station.cpp - OPC-UA communication with the BS
+ *  base_station.cpp - MQTT communication with the BS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,8 @@
 
 #include "base_station.h"
 
-#include "core/exception.h"
 #include "../mps_io_mapping.h"
+#include "core/exception.h"
 
 #include <iostream>
 
@@ -30,10 +30,10 @@ namespace llsfrb {
 namespace mps_comm {
 
 MqttBaseStation::MqttBaseStation(const std::string &name,
-                                   const std::string &ip,
-                                   unsigned short     port,
-                                   const std::string &log_path,
-                                   ConnectionMode     mode)
+                                 const std::string &ip,
+                                 unsigned short     port,
+                                 const std::string &log_path,
+                                 ConnectionMode     mode)
 : Machine(name), MqttMachine(name, Station::STATION_BASE, ip, port, log_path, mode)
 {
 }
@@ -50,7 +50,7 @@ MqttBaseStation::get_base(llsf_msgs::BaseColor color)
 	case llsf_msgs::BASE_SILVER: color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_SILVER; break;
 	default: throw fawkes::Exception("Unexpected base color (%lu)", color);
 	}
-	
+
 	enqueue_instruction(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
 }
 

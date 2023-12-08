@@ -1,8 +1,9 @@
 /***************************************************************************
- *  stations.h - All OPC-UA MPS stations
+ *  stations.h - All MQTT MPS stations
  *
- *  Created: Sat 01 Feb 2020 12:41:11 CET 12:41
- *  Copyright  2020  Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify

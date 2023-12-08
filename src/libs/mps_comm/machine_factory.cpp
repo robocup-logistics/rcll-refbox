@@ -27,7 +27,7 @@
 #endif
 
 #ifdef HAVE_MQTT
-# include "mqtt/stations.h"
+#	include "mqtt/stations.h"
 #endif
 
 #include <core/exception.h>
@@ -100,21 +100,25 @@ MachineFactory::create_machine(const std::string &name,
 	}
 #endif
 #ifdef HAVE_MQTT
-	if (connection_mode == "mqtt")
-	{
+	if (connection_mode == "mqtt") {
 		std::unique_ptr<MqttMachine> mps;
 		if (type == "BS") {
 			std::cout << "Name: " << name << std::endl;
-			mps = std::make_unique<MqttBaseStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+			mps = std::make_unique<MqttBaseStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 			return std::move(mps);
 		} else if (type == "CS") {
-			return std::make_unique<MqttCapStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+			return std::make_unique<MqttCapStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 		} else if (type == "DS") {
-			return std::make_unique<MqttDeliveryStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+			return std::make_unique<MqttDeliveryStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 		} else if (type == "RS") {
-			return std::make_unique<MqttRingStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+			return std::make_unique<MqttRingStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 		} else if (type == "SS") {
-			return std::make_unique<MqttStorageStation>(name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+			return std::make_unique<MqttStorageStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 		} else {
 			throw fawkes::Exception(
 			  "Unexpected machine type '%s' for machine '%s' and connection mode '%s'",

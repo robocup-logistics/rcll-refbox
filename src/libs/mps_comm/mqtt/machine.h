@@ -1,9 +1,9 @@
 /***************************************************************************
- *  machine.h - OPC-UA communication with an MPS
+ *  machine.h - MQTT communication with an MPS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -23,32 +23,29 @@
 #pragma once
 
 #include "../machine.h"
-#include <thread>
+#include "../mps_io_mapping.h"
+#include "mqtt_action_listener.h"
+#include "mqtt_callback.h"
+#include "mqtt_client_wrapper.h"
+#include "mqtt_utils.h"
+
+#include <spdlog/spdlog.h>
+
+#include <boost/any.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <string>
+#include <thread>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <boost/any.hpp>
-#include <spdlog/spdlog.h>
-#include "../mps_io_mapping.h"
-#include "mqtt_utils.h"
-#include "mqtt_callback.h"
-#include "mqtt_action_listener.h"
-#include "mqtt_client_wrapper.h"
 
 namespace llsfrb {
 namespace mps_comm {
 
-
-
-
 class MachineFactory;
-
-
 
 class MqttMachine : public virtual Machine
 {
@@ -59,11 +56,11 @@ class MqttMachine : public virtual Machine
 
 public:
 	MqttMachine(const std::string &name,
-				 Station machine_type,
-	             const std::string &ip,
-	             unsigned short port,
-	             const std::string &log_path = "",
-	             ConnectionMode              = PLC);
+	            Station            machine_type,
+	            const std::string &ip,
+	            unsigned short     port,
+	            const std::string &log_path = "",
+	            ConnectionMode              = PLC);
 
 	~MqttMachine() override;
 
@@ -86,15 +83,15 @@ public:
 	// Identify: The PLC does not know, which machine it runs. This command tells it the type.
 	virtual void identify();
 
-
 	std::shared_ptr<spdlog::logger> logger;
-	std::atomic<bool> start_sending_instructions;
-	std::atomic<bool> connected_;
-	const std::string &client_id_;
-	const Station machine_type_;
-	std::mutex command_queue_mutex_;
-	std::mutex client_mutex_;
-	mqtt_client_wrapper* mqtt_client_;
+	std::atomic<bool>               start_sending_instructions;
+	std::atomic<bool>               connected_;
+	const std::string              &client_id_;
+	const Station                   machine_type_;
+	std::mutex                      command_queue_mutex_;
+	std::mutex                      client_mutex_;
+	mqtt_client_wrapper            *mqtt_client_;
+
 protected:
 	void enqueue_instruction(unsigned short command,
 	                         unsigned short payload1 = 0,
@@ -114,7 +111,7 @@ protected:
 
 	const ConnectionMode connection_mode_;
 
-	bool                    shutdown_;
+	bool shutdown_;
 
 	std::mutex              command_mutex_;
 	std::condition_variable queue_condition_;
@@ -125,8 +122,6 @@ protected:
 	bool simulation_;
 	bool subscribed_;
 	bool running;
-
-
 };
 
 } // namespace mps_comm

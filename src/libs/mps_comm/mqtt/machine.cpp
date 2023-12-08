@@ -1,9 +1,9 @@
 /***************************************************************************
- *  machine.cpp - OPC-UA communication with an MPS
+ *  machine.cpp - MQTT communication with an MPS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,6 @@
 #include <string>
 #include <thread>
 
-
 namespace llsfrb {
 #if 0
 }
@@ -48,15 +47,14 @@ namespace mps_comm {
 }
 #endif
 using Instruction =
-	  std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
+  std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
 
-
-MqttMachine::MqttMachine(const std::string &name, 
-                           Station machine_type,
-                           const std::string &ip,
-                           unsigned short     port,
-                           const std::string &log_path,
-                           ConnectionMode     connection_mode)
+MqttMachine::MqttMachine(const std::string &name,
+                         Station            machine_type,
+                         const std::string &ip,
+                         unsigned short     port,
+                         const std::string &log_path,
+                         ConnectionMode     connection_mode)
 : connected_(false),
   client_id_(name),
   machine_type_(machine_type),
@@ -68,10 +66,12 @@ MqttMachine::MqttMachine(const std::string &name,
 {
 	initLogger(log_path);
 	std::cout << std::string("tcp://" + ip_ + ":" + std::to_string(port_)) << std::endl;
-	mqtt_client_ = new mqtt_client_wrapper(client_id_, logger, std::string("tcp://" + ip_ + ":" + std::to_string(port_)));
-	subscribed_ = false;
+	mqtt_client_               = new mqtt_client_wrapper(client_id_,
+                                         logger,
+                                         std::string("tcp://" + ip_ + ":" + std::to_string(port_)));
+	subscribed_                = false;
 	start_sending_instructions = false;
-	running = true;
+	running                    = true;
 
 	//worker_thread_ = std::thread(&MqttMachine::client_keep_alive, this);
 	dispatcher_thread_ = std::thread(&MqttMachine::dispatch_command_queue, this);
@@ -80,45 +80,39 @@ MqttMachine::MqttMachine(const std::string &name,
 void
 MqttMachine::dispatch_command_queue()
 {
-	while(running)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        if(!mqtt_client_->connected)
-        {
-            continue;
-        }
-        command_queue_mutex_.lock();
-        if(command_queue_.empty())
-        {
-            command_queue_mutex_.unlock();
+	while (running) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		if (!mqtt_client_->connected) {
+			continue;
+		}
+		command_queue_mutex_.lock();
+		if (command_queue_.empty()) {
+			command_queue_mutex_.unlock();
 			std::this_thread::sleep_for(std::chrono::milliseconds(180));
-            continue;
-        }
-        if(mqtt_client_->dispatch_command(command_queue_.front()))
-        {
-            command_queue_.pop();
-        }
-        command_queue_mutex_.unlock();
-    }
+			continue;
+		}
+		if (mqtt_client_->dispatch_command(command_queue_.front())) {
+			command_queue_.pop();
+		}
+		command_queue_mutex_.unlock();
+	}
 }
 
-
-
-void MqttMachine::enqueue_instruction(unsigned short command,
-                                  unsigned short payload1,
-                                  unsigned short payload2,
-                                  int            timeout,
-                                  unsigned char  status,
-                                  unsigned char  error)
+void
+MqttMachine::enqueue_instruction(unsigned short command,
+                                 unsigned short payload1,
+                                 unsigned short payload2,
+                                 int            timeout,
+                                 unsigned char  status,
+                                 unsigned char  error)
 {
 	std::lock_guard<std::mutex> lock(command_queue_mutex_);
-    command_queue_.push(std::make_tuple(command, payload1, payload2, timeout, status, error));
+	command_queue_.push(std::make_tuple(command, payload1, payload2, timeout, status, error));
 	//logger->info("Enqueued a instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 }
 
-
-
-void MqttMachine::reset()
+void
+MqttMachine::reset()
 {
 	enqueue_instruction(Command::COMMAND_SET_TYPE, machine_type_ / 100);
 }
@@ -128,9 +122,10 @@ MqttMachine::~MqttMachine()
 	delete mqtt_client_;
 }
 
-void MqttMachine::set_light(llsf_msgs::LightColor color,
-                        llsf_msgs::LightState state,
-                        unsigned short        time)
+void
+MqttMachine::set_light(llsf_msgs::LightColor color,
+                       llsf_msgs::LightState state,
+                       unsigned short        time)
 {
 	LightColor m_color = LIGHT_COLOR_RESET;
 	switch (color) {
@@ -147,7 +142,8 @@ void MqttMachine::set_light(llsf_msgs::LightColor color,
 	enqueue_instruction(m_color, plc_state, time);
 }
 
-void MqttMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
+void
+MqttMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 {
 	enqueue_instruction(Command::COMMAND_MOVE_CONVEYOR + machine_type_,
 	                    sensor,
@@ -155,14 +151,16 @@ void MqttMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 	                    Timeout::TIMEOUT_BAND);
 }
 
-void MqttMachine::reset_light()
+void
+MqttMachine::reset_light()
 {
 	set_light(llsf_msgs::LightColor::RED, llsf_msgs::OFF);
 }
 
-void MqttMachine::initLogger(const std::string &log_path)
+void
+MqttMachine::initLogger(const std::string &log_path)
 {
-    if (log_path.empty()) {
+	if (log_path.empty()) {
 		// stdout redirected logging
 		logger = spdlog::stdout_logger_mt(name_);
 		logger->set_level(spdlog::level::info);
@@ -173,7 +171,6 @@ void MqttMachine::initLogger(const std::string &log_path)
 	}
 	logger->info("\n\n\nNew logging session started");
 }
-
 
 void
 MqttMachine::register_busy_callback(std::function<void(bool)> callback)
@@ -190,13 +187,12 @@ MqttMachine::register_ready_callback(std::function<void(bool)> callback)
 void
 MqttMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
-	mqtt_client_->register_barcode_callback(callback);	
+	mqtt_client_->register_barcode_callback(callback);
 }
 
 void
 MqttMachine::identify()
 {
-
 }
 
 } // namespace mps_comm

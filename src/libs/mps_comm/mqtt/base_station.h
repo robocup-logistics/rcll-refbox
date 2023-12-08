@@ -1,9 +1,9 @@
 /***************************************************************************
- *  base_station.h - OPC-UA communication with the BS
+ *  base_station.h - MQTT communication with the BS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -34,10 +34,10 @@ class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
 {
 public:
 	MqttBaseStation(const std::string &name,
-	                 const std::string &ip,
-	                 unsigned short     port,
-	                 const std::string &log_path = "",
-	                 ConnectionMode     mode     = PLC);
+	                const std::string &ip,
+	                unsigned short     port,
+	                const std::string &log_path = "",
+	                ConnectionMode     mode     = PLC);
 
 	void get_base(llsf_msgs::BaseColor slot) override;
 };

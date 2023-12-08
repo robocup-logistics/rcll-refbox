@@ -1,9 +1,9 @@
 /***************************************************************************
- *  cap_station.cpp - OPC-UA communication with the CS
+ *  cap_station.cpp - MQTT communication with the CS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -35,10 +35,10 @@ namespace mps_comm {
 #endif
 
 MqttCapStation::MqttCapStation(const std::string &name,
-                                 const std::string &ip,
-                                 unsigned short     port,
-                                 const std::string &log_path,
-                                 ConnectionMode     mode)
+                               const std::string &ip,
+                               unsigned short     port,
+                               const std::string &log_path,
+                               ConnectionMode     mode)
 : Machine(name), MqttMachine(name, Station::STATION_CAP, ip, port, log_path, mode)
 {
 }

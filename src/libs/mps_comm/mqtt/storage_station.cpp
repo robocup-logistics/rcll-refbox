@@ -1,9 +1,9 @@
 /***************************************************************************
- *  storage_station.cpp - OPC-UA communication with the SS
+ *  storage_station.cpp - MQTT communication with the SS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -35,10 +35,10 @@ namespace mps_comm {
 #endif
 
 MqttStorageStation::MqttStorageStation(const std::string &name,
-                                         const std::string &ip,
-                                         unsigned short     port,
-                                         const std::string &log_path,
-                                         ConnectionMode     mode)
+                                       const std::string &ip,
+                                       unsigned short     port,
+                                       const std::string &log_path,
+                                       ConnectionMode     mode)
 : Machine(name), MqttMachine(name, Station::STATION_STORAGE, ip, port, log_path, mode)
 {
 }
@@ -57,9 +57,9 @@ MqttStorageStation::store(unsigned int shelf, unsigned int slot)
 
 void
 MqttStorageStation::relocate(unsigned int shelf,
-                              unsigned int slot,
-                              unsigned int target_shelf,
-                              unsigned int target_slot)
+                             unsigned int slot,
+                             unsigned int target_shelf,
+                             unsigned int target_slot)
 {
 	enqueue_instruction(Operation::OPERATION_RELOCATE + machine_type_,
 	                    (shelf * 10) + slot,
