@@ -478,6 +478,36 @@ Data::log_push_robot_info(int number, std::string name)
 	}
 }
 
+/*
+ * @brief Gets a specific agent-task fact from CLIPS and pushes it to the send queue
+ *
+ */
+void
+Data::log_push_agent_task_info(int tid, int rid)
+{
+	MutexLocker lock(&env_mutex_);
+
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "agent-task")) {
+			try {
+				if (get_value<int64_t>(fact, "task-id") == tid
+				    && get_value<int64_t>(fact, "robot-id") == rid) {
+					rapidjson::Document d;
+					d.SetObject();
+					rapidjson::Document::AllocatorType &alloc = d.GetAllocator();
+					get_agent_task_info_fact(&d, alloc, fact);
+					//send it off
+					log_push(d);
+				}
+			} catch (Exception &e) {
+				logger_->log_error("Websocket", "can't access value(s) of fact of type robot");
+			}
+		}
+		fact = fact->next();
+	}
+}
+
 /**
  * @brief Gets the game-state fact from CLIPS and pushes it to the send queue
  *
@@ -1035,6 +1065,75 @@ Data::get_robot_info_fact(T                                  *o,
 		pose_array.PushBack(v, alloc);
 	}
 	(*o).AddMember("pose", pose_array, alloc);
+}
+
+/**
+ * @brief Gets data from an agent-task fact and packs into into a rapidjson object
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
+ */
+template <class T>
+void
+Data::get_agent_task_info_fact(T                                  *o,
+                               rapidjson::Document::AllocatorType &alloc,
+                               CLIPS::Fact::pointer                fact)
+{
+	//generic type information
+	rapidjson::Value json_string;
+	json_string.SetString("clips", alloc);
+	(*o).AddMember("level", json_string, alloc);
+	json_string.SetString("agent-task", alloc);
+	(*o).AddMember("type", json_string, alloc);
+	//value fields
+	json_string.SetString((get_value<std::string>(fact, "task-type")).c_str(), alloc);
+	(*o).AddMember("task_type", json_string, alloc);
+
+	rapidjson::Value task_params_array(rapidjson::kArrayType);
+	task_params_array.Reserve(get_values(fact, "task-parameters").size(), alloc);
+	for (const auto &e : get_values(fact, "task-parameters")) {
+		rapidjson::Value v;
+		v.SetString(e, alloc);
+		task_params_array.PushBack(v, alloc);
+	}
+	(*o).AddMember("task_parameters", task_params_array, alloc);
+
+	json_string.SetInt(get_value<int64_t>(fact, "task-id"));
+	(*o).AddMember("task_id", json_string, alloc);
+	json_string.SetInt(get_value<int64_t>(fact, "robot-id"));
+	(*o).AddMember("robot_id", json_string, alloc);
+	json_string.SetString((get_value<std::string>(fact, "team-color")).c_str(), alloc);
+	(*o).AddMember("team_color", json_string, alloc);
+	json_string.SetFloat(get_value<float>(fact, "start-time"));
+	(*o).AddMember("start_time", json_string, alloc);
+	json_string.SetFloat(get_value<float>(fact, "end-time"));
+	(*o).AddMember("end_time", json_string, alloc);
+	json_string.SetInt(get_value<int64_t>(fact, "order-id"));
+	(*o).AddMember("order_id", json_string, alloc);
+	json_string.SetBool(get_value<bool>(fact, "processed"));
+	(*o).AddMember("processed", json_string, alloc);
+	json_string.SetString((get_value<std::string>(fact, "workpiece-name")).c_str(), alloc);
+	(*o).AddMember("workpiece_name", json_string, alloc);
+	json_string.SetBool(get_value<bool>(fact, "unknown-action"));
+	(*o).AddMember("unknown_action", json_string, alloc);
+	json_string.SetBool(get_value<bool>(fact, "successful"));
+	(*o).AddMember("successful", json_string, alloc);
+	json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
+	(*o).AddMember("base_color", json_string, alloc);
+
+	rapidjson::Value ring_colors_array(rapidjson::kArrayType);
+	ring_colors_array.Reserve(get_values(fact, "ring-color").size(), alloc);
+	for (const auto &e : get_values(fact, "ring-color")) {
+		rapidjson::Value v;
+		v.SetString(e, alloc);
+		ring_colors_array.PushBack(v, alloc);
+	}
+	(*o).AddMember("ring_color", ring_colors_array, alloc);
+
+	json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
+	(*o).AddMember("cap_color", json_string, alloc);
 }
 
 /**
