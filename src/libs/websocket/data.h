@@ -55,7 +55,7 @@ public:
 	void                                             clients_send_all(rapidjson::Document &d);
 	void                                             log_push_attention_message(std::string text,
 	                                                                            std::string team,
-	                                                                            std::string time_to_display,
+	                                                                            int         time_to_display,
 	                                                                            float       game_time);
 	std::function<void(std::string)>                 clips_set_gamestate;
 	std::function<void(std::string)>                 clips_set_gamephase;
