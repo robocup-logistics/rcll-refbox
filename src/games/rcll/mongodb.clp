@@ -363,9 +363,9 @@
 		 then
 			(bind ?gs-doc (mongodb-fact-to-bson ?temp-fact))
 		 else
-			(bind ?gs-facts (find-fact ((?m machine)) (eq ?gsh:name ?m:name)))
+			(bind ?gs-facts (find-fact ((?m gamestate)) TRUE))
 			(if ?gs-facts then
-				(bind ?gs-doc (mongodb-fact-to-bson (nth$ 1 ?machine-facts)))
+				(bind ?gs-doc (mongodb-fact-to-bson (nth$ 1 ?gs-facts)))
 			)
 		)
 		(if ?gs-doc then
