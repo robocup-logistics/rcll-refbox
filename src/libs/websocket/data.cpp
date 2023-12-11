@@ -249,7 +249,7 @@ Data::clients_send_all(rapidjson::Document &d)
 void
 Data::log_push_attention_message(std::string text,
                                  std::string team,
-                                 std::string time_to_display,
+                                 int         time_to_display,
                                  float       game_time)
 {
 	rapidjson::Document d;
@@ -263,7 +263,7 @@ Data::log_push_attention_message(std::string text,
 	d.AddMember("text", json_string, alloc);
 	json_string.SetString((team).c_str(), alloc);
 	d.AddMember("team", json_string, alloc);
-	json_string.SetString((time_to_display).c_str(), alloc);
+	json_string.SetInt(time_to_display);
 	d.AddMember("time_to_display", json_string, alloc);
 	json_string.SetFloat(game_time);
 	d.AddMember("game_time", json_string, alloc);
@@ -732,11 +732,11 @@ Data::on_connect_info(std::string tmpl_name,
 
 /**
  * @brief Gets data of the saved known-teams on the refbox side to support user input
- * 
- * @tparam T 
- * @param o 
- * @param alloc 
- * @param fact 
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
  */
 template <class T>
 void
@@ -895,19 +895,19 @@ Data::get_order_info_fact(T                                  *o,
 	json_string.SetInt((get_value<int64_t>(fact, "activate-at")));
 	(*o).AddMember("activate_at", json_string, alloc);
 	rapidjson::Value delivery_array(rapidjson::kArrayType);
-	delivery_array.Reserve(get_values(fact, "delivery-period").size(), alloc);
-	for (const auto &e : get_values(fact, "delivery-period")) {
+	delivery_array.Reserve(fact->slot_value("delivery-period").size(), alloc);
+	for (auto value : fact->slot_value("delivery-period")) {
 		rapidjson::Value v;
-		v.SetString(e, alloc);
+		v.SetInt(value.as_integer());
 		delivery_array.PushBack(v, alloc);
 	}
 	(*o).AddMember("delivery_period", delivery_array, alloc);
 
 	rapidjson::Value quantity_array(rapidjson::kArrayType);
-	quantity_array.Reserve(get_values(fact, "quantity-delivered").size(), alloc);
-	for (const auto &e : get_values(fact, "quantity-delivered")) {
+	quantity_array.Reserve(fact->slot_value("quantity-delivered").size(), alloc);
+	for (auto value : fact->slot_value("quantity-delivered")) {
 		rapidjson::Value v;
-		v.SetString(e, alloc);
+		v.SetInt(value.as_integer());
 		quantity_array.PushBack(v, alloc);
 	}
 	(*o).AddMember("quantity_delivered", quantity_array, alloc);
@@ -1019,19 +1019,19 @@ Data::get_robot_info_fact(T                                  *o,
 	(*o).AddMember("maintenance_warning_sent", json_string, alloc);
 
 	rapidjson::Value last_seen_array(rapidjson::kArrayType);
-	last_seen_array.Reserve(get_values(fact, "last-seen").size(), alloc);
-	for (const auto &e : get_values(fact, "last-seen")) {
+	last_seen_array.Reserve(fact->slot_value("last-seen").size(), alloc);
+	for (auto value : fact->slot_value("last-seen")) {
 		rapidjson::Value v;
-		v.SetString(e, alloc);
+		v.SetFloat(value.as_float());
 		last_seen_array.PushBack(v, alloc);
 	}
 	(*o).AddMember("last_seen", last_seen_array, alloc);
 
 	rapidjson::Value pose_array(rapidjson::kArrayType);
-	pose_array.Reserve(get_values(fact, "pose").size(), alloc);
-	for (const auto &e : get_values(fact, "pose")) {
+	pose_array.Reserve(fact->slot_value("pose").size(), alloc);
+	for (auto value : fact->slot_value("pose")) {
 		rapidjson::Value v;
-		v.SetString(e, alloc);
+		v.SetFloat(value.as_float());
 		pose_array.PushBack(v, alloc);
 	}
 	(*o).AddMember("pose", pose_array, alloc);
@@ -1072,9 +1072,9 @@ Data::get_game_state_fact(T                                  *o,
 	(*o).AddMember("cyan", json_string, alloc);
 	json_string.SetString((get_values(fact, "teams")[1]).c_str(), alloc);
 	(*o).AddMember("magenta", json_string, alloc);
-	json_string.SetString((get_values(fact, "points")[0]).c_str(), alloc);
+	json_string.SetInt(fact->slot_value("points")[0].as_integer());
 	(*o).AddMember("points_cyan", json_string, alloc);
-	json_string.SetString((get_values(fact, "points")[1]).c_str(), alloc);
+	json_string.SetInt(fact->slot_value("points")[1].as_integer());
 	(*o).AddMember("points_magenta", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "field-height")));
 	(*o).AddMember("field_height", json_string, alloc);

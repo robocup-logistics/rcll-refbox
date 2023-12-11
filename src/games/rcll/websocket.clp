@@ -13,7 +13,7 @@
   (gamestate (game-time ?gt))
   =>
   (retract ?msg)
-  (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show) ?gt)
+  (ws-send-attention-message (str-cat ?text) (str-cat ?team) ?time-to-show ?gt)
 )
 
 (defrule ws-reset-machine-by-team
