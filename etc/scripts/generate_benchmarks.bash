@@ -50,7 +50,7 @@ trap cleanup $TRAP_SIGNALS
 
 for i in  $(seq 1 $NUM_BENCHMARKS)
 do
-	DOC_COUNT=$(mongo rcll --eval "db.game_report.count({\"report-name\": \"${NAME_PREFIX}_${i}\"})" --quiet)
+	DOC_COUNT=$(mongo rcll --eval "db.game_report.count({\"report_name\": \"${NAME_PREFIX}_${i}\"})" --quiet)
 
 	# make sure that the report name is fresh
 	if [ ${DOC_COUNT} -ne 0 ]; then
@@ -75,7 +75,7 @@ do
 			sleep 1
 			killall -15 llsf-refbox  &>/dev/null &
 			sleep 1
-			DOC_COUNT=$(mongo rcll --eval "db.game_report.count({\"report-name\": \"${NAME_PREFIX}_${i}\"})" --quiet)
+			DOC_COUNT=$(mongo rcll --eval "db.game_report.count({\"report_name\": \"${NAME_PREFIX}_${i}\"})" --quiet)
 		done
 		echo "Created report for ${NAME_PREFIX}_${i}"
 	fi
