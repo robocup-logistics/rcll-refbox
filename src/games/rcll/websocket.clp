@@ -69,6 +69,13 @@
   (ws-create-RobotInfo ?number ?name)
 )
 
+(defrule ws-update-agent-task
+  "send update of an agent task, whenever the agent task fact changes"
+  ?sf <- (agent-task (task-id ?tid) (robot-id ?rid))
+  =>
+  (ws-create-AgentTaskInfo ?tid ?rid)
+)
+
 (defrule ws-update-workpiece
   "send update of a workpiece, whenever the workpiece fact changes"
   ?sf <- (workpiece (id ?id) (latest-data TRUE))
