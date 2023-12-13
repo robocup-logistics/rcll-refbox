@@ -201,18 +201,25 @@
 
   )
 
- 
-
-  ; #! get smallest startrange , stack durarion ranges ?
-  
 
   ; reset orders, assign random times
   (delayed-do-for-all-facts ((?order order)) TRUE
+
+    (bind ?storingtime 0)
+    (do-for-all-facts ((?product product)) (eq ?product:oid ?order:id)
+      (bind ?storingtime (+ ?storingtime 60)) ; add 1 min for storing for each product in order
+    )
     (bind ?deliver-start (random (nth$ 1 ?order:start-range)
                                  (nth$ 2 ?order:start-range)))
+
+    (bind ?deliver-start (+ ?deliver-start ?storingtime))  ; add production time for storing               
+                              
     (bind ?deliver-end
       (+ ?deliver-start (random (nth$ 1 ?order:duration-range)
                                 (nth$ 2 ?order:duration-range))))
+                              
+    (bind ?deliver-end (+ ?deliver-end ?storingtime))   ; add delivery time for retrieving                 
+
     (bind ?activation-pre-time
           (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
     (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
@@ -238,9 +245,17 @@
       (printout t "Revising deliver time (" ?deliver-start "-" ?deliver-end ") to ("
                   (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) "-" ?*PRODUCTION-TIME* "), "
                   "time shift: " (- ?deliver-end ?*PRODUCTION-TIME*) crlf)
-      (bind ?deliver-start (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)))
+      (bind ?deliver-start (max (- ?deliver-start (- ?deliver-end ?*PRODUCTION-TIME*)) 0)) ; max for limiting shift because of additional storing time
       (bind ?deliver-end ?*PRODUCTION-TIME*)
     )
+
+    (do-for-all-facts ((?order order)) TRUE
+    (bind ?duration (- (nth$ 2 ?order:delivery-period) (nth$ 1 ?order:delivery-period)))
+    (printout t "Order " ?order:id ": from " (time-sec-format (nth$ 1 ?order:delivery-period))
+	      " to " (time-sec-format (nth$ 2 ?order:delivery-period))
+	      " (@" (time-sec-format ?order:activate-at) " ~" ?duration "s) "
+	      "D" ?order:delivery-gate crlf))
+
 
     (bind ?gate (random 1 3))
 

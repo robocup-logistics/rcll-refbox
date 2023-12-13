@@ -306,7 +306,7 @@
   ; element of delivery-period (end time)
   (multislot duration-range (type INTEGER) (cardinality 2 2) (default 60 180))
   ; Time window in which it must be delivered, set during initial randomization
-  (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 2700))
+  (multislot delivery-period (type INTEGER) (cardinality 2 2) (default 0 900))
   (slot delivery-gate (type INTEGER) (default 1))
   (slot active (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot activate-at (type INTEGER) (default 0))
