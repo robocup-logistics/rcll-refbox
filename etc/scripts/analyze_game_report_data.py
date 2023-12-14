@@ -118,11 +118,11 @@ def load_data(mongodb_uri,
         all_reports = collection.find({})
     else:
         if not reports:
-            all_reports = collection.find({}).sort('start-time', pymongo.DESCENDING).limit(1)
+            all_reports = collection.find({}).sort('start_time', pymongo.DESCENDING).limit(1)
         else:
             query= {"$or": []}
             for report in reports:
-                query["$or"].append({"report-name":report})
+                query["$or"].append({"report_name":report})
             all_reports = collection.find(query)
 
     games = []
@@ -133,38 +133,38 @@ def load_data(mongodb_uri,
         # get agent tasks
         cyan_agent_tasks = []
         magenta_agent_tasks = []
-        if "agent-task-history" in report:
-            for task in report["agent-task-history"]:
+        if "agent_task_history" in report:
+            for task in report["agent_task_history"]:
                 waypoint = ""
                 machine_id = ""
                 machine_point = ""
                 shelf_id = ""
-                for p in range(math.floor(len(task["task-parameters"])/2)):
-                    if task["task-parameters"][p*2] == "waypoint":
-                        waypoint = task["task-parameters"][p*2+1]
-                    elif task["task-parameters"][p*2] == "machine-id":
-                        machine_id = task["task-parameters"][p*2+1]
-                    elif task["task-parameters"][p*2] == "machine-point":
-                        machine_point = task["task-parameters"][p*2+1]
-                    elif task["task-parameters"][p*2] == "shelf-number":
-                        shelf_id = task["task-parameters"][p*2+1]
-                a_task = AgentTask(task["robot-id"],
-                                   task["start-time"],
-                                   task["end-time"],
-                                   task["task-type"],
+                for p in range(math.floor(len(task["task_parameters"])/2)):
+                    if task["task_parameters"][p*2] == "waypoint":
+                        waypoint = task["task_parameters"][p*2+1]
+                    elif task["task_parameters"][p*2] == "machine_id":
+                        machine_id = task["task_parameters"][p*2+1]
+                    elif task["task_parameters"][p*2] == "machine_point":
+                        machine_point = task["task_parameters"][p*2+1]
+                    elif task["task_parameters"][p*2] == "shelf_number":
+                        shelf_id = task["task_parameters"][p*2+1]
+                a_task = AgentTask(task["robot_id"],
+                                   task["start_time"],
+                                   task["end_time"],
+                                   task["task_type"],
                                    waypoint,
                                    machine_id,
                                    machine_point,
                                    shelf_id,
-                                   task["task-id"],
-                                   task["order-id"],
-                                   task["workpiece-name"],
-                                   task["unknown-action"],
+                                   task["task_id"],
+                                   task["order_id"],
+                                   task["workpiece_name"],
+                                   task["unknown_action"],
                                    task["successful"],
-                                   task["base-color"],
-                                   task["ring-color"],
-                                   task["cap-color"])
-                if task["team-color"] == "CYAN":
+                                   task["base_color"],
+                                   task["ring_color"],
+                                   task["cap_color"])
+                if task["team_color"] == "CYAN":
                     cyan_agent_tasks.append(a_task)
                 else:
                     magenta_agent_tasks.append(a_task)
@@ -172,15 +172,15 @@ def load_data(mongodb_uri,
         # get stamped poses:
         cyan_stamped_poses = []
         magenta_stamped_poses = []
-        if "robot-pose-history" in report:
-            for pose in report["robot-pose-history"]:
-                s_pose = StampedPose(pose["task-id"],
-                                     pose["robot-id"],
+        if "robot_pose_history" in report:
+            for pose in report["robot_pose_history"]:
+                s_pose = StampedPose(pose["task_id"],
+                                     pose["robot_id"],
                                      pose["x"],
                                      pose["y"],
                                      pose["ori"],
                                      pose["time"])
-                if pose["team-color"] == "CYAN":
+                if pose["team_color"] == "CYAN":
                     cyan_stamped_poses.append(s_pose)
                 else:
                     magenta_stamped_poses.append(s_pose)
@@ -188,21 +188,21 @@ def load_data(mongodb_uri,
         # get workpiece facts:
         cyan_workpiece_facts = []
         magenta_workpiece_facts = []
-        if "workpiece-history" in report:
-            for wp in report["workpiece-history"]:
+        if "workpiece_history" in report:
+            for wp in report["workpiece_history"]:
                 wp_fact = WorkpieceFact(wp["id"],
                                         wp["name"],
                                         wp["order"],
-                                        wp["start-time"],
-                                        wp["end-time"],
-                                        wp["at-machine"],
-                                        wp["at-side"],
+                                        wp["start_time"],
+                                        wp["end_time"],
+                                        wp["at_machine"],
+                                        wp["at_side"],
                                         wp["holding"],
-                                        wp["robot-holding"],
-                                        wp["unknown-action"],
-                                        wp["base-color"],
-                                        wp["ring-colors"],
-                                        wp["cap-color"])
+                                        wp["robot_holding"],
+                                        wp["unknown_action"],
+                                        wp["base_color"],
+                                        wp["ring_colors"],
+                                        wp["cap_color"])
                 if wp["team"] == "CYAN":
                     cyan_workpiece_facts.append(wp_fact)
                 else:
@@ -216,7 +216,7 @@ def load_data(mongodb_uri,
                 p = Points(points_entry["points"],
                            points_entry["phase"],
                            points_entry["reason"],
-                           points_entry["game-time"])
+                           points_entry["game_time"])
                 if points_entry["team"] == "CYAN":
                     cyan_points.append(p)
                 else:
@@ -228,8 +228,8 @@ def load_data(mongodb_uri,
         actions = dict()
         for mps_name in machine_names:
             actions[mps_name] = []
-        if "machine-history" in report:
-            for action in report["machine-history"]:
+        if "machine_history" in report:
+            for action in report["machine_history"]:
                 actions[action["name"]].append(action)
 
         # BS
@@ -238,13 +238,13 @@ def load_data(mongodb_uri,
                 if (action["state"] == 'PROCESSING'
                       and len(actions[t]) > ind+2 and actions[t][ind+1]["state"] == 'PROCESSED'
                       and actions[t][ind+2]["state"] == 'READY-AT-OUTPUT'):
-                    rao_stop = game_length - actions[t][ind+2]["game-time"]
+                    rao_stop = game_length - actions[t][ind+2]["game_time"]
                     if (len(actions[t]) > ind+3):
-                        rao_stop = actions[t][ind+3]["game-time"] - actions[t][ind+2]["game-time"]
+                        rao_stop = actions[t][ind+3]["game_time"] - actions[t][ind+2]["game_time"]
                     a = MachineAction(action["name"],
                                       'DISPENSE_BASE',
-                                      action["game-time"],
-                                      actions[t][ind+2]["game-time"],
+                                      action["game_time"],
+                                      actions[t][ind+2]["game_time"],
                                       rao_stop)
                     if t == 'C-BS':
                         cyan_machine_actions.append(a)
@@ -258,22 +258,22 @@ def load_data(mongodb_uri,
                           and actions[t][ind+2]["state"] == 'PROCESSED'
                           and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
                         performed_task = 'RETRIEVED_CAP'
-                        if ("meta-fact" in actions[t][ind+1]
-                          and "cs-operation" in actions[t][ind+1]["meta-fact"]
-                          and actions[t][ind+1]["meta-fact"]["cs-operation"] == 'MOUNT_CAP'):
+                        if ("meta_fact" in actions[t][ind+1]
+                          and "cs_operation" in actions[t][ind+1]["meta_fact"]
+                          and actions[t][ind+1]["meta_fact"]["cs_operation"] == 'MOUNT_CAP'):
                             performed_task = 'MOUNT_CAP'
-                        elif ("machine-fact" in actions[t][ind+1]
-                          and "cs-operation" in actions[t][ind+1]["machine-fact"]
-                          and actions[t][ind+1]["machine-fact"]["cs-operation"] == 'MOUNT_CAP'):
+                        elif ("machine_fact" in actions[t][ind+1]
+                          and "cs_operation" in actions[t][ind+1]["machine_fact"]
+                          and actions[t][ind+1]["machine_fact"]["cs_operation"] == 'MOUNT_CAP'):
                             performed_task = 'MOUNT_CAP'
-                        rao_stop = game_length - actions[t][ind+3]["game-time"]
+                        rao_stop = game_length - actions[t][ind+3]["game_time"]
                         if (len(actions[t]) > ind+4):
-                            rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
+                            rao_stop = actions[t][ind+4]["game_time"] - actions[t][ind+3]["game_time"]
 
                         a = MachineAction(action["name"],
                                           performed_task,
-                                          action["game-time"],
-                                          actions[t][ind+3]["game-time"],
+                                          action["game_time"],
+                                          actions[t][ind+3]["game_time"],
                                           rao_stop)
                         if t in ['C-CS1', 'C-CS2']:
                             cyan_machine_actions.append(a)
@@ -286,13 +286,13 @@ def load_data(mongodb_uri,
                       and len(actions[t]) > ind+3 and actions[t][ind+1]["state"] == 'PROCESSING'
                       and actions[t][ind+2]["state"] == 'PROCESSED'
                       and actions[t][ind+3]["state"] == 'READY-AT-OUTPUT'):
-                    rao_stop = game_length - actions[t][ind+3]["game-time"]
+                    rao_stop = game_length - actions[t][ind+3]["game_time"]
                     if (len(actions[t]) > ind+4):
-                        rao_stop = actions[t][ind+4]["game-time"] - actions[t][ind+3]["game-time"]
+                        rao_stop = actions[t][ind+4]["game_time"] - actions[t][ind+3]["game_time"]
                     a = MachineAction(action["name"],
                                       'MOUNT_RING',
-                                      action["game-time"],
-                                      actions[t][ind+3]["game-time"],
+                                      action["game_time"],
+                                      actions[t][ind+3]["game_time"],
                                       rao_stop)
                     if t in ['C-RS1', 'C-RS2']:
                         cyan_machine_actions.append(a)
@@ -305,8 +305,8 @@ def load_data(mongodb_uri,
                       and len(actions[t]) > ind+1 and actions[t][ind+1]["state"] == 'PROCESSED'):
                     a = MachineAction(action["name"],
                                       'DELIVER',
-                                      action["game-time"],
-                                      actions[t][ind+1]["game-time"],
+                                      action["game_time"],
+                                      actions[t][ind+1]["game_time"],
                                       0)
                     if t == 'C-DS':
                         cyan_machine_actions.append(a)
