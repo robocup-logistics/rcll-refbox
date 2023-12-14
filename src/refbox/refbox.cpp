@@ -1564,6 +1564,10 @@ LLSFRefBox::clips_bson_append(void *bson, std::string field_name, CLIPS::Value v
 				b->append(kvp(field_name, true));
 				break;
 			}
+			if (value == "nil") {
+				b->append(kvp(field_name,  bsoncxx::types::b_null{}));
+				break;
+			}
 		case CLIPS::TYPE_INSTANCE_NAME:
 		case CLIPS::TYPE_STRING: b->append(kvp(field_name, value.as_string())); break;
 		case CLIPS::TYPE_EXTERNAL_ADDRESS: {
@@ -1893,6 +1897,9 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 	case bsoncxx::type::k_utf8: return CLIPS::Value(element->get_utf8().value.to_string());
 	case bsoncxx::type::k_bool:
 		return CLIPS::Value(element->get_bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+	case bsoncxx::type::k_null:
+            return CLIPS::Value("nil", CLIPS::TYPE_SYMBOL);
+
 	case bsoncxx::type::k_int32: return CLIPS::Value(element->get_int32());
 	case bsoncxx::type::k_int64: return CLIPS::Value(element->get_int64());
 	case bsoncxx::type::k_document: {
