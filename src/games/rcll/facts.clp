@@ -169,8 +169,6 @@
                                               C-CS2 C-CS2
                                               C-DS))
   (slot next-side (type SYMBOL) (allowed-values INPUT OUTPUT SHELF))
-  (multislot vision-pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
-  (multislot vision-pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot maintenance-start-time (type FLOAT))
   (slot maintenance-cycles (type INTEGER) (default 0))
   (slot maintenance-warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
