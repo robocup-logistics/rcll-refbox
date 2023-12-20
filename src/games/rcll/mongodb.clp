@@ -30,13 +30,19 @@
 	(return (+ (* (nth$ 1 ?time) 1000) (div (nth$ 2 ?time) 1000)))
 )
 
-(deffunction mongodb-fact-to-bson (?fact-id)
-" Create a bson document from a fact.
+(deffunction mongodb-fact-to-bson-append (?doc ?fact-id $?only-slots)
+" Update a bson document from a fact.
+  @param ?doc document to update
   @param ?fact-id Fact to encode as bson document
+  @param $?only-slots optional list of slots within ?fact that are stored.
+                      If unspecified all slots are stored.
   @return ?doc bson document containing all slots of ?fact-id
 "
-	(bind ?doc (bson-create))
-	(bind ?slots (fact-slot-names ?fact-id))
+	(bind ?slots ?only-slots)
+	(if (eq (length$ ?slots) 0)
+	 then
+		(bind ?slots (fact-slot-names ?fact-id))
+	)
 	(foreach ?slot ?slots
 		(bind ?is-multislot (deftemplate-slot-multip (fact-relation ?fact-id) ?slot))
 		(bind ?slot-value (fact-slot-value ?fact-id ?slot))
@@ -48,6 +54,17 @@
 		)
 	)
 	(return ?doc)
+)
+
+(deffunction mongodb-fact-to-bson (?fact-id $?only-slots)
+" Create a bson document from a fact.
+  @param ?fact-id Fact to encode as bson document
+  @param $?only-slots optional list of slots within ?fact that are stored.
+                      If unspecified all slots are stored.
+  @return ?doc bson document containing all slots of ?fact-id
+"
+	(bind ?doc (bson-create))
+	(return (mongodb-fact-to-bson-append ?doc ?fact-id $?only-slots))
 )
 
 (deffunction mongodb-retrieve-value-from-doc (?doc ?field ?type ?is-list)
@@ -335,49 +352,38 @@
 	(return ?success)
 )
 
-(deffunction mongodb-create-game-report (?teams ?stime ?etime ?report-name)
-	(bind ?doc (bson-create))
-
-	(bson-append-array ?doc "start_timestamp" ?stime)
-	(bson-append-time  ?doc "start_time" ?stime)
-	(bson-append-array ?doc "teams" ?teams)
-	(bson-append ?doc "report_name" ?report-name)
-	(bson-append ?doc "report_version" ?*MONGODB-REPORT-VERSION*)
-
+(deffunction mongodb-update-game-report (?doc ?teams ?stime ?etime ?report-name)
 	(if (time-nonzero ?etime) then
 		(bson-append-time ?doc "end_time" ?etime)
 	)
 
 	(do-for-fact ((?p gamestate)) TRUE
--		(bind ?gamestate-doc (mongodb-fact-to-bson ?p))
--		(bson-append ?doc "gamestate" ?gamestate-doc)
--		(bson-builder-destroy ?gamestate-doc)
+		(bind ?gamestate-doc (mongodb-fact-to-bson ?p))
+		(bson-append ?doc "gamestate" ?gamestate-doc)
+		(bson-builder-destroy ?gamestate-doc)
 	)
 
 	(bind ?gamestate-arr (bson-array-start))
 	(do-for-all-facts ((?gsh gamestate-history)) TRUE
-		(bind ?history-doc (mongodb-fact-to-bson ?gsh))
+		(bind ?history-doc (mongodb-fact-to-bson ?gsh (remove$ (fact-slot-names ?gsh) fact-string)))
 		(bind ?temp-fact (assert-string ?gsh:fact-string))
 		(bind ?gs-doc FALSE)
 		(if ?temp-fact
 		 then
-			(bind ?gs-doc (mongodb-fact-to-bson ?temp-fact))
+			(bind ?gs-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
 		 else
 			(bind ?gs-facts (find-fact ((?m gamestate)) TRUE))
 			(if ?gs-facts then
-				(bind ?gs-doc (mongodb-fact-to-bson (nth$ 1 ?gs-facts)))
+				(bind ?gs-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?gs-facts)))
 			)
 		)
-		(if ?gs-doc then
-			(bson-append ?history-doc "gamestate_fact" ?gs-doc)
-		 else
+		(if (not ?gs-doc) then
 			(printout warn "mongodb: machine history fact without machine fact!" crlf)
 		)
 		(if ?temp-fact then
 			(retract ?temp-fact)
 		)
 		(bson-array-append ?gamestate-arr ?history-doc)
-		(bson-builder-destroy ?gs-doc)
 		(bson-builder-destroy ?history-doc)
 	)
 	(bson-array-finish ?doc "gamestate_history" ?gamestate-arr)
@@ -409,21 +415,19 @@
 	(bind ?machine-history-arr (bson-array-start))
 	(unwatch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
 	(do-for-all-facts ((?mh machine-history)) TRUE
-		(bind ?history-doc (mongodb-fact-to-bson ?mh))
+		(bind ?history-doc (mongodb-fact-to-bson ?mh (create$ name state)))
 		(bind ?temp-fact (assert-string ?mh:fact-string))
 		(bind ?machine-doc FALSE)
 		(if ?temp-fact
 		 then
-			(bind ?machine-doc (mongodb-fact-to-bson ?temp-fact))
+			(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
 		 else
 			(bind ?machine-facts (find-fact ((?m machine)) (eq ?mh:name ?m:name)))
 			(if ?machine-facts then
-				(bind ?machine-doc (mongodb-fact-to-bson (nth$ 1 ?machine-facts)))
+				(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?machine-facts)))
 			)
 		)
-		(if ?machine-doc then
-			(bson-append ?history-doc "machine_fact" ?machine-doc)
-		 else
+		(if (not ?machine-doc) then
 			(printout warn "mongodb: machine history fact without machine fact!" crlf)
 		)
 		(if ?temp-fact then
@@ -434,26 +438,23 @@
 		(bind ?machine-meta-doc FALSE)
 		(if ?temp-fact
 		 then
-			(bind ?machine-meta-doc (mongodb-fact-to-bson ?temp-fact))
+			(bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
 		 else
 			; for some reason clips crashes, if the meta-fact-name is passed
 			; on-the-fly. Therefore, store it via bind first.
 			(bind ?meta-fact-name (sym-cat (lowcase (sub-string 3 4 ?mh:name)) -meta))
 			(bind ?machine-meta-facts (find-fact ((?m ?meta-fact-name)) (eq ?mh:name ?m:name)))
 			(if ?machine-meta-facts then
-				(bind ?machine-meta-doc (mongodb-fact-to-bson (nth$ 1 ?machine-meta-facts)))
+				(bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?machine-meta-facts)))
 			)
 		)
-		(if ?machine-meta-doc then
-			(bson-append ?history-doc "meta_fact" ?machine-meta-doc)
-		 else
+		(if (not ?machine-meta-doc) then
 			(printout warn "mongodb: machine history fact " ?mh:name " without machine meta fact!" crlf)
 		)
 		(if ?temp-fact then
 			(retract ?temp-fact)
 		)
 		(bson-array-append ?machine-history-arr ?history-doc)
-		(bson-builder-destroy ?machine-doc)
 		(bson-builder-destroy ?history-doc)
 	)
 	(watch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
@@ -481,6 +482,11 @@
 	(return ?doc)
 )
 
+(deffunction mongodb-create-game-report (?teams ?stime ?etime ?report-name)
+  (bind ?doc (bson-create))
+  (return (mongodb-update-game-report ?doc ?teams ?stime ?etime ?report-name))
+)
+
 (deftemplate mongodb-phase-change
 	(multislot registered-phases (type SYMBOL) (default (create$)))
 )
@@ -496,27 +502,19 @@
 		(retract ?machine-history)
 	)
 	(assert (mongodb-game-report (start ?stime) (name ?report-name)))
-	(bind ?doc (mongodb-create-game-report ?teams ?stime ?etime ?report-name))
+	(bind ?doc (bson-create))
+
+	(bson-append-array ?doc "start_timestamp" ?stime)
+	(bson-append-time  ?doc "start_time" ?stime)
+	(bson-append-array ?doc "teams" ?teams)
+	(bson-append ?doc "report_name" ?report-name)
+	(bson-append ?doc "report_version" ?*MONGODB-REPORT-VERSION*)
 	; store information describing the game setup only once
-	(bind ?m-arr (bson-array-start))
-	(do-for-all-facts ((?m ring-spec)) TRUE
-		(bind ?ring-spec-doc (mongodb-fact-to-bson ?m))
-		(bson-array-append ?m-arr ?ring-spec-doc)
-		(bson-builder-destroy ?ring-spec-doc)
+	(bind ?ring-spec-doc (bson-create))
+	(do-for-all-facts ((?rs ring-spec)) TRUE
+		(bson-append ?ring-spec-doc (snake-case ?rs:color) ?rs:req-bases)
 	)
-	(bson-array-finish ?doc "ring_specs" ?m-arr)
-	(bind ?m-arr (bson-array-start))
-	(foreach ?m-type (deftemplate-slot-allowed-values machine mtype)
-		; for some reason clips crashes, if the meta-fact-name is passed
-		; on-the-fly. Therefore, store it via bind first.
-		(bind ?meta-fact-name (sym-cat (lowcase ?m-type) -meta))
-		(do-for-all-facts ((?meta-f ?meta-fact-name)) TRUE
-			(bind ?meta-doc (mongodb-fact-to-bson ?meta-f))
-			(bson-array-append ?m-arr ?meta-doc)
-			(bson-builder-destroy ?meta-doc)
-		)
-	)
-	(bson-array-finish ?doc "machine_meta" ?m-arr)
+	(bson-append ?doc "ring_specs" ?ring-spec-doc)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine-ss-shelf-slot)) TRUE
 		(bind ?ss-doc (mongodb-fact-to-bson ?m))
@@ -526,11 +524,17 @@
 	(bson-array-finish ?doc "machine_ss_shelf_slots" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine)) TRUE
-		(bind ?machine-doc (mongodb-fact-to-bson ?m))
+		(bind ?machine-doc (mongodb-fact-to-bson ?m (create$ name team mtype rotation pose)))
+		(if (eq ?m:mtype RS) then
+	      (do-for-fact ((?rs-meta rs-meta)) (eq ?rs-meta:name ?m:name)
+		    (mongodb-fact-to-bson-append ?machine-doc ?rs-meta (create$ rs-ring-colors))
+		  )
+		)
 		(bson-array-append ?m-arr ?machine-doc)
 		(bson-builder-destroy ?machine-doc)
 	)
 	(bson-array-finish ?doc "machines" ?m-arr)
+	(bind ?doc (mongodb-update-game-report ?doc ?teams ?stime ?etime ?report-name))
 	(mongodb-write-game-report ?doc ?stime ?report-name)
 	(assert (mongodb-phase-change))
 )
