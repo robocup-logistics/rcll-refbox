@@ -290,7 +290,7 @@
                           (successful ?successful)
                           (processed FALSE)
                           (base-color ?base-color)
-                          (ring-color $?ring-color)
+                          (ring-colors $?ring-color)
                           (cap-color ?cap-color)))
       (printout ?*AGENT-TASK-ROUTER* "agent-task: " ?task-type ?task-parameters crlf)
     )

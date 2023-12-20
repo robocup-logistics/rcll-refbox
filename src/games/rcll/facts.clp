@@ -213,7 +213,7 @@
   (slot successful (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
 
   (slot base-color (type SYMBOL) (allowed-values nil BASE_BLACK BASE_CLEAR BASE_RED BASE_SILVER))
-  (multislot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (multislot ring-colors (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
 )
 
