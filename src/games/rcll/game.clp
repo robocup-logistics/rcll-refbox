@@ -766,9 +766,10 @@
 	(not (gamestate-history))
 	?gs <- (gamestate (state ?state) (phase ?phase) (game-time ?gt)
 	  (cont-time ?ct) (over-time ?ot))
+	(time $?now)
 	=>
 	(assert (gamestate-history (state ?state) (phase ?phase)
-	  (game-time ?gt)
+	  (game-time ?gt) (time $?now)
 	  (cont-time ?ct) (over-time ?ot) (fact-string (fact-to-string ?gs))))
 )
 
@@ -780,11 +781,75 @@
 	  (cont-time ?ct) (over-time ?curr-ot))
 	(test (or (neq ?curr-state ?state) (neq ?curr-phase ?phase)
 	  (neq ?curr-ot ?ot)))
+	(time $?now)
 	=>
 	(modify ?gsh (is-latest FALSE))
 	(assert (gamestate-history (state ?curr-state) (phase ?curr-phase)
-	  (game-time ?gt) (cont-time ?ct) (over-time ?curr-ot)
+	  (game-time ?gt) (cont-time ?ct) (time $?now) (over-time ?curr-ot)
 	  (fact-string (fact-to-string ?gs))))
+)
+
+(defrule game-create-first-robot-history
+	(not (robot-history (number ?n) (team ?team)))
+	?robot <- (robot (number ?n) (state ?s) (warning-sent ?ws) (has-pose ?hp) (team ?t) (pose ?x ?y ?ori) (pose-time $?pt) (maintenance-start-time ?mst) (maintenance-cycles ?mc) (maintenance-warning-sent ?mws))
+	(time $?now)
+	=>
+	(assert (robot-history
+	  (state ?s)
+      (warning-sent ?ws)
+      (has-pose ?hp)
+      (number ?n)
+	  (team ?t)
+      (x ?x)
+      (y ?y)
+      (ori ?ori)
+      (maintenance-start-time ?mst)
+      (maintenance-cycles ?mc)
+      (maintenance-warning-sent ?mws)
+      (pose-time ?pt)
+      (time ?now)
+      (fact-string (fact-to-string ?robot))
+	  )
+	)
+)
+
+(defrule game-create-next-robot-history
+	(declare (salience ?*PRIORITY_HIGHER*))
+	?rh <- (robot-history (state ?s) (warning-sent ?ws) (has-pose ?hp)
+      (number ?n) (team ?t) (x ?x) (y ?y) (ori ?ori)
+      (maintenance-start-time ?mst) (maintenance-cycles ?mc)
+      (maintenance-warning-sent ?mws) (pose-time $?pt)
+	)
+	?robot <- (robot (number ?n) (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (team ?t) (pose ?n-x ?n-y ?n-ori) (pose-time $?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws))
+	(test (or (neq
+	(create$ ?n-s ?n-ws ?n-hp ?n-mst ?n-mc ?n-ws)
+	(create$ ?s ?ws ?hp ?mst ?mc ?ws))
+	  (and (neq (create$ ?n-x ?n-y ?n-ori) (create$ ?x ?y ?ori))
+	       (time-diff-sec ?n-pt ?pt) 5)))
+	(time $?now)
+	=>
+	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (x ?n-x) (y ?n-y) (ori ?n-ori) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now))
+	(modify ?rh (is-latest FALSE))
+)
+
+(defrule game-create-first-shelf-slot-history
+    ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?filled) (description  ?desc))
+	(not (shelf-slot-history (name ?name) (shelf ?shelf) (slot ?slot)))
+	(time $?now)
+	=>
+	(assert (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description ?desc)
+	  (time $?now) (fact-string (fact-to-string ?sf))))
+)
+
+(defrule game-create-next-shelf-slot-history
+	(declare (salience ?*PRIORITY_HIGHER*))
+    ?hf <- (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description  ?desc) (is-latest TRUE))
+    ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?new-filled) (description  ?new-desc))
+	(test (or (neq ?filled ?new-filled) (neq ?desc ?new-desc)))
+	(time $?now)
+	=>
+    (duplicate ?hf (is-filled ?new-filled) (description ?new-desc) (fact-string (fact-to-string ?sf)) (time ?now))
+	(modify ?hf (is-latest FALSE))
 )
 
 (defrule silence-debug

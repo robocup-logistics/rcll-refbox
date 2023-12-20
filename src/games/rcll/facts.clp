@@ -217,18 +217,6 @@
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
 )
 
-(deftemplate stamped-pose
-  (slot task-id (type INTEGER))
-  (slot robot-id (type INTEGER))
-  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
-
-  (slot x (type FLOAT))
-  (slot y (type FLOAT))
-  (slot ori (type FLOAT))
-
-  (slot time (type FLOAT))
-)
-
 (deftemplate signal
   (slot type)
   (multislot time (type INTEGER) (cardinality 2 2) (default (create$ 0 0)))
@@ -469,6 +457,36 @@
 	(slot meta-fact-string (type STRING))
 )
 
+(deftemplate shelf-slot-history
+  (slot name (type SYMBOL) (allowed-values UNSET C-SS M-SS)(default UNSET))
+  (slot shelf (type INTEGER))
+  (slot slot (type INTEGER))
+  (slot is-filled (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot description (type STRING) (default ""))
+  (slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot fact-string (type STRING))
+)
+
+(deftemplate robot-history
+  (slot state (type SYMBOL) (allowed-values ACTIVE MAINTENANCE DISQUALIFIED) (default ACTIVE))
+  (slot warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+   ; x y theta (meters and rad)
+  (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot number (type INTEGER))
+  (slot team (type STRING))
+  (slot x (type FLOAT))
+  (slot y (type FLOAT))
+  (slot ori (type FLOAT))
+  (slot maintenance-start-time (type FLOAT))
+  (slot maintenance-cycles (type INTEGER) (default 0))
+  (slot maintenance-warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot fact-string (type STRING))
+)
+
 (deftemplate gamestate-history
 	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
 	(slot state (type SYMBOL)
@@ -476,6 +494,7 @@
 	(slot phase (type SYMBOL)
 	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
 	(default PRE_GAME))
+	(multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
 	(slot game-time (type FLOAT) (default 0.0))
 	(slot cont-time (type FLOAT) (default 0.0))
 	(slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))

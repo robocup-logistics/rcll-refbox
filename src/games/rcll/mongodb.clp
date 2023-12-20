@@ -26,6 +26,18 @@
 	(multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
 )
 
+(deffunction mongodb-create-doc-from-key-val (?key-val)
+  (bind ?doc (bson-create))
+  (bind ?index 1)
+  (while (< ?index (length$ ?key-val)) do
+     (bind ?key (nth$ ?index ?key-val))
+     (bind ?value (nth$ (+ ?index 1) ?key-val))
+	 (bson-append ?doc (snake-case ?key) ?value)
+	 (bind ?index (+ ?index 2))
+  )
+  (return ?doc)
+)
+
 (deffunction mongodb-time-as-ms (?time)
 	(return (+ (* (nth$ 1 ?time) 1000) (div (nth$ 2 ?time) 1000)))
 )
@@ -365,24 +377,26 @@
 
 	(bind ?gamestate-arr (bson-array-start))
 	(do-for-all-facts ((?gsh gamestate-history)) TRUE
-		(bind ?history-doc (mongodb-fact-to-bson ?gsh (remove$ (fact-slot-names ?gsh) fact-string)))
-		(bind ?temp-fact (assert-string ?gsh:fact-string))
-		(bind ?gs-doc FALSE)
-		(if ?temp-fact
-		 then
-			(bind ?gs-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
-		 else
-			(bind ?gs-facts (find-fact ((?m gamestate)) TRUE))
-			(if ?gs-facts then
-				(bind ?gs-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?gs-facts)))
-			)
-		)
-		(if (not ?gs-doc) then
-			(printout warn "mongodb: machine history fact without machine fact!" crlf)
-		)
-		(if ?temp-fact then
-			(retract ?temp-fact)
-		)
+		(bind ?history-doc (mongodb-fact-to-bson ?gsh))
+		(bson-append-time ?history-doc "time" ?gsh:time)
+		; No need to store full information of gamestate
+		;(bind ?temp-fact (assert-string ?gsh:fact-string))
+		;(bind ?gs-doc FALSE)
+		;(if ?temp-fact
+		; then
+		;	(bind ?gs-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
+		; else
+		;	(bind ?gs-facts (find-fact ((?m gamestate)) TRUE))
+		;	(if ?gs-facts then
+		;		(bind ?gs-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?gs-facts)))
+		;	)
+		;)
+		;(if (not ?gs-doc) then
+		;	(printout warn "mongodb: machine history fact without machine fact!" crlf)
+		;)
+		;(if ?temp-fact then
+		;	(retract ?temp-fact)
+		;)
 		(bson-array-append ?gamestate-arr ?history-doc)
 		(bson-builder-destroy ?history-doc)
 	)
@@ -415,41 +429,54 @@
 	(bind ?machine-history-arr (bson-array-start))
 	(unwatch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
 	(do-for-all-facts ((?mh machine-history)) TRUE
-		(bind ?history-doc (mongodb-fact-to-bson ?mh (create$ name state)))
-		(bind ?temp-fact (assert-string ?mh:fact-string))
-		(bind ?machine-doc FALSE)
-		(if ?temp-fact
-		 then
-			(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
-		 else
-			(bind ?machine-facts (find-fact ((?m machine)) (eq ?mh:name ?m:name)))
-			(if ?machine-facts then
-				(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?machine-facts)))
-			)
-		)
-		(if (not ?machine-doc) then
-			(printout warn "mongodb: machine history fact without machine fact!" crlf)
-		)
-		(if ?temp-fact then
-			(retract ?temp-fact)
-		)
+		(bind ?history-doc (mongodb-fact-to-bson ?mh))
+		(bson-append-time ?history-doc "time" ?mh:time)
+		;(bind ?temp-fact (assert-string ?mh:fact-string))
+		;(bind ?machine-doc FALSE)
+		;(if ?temp-fact
+		; then
+		;	(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
+		; else
+		;	(bind ?machine-facts (find-fact ((?m machine)) (eq ?mh:name ?m:name)))
+		;	(if ?machine-facts then
+		;		(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?machine-facts)))
+		;	)
+		;)
+		;(if (not ?machine-doc) then
+		;	(printout warn "mongodb: machine history fact without machine fact!" crlf)
+		;)
+		;(if ?temp-fact then
+		;	(retract ?temp-fact)
+		;)
 		(bind ?temp-fact FALSE)
 		(bind ?temp-fact (assert-string ?mh:meta-fact-string))
 		(bind ?machine-meta-doc FALSE)
+		(bind ?m-type (sym-cat (sub-string 3 4 ?mh:name)))
+		(bind ?meta-fact FALSE)
 		(if ?temp-fact
 		 then
-			(bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
+			(bind ?meta-fact ?temp-fact)
 		 else
 			; for some reason clips crashes, if the meta-fact-name is passed
 			; on-the-fly. Therefore, store it via bind first.
-			(bind ?meta-fact-name (sym-cat (lowcase (sub-string 3 4 ?mh:name)) -meta))
+			(bind ?meta-fact-name (sym-cat (lowcase ?m-type) -meta))
 			(bind ?machine-meta-facts (find-fact ((?m ?meta-fact-name)) (eq ?mh:name ?m:name)))
 			(if ?machine-meta-facts then
-				(bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?machine-meta-facts)))
+			  (bind ?meta-fact (nth$ 1 ?machine-meta-facts))
 			)
 		)
-		(if (not ?machine-meta-doc) then
-			(printout warn "mongodb: machine history fact " ?mh:name " without machine meta fact!" crlf)
+		(if ?meta-fact then
+		  (if (eq ?m-type SS) then
+		    (bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc ?meta-fact (remove$ (fact-slot-names ?meta-fact) ss-shelf-slot)))
+		    (bind ?positions (fact-slot-value ?meta-fact ss-shelf-slot))
+		    (bson-append ?history-doc "shelf" (nth$ 1 ?positions))
+		    (bson-append ?history-doc "slot" (nth$ 2 ?positions))
+
+		   else
+		    (bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc ?meta-fact))
+		  )
+		 else
+		  (printout warn "mongodb: machine history fact " ?mh:name " without machine meta fact!" crlf)
 		)
 		(if ?temp-fact then
 			(retract ?temp-fact)
@@ -460,6 +487,15 @@
 	(watch facts machine bs-meta cs-meta rs-meta ds-meta ss-meta)
 	(bson-array-finish ?doc "machine_history" ?machine-history-arr)
 
+    (bind ?shelf-slot-history-arr (bson-array-start))
+	(do-for-all-facts ((?ssh shelf-slot-history)) TRUE
+		(bind ?history-doc (mongodb-fact-to-bson ?ssh))
+		(bson-append-time ?history-doc "time" ?ssh:time)
+		(bson-array-append ?shelf-slot-history-arr ?history-doc)
+		(bson-builder-destroy ?history-doc)
+	)
+	(bson-array-finish ?doc "shelf_slot_history" ?shelf-slot-history-arr)
+
 	(bind ?workpiece-arr (bson-array-start))
 	(do-for-all-facts ((?wp workpiece)) TRUE
 		(bson-array-append ?workpiece-arr (mongodb-fact-to-bson ?wp))
@@ -468,15 +504,18 @@
 
 	(bind ?agent-task-arr (bson-array-start))
 	(do-for-all-facts ((?at agent-task)) TRUE
-		(bson-array-append ?agent-task-arr (mongodb-fact-to-bson ?at))
+		(bind ?task-doc (mongodb-fact-to-bson ?at (remove$ (fact-slot-names ?at) task-parameters)))
+		(bind ?task-param-doc (mongodb-create-doc-from-key-val ?at:task-parameters))
+		(bson-append ?task-doc "task_parameters" ?task-param-doc)
+		(bson-array-append ?agent-task-arr ?task-doc)
 	)
 	(bson-array-finish ?doc "agent_task_history" ?agent-task-arr)
 
-	(bind ?stamped-poses-arr (bson-array-start))
-	(do-for-all-facts ((?sp stamped-pose)) TRUE
-		(bson-array-append ?stamped-poses-arr (mongodb-fact-to-bson ?sp))
+	(bind ?robot-history-arr (bson-array-start))
+	(do-for-all-facts ((?rh robot-history)) TRUE
+		(bson-array-append ?robot-history-arr (mongodb-fact-to-bson ?rh))
 	)
-	(bson-array-finish ?doc "robot_pose_history" ?stamped-poses-arr)
+	(bson-array-finish ?doc "robot_history" ?robot-history-arr)
 
 	;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 	(return ?doc)
@@ -516,8 +555,10 @@
 	)
 	(bson-append ?doc "ring_specs" ?ring-spec-doc)
 	(bind ?m-arr (bson-array-start))
-	(do-for-all-facts ((?m machine-ss-shelf-slot)) TRUE
-		(bind ?ss-doc (mongodb-fact-to-bson ?m))
+	(do-for-all-facts ((?m machine-ss-shelf-slot)) ?m:is-filled
+		(bind ?ss-doc (mongodb-fact-to-bson ?m (create$ name description)))
+		(bson-append ?ss-doc "shelf" (nth$ 1 ?m:position))
+		(bson-append ?ss-doc "slot" (nth$ 1 ?m:position))
 		(bson-array-append ?m-arr ?ss-doc)
 		(bson-builder-destroy ?ss-doc)
 	)

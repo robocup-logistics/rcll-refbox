@@ -194,14 +194,6 @@
     (bind ?task-id (pb-field-value ?at "task_id"))
     (bind ?robot-id (pb-field-value ?at "robot_id"))
 
-    (assert (stamped-pose (task-id ?task-id)
-                          (robot-id ?robot-id)
-                          (team-color ?team-color)
-                          (x (nth$ 1 ?pose))
-                          (y (nth$ 2 ?pose))
-                          (ori (nth$ 3 ?pose))
-                          (time ?gt)))
-
     ; if agent task does not exist, create one
     (if (not (any-factp ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
                                                         (eq ?agent-task:task-id ?task-id)
