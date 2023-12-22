@@ -112,6 +112,11 @@ message ProductInfo {
   required BaseColor    base_color = 4;
   repeated RingColor    ring_colors = 5;
   required CapColor     cap_color = 6;
+  
+  // Quantity requested and delivered
+  required uint32 quantity_requested_p = 7;
+  required uint32 quantity_delivered_cyan_p = 8;
+  required uint32 quantity_delivered_magenta_p = 9;
 }
 
 

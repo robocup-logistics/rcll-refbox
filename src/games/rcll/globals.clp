@@ -55,7 +55,7 @@
   ?*PREPARE-WAIT-TILL-PROCESSING* = 5
   ?*PROCESS-TIME-SS* = 5
   ?*SS-MAX-SHELF* = 5 ; min value is 0
-  ?*SS-MAX-SLOT* = 7 ; min value is 0
+  ?*SS-MAX-SLOT* = 3 ; min value is 0
   ?*SS-SHELF-DEPTH* = 2
 
   ; number of points for specific actions
@@ -170,7 +170,7 @@
   ?*ORDER-ACTIVATION-DISTANCE*  = 120
   ?*ORDER-ACTIVATION-DEVIATION*  = 90
 
-  ?*ORDER-ACTIVATE-LATEST-TIME*  = 2880 ; /3
+  ?*ORDER-ACTIVATE-LATEST-TIME*  = 2880 ; 960 original
 
   ?*AGENT-TASK-ROUTER*  = debug
 )

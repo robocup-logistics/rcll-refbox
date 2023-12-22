@@ -968,6 +968,9 @@ Data::get_product_info_fact(T                                  *o,
 	(*o).AddMember("cap_color", json_string, alloc);
 	json_string.SetInt((get_value<int64_t>(fact, "pid")));
 	(*o).AddMember("pid", json_string, alloc);
+	
+	json_string.SetInt((get_value<int64_t>(fact, "quantity-requested-p")));
+	(*o).AddMember("quantity_requested_p", json_string, alloc);
 
 	rapidjson::Value ring_array(rapidjson::kArrayType);
 	ring_array.Reserve(get_values(fact, "ring-colors").size(), alloc);
@@ -977,6 +980,15 @@ Data::get_product_info_fact(T                                  *o,
 		ring_array.PushBack(v, alloc);
 	}
 	(*o).AddMember("ring_colors", ring_array, alloc);
+
+	rapidjson::Value quantity_array(rapidjson::kArrayType);
+	quantity_array.Reserve(get_values(fact, "quantity-delivered-p").size(), alloc);
+	for (const auto &e : get_values(fact, "quantity-delivered-p")) {
+		rapidjson::Value v;
+		v.SetString(e, alloc);
+		quantity_array.PushBack(v, alloc);
+	}
+	(*o).AddMember("quantity_delivered_p", quantity_array, alloc);
 
 	(*o).AddMember("unconfirmed_deliveries",
 	               get_unconfirmed_delivery_fact(alloc, get_value<int64_t>(fact, "pid")),

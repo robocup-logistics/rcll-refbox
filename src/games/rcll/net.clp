@@ -920,6 +920,12 @@
   )
   (pb-set-field ?p "cap_color" (fact-slot-value ?product-fact cap-color))
 
+  (pb-set-field ?p "quantity_requested_p" (fact-slot-value ?product-fact quantity-requested-p))
+  (pb-set-field ?p "quantity_delivered_cyan_p"
+		(nth$ 1 (fact-slot-value ?product-fact quantity-delivered-p)))
+  (pb-set-field ?p "quantity_delivered_magenta_p"
+		(nth$ 2 (fact-slot-value ?product-fact quantity-delivered-p)))
+
   (return ?p)
 )
 
