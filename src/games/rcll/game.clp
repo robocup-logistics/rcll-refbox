@@ -71,12 +71,13 @@
   (bind ?low-complexity (create$ C0 C1))
   (bind ?high-complexity (create$ C2 C3))
   (bind ?complexities (create$))
-  (loop-for-count (?current-order 1 11) ; #! change to products
+  (loop-for-count (?current-product 1 15) ; 30 products
        (bind ?low-complexity (randomize$ ?low-complexity))
        (bind ?high-complexity (randomize$ ?high-complexity))
        (bind ?complexities (append$ ?complexities
              (create$ (nth$ 1 ?low-complexity)
-                      (nth$ 1 ?high-complexity))))
+                      (nth$ 1 ?high-complexity)
+                      )))
   )
 
   ; (delayed-do-for-all-facts ((?order order)) (is-standing-order ?order:id)
