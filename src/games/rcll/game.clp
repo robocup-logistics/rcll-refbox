@@ -79,31 +79,30 @@
                       (nth$ 1 ?high-complexity))))
   )
 
-  ; #!
-  (delayed-do-for-all-facts ((?order order)) (is-standing-order ?order:id)
+  ; (delayed-do-for-all-facts ((?order order)) (is-standing-order ?order:id)
 
-    (modify ?order  (start-range 0 0) ; #!
-                    (activation-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
-                    (duration-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*))
-  )
+  ;   (modify ?order  (start-range 0 0)  
+  ;                   (activation-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
+  ;                   (duration-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*))
+  ; )
 
   ; Standing Orders
-  (delayed-do-for-all-facts ((?product product)) (is-standing-order ?product:oid)
-    (bind ?complexity (nth$ 1 ?complexities))
-    (bind ?complexities (rest$ ?complexities))
-    (modify ?product (complexity ?complexity) )
-                    ;  (start-range 0 0) ; #!
-                    ;  (activation-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
-                    ;  (duration-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
-  )
+  ; (delayed-do-for-all-facts ((?product product)) (is-standing-order ?product:oid)
+  ;   (bind ?complexity (nth$ 1 ?complexities))
+  ;   (bind ?complexities (rest$ ?complexities))
+  ;   (modify ?product (complexity ?complexity) )
+  ;                   ;  (start-range 0 0) ; #!
+  ;                   ;  (activation-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
+  ;                   ;  (duration-range ?*PRODUCTION-TIME* ?*PRODUCTION-TIME*)
+  ; )
 
   (bind ?activate-at-center 180)
   (bind ?complexities (randomize$ ?complexities))
 
   ; Set start activation and duration ranges
   (delayed-do-for-all-facts ((?order order))
-    (and (not (is-standing-order ?order:id)) (not ?order:allow-overtime))
-    
+    ; (and (not (is-standing-order ?order:id)) (not ?order:allow-overtime))
+    (not ?order:allow-overtime)
     ; (bind ?starting-ranges (create$)) ;#! list start ranges for deliver-start
     (bind ?activation-range-min 0)
     (bind ?activation-range-max 0)
@@ -207,7 +206,7 @@
 
     (bind ?storingtime 0)
     (do-for-all-facts ((?product product)) (eq ?product:oid ?order:id)
-      (bind ?storingtime (+ ?storingtime 60)) ; add 1 min for storing for each product in order
+      (bind ?storingtime (+ ?storingtime 120)) ; add 2 min for storing and retrieving for each product in order
     )
     (bind ?deliver-start (random (nth$ 1 ?order:start-range)
                                  (nth$ 2 ?order:start-range)))
@@ -222,11 +221,12 @@
 
     (bind ?activation-pre-time
           (random (nth$ 1 ?order:activation-range) (nth$ 2 ?order:activation-range)))
-    (bind ?activate-at (max (- ?deliver-start ?activation-pre-time) 0))
+    (bind ?activate-at (max (- (- ?deliver-start ?storingtime) ?activation-pre-time) 0))
     (if ?*RANDOMIZE-ACTIVATE-ALL-AT-START* then (bind ?activate-at 0))
     ; keep the activation time between ?*EXPLORATION-TIME* and
     ; ?*ORDER-ACTIVATE-LATEST-TIME*
-    (if (and (not (is-standing-order ?order:id)) (< ?activate-at ?*EXPLORATION-TIME*)) then
+    (if (< ?activate-at ?*EXPLORATION-TIME*) then
+    ; (and (not (is-standing-order ?order:id)) (< ?activate-at ?*EXPLORATION-TIME*)) then
       (bind ?shift-time (- ?*EXPLORATION-TIME* ?activate-at))
       (bind ?activate-at   (+ ?activate-at ?shift-time))
       (bind ?deliver-start (+ ?deliver-start ?shift-time))

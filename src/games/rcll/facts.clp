@@ -278,6 +278,9 @@
 	     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values CAP_BLACK CAP_GREY))
 
+  (slot quantity-requested-p (type INTEGER) (default 1))
+  (multislot quantity-delivered-p (type INTEGER) (cardinality 2 2) (default 0 0))
+
   (slot product-delivered (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
@@ -622,4 +625,12 @@
   (product (pid  20))
   (product (pid  21))
   (product (pid  22))
+  (product (pid 23))
+  (product (pid 24))
+  (product (pid 25))
+  (product (pid 26))
+  (product (pid 27))
+  (product (pid 28))
+  (product (pid 29))
+  (product (pid 30))
 )
