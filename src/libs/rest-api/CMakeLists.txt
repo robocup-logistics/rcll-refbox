@@ -9,7 +9,7 @@ pkg_check_modules(APRUTIL REQUIRED apr-util-1)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${CLIPSMM_INCLUDE_DIRS})
-
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_library(refbox-rest-api SHARED
     webview_server.cpp
     service_browse_handler.cpp
@@ -30,5 +30,4 @@ target_link_libraries(refbox-rest-api
   ${APRUTIL_LIBRARIES}
   ${Boost_LIBRARIES}
   ${CLIPSMM_LIBRARIES}
-)
-
+refbox-netcomm)
