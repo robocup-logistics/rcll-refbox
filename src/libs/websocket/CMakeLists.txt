@@ -12,7 +12,7 @@ link_directories(${CLIPSMM_LIBRARY_DIRS})
 
 if(Boost_FOUND AND RapidJSON_FOUND)
     # Create the library
-    add_library(refbox-websocket SHARED data.cpp client.cpp backend.cpp server.cpp)
+    add_library(refbox-websocket SHARED data.cpp client.cpp backend.cpp server.cpp data.h client.h backend.h server.h)
     target_link_libraries(refbox-websocket stdc++ pthread refbox-core ${Boost_LIBRARIES})
 else()
     message(WARNING "Cannot build llsfrbwebsocket library (one or more dependencies not found)")

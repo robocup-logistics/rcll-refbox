@@ -17,8 +17,8 @@ if(USE_AVAHI)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-add_library(refbox-netcomm
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+add_library(refbox-netcomm SHARED
     utils/exceptions.cpp
     utils/incoming_connection_handler.cpp
     utils/acceptor_thread.cpp
@@ -35,7 +35,26 @@ add_library(refbox-netcomm
     socket/datagram_multicast.cpp
     socket/datagram_broadcast.cpp
     socket/socket.cpp
-    socket/datagram.cpp)
+    socket/datagram.cpp
+    utils/acceptor_thread.h
+    utils/resolver.h
+    utils/ntoh64.h
+    utils/resolver_thread.h
+    utils/exceptions.h
+    utils/incoming_connection_handler.h
+    service_discovery/service_browser.h
+    service_discovery/service.h
+    service_discovery/service_publisher.h
+    service_discovery/browse_handler.h
+    service_discovery/dummy_service_browser.h
+    service_discovery/dummy_service_publisher.h
+    dns-sd/avahi_resolver_handler.h
+    dns-sd/avahi_thread.h
+    socket/datagram.h
+    socket/socket.h
+    socket/datagram_broadcast.h
+    socket/stream.h
+    socket/datagram_multicast.h)
 target_link_libraries(refbox-netcomm stdc++ m refbox-core refbox-utils)
 
 if(USE_AVAHI)

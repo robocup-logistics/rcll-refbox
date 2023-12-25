@@ -8,19 +8,23 @@ add_subdirectory(llsf_log_msgs)
 find_package(Boost 1.81 REQUIRED)
 find_package(Protobuf REQUIRED)
 
-# link_directories(${CLIPSMM_LIBRARY_DIRS})
+link_directories(${CLIPSMM_LIBRARY_DIRS})
 
-# include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-# include_directories(${Boost_INCLUDE_DIRS})
-# include_directories(${Protobuf_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${Protobuf_INCLUDE_DIRS})
 
-# add_library(refbox-logging SHARED
-#     network.cpp
-#     cache.cpp
-#     logger.cpp
-#     websocket.cpp
-#     console.cpp
-#     multi.cpp
-#     file.cpp)
+add_library(refbox-logging SHARED
+    network.cpp
+    cache.cpp
+    logger.cpp
+    websocket.cpp
+    console.cpp
+    multi.cpp
+    multi.h
+    file.cpp)
 
-# target_link_libraries(refbox-logging ${CLIPSMM_LIBRARIES} ${Boost_LIBRARIES} refbox-core refbox-log-msgs)
+target_link_libraries(refbox-logging ${CLIPSMM_LIBRARIES}
+ mps-log-msgs
+ refbox-websocket
+  ${Boost_LIBRARIES} refbox-core msgs)
