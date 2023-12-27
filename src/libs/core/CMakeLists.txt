@@ -25,7 +25,7 @@ add_library(refbox-core SHARED
     exceptions/system.cpp
     plugin.cpp)
 
-target_link_libraries(refbox-core pthread stdc++ m)
+target_link_libraries(refbox-core pthread stdc++ m mps_comm)
 
 if(NOT APPLE)
   target_link_libraries(refbox-core rt)

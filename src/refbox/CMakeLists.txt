@@ -32,13 +32,11 @@ else()
     set(OMIT_OBJECTS "dns-sd/%")
 endif()
 
-add_executable(refbox clips_logger.cpp
+add_executable(refbox main.cpp clips_logger.cpp
     refbox.cpp)
 
 target_link_libraries(refbox
-  ${CLIPSMM_LIBRARIES}
   msgs
-  stdc++
   protobuf_clips
   refbox-utils
   refbox-netcomm
@@ -52,9 +50,13 @@ gecodeminimodel gecodedriver gecodesearch gecodesupport gecodekernel gecodeint
   refbox-config
   refbox-logging)
 target_link_libraries(refbox ${PROTOBUF_LIBRARIES} ${GECODE_LIBRARIES})
-target_link_libraries(refbox ${PROTOBUFCOMM_LIBRARIES})
+target_link_libraries(refbox ${PROTOBUFCOMM_LIBRARIES} )
+target_link_libraries(refbox stdc++)
 
 # target_link_libraries(refbox ${LIBMICROHTTPD_LIBRARIES})
 target_link_libraries(refbox ${LIBMHD_LIBRARIES})
 
 target_link_libraries(refbox ${AVAHI_LIBRARIES})
+set_target_properties(refbox PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+)
