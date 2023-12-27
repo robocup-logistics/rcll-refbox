@@ -13,6 +13,9 @@ link_directories(${CLIPSMM_LIBRARY_DIRS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${Protobuf_INCLUDE_DIRS})
+include_directories(
+"/home/timwendt/rcll-refbox/build/src/libs"
+)
 
 add_library(refbox-logging SHARED
     network.cpp
