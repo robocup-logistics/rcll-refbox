@@ -549,11 +549,14 @@
 	(bson-append ?doc "report_name" ?report-name)
 	(bson-append ?doc "report_version" ?*MONGODB-REPORT-VERSION*)
 	; store information describing the game setup only once
-	(bind ?ring-spec-doc (bson-create))
+	(bind ?ring-spec-arr (bson-array-start))
 	(do-for-all-facts ((?rs ring-spec)) TRUE
-		(bson-append ?ring-spec-doc (snake-case ?rs:color) ?rs:req-bases)
+		(bind ?rs-doc (mongodb-fact-to-bson ?rs))
+		(bson-array-append ?ring-spec-arr ?rs-doc)
+		(bson-builder-destroy ?rs-doc)
 	)
-	(bson-append ?doc "ring_specs" ?ring-spec-doc)
+	(bson-array-finish ?doc "ring_specs" ?ring-spec-arr)
+
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine-ss-shelf-slot)) ?m:is-filled
 		(bind ?ss-doc (mongodb-fact-to-bson ?m (create$ name description)))
