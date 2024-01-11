@@ -565,7 +565,7 @@
 	(bson-array-finish ?doc "machine_ss_shelf_slots" ?m-arr)
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine)) TRUE
-		(bind ?machine-doc (mongodb-fact-to-bson ?m (create$ name team mtype rotation pose)))
+		(bind ?machine-doc (mongodb-fact-to-bson ?m (create$ name team mtype rotation pose zone)))
 		(if (eq ?m:mtype RS) then
 	      (do-for-fact ((?rs-meta rs-meta)) (eq ?rs-meta:name ?m:name)
 		    (mongodb-fact-to-bson-append ?machine-doc ?rs-meta (create$ rs-ring-colors))
