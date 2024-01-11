@@ -467,8 +467,8 @@
 		)
 		(if ?meta-fact then
 		  (if (eq ?m-type SS) then
-		    (bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc ?meta-fact (remove$ (fact-slot-names ?meta-fact) ss-shelf-slot)))
-		    (bind ?positions (fact-slot-value ?meta-fact ss-shelf-slot))
+		    (bind ?machine-meta-doc (mongodb-fact-to-bson-append ?history-doc ?meta-fact (remove$ (fact-slot-names ?meta-fact) current-shelf-slot)))
+		    (bind ?positions (fact-slot-value ?meta-fact current-shelf-slot))
 		    (bson-append ?history-doc "shelf" (nth$ 1 ?positions))
 		    (bson-append ?history-doc "slot" (nth$ 2 ?positions))
 

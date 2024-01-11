@@ -86,9 +86,9 @@
 				 then
 					(printout t "Prepared " ?mname " to RETRIEVE (" ?shelf "," ?slot ")" crlf)
 					(modify ?m (state PREPARED) (wait-for-product-since ?gt))
-					(modify ?meta (ss-operation ?operation)
-					              (ss-shelf-slot ?shelf ?slot)
-					              (ss-wp-description ?description))
+					(modify ?meta (current-operation ?operation)
+					              (current-shelf-slot ?shelf ?slot)
+					              (current-wp-description ?description))
 				 else
 					(modify ?m (state BROKEN)
 					           (broken-reason (str-cat "Prepare received for " ?mname
@@ -105,9 +105,9 @@
 					 else
 						(printout t "Prepared " ?mname " to STORE (" ?shelf "," ?slot ")" crlf)
 						(modify ?m (state PREPARED) (wait-for-product-since ?gt))
-						(modify ?meta (ss-operation ?operation)
-						              (ss-shelf-slot ?shelf ?slot)
-						              (ss-wp-description ?new-description))
+						(modify ?meta (current-operation ?operation)
+						              (current-shelf-slot ?shelf ?slot)
+						              (current-wp-description ?new-description))
 					)
 				)
 				(if (eq ?operation CHANGE_INFO)
@@ -656,7 +656,7 @@
 	"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING|PREPARED) (task nil))
-	(ss-meta (ss-shelf-slot ?shelf ?slot&:(eq 1 (mod ?slot 2))))
+	(ss-meta (current-shelf-slot ?shelf ?slot&:(eq 1 (mod ?slot 2))))
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible FALSE))
 	?s <- (machine-ss-shelf-slot (position ?shelf ?front-slot&:(ss-slot-blocked-by ?slot ?front-slot))
 	                             (is-filled TRUE) (is-accessible TRUE))
@@ -685,7 +685,7 @@
 	"Start moving the workpiece to the middle if the SS is PREPARED."
 	(gamestate (state RUNNING) (phase PRODUCTION))
 	?m <- (machine (name ?n) (mtype SS) (state PREPARED|PROCESSING) (task nil))
-	(ss-meta (name ?n) (ss-shelf-slot ?shelf ?slot) (ss-operation STORE))
+	(ss-meta (name ?n) (current-shelf-slot ?shelf ?slot) (current-operation STORE))
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled FALSE)
 	                       (is-accessible TRUE))
 	=>
@@ -702,7 +702,7 @@
 	"
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PREPARED) (task nil))
-	(ss-meta (name ?n) (ss-operation ?ss-op) (ss-shelf-slot ?shelf ?slot))
+	(ss-meta (name ?n) (current-operation ?ss-op) (current-shelf-slot ?shelf ?slot))
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible FALSE))
 	(not (machine-ss-shelf-slot (name ?n) (is-accessible TRUE) (is-filled FALSE)))
 	=>
@@ -745,7 +745,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (team ?team) (mtype SS) (state PREPARED|PROCESSING)
 	               (task RELOCATE) (mps-busy FALSE))
-	(ss-meta (name ?n) (ss-shelf-slot ?shelf ?slot))
+	(ss-meta (name ?n) (current-shelf-slot ?shelf ?slot))
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?curr-shelf ?curr-slot)
 	                             (move-to ?target-shelf ?target-slot)
 	                             (description ?description)
@@ -773,7 +773,7 @@
 	"SS is prepared for retrieval, get the product from the shelf."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING|PREPARED) (task nil))
-	(ss-meta (name ?n) (ss-operation ?ss-op&RETRIEVE) (ss-shelf-slot ?shelf ?slot))
+	(ss-meta (name ?n) (current-operation ?ss-op&RETRIEVE) (current-shelf-slot ?shelf ?slot))
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible TRUE) (is-filled TRUE))
 	=>
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op) (mps-busy WAIT))
@@ -786,7 +786,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PREPARED|PROCESSING)
 	               (task MOVE-MID) (mps-busy FALSE))
-	(ss-meta (name ?n) (ss-operation ?ss-op&STORE) (ss-shelf-slot ?shelf ?slot))
+	(ss-meta (name ?n) (current-operation ?ss-op&STORE) (current-shelf-slot ?shelf ?slot))
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible TRUE) (is-filled FALSE))
 	=>
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?ss-op) (mps-busy WAIT))
@@ -799,7 +799,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (team ?team)
 	               (task RETRIEVE) (mps-busy FALSE))
-	(ss-meta (name ?n) (ss-shelf-slot ?shelf ?slot))
+	(ss-meta (name ?n) (current-shelf-slot ?shelf ?slot))
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled TRUE))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
@@ -820,7 +820,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (task STORE)
 	               (mps-busy FALSE) (team ?team))
-	(ss-meta (ss-shelf-slot ?shelf ?slot) (ss-wp-description ?description))
+	(ss-meta (current-shelf-slot ?shelf ?slot) (current-wp-description ?description))
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled FALSE))
 	=>
 	(printout t "Machine " ?n " finished storage at (" ?shelf ", " ?slot ")" crlf)

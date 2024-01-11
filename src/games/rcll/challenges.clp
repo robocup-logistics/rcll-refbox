@@ -272,7 +272,7 @@
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
 	  (modify ?machine (productions 0) (state IDLE) (operation-mode RETRIEVE_CAP)
-	             (ss-operation STORE)
+	             (current-operation STORE)
 	             (proc-start 0.0))
 	)
 	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE

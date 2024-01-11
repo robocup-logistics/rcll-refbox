@@ -834,7 +834,7 @@ Data::get_machine_info_fact(T                                  *o,
 		if (match(meta_fact, "ds-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
 			json_string.SetInt((get_value<int64_t>(meta_fact, "order-id")));
-			(*o).AddMember("ds_order", json_string, alloc);
+			(*o).AddMember("order_id", json_string, alloc);
 			break;
 		}
 		meta_fact = meta_fact->next();

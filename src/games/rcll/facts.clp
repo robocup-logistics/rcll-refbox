@@ -101,9 +101,9 @@
 
 (deftemplate ss-meta
   (slot name (type SYMBOL))
-  (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
-  (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
-  (slot ss-wp-description (type STRING))
+  (slot current-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
+  (multislot current-shelf-slot (type INTEGER) (cardinality 2 2))
+  (slot current-wp-description (type STRING))
 )
 
 (deftemplate machine-mps-state

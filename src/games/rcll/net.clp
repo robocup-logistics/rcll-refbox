@@ -716,8 +716,8 @@
 	  )
 	  (case SS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f ss-operation))
-	    (bind ?shelf-slot (fact-slot-value ?meta-f ss-shelf-slot))
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f current-operation))
+	    (bind ?shelf-slot (fact-slot-value ?meta-f current-shelf-slot))
 	    (pb-set-field ?pm "shelf" (nth$ 1 ?shelf-slot))
 	    (pb-set-field ?pm "slot" (nth$ 2 ?shelf-slot))
 	    (pb-set-field ?m "instruction_ss" ?pm)
