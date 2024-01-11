@@ -818,7 +818,7 @@
 	?rh <- (robot-history (state ?s) (warning-sent ?ws) (has-pose ?hp)
       (number ?n) (team ?t) (x ?x) (y ?y) (ori ?ori)
       (maintenance-start-time ?mst) (maintenance-cycles ?mc)
-      (maintenance-warning-sent ?mws) (pose-time $?pt)
+      (maintenance-warning-sent ?mws) (pose-time $?pt) (is-latest TRUE)
 	)
 	?robot <- (robot (number ?n) (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (team ?t) (pose ?n-x ?n-y ?n-ori) (pose-time $?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws))
 	(test (or (neq
