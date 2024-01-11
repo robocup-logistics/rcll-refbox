@@ -318,7 +318,7 @@
 	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
 	; do not delete rs-meta as the ring-colors are set later in this rule
 	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
-	  (modify ?rs-meta (mps-base-counter 0)
+	  (modify ?rs-meta (slide-counter 0)
 	                   (bases-added 0)
 	                   (bases-used 0)
 	  )
@@ -637,7 +637,7 @@
 	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
 	; do not delete rs-meta as the ring-colors are set later in this rule
 	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
-	  (modify ?rs-meta (mps-base-counter 0)
+	  (modify ?rs-meta (slide-counter 0)
 	                   (bases-added 0)
 	                   (bases-used 0)
 	  )

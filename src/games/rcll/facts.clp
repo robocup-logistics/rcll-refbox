@@ -87,14 +87,14 @@
     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (multislot available-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (slot mps-base-counter (type INTEGER) (default 0))
+  (slot slide-counter (type INTEGER) (default 0))
   (slot bases-added (type INTEGER) (default 0))
   (slot bases-used (type INTEGER) (default 0))
 )
 
 (deftemplate ds-meta
   (slot name (type SYMBOL))
-  (slot ds-gate (type INTEGER))
+  (slot gate (type INTEGER))
 ;  (slot ds-last-gate (type INTEGER))
   (slot order-id (type INTEGER))
 )

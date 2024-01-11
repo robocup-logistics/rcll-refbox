@@ -710,7 +710,7 @@
 	    )
 	  (case DS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
-	    (pb-set-field ?pm "gate" (fact-slot-value ?meta-f ds-gate))
+	    (pb-set-field ?pm "gate" (fact-slot-value ?meta-f gate))
 	    (pb-set-field ?pm "order_id" (fact-slot-value ?meta-f order-id))
 	    (pb-set-field ?m "instruction_ds" ?pm)
 	  )

@@ -38,13 +38,13 @@
 		(bind ?order-id (pb-field-value ?prepmsg "order_id"))
 		(if (not (do-for-fact ((?order order)) (eq ?order:id ?order-id)
 			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
-			(modify ?meta (order-id ?order-id) (ds-gate ?order:delivery-gate))
+			(modify ?meta (order-id ?order-id) (gate ?order:delivery-gate))
 			(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			))
 		 then
 			(if (eq (pb-field-value ?prepmsg "order_id") 0) then
 				(printout t "Prepared " ?mname " to consume product not belonging to any order (id 0)" crlf)
-				(modify ?meta (order-id ?order-id) (ds-gate 1))
+				(modify ?meta (order-id ?order-id) (gate 1))
 				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			 else
 				(modify ?m (state BROKEN)
@@ -347,11 +347,11 @@
 (defrule production-mps-feedback-rs-new-base-on-slide
 	"Process a SLIDE-COUNTER event sent by the PLC. Do not directly increase the
 	 counter but assert a transient mps-add-base-on-slide fact instead."
-	?m <- (rs-meta (name ?n) (mps-base-counter ?mps-counter))
+	?m <- (rs-meta (name ?n) (slide-counter ?mps-counter))
 	?fb <- (mps-status-feedback ?n SLIDE-COUNTER ?new-counter&:(> ?new-counter ?mps-counter))
 	=>
 	(retract ?fb)
-	(modify ?m (mps-base-counter ?new-counter))
+	(modify ?m (slide-counter ?new-counter))
 	(assert (mps-add-base-on-slide ?n))
 )
 
@@ -419,7 +419,7 @@
    feedback once."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (machine (name ?n) (mtype RS) (state PREPARED))
-  (rs-meta (name ?n) (mps-base-counter ?mps-counter)
+  (rs-meta (name ?n) (slide-counter ?mps-counter)
            (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
              (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
@@ -596,7 +596,7 @@
   "DS is prepared for order id 0."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil))
-	(ds-meta (name ?n) (order-id 0) (ds-gate ?gate))
+	(ds-meta (name ?n) (order-id 0) (gate ?gate))
 	=>
   (printout t "Machine " ?n " processing consumption" crlf)
 	(assert (send-machine-update))
