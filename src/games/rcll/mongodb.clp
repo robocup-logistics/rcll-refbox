@@ -558,15 +558,6 @@
 	(bson-array-finish ?doc "ring_specs" ?ring-spec-arr)
 
 	(bind ?m-arr (bson-array-start))
-	(do-for-all-facts ((?m machine-ss-shelf-slot)) ?m:is-filled
-		(bind ?ss-doc (mongodb-fact-to-bson ?m (create$ name description)))
-		(bson-append ?ss-doc "shelf" (nth$ 1 ?m:position))
-		(bson-append ?ss-doc "slot" (nth$ 1 ?m:position))
-		(bson-array-append ?m-arr ?ss-doc)
-		(bson-builder-destroy ?ss-doc)
-	)
-	(bson-array-finish ?doc "machine_ss_shelf_slots" ?m-arr)
-	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine)) TRUE
 		(bind ?machine-doc (mongodb-fact-to-bson ?m (create$ name team mtype rotation pose zone)))
 		(if (eq ?m:mtype RS) then
