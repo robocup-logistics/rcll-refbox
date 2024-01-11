@@ -791,8 +791,9 @@
 
 (defrule game-create-first-robot-history
 	(not (robot-history (number ?n) (team ?team)))
-	?robot <- (robot (number ?n) (state ?s) (warning-sent ?ws) (has-pose ?hp) (team ?t) (pose ?x ?y ?ori) (pose-time $?pt) (maintenance-start-time ?mst) (maintenance-cycles ?mc) (maintenance-warning-sent ?mws))
+	?robot <- (robot (number ?n) (state ?s) (warning-sent ?ws) (has-pose ?hp) (team ?t) (team-color ?team-color) (pose ?x ?y ?ori) (pose-time $?pt) (maintenance-start-time ?mst) (maintenance-cycles ?mc) (maintenance-warning-sent ?mws))
 	(time $?now)
+	
 	=>
 	(assert (robot-history
 	  (state ?s)
@@ -800,9 +801,8 @@
       (has-pose ?hp)
       (number ?n)
 	  (team ?t)
-      (x ?x)
-      (y ?y)
-      (ori ?ori)
+	  (team-color ?team-color)
+      (pose ?x ?y ?ori)
       (maintenance-start-time ?mst)
       (maintenance-cycles ?mc)
       (maintenance-warning-sent ?mws)
@@ -816,19 +816,19 @@
 (defrule game-create-next-robot-history
 	(declare (salience ?*PRIORITY_HIGHER*))
 	?rh <- (robot-history (state ?s) (warning-sent ?ws) (has-pose ?hp)
-      (number ?n) (team ?t) (x ?x) (y ?y) (ori ?ori)
+      (number ?n) (team ?t) (team-color ?tc) (pose $?pose)
       (maintenance-start-time ?mst) (maintenance-cycles ?mc)
       (maintenance-warning-sent ?mws) (pose-time $?pt) (is-latest TRUE)
 	)
-	?robot <- (robot (number ?n) (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (team ?t) (pose ?n-x ?n-y ?n-ori) (pose-time $?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws))
+	?robot <- (robot (number ?n) (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (team ?t) (team-color ?tc) (pose $?n-pose) (pose-time $?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws))
 	(test (or (neq
 	(create$ ?n-s ?n-ws ?n-hp ?n-mst ?n-mc ?n-ws)
 	(create$ ?s ?ws ?hp ?mst ?mc ?ws))
-	  (and (neq (create$ ?n-x ?n-y ?n-ori) (create$ ?x ?y ?ori))
+	  (and (neq ?n-pose ?pose)
 	       (time-diff-sec ?n-pt ?pt) 5)))
 	(time $?now)
 	=>
-	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (x ?n-x) (y ?n-y) (ori ?n-ori) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now))
+	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now))
 	(modify ?rh (is-latest FALSE))
 )
 
