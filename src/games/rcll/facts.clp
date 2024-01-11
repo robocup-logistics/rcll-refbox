@@ -76,16 +76,16 @@
 
 (deftemplate cs-meta
   (slot name (type SYMBOL))
-  (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
-  (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
-  (slot cs-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
+  (slot operation-mode (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
+  (slot has-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot current-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
 )
 
 (deftemplate rs-meta
   (slot name (type SYMBOL))
-  (slot rs-ring-color (type SYMBOL)
+  (slot current-ring-color (type SYMBOL)
     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
+  (multislot available-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot mps-base-counter (type INTEGER) (default 0))
   (slot bases-added (type INTEGER) (default 0))

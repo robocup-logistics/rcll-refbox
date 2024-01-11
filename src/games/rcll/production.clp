@@ -138,11 +138,11 @@
 	 then
 		(bind ?prepmsg (pb-field-value ?p "instruction_rs"))
 		(bind ?ring-color (sym-cat (pb-field-value ?prepmsg "ring_color")))
-		(if (member$ ?ring-color (fact-slot-value ?meta rs-ring-colors))
+		(if (member$ ?ring-color (fact-slot-value ?meta available-colors))
 		 then
 			(printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
 			(modify ?m (state PREPARED) (wait-for-product-since ?gt))
-			(modify ?meta (rs-ring-color ?ring-color))
+			(modify ?meta (current-ring-color ?ring-color))
 		 else
 			(modify ?m (state BROKEN)
 			           (broken-reason (str-cat "Prepare received for " ?mname " for invalid ring color (" ?ring-color ")")))
@@ -161,10 +161,10 @@
 		(switch ?cs-op
 
 		 (case RETRIEVE_CAP then
-			(if (not (fact-slot-value ?meta cs-retrieved))
+			(if (not (fact-slot-value ?meta has-retrieved))
 			 then
 				(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-				(modify ?meta (cs-operation ?cs-op))
+				(modify ?meta (operation-mode ?cs-op))
 				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			 else
 				(modify ?m (state BROKEN)
@@ -172,10 +172,10 @@
 				                                   "cannot retrieve while already holding")))
 		 ))
 		 (case MOUNT_CAP then
-			(if (fact-slot-value ?meta cs-retrieved)
+			(if (fact-slot-value ?meta has-retrieved)
 			 then
 				(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
-				(modify ?meta (cs-operation ?cs-op))
+				(modify ?meta (operation-mode ?cs-op))
 				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 			 else
 				(modify ?m (state BROKEN)
@@ -400,7 +400,7 @@
   "The RS has been prepared but it does not have sufficient additional material; switch to BROKEN."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED))
-  (rs-meta (name ?n) (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
+  (rs-meta (name ?n) (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
 	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
 	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?n "/connection")))
@@ -420,7 +420,7 @@
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   (machine (name ?n) (mtype RS) (state PREPARED))
   (rs-meta (name ?n) (mps-base-counter ?mps-counter)
-           (rs-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
+           (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
              (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
   (not (mps-status-feedback ?n SLIDE-COUNTER ?))
@@ -437,7 +437,7 @@
   "The RS is PREPARED. Start moving the workpiece to the middle to mount a ring."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task nil))
-  (rs-meta (name ?n) (rs-ring-color ?ring-color) (rs-ring-colors $?ring-colors)
+  (rs-meta (name ?n) (current-ring-color ?ring-color) (available-colors $?ring-colors)
            (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases&:(>= (- ?ba ?bu) ?req-bases)))
   =>
@@ -450,8 +450,8 @@
   "Workpiece is in the middle of the conveyor belt of the RS, mount a ring."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE))
-	?meta <- (rs-meta (name ?n) (rs-ring-color ?ring-color)
-	                  (rs-ring-colors $?ring-colors) (bases-used ?bu))
+	?meta <- (rs-meta (name ?n) (current-ring-color ?ring-color)
+	                  (available-colors $?ring-colors) (bases-used ?bu))
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
 	=>
 	(printout t "Machine " ?n ": mount ring" crlf)
@@ -466,7 +466,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PROCESSING)
 	               (task MOUNT-RING) (mps-busy FALSE) (team ?team))
-	(rs-meta (name ?n) (rs-ring-color ?ring-color))
+	(rs-meta (name ?n) (current-ring-color ?ring-color))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
 	(assert (product-processed (at-machine ?n) (mtype RS) (team ?team)
@@ -518,7 +518,7 @@
   "Start moving the workpiece to the middle if the CS is PREPARED."
   (gamestate (state RUNNING) (phase PRODUCTION))
   ?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task nil))
-  (cs-meta (name ?n) (cs-operation ?cs-op))
+  (cs-meta (name ?n) (operation-mode ?cs-op))
   =>
   (printout t "Machine " ?n " prepared for " ?cs-op crlf)
   (modify ?m (task MOVE-MID) (mps-busy WAIT))
@@ -530,7 +530,7 @@
 	 on the instructed task."
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE))
-	(cs-meta (name ?n) (cs-operation ?cs-op))
+	(cs-meta (name ?n) (operation-mode ?cs-op))
 	=>
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task ?cs-op) (mps-busy WAIT))
 	(assert (send-machine-update))
@@ -549,7 +549,7 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (team ?team)
 	                 (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP) (mps-busy FALSE))
-	?cs-meta <- (cs-meta (name ?n) (cs-operation ?cs-op))
+	?cs-meta <- (cs-meta (name ?n) (operation-mode ?cs-op))
 	(workpiece-tracking (enabled ?wt-enabled))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
@@ -566,7 +566,7 @@
 	)
 	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
 	(assert (send-machine-update))
-	(modify ?cs-meta (cs-retrieved (eq ?cs-op RETRIEVE_CAP)))
+	(modify ?cs-meta (has-retrieved (eq ?cs-op RETRIEVE_CAP)))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
@@ -861,7 +861,7 @@
 	"The MPS is BROKEN. Inform the referee and reset the machine to stop the conveyor belt."
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0))
-                 ;(bases-added ?ba) (bases-used ?bu) (cs-retrieved ?cap-loaded))
+                 ;(bases-added ?ba) (bases-used ?bu) (has-retrieved ?cap-loaded))
   =>
   (printout t "Machine " ?n " broken: " ?reason crlf)
   (assert (attention-message (team ?team) (text ?reason)))
@@ -878,7 +878,7 @@
   )
   (do-for-fact ((?meta cs-meta)) (eq ?meta:name ?n)
     ; Revoke points awarded for an unused cap at CS
-    (if ?meta:cs-retrieved then
+    (if ?meta:has-retrieved then
       (assert (points (game-time ?gt) (team ?team) (phase PRODUCTION)
                       (points (* -1  ?*PRODUCTION-POINTS-RETRIEVE-CAP*))
                       (reason (str-cat "Deducting retrieved cap at " ?n))))
@@ -900,7 +900,7 @@
 		(modify ?meta (bases-used ?meta:bases-added))
 	)
 	(do-for-fact ((?meta cs-meta)) (eq ?meta:name ?n)
-		(modify ?meta (cs-retrieved FALSE))
+		(modify ?meta (has-retrieved FALSE))
 	)
 )
 

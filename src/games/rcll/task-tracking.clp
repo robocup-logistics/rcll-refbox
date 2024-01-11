@@ -546,10 +546,10 @@
   ; place workpiece at output
   (bind ?wp-name nil)
   (bind ?c-col CAP_UNKNOWN)
-  (bind ?cs-retrieved nil)
+  (bind ?has-retrieved nil)
   (bind ?cs-meta-fact nil)
   (do-for-fact ((?cs-meta cs-meta)) (eq ?cs-meta:name ?m-name)
-    (bind ?cs-retrieved ?cs-meta:cs-retrieved)
+    (bind ?has-retrieved ?cs-meta:cs-retrieved)
     (bind ?cs-meta-fact ?cs-meta)
   )
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
@@ -565,16 +565,16 @@
                          (unknown-action FALSE)
                          (ring-colors (append$ ?wp:ring-colors ?r-color))
                          (at-side OUTPUT)))
-        (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
+        (if (and (eq ?r-color nil) (eq ?has-retrieved FALSE)) then
           ; mounted cap
           (printout ?*AGENT-TASK-ROUTER* ?wp-name " is now mounting a cap!" crlf)
-          (bind ?c-col (fact-slot-value ?cs-meta-fact cs-cap-color))
+          (bind ?c-col (fact-slot-value ?cs-meta-fact current-cap-color))
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
                          (cap-color ?c-col)
                          (at-side OUTPUT))
-          (modify ?cs-meta-fact (cs-cap-color nil)))
-        (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
+          (modify ?cs-meta-fact (current-cap-color nil)))
+        (if (and (eq ?r-color nil) (eq ?has-retrieved TRUE)) then
           ; retrieved cap
           (printout ?*AGENT-TASK-ROUTER* ?wp-name " retrieved a cap!" crlf)
           (duplicate ?wp (start-time ?gt)
@@ -584,7 +584,7 @@
           (if (or (eq ?wp:cap-color CAP_BLACK)
                   (eq ?wp:cap-color CAP_GREY)) then
             (bind ?c-col ?wp:cap-color))
-          (modify ?cs-meta-fact (cs-cap-color ?c-col)))
+          (modify ?cs-meta-fact (current-cap-color ?c-col)))
         (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
           (printout ?*AGENT-TASK-ROUTER* ?m-name " processed workpiece" ?wp-name " with ring AND cap infos!" crlf))
         (modify ?wp (latest-data FALSE) (end-time ?gt))
@@ -621,7 +621,7 @@
                          (base-color nil)
                          (ring-colors ?r-color)
                          (cap-color nil))))
-    (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
+    (if (and (eq ?r-color nil) (eq ?has-retrieved FALSE)) then
       ; mounted cap
       (printout ?*AGENT-TASK-ROUTER* "unknown workpiece " ?wp-name " is now mounting a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
@@ -647,8 +647,8 @@
                          (at-side OUTPUT)
                          (base-color nil)
                          (cap-color ?c-col)))
-      (modify ?cs-meta-fact (cs-cap-color nil)))
-    (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
+      (modify ?cs-meta-fact (current-cap-color nil)))
+    (if (and (eq ?r-color nil) (eq ?has-retrieved TRUE)) then
       ; retrieved cap
       (printout ?*AGENT-TASK-ROUTER* "unknown workpiece " ?wp-name " retrieved a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
@@ -674,7 +674,7 @@
                          (at-side OUTPUT)
                          (base-color nil)
                          (cap-color nil)))
-      (modify ?cs-meta-fact (cs-cap-color ?c-col)))
+      (modify ?cs-meta-fact (current-cap-color ?c-col)))
     (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
       (printout ?*AGENT-TASK-ROUTER* ?m-name " processed unknown workpiece " ?wp-name " with ring AND cap infos!" crlf))
   )

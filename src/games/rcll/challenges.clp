@@ -238,7 +238,7 @@
 			(progn$ (?str-color ?rc:list-value)
 				(bind ?ring-colors (append$ ?ring-colors (sym-cat ?str-color))))
 			(do-for-fact ((?rs-meta rs-meta)) (eq ?rs-meta:name ?m:name)
-				(modify ?rs-meta (rs-ring-colors ?ring-colors))
+				(modify ?rs-meta (available-colors ?ring-colors))
 			)
 		)
 		(bind ?spec-prefix "/llsfrb/challenges/machine-setup/ring-specs/")
@@ -271,7 +271,7 @@
 	=>
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
+	  (modify ?machine (productions 0) (state IDLE) (operation-mode RETRIEVE_CAP)
 	             (ss-operation STORE)
 	             (proc-start 0.0))
 	)

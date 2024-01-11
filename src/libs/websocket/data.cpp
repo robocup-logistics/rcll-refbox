@@ -800,24 +800,24 @@ Data::get_machine_info_fact(T                                  *o,
 	while (meta_fact) {
 		if (match(meta_fact, "cs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			json_string.SetString((get_value<std::string>(meta_fact, "cs-operation")).c_str(), alloc);
-			(*o).AddMember("cs_operation", json_string, alloc);
-			json_string.SetBool((get_value<bool>(meta_fact, "cs-retrieved")));
-			(*o).AddMember("cs_retrieved", json_string, alloc);
+			json_string.SetString((get_value<std::string>(meta_fact, "operation-mode")).c_str(), alloc);
+			(*o).AddMember("operation_mode", json_string, alloc);
+			json_string.SetBool((get_value<bool>(meta_fact, "has-retrieved")));
+			(*o).AddMember("has_retrieved", json_string, alloc);
 			break;
 		}
 		if (match(meta_fact, "rs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			json_string.SetString((get_value<std::string>(meta_fact, "rs-ring-color")).c_str(), alloc);
-			(*o).AddMember("rs_ring_color", json_string, alloc);
+			json_string.SetString((get_value<std::string>(meta_fact, "current-color")).c_str(), alloc);
+			(*o).AddMember("current_color", json_string, alloc);
 			rapidjson::Value ring_array(rapidjson::kArrayType);
-			ring_array.Reserve(get_values(meta_fact, "rs-ring-colors").size(), alloc);
-			for (const auto &e : get_values(meta_fact, "rs-ring-colors")) {
+			ring_array.Reserve(get_values(meta_fact, "available-colors").size(), alloc);
+			for (const auto &e : get_values(meta_fact, "available-colors")) {
 				rapidjson::Value v;
 				v.SetString(e, alloc);
 				ring_array.PushBack(v, alloc);
 			}
-			(*o).AddMember("rs_ring_colors", ring_array, alloc);
+			(*o).AddMember("available_colors", ring_array, alloc);
 			json_string.SetInt((get_value<int64_t>(meta_fact, "bases-added")));
 			(*o).AddMember("bases_added", json_string, alloc);
 			json_string.SetInt((get_value<int64_t>(meta_fact, "bases-used")));

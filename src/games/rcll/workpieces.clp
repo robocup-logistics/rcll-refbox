@@ -68,7 +68,7 @@
       ;Simulate Ring mouting processes
       (foreach ?r ?order:ring-colors
         (do-for-fact ((?m machine)) (and (eq ?m:mtype RS)(eq ?m:team ?team)
-                                         (member$ ?r ?m:rs-ring-colors))
+                                         (member$ ?r ?m:available-colors))
            (assert (product-processed (mtype RS)
                                       (team ?team)
                                       (confirmed TRUE)

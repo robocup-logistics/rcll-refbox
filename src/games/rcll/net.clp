@@ -658,9 +658,9 @@
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
-             (eq ?mtype RS) (> (length$ (fact-slot-value ?meta-f rs-ring-colors)) 0))
+             (eq ?mtype RS) (> (length$ (fact-slot-value ?meta-f available-colors)) 0))
      then
-     (foreach ?rc (fact-slot-value ?meta-f rs-ring-colors)
+     (foreach ?rc (fact-slot-value ?meta-f available-colors)
        (pb-add-list ?m "ring_colors" ?rc)
      )
     )
@@ -687,7 +687,7 @@
       )
       (if (eq ?mtype CS) then
         (pb-set-field ?m "loaded_with"
-          (if (fact-slot-value ?meta-f cs-retrieved) then 1 else 0))
+          (if (fact-slot-value ?meta-f has-retrieved) then 1 else 0))
       )
 
       (foreach ?l (fact-slot-value ?mlf actual-lights)
@@ -724,12 +724,12 @@
 	  )
 	  (case RS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionRS"))
-	    (pb-set-field ?pm "ring_color" (fact-slot-value ?meta-f rs-ring-color))
+	    (pb-set-field ?pm "ring_color" (fact-slot-value ?meta-f current-ring-color))
 	    (pb-set-field ?m "instruction_rs" ?pm)
 	  )
 	  (case CS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionCS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f cs-operation))
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f operation-mode))
 	    (pb-set-field ?m "instruction_cs" ?pm)
 	  )
         )

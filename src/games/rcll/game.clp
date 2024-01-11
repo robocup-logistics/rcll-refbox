@@ -394,7 +394,7 @@
   ; Print required additional bases
   (do-for-all-facts ((?m machine) (?meta rs-meta))
     (and (eq ?m:mtype RS) (eq ?m:name ?meta:name))
-    (printout t "RS " ?meta:name " has colors " ?meta:rs-ring-colors crlf)
+    (printout t "RS " ?meta:name " has colors " ?meta:available-colors crlf)
   )
 
 	; Print machine swapping info
