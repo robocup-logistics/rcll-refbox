@@ -465,6 +465,7 @@
   (slot description (type STRING) (default ""))
   (slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot game-time (type FLOAT) (default 0.0))
   (slot fact-string (type STRING))
 )
 
@@ -483,6 +484,7 @@
   (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
   (multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot game-time (type FLOAT) (default 0.0))
   (slot fact-string (type STRING))
 )
 

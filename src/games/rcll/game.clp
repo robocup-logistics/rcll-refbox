@@ -793,7 +793,7 @@
 	(not (robot-history (number ?n) (team ?team)))
 	?robot <- (robot (number ?n) (state ?s) (warning-sent ?ws) (has-pose ?hp) (team ?t) (team-color ?team-color) (pose ?x ?y ?ori) (pose-time $?pt) (maintenance-start-time ?mst) (maintenance-cycles ?mc) (maintenance-warning-sent ?mws))
 	(time $?now)
-	
+	(gamestate (game-time ?gt))
 	=>
 	(assert (robot-history
 	  (state ?s)
@@ -808,6 +808,7 @@
       (maintenance-warning-sent ?mws)
       (pose-time ?pt)
       (time ?now)
+      (game-time ?gt)
       (fact-string (fact-to-string ?robot))
 	  )
 	)
@@ -827,8 +828,9 @@
 	  (and (neq ?n-pose ?pose)
 	       (time-diff-sec ?n-pt ?pt) 5)))
 	(time $?now)
+	(gamestate (game-time ?gt))
 	=>
-	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now))
+	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now) (game-time ?gt))
 	(modify ?rh (is-latest FALSE))
 )
 
@@ -836,9 +838,10 @@
     ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?filled) (description  ?desc))
 	(not (shelf-slot-history (name ?name) (shelf ?shelf) (slot ?slot)))
 	(time $?now)
+	(gamestate (game-time ?gt))
 	=>
 	(assert (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description ?desc)
-	  (time $?now) (fact-string (fact-to-string ?sf))))
+	  (time $?now) (game-time ?gt) (fact-string (fact-to-string ?sf))))
 )
 
 (defrule game-create-next-shelf-slot-history
@@ -847,8 +850,9 @@
     ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?new-filled) (description  ?new-desc))
 	(test (or (neq ?filled ?new-filled) (neq ?desc ?new-desc)))
 	(time $?now)
+	(gamestate (game-time ?gt))
 	=>
-    (duplicate ?hf (is-filled ?new-filled) (description ?new-desc) (fact-string (fact-to-string ?sf)) (time ?now))
+    (duplicate ?hf (is-filled ?new-filled) (description ?new-desc) (fact-string (fact-to-string ?sf)) (time ?now) (game-time ?gt))
 	(modify ?hf (is-latest FALSE))
 )
 
