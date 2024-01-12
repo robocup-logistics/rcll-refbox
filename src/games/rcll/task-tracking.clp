@@ -549,7 +549,7 @@
   (bind ?has-retrieved nil)
   (bind ?cs-meta-fact nil)
   (do-for-fact ((?cs-meta cs-meta)) (eq ?cs-meta:name ?m-name)
-    (bind ?has-retrieved ?cs-meta:cs-retrieved)
+    (bind ?has-retrieved ?cs-meta:has-retrieved)
     (bind ?cs-meta-fact ?cs-meta)
   )
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
