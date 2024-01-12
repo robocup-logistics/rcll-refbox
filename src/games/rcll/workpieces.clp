@@ -293,14 +293,14 @@
                               (confirmed FALSE)
                               (workpiece ?wp-id)
                               (at-machine ?m-name)
-                              (base-color ?bs-color))
+                              (base-color ?current-base-color))
     =>
     (printout t "Workpiece " ?id ": at " ?m-name ", processed"crlf)
-    (if (neq ?bs-color ?base-color)
+    (if (neq ?current-base-color ?base-color)
       then (printout t "Workpiece correction ["
-                       ?base-color  "->" ?bs-color "]" crlf)
+                       ?base-color  "->" ?current-base-color "]" crlf)
     )
-    (duplicate ?wf (start-time ?gt) (base-color ?bs-color))
+    (duplicate ?wf (start-time ?gt) (base-color ?current-base-color))
     (modify ?wf (latest-data FALSE) (end-time ?gt))
     (modify ?pf (workpiece ?id) (confirmed TRUE))
 )

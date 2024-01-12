@@ -23,7 +23,7 @@
 		(bind ?side (sym-cat (pb-field-value ?prepmsg "side")))
 		(bind ?color (sym-cat (pb-field-value ?prepmsg "color")))
 		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
-		(modify ?meta (bs-side ?side) (bs-color ?color))
+		(modify ?meta (current-side ?side) (current-base-color ?color))
 		(modify ?m (state PREPARED) (wait-for-product-since ?gt))
 	 else
 		(modify ?m (state BROKEN)
@@ -369,7 +369,7 @@
   "Start dispensing a base from a prepared BS"
   (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PREPARED))
-	(bs-meta (name ?n) (bs-color ?color))
+	(bs-meta (name ?n) (current-base-color ?color))
   =>
   (printout t "Machine " ?n " dispensing " ?color " base" crlf)
 	(modify ?m (state PROCESSING) (proc-start ?gt) (task DISPENSE) (mps-busy WAIT))
@@ -382,11 +382,11 @@
 	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE)
 	               (mps-busy FALSE) (team ?team))
-	(bs-meta (name ?n) (bs-side ?side) (bs-color ?bs-color))
+	(bs-meta (name ?n) (current-side ?side) (current-base-color ?current-base-color))
 	=>
 	(printout t "Machine " ?n " moving base to " ?side crlf)
 	(assert (product-processed (at-machine ?n) (mtype BS) (team ?team)
-	                           (game-time ?gt) (base-color ?bs-color)))
+	                           (game-time ?gt) (base-color ?current-base-color)))
 	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy WAIT))
 	(if (eq ?side INPUT)
 	 then

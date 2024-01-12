@@ -70,8 +70,8 @@
 
 (deftemplate bs-meta
   (slot name (type SYMBOL))
-  (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
-  (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
+  (slot current-side (type SYMBOL) (allowed-values INPUT OUTPUT))
+  (slot current-base-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
 )
 
 (deftemplate cs-meta

@@ -704,8 +704,8 @@
 	(switch (fact-slot-value ?mf mtype)
 	  (case BS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionBS"))
-	    (pb-set-field ?pm "side" (fact-slot-value ?meta-f bs-side))
-	    (pb-set-field ?pm "color" (fact-slot-value ?meta-f bs-color))
+	    (pb-set-field ?pm "side" (fact-slot-value ?meta-f current-side))
+	    (pb-set-field ?pm "color" (fact-slot-value ?meta-f current-base-color))
 	          (pb-set-field ?m "instruction_bs" ?pm)
 	    )
 	  (case DS then
