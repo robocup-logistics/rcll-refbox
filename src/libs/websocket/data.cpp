@@ -1245,8 +1245,18 @@ Data::get_workpiece_info_fact(T                                  *o,
 {
 	rapidjson::Value json_string;
 	//value fields
+	json_string.SetString((get_value<std::string>(fact, "name")).c_str(), alloc);
+	(*o).AddMember("name", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "at-machine")).c_str(), alloc);
 	(*o).AddMember("at_machine", json_string, alloc);
+	json_string.SetString((get_value<std::string>(fact, "at-side")).c_str(), alloc);
+	(*o).AddMember("at_side", json_string, alloc);
+	json_string.SetBool((get_value<bool>(fact, "holding")));
+	(*o).AddMember("holding", json_string, alloc);
+	json_string.SetInt((get_value<int64_t>(fact, "robot-holding")));
+	(*o).AddMember("robot_holding", json_string, alloc);
+	json_string.SetBool((get_value<bool>(fact, "unknown-action")));
+	(*o).AddMember("unknown_action", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
 	(*o).AddMember("state", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
