@@ -1265,9 +1265,9 @@ Data::get_workpiece_info_fact(T                                  *o,
 	(*o).AddMember("cap_color", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
 	(*o).AddMember("team", json_string, alloc);
-	json_string.SetFloat((get_value<int64_t>(fact, "id")));
+	json_string.SetInt((get_value<int64_t>(fact, "id")));
 	(*o).AddMember("id", json_string, alloc);
-	json_string.SetFloat((get_value<int64_t>(fact, "order")));
+	json_string.SetInt((get_value<int64_t>(fact, "order")));
 	(*o).AddMember("order", json_string, alloc);
 	json_string.SetFloat((get_value<float>(fact, "visible")));
 	(*o).AddMember("visible", json_string, alloc);
