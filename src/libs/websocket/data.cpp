@@ -1165,6 +1165,8 @@ Data::get_game_state_fact(T                                  *o,
 	(*o).AddMember("prev_phase", json_string, alloc);
 	json_string.SetFloat((get_value<float>(fact, "game-time")));
 	(*o).AddMember("game_time", json_string, alloc);
+	json_string.SetFloat((get_value<float>(fact, "cont-time")));
+	(*o).AddMember("cont_time", json_string, alloc);
 	json_string.SetBool((get_value<bool>(fact, "over-time")));
 	(*o).AddMember("over_time", json_string, alloc);
 	json_string.SetString((get_values(fact, "teams")[0]).c_str(), alloc);
