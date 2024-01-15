@@ -713,7 +713,12 @@ Data::pack_facts_to_doc(std::string tmpl_name, const std::vector<CLIPS::Fact::po
 	}
 	
 	// add 'content' array to the root object
-	root.AddMember("content", contentArray, root.GetAllocator());
+    if (contentArray.Size() > 1) {
+        root.AddMember("content", contentArray, root.GetAllocator());
+    } else if (contentArray.Size() == 1) {
+        // If there is only one element, add it directly without the array
+        root.AddMember("content", contentArray[0], root.GetAllocator());
+    }
 	return root;
 }
 
