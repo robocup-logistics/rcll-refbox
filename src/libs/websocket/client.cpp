@@ -167,14 +167,25 @@ ClientS::~ClientS()
 bool
 ClientS::send(std::string msg)
 {
-	const std::lock_guard<std::mutex> lock(wr_mu);
+    const std::lock_guard<std::mutex> lock(wr_mu);
 
-	boost::system::error_code error;
-	boost::asio::write(*socket, boost::asio::buffer(msg + "\n"), error);
-	if (error && error != boost::asio::error::eof) {
-		return false;
-	}
-	return true;
+    // Split the input string into individual messages
+    std::istringstream iss(msg);
+    std::string singleMsg;
+
+    while (std::getline(iss, singleMsg, '\n'))
+    {
+        // Send each message separately
+        boost::system::error_code error;
+        boost::asio::write(*socket, boost::asio::buffer(singleMsg + "\n"), error);
+
+        if (error && error != boost::asio::error::eof)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**

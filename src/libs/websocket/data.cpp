@@ -685,7 +685,7 @@ Data::on_connect_machine_info()
  * @return doc with facts
  */
 rapidjson::Document
-Data::pack_facts_to_doc(std::string tmpl_name, std::vector<CLIPS::Fact::pointer> &facts,
+Data::pack_facts_to_doc(std::string tmpl_name, const std::vector<CLIPS::Fact::pointer> &facts,
                       void (Data::*get_info_fact)(rapidjson::Value *,
                                                   rapidjson::Document::AllocatorType &,
                                                   CLIPS::Fact::pointer))
@@ -784,13 +784,25 @@ Data::on_connect_info(std::string tmpl_name,
                       void (Data::*get_info_fact)(rapidjson::Value *,
                                                   rapidjson::Document::AllocatorType &,
                                                   CLIPS::Fact::pointer))
-{
-	auto doc = pack_facts_to_doc(tmpl_name,get_info_fact);
-	//write to string and return
-	rapidjson::StringBuffer                    buffer;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	doc.Accept(writer);
-	return buffer.GetString();
+{   
+	std::ostringstream messages;
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, tmpl_name.c_str())) {
+	    // Perform the string buffer operations for each matching fact
+            auto doc = pack_facts_to_doc(tmpl_name, {fact}, get_info_fact);
+
+            // Write to string and append to messages
+            rapidjson::StringBuffer buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            doc.Accept(writer);
+
+            messages << buffer.GetString() << "\n";
+		}
+		fact = fact->next();
+	}
+	 // Return the accumulated messages as a single string
+    return messages.str();
 }
 
 /**

@@ -131,7 +131,7 @@ public:
                                                           rapidjson::Document::AllocatorType &,
                                                           CLIPS::Fact::pointer));
 		rapidjson::Document      pack_facts_to_doc(std::string tmpl_name,
-														  std::vector<CLIPS::Fact::pointer> &facts,
+														  const std::vector<CLIPS::Fact::pointer> &facts,
 	                                 void (Data::*get_info_fact)(rapidjson::Value *,
                                                           rapidjson::Document::AllocatorType &,
                                                           CLIPS::Fact::pointer));
