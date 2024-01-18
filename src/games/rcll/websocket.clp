@@ -54,7 +54,8 @@
 
 (defrule ws-update-unconfirmed-delivery
   "send update of an order, whenever the unconfirmed delivery information changes"
-  ?sf <- (product-processed (order ?id))
+  (product-processed (order ?id))
+  (order (id ?id))
   (gamestate (phase PRODUCTION|POST_GAME))
   =>
   (ws-create-OrderInfo ?id)
