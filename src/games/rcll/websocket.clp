@@ -125,6 +125,7 @@
     ws-send-attention-message
     ws-reset-machine-by-team
     ws-update-gamestate
+    ws-update-time-info
     ws-update-order
     ws-update-unconfirmed-delivery
     ws-update-order-external
