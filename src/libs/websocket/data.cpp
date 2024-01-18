@@ -737,7 +737,7 @@ Data::on_connect_robot_info()
 std::string
 Data::on_connect_ring_spec()
 {
-	return on_connect_info("ring-specs", &Data::get_ring_spec_fact<rapidjson::Value>);
+	return on_connect_info("ring-spec", &Data::get_ring_spec_fact<rapidjson::Value>);
 }
 
 /**
