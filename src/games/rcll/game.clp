@@ -736,6 +736,7 @@
 )
 
 (defrule game-create-first-machine-history
+  (declare (salience ?*PRIORITY_FIRST*))
 	?m <- (machine (name ?n) (state ?s))
 	(or ?mf <- (bs-meta (name ?n))
 	    ?mf <- (rs-meta (name ?n))
@@ -754,6 +755,7 @@
 )
 
 (defrule game-create-next-machine-history
+  (declare (salience ?*PRIORITY_FIRST*))
 	?m <- (machine (name ?n) (state ?s))
 	?hist <- (machine-history (name ?n) (state ?s-last&:(neq ?s ?s-last))
 	           (time $?last) (is-latest TRUE))
@@ -785,7 +787,7 @@
 )
 
 (defrule game-create-next-gamestate-history
-	(declare (salience ?*PRIORITY_HIGHER*))
+  (declare (salience ?*PRIORITY_FIRST*))
 	?gsh <- (gamestate-history (is-latest TRUE) (state ?state)
 	  (phase ?phase) (over-time ?ot) )
 	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (over-time ?curr-ot))
@@ -826,7 +828,7 @@
 )
 
 (defrule game-create-next-robot-history
-	(declare (salience ?*PRIORITY_HIGHER*))
+  (declare (salience ?*PRIORITY_FIRST*))
 	?rh <- (robot-history (state ?s) (warning-sent ?ws) (has-pose ?hp)
       (number ?n) (team ?t) (team-color ?tc) (pose $?pose)
       (maintenance-start-time ?mst) (maintenance-cycles ?mc)
@@ -856,7 +858,7 @@
 )
 
 (defrule game-create-next-shelf-slot-history
-	(declare (salience ?*PRIORITY_HIGHER*))
+  (declare (salience ?*PRIORITY_FIRST*))
     ?hf <- (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description  ?desc) (is-latest TRUE))
     ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?new-filled) (description  ?new-desc))
 	(test (or (neq ?filled ?new-filled) (neq ?desc ?new-desc)))
