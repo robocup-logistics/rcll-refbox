@@ -694,7 +694,28 @@ Data::on_connect_agent_task_info()
 std::string
 Data::on_connect_workpiece_info()
 {
-	return on_connect_info("workpiece", &Data::get_workpiece_info_fact<rapidjson::Value>);
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+	// get machine facts pointers
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "workpiece") && get_value<bool>(fact, "latest-data")) {
+			facts.push_back(fact);
+		}
+		fact = fact->next();
+	}
+	std::ostringstream messages;
+	for (const auto &f : facts) {
+		auto doc =
+		  pack_facts_to_doc("agent-task", {f}, &Data::get_agent_task_info_fact<rapidjson::Value>);
+		;
+		rapidjson::StringBuffer                    buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		doc.Accept(writer);
+		messages << buffer.GetString() << "\n";
+	}
+	// Return the accumulated messages as a single string
+	return messages.str();
 }
 
 /**
