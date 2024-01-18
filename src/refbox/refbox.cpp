@@ -2207,6 +2207,8 @@ LLSFRefBox::setup_clips_websocket()
 	                                                     float       game_time,
 	                                                     std::string phase,
 	                                                     std::string reason) {
+		if ((team_color == "CYAN" || team_color == "MAGENTA")
+				&& (phase == "EXPLORATION" || phase == "PRODUCTION")) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f(
 		  "(points (points %d) (team %s) (game-time %f) (phase %s) (reason \"%s\"))",
@@ -2215,6 +2217,9 @@ LLSFRefBox::setup_clips_websocket()
 		  game_time,
 		  phase.c_str(),
 		  reason.c_str());
+		} else {
+		logger_->log_error("Websocket", ": Received invalid points, expected team-color CYAN|MAGENTA and phase EXPLORATION|PRODUCTION, but got %s and %s", team_color.c_str(), phase.c_str());
+			}
 	};
 }
 
