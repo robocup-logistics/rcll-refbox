@@ -2106,6 +2106,9 @@ LLSFRefBox::setup_clips_websocket()
 	clips_->add_function("ws-create-GameState",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_game_state)));
+	clips_->add_function("ws-create-TimeInfo",
+	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
+	                                                    &websocket::Data::log_push_time_info)));
 
 	clips_->add_function("ws-create-RobotInfo",
 	                     sigc::slot<void, int, std::string>(

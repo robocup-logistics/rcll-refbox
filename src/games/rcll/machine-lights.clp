@@ -37,9 +37,11 @@
 (defrule machine-lights-init
 	(declare (salience ?*PRIORITY_HIGH*))
 	?gf <- (gamestate (phase ?PHASE) (prev-phase SETUP))
+	?ti <- (time-info)
 	=>
 	; Set prev phase to avoid re-firing, reset game time
-	(modify ?gf (prev-phase ?PHASE) (game-time 0.0))
+	(modify ?gf (prev-phase ?PHASE))
+	(modify ?ti (game-time 0.0))
 
 	; Set lights
 	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
@@ -127,7 +129,8 @@
 )
 
 (defrule machine-lights-prepared
-	(gamestate (phase PRODUCTION) (game-time ?gt))
+	(gamestate (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	(machine (state PREPARED) (name ?n))
 	?ml <- (machine-lights (name ?n) (desired-lights $?dl&:(neq ?dl (create$ GREEN-BLINK))))
 	(exploration-report (name ?n) (correctly-reported TRUE))

@@ -110,7 +110,9 @@
 
 (defrule init-game
   ?gf <- (gamestate (state INIT))
+  ?ti <- (time-info)
   =>
-  (modify ?gf (state WAIT_START) (last-time (now)))
+  (modify ?gf (state WAIT_START))
+  (modify ?ti (last-time (now)))
 )
 

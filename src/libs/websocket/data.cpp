@@ -510,6 +510,17 @@ Data::log_push_game_state()
 }
 
 /**
+ * @brief Gets the time-info fact from CLIPS and pushes it to the send queue
+ *
+ */
+void
+Data::log_push_time_info()
+{
+	auto doc = pack_facts_to_doc("time-info", &Data::get_time_info_fact<rapidjson::Value>);
+	log_push(doc);
+}
+
+/**
  * @brief Gets all ring-spec facts from CLIPS and pushes them to the send queue as an array
  *
  */
@@ -708,7 +719,7 @@ Data::pack_facts_to_doc(std::string tmpl_name, const std::vector<CLIPS::Fact::po
 	        // add to 'content' array
 	        contentArray.PushBack(factObject, root.GetAllocator());
 	    } catch (Exception &e) {
-	        logger_->log_error("Websocket", "can't access value(s) of fact, omitting");
+	        logger_->log_error("Websocket", "can't access value(s) of fact of type %s, omitting", tmpl_name.c_str());
 	    }
 	}
 	
@@ -1181,10 +1192,6 @@ Data::get_game_state_fact(T                                  *o,
 	(*o).AddMember("phase", json_string, alloc);
 	json_string.SetString((get_value<std::string>(fact, "prev-phase")).c_str(), alloc);
 	(*o).AddMember("prev_phase", json_string, alloc);
-	json_string.SetFloat((get_value<float>(fact, "game-time")));
-	(*o).AddMember("game_time", json_string, alloc);
-	json_string.SetFloat((get_value<float>(fact, "cont-time")));
-	(*o).AddMember("cont_time", json_string, alloc);
 	json_string.SetBool((get_value<bool>(fact, "over-time")));
 	(*o).AddMember("over_time", json_string, alloc);
 	json_string.SetString((get_values(fact, "teams")[0]).c_str(), alloc);
@@ -1201,6 +1208,28 @@ Data::get_game_state_fact(T                                  *o,
 	(*o).AddMember("field_width", json_string, alloc);
 	json_string.SetBool((get_value<bool>(fact, "field-mirrored")));
 	(*o).AddMember("field_mirrored", json_string, alloc);
+}
+
+/**
+ * @brief Gets data of a time-info fact and packs into into a rapidjson object
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
+ */
+template <class T>
+void
+Data::get_time_info_fact(T                                  *o,
+                          rapidjson::Document::AllocatorType &alloc,
+                          CLIPS::Fact::pointer                fact)
+{
+	rapidjson::Value json_string;
+	//value fields
+	json_string.SetFloat((get_value<float>(fact, "game-time")));
+	(*o).AddMember("game_time", json_string, alloc);
+	json_string.SetFloat((get_value<float>(fact, "cont-time")));
+	(*o).AddMember("cont_time", json_string, alloc);
 }
 
 /**

@@ -45,7 +45,8 @@
 )
 
 (defrule exploration-report-incoming
-	(gamestate (phase EXPLORATION|PRODUCTION) (game-time ?game-time))
+	(gamestate (phase EXPLORATION|PRODUCTION))
+	(time-info (game-time ?game-time))
   ?mf <- (protobuf-msg (type "llsf_msgs.MachineReport") (ptr ?p)
 	                     (rcvd-from ?from-host ?from-port) (rcvd-via ?via)
 	                     (client-type ?ct) (client-id ?cid))
@@ -250,7 +251,8 @@
 
 (defrule exploration-send-MachineReportInfo
 	(time $?now)
-	(gamestate (phase EXPLORATION|PRODUCTION) (game-time ?game-time&:(< ?game-time ?*EXPLORATION-TIME*)))
+	(gamestate (phase EXPLORATION|PRODUCTION))
+	(time-info (game-time ?game-time&:(< ?game-time ?*EXPLORATION-TIME*)))
 	?sf <- (signal (type machine-report-info)
 	       (time $?t&:(timeout ?now ?t ?*BC-MACHINE-REPORT-INFO-PERIOD*)) (seq ?seq))
 	(network-peer (group CYAN) (id ?peer-id-cyan))

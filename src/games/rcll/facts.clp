@@ -345,6 +345,12 @@
   (slot order (type INTEGER) (default 0))
 )
 
+(deftemplate time-info
+  (slot game-time (type FLOAT) (default 0.0))
+  (slot cont-time (type FLOAT) (default 0.0))
+  ; cardinality 2: sec msec
+  (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
+)
 
 (deftemplate gamestate
   (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE) (default STANDALONE))
@@ -358,17 +364,13 @@
   (slot prev-phase (type SYMBOL)
 	(allowed-values NONE PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
 	(default NONE))
-  (slot game-time (type FLOAT) (default 0.0))
-  (slot cont-time (type FLOAT) (default 0.0))
-  ; cardinality 2: sec msec
-  (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
-  (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
-  (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
   ; cardinality 2: team cyan and magenta
   (multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot teams (type STRING) (cardinality 2 2) (default "" ""))
 
   (slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+  (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
 
   (slot field-height (type INTEGER) (default 8))
   (slot field-width (type INTEGER) (default 7))
@@ -500,6 +502,7 @@
 	(slot cont-time (type FLOAT) (default 0.0))
 	(slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 	(slot fact-string (type STRING))
+	(slot time-fact-string (type STRING))
 )
 
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
@@ -512,6 +515,7 @@
 
 (deffacts startup
   (gamestate (phase PRE_GAME))
+  (time-info)
   (machine-generation (state NOT-STARTED))
   (game-parameters)
   (send-mps-positions)

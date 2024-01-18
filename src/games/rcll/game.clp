@@ -279,7 +279,7 @@
 
 (defrule game-mps-solver-start
   "start the solver"
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   ?mg <- (machine-generation (state NOT-STARTED))
   (game-parameters (is-parameterized FALSE) (machine-positions RANDOM))
   =>
@@ -291,7 +291,8 @@
 
 (defrule game-mps-solver-check
   "check if the solver is finished"
-  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME) (game-time ?gt))
+  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+  (time-info (game-time ?gt))
   ?mg <- (machine-generation (state STARTED) (generation-state-last-checked ?gs&:(timeout-sec ?gt ?gs ?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE*)))
   =>
   (if (and (not (mps-generator-running)) (mps-generator-field-generated))
@@ -408,20 +409,21 @@
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
   ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION)
-		    (state RUNNING)
-		    (game-time ?game-time) (cont-time ?cont-time)
+		    (state RUNNING))
+  ?ti <- (time-info (game-time ?game-time) (cont-time ?cont-time)
 		    (last-time $?last-time&:(neq ?last-time ?now)))
   ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
 		(speedup ?speedup) (real-time-factor ?rtf) (last-recv-time $?lrt))
   (or (sim-time (enabled FALSE))
-      (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
+      (time-info (last-time $?last-time&:(neq ?last-time ?sim-time))))
   =>
   (bind ?points-cyan (game-calc-points CYAN))
   (bind ?points-magenta (game-calc-points MAGENTA))
   (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
   (bind ?timediff (* (time-diff-sec ?now ?last-time) ?speedup))
-  (modify ?gf (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
-	  (last-time ?now) (points ?points-cyan ?points-magenta))
+  (modify ?ti (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
+    (last-time ?now))
+  (modify ?gf (points ?points-cyan ?points-magenta))
 )
 
 (defrule game-update-last-time
@@ -431,28 +433,32 @@
       (gamestate (state ~RUNNING)))
   ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
 		   (real-time-factor ?rtf) (last-recv-time $?lrt))
-  ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
+  ?ti <- (time-info (last-time $?last-time&:(neq ?last-time ?now)))
   (or (sim-time (enabled FALSE))
-      (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
+      (time-info (last-time $?last-time&:(neq ?last-time ?sim-time))))
   (not (finalize))
   =>
   (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
-  (modify ?gf (last-time ?now))
+  (modify ?ti (last-time ?now))
 )
 
 (defrule game-start-training
   ?gs <- (gamestate (teams "" "") (phase PRE_GAME) (state RUNNING))
+  ?ti <- (time-info)
   =>
-  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (game-time 0.0) (start-time (now))
+  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now))
     (field-height ?*FIELD-HEIGHT*) (field-width ?*FIELD-WIDTH*) (field-mirrored ?*FIELD-MIRRORED*))
+  (modify ?ti (game-time 0.0))
   (assert (attention-message (text "Starting  *** TRAINING ***  game")))
 )
 
 (defrule game-start
   ?gs <- (gamestate (teams ?team_cyan ?team_magenta) (phase PRE_GAME) (state RUNNING))
+  ?ti <- (time-info)
   =>
   (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now))
     (field-height ?*FIELD-HEIGHT*) (field-width ?*FIELD-WIDTH*) (field-mirrored ?*FIELD-MIRRORED*))
+  (modify ?ti (game-time 0.0))
   (assert (attention-message (text "Starting setup phase") (time 15)))
 )
 
@@ -464,8 +470,8 @@
 )
 
 (defrule game-setup-warn-end-near
-  (gamestate (phase SETUP) (state RUNNING)
-	     (game-time ?game-time&:(>= ?game-time (* ?*SETUP-TIME* .9))))
+  (gamestate (phase SETUP) (state RUNNING))
+  (time-info (game-time ?game-time&:(>= ?game-time (* ?*SETUP-TIME* .9))))
   (not (setup-warned))
   =>
   (assert (setup-warned))
@@ -473,10 +479,11 @@
 )
 
 (defrule game-switch-from-setup-to-production
-  ?gs <- (gamestate (phase SETUP) (state RUNNING)
-		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
+  ?gs <- (gamestate (phase SETUP) (state RUNNING))
+  ?ti <- (time-info (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
   =>
-  (modify ?gs (phase PRODUCTION) (prev-phase SETUP) (game-time 0.0))
+  (modify ?gs (phase PRODUCTION) (prev-phase SETUP))
+  (modify ?ti (game-time 0.0))
   (assert (attention-message (text "Switching to production phase")))
 )
 
@@ -558,16 +565,16 @@
 
 (defrule game-over
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta))
-		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta)))
+  (time-info (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED))
 )
 
 (defrule game-enter-overtime
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(= ?p-cyan ?p-magenta))
-		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(= ?p-cyan ?p-magenta)))
+  (time-info (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (assert (attention-message (text "Entering over-time") (time 15)))
   (modify ?gs (over-time TRUE))
@@ -575,8 +582,8 @@
 
 (defrule game-over-after-overtime
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time TRUE)
-		    (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
+		    (over-time TRUE))
+  (time-info (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
 )
@@ -605,7 +612,7 @@
 
 (defrule game-quit-after-finalize
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (phase POST_GAME) (end-time $?end-time))
+  (gamestate (phase POST_GAME))
   (finalize)
   =>
   (exit)
@@ -698,8 +705,10 @@
 
 (defrule game-switch-back-to-setup
   ?gs <- (gamestate (phase SETUP) (prev-phase ~PRE_GAME))
+  ?ti <- (time-info)
   =>
-  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
+  (modify ?gs (prev-phase PRE_GAME) (state WAIT_START))
+  (modify ?ti (game-time 0.0))
   (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
     (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
@@ -708,8 +717,10 @@
 
 (defrule game-switch-back-to-pre-game
   ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
+  ?ti <- (time-info)
   =>
-  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
+  (modify ?gs (prev-phase PRE_GAME) (state WAIT_START))
+  (modify ?ti (game-time 0.0))
   (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
     (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
@@ -732,7 +743,7 @@
 	    ?mf <- (ds-meta (name ?n))
 	    ?mf <- (ss-meta (name ?n))
 	)
-	(gamestate (game-time ?gt))
+	(time-info (game-time ?gt))
 	(time $?now)
 	(not (machine-history (name ?n)))
 	=>
@@ -752,7 +763,7 @@
 	    ?mf <- (ds-meta (name ?n))
 	    ?mf <- (ss-meta (name ?n))
 	)
-	(gamestate (game-time ?gt))
+	(time-info (game-time ?gt))
 	(time $?now)
 	=>
 	(modify ?hist (is-latest FALSE))
@@ -764,8 +775,8 @@
 
 (defrule game-create-first-gamestate-history
 	(not (gamestate-history))
-	?gs <- (gamestate (state ?state) (phase ?phase) (game-time ?gt)
-	  (cont-time ?ct) (over-time ?ot))
+	?gs <- (gamestate (state ?state) (phase ?phase) (over-time ?ot))
+	(time-info (game-time ?gt) (cont-time ?ct))
 	(time $?now)
 	=>
 	(assert (gamestate-history (state ?state) (phase ?phase)
@@ -777,8 +788,8 @@
 	(declare (salience ?*PRIORITY_HIGHER*))
 	?gsh <- (gamestate-history (is-latest TRUE) (state ?state)
 	  (phase ?phase) (over-time ?ot) )
-	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (game-time ?gt)
-	  (cont-time ?ct) (over-time ?curr-ot))
+	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (over-time ?curr-ot))
+	?ti <- (time-info (game-time ?gt) (cont-time ?ct))
 	(test (or (neq ?curr-state ?state) (neq ?curr-phase ?phase)
 	  (neq ?curr-ot ?ot)))
 	(time $?now)
@@ -786,14 +797,14 @@
 	(modify ?gsh (is-latest FALSE))
 	(assert (gamestate-history (state ?curr-state) (phase ?curr-phase)
 	  (game-time ?gt) (cont-time ?ct) (time $?now) (over-time ?curr-ot)
-	  (fact-string (fact-to-string ?gs))))
+	  (fact-string (fact-to-string ?gs)) (time-fact-string (fact-to-string ?ti))))
 )
 
 (defrule game-create-first-robot-history
 	(not (robot-history (number ?n) (team ?team)))
 	?robot <- (robot (number ?n) (state ?s) (warning-sent ?ws) (has-pose ?hp) (team ?t) (team-color ?team-color) (pose ?x ?y ?ori) (pose-time $?pt) (maintenance-start-time ?mst) (maintenance-cycles ?mc) (maintenance-warning-sent ?mws))
 	(time $?now)
-	(gamestate (game-time ?gt))
+	(time-info (game-time ?gt))
 	=>
 	(assert (robot-history
 	  (state ?s)
@@ -828,7 +839,7 @@
 	  (and (neq ?n-pose ?pose)
 	       (time-diff-sec ?n-pt ?pt) 5)))
 	(time $?now)
-	(gamestate (game-time ?gt))
+	(time-info (game-time ?gt))
 	=>
 	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now) (game-time ?gt))
 	(modify ?rh (is-latest FALSE))
@@ -838,7 +849,7 @@
     ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?filled) (description  ?desc))
 	(not (shelf-slot-history (name ?name) (shelf ?shelf) (slot ?slot)))
 	(time $?now)
-	(gamestate (game-time ?gt))
+	(time-info (game-time ?gt))
 	=>
 	(assert (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description ?desc)
 	  (time $?now) (game-time ?gt) (fact-string (fact-to-string ?sf))))
@@ -850,7 +861,7 @@
     ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?new-filled) (description  ?new-desc))
 	(test (or (neq ?filled ?new-filled) (neq ?desc ?new-desc)))
 	(time $?now)
-	(gamestate (game-time ?gt))
+	(time-info (game-time ?gt))
 	=>
     (duplicate ?hf (is-filled ?new-filled) (description ?new-desc) (fact-string (fact-to-string ?sf)) (time ?now) (game-time ?gt))
 	(modify ?hf (is-latest FALSE))

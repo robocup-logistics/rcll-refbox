@@ -369,8 +369,9 @@
 		(bson-append-time ?doc "end_time" ?etime)
 	)
 
-	(do-for-fact ((?p gamestate)) TRUE
+	(do-for-fact ((?p gamestate) (?ti time-info)) TRUE
 		(bind ?gamestate-doc (mongodb-fact-to-bson ?p))
+		(bind ?gamestate-doc (mongodb-fact-to-bson-append ?gamestate-doc ?ti))
 		(bson-append ?doc "gamestate" ?gamestate-doc)
 		(bson-builder-destroy ?gamestate-doc)
 	)

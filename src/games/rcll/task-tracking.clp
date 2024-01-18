@@ -25,7 +25,7 @@
                     (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* ?task-type " received" crlf)
   (bind ?wp-name nil)
@@ -117,7 +117,7 @@
                     (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* "Retrieve received" crlf)
   (bind ?wp-name nil)
@@ -275,7 +275,7 @@
                     (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* "Deliver received" crlf)
   (bind ?wp-name nil)
@@ -413,7 +413,7 @@
                     (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* "BufferStation received" crlf)
   (bind ?wp-name nil)
@@ -491,7 +491,8 @@
 
 (defrule workpiece-at-bs-received
   "When workpiece available at BS, create workpiece fact."
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype BS)
                             (workpiece 0)
@@ -519,7 +520,8 @@
 
 (defrule workpiece-at-rs-cs-received
   "Update workpiece available at an RS or CS with the recent production operation."
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype RS|CS)
                             (confirmed FALSE)
@@ -685,7 +687,8 @@
 
 (defrule workpiece-at-ds-received
   "Update the available workpiece with the recent production operation."
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype DS)
                             (workpiece 0)

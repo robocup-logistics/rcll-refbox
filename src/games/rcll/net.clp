@@ -145,7 +145,7 @@
 (defrule net-recv-beacon
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
@@ -463,7 +463,7 @@
 (defrule net-recv-WorkpieceAddRing
   ?mf <- (protobuf-msg (type "llsf_msgs.WorkpieceAddRing") (ptr ?p) (rcvd-at $?rcvd-at)
 											 (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
 
@@ -507,7 +507,7 @@
   (time $?now)
   ?f <- (signal (type workpiece-info) (time $?t&:(timeout ?now ?t ?*WORKPIECEINFO-PERIOD*)) (seq ?seq))
   (workpiece-tracking (enabled TRUE) (broadcast TRUE))
-  (gamestate (cont-time ?ctime))
+  (time-info (cont-time ?ctime))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?wi (net-create-WorkpieceInfo))
@@ -517,11 +517,11 @@
   (pb-destroy ?wi)
 )
 
-(deffunction net-create-GameState (?gs)
+(deffunction net-create-GameState (?gs ?ti)
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))
   (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then
-    (bind ?gt (time-from-sec (fact-slot-value ?gs game-time)))
+    (bind ?gt (time-from-sec (fact-slot-value ?ti game-time)))
     (pb-set-field ?gamestate-time "sec" (nth$ 1 ?gt))
     (pb-set-field ?gamestate-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
     (pb-set-field ?gamestate "game_time" ?gamestate-time) ; destroys ?gamestate-time!
@@ -545,14 +545,14 @@
 
 (defrule net-send-GameState
   (time $?now)
-  ?gs <- (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase)
-		    (game-time ?game-time) (teams $?teams))
+  ?gs <- (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase) (teams $?teams))
+  ?ti <- (time-info (game-time ?game-time))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (if (debug 3) then (printout t "Sending GameState" crlf))
-  (bind ?gamestate (net-create-GameState ?gs))
+  (bind ?gamestate (net-create-GameState ?gs ?ti))
 
   (pb-broadcast ?peer-id-public ?gamestate)
 
@@ -612,7 +612,7 @@
 (defrule net-send-RobotInfo
   (time $?now)
   ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
-  (gamestate (cont-time ?ctime))
+  (time-info (cont-time ?ctime))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?ri (net-create-RobotInfo ?ctime TRUE))
@@ -626,7 +626,7 @@
   (time $?now)
   ?f <- (signal (type bc-robot-info)
 		(time $?t&:(timeout ?now ?t ?*BC-ROBOTINFO-PERIOD*)) (seq ?seq))
-  (gamestate (game-time ?gtime))
+  (time-info (game-time ?gtime))
   (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))

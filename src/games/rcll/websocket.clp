@@ -10,7 +10,7 @@
 (defrule ws-send-attention-message
   "forward attention messages to the websocket backend"
   ?msg <- (ws-attention-message ?text ?team ?time-to-show)
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (retract ?msg)
   (ws-send-attention-message (str-cat ?text) (str-cat ?team) ?time-to-show ?gt)
@@ -35,6 +35,13 @@
   ?sf <- (gamestate)
   =>
   (ws-create-GameState)
+)
+
+(defrule ws-update-time-info
+  "send udpate of time-info whenever the gamestate fact changes"
+  (time-info)
+  =>
+  (ws-create-TimeInfo)
 )
 
 (defrule ws-update-order

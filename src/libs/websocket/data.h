@@ -72,6 +72,7 @@ public:
 	void        log_push_points();
 	void        log_push_ring_spec();
 	void        log_push_game_state();
+	void        log_push_time_info();
 	void        log_push_robot_info(int number, std::string name);
 	void        log_push_agent_task_info(int tid, int rid);
 	void        log_push_order_info(int id);
@@ -109,6 +110,9 @@ public:
 	template <class T>
 	void
 	get_game_state_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_time_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void
 	get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);

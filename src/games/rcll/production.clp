@@ -190,8 +190,10 @@
 
 (defrule production-start
   ?gs <- (gamestate (phase PRODUCTION) (prev-phase ~PRODUCTION))
+  ?ti <- (time-info)
   =>
-  (modify ?gs (prev-phase PRODUCTION) (game-time 0.0))
+  (modify ?gs (prev-phase PRODUCTION))
+  (modify ?ti (game-time 0.0))
 
   ; trigger machine info burst period
   (do-for-fact ((?sf signal)) (eq ?sf:type machine-info-bc)
@@ -201,7 +203,8 @@
 )
 
 (defrule production-machine-down
-  (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
+  (gamestate (phase PRODUCTION) (state RUNNING))
+  (time-info (game-time ?gt))
   ?mf <- (machine (name ?name) (mtype ?mtype)
                   (state ?state&~DOWN) (proc-start ?proc-start)
                   (wait-for-product-since ?wait-since)
@@ -216,7 +219,8 @@
 )
 
 (defrule production-machine-up
-  (gamestate (phase PRODUCTION) (state RUNNING) (game-time ?gt))
+  (gamestate (phase PRODUCTION) (state RUNNING))
+  (time-info (game-time ?gt))
   ?mf <- (machine (name ?name) (state DOWN) (proc-start ?proc-start) (prev-state ?prev-state&~DOWN)
 		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
   =>
@@ -226,7 +230,8 @@
 )
 
 (defrule production-machine-prepare
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?pf <- (protobuf-msg (type "llsf_msgs.PrepareMachine") (ptr ?p)
 	       (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
 	(network-peer (id ?cid) (group ?group))
@@ -297,7 +302,8 @@
 )
 
 (defrule production-machine-reset-by-team
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.ResetMachine") (ptr ?p)
 		     (rcvd-from ?from-host ?from-port) (client-type ?ct) (client-id ?cid))
   (network-peer (id ?cid) (group ?group))
@@ -367,7 +373,8 @@
 
 (defrule production-bs-dispense
   "Start dispensing a base from a prepared BS"
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?m <- (machine (name ?n) (mtype BS) (state PREPARED))
 	(bs-meta (name ?n) (current-base-color ?color))
   =>
@@ -379,7 +386,8 @@
 
 (defrule production-bs-move-conveyor
   "The BS has dispensed a base. We now need to move the conveyor"
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS) (state PROCESSING) (task DISPENSE)
 	               (mps-busy FALSE) (team ?team))
 	(bs-meta (name ?n) (current-side ?side) (current-base-color ?current-base-color))
@@ -398,7 +406,8 @@
 
 (defrule production-rs-insufficient-bases
   "The RS has been prepared but it does not have sufficient additional material; switch to BROKEN."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED))
   (rs-meta (name ?n) (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
@@ -417,7 +426,8 @@
    However, slide payment checks are disabled so is assumed that rings were
    payed beforehand, but no mps feedback was received. Hence, simulate the
    feedback once."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   (machine (name ?n) (mtype RS) (state PREPARED))
   (rs-meta (name ?n) (slide-counter ?mps-counter)
            (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
@@ -435,7 +445,8 @@
 
 (defrule production-rs-move-to-mid
   "The RS is PREPARED. Start moving the workpiece to the middle to mount a ring."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task nil))
   (rs-meta (name ?n) (current-ring-color ?ring-color) (available-colors $?ring-colors)
            (bases-added ?ba) (bases-used ?bu))
@@ -448,7 +459,8 @@
 
 (defrule production-rs-mount-ring
   "Workpiece is in the middle of the conveyor belt of the RS, mount a ring."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE))
 	?meta <- (rs-meta (name ?n) (current-ring-color ?ring-color)
 	                  (available-colors $?ring-colors) (bases-used ?bu))
@@ -463,7 +475,8 @@
 
 (defrule production-rs-move-to-output
 	"Ring is mounted, move to output"
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype RS) (state PROCESSING)
 	               (task MOUNT-RING) (mps-busy FALSE) (team ?team))
 	(rs-meta (name ?n) (current-ring-color ?ring-color))
@@ -488,7 +501,8 @@
 	"Process the transient mps-add-base-on-slide, which is either created by a
 	 SLIDE-COUNTER event or by receiving a protobuf message. Actually increment
 	 the counter of the machine."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (state ?state) (mtype RS) (team ?team))
 	?meta <- (rs-meta (name ?n) (bases-used ?bases-used)
 	                  (bases-added ?old-num-bases))
@@ -528,7 +542,8 @@
 (defrule production-cs-main-op
 	"Workpiece is in the middle of the CS. MOUNT or RETRIEVE the cap, depending
 	 on the instructed task."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PREPARED) (task MOVE-MID) (mps-busy FALSE))
 	(cs-meta (name ?n) (operation-mode ?cs-op))
 	=>
@@ -546,7 +561,8 @@
 
 (defrule production-cs-move-to-output
 	"The CS has completed mounting/retrieving a cap. Move the workpiece to the output."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype CS) (state PROCESSING) (team ?team)
 	                 (task ?cs-op&RETRIEVE_CAP|MOUNT_CAP) (mps-busy FALSE))
 	?cs-meta <- (cs-meta (name ?n) (operation-mode ?cs-op))
@@ -572,7 +588,8 @@
 
 (defrule production-bs-cs-rs-ss-ready-at-output
 	"Workpiece is in output, switch to READY-AT-OUTPUT"
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype BS|CS|RS|SS) (state PROCESSED) (task MOVE-OUT)
 	               (mps-busy FALSE) (mps-ready TRUE))
 	(or (workpiece-tracking (enabled FALSE))
@@ -584,7 +601,8 @@
 
 (defrule production-mps-product-retrieved
 	"The workpiece has been taken away, set the machine to IDLE and reset it."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (state READY-AT-OUTPUT) (mps-ready FALSE))
 	=>
 	(printout t "Machine " ?n ": workpiece has been picked up" crlf)
@@ -594,7 +612,8 @@
 
 (defrule production-ds-start-processing-consumption
   "DS is prepared for order id 0."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil))
 	(ds-meta (name ?n) (order-id 0) (gate ?gate))
 	=>
@@ -607,7 +626,8 @@
 
 (defrule production-ds-start-processing
   "DS is prepared, start processing the delivered workpiece."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PREPARED) (task nil))
 	(ds-meta (name ?n) (order-id ?order))
 	(order (id ?order) (delivery-gate ?gate)
@@ -622,7 +642,8 @@
 
 (defrule production-ds-order-delivered
 	"The DS processed the workpiece, ask the referee for confirmation of the delivery."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSING) (task DELIVER)
 	               (mps-busy FALSE) (team ?team))
 	(ds-meta (name ?n) (order-id ?order))
@@ -642,7 +663,8 @@
 (defrule production-ds-processed
   "The DS finished processing the workpiece, set the machine to IDLE and reset it."
 	(declare (salience ?*PRIORITY_LAST*))
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
 	=>
   (printout t "Machine " ?n " finished processing" crlf)
@@ -654,7 +676,8 @@
 	" Another workpiece blocks the requested storage/retrieval operation.
 	  Hence  the blocking workpiece is relocated to a different position.
 	"
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING|PREPARED) (task nil))
 	(ss-meta (current-shelf-slot ?shelf ?slot&:(eq 1 (mod ?slot 2))))
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible FALSE))
@@ -700,7 +723,8 @@
 	 Either the machine is full or a some positions in the back are free which
 	 can be filled to free a front row slot with a relocation operation.
 	"
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PREPARED) (task nil))
 	(ss-meta (name ?n) (current-operation ?ss-op) (current-shelf-slot ?shelf ?slot))
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible FALSE))
@@ -742,7 +766,8 @@
 (defrule production-ss-relocate-completed
 	" SS is done relocating, update the storage information.
 	"
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (team ?team) (mtype SS) (state PREPARED|PROCESSING)
 	               (task RELOCATE) (mps-busy FALSE))
 	(ss-meta (name ?n) (current-shelf-slot ?shelf ?slot))
@@ -771,7 +796,8 @@
 
 (defrule production-ss-retrieve-start
 	"SS is prepared for retrieval, get the product from the shelf."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING|PREPARED) (task nil))
 	(ss-meta (name ?n) (current-operation ?ss-op&RETRIEVE) (current-shelf-slot ?shelf ?slot))
 	(machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-accessible TRUE) (is-filled TRUE))
@@ -783,7 +809,8 @@
 
 (defrule production-ss-store-start
 	"SS has moved the product to the middle, store it on the shelf."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PREPARED|PROCESSING)
 	               (task MOVE-MID) (mps-busy FALSE))
 	(ss-meta (name ?n) (current-operation ?ss-op&STORE) (current-shelf-slot ?shelf ?slot))
@@ -796,7 +823,8 @@
 
 (defrule production-ss-retrieve-completed-move-to-output
 	"The SS has completed the retrieval. Move the workpiece to the output."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (team ?team)
 	               (task RETRIEVE) (mps-busy FALSE))
 	(ss-meta (name ?n) (current-shelf-slot ?shelf ?slot))
@@ -817,7 +845,8 @@
 
 (defrule production-ss-store-completed
 	"The SS processed the workpiece. "
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (state PROCESSING) (task STORE)
 	               (mps-busy FALSE) (team ?team))
 	(ss-meta (current-shelf-slot ?shelf ?slot) (current-wp-description ?description))
@@ -838,7 +867,8 @@
 (defrule production-ss-store-processed
   "The SS finished storing the workpiece, set the machine to IDLE and reset it."
 	(declare (salience ?*PRIORITY_LAST*))
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (task STORE) (state PROCESSED))
 	=>
 	(printout t "Machine " ?n " finished processing" crlf)
@@ -848,7 +878,8 @@
 
 (defrule production-mps-idle
 	"The machine has been in WAIT-IDLE for the specified time, switch to IDLE."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (state WAIT-IDLE)
 	               (idle-since ?it&:(timeout-sec ?gt ?it ?*WAIT-IDLE-TIME*)))
 	=>
@@ -859,7 +890,8 @@
 
 (defrule production-mps-broken
 	"The MPS is BROKEN. Inform the referee and reset the machine to stop the conveyor belt."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?m <- (machine (name ?n) (state BROKEN) (team ?team) (broken-reason ?reason) (broken-since 0.0))
                  ;(bases-added ?ba) (bases-used ?bu) (has-retrieved ?cap-loaded))
   =>
@@ -889,7 +921,8 @@
 
 (defrule production-mps-broken-recover
 	"Reset a machine that was BROKEN after the down time has passed."
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (state BROKEN)
 	               (broken-since ?bs&~0.0&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
 	=>
@@ -906,7 +939,8 @@
 
 (defrule production-prepared-but-no-input
   "The machine has been prepared but has never received a workpiece. Set it to BROKEN."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?m <- (machine (name ?n) (mtype ?type&~BS) (state ?state
 	                 &:(or (and (eq ?type DS) (eq ?state PROCESSING))
 	                       (and (neq ?type DS) (eq ?state PREPARED))))
@@ -920,7 +954,8 @@
 (defrule production-timeout-while-processing
   "The machine got stuck while processing the workpiece. Set it to BROKEN.
 	 This may be caused by a machine failure or by a misplaced workpiece."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?m <- (machine (name ?n) (state PROCESSING|PROCESSED)
         (proc-start ?start&:(timeout-sec ?gt ?start ?*PROCESSING-WAIT-TILL-RESET*)))
 	=>
@@ -933,7 +968,8 @@
 
 (defrule production-pb-recv-SetMachineState
   "We received a manual override of the machine state, process it accordingly."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.SetMachineState") (ptr ?p) (rcvd-via STREAM)
 		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
   =>
@@ -943,7 +979,8 @@
 )
 
 (defrule production-proc-SetMachineState
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?cmd <- (production-SetMachineState ?mname ?state)
   =>
   (retract ?cmd)
@@ -956,7 +993,8 @@
 
 (defrule production-pb-recv-MachineAddBase
   "We received a manual SLIDE-COUNTER event. Process it just like a regular SLIDE-COUNTER event."
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.MachineAddBase") (ptr ?p) (rcvd-via STREAM)
 		       (rcvd-from ?from-host ?from-port) (client-id ?cid))
   =>
@@ -965,7 +1003,8 @@
 )
 
 (defrule production-send-machine-positions
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt&:(> ?gt ?*EXPLORATION-TIME*)))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt&:(> ?gt ?*EXPLORATION-TIME*)))
   ?send-pos <- (send-mps-positions (phases $?phases&:(not (member$ PRODUCTION ?phases))))
   (not (confval (path "/llsfrb/challenges/enable") (type BOOL) (value TRUE)))
   =>
@@ -973,7 +1012,8 @@
 )
 
 (defrule production-proc-MachineAddBase
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?cmd <- (production-MachineAddBase ?mname)
   =>
   (retract ?cmd)
@@ -987,7 +1027,8 @@
 " Each occupied shelf slot of a SS causes periodic costs.
 "
 	(test (> ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME* 0))
-	(gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+	(gamestate (state RUNNING) (phase PRODUCTION))
+	(time-info (game-time ?gt))
 	?s <- (machine-ss-shelf-slot (name ?n) (is-filled TRUE) (position ?shelf ?slot)
 	  (num-payments ?np&:(< ?np ?*SS-MAX-NUM-PAYMENTS-PER-VOLUME*))
 	  (last-payed ?lp&:(> (- ?gt ?lp) ?*SS-PAYMENT-INTERVAL*)))

@@ -124,7 +124,8 @@
     "Workpiece available on a usable machine while tracking is enabled.
     Update workpiece by read event information (mps-status-feedback)"
     (workpiece-tracking (enabled TRUE))
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     ?mf <- (mps-read-barcode ?m-name ?id)
     (machine (name ?m-name) (state ~BROKEN) (team ?team))
     =>
@@ -199,7 +200,7 @@
     (workpiece-tracking (enabled TRUE))
     (machine (name ?m-name) (state WAIT-IDLE|BROKEN))
     (workpiece (id ?id) (at-machine ?m-name) (holding FALSE) (state AVAILABLE) (latest-data TRUE))
-    (gamestate (game-time ?gt))
+    (time-info (game-time ?gt))
     =>
     (do-for-all-facts ((?workpiece workpiece)) (and (eq ?workpiece:at-machine ?m-name)
                                                (eq ?workpiece:latest-data TRUE)
@@ -227,7 +228,8 @@
    the color of the first ring fully determines the complexity class. Furthermore
    we assume that there is only a single order of complexity >0 each. Hence, knowing
    the first ring will immediately determine the order of the workpiece."
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id) (order 0) (team ?r-team)
                       (latest-data TRUE)
@@ -253,7 +255,8 @@
 
 (defrule workpiece-resign-order
     "Resign order from workpiece, if they became inconsistent"
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (latest-data TRUE)
@@ -281,7 +284,8 @@
 (defrule workpiece-at-bs
     "When workpiece available at BS, confirm generated base-color against
     prepared base-color."
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (latest-data TRUE)
@@ -308,7 +312,8 @@
 (defrule workpiece-processed-at-rs
     "Update workpiece available at an RS with the recent production operation.
     Link the production operation to the workpiece"
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (latest-data TRUE)
@@ -331,7 +336,8 @@
 (defrule workpiece-processed-at-cs
     "Update the available workpiece at CS with the recent production operation.
     Like the production operation to the workpiece."
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (latest-data TRUE)
@@ -356,7 +362,8 @@
 (defrule workpiece-processed-at-ds
     "Update the available workpiece with the recent production operation.
     Link the delivery to the available workpiece"
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf <- (workpiece (id ?id)
                       (latest-data TRUE)
@@ -385,7 +392,8 @@
 ;------------------------------Sanity Checks
 (defrule workpiece-available-twice
     "Error different workpieces available at same  machines"
-    (gamestate (phase PRODUCTION) (game-time ?gt))
+    (gamestate (phase PRODUCTION))
+    (time-info (game-time ?gt))
     (workpiece-tracking (enabled TRUE))
     ?wf1 <- (workpiece (id ?first-id)
                        (latest-data TRUE)

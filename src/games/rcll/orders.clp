@@ -26,7 +26,8 @@
 )
 
 (defrule activate-order
-  (gamestate (state RUNNING) (phase PRODUCTION) (game-time ?gt))
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?of <- (order (id ?id) (active FALSE) (activate-at ?at&:(>= ?gt ?at))
 		(complexity ?c) (quantity-requested ?q) (delivery-period $?period))
   ?sf <- (signal (type order-info))
@@ -50,7 +51,8 @@
 )
 
 (defrule order-recv-SetOrderDelivered
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?pf <- (protobuf-msg (type "llsf_msgs.SetOrderDelivered") (ptr ?p) (rcvd-via STREAM))
   =>
   (bind ?team (pb-field-value ?p "team_color"))
@@ -59,7 +61,8 @@
 )
 
 (defrule order-proc-SetOrderDelivered
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   ?cmd <- (order-SetOrderDelivered ?team-color ?order)
   =>
   (bind ?wp-id (workpiece-simulate-tracking ?order ?team-color ?gt))
@@ -227,7 +230,8 @@
 
 
 (defrule order-delivery-confirmation-referee-confirmed-workpiece-rectify
-  ?gf <- (gamestate (phase PRODUCTION|POST_GAME) (game-time ?gt))
+  ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
+  (time-info (game-time ?gt))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece ?workpiece-id) (game-time ?delivery-time))
