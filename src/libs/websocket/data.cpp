@@ -1125,14 +1125,20 @@ Data::get_agent_task_info_fact(T                                  *o,
 	json_string.SetString((get_value<std::string>(fact, "task-type")).c_str(), alloc);
 	(*o).AddMember("task_type", json_string, alloc);
 
-	rapidjson::Value task_params_array(rapidjson::kArrayType);
-	task_params_array.Reserve(get_values(fact, "task-parameters").size(), alloc);
-	for (const auto &e : get_values(fact, "task-parameters")) {
-		rapidjson::Value v;
-		v.SetString(e, alloc);
-		task_params_array.PushBack(v, alloc);
+	rapidjson::Value task_params_object(rapidjson::kObjectType);
+	auto             values = get_values(fact, "task-parameters");
+	for (size_t i = 0; i + 1 < values.size(); i += 2) {
+		const auto &key   = values[i];
+		const auto &value = values[i + 1];
+
+		rapidjson::Value json_key, json_value;
+		json_key.SetString(key.c_str(), key.length(), alloc);
+		json_value.SetString(value.c_str(), value.length(), alloc);
+
+		task_params_object.AddMember(json_key, json_value, alloc);
 	}
-	(*o).AddMember("task_parameters", task_params_array, alloc);
+
+	(*o).AddMember("task_parameters", task_params_object, alloc);
 
 	json_string.SetInt(get_value<int64_t>(fact, "task-id"));
 	(*o).AddMember("task_id", json_string, alloc);
