@@ -82,6 +82,7 @@ public:
 	void        log_push_order_info_via_delivery(int delivery_id);
 	void        log_push_known_teams();
 	std::string on_connect_known_teams();
+	std::string on_connect_agent_task_info();
 	std::string on_connect_machine_info();
 	std::string on_connect_order_info();
 	std::string on_connect_order_count();

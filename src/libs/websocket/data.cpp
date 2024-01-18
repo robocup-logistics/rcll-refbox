@@ -647,6 +647,45 @@ Data::on_connect_known_teams()
 	return on_connect_info("known-teams", &Data::get_known_teams_fact<rapidjson::Value>);
 }
 
+std::string
+Data::on_connect_agent_task_info()
+{
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+	// Map to store the highest task-id for each robot-id
+	std::unordered_map<int, CLIPS::Fact::pointer> highest_task_ids;
+
+	// get machine facts pointers
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "agent-task") && get_value<bool>(fact, "processed")) {
+			int robot_id = get_value<int>(fact, "robot-id");
+			int task_id  = get_value<int>(fact, "task-id");
+
+			// Check if we have seen this robot before or if the current task-id is higher
+			if (highest_task_ids.find(robot_id) == highest_task_ids.end()
+			    || task_id > get_value<int>(highest_task_ids[robot_id], "task-id")) {
+				// Update the pointer to the fact with the highest task-id for this robot
+				highest_task_ids[robot_id] = fact;
+			}
+		}
+		fact = fact->next();
+	}
+	std::ostringstream messages;
+	for (const auto &entry : highest_task_ids) {
+		auto doc = pack_facts_to_doc("agent-task",
+		                             {entry.second},
+		                             &Data::get_agent_task_info_fact<rapidjson::Value>);
+		;
+		rapidjson::StringBuffer                    buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		doc.Accept(writer);
+		messages << buffer.GetString() << "\n";
+	}
+	// Return the accumulated messages as a single string
+	return messages.str();
+}
+
 /**
  * @brief Create a string of a JSON array containing the data of all current workpiece info facts
  *

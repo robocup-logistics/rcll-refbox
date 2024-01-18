@@ -334,6 +334,7 @@ Client::on_connect_update()
 	send(data_->on_connect_order_count());
 	send(data_->on_connect_game_state());
 	send(data_->on_connect_config());
+	send(data_->on_connect_agent_task_info());
 
 	if (gamestate == "RUNNING" || gamestate == "PAUSED") {
 		send(data_->on_connect_machine_info());
