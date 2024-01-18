@@ -289,6 +289,44 @@ get_value(const CLIPS::Fact::pointer &fact, const std::string &slot_name)
 	}
 	return v[0];
 }
+void
+clips_to_json(const CLIPS::Value                 &clipsValue,
+              rapidjson::Value                   &jsonValue,
+              rapidjson::Document::AllocatorType &allocator)
+{
+	CLIPS::Type t = clipsValue.type();
+
+	switch (t) {
+	case CLIPS::Type::TYPE_STRING:
+	case CLIPS::Type::TYPE_SYMBOL: jsonValue.SetString(clipsValue.as_string(), allocator); break;
+
+	case CLIPS::Type::TYPE_FLOAT: jsonValue.SetDouble(clipsValue.as_float()); break;
+
+	case CLIPS::Type::TYPE_INTEGER: jsonValue.SetInt(clipsValue.as_integer()); break;
+	default: throw Exception("Unsupported type"); break;
+	}
+}
+
+void
+clips_to_json(const CLIPS::Fact::pointer         &fact,
+              const std::string                  &slot,
+              rapidjson::Value                   &json_value,
+              rapidjson::Document::AllocatorType &allocator)
+{
+	CLIPS::Values v = fact->slot_value(slot);
+	if (!v.empty()) {
+		if (v.size() > 1) {
+			json_value.SetArray();
+			for (const auto &value : v) {
+				rapidjson::Value json_sub_val;
+				clips_to_json(value, json_sub_val, allocator);
+				json_value.PushBack(json_sub_val, allocator);
+			}
+		} else {
+			clips_to_json(v[0], json_value, allocator);
+		}
+	}
+}
 
 /** Specialization for bool.
  * @param fact pointer to CLIPS fact
@@ -375,6 +413,32 @@ Data::log_push_machine_info(std::string name)
 		fact = fact->next();
 	}
 	auto doc = pack_facts_to_doc("machine", facts, &Data::get_machine_info_fact<rapidjson::Value>);
+	log_push(doc);
+}
+
+/**
+ * @brief Gets specific confval fact from CLIPS and pushes it to the send queue
+ *
+ */
+void
+Data::log_push_config(std::string path)
+{
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+	CLIPS::Fact::pointer              fact  = env_->get_facts();
+	while (fact) {
+		if (match(fact, "confval")) {
+			try {
+				if (get_value<std::string>(fact, "path") == path) {
+					facts.push_back(fact);
+				}
+			} catch (Exception &e) {
+				logger_->log_error("Websocket", "can't access value(s) of fact of type confval");
+			}
+		}
+		fact = fact->next();
+	}
+	auto doc = pack_facts_to_doc("confval", facts, &Data::get_config_fact<rapidjson::Value>);
 	log_push(doc);
 }
 
@@ -647,6 +711,17 @@ std::string
 Data::on_connect_order_info()
 {
 	return on_connect_info("order", &Data::get_order_info_fact<rapidjson::Value>);
+}
+
+/**
+ * @brief Create a string of a JSON array containing the data of all current confval facts
+ *
+ * @return std::string
+ */
+std::string
+Data::on_connect_config()
+{
+	return on_connect_info("confval", &Data::get_config_fact<rapidjson::Value>);
 }
 
 /**
@@ -1301,6 +1376,36 @@ Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
 	(*o).AddMember("points", json_string, alloc);
 	json_string.SetFloat((get_value<float>(fact, "game-time")));
 	(*o).AddMember("game_time", json_string, alloc);
+}
+
+/**
+ * @brief Gets data of a confval fact and packs into into a rapidjson object
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
+ */
+template <class T>
+void
+Data::get_config_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact)
+{
+	rapidjson::Value json_string;
+	json_string.SetString((get_value<std::string>(fact, "path")).c_str(), alloc);
+	(*o).AddMember("path", json_string, alloc);
+	json_string.SetString((get_value<std::string>(fact, "type")).c_str(), alloc);
+	(*o).AddMember("type", json_string, alloc);
+
+	auto is_list = get_value<bool>(fact, "is-list");
+	auto type    = get_value<std::string>(fact, "type");
+
+	if (is_list) {
+		clips_to_json(fact, "list-value", json_string, alloc);
+		(*o).AddMember("value", json_string, alloc);
+	} else {
+		clips_to_json(fact, "value", json_string, alloc);
+		(*o).AddMember("value", json_string, alloc);
+	}
 }
 
 /**

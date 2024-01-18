@@ -333,6 +333,7 @@ Client::on_connect_update()
 	send(data_->on_connect_known_teams());
 	send(data_->on_connect_order_count());
 	send(data_->on_connect_game_state());
+	send(data_->on_connect_config());
 
 	if (gamestate == "RUNNING" || gamestate == "PAUSED") {
 		send(data_->on_connect_machine_info());

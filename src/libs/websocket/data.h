@@ -70,6 +70,7 @@ public:
 	std::function<void(int, std::string, float, std::string, std::string)> clips_add_points_team;
 	bool        match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
 	void        log_push_points();
+	void        log_push_config(std::string path);
 	void        log_push_ring_spec();
 	void        log_push_game_state();
 	void        log_push_time_info();
@@ -89,6 +90,7 @@ public:
 	std::string on_connect_game_state();
 	std::string on_connect_ring_spec();
 	std::string on_connect_points();
+	std::string on_connect_config();
 	std::string get_gamestate();
 	std::string get_gamephase();
 	std::map<std::string, std::shared_ptr<rapidjson::SchemaDocument>> command_schema_map;
@@ -119,6 +121,8 @@ public:
 	get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void get_config_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void get_workpiece_info_fact(T                                  *o,
 	                             rapidjson::Document::AllocatorType &alloc,

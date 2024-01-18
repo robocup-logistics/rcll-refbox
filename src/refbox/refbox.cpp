@@ -2140,6 +2140,9 @@ LLSFRefBox::setup_clips_websocket()
 	clips_->add_function("ws-create-Points",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_points)));
+	clips_->add_function("ws-create-Config",
+	                     sigc::slot<void, std::string>(sigc::mem_fun(*(backend_->get_data()),
+	                                                    &websocket::Data::log_push_config)));
 
 	clips_->add_function("ws-create-OrderInfo-via-delivery",
 	                     sigc::slot<void, int>(

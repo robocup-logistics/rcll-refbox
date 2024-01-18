@@ -37,6 +37,13 @@
   (ws-create-GameState)
 )
 
+(defrule ws-update-confval
+  "send udpate of gamestate whenever the gamestate fact changes"
+  (confval (path ?path))
+  =>
+  (ws-create-Config ?path)
+)
+
 (defrule ws-update-time-info
   "send udpate of time-info whenever the gamestate fact changes"
   (time-info)
