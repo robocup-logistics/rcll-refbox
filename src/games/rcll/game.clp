@@ -845,8 +845,8 @@
 	(time $?now)
 	(time-info (game-time ?gt))
 	=>
+	(bind ?rh (modify ?rh (is-latest FALSE)))
 	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now) (game-time ?gt))
-	(modify ?rh (is-latest FALSE))
 )
 
 (defrule game-create-first-shelf-slot-history
@@ -867,17 +867,18 @@
 	(time $?now)
 	(time-info (game-time ?gt))
 	=>
+	(bind ?hf (modify ?hf (is-latest FALSE)))
     (duplicate ?hf (is-filled ?new-filled) (description ?new-desc) (fact-string (fact-to-string ?sf)) (time ?now) (game-time ?gt))
-	(modify ?hf (is-latest FALSE))
 )
 
 (defrule silence-debug
 	(confval (path "/llsfrb/clips/debug") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
 	=>
-	(unwatch facts machine-history gamestate-history)
-	(unwatch rules game-create-next-machine-history game-create-next-gamestate-history)
+	(unwatch facts machine-history gamestate-history robot-history shelf-slot-history)
+	(unwatch rules game-create-next-machine-history game-create-next-gamestate-history game-create-next-robot-history game-create-next-shelf-slot-history sort-machine-history sort-shelf-slot-history sort-robot-history sort-gamestate-history)
 )
+
 (defrule game-print-machine-history
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(finalize)
@@ -899,4 +900,40 @@
 	(bind ?history (sort cont-time> ?history))
 	(print-fact-list (fact-indices ?history)
 	                 (create$ phase prev-phase game-time cont-time))
+)
+
+(defrule sort-machine-history
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?mh1 <- (machine-history (time $?time))
+  ?mh2 <- (machine-history (time $?new-time&:(> (time-diff-sec ?new-time ?time) 0)))
+  (test (> (fact-index ?mh1) (fact-index ?mh2)) )
+  =>
+  (modify ?mh2)
+)
+
+(defrule sort-shelf-slot-history
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?mh1 <- (shelf-slot-history (time $?time))
+  ?mh2 <- (shelf-slot-history (time $?new-time&:(> (time-diff-sec ?new-time ?time) 0)))
+  (test (> (fact-index ?mh1) (fact-index ?mh2)) )
+  =>
+  (modify ?mh2)
+)
+
+(defrule sort-robot-history
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?mh1 <- (robot-history (time $?time))
+  ?mh2 <- (robot-history (time $?new-time&:(> (time-diff-sec ?new-time ?time) 0)))
+  (test (> (fact-index ?mh1) (fact-index ?mh2)) )
+  =>
+  (modify ?mh2)
+)
+
+(defrule sort-gamestate-history
+  (declare (salience ?*PRIORITY_HIGH*))
+  ?mh1 <- (gamestate-history (time $?time))
+  ?mh2 <- (gamestate-history (time $?new-time&:(> (time-diff-sec ?new-time ?time) 0)))
+  (test (> (fact-index ?mh1) (fact-index ?mh2)) )
+  =>
+  (modify ?mh2)
 )
