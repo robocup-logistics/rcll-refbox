@@ -552,7 +552,7 @@ Data::log_push_workpiece_info(int id)
 	// get machine facts pointers
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
-		if (match(fact, "workpiece") && get_value<int64_t>(fact, "id") == id) {
+		if (match(fact, "workpiece") && get_value<int64_t>(fact, "id") == id && get_value<bool>(fact, "latest-data")) {
 	        facts.push_back(fact);
 	    }
 	    fact = fact->next();
