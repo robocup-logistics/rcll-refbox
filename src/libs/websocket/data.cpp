@@ -359,9 +359,9 @@ Data::match(CLIPS::Fact::pointer &fact, std::string tmpl_name)
 void
 Data::log_push_machine_info(std::string name)
 {
-	MutexLocker          lock(&env_mutex_);
+	MutexLocker                       lock(&env_mutex_);
 	std::vector<CLIPS::Fact::pointer> facts = {};
-	CLIPS::Fact::pointer fact = env_->get_facts();
+	CLIPS::Fact::pointer              fact  = env_->get_facts();
 	while (fact) {
 		if (match(fact, "machine")) {
 			try {
@@ -376,7 +376,6 @@ Data::log_push_machine_info(std::string name)
 	}
 	auto doc = pack_facts_to_doc("machine", facts, &Data::get_machine_info_fact<rapidjson::Value>);
 	log_push(doc);
-
 }
 
 /**
@@ -389,7 +388,7 @@ Data::log_push_order_info(int id)
 	MutexLocker lock(&env_mutex_);
 
 	std::vector<CLIPS::Fact::pointer> facts = {};
-	CLIPS::Fact::pointer fact = env_->get_facts();
+	CLIPS::Fact::pointer              fact  = env_->get_facts();
 	while (fact) {
 		if (match(fact, "order")) {
 			try {
@@ -417,7 +416,7 @@ Data::log_push_order_info_via_delivery(int delivery_id)
 	MutexLocker lock(&env_mutex_);
 
 	std::vector<CLIPS::Fact::pointer> facts = {};
-	CLIPS::Fact::pointer fact = env_->get_facts();
+	CLIPS::Fact::pointer              fact  = env_->get_facts();
 	while (fact) {
 		if (match(fact, "product-processed")) {
 			try {
@@ -452,7 +451,7 @@ Data::log_push_robot_info(int number, std::string name)
 	MutexLocker lock(&env_mutex_);
 
 	std::vector<CLIPS::Fact::pointer> facts = {};
-	CLIPS::Fact::pointer fact = env_->get_facts();
+	CLIPS::Fact::pointer              fact  = env_->get_facts();
 	while (fact) {
 		if (match(fact, "robot")) {
 			try {
@@ -480,7 +479,7 @@ Data::log_push_agent_task_info(int tid, int rid)
 	MutexLocker lock(&env_mutex_);
 
 	std::vector<CLIPS::Fact::pointer> facts = {};
-	CLIPS::Fact::pointer fact = env_->get_facts();
+	CLIPS::Fact::pointer              fact  = env_->get_facts();
 	while (fact) {
 		if (match(fact, "agent-task")) {
 			try {
@@ -494,7 +493,8 @@ Data::log_push_agent_task_info(int tid, int rid)
 		}
 		fact = fact->next();
 	}
-	auto doc = pack_facts_to_doc("agent-task", facts, &Data::get_agent_task_info_fact<rapidjson::Value>);
+	auto doc =
+	  pack_facts_to_doc("agent-task", facts, &Data::get_agent_task_info_fact<rapidjson::Value>);
 	log_push(doc);
 }
 
@@ -547,17 +547,19 @@ Data::log_push_points()
 void
 Data::log_push_workpiece_info(int id)
 {
-	MutexLocker lock(&env_mutex_);
+	MutexLocker                       lock(&env_mutex_);
 	std::vector<CLIPS::Fact::pointer> facts = {};
 	// get machine facts pointers
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
-		if (match(fact, "workpiece") && get_value<int64_t>(fact, "id") == id && get_value<bool>(fact, "latest-data")) {
-	        facts.push_back(fact);
-	    }
-	    fact = fact->next();
+		if (match(fact, "workpiece") && get_value<int64_t>(fact, "id") == id
+		    && get_value<bool>(fact, "latest-data")) {
+			facts.push_back(fact);
+		}
+		fact = fact->next();
 	}
-	auto doc = pack_facts_to_doc("workpiece", facts, &Data::get_workpiece_info_fact<rapidjson::Value>);
+	auto doc =
+	  pack_facts_to_doc("workpiece", facts, &Data::get_workpiece_info_fact<rapidjson::Value>);
 	log_push(doc);
 }
 
@@ -612,7 +614,7 @@ Data::on_connect_robot_info()
 std::string
 Data::on_connect_ring_spec()
 {
-	return on_connect_info("ring-spec", &Data::get_ring_spec_fact<rapidjson::Value>);
+	return on_connect_info("ring-specs", &Data::get_ring_spec_fact<rapidjson::Value>);
 }
 
 /**
@@ -696,10 +698,11 @@ Data::on_connect_machine_info()
  * @return doc with facts
  */
 rapidjson::Document
-Data::pack_facts_to_doc(std::string tmpl_name, const std::vector<CLIPS::Fact::pointer> &facts,
-                      void (Data::*get_info_fact)(rapidjson::Value *,
-                                                  rapidjson::Document::AllocatorType &,
-                                                  CLIPS::Fact::pointer))
+Data::pack_facts_to_doc(std::string                              tmpl_name,
+                        const std::vector<CLIPS::Fact::pointer> &facts,
+                        void (Data::*get_info_fact)(rapidjson::Value *,
+                                                    rapidjson::Document::AllocatorType &,
+                                                    CLIPS::Fact::pointer))
 {
 	MutexLocker         lock(&env_mutex_);
 	rapidjson::Document root;
@@ -712,24 +715,27 @@ Data::pack_facts_to_doc(std::string tmpl_name, const std::vector<CLIPS::Fact::po
 
 	// get facts and pack into json array
 	for (CLIPS::Fact::pointer fact : facts) {
-	    try {
-	        rapidjson::Value factObject;
-	        factObject.SetObject();
-	        (this->*get_info_fact)(&factObject, root.GetAllocator(), fact);
-	        // add to 'content' array
-	        contentArray.PushBack(factObject, root.GetAllocator());
-	    } catch (Exception &e) {
-	        logger_->log_error("Websocket", "can't access value(s) of fact of type %s, omitting", tmpl_name.c_str());
-	    }
+		try {
+			rapidjson::Value factObject;
+			factObject.SetObject();
+			(this->*get_info_fact)(&factObject, root.GetAllocator(), fact);
+			// add to 'content' array
+			contentArray.PushBack(factObject, root.GetAllocator());
+		} catch (Exception &e) {
+			logger_->log_error("Websocket",
+			                   "can't access value(s) of fact of type %s, omitting",
+			                   tmpl_name.c_str());
+		}
 	}
-	
+
 	// add 'content' array to the root object
-    if (contentArray.Size() > 1) {
-        root.AddMember("content", contentArray, root.GetAllocator());
-    } else if (contentArray.Size() == 1) {
-        // If there is only one element, add it directly without the array
-        root.AddMember("content", contentArray[0], root.GetAllocator());
-    }
+	if (contentArray.Size() > 1) {
+		logger_->log_error("Websocket", "I have multiple content for %s", tmpl_name.c_str());
+		root.AddMember("content", contentArray, root.GetAllocator());
+	} else if (contentArray.Size() == 1) {
+		// If there is only one element, add it directly without the array
+		root.AddMember("content", contentArray[0], root.GetAllocator());
+	}
 	return root;
 }
 
@@ -742,9 +748,9 @@ Data::pack_facts_to_doc(std::string tmpl_name, const std::vector<CLIPS::Fact::po
  */
 rapidjson::Document
 Data::pack_facts_to_doc(std::string tmpl_name,
-                      void (Data::*get_info_fact)(rapidjson::Value *,
-                                                  rapidjson::Document::AllocatorType &,
-                                                  CLIPS::Fact::pointer))
+                        void (Data::*get_info_fact)(rapidjson::Value *,
+                                                    rapidjson::Document::AllocatorType &,
+                                                    CLIPS::Fact::pointer))
 {
 	MutexLocker         lock(&env_mutex_);
 	rapidjson::Document root;
@@ -759,32 +765,33 @@ Data::pack_facts_to_doc(std::string tmpl_name,
 	// get machine facts pointers
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
-	    if (match(fact, tmpl_name)) {
-	        facts.push_back(fact);
-	    }
-	    fact = fact->next();
+		if (match(fact, tmpl_name)) {
+			facts.push_back(fact);
+		}
+		fact = fact->next();
 	}
 
 	// get facts and pack into json array
 	for (CLIPS::Fact::pointer fact : facts) {
-	    try {
-	        rapidjson::Value factObject;
-	        factObject.SetObject();
-	        (this->*get_info_fact)(&factObject, root.GetAllocator(), fact);
-	        // add to 'content' array
-	        contentArray.PushBack(factObject, root.GetAllocator());
-	    } catch (Exception &e) {
-	        logger_->log_error("Websocket", "can't access value(s) of fact, omitting");
-	    }
+		try {
+			rapidjson::Value factObject;
+			factObject.SetObject();
+			(this->*get_info_fact)(&factObject, root.GetAllocator(), fact);
+			// add to 'content' array
+			contentArray.PushBack(factObject, root.GetAllocator());
+		} catch (Exception &e) {
+			logger_->log_error("Websocket", "can't access value(s) of fact, omitting");
+		}
 	}
-	
+
 	// add 'content' array to the root object
-    if (contentArray.Size() > 1) {
-        root.AddMember("content", contentArray, root.GetAllocator());
-    } else if (contentArray.Size() == 1) {
-        // If there is only one element, add it directly without the array
-        root.AddMember("content", contentArray[0], root.GetAllocator());
-    }
+	if (contentArray.Size() > 1) {
+		logger_->log_error("Websocket", "I have multiple content for %s", tmpl_name.c_str());
+		root.AddMember("content", contentArray, root.GetAllocator());
+	} else if (contentArray.Size() == 1) {
+		// If there is only one element, add it directly without the array
+		root.AddMember("content", contentArray[0], root.GetAllocator());
+	}
 	return root;
 }
 
@@ -800,25 +807,25 @@ Data::on_connect_info(std::string tmpl_name,
                       void (Data::*get_info_fact)(rapidjson::Value *,
                                                   rapidjson::Document::AllocatorType &,
                                                   CLIPS::Fact::pointer))
-{   
-	std::ostringstream messages;
+{
+	std::ostringstream   messages;
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
 		if (match(fact, tmpl_name.c_str())) {
-	    // Perform the string buffer operations for each matching fact
-            auto doc = pack_facts_to_doc(tmpl_name, {fact}, get_info_fact);
+			// Perform the string buffer operations for each matching fact
+			auto doc = pack_facts_to_doc(tmpl_name, {fact}, get_info_fact);
 
-            // Write to string and append to messages
-            rapidjson::StringBuffer buffer;
-            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-            doc.Accept(writer);
+			// Write to string and append to messages
+			rapidjson::StringBuffer                    buffer;
+			rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+			doc.Accept(writer);
 
-            messages << buffer.GetString() << "\n";
+			messages << buffer.GetString() << "\n";
 		}
 		fact = fact->next();
 	}
-	 // Return the accumulated messages as a single string
-    return messages.str();
+	// Return the accumulated messages as a single string
+	return messages.str();
 }
 
 /**
@@ -887,7 +894,8 @@ Data::get_machine_info_fact(T                                  *o,
 		}
 		if (match(meta_fact, "rs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			json_string.SetString((get_value<std::string>(meta_fact, "current-ring-color")).c_str(), alloc);
+			json_string.SetString((get_value<std::string>(meta_fact, "current-ring-color")).c_str(),
+			                      alloc);
 			(*o).AddMember("current_ring_color", json_string, alloc);
 			rapidjson::Value ring_array(rapidjson::kArrayType);
 			ring_array.Reserve(get_values(meta_fact, "available-colors").size(), alloc);
@@ -906,7 +914,8 @@ Data::get_machine_info_fact(T                                  *o,
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
 			json_string.SetString((get_value<std::string>(meta_fact, "current-side")).c_str(), alloc);
 			(*o).AddMember("current_side", json_string, alloc);
-			json_string.SetString((get_value<std::string>(meta_fact, "current-base-color")).c_str(), alloc);
+			json_string.SetString((get_value<std::string>(meta_fact, "current-base-color")).c_str(),
+			                      alloc);
 			(*o).AddMember("current_base_color", json_string, alloc);
 			break;
 		}
@@ -1226,9 +1235,7 @@ Data::get_game_state_fact(T                                  *o,
  */
 template <class T>
 void
-Data::get_time_info_fact(T                                  *o,
-                          rapidjson::Document::AllocatorType &alloc,
-                          CLIPS::Fact::pointer                fact)
+Data::get_time_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact)
 {
 	rapidjson::Value json_string;
 	//value fields
