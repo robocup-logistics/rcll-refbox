@@ -408,7 +408,7 @@
 (defrule game-update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION)
+  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (points $?old-points)
 		    (state RUNNING))
   ?ti <- (time-info (game-time ?game-time) (cont-time ?cont-time)
 		    (last-time $?last-time&:(neq ?last-time ?now)))
@@ -423,7 +423,9 @@
   (bind ?timediff (* (time-diff-sec ?now ?last-time) ?speedup))
   (modify ?ti (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
     (last-time ?now))
-  (modify ?gf (points ?points-cyan ?points-magenta))
+  (if (neq ?old-points (create$ ?points-cyan ?points-magenta)) then
+    (modify ?gf (points ?points-cyan ?points-magenta))
+  )
 )
 
 (defrule game-update-last-time
