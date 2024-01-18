@@ -505,8 +505,7 @@ Data::log_push_agent_task_info(int tid, int rid)
 void
 Data::log_push_game_state()
 {
-	auto doc = pack_facts_to_doc("gamestate", &Data::get_game_state_fact<rapidjson::Value>);
-	log_push(doc);
+	log_push(on_connect_game_state());
 }
 
 /**
@@ -615,6 +614,17 @@ std::string
 Data::on_connect_ring_spec()
 {
 	return on_connect_info("ring-specs", &Data::get_ring_spec_fact<rapidjson::Value>);
+}
+
+/**
+ * @brief  Create a string of a JSON array containing the data of the game-state
+ *
+ * @return std::string
+ */
+std::string
+Data::on_connect_game_state()
+{
+	return on_connect_info("gamestate", &Data::get_game_state_fact<rapidjson::Value>);
 }
 
 /**

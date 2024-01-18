@@ -86,6 +86,7 @@ public:
 	std::string on_connect_order_count();
 	std::string on_connect_workpiece_info();
 	std::string on_connect_robot_info();
+	std::string on_connect_game_state();
 	std::string on_connect_ring_spec();
 	std::string on_connect_points();
 	std::string get_gamestate();
