@@ -805,8 +805,8 @@
 )
 
 (defrule game-create-first-robot-history
-	(not (robot-history (number ?n) (team ?team)))
 	?robot <- (robot (number ?n) (state ?s) (warning-sent ?ws) (has-pose ?hp) (team ?t) (team-color ?team-color) (pose ?x ?y ?ori) (pose-time $?pt) (maintenance-start-time ?mst) (maintenance-cycles ?mc) (maintenance-warning-sent ?mws))
+	(not (robot-history (number ?n) (team ?team)))
 	(time $?now)
 	(time-info (game-time ?gt))
 	=>
