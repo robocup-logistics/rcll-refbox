@@ -331,7 +331,6 @@ Client::on_connect_update()
 	std::string gamestate = data_->get_gamestate();
 
 	send(data_->on_connect_known_teams());
-	send(data_->on_connect_order_count());
 	send(data_->on_connect_game_state());
 	send(data_->on_connect_config());
 	send(data_->on_connect_agent_task_info());

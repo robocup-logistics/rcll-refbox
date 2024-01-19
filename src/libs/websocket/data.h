@@ -85,7 +85,6 @@ public:
 	std::string on_connect_agent_task_info();
 	std::string on_connect_machine_info();
 	std::string on_connect_order_info();
-	std::string on_connect_order_count();
 	std::string on_connect_workpiece_info();
 	std::string on_connect_robot_info();
 	std::string on_connect_game_state();
