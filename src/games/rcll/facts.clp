@@ -616,3 +616,4 @@
                   (complexity C0) (allow-overtime TRUE))
 )
 
+(defglobal ?*PHASES* = (deftemplate-slot-allowed-values gamestate phase))

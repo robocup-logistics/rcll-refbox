@@ -58,6 +58,11 @@
   ?*SS-MAX-SLOT* = 7 ; min value is 0
   ?*SS-SHELF-DEPTH* = 2
 
+
+  ?*MAX-ROBOTS-PER-TEAM* = 3
+  ?*NUMBER-OF-ORDERS* = 3
+  ?*BEACON-PERIOD* = 1.0
+
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1
   ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS* = 1
