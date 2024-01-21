@@ -297,8 +297,18 @@ clips_to_json(const CLIPS::Value                 &clipsValue,
 	CLIPS::Type t = clipsValue.type();
 
 	switch (t) {
-	case CLIPS::Type::TYPE_STRING:
-	case CLIPS::Type::TYPE_SYMBOL: jsonValue.SetString(clipsValue.as_string(), allocator); break;
+	case CLIPS::Type::TYPE_STRING: jsonValue.SetString(clipsValue.as_string(), allocator); break;
+	case CLIPS::Type::TYPE_SYMBOL:
+		if (clipsValue.as_string() == "TRUE") {
+			jsonValue.SetBool(true);
+			break;
+		}
+		if (clipsValue.as_string() == "FALSE") {
+			jsonValue.SetBool(false);
+			break;
+		}
+		jsonValue.SetString(clipsValue.as_string(), allocator);
+		break;
 
 	case CLIPS::Type::TYPE_FLOAT: jsonValue.SetDouble(clipsValue.as_float()); break;
 
