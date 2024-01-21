@@ -1284,7 +1284,7 @@ Data::get_agent_task_info_fact(T                                  *o,
 		v.SetString(e, alloc);
 		ring_colors_array.PushBack(v, alloc);
 	}
-	(*o).AddMember("ring_color", ring_colors_array, alloc);
+	(*o).AddMember("ring_colors", ring_colors_array, alloc);
 
 	json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
 	(*o).AddMember("cap_color", json_string, alloc);
