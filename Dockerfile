@@ -66,8 +66,3 @@ COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
 CMD ["llsf-refbox"]
-
-FROM builder as devcontainer
-ARG USER_NAME
-ENV USER_NAME=$USER_NAME
-RUN useradd -u 1000 $USER_NAME
