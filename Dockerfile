@@ -70,8 +70,7 @@ COPY --from=buildenv /buildenv/src/libs/websocket/message_schemas/*.json /usr/lo
 COPY --from=buildenv /buildenv/cfg /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
-RUN dnf install -y --nodocs 'dnf-command(copr)' && \
- 	dnf -y copr enable tavie/paho-mqtt-cpp && \
+RUN dnf install -y --nodocs 'dnf-command(copr)' && dnf -y copr enable tavie/paho-mqtt-cpp && dnf -y copr enable tavie/clips_protobuf &&\
     dnf install -y --nodocs $(cat /requires.txt) && \
     dnf clean all && \
     rm /requires.txt
