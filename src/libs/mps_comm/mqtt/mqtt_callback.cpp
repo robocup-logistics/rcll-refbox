@@ -108,24 +108,38 @@ mqtt_callback::message_arrived(mqtt::const_message_ptr msg)
 		//std::cout << "MPS sent a InBusy update with value [" << value << "]" << std::endl;
 		logger_->info("Received an updated for In/Busy with value " + value);
 		bool val = false;
-		if (boost::algorithm::to_lower_copy(value).compare("true"))
+		if (boost::algorithm::to_lower_copy(value).compare("true") == 0) {
 			val = true;
-		callbacks_[MqttUtils::bits[0]](val);
+		}
+		if (callbacks_[MqttUtils::bits[0]]) {
+			callbacks_[MqttUtils::bits[0]](val);
+		} else {
+			logger_->info("Received something but no callback registered ");
+		}
 		break;
 	}
 	case Topic::InNodes_Ready: {
 		//std::cout << "MPS sent a InEnabled update with value [" << value << "]" << std::endl;
 		logger_->info("Received an updated for In/Ready with value " + value);
 		bool val = false;
-		if (boost::algorithm::to_lower_copy(value).compare("true"))
+		if (boost::algorithm::to_lower_copy(value).compare("true") == 0) {
 			val = true;
-		callbacks_[MqttUtils::bits[1]](val);
+		}
+		if (callbacks_[MqttUtils::bits[1]]) {
+			callbacks_[MqttUtils::bits[1]](val);
+		} else {
+			logger_->info("Received something but no callback registered ");
+		}
 		break;
 	}
 	case Topic::InNodes_Sldcnt: {
 		logger_->info("MPS sent a InSlideCnt update with value [{}]", value);
 		unsigned int count = std::stoul(value);
-		callbacks_[MqttUtils::registers[5]](count);
+		if (callbacks_[MqttUtils::registers[5]]) {
+			callbacks_[MqttUtils::registers[5]](count);
+		} else {
+			logger_->info("Received something but no callback registered ");
+		}
 		// TODO maybe fix and use this instead with std::any in the map std::any_cast <int (*) (int)> (mapIter->second) (5)
 		break;
 	}
