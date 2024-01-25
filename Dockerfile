@@ -53,6 +53,9 @@ RUN shopt -s globstar; \
     /usr/lib/rpm/rpmdeps -R lib/** bin/** | grep -v -f provides.txt > requires.txt
 
 FROM fedora:38 as refbox
+RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
+      dnf -y copr enable thofmann/clips-6.31 && \
+      dnf -y copr enable tavie/clips_protobuf
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
