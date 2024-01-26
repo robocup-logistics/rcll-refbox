@@ -86,7 +86,7 @@
 
 (defrule ws-update-agent-task
   "send update of an agent task, whenever the agent task fact changes"
-  ?sf <- (agent-task (task-id ?tid) (robot-id ?rid))
+  ?sf <- (agent-task (task-id ?tid&:(> ?tid 0)) (robot-id ?rid))
   =>
   (ws-create-AgentTaskInfo ?tid ?rid)
 )
