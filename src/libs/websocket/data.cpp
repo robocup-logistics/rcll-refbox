@@ -1252,7 +1252,11 @@ Data::get_agent_task_info_fact(T                                  *o,
 	rapidjson::Value task_params_object(rapidjson::kObjectType);
 	auto             values = get_values(fact, "task-parameters");
 	for (size_t i = 0; i + 1 < values.size(); i += 2) {
-		const auto &key   = values[i];
+		std::string key   = values[i];
+		std::replace(key.begin(), key.end(), '-', '_');
+		// Transform to lowercase
+		std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+
 		const auto &value = values[i + 1];
 
 		rapidjson::Value json_key, json_value;
