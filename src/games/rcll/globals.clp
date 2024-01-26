@@ -60,7 +60,7 @@
 
 
   ?*MAX-ROBOTS-PER-TEAM* = 3
-  ?*NUMBER-OF-ORDERS* = 3
+  ?*NUMBER-OF-ORDERS* = 11
   ?*BEACON-PERIOD* = 1.0
 
   ; number of points for specific actions
