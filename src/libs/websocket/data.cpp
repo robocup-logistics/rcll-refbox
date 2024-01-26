@@ -1208,7 +1208,7 @@ Data::get_gamephase()
 		}
 		fact = fact->next();
 	}
-	return NULL;
+	return "";
 }
 
 /**
@@ -1229,7 +1229,7 @@ Data::get_gamestate()
 		}
 		fact = fact->next();
 	}
-	return NULL;
+	return "";
 }
 
 } // namespace llsfrb::websocket
