@@ -618,16 +618,16 @@ Data::log_push_points()
  *
  */
 void
-Data::log_push_workpiece_info(int id)
+Data::log_push_workpiece_info(int fact_index)
 {
 	MutexLocker                       lock(&env_mutex_);
 	std::vector<CLIPS::Fact::pointer> facts = {};
 	// get machine facts pointers
 	CLIPS::Fact::pointer fact = env_->get_facts();
 	while (fact) {
-		if (match(fact, "workpiece") && get_value<int64_t>(fact, "id") == id
-		    && get_value<bool>(fact, "latest-data")) {
+		if (fact->index() == fact_index) {
 			facts.push_back(fact);
+			break;
 		}
 		fact = fact->next();
 	}
@@ -717,7 +717,7 @@ Data::on_connect_workpiece_info()
 	std::ostringstream messages;
 	for (const auto &f : facts) {
 		auto doc =
-		  pack_facts_to_doc("agent-task", {f}, &Data::get_agent_task_info_fact<rapidjson::Value>);
+		  pack_facts_to_doc("workpiece", {f}, &Data::get_workpiece_info_fact<rapidjson::Value>);
 		;
 		rapidjson::StringBuffer                    buffer;
 		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);

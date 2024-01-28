@@ -95,7 +95,7 @@
   "send update of a workpiece, whenever the workpiece fact changes"
   ?sf <- (workpiece (id ?id) (latest-data TRUE))
   =>
-  (ws-create-WorkpieceInfo ?id)
+  (ws-create-WorkpieceInfo (fact-index ?sf))
 )
 
 (defrule ws-update-machine
