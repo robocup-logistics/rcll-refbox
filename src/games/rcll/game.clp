@@ -533,6 +533,10 @@
 	(return (> (fact-slot-value ?p1-fact game-time) (fact-slot-value ?p2-fact game-time)))
 )
 
+(deffunction start-time> (?p1-fact ?p2-fact)
+	(return (> (fact-slot-value ?p1-fact start-time) (fact-slot-value ?p2-fact start-time)))
+)
+
 (deffunction game-summary ()
   (game-print-points)
   (assert (attention-message (text "Game Over") (time 60)))
