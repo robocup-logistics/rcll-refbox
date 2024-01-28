@@ -307,6 +307,10 @@ clips_to_json(const CLIPS::Value                 &clipsValue,
 			jsonValue.SetBool(false);
 			break;
 		}
+		if (clipsValue.as_string() == "nil") {
+			jsonValue.SetString("");
+			break;
+		}
 		jsonValue.SetString(clipsValue.as_string(), allocator);
 		break;
 
