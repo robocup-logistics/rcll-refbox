@@ -984,33 +984,32 @@ Data::get_machine_info_fact(T                                  *o,
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "name")).c_str(), alloc);
+	clips_to_json(fact, "name", json_string, alloc);
 	(*o).AddMember("name", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+	clips_to_json(fact, "team", json_string, alloc);
 	(*o).AddMember("team", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "mtype")).c_str(), alloc);
+	clips_to_json(fact, "mtype", json_string, alloc);
 	(*o).AddMember("mtype", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+	clips_to_json(fact, "state", json_string, alloc);
 	(*o).AddMember("state", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "zone")).c_str(), alloc);
+	clips_to_json(fact, "zone", json_string, alloc);
 	(*o).AddMember("zone", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "rotation")));
+	clips_to_json(fact, "rotation", json_string, alloc);
 	(*o).AddMember("rotation", json_string, alloc);
 
 	CLIPS::Fact::pointer meta_fact = env_->get_facts();
 	while (meta_fact) {
 		if (match(meta_fact, "cs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			json_string.SetString((get_value<std::string>(meta_fact, "operation-mode")).c_str(), alloc);
+			clips_to_json(fact, "operation-mode", json_string, alloc);
 			(*o).AddMember("operation_mode", json_string, alloc);
-			json_string.SetBool((get_value<bool>(meta_fact, "has-retrieved")));
+			clips_to_json(fact, "has-retrieved", json_string, alloc);
 			(*o).AddMember("has_retrieved", json_string, alloc);
 			break;
 		}
 		if (match(meta_fact, "rs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			json_string.SetString((get_value<std::string>(meta_fact, "current-ring-color")).c_str(),
-			                      alloc);
+			clips_to_json(fact, "current-ring-color", json_string, alloc);
 			(*o).AddMember("current_ring_color", json_string, alloc);
 			rapidjson::Value ring_array(rapidjson::kArrayType);
 			ring_array.Reserve(get_values(meta_fact, "available-colors").size(), alloc);
@@ -1020,23 +1019,22 @@ Data::get_machine_info_fact(T                                  *o,
 				ring_array.PushBack(v, alloc);
 			}
 			(*o).AddMember("available_colors", ring_array, alloc);
-			json_string.SetInt((get_value<int64_t>(meta_fact, "bases-added")));
+			clips_to_json(fact, "bases-added", json_string, alloc);
 			(*o).AddMember("bases_added", json_string, alloc);
-			json_string.SetInt((get_value<int64_t>(meta_fact, "bases-used")));
+			clips_to_json(fact, "bases-used", json_string, alloc);
 			(*o).AddMember("bases_used", json_string, alloc);
 		}
 		if (match(meta_fact, "bs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			json_string.SetString((get_value<std::string>(meta_fact, "current-side")).c_str(), alloc);
+			clips_to_json(fact, "current-side", json_string, alloc);
 			(*o).AddMember("current_side", json_string, alloc);
-			json_string.SetString((get_value<std::string>(meta_fact, "current-base-color")).c_str(),
-			                      alloc);
+			clips_to_json(fact, "current-base-color", json_string, alloc);
 			(*o).AddMember("current_base_color", json_string, alloc);
 			break;
 		}
 		if (match(meta_fact, "ds-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			json_string.SetInt((get_value<int64_t>(meta_fact, "order-id")));
+			clips_to_json(fact, "order-id", json_string, alloc);
 			(*o).AddMember("order_id", json_string, alloc);
 			break;
 		}
@@ -1076,21 +1074,21 @@ Data::get_order_info_fact(T                                  *o,
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "complexity")).c_str(), alloc);
+	clips_to_json(fact, "complexity", json_string, alloc);
 	(*o).AddMember("complexity", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
+	clips_to_json(fact, "base-color", json_string, alloc);
 	(*o).AddMember("base_color", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
+	clips_to_json(fact, "cap-color", json_string, alloc);
 	(*o).AddMember("cap_color", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "id")));
+	clips_to_json(fact, "id", json_string, alloc);
 	(*o).AddMember("id", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "quantity-requested")));
+	clips_to_json(fact, "quantity-requested", json_string, alloc);
 	(*o).AddMember("quantity_requested", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "delivery-gate")));
+	clips_to_json(fact, "delivery-gate", json_string, alloc);
 	(*o).AddMember("delivery_gate", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "competitive")));
+	clips_to_json(fact, "competitive", json_string, alloc);
 	(*o).AddMember("competitive", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "activate-at")));
+	clips_to_json(fact, "activate-at", json_string, alloc);
 	(*o).AddMember("activate_at", json_string, alloc);
 	rapidjson::Value delivery_array(rapidjson::kArrayType);
 	delivery_array.Reserve(fact->slot_value("delivery-period").size(), alloc);
@@ -1186,29 +1184,29 @@ Data::get_robot_info_fact(T                                  *o,
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+	clips_to_json(fact, "state", json_string, alloc);
 	(*o).AddMember("state", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+	clips_to_json(fact, "team", json_string, alloc);
 	(*o).AddMember("team", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "team-color")).c_str(), alloc);
+	clips_to_json(fact, "team-color", json_string, alloc);
 	(*o).AddMember("team_color", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "name")).c_str(), alloc);
+	clips_to_json(fact, "name", json_string, alloc);
 	(*o).AddMember("name", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "host")).c_str(), alloc);
+	clips_to_json(fact, "host", json_string, alloc);
 	(*o).AddMember("host", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "number")));
+	clips_to_json(fact, "number", json_string, alloc);
 	(*o).AddMember("number", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "port")));
+	clips_to_json(fact, "port", json_string, alloc);
 	(*o).AddMember("port", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "warning-sent")));
+	clips_to_json(fact, "warning-sent", json_string, alloc);
 	(*o).AddMember("warning_sent", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "maintenance-start-time")));
+	clips_to_json(fact, "maintenance-start-time", json_string, alloc);
 	(*o).AddMember("maintenance_start_time", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "maintenance-cycles")));
+	clips_to_json(fact, "maintenance-cycles", json_string, alloc);
 	(*o).AddMember("maintenance_cycles", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "has-pose")));
+	clips_to_json(fact, "has-pose", json_string, alloc);
 	(*o).AddMember("has_pose", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "maintenance-warning-sent")));
+	clips_to_json(fact, "maintenance-warning-sent", json_string, alloc);
 	(*o).AddMember("maintenance_warning_sent", json_string, alloc);
 
 	rapidjson::Value last_seen_array(rapidjson::kArrayType);
@@ -1246,7 +1244,7 @@ Data::get_agent_task_info_fact(T                                  *o,
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "task-type")).c_str(), alloc);
+	clips_to_json(fact, "task-type", json_string, alloc);
 	(*o).AddMember("task_type", json_string, alloc);
 
 	rapidjson::Value task_params_object(rapidjson::kObjectType);
@@ -1268,27 +1266,27 @@ Data::get_agent_task_info_fact(T                                  *o,
 
 	(*o).AddMember("task_parameters", task_params_object, alloc);
 
-	json_string.SetInt(get_value<int64_t>(fact, "task-id"));
+	clips_to_json(fact, "task-id", json_string, alloc);
 	(*o).AddMember("task_id", json_string, alloc);
-	json_string.SetInt(get_value<int64_t>(fact, "robot-id"));
+	clips_to_json(fact, "robot-id", json_string, alloc);
 	(*o).AddMember("robot_id", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "team-color")).c_str(), alloc);
+	clips_to_json(fact, "team-color", json_string, alloc);
 	(*o).AddMember("team_color", json_string, alloc);
-	json_string.SetFloat(get_value<float>(fact, "start-time"));
+	clips_to_json(fact, "start-time", json_string, alloc);
 	(*o).AddMember("start_time", json_string, alloc);
-	json_string.SetFloat(get_value<float>(fact, "end-time"));
+	clips_to_json(fact, "end-time", json_string, alloc);
 	(*o).AddMember("end_time", json_string, alloc);
-	json_string.SetInt(get_value<int64_t>(fact, "order-id"));
+	clips_to_json(fact, "order-id", json_string, alloc);
 	(*o).AddMember("order_id", json_string, alloc);
-	json_string.SetBool(get_value<bool>(fact, "processed"));
+	clips_to_json(fact, "processed", json_string, alloc);
 	(*o).AddMember("processed", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "workpiece-name")).c_str(), alloc);
+	clips_to_json(fact, "workpiece-name", json_string, alloc);
 	(*o).AddMember("workpiece_name", json_string, alloc);
-	json_string.SetBool(get_value<bool>(fact, "unknown-action"));
+	clips_to_json(fact, "unknown-action", json_string, alloc);
 	(*o).AddMember("unknown_action", json_string, alloc);
-	json_string.SetBool(get_value<bool>(fact, "successful"));
+	clips_to_json(fact, "successful", json_string, alloc);
 	(*o).AddMember("successful", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
+	clips_to_json(fact, "base-color", json_string, alloc);
 	(*o).AddMember("base_color", json_string, alloc);
 
 	rapidjson::Value ring_colors_array(rapidjson::kArrayType);
@@ -1300,7 +1298,7 @@ Data::get_agent_task_info_fact(T                                  *o,
 	}
 	(*o).AddMember("ring_colors", ring_colors_array, alloc);
 
-	json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
+	clips_to_json(fact, "cap-color", json_string, alloc);
 	(*o).AddMember("cap_color", json_string, alloc);
 }
 
@@ -1320,13 +1318,13 @@ Data::get_game_state_fact(T                                  *o,
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+	clips_to_json(fact, "state", json_string, alloc);
 	(*o).AddMember("state", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "phase")).c_str(), alloc);
+	clips_to_json(fact, "phase", json_string, alloc);
 	(*o).AddMember("phase", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "prev-phase")).c_str(), alloc);
+	clips_to_json(fact, "prev-phase", json_string, alloc);
 	(*o).AddMember("prev_phase", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "over-time")));
+	clips_to_json(fact, "over-time", json_string, alloc);
 	(*o).AddMember("over_time", json_string, alloc);
 	json_string.SetString((get_values(fact, "teams")[0]).c_str(), alloc);
 	(*o).AddMember("cyan", json_string, alloc);
@@ -1336,11 +1334,11 @@ Data::get_game_state_fact(T                                  *o,
 	(*o).AddMember("points_cyan", json_string, alloc);
 	json_string.SetInt(fact->slot_value("points")[1].as_integer());
 	(*o).AddMember("points_magenta", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "field-height")));
+	clips_to_json(fact, "field-height", json_string, alloc);
 	(*o).AddMember("field_height", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "field-width")));
+	clips_to_json(fact, "field-width", json_string, alloc);
 	(*o).AddMember("field_width", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "field-mirrored")));
+	clips_to_json(fact, "field-mirrored", json_string, alloc);
 	(*o).AddMember("field_mirrored", json_string, alloc);
 }
 
@@ -1358,9 +1356,9 @@ Data::get_time_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS:
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetFloat((get_value<float>(fact, "game-time")));
+	clips_to_json(fact, "game-time", json_string, alloc);
 	(*o).AddMember("game_time", json_string, alloc);
-	json_string.SetFloat((get_value<float>(fact, "cont-time")));
+	clips_to_json(fact, "cont-time", json_string, alloc);
 	(*o).AddMember("cont_time", json_string, alloc);
 }
 
@@ -1378,9 +1376,9 @@ Data::get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS:
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "color")).c_str(), alloc);
+	clips_to_json(fact, "color", json_string, alloc);
 	(*o).AddMember("color", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "req-bases")));
+	clips_to_json(fact, "req-bases", json_string, alloc);
 	(*o).AddMember("req_bases", json_string, alloc);
 }
 
@@ -1398,17 +1396,17 @@ Data::get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "phase")).c_str(), alloc);
+	clips_to_json(fact, "phase", json_string, alloc);
 	(*o).AddMember("phase", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "reason")).c_str(), alloc);
+	clips_to_json(fact, "reason", json_string, alloc);
 	(*o).AddMember("reason", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+	clips_to_json(fact, "team", json_string, alloc);
 	(*o).AddMember("team", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "order")));
+	clips_to_json(fact, "order", json_string, alloc);
 	(*o).AddMember("order", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "points")));
+	clips_to_json(fact, "points", json_string, alloc);
 	(*o).AddMember("points", json_string, alloc);
-	json_string.SetFloat((get_value<float>(fact, "game-time")));
+	clips_to_json(fact, "game-time", json_string, alloc);
 	(*o).AddMember("game_time", json_string, alloc);
 }
 
@@ -1425,9 +1423,9 @@ void
 Data::get_config_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact)
 {
 	rapidjson::Value json_string;
-	json_string.SetString((get_value<std::string>(fact, "path")).c_str(), alloc);
+	clips_to_json(fact, "path", json_string, alloc);
 	(*o).AddMember("path", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "type")).c_str(), alloc);
+	clips_to_json(fact, "type", json_string, alloc);
 	(*o).AddMember("type", json_string, alloc);
 
 	auto is_list = get_value<bool>(fact, "is-list");
@@ -1458,31 +1456,31 @@ Data::get_workpiece_info_fact(T                                  *o,
 {
 	rapidjson::Value json_string;
 	//value fields
-	json_string.SetString((get_value<std::string>(fact, "name")).c_str(), alloc);
+	clips_to_json(fact, "name", json_string, alloc);
 	(*o).AddMember("name", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "at-machine")).c_str(), alloc);
+	clips_to_json(fact, "at-machine", json_string, alloc);
 	(*o).AddMember("at_machine", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "at-side")).c_str(), alloc);
+	clips_to_json(fact, "at-side", json_string, alloc);
 	(*o).AddMember("at_side", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "holding")));
+	clips_to_json(fact, "holding", json_string, alloc);
 	(*o).AddMember("holding", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "robot-holding")));
+	clips_to_json(fact, "robot-holding", json_string, alloc);
 	(*o).AddMember("robot_holding", json_string, alloc);
-	json_string.SetBool((get_value<bool>(fact, "unknown-action")));
+	clips_to_json(fact, "unknown-action", json_string, alloc);
 	(*o).AddMember("unknown_action", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "state")).c_str(), alloc);
+	clips_to_json(fact, "state", json_string, alloc);
 	(*o).AddMember("state", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "base-color")).c_str(), alloc);
+	clips_to_json(fact, "base-color", json_string, alloc);
 	(*o).AddMember("base_color", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "cap-color")).c_str(), alloc);
+	clips_to_json(fact, "cap-color", json_string, alloc);
 	(*o).AddMember("cap_color", json_string, alloc);
-	json_string.SetString((get_value<std::string>(fact, "team")).c_str(), alloc);
+	clips_to_json(fact, "team", json_string, alloc);
 	(*o).AddMember("team", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "id")));
+	clips_to_json(fact, "id", json_string, alloc);
 	(*o).AddMember("id", json_string, alloc);
-	json_string.SetInt((get_value<int64_t>(fact, "order")));
+	clips_to_json(fact, "order", json_string, alloc);
 	(*o).AddMember("order", json_string, alloc);
-	json_string.SetFloat((get_value<float>(fact, "visible")));
+	clips_to_json(fact, "visible", json_string, alloc);
 	(*o).AddMember("visible", json_string, alloc);
 
 	rapidjson::Value rings_array(rapidjson::kArrayType);
