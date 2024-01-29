@@ -841,16 +841,16 @@
       (maintenance-warning-sent ?mws) (pose-time $?pt) (is-latest TRUE)
 	)
 	?robot <- (robot (number ?n) (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (team ?t) (team-color ?tc) (pose $?n-pose) (pose-time $?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws))
+	(time $?now)
+	(time-info (game-time ?gt))
 	(test (or (neq
 	(create$ ?n-s ?n-ws ?n-hp ?n-mst ?n-mc ?n-ws)
 	(create$ ?s ?ws ?hp ?mst ?mc ?ws))
 	  (and (neq ?n-pose ?pose)
-	       (time-diff-sec ?n-pt ?pt) 5)))
-	(time $?now)
-	(time-info (game-time ?gt))
+	       (> (time-diff-sec ?n-pt ?pt) 5))))
 	=>
 	(bind ?rh (modify ?rh (is-latest FALSE)))
-	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now) (game-time ?gt))
+	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now) (game-time ?gt) (is-latest TRUE))
 )
 
 (defrule game-create-first-shelf-slot-history
