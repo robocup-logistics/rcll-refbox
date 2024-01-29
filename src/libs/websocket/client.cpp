@@ -54,10 +54,19 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
 	logger_   = logger;
 	data_     = data;
 	can_send_ = can_send;
-	socket->accept();
-	client_t = std::thread(&Client::receive_thread, this);
-	logger_->log_info("Websocket", "client receive thread started");
-	on_connect_update();
+
+	try {
+        socket->accept();
+        client_t = std::thread(&Client::receive_thread, this);
+        logger_->log_info("Websocket", "client receive thread started");
+        on_connect_update();
+    } catch (const std::exception& e) {
+        // Handle the exception, log an error message, etc.
+        logger_->log_error("Websocket", "Failed to accept websocket connection: %s", e.what());
+        active = false;
+        // Optionally, rethrow the exception or return from the constructor
+        // depending on your application's requirements.
+    }
 }
 
 /**
@@ -298,8 +307,10 @@ Client::receive_thread()
 			}
 
 		} catch (std::exception &e) {
+				logger_->log_error("Websocket", "caught exception while receiving. %s", e.what());
 			disconnect();
 		} catch (...) {
+			logger_->log_error("Websocket", "caught unknown exception while receiving");
 			disconnect();
 		}
 	}
