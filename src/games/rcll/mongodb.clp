@@ -583,7 +583,6 @@
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
 	(not (mongodb-game-report (start $?stime) (name ?report-name)))
-	(game-parameters (is-parameterized TRUE))
 	=>
 	(mongodb-init-report ?teams ?stime ?etime ?report-name)
 )
