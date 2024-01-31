@@ -2141,8 +2141,9 @@ LLSFRefBox::setup_clips_websocket()
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_points)));
 	clips_->add_function("ws-create-Config",
-	                     sigc::slot<void, std::string>(sigc::mem_fun(*(backend_->get_data()),
-	                                                    &websocket::Data::log_push_config)));
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_config)));
 
 	clips_->add_function("ws-create-OrderInfo-via-delivery",
 	                     sigc::slot<void, int>(
@@ -2214,18 +2215,22 @@ LLSFRefBox::setup_clips_websocket()
 	                                                     std::string phase,
 	                                                     std::string reason) {
 		if ((team_color == "CYAN" || team_color == "MAGENTA")
-				&& (phase == "EXPLORATION" || phase == "PRODUCTION")) {
-		fawkes::MutexLocker clips_lock(&clips_mutex_);
-		clips_->assert_fact_f(
-		  "(points (points %d) (team %s) (game-time %f) (phase %s) (reason \"%s\"))",
-		  points,
-		  team_color.c_str(),
-		  game_time,
-		  phase.c_str(),
-		  reason.c_str());
+		    && (phase == "EXPLORATION" || phase == "PRODUCTION")) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f(
+			  "(points (points %d) (team %s) (game-time %f) (phase %s) (reason \"%s\"))",
+			  points,
+			  team_color.c_str(),
+			  game_time,
+			  phase.c_str(),
+			  reason.c_str());
 		} else {
-		logger_->log_error("Websocket", ": Received invalid points, expected team-color CYAN|MAGENTA and phase EXPLORATION|PRODUCTION, but got %s and %s", team_color.c_str(), phase.c_str());
-			}
+			logger_->log_error("Websocket",
+			                   ": Received invalid points, expected team-color CYAN|MAGENTA and phase "
+			                   "EXPLORATION|PRODUCTION, but got %s and %s",
+			                   team_color.c_str(),
+			                   phase.c_str());
+		}
 	};
 }
 
