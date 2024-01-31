@@ -545,7 +545,7 @@
 
 	(bind ?m-arr (bson-array-start))
 	(do-for-all-facts ((?m machine)) TRUE
-		(bind ?machine-doc (mongodb-fact-to-bson ?m (create$ name team mtype rotation pose zone)))
+		(bind ?machine-doc (mongodb-fact-to-bson ?m (create$ name team mtype rotation pose zone down-period)))
 		(if (eq ?m:mtype RS) then
 	      (do-for-fact ((?rs-meta rs-meta)) (eq ?rs-meta:name ?m:name)
 		    (mongodb-fact-to-bson-append ?machine-doc ?rs-meta (create$ available-colors))
@@ -828,9 +828,10 @@
 	         ; the machine_meta array contains meta facts for all machines,
 	         ; loading all facts to rs-meta facts would fail
 	         (mongodb-load-some-facts-from-game-report ?report-name
-	                                              "machine_meta"
+	                                              "machines"
 	                                              rs-meta
-	                                              name))
+	                                              name
+	                                              (create$ available-colors)))
 	 then
 		(printout t "Loading machine-setup finished" crlf)
 		(modify ?gp (machine-setup STATIC))
