@@ -93,7 +93,7 @@
 )
 
 (defrule machine-lights-idle
-	(gamestate (phase PRODUCTION))
+	(gamestate (phase PRODUCTION) (state RUNNING))
 	(machine (state IDLE) (name ?n))
 	?ml <- (machine-lights (name ?n) (desired-lights $?dl&:(neq ?dl (create$ GREEN-ON))))
 	(exploration-report (name ?n) (correctly-reported TRUE))
