@@ -101,7 +101,7 @@
 
 (deffunction machine-retrieve-generated-mps (?mirror)
 	(bind ?machines (mps-generator-get-generated-field))
-	(delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
+	(delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team CYAN) (eq ?m:zone TBD))
 		(if (member$ ?m:name ?machines)
 		 then
 			(bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
@@ -114,8 +114,8 @@
 		)
 	)
 	; Mirror machines for other team
-	(delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
-		(do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
+	(delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team CYAN)
+		(do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team MAGENTA))
 		(if ?mirror then
 			(modify ?mc
 			  (zone (mirror-zone ?mm:zone))
