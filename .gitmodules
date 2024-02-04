@@ -1,0 +1,3 @@
+[submodule "src/msgs/rcll-protobuf-msgs"]
+	path = src/msgs/rcll-protobuf-msgs
+	url = https://github.com/robocup-logistics/rcll-protobuf-msgs.git
