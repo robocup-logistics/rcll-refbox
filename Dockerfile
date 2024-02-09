@@ -61,7 +61,9 @@ RUN shopt -s globstar; \
 FROM fedora:38 as refbox
 RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
-      dnf -y copr enable tavie/clips_protobuf
+      dnf -y copr enable tavie/clips_protobuf && \
+      dnf -y copr enable tavie/paho-mqtt-cpp && \
+      dnf install -y --nodocs paho-c paho-c-devel paho-mqtt-cpp paho-mqtt-cpp-devel 
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
@@ -69,10 +71,12 @@ COPY --from=buildenv /buildenv/src/msgs/*.proto /usr/local/share/rcll-refbox/msg
 COPY --from=buildenv /buildenv/src/libs/websocket/message_schemas/*.json /usr/local/share/rcll-refbox/libs/websocket/message_schemas/
 COPY --from=buildenv /buildenv/cfg /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
+RUN cat /requires.txt
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs 'dnf-command(copr)' && dnf -y copr enable tavie/paho-mqtt-cpp && dnf -y copr enable tavie/clips_protobuf &&\
-    dnf install -y --nodocs $(cat /requires.txt) && \
+    dnf install -y --nodocs $(cat /requires.txt) && \ 
     dnf clean all && \
+    cat /requires.txt && \
     rm /requires.txt
 CMD ["llsf-refbox"]
 
