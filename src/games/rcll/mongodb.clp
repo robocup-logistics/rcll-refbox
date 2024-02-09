@@ -420,23 +420,6 @@
 	(progn$ (?mh ?machine-histories)
 		(bind ?history-doc (mongodb-fact-to-bson ?mh))
 		(bson-append-time ?history-doc "time" (fact-slot-value ?mh time))
-		;(bind ?temp-fact (assert-string ?mh:fact-string))
-		;(bind ?machine-doc FALSE)
-		;(if ?temp-fact
-		; then
-		;	(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc ?temp-fact))
-		; else
-		;	(bind ?machine-facts (find-fact ((?m machine)) (eq ?mh:name ?m:name)))
-		;	(if ?machine-facts then
-		;		(bind ?machine-doc (mongodb-fact-to-bson-append ?history-doc (nth$ 1 ?machine-facts)))
-		;	)
-		;)
-		;(if (not ?machine-doc) then
-		;	(printout warn "mongodb: machine history fact without machine fact!" crlf)
-		;)
-		;(if ?temp-fact then
-		;	(retract ?temp-fact)
-		;)
 		(bind ?temp-fact FALSE)
 		(bind ?temp-fact (assert-string (fact-slot-value ?mh meta-fact-string)))
 		(bind ?machine-meta-doc FALSE)
@@ -503,7 +486,6 @@
     (bind ?robot-history-arr (get-sorted-history (find-all-facts ((?h robot-history)) TRUE)))
 	(bson-array-finish ?doc "robot_history" ?robot-history-arr)
 
-	;(printout t "Storing game report" crlf (bson-tostring ?doc) crlf)
 	(return ?doc)
 )
 
