@@ -143,11 +143,11 @@
 
 ;this function returns the time regarding if the simulation-time and the time-estimation is used
 (deffunction get-time (?sim-time-sync-enabled ?sim-time-estimate-enabled ?real-time ?sim-time ?last-recv-time ?real-time-factor)
-  (if (eq ?sim-time-sync-enabled false)
+  (if (eq ?sim-time-sync-enabled FALSE)
     then
     (return ?real-time)
     else
-    (if (eq ?sim-time-estimate-enabled false)
+    (if (eq ?sim-time-estimate-enabled FALSE)
       then
       (return ?sim-time)
       else

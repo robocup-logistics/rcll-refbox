@@ -70,40 +70,40 @@
 
 (deftemplate bs-meta
   (slot name (type SYMBOL))
-  (slot bs-side (type SYMBOL) (allowed-values INPUT OUTPUT))
-  (slot bs-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
+  (slot current-side (type SYMBOL) (allowed-values INPUT OUTPUT))
+  (slot current-base-color (type SYMBOL) (allowed-values BASE_RED BASE_BLACK BASE_SILVER))
 )
 
 (deftemplate cs-meta
   (slot name (type SYMBOL))
-  (slot cs-operation (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
-  (slot cs-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
-  (slot cs-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
+  (slot operation-mode (type SYMBOL) (allowed-values RETRIEVE_CAP MOUNT_CAP))
+  (slot has-retrieved (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot current-cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY CAP_UNKNOWN) (default nil))
 )
 
 (deftemplate rs-meta
   (slot name (type SYMBOL))
-  (slot rs-ring-color (type SYMBOL)
+  (slot current-ring-color (type SYMBOL)
     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (multislot rs-ring-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
+  (multislot available-colors (type SYMBOL) (default RING_GREEN RING_BLUE)
     (allowed-values RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
-  (slot mps-base-counter (type INTEGER) (default 0))
+  (slot slide-counter (type INTEGER) (default 0))
   (slot bases-added (type INTEGER) (default 0))
   (slot bases-used (type INTEGER) (default 0))
 )
 
 (deftemplate ds-meta
   (slot name (type SYMBOL))
-  (slot ds-gate (type INTEGER))
+  (slot gate (type INTEGER))
 ;  (slot ds-last-gate (type INTEGER))
   (slot order-id (type INTEGER))
 )
 
 (deftemplate ss-meta
   (slot name (type SYMBOL))
-  (slot ss-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
-  (multislot ss-shelf-slot (type INTEGER) (cardinality 2 2))
-  (slot ss-wp-description (type STRING))
+  (slot current-operation (type SYMBOL) (allowed-values STORE RETRIEVE))
+  (multislot current-shelf-slot (type INTEGER) (cardinality 2 2))
+  (slot current-wp-description (type STRING))
 )
 
 (deftemplate machine-mps-state
@@ -169,8 +169,6 @@
                                               C-CS2 C-CS2
                                               C-DS))
   (slot next-side (type SYMBOL) (allowed-values INPUT OUTPUT SHELF))
-  (multislot vision-pose (type FLOAT) (cardinality 3 3) (default 0.0 0.0 0.0))
-  (multislot vision-pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot maintenance-start-time (type FLOAT))
   (slot maintenance-cycles (type INTEGER) (default 0))
   (slot maintenance-warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
@@ -215,20 +213,8 @@
   (slot successful (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
 
   (slot base-color (type SYMBOL) (allowed-values nil BASE_BLACK BASE_CLEAR BASE_RED BASE_SILVER))
-  (multislot ring-color (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
+  (multislot ring-colors (type SYMBOL) (allowed-values nil RING_BLUE RING_GREEN RING_ORANGE RING_YELLOW))
   (slot cap-color (type SYMBOL) (allowed-values nil CAP_BLACK CAP_GREY))
-)
-
-(deftemplate stamped-pose
-  (slot task-id (type INTEGER))
-  (slot robot-id (type INTEGER))
-  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
-
-  (slot x (type FLOAT))
-  (slot y (type FLOAT))
-  (slot ori (type FLOAT))
-
-  (slot time (type FLOAT))
 )
 
 (deftemplate signal
@@ -359,6 +345,12 @@
   (slot order (type INTEGER) (default 0))
 )
 
+(deftemplate time-info
+  (slot game-time (type FLOAT) (default 0.0))
+  (slot cont-time (type FLOAT) (default 0.0))
+  ; cardinality 2: sec msec
+  (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
+)
 
 (deftemplate gamestate
   (slot refbox-mode (type SYMBOL) (allowed-values STANDALONE) (default STANDALONE))
@@ -372,17 +364,13 @@
   (slot prev-phase (type SYMBOL)
 	(allowed-values NONE PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
 	(default NONE))
-  (slot game-time (type FLOAT) (default 0.0))
-  (slot cont-time (type FLOAT) (default 0.0))
-  ; cardinality 2: sec msec
-  (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
-  (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
-  (multislot last-time (type INTEGER) (cardinality 2 2) (default 0 0))
   ; cardinality 2: team cyan and magenta
   (multislot points (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot teams (type STRING) (cardinality 2 2) (default "" ""))
 
   (slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+  (multislot start-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (multislot end-time (type INTEGER) (cardinality 2 2) (default 0 0))
 
   (slot field-height (type INTEGER) (default 8))
   (slot field-width (type INTEGER) (default 7))
@@ -443,9 +431,9 @@
 )
 
 (deftemplate sim-time
-  (slot enabled (type SYMBOL) (allowed-values false true) (default false))
+  (slot enabled (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (slot speedup (type FLOAT) (default 1.0))
-  (slot estimate (type SYMBOL) (allowed-values false true) (default false))
+  (slot estimate (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
   (multislot now (type INTEGER) (cardinality 2 2) (default 0 0))
   (multislot last-recv-time (type INTEGER) (cardinality 2 2) (default 0 0))
   (slot real-time-factor (type FLOAT) (default 0.0))
@@ -461,6 +449,62 @@
 	(slot storage-status (type SYMBOL) (allowed-values PENDING DEFAULT STATIC) (default PENDING))
 )
 
+(deftemplate machine-history
+	(slot name (type SYMBOL))
+	(slot state (type SYMBOL))
+	(slot game-time (type FLOAT) (default 0.0))
+	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+	(multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+	(slot fact-string (type STRING))
+	(slot meta-fact-string (type STRING))
+)
+
+(deftemplate shelf-slot-history
+  (slot name (type SYMBOL) (allowed-values UNSET C-SS M-SS)(default UNSET))
+  (slot shelf (type INTEGER))
+  (slot slot (type INTEGER))
+  (slot is-filled (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot description (type STRING) (default ""))
+  (slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot game-time (type FLOAT) (default 0.0))
+  (slot fact-string (type STRING))
+)
+
+(deftemplate robot-history
+  (slot state (type SYMBOL) (allowed-values ACTIVE MAINTENANCE DISQUALIFIED) (default ACTIVE))
+  (slot warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+   ; x y theta (meters and rad)
+  (slot has-pose (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (slot number (type INTEGER))
+  (slot team (type STRING))
+  (slot team-color (type SYMBOL) (allowed-values nil CYAN MAGENTA))
+  (multislot pose (cardinality 3 3) (type FLOAT))
+  (slot maintenance-start-time (type FLOAT))
+  (slot maintenance-cycles (type INTEGER) (default 0))
+  (slot maintenance-warning-sent (type SYMBOL) (allowed-values TRUE FALSE) (default FALSE))
+  (multislot pose-time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+  (multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+  (slot game-time (type FLOAT) (default 0.0))
+  (slot fact-string (type STRING))
+)
+
+(deftemplate gamestate-history
+	(slot is-latest (type SYMBOL) (allowed-values TRUE FALSE) (default TRUE))
+	(slot state (type SYMBOL)
+	(allowed-values INIT WAIT_START RUNNING PAUSED) (default INIT))
+	(slot phase (type SYMBOL)
+	(allowed-values PRE_GAME SETUP EXPLORATION PRODUCTION POST_GAME)
+	(default PRE_GAME))
+	(multislot time (type INTEGER) (cardinality 2 2) (default 0 0))
+	(slot game-time (type FLOAT) (default 0.0))
+	(slot cont-time (type FLOAT) (default 0.0))
+	(slot over-time (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
+	(slot fact-string (type STRING))
+	(slot time-fact-string (type STRING))
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg
@@ -471,6 +515,7 @@
 
 (deffacts startup
   (gamestate (phase PRE_GAME))
+  (time-info)
   (machine-generation (state NOT-STARTED))
   (game-parameters)
   (send-mps-positions)
@@ -571,3 +616,4 @@
                   (complexity C0) (allow-overtime TRUE))
 )
 
+(defglobal ?*PHASES* = (deftemplate-slot-allowed-values gamestate phase))

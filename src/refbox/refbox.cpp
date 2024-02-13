@@ -924,9 +924,10 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
 			type = "INT";
 		else if (v->is_float())
 			type = "FLOAT";
-		else if (v->is_bool())
-			type = "BOOL";
-		else if (v->is_string()) {
+		else if (v->is_bool()) {
+			type  = "BOOL";
+			value = v->get_bool() ? "TRUE" : "FALSE";
+		} else if (v->is_string()) {
 			type = "STRING";
 			if (!v->is_list()) {
 				value = std::string("\"") + value + "\"";
@@ -1555,6 +1556,18 @@ LLSFRefBox::clips_bson_append(void *bson, std::string field_name, CLIPS::Value v
 			break;
 
 		case CLIPS::TYPE_SYMBOL:
+			if (value == "FALSE") {
+				b->append(kvp(field_name, false));
+				break;
+			}
+			if (value == "TRUE") {
+				b->append(kvp(field_name, true));
+				break;
+			}
+			if (value == "nil") {
+				b->append(kvp(field_name, bsoncxx::types::b_null{}));
+				break;
+			}
 		case CLIPS::TYPE_INSTANCE_NAME:
 		case CLIPS::TYPE_STRING: b->append(kvp(field_name, value.as_string())); break;
 		case CLIPS::TYPE_EXTERNAL_ADDRESS: {
@@ -1884,6 +1897,8 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 	case bsoncxx::type::k_utf8: return CLIPS::Value(element->get_utf8().value.to_string());
 	case bsoncxx::type::k_bool:
 		return CLIPS::Value(element->get_bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+	case bsoncxx::type::k_null: return CLIPS::Value("nil", CLIPS::TYPE_SYMBOL);
+
 	case bsoncxx::type::k_int32: return CLIPS::Value(element->get_int32());
 	case bsoncxx::type::k_int64: return CLIPS::Value(element->get_int64());
 	case bsoncxx::type::k_document: {
@@ -2084,18 +2099,25 @@ LLSFRefBox::setup_clips_websocket()
 	//define the functions called by CLIPS
 
 	clips_->add_function("ws-send-attention-message",
-	                     sigc::slot<void, std::string, std::string, std::string, float>(
+	                     sigc::slot<void, std::string, std::string, int, float>(
 	                       sigc::mem_fun(*(backend_->get_data()),
 	                                     &websocket::Data::log_push_attention_message)));
 
 	clips_->add_function("ws-create-GameState",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_game_state)));
+	clips_->add_function("ws-create-TimeInfo",
+	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
+	                                                    &websocket::Data::log_push_time_info)));
 
 	clips_->add_function("ws-create-RobotInfo",
 	                     sigc::slot<void, int, std::string>(
 	                       sigc::mem_fun(*(backend_->get_data()),
 	                                     &websocket::Data::log_push_robot_info)));
+	clips_->add_function("ws-create-AgentTaskInfo",
+	                     sigc::slot<void, int, int>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_agent_task_info)));
 
 	clips_->add_function("ws-create-MachineInfo",
 	                     sigc::slot<void, std::string>(
@@ -2118,6 +2140,10 @@ LLSFRefBox::setup_clips_websocket()
 	clips_->add_function("ws-create-Points",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_points)));
+	clips_->add_function("ws-create-Config",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_config)));
 
 	clips_->add_function("ws-create-OrderInfo-via-delivery",
 	                     sigc::slot<void, int>(
@@ -2188,14 +2214,23 @@ LLSFRefBox::setup_clips_websocket()
 	                                                     float       game_time,
 	                                                     std::string phase,
 	                                                     std::string reason) {
-		fawkes::MutexLocker clips_lock(&clips_mutex_);
-		clips_->assert_fact_f(
-		  "(points (points %d) (team %s) (game-time %f) (phase %s) (reason \"%s\"))",
-		  points,
-		  team_color.c_str(),
-		  game_time,
-		  phase.c_str(),
-		  reason.c_str());
+		if ((team_color == "CYAN" || team_color == "MAGENTA")
+		    && (phase == "EXPLORATION" || phase == "PRODUCTION")) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f(
+			  "(points (points %d) (team %s) (game-time %f) (phase %s) (reason \"%s\"))",
+			  points,
+			  team_color.c_str(),
+			  game_time,
+			  phase.c_str(),
+			  reason.c_str());
+		} else {
+			logger_->log_error("Websocket",
+			                   ": Received invalid points, expected team-color CYAN|MAGENTA and phase "
+			                   "EXPLORATION|PRODUCTION, but got %s and %s",
+			                   team_color.c_str(),
+			                   phase.c_str());
+		}
 	};
 }
 

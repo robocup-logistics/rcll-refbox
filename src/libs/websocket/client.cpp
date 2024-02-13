@@ -54,10 +54,19 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
 	logger_   = logger;
 	data_     = data;
 	can_send_ = can_send;
-	socket->accept();
-	client_t = std::thread(&Client::receive_thread, this);
-	logger_->log_info("Websocket", "client receive thread started");
-	on_connect_update();
+
+	try {
+		socket->accept();
+		client_t = std::thread(&Client::receive_thread, this);
+		logger_->log_info("Websocket", "client receive thread started");
+		on_connect_update();
+	} catch (const std::exception &e) {
+		// Handle the exception, log an error message, etc.
+		logger_->log_error("Websocket", "Failed to accept websocket connection: %s", e.what());
+		active = false;
+		// Optionally, rethrow the exception or return from the constructor
+		// depending on your application's requirements.
+	}
 }
 
 /**
@@ -85,10 +94,18 @@ ClientWS::send(std::string msg)
 {
 	const std::lock_guard<std::mutex> lock(wr_mu);
 
-	boost::system::error_code error;
-	socket->write(boost::asio::buffer(msg + "\n"), error);
-	if (error && error != boost::asio::error::eof) {
-		return false;
+	// Split the input string into individual messages
+	std::istringstream iss(msg);
+	std::string        singleMsg;
+
+	while (std::getline(iss, singleMsg, '\n')) {
+		// Send each message separately
+		boost::system::error_code error;
+		socket->write(boost::asio::buffer(singleMsg + "\n"), error);
+
+		if (error && error != boost::asio::error::eof) {
+			return false;
+		}
 	}
 
 	return true;
@@ -169,11 +186,20 @@ ClientS::send(std::string msg)
 {
 	const std::lock_guard<std::mutex> lock(wr_mu);
 
-	boost::system::error_code error;
-	boost::asio::write(*socket, boost::asio::buffer(msg + "\n"), error);
-	if (error && error != boost::asio::error::eof) {
-		return false;
+	// Split the input string into individual messages
+	std::istringstream iss(msg);
+	std::string        singleMsg;
+
+	while (std::getline(iss, singleMsg, '\n')) {
+		// Send each message separately
+		boost::system::error_code error;
+		boost::asio::write(*socket, boost::asio::buffer(singleMsg + "\n"), error);
+
+		if (error && error != boost::asio::error::eof) {
+			return false;
+		}
 	}
+
 	return true;
 }
 
@@ -281,8 +307,10 @@ Client::receive_thread()
 			}
 
 		} catch (std::exception &e) {
+			logger_->log_error("Websocket", "caught exception while receiving. %s", e.what());
 			disconnect();
 		} catch (...) {
+			logger_->log_error("Websocket", "caught unknown exception while receiving");
 			disconnect();
 		}
 	}
@@ -314,7 +342,9 @@ Client::on_connect_update()
 	std::string gamestate = data_->get_gamestate();
 
 	send(data_->on_connect_known_teams());
-	send(data_->on_connect_order_count());
+	send(data_->on_connect_game_state());
+	send(data_->on_connect_config());
+	send(data_->on_connect_agent_task_info());
 
 	if (gamestate == "RUNNING" || gamestate == "PAUSED") {
 		send(data_->on_connect_machine_info());

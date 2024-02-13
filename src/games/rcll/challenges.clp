@@ -120,7 +120,7 @@
 (defrule challenges-create-routes
 " Create some routes with waypoints in the field as a navigation challenge "
 	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
-	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/challenges/publish-routes/num-points") (type UINT) (value ?points))
 	(confval (path "/llsfrb/challenges/publish-routes/num-routes") (type UINT) (value ?routes))
 	(challenges-field (free-zones $?free) (occupied-zones $?occupied))
@@ -166,7 +166,7 @@
 (defrule challenges-customize-orders
 " Delete all existing orders and then load orders from configuration "
 	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
-	(confval (path "/llsfrb/challenges/orders/customize") (type BOOL) (value true))
+	(confval (path "/llsfrb/challenges/orders/customize") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/challenges/production-time") (type UINT) (value ?max-time))
 =>
 	(bind ?id 1)
@@ -238,7 +238,7 @@
 			(progn$ (?str-color ?rc:list-value)
 				(bind ?ring-colors (append$ ?ring-colors (sym-cat ?str-color))))
 			(do-for-fact ((?rs-meta rs-meta)) (eq ?rs-meta:name ?m:name)
-				(modify ?rs-meta (rs-ring-colors ?ring-colors))
+				(modify ?rs-meta (available-colors ?ring-colors))
 			)
 		)
 		(bind ?spec-prefix "/llsfrb/challenges/machine-setup/ring-specs/")
@@ -271,8 +271,8 @@
 	=>
 	(delayed-do-for-all-facts ((?machine machine)) TRUE
 	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE) (cs-operation RETRIEVE_CAP)
-	             (ss-operation STORE)
+	  (modify ?machine (productions 0) (state IDLE) (operation-mode RETRIEVE_CAP)
+	             (current-operation STORE)
 	             (proc-start 0.0))
 	)
 	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
@@ -300,7 +300,7 @@
 	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
 	; do not delete rs-meta as the ring-colors are set later in this rule
 	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
-	  (modify ?rs-meta (mps-base-counter 0)
+	  (modify ?rs-meta (slide-counter 0)
 	                   (bases-added 0)
 	                   (bases-used 0)
 	  )
@@ -370,7 +370,7 @@
 (defrule challenges-net-send-navigation-messages
 	(time $?now)
 	(gamestate (phase PRODUCTION))
-	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value true))
+	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value TRUE))
 	?sf <- (signal (type navigation-routes-bc) (seq ?seq) (count ?count)
 	  (time $?t&:(timeout ?now ?t
 	    (if (> ?count ?*BC-MACHINE-INFO-BURST-COUNT*)

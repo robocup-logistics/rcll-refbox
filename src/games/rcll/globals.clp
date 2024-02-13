@@ -58,6 +58,11 @@
   ?*SS-MAX-SLOT* = 7 ; min value is 0
   ?*SS-SHELF-DEPTH* = 2
 
+
+  ?*MAX-ROBOTS-PER-TEAM* = 3
+  ?*NUMBER-OF-ORDERS* = 11
+  ?*BEACON-PERIOD* = 1.0
+
   ; number of points for specific actions
   ?*EXPLORATION-CORRECT-REPORT-ROTATION-POINTS* = 1
   ?*EXPLORATION-CORRECT-REPORT-ZONE-POINTS* = 1
@@ -84,7 +89,7 @@
   ?*PRODUCTION-POINTS-SS-STORAGE* = -5
   ?*PRODUCTION-POINTS-SS-RELOCATION* = 0
   ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME* = 0
-  ; Set to true to cap the number of points deducted at the storage station
+  ; Set to TRUE to cap the number of points deducted at the storage station
   ?*PRODUCTION-POINTS-SS-USE-MAX-POINT-LIMIT* = FALSE
   ?*PRODUCTION-POINTS-SS-MAX-TOTAL-POINTS* = -20
   ?*SS-PAYMENT-INTERVAL* = 60.

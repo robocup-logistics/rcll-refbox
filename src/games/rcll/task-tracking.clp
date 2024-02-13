@@ -22,10 +22,10 @@
                                      machine-point ?machine-point)
                     (order-id ?order-id)
                     (base-color ?base-color)
-                    (ring-color $?ring-color)
+                    (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* ?task-type " received" crlf)
   (bind ?wp-name nil)
@@ -114,10 +114,10 @@
                                      machine-point ?machine-point)
                     (order-id ?order-id)
                     (base-color ?base-color)
-                    (ring-color $?ring-color)
+                    (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* "Retrieve received" crlf)
   (bind ?wp-name nil)
@@ -137,7 +137,7 @@
                         (order-id ?order-id)
                         (successful TRUE)
                         (base-color ?base-color)
-                        (ring-color $?ring-color)
+                        (ring-colors $?ring-color)
                         (cap-color ?cap-color)))
   )
 
@@ -272,10 +272,10 @@
                                      machine-point ?machine-point)
                     (order-id ?order-id)
                     (base-color ?base-color)
-                    (ring-color $?ring-color)
+                    (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* "Deliver received" crlf)
   (bind ?wp-name nil)
@@ -321,7 +321,7 @@
                         (order-id ?order-id)
                         (successful TRUE)
                         (base-color ?base-color)
-                        (ring-color $?ring-color)
+                        (ring-colors $?ring-color)
                         (cap-color ?cap-color)))
     (modify ?r (next-at ?machine-id) (next-side ?machine-point))
   )
@@ -410,10 +410,10 @@
                                      shelf-number ?shelf-number)
                     (order-id ?order-id)
                     (base-color ?base-color)
-                    (ring-color $?ring-color)
+                    (ring-colors $?ring-color)
                     (cap-color ?cap-color))
   ?r <- (robot (number ?robot-id) (team-color ?team-color) (next-at ?next-at) (next-side ?next-side))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (printout ?*AGENT-TASK-ROUTER* "BufferStation received" crlf)
   (bind ?wp-name nil)
@@ -433,7 +433,7 @@
                         (order-id ?order-id)
                         (successful TRUE)
                         (base-color ?base-color)
-                        (ring-color $?ring-color)
+                        (ring-colors $?ring-color)
                         (cap-color ?cap-color)))
   )
 
@@ -491,7 +491,8 @@
 
 (defrule workpiece-at-bs-received
   "When workpiece available at BS, create workpiece fact."
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype BS)
                             (workpiece 0)
@@ -519,7 +520,8 @@
 
 (defrule workpiece-at-rs-cs-received
   "Update workpiece available at an RS or CS with the recent production operation."
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype RS|CS)
                             (confirmed FALSE)
@@ -546,10 +548,10 @@
   ; place workpiece at output
   (bind ?wp-name nil)
   (bind ?c-col CAP_UNKNOWN)
-  (bind ?cs-retrieved nil)
+  (bind ?has-retrieved nil)
   (bind ?cs-meta-fact nil)
   (do-for-fact ((?cs-meta cs-meta)) (eq ?cs-meta:name ?m-name)
-    (bind ?cs-retrieved ?cs-meta:cs-retrieved)
+    (bind ?has-retrieved ?cs-meta:has-retrieved)
     (bind ?cs-meta-fact ?cs-meta)
   )
   (if (not (do-for-fact ((?wp workpiece)) (and (eq ?wp:at-machine ?m-name)
@@ -565,16 +567,16 @@
                          (unknown-action FALSE)
                          (ring-colors (append$ ?wp:ring-colors ?r-color))
                          (at-side OUTPUT)))
-        (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
+        (if (and (eq ?r-color nil) (eq ?has-retrieved FALSE)) then
           ; mounted cap
           (printout ?*AGENT-TASK-ROUTER* ?wp-name " is now mounting a cap!" crlf)
-          (bind ?c-col (fact-slot-value ?cs-meta-fact cs-cap-color))
+          (bind ?c-col (fact-slot-value ?cs-meta-fact current-cap-color))
           (duplicate ?wp (start-time ?gt)
                          (unknown-action FALSE)
                          (cap-color ?c-col)
                          (at-side OUTPUT))
-          (modify ?cs-meta-fact (cs-cap-color nil)))
-        (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
+          (modify ?cs-meta-fact (current-cap-color nil)))
+        (if (and (eq ?r-color nil) (eq ?has-retrieved TRUE)) then
           ; retrieved cap
           (printout ?*AGENT-TASK-ROUTER* ?wp-name " retrieved a cap!" crlf)
           (duplicate ?wp (start-time ?gt)
@@ -584,7 +586,7 @@
           (if (or (eq ?wp:cap-color CAP_BLACK)
                   (eq ?wp:cap-color CAP_GREY)) then
             (bind ?c-col ?wp:cap-color))
-          (modify ?cs-meta-fact (cs-cap-color ?c-col)))
+          (modify ?cs-meta-fact (current-cap-color ?c-col)))
         (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
           (printout ?*AGENT-TASK-ROUTER* ?m-name " processed workpiece" ?wp-name " with ring AND cap infos!" crlf))
         (modify ?wp (latest-data FALSE) (end-time ?gt))
@@ -621,7 +623,7 @@
                          (base-color nil)
                          (ring-colors ?r-color)
                          (cap-color nil))))
-    (if (and (eq ?r-color nil) (eq ?cs-retrieved FALSE)) then
+    (if (and (eq ?r-color nil) (eq ?has-retrieved FALSE)) then
       ; mounted cap
       (printout ?*AGENT-TASK-ROUTER* "unknown workpiece " ?wp-name " is now mounting a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
@@ -647,8 +649,8 @@
                          (at-side OUTPUT)
                          (base-color nil)
                          (cap-color ?c-col)))
-      (modify ?cs-meta-fact (cs-cap-color nil)))
-    (if (and (eq ?r-color nil) (eq ?cs-retrieved TRUE)) then
+      (modify ?cs-meta-fact (current-cap-color nil)))
+    (if (and (eq ?r-color nil) (eq ?has-retrieved TRUE)) then
       ; retrieved cap
       (printout ?*AGENT-TASK-ROUTER* "unknown workpiece " ?wp-name " retrieved a cap!" crlf)
       (assert (workpiece (latest-data FALSE)
@@ -674,7 +676,7 @@
                          (at-side OUTPUT)
                          (base-color nil)
                          (cap-color nil)))
-      (modify ?cs-meta-fact (cs-cap-color ?c-col)))
+      (modify ?cs-meta-fact (current-cap-color ?c-col)))
     (if (and (neq ?r-color nil) (neq ?cs-meta-fact nil)) then
       (printout ?*AGENT-TASK-ROUTER* ?m-name " processed unknown workpiece " ?wp-name " with ring AND cap infos!" crlf))
   )
@@ -685,7 +687,8 @@
 
 (defrule workpiece-at-ds-received
   "Update the available workpiece with the recent production operation."
-  (gamestate (phase PRODUCTION) (game-time ?gt))
+  (gamestate (phase PRODUCTION))
+  (time-info (game-time ?gt))
   (workpiece-tracking (enabled FALSE))
   ?pf <- (product-processed (mtype DS)
                             (workpiece 0)

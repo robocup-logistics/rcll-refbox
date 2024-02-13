@@ -8,15 +8,15 @@
 ;---------------------------------------------------------------------------
 
 (defrule setup-speedup-light
-  (gamestate (phase SETUP) (state RUNNING)
-	     (game-time ?gt&:(>= ?gt ?*SETUP-LIGHT-SPEEDUP-TIME-1*)))
+  (gamestate (phase SETUP) (state RUNNING))
+  (time-info (game-time ?gt&:(>= ?gt ?*SETUP-LIGHT-SPEEDUP-TIME-1*)))
   =>
   (bind ?*SETUP-LIGHT-PERIOD* ?*SETUP-LIGHT-PERIOD-1*)
 )
 
 (defrule setup-speedup-light-more
-  (gamestate (phase SETUP) (state RUNNING)
-	     (game-time ?gt&:(>= ?gt ?*SETUP-LIGHT-SPEEDUP-TIME-2*)))
+  (gamestate (phase SETUP) (state RUNNING))
+  (time-info (game-time ?gt&:(>= ?gt ?*SETUP-LIGHT-SPEEDUP-TIME-2*)))
   =>
   (bind ?*SETUP-LIGHT-PERIOD* ?*SETUP-LIGHT-PERIOD-2*)
 )

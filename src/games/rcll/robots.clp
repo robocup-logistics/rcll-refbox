@@ -44,7 +44,7 @@
 )
 
 (defrule robot-maintenance-warning
-  (gamestate (cont-time ?ctime) (game-time ?game-time))
+  (time-info(cont-time ?ctime) (game-time ?game-time))
   ?rf <- (robot (state MAINTENANCE) (number ?number) (name ?name) (team ?team)
 		(maintenance-warning-sent FALSE)
 		(maintenance-start-time ?st&:(timeout-sec ?game-time ?st ?*MAINTENANCE-WARN-TIME*)))
@@ -57,7 +57,7 @@
 )
 
 (defrule robot-disqualify-maintenance-timeout
-  (gamestate (cont-time ?ctime) (game-time ?game-time))
+  (time-info (cont-time ?ctime) (game-time ?game-time))
   ?rf <- (robot (state MAINTENANCE) (number ?number) (name ?name) (team ?team)
 		(maintenance-start-time ?st&:(timeout-sec ?game-time ?st (+ ?*MAINTENANCE-ALLOWED-TIME* ?*MAINTENANCE-GRACE-TIME*))))
 
@@ -84,14 +84,16 @@
 
 (defrule robot-recv-SetRobotMaintenance
   ?pf <- (protobuf-msg (type "llsf_msgs.SetRobotMaintenance") (ptr ?p) (rcvd-via STREAM))
-  (gamestate (phase ?phase) (cont-time ?ctime) (game-time ?game-time))
+  (gamestate (phase ?phase))
+  (time-info (cont-time ?ctime) (game-time ?game-time))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
   (assert (robot-SetRobotMaintenance (pb-field-value ?p "robot_number") (sym-cat (pb-field-value ?p "team_color")) (pb-field-value ?p "maintenance")))
 )
 
 (defrule robot-proc-SetRobotMaintenance
-  (gamestate (phase ?phase) (cont-time ?ctime) (game-time ?game-time))
+  (gamestate (phase ?phase))
+  (time-info (cont-time ?ctime) (game-time ?game-time))
   ?cmd <- (robot-SetRobotMaintenance ?robot-number ?team-color ?maintenance)
   =>
   (retract ?cmd) ; message will be destroyed after rule completes

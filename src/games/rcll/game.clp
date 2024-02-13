@@ -261,15 +261,15 @@
 	(bind ?m-setup PENDING)
 	(bind ?orders PENDING)
 	(bind ?s-status PENDING)
-	(bind ?mongodb-enabled (eq ?cfg-mongodb-enabled true))
-	(if (and (not ?mongodb-enabled) (member$ false (create$ ?random-field ?random-machine-setup ?random-orders ?default-storage )))
+	(bind ?mongodb-enabled (eq ?cfg-mongodb-enabled TRUE))
+	(if (and (not ?mongodb-enabled) (member$ FALSE (create$ ?random-field ?random-machine-setup ?random-orders ?default-storage )))
 	 then
 		(printout warn "Mongodb disabled, randomize all parameters despite configured static settings." crlf)
 	)
-	(if (or (not ?mongodb-enabled) (eq ?random-field  true)) then (bind ?m-positions RANDOM))
-	(if (or (not ?mongodb-enabled) (eq ?random-machine-setup true)) then (bind ?m-setup RANDOM))
-	(if (or (not ?mongodb-enabled) (eq ?random-orders true)) then (bind ?orders RANDOM))
-	(if (or (not ?mongodb-enabled) (eq ?default-storage true)) then (bind ?s-status DEFAULT))
+	(if (or (not ?mongodb-enabled) (eq ?random-field  TRUE)) then (bind ?m-positions RANDOM))
+	(if (or (not ?mongodb-enabled) (eq ?random-machine-setup TRUE)) then (bind ?m-setup RANDOM))
+	(if (or (not ?mongodb-enabled) (eq ?random-orders TRUE)) then (bind ?orders RANDOM))
+	(if (or (not ?mongodb-enabled) (eq ?default-storage TRUE)) then (bind ?s-status DEFAULT))
 	(modify ?gt (machine-positions ?m-positions)
 	            (machine-setup ?m-setup)
 	            (orders ?orders)
@@ -279,7 +279,7 @@
 
 (defrule game-mps-solver-start
   "start the solver"
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   ?mg <- (machine-generation (state NOT-STARTED))
   (game-parameters (is-parameterized FALSE) (machine-positions RANDOM))
   =>
@@ -291,7 +291,8 @@
 
 (defrule game-mps-solver-check
   "check if the solver is finished"
-  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME) (game-time ?gt))
+  (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
+  (time-info (game-time ?gt))
   ?mg <- (machine-generation (state STARTED) (generation-state-last-checked ?gs&:(timeout-sec ?gt ?gs ?*MACHINE-GENERATION-TIMEOUT-CHECK-STATE*)))
   =>
   (if (and (not (mps-generator-running)) (mps-generator-field-generated))
@@ -318,7 +319,7 @@
 	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
 	; do not delete rs-meta as the ring-colors are set later in this rule
 	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
-	  (modify ?rs-meta (mps-base-counter 0)
+	  (modify ?rs-meta (slide-counter 0)
 	                   (bases-added 0)
 	                   (bases-used 0)
 	  )
@@ -394,7 +395,7 @@
   ; Print required additional bases
   (do-for-all-facts ((?m machine) (?meta rs-meta))
     (and (eq ?m:mtype RS) (eq ?m:name ?meta:name))
-    (printout t "RS " ?meta:name " has colors " ?meta:rs-ring-colors crlf)
+    (printout t "RS " ?meta:name " has colors " ?meta:available-colors crlf)
   )
 
 	; Print machine swapping info
@@ -407,21 +408,24 @@
 (defrule game-update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION)
-		    (state RUNNING)
-		    (game-time ?game-time) (cont-time ?cont-time)
+  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (points $?old-points)
+		    (state RUNNING))
+  ?ti <- (time-info (game-time ?game-time) (cont-time ?cont-time)
 		    (last-time $?last-time&:(neq ?last-time ?now)))
   ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
 		(speedup ?speedup) (real-time-factor ?rtf) (last-recv-time $?lrt))
-  (or (sim-time (enabled false))
-      (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
+  (or (sim-time (enabled FALSE))
+      (time-info (last-time $?last-time&:(neq ?last-time ?sim-time))))
   =>
   (bind ?points-cyan (game-calc-points CYAN))
   (bind ?points-magenta (game-calc-points MAGENTA))
   (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
   (bind ?timediff (* (time-diff-sec ?now ?last-time) ?speedup))
-  (modify ?gf (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
-	  (last-time ?now) (points ?points-cyan ?points-magenta))
+  (modify ?ti (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
+    (last-time ?now))
+  (if (neq ?old-points (create$ ?points-cyan ?points-magenta)) then
+    (modify ?gf (points ?points-cyan ?points-magenta))
+  )
 )
 
 (defrule game-update-last-time
@@ -431,28 +435,32 @@
       (gamestate (state ~RUNNING)))
   ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
 		   (real-time-factor ?rtf) (last-recv-time $?lrt))
-  ?gf <- (gamestate (last-time $?last-time&:(neq ?last-time ?now)))
-  (or (sim-time (enabled false))
-      (gamestate (last-time $?last-time&:(neq ?last-time ?sim-time))))
+  ?ti <- (time-info (last-time $?last-time&:(neq ?last-time ?now)))
+  (or (sim-time (enabled FALSE))
+      (time-info (last-time $?last-time&:(neq ?last-time ?sim-time))))
   (not (finalize))
   =>
   (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
-  (modify ?gf (last-time ?now))
+  (modify ?ti (last-time ?now))
 )
 
 (defrule game-start-training
   ?gs <- (gamestate (teams "" "") (phase PRE_GAME) (state RUNNING))
+  ?ti <- (time-info)
   =>
-  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (game-time 0.0) (start-time (now))
+  (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now))
     (field-height ?*FIELD-HEIGHT*) (field-width ?*FIELD-WIDTH*) (field-mirrored ?*FIELD-MIRRORED*))
+  (modify ?ti (game-time 0.0))
   (assert (attention-message (text "Starting  *** TRAINING ***  game")))
 )
 
 (defrule game-start
   ?gs <- (gamestate (teams ?team_cyan ?team_magenta) (phase PRE_GAME) (state RUNNING))
+  ?ti <- (time-info)
   =>
   (modify ?gs (phase SETUP) (prev-phase PRE_GAME) (start-time (now))
     (field-height ?*FIELD-HEIGHT*) (field-width ?*FIELD-WIDTH*) (field-mirrored ?*FIELD-MIRRORED*))
+  (modify ?ti (game-time 0.0))
   (assert (attention-message (text "Starting setup phase") (time 15)))
 )
 
@@ -464,8 +472,8 @@
 )
 
 (defrule game-setup-warn-end-near
-  (gamestate (phase SETUP) (state RUNNING)
-	     (game-time ?game-time&:(>= ?game-time (* ?*SETUP-TIME* .9))))
+  (gamestate (phase SETUP) (state RUNNING))
+  (time-info (game-time ?game-time&:(>= ?game-time (* ?*SETUP-TIME* .9))))
   (not (setup-warned))
   =>
   (assert (setup-warned))
@@ -473,10 +481,11 @@
 )
 
 (defrule game-switch-from-setup-to-production
-  ?gs <- (gamestate (phase SETUP) (state RUNNING)
-		    (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
+  ?gs <- (gamestate (phase SETUP) (state RUNNING))
+  ?ti <- (time-info (game-time ?game-time&:(>= ?game-time ?*SETUP-TIME*)))
   =>
-  (modify ?gs (phase PRODUCTION) (prev-phase SETUP) (game-time 0.0))
+  (modify ?gs (phase PRODUCTION) (prev-phase SETUP))
+  (modify ?ti (game-time 0.0))
   (assert (attention-message (text "Switching to production phase")))
 )
 
@@ -516,8 +525,16 @@
 	(return (> (fact-slot-value ?o1-fact id) (fact-slot-value ?o2-fact id)))
 )
 
+(deffunction cont-time> (?o1-fact ?o2-fact)
+	(return (> (fact-slot-value ?o1-fact cont-time) (fact-slot-value ?o2-fact cont-time)))
+)
+
 (deffunction points> (?p1-fact ?p2-fact)
 	(return (> (fact-slot-value ?p1-fact game-time) (fact-slot-value ?p2-fact game-time)))
+)
+
+(deffunction start-time> (?p1-fact ?p2-fact)
+	(return (> (fact-slot-value ?p1-fact start-time) (fact-slot-value ?p2-fact start-time)))
 )
 
 (deffunction game-summary ()
@@ -554,16 +571,16 @@
 
 (defrule game-over
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta))
-		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(<> ?p-cyan ?p-magenta)))
+  (time-info (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED))
 )
 
 (defrule game-enter-overtime
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(= ?p-cyan ?p-magenta))
-		    (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
+		    (over-time FALSE) (points ?p-cyan ?p-magenta&:(= ?p-cyan ?p-magenta)))
+  (time-info (game-time ?game-time&:(>= ?game-time ?*PRODUCTION-TIME*)))
   =>
   (assert (attention-message (text "Entering over-time") (time 15)))
   (modify ?gs (over-time TRUE))
@@ -571,8 +588,8 @@
 
 (defrule game-over-after-overtime
   ?gs <- (gamestate (refbox-mode STANDALONE) (phase PRODUCTION) (state RUNNING)
-		    (over-time TRUE)
-		    (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
+		    (over-time TRUE))
+  (time-info (game-time ?gt&:(>= ?gt (+ ?*PRODUCTION-TIME* ?*PRODUCTION-OVERTIME*))))
   =>
   (modify ?gs (phase POST_GAME) (prev-phase PRODUCTION) (state PAUSED) (end-time (now)))
 )
@@ -601,7 +618,7 @@
 
 (defrule game-quit-after-finalize
   (declare (salience ?*PRIORITY_HIGH*))
-  (gamestate (phase POST_GAME) (end-time $?end-time))
+  (gamestate (phase POST_GAME))
   (finalize)
   =>
   (exit)
@@ -633,7 +650,7 @@
 	(delayed-do-for-all-facts ((?bs-meta bs-meta)) TRUE (retract ?bs-meta))
 	; do not delete rs-meta as the ring-colors are set later in this rule
 	(delayed-do-for-all-facts ((?rs-meta rs-meta)) TRUE
-	  (modify ?rs-meta (mps-base-counter 0)
+	  (modify ?rs-meta (slide-counter 0)
 	                   (bases-added 0)
 	                   (bases-used 0)
 	  )
@@ -694,8 +711,10 @@
 
 (defrule game-switch-back-to-setup
   ?gs <- (gamestate (phase SETUP) (prev-phase ~PRE_GAME))
+  ?ti <- (time-info)
   =>
-  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
+  (modify ?gs (prev-phase PRE_GAME) (state WAIT_START))
+  (modify ?ti (game-time 0.0))
   (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
     (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
@@ -704,8 +723,10 @@
 
 (defrule game-switch-back-to-pre-game
   ?gs <- (gamestate (phase PRE_GAME) (prev-phase ~PRE_GAME))
+  ?ti <- (time-info)
   =>
-  (modify ?gs (prev-phase PRE_GAME) (game-time 0.0) (state WAIT_START))
+  (modify ?gs (prev-phase PRE_GAME) (state WAIT_START))
+  (modify ?ti (game-time 0.0))
   (delayed-do-for-all-facts ((?ml machine-lights)) TRUE
     (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
   )
@@ -718,4 +739,169 @@
 	=>
 	(retract ?gr)
 	(game-reset)
+)
+
+(defrule game-create-first-machine-history
+  (declare (salience ?*PRIORITY_FIRST*))
+	?m <- (machine (name ?n) (state ?s))
+	(or ?mf <- (bs-meta (name ?n))
+	    ?mf <- (rs-meta (name ?n))
+	    ?mf <- (cs-meta (name ?n))
+	    ?mf <- (ds-meta (name ?n))
+	    ?mf <- (ss-meta (name ?n))
+	)
+	(time-info (game-time ?gt))
+	(time $?now)
+	(not (machine-history (name ?n)))
+	=>
+	(assert (machine-history (name ?n) (game-time ?gt) (time ?now)
+	          (state ?s) (fact-string (fact-to-string ?m))
+	          (meta-fact-string (fact-to-string ?mf))
+	))
+)
+
+(defrule game-create-next-machine-history
+  (declare (salience ?*PRIORITY_FIRST*))
+	?m <- (machine (name ?n) (state ?s))
+	?hist <- (machine-history (name ?n) (state ?s-last&:(neq ?s ?s-last))
+	           (time $?last) (is-latest TRUE))
+	(or ?mf <- (bs-meta (name ?n))
+	    ?mf <- (rs-meta (name ?n))
+	    ?mf <- (cs-meta (name ?n))
+	    ?mf <- (ds-meta (name ?n))
+	    ?mf <- (ss-meta (name ?n))
+	)
+	(time-info (game-time ?gt))
+	(time $?now)
+	=>
+	(modify ?hist (is-latest FALSE))
+	(assert (machine-history (name ?n) (game-time ?gt)
+	          (time ?now) (state ?s) (fact-string (fact-to-string ?m))
+	          (meta-fact-string (fact-to-string ?mf))
+	))
+)
+
+(defrule game-create-first-gamestate-history
+	(not (gamestate-history))
+	?gs <- (gamestate (state ?state) (phase ?phase) (over-time ?ot))
+	(time-info (game-time ?gt) (cont-time ?ct))
+	(time $?now)
+	=>
+	(assert (gamestate-history (state ?state) (phase ?phase)
+	  (game-time ?gt) (time $?now)
+	  (cont-time ?ct) (over-time ?ot) (fact-string (fact-to-string ?gs))))
+)
+
+(defrule game-create-next-gamestate-history
+  (declare (salience ?*PRIORITY_FIRST*))
+	?gsh <- (gamestate-history (is-latest TRUE) (state ?state)
+	  (phase ?phase) (over-time ?ot) )
+	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (over-time ?curr-ot))
+	?ti <- (time-info (game-time ?gt) (cont-time ?ct))
+	(test (or (neq ?curr-state ?state) (neq ?curr-phase ?phase)
+	  (neq ?curr-ot ?ot)))
+	(time $?now)
+	=>
+	(modify ?gsh (is-latest FALSE))
+	(assert (gamestate-history (state ?curr-state) (phase ?curr-phase)
+	  (game-time ?gt) (cont-time ?ct) (time $?now) (over-time ?curr-ot)
+	  (fact-string (fact-to-string ?gs)) (time-fact-string (fact-to-string ?ti))))
+)
+
+(defrule game-create-first-robot-history
+	?robot <- (robot (number ?n) (state ?s) (warning-sent ?ws) (has-pose ?hp) (team ?t) (team-color ?team-color) (pose ?x ?y ?ori) (pose-time $?pt) (maintenance-start-time ?mst) (maintenance-cycles ?mc) (maintenance-warning-sent ?mws))
+	(not (robot-history (number ?n) (team ?team)))
+	(time $?now)
+	(time-info (game-time ?gt))
+	=>
+	(assert (robot-history
+	  (state ?s)
+      (warning-sent ?ws)
+      (has-pose ?hp)
+      (number ?n)
+	  (team ?t)
+	  (team-color ?team-color)
+      (pose ?x ?y ?ori)
+      (maintenance-start-time ?mst)
+      (maintenance-cycles ?mc)
+      (maintenance-warning-sent ?mws)
+      (pose-time ?pt)
+      (time ?now)
+      (game-time ?gt)
+      (fact-string (fact-to-string ?robot))
+	  )
+	)
+)
+
+(defrule game-create-next-robot-history
+  (declare (salience ?*PRIORITY_FIRST*))
+	?rh <- (robot-history (state ?s) (warning-sent ?ws) (has-pose ?hp)
+      (number ?n) (team ?t) (team-color ?tc) (pose $?pose)
+      (maintenance-start-time ?mst) (maintenance-cycles ?mc)
+      (maintenance-warning-sent ?mws) (pose-time $?pt) (is-latest TRUE)
+	)
+	?robot <- (robot (number ?n) (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (team ?t) (team-color ?tc) (pose $?n-pose) (pose-time $?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws))
+	(time $?now)
+	(time-info (game-time ?gt))
+	(test (or (neq
+	(create$ ?n-s ?n-ws ?n-hp ?n-mst ?n-mc ?n-ws)
+	(create$ ?s ?ws ?hp ?mst ?mc ?ws))
+	  (and (neq ?n-pose ?pose)
+	       (> (time-diff-sec ?n-pt ?pt) 5))))
+	=>
+	(bind ?rh (modify ?rh (is-latest FALSE)))
+	(duplicate ?rh (state ?n-s) (warning-sent ?n-ws) (has-pose ?n-hp) (pose ?n-pose) (pose-time ?n-pt) (maintenance-start-time ?n-mst) (maintenance-cycles ?n-mc) (maintenance-warning-sent ?n-mws) (time ?now) (game-time ?gt) (is-latest TRUE))
+)
+
+(defrule game-create-first-shelf-slot-history
+    ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?filled) (description  ?desc))
+	(not (shelf-slot-history (name ?name) (shelf ?shelf) (slot ?slot)))
+	(time $?now)
+	(time-info (game-time ?gt))
+	=>
+	(assert (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description ?desc)
+	  (time $?now) (game-time ?gt) (fact-string (fact-to-string ?sf))))
+)
+
+(defrule game-create-next-shelf-slot-history
+  (declare (salience ?*PRIORITY_FIRST*))
+    ?hf <- (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description  ?desc) (is-latest TRUE))
+    ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?new-filled) (description  ?new-desc))
+	(test (or (neq ?filled ?new-filled) (neq ?desc ?new-desc)))
+	(time $?now)
+	(time-info (game-time ?gt))
+	=>
+	(bind ?hf (modify ?hf (is-latest FALSE)))
+    (duplicate ?hf (is-filled ?new-filled) (description ?new-desc) (fact-string (fact-to-string ?sf)) (time ?now) (game-time ?gt))
+)
+
+(defrule silence-debug
+	(confval (path "/llsfrb/clips/debug") (type BOOL) (value TRUE))
+	(confval (path "/llsfrb/clips/debug-level") (type UINT) (value ?v&:(< ?v 3)))
+	=>
+	(unwatch facts machine-history gamestate-history robot-history shelf-slot-history)
+	(unwatch rules game-create-next-machine-history game-create-next-gamestate-history game-create-next-robot-history game-create-next-shelf-slot-history)
+)
+
+(defrule game-print-machine-history
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(finalize)
+	=>
+	; machine history
+	(foreach ?curr-mps (deftemplate-slot-allowed-values machine name)
+		(print-sep (str-cat ?curr-mps " states"))
+		(bind ?history (find-all-facts ((?h machine-history)) (eq ?h:name ?curr-mps)))
+		(bind ?history (sort history> ?history))
+		(print-fact-list (fact-indices ?history) (create$ game-time time name state))
+	)
+)
+
+(defrule game-print-gamestates-from-mongodb-report
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(finalize)
+	=>
+	(bind ?history (find-all-facts ((?h gamestate-history)) TRUE))
+	(bind ?history (sort cont-time> ?history))
+	(print-fact-list (fact-indices ?history)
+	                 (create$ phase prev-phase game-time cont-time))
 )

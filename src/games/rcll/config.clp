@@ -26,6 +26,17 @@
 	(assert (disabled-slide-printed ?n))
 )
 
+(defrule config-update-order-count
+  (order)
+  ?cf <- (confval (path "/llsfrb/globals/number_of_orders") (value ?count))
+  =>
+  (bind ?orders (find-all-facts ((?o order)) TRUE))
+  (bind ?new-count (length$ ?orders))
+  (if (neq ?count ?new-count) then
+    (modify ?cf (value ?new-count))
+  )
+)
+
 ;(defrule print-confval
 ;  (confval (path ?p) (type ?t) (value ?v) (is-list ?is-list) (list-value $?lv))
 ;  =>

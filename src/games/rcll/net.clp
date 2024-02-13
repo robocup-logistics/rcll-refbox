@@ -145,7 +145,7 @@
 (defrule net-recv-beacon
   ?mf <- (protobuf-msg (type "llsf_msgs.BeaconSignal") (ptr ?p) (rcvd-at $?rcvd-at)
 		       (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
   ;(printout t "Received beacon from known " ?from-host ":" ?from-port crlf)
@@ -193,14 +193,6 @@
     (bind ?team-color (pb-field-value ?at "team_color"))
     (bind ?task-id (pb-field-value ?at "task_id"))
     (bind ?robot-id (pb-field-value ?at "robot_id"))
-
-    (assert (stamped-pose (task-id ?task-id)
-                          (robot-id ?robot-id)
-                          (team-color ?team-color)
-                          (x (nth$ 1 ?pose))
-                          (y (nth$ 2 ?pose))
-                          (ori (nth$ 3 ?pose))
-                          (time ?gt)))
 
     ; if agent task does not exist, create one
     (if (not (any-factp ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
@@ -290,7 +282,7 @@
                           (successful ?successful)
                           (processed FALSE)
                           (base-color ?base-color)
-                          (ring-color $?ring-color)
+                          (ring-colors $?ring-color)
                           (cap-color ?cap-color)))
       (printout ?*AGENT-TASK-ROUTER* "agent-task: " ?task-type ?task-parameters crlf)
     )
@@ -471,7 +463,7 @@
 (defrule net-recv-WorkpieceAddRing
   ?mf <- (protobuf-msg (type "llsf_msgs.WorkpieceAddRing") (ptr ?p) (rcvd-at $?rcvd-at)
 											 (rcvd-from ?from-host ?from-port) (rcvd-via ?via))
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (retract ?mf) ; message will be destroyed after rule completes
 
@@ -515,7 +507,7 @@
   (time $?now)
   ?f <- (signal (type workpiece-info) (time $?t&:(timeout ?now ?t ?*WORKPIECEINFO-PERIOD*)) (seq ?seq))
   (workpiece-tracking (enabled TRUE) (broadcast TRUE))
-  (gamestate (cont-time ?ctime))
+  (time-info (cont-time ?ctime))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?wi (net-create-WorkpieceInfo))
@@ -525,11 +517,11 @@
   (pb-destroy ?wi)
 )
 
-(deffunction net-create-GameState (?gs)
+(deffunction net-create-GameState (?gs ?ti)
   (bind ?gamestate (pb-create "llsf_msgs.GameState"))
   (bind ?gamestate-time (pb-field-value ?gamestate "game_time"))
   (if (eq (type ?gamestate-time) EXTERNAL-ADDRESS) then
-    (bind ?gt (time-from-sec (fact-slot-value ?gs game-time)))
+    (bind ?gt (time-from-sec (fact-slot-value ?ti game-time)))
     (pb-set-field ?gamestate-time "sec" (nth$ 1 ?gt))
     (pb-set-field ?gamestate-time "nsec" (integer (* (nth$ 2 ?gt) 1000)))
     (pb-set-field ?gamestate "game_time" ?gamestate-time) ; destroys ?gamestate-time!
@@ -553,14 +545,14 @@
 
 (defrule net-send-GameState
   (time $?now)
-  ?gs <- (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase)
-		    (game-time ?game-time) (teams $?teams))
+  ?gs <- (gamestate (refbox-mode ?refbox-mode) (state ?state) (phase ?phase) (teams $?teams))
+  ?ti <- (time-info (game-time ?game-time))
   ?f <- (signal (type gamestate) (time $?t&:(timeout ?now ?t ?*GAMESTATE-PERIOD*)) (seq ?seq))
   (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (if (debug 3) then (printout t "Sending GameState" crlf))
-  (bind ?gamestate (net-create-GameState ?gs))
+  (bind ?gamestate (net-create-GameState ?gs ?ti))
 
   (pb-broadcast ?peer-id-public ?gamestate)
 
@@ -620,7 +612,7 @@
 (defrule net-send-RobotInfo
   (time $?now)
   ?f <- (signal (type robot-info) (time $?t&:(timeout ?now ?t ?*ROBOTINFO-PERIOD*)) (seq ?seq))
-  (gamestate (cont-time ?ctime))
+  (time-info (cont-time ?ctime))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
   (bind ?ri (net-create-RobotInfo ?ctime TRUE))
@@ -634,7 +626,7 @@
   (time $?now)
   ?f <- (signal (type bc-robot-info)
 		(time $?t&:(timeout ?now ?t ?*BC-ROBOTINFO-PERIOD*)) (seq ?seq))
-  (gamestate (game-time ?gtime))
+  (time-info (game-time ?gtime))
   (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
   (modify ?f (time ?now) (seq (+ ?seq 1)))
@@ -666,9 +658,9 @@
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
-             (eq ?mtype RS) (> (length$ (fact-slot-value ?meta-f rs-ring-colors)) 0))
+             (eq ?mtype RS) (> (length$ (fact-slot-value ?meta-f available-colors)) 0))
      then
-     (foreach ?rc (fact-slot-value ?meta-f rs-ring-colors)
+     (foreach ?rc (fact-slot-value ?meta-f available-colors)
        (pb-add-list ?m "ring_colors" ?rc)
      )
     )
@@ -695,7 +687,7 @@
       )
       (if (eq ?mtype CS) then
         (pb-set-field ?m "loaded_with"
-          (if (fact-slot-value ?meta-f cs-retrieved) then 1 else 0))
+          (if (fact-slot-value ?meta-f has-retrieved) then 1 else 0))
       )
 
       (foreach ?l (fact-slot-value ?mlf actual-lights)
@@ -712,32 +704,32 @@
 	(switch (fact-slot-value ?mf mtype)
 	  (case BS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionBS"))
-	    (pb-set-field ?pm "side" (fact-slot-value ?meta-f bs-side))
-	    (pb-set-field ?pm "color" (fact-slot-value ?meta-f bs-color))
+	    (pb-set-field ?pm "side" (fact-slot-value ?meta-f current-side))
+	    (pb-set-field ?pm "color" (fact-slot-value ?meta-f current-base-color))
 	          (pb-set-field ?m "instruction_bs" ?pm)
 	    )
 	  (case DS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionDS"))
-	    (pb-set-field ?pm "gate" (fact-slot-value ?meta-f ds-gate))
+	    (pb-set-field ?pm "gate" (fact-slot-value ?meta-f gate))
 	    (pb-set-field ?pm "order_id" (fact-slot-value ?meta-f order-id))
 	    (pb-set-field ?m "instruction_ds" ?pm)
 	  )
 	  (case SS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionSS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f ss-operation))
-	    (bind ?shelf-slot (fact-slot-value ?meta-f ss-shelf-slot))
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f current-operation))
+	    (bind ?shelf-slot (fact-slot-value ?meta-f current-shelf-slot))
 	    (pb-set-field ?pm "shelf" (nth$ 1 ?shelf-slot))
 	    (pb-set-field ?pm "slot" (nth$ 2 ?shelf-slot))
 	    (pb-set-field ?m "instruction_ss" ?pm)
 	  )
 	  (case RS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionRS"))
-	    (pb-set-field ?pm "ring_color" (fact-slot-value ?meta-f rs-ring-color))
+	    (pb-set-field ?pm "ring_color" (fact-slot-value ?meta-f current-ring-color))
 	    (pb-set-field ?m "instruction_rs" ?pm)
 	  )
 	  (case CS then
 	    (bind ?pm (pb-create "llsf_msgs.PrepareInstructionCS"))
-	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f cs-operation))
+	    (pb-set-field ?pm "operation" (fact-slot-value ?meta-f operation-mode))
 	    (pb-set-field ?m "instruction_cs" ?pm)
 	  )
         )

@@ -38,7 +38,7 @@
 (defrule silence-debug-facts
   (declare (salience -1000))
   (init)
-  (confval (path "/llsfrb/clips/debug") (type BOOL) (value true))
+  (confval (path "/llsfrb/clips/debug") (type BOOL) (value TRUE))
   (confval (path "/llsfrb/clips/unwatch-facts") (type STRING) (is-list TRUE) (list-value $?lv))
   =>
   (printout t "Disabling watching of the following facts: " ?lv crlf)
@@ -48,7 +48,7 @@
 (defrule silence-debug-rules
   (declare (salience -1000))
   (init)
-  (confval (path "/llsfrb/clips/debug") (type BOOL) (value true))
+  (confval (path "/llsfrb/clips/debug") (type BOOL) (value TRUE))
   (confval (path "/llsfrb/clips/unwatch-rules") (type STRING) (is-list TRUE) (list-value $?lv))
   =>
   (printout t "Disabling watching of the following rules: " ?lv crlf)
@@ -66,9 +66,9 @@
 )
 (defrule simulation-disabled
   (init)
-  (confval (path "/llsfrb/simulation/enable") (type BOOL) (value false))
+  (confval (path "/llsfrb/simulation/enable") (type BOOL) (value FALSE))
   =>
-  (assert (sim-time (enabled false)))
+  (assert (sim-time (enabled FALSE)))
 )
 
 (defrule reset-game
@@ -110,7 +110,9 @@
 
 (defrule init-game
   ?gf <- (gamestate (state INIT))
+  ?ti <- (time-info)
   =>
-  (modify ?gf (state WAIT_START) (last-time (now)))
+  (modify ?gf (state WAIT_START))
+  (modify ?ti (last-time (now)))
 )
 

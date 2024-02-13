@@ -59,7 +59,7 @@ public:
 private:
 	Logger     *logger_;
 	Logger     *trace_logger_;
-	char	     *component_;
+	char       *component_;
 	std::string buffer_;
 };
 

@@ -55,7 +55,7 @@ public:
 	void                                             clients_send_all(rapidjson::Document &d);
 	void                                             log_push_attention_message(std::string text,
 	                                                                            std::string team,
-	                                                                            std::string time_to_display,
+	                                                                            int         time_to_display,
 	                                                                            float       game_time);
 	std::function<void(std::string)>                 clips_set_gamestate;
 	std::function<void(std::string)>                 clips_set_gamephase;
@@ -70,22 +70,27 @@ public:
 	std::function<void(int, std::string, float, std::string, std::string)> clips_add_points_team;
 	bool        match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
 	void        log_push_points();
+	void        log_push_config(std::string path);
 	void        log_push_ring_spec();
 	void        log_push_game_state();
+	void        log_push_time_info();
 	void        log_push_robot_info(int number, std::string name);
+	void        log_push_agent_task_info(int tid, int rid);
 	void        log_push_order_info(int id);
 	void        log_push_machine_info(std::string name);
 	void        log_push_workpiece_info(int id);
 	void        log_push_order_info_via_delivery(int delivery_id);
 	void        log_push_known_teams();
 	std::string on_connect_known_teams();
+	std::string on_connect_agent_task_info();
 	std::string on_connect_machine_info();
 	std::string on_connect_order_info();
-	std::string on_connect_order_count();
 	std::string on_connect_workpiece_info();
 	std::string on_connect_robot_info();
+	std::string on_connect_game_state();
 	std::string on_connect_ring_spec();
 	std::string on_connect_points();
+	std::string on_connect_config();
 	std::string get_gamestate();
 	std::string get_gamephase();
 	std::map<std::string, std::shared_ptr<rapidjson::SchemaDocument>> command_schema_map;
@@ -102,13 +107,22 @@ public:
 	void
 	get_robot_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
+	void get_agent_task_info_fact(T                                  *o,
+	                              rapidjson::Document::AllocatorType &alloc,
+	                              CLIPS::Fact::pointer                fact);
+	template <class T>
 	void
 	get_game_state_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_time_info_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void
 	get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void get_config_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void get_workpiece_info_fact(T                                  *o,
 	                             rapidjson::Document::AllocatorType &alloc,
@@ -120,6 +134,18 @@ public:
 	                                 void (Data::*get_info_fact)(rapidjson::Value *,
                                                           rapidjson::Document::AllocatorType &,
                                                           CLIPS::Fact::pointer));
+
+	rapidjson::Document
+	pack_facts_to_doc(std::string tmpl_name,
+	                  void (Data::*get_info_fact)(rapidjson::Value *,
+	                                              rapidjson::Document::AllocatorType &,
+	                                              CLIPS::Fact::pointer));
+	rapidjson::Document
+	pack_facts_to_doc(std::string                              tmpl_name,
+	                  const std::vector<CLIPS::Fact::pointer> &facts,
+	                  void (Data::*get_info_fact)(rapidjson::Value *,
+	                                              rapidjson::Document::AllocatorType &,
+	                                              CLIPS::Fact::pointer));
 
 private:
 	std::shared_ptr<Logger>                    logger_;

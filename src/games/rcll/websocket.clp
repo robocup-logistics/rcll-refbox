@@ -10,10 +10,10 @@
 (defrule ws-send-attention-message
   "forward attention messages to the websocket backend"
   ?msg <- (ws-attention-message ?text ?team ?time-to-show)
-  (gamestate (game-time ?gt))
+  (time-info (game-time ?gt))
   =>
   (retract ?msg)
-  (ws-send-attention-message (str-cat ?text) (str-cat ?team) (str-cat ?time-to-show) ?gt)
+  (ws-send-attention-message (str-cat ?text) (str-cat ?team) ?time-to-show ?gt)
 )
 
 (defrule ws-reset-machine-by-team
@@ -37,6 +37,20 @@
   (ws-create-GameState)
 )
 
+(defrule ws-update-confval
+  "send udpate of gamestate whenever the gamestate fact changes"
+  (confval (path ?path))
+  =>
+  (ws-create-Config ?path)
+)
+
+(defrule ws-update-time-info
+  "send udpate of time-info whenever the gamestate fact changes"
+  (time-info)
+  =>
+  (ws-create-TimeInfo)
+)
+
 (defrule ws-update-order
   "send update of an order, whenever the order fact changes"
   ?sf <- (order (id ?id))
@@ -47,7 +61,8 @@
 
 (defrule ws-update-unconfirmed-delivery
   "send update of an order, whenever the unconfirmed delivery information changes"
-  ?sf <- (product-processed (order ?id))
+  (product-processed (order ?id))
+  (order (id ?id))
   (gamestate (phase PRODUCTION|POST_GAME))
   =>
   (ws-create-OrderInfo ?id)
@@ -69,11 +84,18 @@
   (ws-create-RobotInfo ?number ?name)
 )
 
+(defrule ws-update-agent-task
+  "send update of an agent task, whenever the agent task fact changes"
+  ?sf <- (agent-task (task-id ?tid&:(> ?tid 0)) (robot-id ?rid))
+  =>
+  (ws-create-AgentTaskInfo ?tid ?rid)
+)
+
 (defrule ws-update-workpiece
   "send update of a workpiece, whenever the workpiece fact changes"
   ?sf <- (workpiece (id ?id) (latest-data TRUE))
   =>
-  (ws-create-WorkpieceInfo ?id)
+  (ws-create-WorkpieceInfo (fact-index ?sf))
 )
 
 (defrule ws-update-machine
@@ -111,6 +133,7 @@
     ws-send-attention-message
     ws-reset-machine-by-team
     ws-update-gamestate
+    ws-update-time-info
     ws-update-order
     ws-update-unconfirmed-delivery
     ws-update-order-external
