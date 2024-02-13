@@ -395,7 +395,8 @@
 	(challenges-route (id ?r-id) (team-color ?col) (remaining $?zones&:(member$ (pose-to-zone ?x ?y) ?zones)))
 	(not (challenges-zone-visit (robot-number ?n) (team-color ?col)))
 	(not (challenges-zone-visit (team-color ?col) (route-id ?r-id)))
-	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+	(gamestate (phase PRODUCTION) (state RUNNING))
+	(time-info (game-time ?gt))
 =>
 	(assert (challenges-zone-visit (route-id ?r-id) (team-color ?col)
 	(robot-number ?n) (visited-zone (pose-to-zone ?x ?y)) (visit-start ?gt)))
@@ -404,13 +405,15 @@
 	(robot (number ?n) (team-color ?col) (pose ?x ?y ?z) (state ACTIVE))
 	?zv <- (challenges-zone-visit (robot-number ?n) (team-color ?col)
 	         (visited-zone ?zone&:(neq ?zone (pose-to-zone ?x ?y))))
-	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+	(gamestate (phase PRODUCTION) (state RUNNING))
+	(time-info (game-time ?gt))
 =>
 	(retract ?zv)
 )
 
 (defrule challenges-zone-visit-success
-	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+	(gamestate (phase PRODUCTION) (state RUNNING))
+	(time-info (game-time ?gt))
 	?route <- (challenges-route (team-color ?col) (id ?r-id)
 	  (remaining $?remaining) (reached $?reached))
 	?zv <- (challenges-zone-visit (team-color ?col) (route-id ?r-id)
