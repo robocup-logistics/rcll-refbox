@@ -103,7 +103,6 @@ MachineFactory::create_machine(const std::string &name,
 	if (connection_mode == "mqtt") {
 		std::unique_ptr<MqttMachine> mps;
 		if (type == "BS") {
-			std::cout << "Name: " << name << std::endl;
 			mps = std::make_unique<MqttBaseStation>(
 			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 			return std::move(mps);

@@ -50,10 +50,9 @@ enum Topic {
 class MqttUtils
 {
 public:
-	const inline static std::string              BROKER_ADDRESS = "tcp://mosquitto:1883";
-	const inline static std::string              TOPIC_PREFIX   = "MPS";
-	const inline static std::string              TOPIC          = "MPS/{0}/{1}/{2}";
-	const inline static std::vector<std::string> folders        = {"In", "Basic"};
+	const inline static std::string              TOPIC_PREFIX = "MPS";
+	const inline static std::string              TOPIC        = "MPS/{0}/{1}/{2}";
+	const inline static std::vector<std::string> folders      = {"In", "Basic"};
 	const inline static std::vector<std::string> registers =
 	  {"ActionId", "BarCode", "Data/Data[0]", "Data/Data[1]", "Error", "SlideCnt", "Status"};
 	const inline static std::vector<std::string> bits =

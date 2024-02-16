@@ -65,10 +65,9 @@ MqttMachine::MqttMachine(const std::string &name,
   simulation_(connection_mode == SIMULATION)
 {
 	initLogger(log_path);
-	std::cout << std::string("tcp://" + ip_ + ":" + std::to_string(port_)) << std::endl;
-	mqtt_client_               = new mqtt_client_wrapper(client_id_,
-                                         logger,
-                                         std::string("tcp://" + ip_ + ":" + std::to_string(port_)));
+	auto broker = std::string("tcp://" + ip_ + ":" + std::to_string(port_));
+	logger->info("Connecting to {}", broker);
+	mqtt_client_               = new mqtt_client_wrapper(client_id_, logger, broker);
 	subscribed_                = false;
 	start_sending_instructions = false;
 	running                    = true;
