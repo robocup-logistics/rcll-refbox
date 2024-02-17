@@ -37,7 +37,7 @@ public:
 	                const std::string &ip,
 	                unsigned short     port,
 	                const std::string &log_path = "",
-	                ConnectionMode     mode     = PLC);
+	                ConnectionMode     mode     = MQTT);
 
 	void get_base(llsf_msgs::BaseColor slot) override;
 };

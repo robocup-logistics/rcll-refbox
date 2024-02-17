@@ -60,7 +60,7 @@ public:
 	            const std::string &ip,
 	            unsigned short     port,
 	            const std::string &log_path = "",
-	            ConnectionMode              = PLC);
+	            ConnectionMode              = MQTT);
 
 	~MqttMachine() override;
 

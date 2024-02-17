@@ -42,7 +42,7 @@ public:
 	               const std::string &ip,
 	               unsigned short     port,
 	               const std::string &log_path = "",
-	               ConnectionMode     mode     = PLC);
+	               ConnectionMode     mode     = MQTT);
 
 	virtual ~MqttCapStation();
 

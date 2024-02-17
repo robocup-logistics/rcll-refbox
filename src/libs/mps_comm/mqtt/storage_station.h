@@ -37,7 +37,7 @@ public:
 	                   const std::string &ip,
 	                   unsigned short     port,
 	                   const std::string &log_path = "",
-	                   ConnectionMode     mode     = PLC);
+	                   ConnectionMode     mode     = MQTT);
 	void retrieve(unsigned int shelf, unsigned int slot) override;
 	void store(unsigned int shelf, unsigned int slot) override;
 	void relocate(unsigned int shelf,
