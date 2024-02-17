@@ -71,17 +71,6 @@ COPY --from=buildenv /buildenv/src/msgs/*.proto /usr/local/share/rcll-refbox/msg
 COPY --from=buildenv /buildenv/src/libs/websocket/message_schemas/*.json /usr/local/share/rcll-refbox/libs/websocket/message_schemas/
 COPY --from=buildenv /buildenv/cfg /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
-RUN cat /requires.txt
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
-RUN dnf install -y --nodocs 'dnf-command(copr)' && dnf -y copr enable tavie/paho-mqtt-cpp && dnf -y copr enable tavie/clips_protobuf &&\
-    dnf install -y --nodocs $(cat /requires.txt) && \ 
-    dnf clean all && \
-    cat /requires.txt && \
-    rm /requires.txt
+RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
 CMD ["llsf-refbox"]
-
-FROM builder as devcontainer
-ARG USER_NAME
-ENV USER_NAME=$USER_NAME
-RUN useradd -u 1000 $USER_NAME
-RUN usermod -aG wheel $USER_NAME && ( echo "$USER_NAME:refbox" | chpasswd )
