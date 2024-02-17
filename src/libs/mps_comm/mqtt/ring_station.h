@@ -37,7 +37,7 @@ public:
 	                const std::string &ip,
 	                unsigned short     port,
 	                const std::string &log_path = "",
-	                ConnectionMode     mode     = PLC);
+	                ConnectionMode     mode     = MQTT);
 
 	void mount_ring(unsigned int feeder, llsf_msgs::RingColor color) override;
 	void register_slide_callback(std::function<void(unsigned int)>) override;
