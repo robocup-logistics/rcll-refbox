@@ -20,7 +20,7 @@ include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 include $(BASEDIR)/src/libs/mps_comm/freeopcua.mk
 
-LIBS_libmps_comm = stdc++ m llsfrbcore llsfrbconfig pthread paho-mqtt3cs paho-mqtt3c paho-mqtt3as paho-mqtt3a paho-mqttpp3
+LIBS_libmps_comm = stdc++ m llsfrbcore llsfrbconfig pthread
 OBJS_opcua = opcua/opc_utils.o opcua/machine.o opcua/base_station.o \
 						 opcua/cap_station.o opcua/delivery_station.o opcua/ring_station.o \
              opcua/storage_station.o
@@ -38,10 +38,13 @@ else
   WARN_TARGETS += warning_cpp17
 endif
 
-HAVE_MQTT = 1
+HAVE_MQTT = $(shell if [ -f /usr/include/mqtt/async_client.h ]; then echo 1; else echo 0; fi)
 ifeq ($(HAVE_MQTT),1)
+  LIBS_libmps_comm += paho-mqtt3cs paho-mqtt3c paho-mqtt3as paho-mqtt3a paho-mqttpp3
   OBJS_libmps_comm += $(OBJS_mqtt)
-CFLAGS += $(CFLAGS_CPP17) -DHAVE_MQTT
+  CFLAGS += $(CFLAGS_CPP17) -DHAVE_MQTT
+else
+  WARN_TARGETS += warning_mqtt
 endif
 
 
@@ -61,6 +64,8 @@ all: $(WARN_TARGETS)
 .PHONY: $(WARN_TARGETS)
 warning_freeopcua:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No OPC-UA support$(TNORMAL) ($(WARNING_FREEOPCUA))"
+warning_mqtt:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No mqtt support$(TNORMAL) (paho-c(-devel) and paho-mqtt-cpp(-devel) required)"
 warning_cpp17:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No Mockup support$(TNORMAL) (C++17 not supported)"
 endif
