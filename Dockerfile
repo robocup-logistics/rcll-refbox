@@ -62,8 +62,7 @@ FROM fedora:38 as refbox
 RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
       dnf -y copr enable tavie/clips_protobuf && \
-      dnf -y copr enable tavie/paho-mqtt-cpp && \
-      dnf install -y --nodocs paho-c paho-c-devel paho-mqtt-cpp paho-mqtt-cpp-devel 
+      dnf -y copr enable tavie/paho-mqtt-cpp
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
 COPY --from=buildenv /buildenv/src/games /usr/local/share/rcll-refbox/games
