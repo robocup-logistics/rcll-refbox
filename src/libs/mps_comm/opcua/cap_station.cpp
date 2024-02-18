@@ -21,7 +21,7 @@
 
 #include "cap_station.h"
 
-#include "mps_io_mapping.h"
+#include "../mps_io_mapping.h"
 
 #include <iostream>
 

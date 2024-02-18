@@ -1,9 +1,9 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  delivery_station.cpp - MQTT communication with the DS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -34,21 +34,21 @@ namespace mps_comm {
 }
 #endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
-                                           const std::string &ip,
-                                           unsigned short     port,
-                                           const std::string &log_path,
-                                           ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
+MqttDeliveryStation::MqttDeliveryStation(const std::string &name,
+                                         const std::string &ip,
+                                         unsigned short     port,
+                                         const std::string &log_path,
+                                         ConnectionMode     mode)
+: Machine(name), MqttMachine(name, Station::STATION_DELIVERY, ip, port, log_path, mode)
 {
 }
 
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
+MqttDeliveryStation::~MqttDeliveryStation()
 {
 }
 
 void
-OpcUaDeliveryStation::deliver_product(int slot)
+MqttDeliveryStation::deliver_product(int slot)
 {
 	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
 }

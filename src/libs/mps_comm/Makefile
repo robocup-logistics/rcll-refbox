@@ -27,6 +27,8 @@ OBJS_opcua = opcua/opc_utils.o opcua/machine.o opcua/base_station.o \
 OBJS_mockup = mockup/machine.o mockup/base_station.o mockup/cap_station.o \
 							mockup/delivery_station.o mockup/ring_station.o \
               mockup/storage_station.o
+OBJS_mqtt = mqtt/machine.o mqtt/base_station.o mqtt/mqtt_utils.o mqtt/mqtt_callback.o mqtt/mqtt_action_listener.o \
+            mqtt/mqtt_client_wrapper.o mqtt/cap_station.o mqtt/delivery_station.o mqtt/ring_station.o mqtt/storage_station.o
 OBJS_libmps_comm = time_utils.o machine_factory.o
 
 ifeq ($(HAVE_CPP17),1)
@@ -35,6 +37,16 @@ ifeq ($(HAVE_CPP17),1)
 else
   WARN_TARGETS += warning_cpp17
 endif
+
+HAVE_MQTT = $(shell if [ -f /usr/include/mqtt/async_client.h ]; then echo 1; else echo 0; fi)
+ifeq ($(HAVE_MQTT),1)
+  LIBS_libmps_comm += paho-mqtt3cs paho-mqtt3c paho-mqtt3as paho-mqtt3a paho-mqttpp3
+  OBJS_libmps_comm += $(OBJS_mqtt)
+  CFLAGS += $(CFLAGS_CPP17) -DHAVE_MQTT
+else
+  WARN_TARGETS += warning_mqtt
+endif
+
 
 ifeq ($(HAVE_FREEOPCUA),1)
   OBJS_libmps_comm += $(OBJS_opcua)
@@ -52,6 +64,8 @@ all: $(WARN_TARGETS)
 .PHONY: $(WARN_TARGETS)
 warning_freeopcua:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No OPC-UA support$(TNORMAL) ($(WARNING_FREEOPCUA))"
+warning_mqtt:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No mqtt support$(TNORMAL) (paho-c(-devel) and paho-mqtt-cpp(-devel) required)"
 warning_cpp17:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No Mockup support$(TNORMAL) (C++17 not supported)"
 endif

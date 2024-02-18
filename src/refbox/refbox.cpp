@@ -396,7 +396,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	avahi_thread_            = std::make_shared<AvahiThread>();
 	service_publisher        = avahi_thread_;
 	service_browser          = avahi_thread_;
-
 	avahi_thread_->start();
 	nnresolver      = std::make_unique<fawkes::NetworkNameResolver>(avahi_thread_.get());
 	refbox_service_ = std::make_unique<fawkes::NetworkService>(nnresolver.get(),

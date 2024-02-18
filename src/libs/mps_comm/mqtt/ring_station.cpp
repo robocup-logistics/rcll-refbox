@@ -1,9 +1,9 @@
 /***************************************************************************
- *  delivery_station.cpp - OPC-UA communication with the DS
+ *  ring_station.cpp - MQTT communication with the RS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -19,38 +19,35 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "delivery_station.h"
+#include "ring_station.h"
 
 #include "../mps_io_mapping.h"
 
 #include <iostream>
 
 namespace llsfrb {
-#if 0
-}
-#endif
 namespace mps_comm {
-#if 0
-}
-#endif
 
-OpcUaDeliveryStation::OpcUaDeliveryStation(const std::string &name,
-                                           const std::string &ip,
-                                           unsigned short     port,
-                                           const std::string &log_path,
-                                           ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_DELIVERY, ip, port, log_path, mode)
-{
-}
-
-OpcUaDeliveryStation::~OpcUaDeliveryStation()
+MqttRingStation::MqttRingStation(const std::string &name,
+                                 const std::string &ip,
+                                 unsigned short     port,
+                                 const std::string &log_path,
+                                 ConnectionMode     mode)
+: Machine(name), MqttMachine(name, Station::STATION_RING, ip, port, log_path, mode)
 {
 }
 
 void
-OpcUaDeliveryStation::deliver_product(int slot)
+MqttRingStation::mount_ring(unsigned int feeder, llsf_msgs::RingColor color)
 {
-	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
+	uint16_t payload2 = color;
+	enqueue_instruction(Operation::OPERATION_MOUNT_RING + machine_type_, feeder, payload2);
+}
+
+void
+MqttRingStation::register_slide_callback(std::function<void(unsigned int)> callback)
+{
+	mqtt_client_->register_slide_callback(callback);
 }
 
 } // namespace mps_comm

@@ -1,9 +1,9 @@
 /***************************************************************************
- *  base_station.cpp - OPC-UA communication with the BS
+ *  base_station.cpp - MQTT communication with the BS
  *
- *  Created: Thu 21 Feb 2019 13:29:11 CET 13:29
- *  Copyright  2019  Alex Maestrini <maestrini@student.tugraz.at>
- *                   Till Hofmann <hofmann@kbsg.rwth-aachen.de>
+ *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
+ *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
+ *
  ****************************************************************************/
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -29,17 +29,17 @@
 namespace llsfrb {
 namespace mps_comm {
 
-OpcUaBaseStation::OpcUaBaseStation(const std::string &name,
-                                   const std::string &ip,
-                                   unsigned short     port,
-                                   const std::string &log_path,
-                                   ConnectionMode     mode)
-: Machine(name), OpcUaMachine(Station::STATION_BASE, ip, port, log_path, mode)
+MqttBaseStation::MqttBaseStation(const std::string &name,
+                                 const std::string &ip,
+                                 unsigned short     port,
+                                 const std::string &log_path,
+                                 ConnectionMode     mode)
+: Machine(name), MqttMachine(name, Station::STATION_BASE, ip, port, log_path, mode)
 {
 }
 
 void
-OpcUaBaseStation::get_base(llsf_msgs::BaseColor color)
+MqttBaseStation::get_base(llsf_msgs::BaseColor color)
 {
 	//lock_guard<mutex> g(lock_);
 	llsfrb::mps_comm::BaseColor color_sps;

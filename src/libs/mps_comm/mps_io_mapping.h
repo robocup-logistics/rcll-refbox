@@ -28,6 +28,9 @@
 namespace llsfrb {
 namespace mps_comm {
 
+enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
+
+enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 // Base commands for mps_comm communication:
 // Each machine type has a base prefix.
 // The sub commands are added to these base prefixes.

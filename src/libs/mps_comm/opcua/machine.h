@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../machine.h"
-#include "mps_io_mapping.h"
+#include "../mps_io_mapping.h"
 #include "opc_utils.h"
 #include "subscription_client.h"
 
@@ -39,9 +39,9 @@
 namespace llsfrb {
 namespace mps_comm {
 
-enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
+//enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
 
-enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
+//enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
 
 class MachineFactory;
 

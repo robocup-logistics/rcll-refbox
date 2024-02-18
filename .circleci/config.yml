@@ -11,6 +11,7 @@ jobs:
             dnf install -y --nodocs 'dnf-command(copr)' && \
             dnf -y copr enable thofmann/clips-6.31 && \
             dnf -y copr enable tavie/clips_protobuf && \
+            dnf -y copr enable tavie/paho-mqtt-cpp && \
             dnf install -y --nodocs \
               apr-util-devel \
               avahi-devel \
@@ -39,7 +40,11 @@ jobs:
               rapidjson-devel \
               which \
               yaml-cpp-devel \
-              yamllint
+              yamllint \
+              cmake \
+              paho-c-devel \
+              paho-mqtt-cpp \
+              paho-mqtt-cpp-devel
       - checkout
       - run: make quick-check
       - run: make all FAIL_ON_WARNING=1
