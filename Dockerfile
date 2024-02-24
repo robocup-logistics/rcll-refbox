@@ -74,4 +74,6 @@ COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
 ENV PATH="/usr/local/bin:${PATH}"
+RUN mkdir /logs
+WORKDIR logs
 CMD ["llsf-refbox"]
