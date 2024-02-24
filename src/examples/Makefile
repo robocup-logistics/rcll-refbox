@@ -24,10 +24,10 @@ CFLAGS += $(CFLAGS_CPP11)
 REQ_BOOST_LIBS = thread asio system signals2
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
 
-LIBS_example_client = stdc++ llsf_msgs
+LIBS_example_client = stdc++ rcll_msgs
 OBJS_example_client = client.o
 
-LIBS_example_peer = stdc++ llsf_msgs
+LIBS_example_peer = stdc++ rcll_msgs
 OBJS_example_peer = peer.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_PROTOBUF_COMM)$(HAVE_BOOST_LIBS),111)
