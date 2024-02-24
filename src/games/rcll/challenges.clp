@@ -486,3 +486,16 @@
     (mapped-to "field_mirrored") (value ?v))
   )
 )
+
+(defrule challenges-add-pb-conf-challenge-name
+  (confval (path ?p&"/llsfrb/challenges/name") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "challenge_name") (value ?v))
+  )
+)
