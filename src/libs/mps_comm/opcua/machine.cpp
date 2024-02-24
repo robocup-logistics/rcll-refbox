@@ -428,7 +428,7 @@ void
 OpcUaMachine::register_opc_callback(SubscriptionClient::ReturnValueCallback callback,
                                     OpcUtils::MPSRegister                   reg)
 {
-	logger->info("Registering callback for register {}", reg);
+	logger->info("Registering callback for register {}", static_cast<int>(reg));
 	SubscriptionClient *sub = subscribe(reg, simulation_);
 	sub->add_callback(callback);
 }
