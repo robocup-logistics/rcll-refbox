@@ -429,3 +429,21 @@
 		                "that was not marked as 'remaining', ignoring" crlf)
 	)
 )
+
+(defrule challenges-sync-config-with-global-field-width
+  ?cv <- (confval (path "/llsfrb/challenges/field/width") (value ?v&:(neq  ?v ?*FIELD-WIDTH*)))
+  =>
+  (modify ?cv (value ?*FIELD-WIDTH*))
+)
+
+(defrule challenges-sync-config-with-global-field-height
+  ?cv <- (confval (path "/llsfrb/challenges/field/height") (value ?v&:(neq  ?v ?*FIELD-HEIGHT*)))
+  =>
+  (modify ?cv (value ?*FIELD-HEIGHT*))
+)
+
+(defrule challenges-sync-config-with-global-field-mirrored
+  ?cv <- (confval (path "/llsfrb/challenges/field/mirrored") (value ?v&:(neq  ?v ?*FIELD-MIRRORED*)))
+  =>
+  (modify ?cv (value ?*FIELD-MIRRORED*))
+)

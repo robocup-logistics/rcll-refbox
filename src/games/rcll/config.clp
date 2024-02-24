@@ -37,6 +37,23 @@
   )
 )
 
+(defrule config-sync-config-with-global-field-width
+  ?cv <- (confval (path "/llsfrb/game/field/width") (value ?v&:(neq  ?v ?*FIELD-WIDTH*)))
+  =>
+  (modify ?cv (value ?*FIELD-WIDTH*))
+)
+
+(defrule config-sync-config-with-global-field-height
+  ?cv <- (confval (path "/llsfrb/game/field/height") (value ?v&:(neq  ?v ?*FIELD-HEIGHT*)))
+  =>
+  (modify ?cv (value ?*FIELD-HEIGHT*))
+)
+
+(defrule config-sync-config-with-global-field-mirrored
+  ?cv <- (confval (path "/llsfrb/game/field/mirrored") (value ?v&:(neq  ?v ?*FIELD-MIRRORED*)))
+  =>
+  (modify ?cv (value ?*FIELD-MIRRORED*))
+)
 ;(defrule print-confval
 ;  (confval (path ?p) (type ?t) (value ?v) (is-list ?is-list) (list-value $?lv))
 ;  =>
