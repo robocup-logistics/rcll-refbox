@@ -46,7 +46,8 @@ jobs:
               paho-c-devel \
               paho-mqtt-cpp \
               paho-mqtt-cpp-devel
-      - checkout
+      - checkout:
+          submodules: true
       - run: make quick-check
       - run: make all FAIL_ON_WARNING=1
 workflows:
