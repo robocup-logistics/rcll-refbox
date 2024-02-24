@@ -5,7 +5,7 @@
 
 llsfrb:
   comm:
-    protobuf-dirs: ["@SHAREDIR@/msgs"]
+    protobuf-dirs: ["@SHAREDIR@/msgs/rcll-protobuf-msgs"]
     # TCP port the refbox listens on for controller connections.
     server-port: !tcp-port 4444
     # peer communication broadcast address.
