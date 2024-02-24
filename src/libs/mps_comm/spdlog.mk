@@ -15,9 +15,10 @@
 
 ifneq ($(PKGCONFIG),)
   HAVE_SPDLOG= $(if $(shell $(PKGCONFIG) --exists spdlog; echo $${?/1/}),1,0)
+  HAVE_FMT= $(if $(shell $(PKGCONFIG) --exists fmt; echo $${?/1/}),1,0)
 endif
 
-ifeq ($(HAVE_SPDLOG),1)
-  CFLAGS_SPDLOG = $(shell $(PKGCONFIG) --cflags spdlog)
-  LDFLAGS_SPDLOG = $(shell $(PKGCONFIG) --libs spdlog)
+ifeq ($(HAVE_FMT)$(HAVE_SPDLOG),11)
+  CFLAGS_SPDLOG = $(shell $(PKGCONFIG) --cflags spdlog) $(shell $(PKGCONFIG) --cflags fmt)
+  LDFLAGS_SPDLOG = $(shell $(PKGCONFIG) --libs spdlog) $(shell $(PKGCONFIG) --libs fmt)
 endif

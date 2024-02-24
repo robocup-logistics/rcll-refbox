@@ -19,6 +19,7 @@ include $(BASEDIR)/etc/buildsys/config.mk
 include $(BUILDSYSDIR)/protobuf.mk
 include $(BUILDSYSDIR)/boost.mk
 include $(BASEDIR)/src/libs/mps_comm/freeopcua.mk
+include $(BASEDIR)/src/libs/mps_comm/spdlog.mk
 
 LIBS_libmps_comm = stdc++ m llsfrbcore llsfrbconfig pthread
 OBJS_opcua = opcua/opc_utils.o opcua/machine.o opcua/base_station.o \
@@ -56,6 +57,13 @@ else
   WARN_TARGETS += warning_freeopcua
 endif
 
+ifeq ($(HAVE_SPDLOG)$(HAVE_FMT),11)
+  CFLAGS  += $(CFLAGS_SPDLOG)
+  LDFLAGS += $(LDFLAGS_SPDLOG)
+else
+  WARN_TARGETS += warning_spdlog
+endif
+
 OBJS_all = $(OBJS_libmps_comm)
 LIBS_all = $(LIBDIR)/libmps_comm.so
 
@@ -64,6 +72,8 @@ all: $(WARN_TARGETS)
 .PHONY: $(WARN_TARGETS)
 warning_freeopcua:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No OPC-UA support$(TNORMAL) ($(WARNING_FREEOPCUA))"
+warning_spdlog:
+	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No spdlog support$(TNORMAL) ($(WARNING_SPDLOG))"
 warning_mqtt:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)No mqtt support$(TNORMAL) (paho-c(-devel) and paho-mqtt-cpp(-devel) required)"
 warning_cpp17:
