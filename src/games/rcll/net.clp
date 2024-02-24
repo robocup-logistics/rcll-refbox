@@ -673,6 +673,11 @@
     (bind ?rotation (fact-slot-value ?mf rotation))
 
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
+    (bind ?tag-ids (tag-ids-from-machine-name (fact-slot-value ?mf name)))
+    (if ?tag-ids then
+      (pb-set-field ?m "input_tag" (nth$ 1 ?tag-ids))
+      (pb-set-field ?m "output_tag" (nth$ 2 ?tag-ids))
+    )
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
