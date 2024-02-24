@@ -5,6 +5,7 @@ jobs:
     docker:
       - image: fedora:39
     steps:
+      - checkout:
       - run:
           name: Install dependencies
           command: |
@@ -45,9 +46,8 @@ jobs:
               cmake \
               paho-c-devel \
               paho-mqtt-cpp \
-              paho-mqtt-cpp-devel
-      - checkout:
-          submodules: true
+              paho-mqtt-cpp-devel && \
+              git submodule update --init --recursive
       - run: make quick-check
       - run: make all FAIL_ON_WARNING=1
 workflows:
