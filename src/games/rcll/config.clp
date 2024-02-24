@@ -54,6 +54,53 @@
   =>
   (modify ?cv (value ?*FIELD-MIRRORED*))
 )
+
+(defrule config-add-pb-conf-field-width
+  (confval (path ?p&"/llsfrb/game/field/width") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "field_width") (value ?v))
+  )
+)
+
+(defrule config-add-pb-conf-field-height
+  (confval (path ?p&"/llsfrb/game/field/height") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "field_height") (value ?v))
+  )
+)
+
+(defrule config-add-pb-conf-field-mirrored
+  (confval (path ?p&"/llsfrb/game/field/mirrored") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "field_mirrored") (value ?v))
+  )
+)
+
+(defrule config-sync-pb-conf
+  (confval (path ?path) (type ?t) (value ?v))
+  ?pb-conf <- (public-pb-conf (path ?path) (value ?old-v&:(neq ?v ?old-v)))
+  =>
+  (bind ?type (confval-to-pb-type ?t))
+  (modify ?pb-conf (type ?type) (value ?v))
+)
 ;(defrule print-confval
 ;  (confval (path ?p) (type ?t) (value ?v) (is-list ?is-list) (list-value $?lv))
 ;  =>

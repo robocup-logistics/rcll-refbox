@@ -484,3 +484,16 @@
 	(bind ?update-str (str-cat ?update-str ")"))
   (return ?update-str)
 )
+
+(deffunction confval-to-pb-type (?t)
+  (bind ?type nil)
+  (if (eq ?t UINT) then (bind ?type INTEGER))
+  (if (eq ?t FLOAT) then (bind ?type FLOAT))
+  (if (eq ?t BOOL) then (bind ?type BOOLEAN))
+  (if (eq ?t STRING) then (bind ?type BOOLEAN))
+  (if (eq ?type nil) then
+    (printout warn "try to add public config with unknown type " ?t " -> use STRING instead" crlf)
+    (bind ?type STRING)
+  )
+  (return ?type)
+)
