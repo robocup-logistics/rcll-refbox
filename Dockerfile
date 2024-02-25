@@ -8,11 +8,12 @@
 #   (at your option) any later version.
 #
 
-FROM fedora:38 as builder
+FROM fedora:39 as builder
 RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
       dnf -y copr enable tavie/clips_protobuf && \
       dnf -y copr enable tavie/paho-mqtt-cpp && \
+      dnf -y copr enable tavie/mongo-cxx-driver && \
       dnf install -y --nodocs \
       avahi-devel \
       boost-devel \
@@ -58,11 +59,12 @@ RUN shopt -s globstar; \
     /usr/lib/rpm/rpmdeps -P lib/** bin/** > provides.txt && \
     /usr/lib/rpm/rpmdeps -R lib/** bin/** | grep -v -f provides.txt > requires.txt
 
-FROM fedora:38 as refbox
+FROM fedora:39 as refbox
 RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && \
       dnf -y copr enable thofmann/clips-6.31 && \
       dnf -y copr enable tavie/clips_protobuf && \
       dnf -y copr enable tavie/paho-mqtt-cpp && \
+      dnf -y copr enable tavie/mongo-cxx-driver && \
       dnf install -y --nodocs paho-c paho-c-devel paho-mqtt-cpp paho-mqtt-cpp-devel 
 COPY --from=buildenv /buildenv/bin/* /usr/local/bin/
 COPY --from=buildenv /buildenv/lib/* /usr/local/lib64/
@@ -73,4 +75,7 @@ COPY --from=buildenv /buildenv/cfg /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
+ENV PATH="/usr/local/bin:${PATH}"
+RUN mkdir /logs
+WORKDIR logs
 CMD ["llsf-refbox"]
