@@ -36,7 +36,7 @@ ifeq ($(HAVE_NCURSES),1)
 endif
 
 LIBS_llsf_refbox_shell = m stdc++ llsfrbcore llsfrbconfig \
-			 llsf_msgs llsf_log_msgs
+			 rcll_msgs llsf_log_msgs
 OBJS_llsf_refbox_shell = main.o shell.o machine.o robot.o order.o menus.o colors.o
 
 ifeq ($(HAVE_PROTOBUF)$(HAVE_PROTOBUF_COMM)$(HAVE_BOOST_LIBS)$(HAVE_NCURSES),111)
