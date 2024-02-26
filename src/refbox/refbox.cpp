@@ -705,6 +705,25 @@ LLSFRefBox::setup_clips()
 	clips_->add_function("mps-ss-relocate",
 	                     sigc::slot<void, std::string, int, int, int, int>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_relocate)));
+	clips_->add_function("config-update-float",
+	                     sigc::slot<void, std::string, float>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_float)));
+	clips_->add_function("config-update-uint",
+	                     sigc::slot<void, std::string, unsigned int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_uint)));
+
+	clips_->add_function("config-update-int",
+	                     sigc::slot<void, std::string, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_int)));
+
+	clips_->add_function("config-update-bool",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_bool)));
+
+	clips_->add_function("config-update-string",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_string)));
+
 
 	clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 }
@@ -936,6 +955,39 @@ CLIPS::Value
 LLSFRefBox::clips_config_path_exists(std::string path)
 {
 	return CLIPS::Value(config_->exists(path.c_str()) ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+}
+
+void
+LLSFRefBox::clips_config_update_float(std::string path, float f)
+{
+	config_->set_float(path.c_str(), f);
+}
+void
+LLSFRefBox::clips_config_update_uint(std::string path, unsigned int uint)
+{
+	config_->set_uint(path.c_str(), uint);
+}
+
+void
+LLSFRefBox::clips_config_update_int(std::string path, int i)
+{
+	config_->set_int(path.c_str(), i);
+}
+
+void
+LLSFRefBox::clips_config_update_bool(std::string path, std::string b)
+{
+	if (b == "FALSE") {
+		config_->set_bool(path.c_str(), false);
+	} else {
+		config_->set_bool(path.c_str(), true);
+	}
+}
+
+void
+LLSFRefBox::clips_config_update_string(std::string path, std::string s)
+{
+	config_->set_string(path.c_str(), s);
 }
 
 CLIPS::Value
