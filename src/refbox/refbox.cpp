@@ -193,26 +193,10 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	clips_ = std::make_unique<CLIPS::Environment>();
 	setup_clips();
 
-	cfg_machine_assignment_ = ASSIGNMENT_2014;
-	try {
-		std::string m_ass_str = config_->get_string("/llsfrb/game/machine-assignment");
-		if (m_ass_str == "2013") {
-			cfg_machine_assignment_ = ASSIGNMENT_2013;
-		} else if (m_ass_str == "2014") {
-			cfg_machine_assignment_ = ASSIGNMENT_2014;
-		} else {
-			logger_->log_warn("RefBox", "Invalid machine assignment '%s', using 2014", m_ass_str.c_str());
-			cfg_machine_assignment_ = ASSIGNMENT_2014;
-		}
-	} catch (fawkes::Exception &e) {
-	} // ignored, use default
 	std::stringstream refbox_call;
 	for (int i = 0; i < argc; ++i)
 		refbox_call << " " << argv[i];
 	logger_->log_info("RefBox", "%s", refbox_call.str().c_str());
-	logger_->log_info("RefBox",
-	                  "Using %s machine assignment",
-	                  (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
 
 	setup_protobuf_comm();
 
