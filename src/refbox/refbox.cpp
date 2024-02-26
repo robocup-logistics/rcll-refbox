@@ -626,12 +626,6 @@ LLSFRefBox::setup_clips()
 		clips_->evaluate("(watch facts)");
 	}
 
-	bool simulation = false;
-	try {
-		simulation = config_->get_bool("/llsfrb/simulation/enabled");
-	} catch (Exception &e) {
-	} // ignore, use default
-
 	init_clips_logger(clips_->cobj(), logger_.get(), clips_logger_.get());
 
 	std::string defglobal_ver =
@@ -665,54 +659,52 @@ LLSFRefBox::setup_clips()
 	                     sigc::slot<void, CLIPS::Values, CLIPS::Values>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_print_fact_list)));
 
-	if (!simulation) {
-		clips_->add_function("mps-move-conveyor",
-		                     sigc::slot<void, std::string, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_move_conveyor)));
-		clips_->add_function("mps-cs-retrieve-cap",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_retrieve_cap)));
-		clips_->add_function("mps-cs-mount-cap",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_mount_cap)));
-		clips_->add_function("mps-bs-dispense",
-		                     sigc::slot<void, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
+	clips_->add_function("mps-move-conveyor",
+	                     sigc::slot<void, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_move_conveyor)));
+	clips_->add_function("mps-cs-retrieve-cap",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_retrieve_cap)));
+	clips_->add_function("mps-cs-mount-cap",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_mount_cap)));
+	clips_->add_function("mps-bs-dispense",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
 
-		clips_->add_function("mps-set-light",
-		                     sigc::slot<void, std::string, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
-		clips_->add_function("mps-set-lights",
-		                     sigc::slot<void, std::string, std::string, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
-		clips_->add_function("mps-reset-lights",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_lights)));
-		clips_->add_function("mps-ds-process",
-		                     sigc::slot<void, std::string, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
-		clips_->add_function("mps-rs-mount-ring",
-		                     sigc::slot<void, std::string, int, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
-		clips_->add_function("mps-reset",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
-		clips_->add_function("mps-reset-base-counter",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
-		clips_->add_function("mps-deliver",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
-		clips_->add_function("mps-ss-retrieve",
-		                     sigc::slot<void, std::string, int, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_retrieve)));
-		clips_->add_function("mps-ss-store",
-		                     sigc::slot<void, std::string, int, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_store)));
-		clips_->add_function("mps-ss-relocate",
-		                     sigc::slot<void, std::string, int, int, int, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_relocate)));
-	}
+	clips_->add_function("mps-set-light",
+	                     sigc::slot<void, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
+	clips_->add_function("mps-set-lights",
+	                     sigc::slot<void, std::string, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
+	clips_->add_function("mps-reset-lights",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_lights)));
+	clips_->add_function("mps-ds-process",
+	                     sigc::slot<void, std::string, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
+	clips_->add_function("mps-rs-mount-ring",
+	                     sigc::slot<void, std::string, int, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
+	clips_->add_function("mps-reset",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
+	clips_->add_function("mps-reset-base-counter",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
+	clips_->add_function("mps-deliver",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
+	clips_->add_function("mps-ss-retrieve",
+	                     sigc::slot<void, std::string, int, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_retrieve)));
+	clips_->add_function("mps-ss-store",
+	                     sigc::slot<void, std::string, int, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_store)));
+	clips_->add_function("mps-ss-relocate",
+	                     sigc::slot<void, std::string, int, int, int, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_relocate)));
 
 	clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 }
