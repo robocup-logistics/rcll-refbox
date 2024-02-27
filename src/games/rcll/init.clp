@@ -83,7 +83,7 @@
       )
       (bind ?global-val ?formatted-string)
     )
-    (str-assert (str-cat "(confval (path \"/llsfrb/globals/" (snake-case ?global) "\")"
+    (str-assert (str-cat "(confval (path \"/llsfrb/globals/" (lowcase ?global) "\")"
     " (type " ?type ") (is-list " ?is-list ") (" ?val-slot-name " " ?global-val"))"))
     )
   (assert (config-loaded))
