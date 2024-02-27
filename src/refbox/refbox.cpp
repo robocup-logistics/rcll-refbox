@@ -2211,6 +2211,18 @@ LLSFRefBox::setup_clips_websocket()
 				                   path.c_str());
 				return;
 			}
+		} else if (type == "float") {
+			try {
+				float num = std::stof(value);
+				config_->set_float(path.c_str(), num);
+			} catch (std::exception &e) {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected float %s",
+				                   value.c_str(),
+				                   path.c_str(),
+				                   e.what());
+				return;
+			}
 		} else if (type == "unsigned int") {
 			try {
 				unsigned int num = std::stoul(value, nullptr, 10);
@@ -2223,7 +2235,6 @@ LLSFRefBox::setup_clips_websocket()
 				                   e.what());
 				return;
 			}
-
 		} else if (type == "int") {
 			try {
 				int num = std::stoi(value);
@@ -2235,9 +2246,8 @@ LLSFRefBox::setup_clips_websocket()
 				                   path.c_str());
 				return;
 			}
-		} else if (type == "SEQUENCE") {
-			logger_->log_error("Websocket", "Setting of lists via frontend is not supported");
-			return;
+		} else {
+			logger_->log_error("Websocket", "Setting of type %s via frontend is not supported", type.c_str());
 		}
 		fawkes::MutexLocker  clips_lock(&clips_mutex_);
 		CLIPS::Fact::pointer fact = clips_->get_facts();
