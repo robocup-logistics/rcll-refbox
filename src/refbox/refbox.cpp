@@ -709,7 +709,7 @@ LLSFRefBox::setup_clips()
 	                     sigc::slot<void, std::string, float>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_float)));
 	clips_->add_function("config-update-uint",
-	                     sigc::slot<void, std::string, unsigned int>(
+	                     sigc::slot<void, std::string, int>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_uint)));
 
 	clips_->add_function("config-update-int",
@@ -723,7 +723,6 @@ LLSFRefBox::setup_clips()
 	clips_->add_function("config-update-string",
 	                     sigc::slot<void, std::string, std::string>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_string)));
-
 
 	clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 }
@@ -965,9 +964,9 @@ LLSFRefBox::clips_config_update_float(std::string path, float f)
 	config_->set_float(path.c_str(), f);
 }
 void
-LLSFRefBox::clips_config_update_uint(std::string path, unsigned int uint)
+LLSFRefBox::clips_config_update_uint(std::string path, int i)
 {
-	config_->set_uint(path.c_str(), uint);
+	config_->set_uint(path.c_str(), i);
 }
 
 void

@@ -182,7 +182,7 @@ private: // methods
 
 	void clips_config_update_float(std::string path, float f);
 
-	void clips_config_update_uint(std::string path, unsigned int uint);
+	void clips_config_update_uint(std::string path, int i);
 	void clips_config_update_int(std::string path, int i);
 	void clips_config_update_bool(std::string path, std::string b);
 	void clips_config_update_string(std::string path, std::string s);
