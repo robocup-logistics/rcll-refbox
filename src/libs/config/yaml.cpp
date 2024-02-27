@@ -629,7 +629,7 @@ void
 YamlConfiguration::write_host_file()
 {
 	if (host_file_ == "") {
-		throw fawkes::Exception("YamlConfig: no host config file specified");
+		return;
 	}
 	if (mutex->try_lock()) {
 		try {
