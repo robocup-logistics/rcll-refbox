@@ -62,7 +62,7 @@ static_assert(false, "__has_include not supported");
 #else
 #	if __cplusplus >= 201703L && __has_include(<filesystem>)
 #		include <filesystem>
-namespace fs    = std::filesystem;
+namespace fs = std::filesystem;
 #	elif __has_include(<experimental/filesystem>)
 #		include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
@@ -1995,10 +1995,11 @@ LLSFRefBox::handle_timer(const boost::system::error_code &error)
 }
 
 void
-LLSFRefBox::clips_add_machine(const std::string &machine_name) {
+LLSFRefBox::clips_add_machine(const std::string &machine_name)
+{
 	std::string cfg_prefix = "/llsfrb/mps/stations/" + machine_name + "/";
-	auto old_mps = mps_.find(machine_name);
-	if(old_mps != mps_.end()) {
+	auto        old_mps    = mps_.find(machine_name);
+	if (old_mps != mps_.end()) {
 		old_mps->second.reset();
 	}
 	bool active = true;
@@ -2102,7 +2103,7 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::error,
 	                               boost::asio::placeholders::signal_number));
 #else
-	g_refbox          = this;
+	g_refbox = this;
 	signal(SIGINT, llsfrb::handle_signal);
 #endif
 
@@ -2266,7 +2267,9 @@ LLSFRefBox::setup_clips_websocket()
 				return;
 			}
 		} else {
-			logger_->log_error("Websocket", "Setting of type %s via frontend is not supported", type.c_str());
+			logger_->log_error("Websocket",
+			                   "Setting of type %s via frontend is not supported",
+			                   type.c_str());
 		}
 		fawkes::MutexLocker  clips_lock(&clips_mutex_);
 		CLIPS::Fact::pointer fact = clips_->get_facts();
@@ -2284,12 +2287,10 @@ LLSFRefBox::setup_clips_websocket()
 			fact = fact->next();
 		}
 		std::shared_ptr<Configuration::ValueIterator> v(config_->search(path.c_str()));
-		if(v->valid()) {
+		if (v->valid()) {
 			clips_assert_confval(v);
 		} else {
-			logger_->log_error("Websocket",
-			                   "Failed to find config ",
-			                   path.c_str());
+			logger_->log_error("Websocket", "Failed to find config ", path.c_str());
 		}
 	};
 	backend_->get_data()->clips_set_teamname = [this](std::string color_string,
