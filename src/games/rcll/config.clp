@@ -117,6 +117,22 @@
 
 ; ----------------------------------------------------------------------------
 
+(defrule config-sync-confval-with-parser
+" The parser is used while handling incoming confval updates, hence keep it
+  up-to-date
+"
+  (confval (path ?p) (is-list FALSE) (value ?v) (type ?type))
+  =>
+  (switch ?type
+    (case UINT then (config-update-uint ?p ?v))
+    (case FLOAT then (config-update-float ?p ?v))
+    (case INT then (config-update-int ?p ?v))
+    (case BOOL then (config-update-bool ?p ?v))
+    (case STRING then (config-update-string ?p ?v))
+    (default (printout error "Unknown confval type " ?type crlf))
+  )
+)
+
 (defrule config-sync-global-confval-with-global-var
 " Override a global variable given from a confval.
   As confvals do not distinguish between STRING and SYMBOLS, preserve the
