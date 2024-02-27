@@ -260,6 +260,9 @@ Client::receive_thread()
 					if (strcmp(msgs["command"].GetString(), "set_gamestate") == 0) {
 						data_->clips_set_gamestate(msgs["state"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "set_confval") == 0) {
+						data_->clips_set_confval(msgs["path"].GetString(), msgs["value"].GetString());
+					}
 					if (strcmp(msgs["command"].GetString(), "set_gamephase") == 0) {
 						data_->clips_set_gamephase(msgs["phase"].GetString());
 					}

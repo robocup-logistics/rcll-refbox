@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/config_update_float_schema.json",
+    "type": "object",
+    "title": "Config Update Schema",
+    "description": "Schema for updating a configuraion value.",
+    "required": ["path", "value"],
+    "properties": {
+        "path": {
+            "type": "string",
+            "description": "The path to the value in the configuration."
+        },
+        "value": {
+            "description": "The new value to set.",
+            "anyOf": [
+                { "type": "number" },
+                { "type": "string" }
+            ]
+        }
+    }
+}
+

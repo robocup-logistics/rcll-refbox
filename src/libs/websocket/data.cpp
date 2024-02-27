@@ -61,6 +61,7 @@ Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mute
 	                              "set_order_delivered",
 	                              "set_robot_maintenance",
 	                              "set_teamname",
+	                              "set_confval",
 	                              "reset_machine_by_team",
 	                              "add_points_team"};
 

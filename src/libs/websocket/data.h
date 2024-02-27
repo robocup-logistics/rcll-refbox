@@ -59,6 +59,7 @@ public:
 	                                                                            float       game_time);
 	std::function<void(std::string)>                 clips_set_gamestate;
 	std::function<void(std::string)>                 clips_set_gamephase;
+	std::function<void(std::string, std::string)>    clips_set_confval;
 	std::function<void()>                            clips_randomize_field;
 	std::function<void(std::string, std::string)>    clips_set_teamname;
 	std::function<void(int, bool, int, std::string)> clips_confirm_delivery;

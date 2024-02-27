@@ -909,48 +909,50 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
 {
 	std::shared_ptr<Configuration::ValueIterator> v(config_->search(cfg_prefix.c_str()));
 	while (v->next()) {
-		std::string type  = "";
-		std::string value = v->get_as_string();
-
-		if (v->is_uint())
-			type = "UINT";
-		else if (v->is_int())
-			type = "INT";
-		else if (v->is_float())
-			type = "FLOAT";
-		else if (v->is_bool()) {
-			type  = "BOOL";
-			value = v->get_bool() ? "TRUE" : "FALSE";
-		} else if (v->is_string()) {
-			type = "STRING";
-			if (!v->is_list()) {
-				value = std::string("\"") + value + "\"";
-			}
-		} else {
-			logger_->log_warn("RefBox",
-			                  "Config value at '%s' of unknown type '%s'",
-			                  v->path(),
-			                  v->type());
-		}
-
-		if (v->is_list()) {
-			//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
-			//       v->path(), type.c_str(), value.c_str());
-			clips_->assert_fact_f("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
-			                      v->path(),
-			                      type.c_str(),
-			                      value.c_str());
-		} else {
-			//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (value %s))",
-			//       v->path(), type.c_str(), value.c_str());
-			clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
-			                      v->path(),
-			                      type.c_str(),
-			                      value.c_str());
-		}
+		clips_assert_confval(v);
 	}
 }
 
+void
+LLSFRefBox::clips_assert_confval(std::shared_ptr<Configuration::ValueIterator> v)
+{
+	std::string type  = "";
+	std::string value = v->get_as_string();
+
+	if (v->is_uint())
+		type = "UINT";
+	else if (v->is_int())
+		type = "INT";
+	else if (v->is_float())
+		type = "FLOAT";
+	else if (v->is_bool()) {
+		type  = "BOOL";
+		value = v->get_bool() ? "TRUE" : "FALSE";
+	} else if (v->is_string()) {
+		type = "STRING";
+		if (!v->is_list()) {
+			value = std::string("\"") + value + "\"";
+		}
+	} else {
+		logger_->log_warn("RefBox", "Config value at '%s' of unknown type '%s'", v->path(), v->type());
+	}
+
+	if (v->is_list()) {
+		//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
+		//       v->path(), type.c_str(), value.c_str());
+		clips_->assert_fact_f("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
+		                      v->path(),
+		                      type.c_str(),
+		                      value.c_str());
+	} else {
+		//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (value %s))",
+		//       v->path(), type.c_str(), value.c_str());
+		clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
+		                      v->path(),
+		                      type.c_str(),
+		                      value.c_str());
+	}
+}
 CLIPS::Value
 LLSFRefBox::clips_config_path_exists(std::string path)
 {
@@ -2193,6 +2195,74 @@ LLSFRefBox::setup_clips_websocket()
 	backend_->get_data()->clips_randomize_field = [this]() {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(net-RandomizeField)");
+	};
+	backend_->get_data()->clips_set_confval = [this](std::string path, std::string value) {
+		std::string type = config_->get_type(path);
+		if (type == "string") {
+			config_->set_string(path.c_str(), value);
+		} else if (type == "bool") {
+			if (value == "true") {
+				config_->set_bool(path.c_str(), true);
+			} else if (value == "false") {
+				config_->set_bool(path.c_str(), false);
+			} else {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected true or false",
+				                   value.c_str(),
+				                   path.c_str());
+				return;
+			}
+		} else if (type == "unsigned int") {
+			try {
+				unsigned int num = std::stoul(value, nullptr, 10);
+				config_->set_uint(path.c_str(), num);
+			} catch (std::exception &e) {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected uint %s",
+				                   value.c_str(),
+				                   path.c_str(),
+				                   e.what());
+				return;
+			}
+
+		} else if (type == "int") {
+			try {
+				int num = std::stoi(value);
+				config_->set_int(path.c_str(), num);
+			} catch (std::exception &e) {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected int",
+				                   value.c_str(),
+				                   path.c_str());
+				return;
+			}
+		} else if (type == "SEQUENCE") {
+			logger_->log_error("Websocket", "Setting of lists via frontend is not supported");
+			return;
+		}
+		fawkes::MutexLocker  clips_lock(&clips_mutex_);
+		CLIPS::Fact::pointer fact = clips_->get_facts();
+		while (fact) {
+			if (fact->get_template()->name() == "confval") {
+				try {
+					if (fact->slot_value("path")[0].as_string() == path) {
+						fact->retract();
+						break;
+					}
+				} catch (Exception &e) {
+					logger_->log_error("Websocket", "can't access path slot of confval fact");
+				}
+			}
+			fact = fact->next();
+		}
+		std::shared_ptr<Configuration::ValueIterator> v(config_->search(path.c_str()));
+		if(v->valid()) {
+			clips_assert_confval(v);
+		} else {
+			logger_->log_error("Websocket",
+			                   "Failed to find config ",
+			                   path.c_str());
+		}
 	};
 	backend_->get_data()->clips_set_teamname = [this](std::string color_string,
 	                                                  std::string name_string) {

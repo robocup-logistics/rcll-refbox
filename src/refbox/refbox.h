@@ -38,6 +38,7 @@
 #ifndef __LLSF_REFBOX_REFBOX_H_
 #define __LLSF_REFBOX_REFBOX_H_
 
+#include <config/yaml.h>
 #include <core/threading/mutex.h>
 #include <core/threading/mutex_locker.h>
 #include <core/threading/thread_list.h>
@@ -241,6 +242,8 @@ private: // members
 	websocket::Backend *backend_;
 	void                setup_clips_websocket();
 #endif
+
+	void clips_assert_confval(std::shared_ptr<Configuration::ValueIterator> v);
 
 #ifdef HAVE_AVAHI
 	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;
