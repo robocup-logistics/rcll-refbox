@@ -119,6 +119,7 @@ MqttMachine::reset()
 MqttMachine::~MqttMachine()
 {
 	delete mqtt_client_;
+	spdlog::drop(name_);
 }
 
 void

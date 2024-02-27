@@ -186,6 +186,7 @@ OpcUaMachine::~OpcUaMachine()
 		worker_thread_.join();
 	}
 	disconnect();
+	spdlog::drop(name_);
 }
 
 void
