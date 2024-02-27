@@ -662,7 +662,7 @@
 
 (defrule production-ds-processed
   "The DS finished processing the workpiece, set the machine to IDLE and reset it."
-	(declare (salience ?*PRIORITY_LAST*))
+	(declare (salience ?*PRIORITY-LAST*))
 	(gamestate (state RUNNING) (phase PRODUCTION))
 	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype DS) (state PROCESSED))
@@ -866,7 +866,7 @@
 
 (defrule production-ss-store-processed
   "The SS finished storing the workpiece, set the machine to IDLE and reset it."
-	(declare (salience ?*PRIORITY_LAST*))
+	(declare (salience ?*PRIORITY-LAST*))
 	(gamestate (state RUNNING) (phase PRODUCTION))
 	(time-info (game-time ?gt))
 	?m <- (machine (name ?n) (mtype SS) (task STORE) (state PROCESSED))

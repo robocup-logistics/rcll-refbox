@@ -13,7 +13,7 @@
 ;(defmodule TIME-UTILS)
 
 (defglobal
-  ?*PRIORITY_TIME_RETRACT*    = -10000
+  ?*PRIORITY-TIME_RETRACT*    = -10000
 )
 
 ; This assumes Fawkes-style time, i.e. sec and usec
@@ -161,7 +161,7 @@
 
 ; --- RULES - general housekeeping
 (defrule retract-time
-  (declare (salience ?*PRIORITY_TIME_RETRACT*))
+  (declare (salience ?*PRIORITY-TIME_RETRACT*))
   ?f <- (time $?)
   =>
   (retract ?f)

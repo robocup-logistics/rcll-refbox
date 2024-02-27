@@ -95,7 +95,7 @@
 )
 
 (defrule retract-reset-game
-  (declare (salience ?*PRIORITY_CLEANUP*))
+  (declare (salience ?*PRIORITY-CLEANUP*))
   ?rf <- (reset-game)
   =>
   (retract ?rf)

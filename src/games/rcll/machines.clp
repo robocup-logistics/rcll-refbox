@@ -27,7 +27,7 @@
 )
 
 (defrule machine-meta-init
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY-HIGH*))
   (machine (name ?n) (mtype ?type))
   (not (bs-meta (name ?n)))
   (not (rs-meta (name ?n)))
@@ -39,7 +39,7 @@
 )
 
 (defrule machine-meta-retract
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY-HIGH*))
   (or ?mf <- (bs-meta (name ?n))
       ?mf <- (rs-meta (name ?n))
       ?mf <- (cs-meta (name ?n))

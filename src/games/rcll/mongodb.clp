@@ -544,7 +544,7 @@
 
 (defrule mongodb-start-new-report
 " After restarting a game, a new report should be created"
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY-HIGH*))
 	?t <- (mongodb-new-report)
 	(game-parameters (is-parameterized TRUE))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
@@ -559,7 +559,7 @@
 )
 
 (defrule mongodb-game-report-begin
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY-HIGH*))
 	?gp <- (game-parameters (is-parameterized TRUE))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
@@ -571,7 +571,7 @@
 
 (defrule mongodb-start-new-report
 " After restarting a game, a new report should be created"
-	(declare (salience ?*PRIORITY_HIGH*))
+	(declare (salience ?*PRIORITY-HIGH*))
 	?t <- (mongodb-new-report)
 	?gp <- (game-parameters (is-parameterized TRUE))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
@@ -586,7 +586,7 @@
 )
 
 (defrule mongodb-game-report-begin
-	(declare (salience ?*PRIORITY_HIGHER*))
+	(declare (salience ?*PRIORITY-HIGHER*))
 	?gp <- (game-parameters (is-parameterized TRUE))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
@@ -597,7 +597,7 @@
 )
 
 (defrule mongodb-game-report-end
-	(declare (salience ?*PRIORITY_HIGHER*))
+	(declare (salience ?*PRIORITY-HIGHER*))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	  (phase POST_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
@@ -609,7 +609,7 @@
 )
 
 (defrule mongodb-game-report-new-phase-update
-	(declare (salience ?*PRIORITY_HIGHER*))
+	(declare (salience ?*PRIORITY-HIGHER*))
 	(time $?now)
 	(gamestate (phase ?p) (state RUNNING)
 	     (teams $?teams&:(neq ?teams (create$ "" "")))
@@ -624,7 +624,7 @@
 
 
 (defrule mongodb-game-report-update
-	(declare (salience ?*PRIORITY_HIGHER*))
+	(declare (salience ?*PRIORITY-HIGHER*))
 	(time $?now)
 	(gamestate (state RUNNING)
 	     (teams $?teams&:(neq ?teams (create$ "" "")))
@@ -640,7 +640,7 @@
 )
 
 (defrule mongodb-game-report-finalize
-	(declare (salience ?*PRIORITY_HIGHER*))
+	(declare (salience ?*PRIORITY-HIGHER*))
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (start-time $?stime) (end-time $?etime))
 	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name))
@@ -650,7 +650,7 @@
 )
 
 (defrule mongodb-net-client-connected
-  (declare (salience ?*PRIORITY_HIGHER*))
+  (declare (salience ?*PRIORITY-HIGHER*))
   (protobuf-server-client-connected ?client-id ?host ?port)
   =>
   (bind ?client-doc (bson-create))
@@ -664,7 +664,7 @@
 )
 
 (defrule mongodb-net-client-disconnected
-  (declare (salience ?*PRIORITY_HIGHER*))
+  (declare (salience ?*PRIORITY-HIGHER*))
   (protobuf-server-client-disconnected ?client-id)
   =>
   (bind ?client-update-doc (bson-create))
@@ -681,7 +681,7 @@
 
 
 (defrule mongodb-restore-gamestate
-	(declare (salience ?*PRIORITY_FIRST*))
+	(declare (salience ?*PRIORITY-FIRST*))
 	(time $?now)
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
@@ -716,7 +716,7 @@
 )
 
 (defrule mongodb-load-gamephase-points
-	(declare (salience ?*PRIORITY_FIRST*))
+	(declare (salience ?*PRIORITY-FIRST*))
 	?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value TRUE))
@@ -742,7 +742,7 @@
 )
 
 (defrule mongodb-load-storage-status
-	(declare (salience ?*PRIORITY_FIRST*))
+	(declare (salience ?*PRIORITY-FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/default-storage") (type BOOL) (value FALSE))
@@ -763,7 +763,7 @@
 )
 
 (defrule mongodb-load-orders
-	(declare (salience ?*PRIORITY_FIRST*))
+	(declare (salience ?*PRIORITY-FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/random-orders") (type BOOL) (value FALSE))
@@ -790,7 +790,7 @@
 )
 
 (defrule mongodb-load-machine-setup
-	(declare (salience ?*PRIORITY_FIRST*))
+	(declare (salience ?*PRIORITY-FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value FALSE))
@@ -823,7 +823,7 @@
 )
 
 (defrule mongodb-load-machine-zones
-	(declare (salience ?*PRIORITY_FIRST*))
+	(declare (salience ?*PRIORITY-FIRST*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(not (confval (path "/llsfrb/game/random-field") (type BOOL) (value TRUE)))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))

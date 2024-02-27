@@ -43,7 +43,7 @@
 ; Sort orders by ID, such that do-for-all-facts on the orders deftemplate
 ; iterates in a nice order, e.g. for net-send-OrderInstruction
 (defrule sort-orders
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY-HIGH*))
   ?oa <- (order (id ?id-a))
   ?ob <- (order (id ?id-b&:(> ?id-a ?id-b)&:(< (fact-index ?oa) (fact-index ?ob))))
   =>
@@ -185,7 +185,7 @@
 
 (defrule order-delivery-confirmation-referee-confirmed-DS-read-fail-recovery
  "Recover from reading failure at DS, iff there is a unique, fitting, caped unconfirmed, workpiece"
-  (declare (salience ?*PRIORITY_HIGH*))
+  (declare (salience ?*PRIORITY-HIGH*))
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
   ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)

@@ -28,7 +28,7 @@
 
 (defrule config-update-order-count
   (order)
-  ?cf <- (confval (path "/llsfrb/globals/number_of_orders") (value ?count))
+  ?cf <- (confval (path "/llsfrb/globals/number-of-orders") (value ?count))
   =>
   (bind ?orders (find-all-facts ((?o order)) TRUE))
   (bind ?new-count (length$ ?orders))
