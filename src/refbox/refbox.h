@@ -244,6 +244,7 @@ private: // members
 #endif
 
 	void clips_assert_confval(std::shared_ptr<Configuration::ValueIterator> v);
+	bool add_machine(std::string &cfg_name, std::string &cfg_prefix);
 
 #ifdef HAVE_AVAHI
 	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;

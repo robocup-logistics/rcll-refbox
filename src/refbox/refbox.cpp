@@ -226,80 +226,8 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 					std::string cfg_prefix = prefix + cfg_name + "/";
 
 					printf("Config: %s  prefix %s\n", cfg_name.c_str(), cfg_prefix.c_str());
-
-					bool active = true;
-					try {
-						active = config_->get_bool((cfg_prefix + "active").c_str());
-					} catch (Exception &e) {
-					} // ignored, assume enabled
-
-					if (active) {
-						std::string  mpstype = config_->get_string((cfg_prefix + "type").c_str());
-						std::string  mpsip   = config_->get_string((cfg_prefix + "host").c_str());
-						unsigned int port    = config_->get_uint((cfg_prefix + "port").c_str());
-
-						std::string connection_string = "plc";
-						try {
-							// common setting for all machines
-							connection_string = config_->get_string("/llsfrb/mps/connection");
-						} catch (Exception &e) {
-						}
-						try {
-							// machine-specific setting
-							connection_string = config_->get_string((cfg_prefix + "connection").c_str());
-						} catch (Exception &e) {
-						}
-
-						std::string log_path = "";
-						try {
-							log_path = config_->get_string("/llsfrb/log/mps_dir");
-						} catch (Exception &e) {
-						}
-
-						if (log_path != "") {
-							stdfs::create_directory(log_path);
-							std::string log_suffix = cfg_name + ".log";
-							try {
-								log_suffix = config_->get_string((cfg_prefix + "/log_file").c_str());
-							} catch (Exception &e) {
-							}
-							log_path += "/" + log_suffix;
-						}
-
-						MachineFactory mps_factory(config_);
-						auto           mps = mps_factory.create_machine(
-              cfg_name, mpstype, mpsip, port, log_path, connection_string);
-						mps->register_ready_callback([this, cfg_name](bool ready) {
-							fawkes::MutexLocker clips_lock(&clips_mutex_);
-							clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
-							                      cfg_name.c_str(),
-							                      ready ? "TRUE" : "FALSE");
-						});
-						mps->register_busy_callback([this, cfg_name](bool busy) {
-							fawkes::MutexLocker clips_lock(&clips_mutex_);
-							clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
-							                      cfg_name.c_str(),
-							                      busy ? "TRUE" : "FALSE");
-						});
-						mps->register_barcode_callback([this, cfg_name](unsigned long barcode) {
-							fawkes::MutexLocker clips_lock(&clips_mutex_);
-							clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)",
-							                      cfg_name.c_str(),
-							                      barcode);
-						});
-						if (mpstype == "RS") {
-							RingStation *rs = dynamic_cast<RingStation *>(mps.get());
-							if (!rs) {
-								throw Exception("Expected MPS %s to be of type RingStation", cfg_name.c_str());
-							}
-							rs->register_slide_callback([this, cfg_name](unsigned int counter) {
-								fawkes::MutexLocker clips_lock(&clips_mutex_);
-								clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
-								                      cfg_name.c_str(),
-								                      counter);
-							});
-						}
-						mps_[cfg_name] = std::move(mps);
+					bool conf_added = add_machine(cfg_name, cfg_prefix);
+					if (conf_added) {
 						mps_configs.insert(cfg_name);
 					} else {
 						ignored_mps_configs.insert(cfg_name);
@@ -2076,6 +2004,84 @@ LLSFRefBox::handle_timer(const boost::system::error_code &error)
 		timer_.async_wait(
 		  boost::bind(&LLSFRefBox::handle_timer, this, boost::asio::placeholders::error));
 	}
+}
+
+bool
+LLSFRefBox::add_machine(std::string &cfg_name, std::string &cfg_prefix)
+{
+	bool active = true;
+	try {
+		active = config_->get_bool((cfg_prefix + "active").c_str());
+	} catch (Exception &e) {
+	} // ignored, assume enabled
+
+	if (active) {
+		std::string  mpstype = config_->get_string((cfg_prefix + "type").c_str());
+		std::string  mpsip   = config_->get_string((cfg_prefix + "host").c_str());
+		unsigned int port    = config_->get_uint((cfg_prefix + "port").c_str());
+
+		std::string connection_string = "plc";
+		try {
+			// common setting for all machines
+			connection_string = config_->get_string("/llsfrb/mps/connection");
+		} catch (Exception &e) {
+		}
+		try {
+			// machine-specific setting
+			connection_string = config_->get_string((cfg_prefix + "connection").c_str());
+		} catch (Exception &e) {
+		}
+
+		std::string log_path = "";
+		try {
+			log_path = config_->get_string("/llsfrb/log/mps_dir");
+		} catch (Exception &e) {
+		}
+
+		if (log_path != "") {
+			stdfs::create_directory(log_path);
+			std::string log_suffix = cfg_name + ".log";
+			try {
+				log_suffix = config_->get_string((cfg_prefix + "/log_file").c_str());
+			} catch (Exception &e) {
+			}
+			log_path += "/" + log_suffix;
+		}
+
+		MachineFactory mps_factory(config_);
+		auto           mps =
+		  mps_factory.create_machine(cfg_name, mpstype, mpsip, port, log_path, connection_string);
+		mps->register_ready_callback([this, cfg_name](bool ready) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
+			                      cfg_name.c_str(),
+			                      ready ? "TRUE" : "FALSE");
+		});
+		mps->register_busy_callback([this, cfg_name](bool busy) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
+			                      cfg_name.c_str(),
+			                      busy ? "TRUE" : "FALSE");
+		});
+		mps->register_barcode_callback([this, cfg_name](unsigned long barcode) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)", cfg_name.c_str(), barcode);
+		});
+		if (mpstype == "RS") {
+			RingStation *rs = dynamic_cast<RingStation *>(mps.get());
+			if (!rs) {
+				throw Exception("Expected MPS %s to be of type RingStation", cfg_name.c_str());
+			}
+			rs->register_slide_callback([this, cfg_name](unsigned int counter) {
+				fawkes::MutexLocker clips_lock(&clips_mutex_);
+				clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
+				                      cfg_name.c_str(),
+				                      counter);
+			});
+		}
+		mps_[cfg_name] = std::move(mps);
+	}
+	return active;
 }
 
 /** Handle operating system signal.
