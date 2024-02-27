@@ -118,6 +118,7 @@ private: // methods
 	CLIPS::Value  clips_config_path_exists(std::string path);
 	CLIPS::Value  clips_config_get_bool(std::string path);
 	CLIPS::Value  clips_config_get_int(std::string path);
+	void  clips_add_machine(const std::string &machine_name);
 
 	bool mutex_future_ready(const std::string &name);
 
@@ -181,7 +182,6 @@ private: // methods
 	void clips_mps_deliver(std::string machine);
 
 	void clips_config_update_float(std::string path, float f);
-
 	void clips_config_update_uint(std::string path, int i);
 	void clips_config_update_int(std::string path, int i);
 	void clips_config_update_bool(std::string path, std::string b);
@@ -244,7 +244,6 @@ private: // members
 #endif
 
 	void clips_assert_confval(std::shared_ptr<Configuration::ValueIterator> v);
-	bool add_machine(std::string &cfg_name, std::string &cfg_prefix);
 
 #ifdef HAVE_AVAHI
 	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;

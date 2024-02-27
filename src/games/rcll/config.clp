@@ -131,6 +131,20 @@
     (case STRING then (config-update-string ?p ?v))
     (default (printout error "Unknown confval type " ?type crlf))
   )
+  (bind ?mps-prefix "/llsfrb/mps/stations/")
+  (if (and (str-index ?mps-prefix ?p) (str-index "connection" ?p)) then
+    (bind ?m-start (+ 1 (length$ ?mps-prefix)))
+	(bind ?m-end (str-index "/" (sub-string ?m-start (length$ ?p) ?p)))
+    (bind ?m-end (- (+ ?m-start ?m-end) 2))
+    (bind ?machine-name (sym-cat (sub-string ?m-start ?m-end ?p)))
+    (printout warn "Re-initialize " ?machine-name crlf)
+    (if (not (do-for-fact ((?m machine)) (and (eq ?m:name ?machine-name) (member$ ?m:state (create$ IDLE READY-AT-OUTPUT)))
+      (reconfigure-machine ?machine-name)
+      (mps-reset ?machine-name)
+    )) then
+      (printout error "Failed to re-initialize unknown machine " ?machine-name crlf)
+    )
+  )
 )
 
 (defrule config-sync-global-confval-with-global-var
