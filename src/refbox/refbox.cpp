@@ -851,6 +851,20 @@ LLSFRefBox::clips_assert_confval(std::shared_ptr<Configuration::ValueIterator> v
 	} else {
 		logger_->log_warn("RefBox", "Config value at '%s' of unknown type '%s'", v->path(), v->type());
 	}
+	CLIPS::Fact::pointer fact = clips_->get_facts();
+	while (fact) {
+		if (fact->get_template()->name() == "confval") {
+			try {
+				if (fact->slot_value("path")[0].as_string() == v->path()) {
+					fact->retract();
+					break;
+				}
+			} catch (Exception &e) {
+				logger_->log_error("RefBox", "can't access path slot of confval fact");
+			}
+		}
+		fact = fact->next();
+	}
 
 	if (v->is_list()) {
 		//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
