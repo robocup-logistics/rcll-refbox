@@ -12,8 +12,6 @@
 ; Set from refbox.cpp according to src/libs/core/version.h
 
 (load* (resolve-file net.clp))
-(if (config-get-bool "/llsfrb/simulation/enable")
-  then (printout t "Enabling simulation" crlf) (load* (resolve-file simulation.clp)))
 (load* (resolve-file machines.clp))
 (load* (resolve-file workpieces.clp))
 (load* (resolve-file task-tracking.clp))
@@ -24,10 +22,27 @@
 (load* (resolve-file production.clp))
 (load* (resolve-file exploration.clp))
 (load* (resolve-file machine-lights.clp))
-(if (config-get-bool "/llsfrb/webshop/enable")
-  then (printout t "Enabling Opencart Webshop" crlf) (load* (resolve-file custom-orders.clp)))
-(if (config-get-bool "/llsfrb/challenges/enable")
-  then (load* (resolve-file challenges.clp)))
+
+(defrule load-webshop-on-demand
+  (declare (salience ?*PRIORITY-HIGH*))
+  (confval (path "/llsfrb/webshop/enable") (type ?BOOL) (value TRUE))
+  =>
+  (load* (resolve-file webshop.clp))
+)
+
+(defrule load-simulation-on-demand
+  (declare (salience ?*PRIORITY-HIGH*))
+  (confval (path "/llsfrb/simulation/enable") (type ?BOOL) (value TRUE))
+  =>
+  (load* (resolve-file simulation.clp))
+)
+
+(defrule load-challenges-on-demand
+  (declare (salience ?*PRIORITY-HIGH*))
+  (confval (path "/llsfrb/challenges/enable") (type ?BOOL) (value TRUE))
+  =>
+  (load* (resolve-file challenges.clp))
+)
 
 (defrule config-timer-interval
   (confval (path "/llsfrb/clips/timer-interval") (type ?t) (value ?v))
