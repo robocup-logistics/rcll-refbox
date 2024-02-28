@@ -308,6 +308,23 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		logger_->log_info("RefBox", "Could not start RESTapi");
 		logger_->log_error("Exception: ", e.what());
 	}
+
+	// gather all yaml files that one could choose from
+	std::vector<std::string> all_yaml_files;
+	for (const auto &p : fs::recursive_directory_iterator(CONFDIR)) {
+		if (fs::is_regular_file(p.path()) && p.path().extension() == ".yaml") {
+			all_yaml_files.push_back(p.path().string());
+			std::string relative_path = "";
+			try {
+				relative_path = p.path().parent_path().string().substr(std::strlen(CONFDIR) + 1);
+			} catch (const std::out_of_range &) {
+			}
+			std::string filename = p.path().stem().string();
+			clips_->assert_fact_f("(cfg-preset (category \"%s\") (preset \"%s\"))",
+			                      relative_path.c_str(),
+			                      filename.c_str());
+		}
+	}
 }
 
 /** Destructor. */
@@ -2114,6 +2131,10 @@ LLSFRefBox::setup_clips_websocket()
 	clips_->add_function("ws-create-GameState",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_game_state)));
+	clips_->add_function("ws-create-CfgPreset",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_cfg_preset)));
 	clips_->add_function("ws-create-TimeInfo",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_time_info)));
@@ -2163,6 +2184,24 @@ LLSFRefBox::setup_clips_websocket()
 	                                                    &websocket::Data::log_push_known_teams)));
 
 	//define functions that set facts in the CLIPS environment to control the refbox
+	backend_->get_data()->clips_set_cfg_preset = [this](const std::string &category,
+	                                                    const std::string &preset) {
+		std::string cfg_file = std::string(CONFDIR) + "/" + category + "/" + preset + ".yaml";
+		if (fs::exists(fs::path(cfg_file))) {
+			YamlConfiguration tmp_config = YamlConfiguration(CONFDIR);
+			tmp_config.load(cfg_file.c_str());
+			std::shared_ptr<Configuration::ValueIterator> v(tmp_config.search("/"));
+			fawkes::MutexLocker                           clips_lock(&clips_mutex_);
+			while (v->next()) {
+				clips_assert_confval(v);
+			}
+		} else {
+			logger_->log_error("Websocket",
+			                   "Received invalid config preset (%s, %s)",
+			                   category.c_str(),
+			                   preset.c_str());
+		}
+	};
 	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(net-SetGameState %s)", state_string.c_str());

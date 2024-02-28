@@ -60,6 +60,7 @@ public:
 	std::function<void(std::string)>                 clips_set_gamestate;
 	std::function<void(std::string)>                 clips_set_gamephase;
 	std::function<void(std::string, std::string)>    clips_set_confval;
+	std::function<void(const std::string &, const std::string &)> clips_set_cfg_preset;
 	std::function<void()>                            clips_randomize_field;
 	std::function<void(std::string, std::string)>    clips_set_teamname;
 	std::function<void(int, bool, int, std::string)> clips_confirm_delivery;
@@ -73,6 +74,7 @@ public:
 	void        log_push_points();
 	void        log_push_config(std::string path);
 	void        log_push_ring_spec();
+	void        log_push_cfg_preset(const std::string &category, const std::string &preset);
 	void        log_push_game_state();
 	void        log_push_time_info();
 	void        log_push_robot_info(int number, std::string name);
@@ -89,6 +91,7 @@ public:
 	std::string on_connect_workpiece_info();
 	std::string on_connect_robot_info();
 	std::string on_connect_game_state();
+	std::string on_connect_cfg_preset();
 	std::string on_connect_ring_spec();
 	std::string on_connect_points();
 	std::string on_connect_config();
@@ -120,6 +123,9 @@ public:
 	template <class T>
 	void
 	get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
+	void
+	get_cfg_preset_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
