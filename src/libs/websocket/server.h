@@ -31,24 +31,29 @@ namespace llsfrb::websocket {
 class Server
 {
 public:
-	Server(std::shared_ptr<Data> data, std::shared_ptr<Logger> logger, boost::asio::io_service &io_service, uint port, bool ws_mode, bool allow_control_all);
+	Server(std::shared_ptr<Data>    data,
+	       std::shared_ptr<Logger>  logger,
+	       boost::asio::io_service &io_service,
+	       uint                     port,
+	       bool                     ws_mode,
+	       bool                     allow_control_all);
 
 	void shutdown();
 
 	void operator()();
 
 private:
-	void handle_accept(const boost::system::error_code& error, boost::asio::ip::tcp::socket &socket);
+	void handle_accept(const boost::system::error_code &error, boost::asio::ip::tcp::socket &socket);
 	void do_accept();
 
-	std::shared_ptr<Data>                           data_;
-	std::shared_ptr<Logger>                         logger_;
-	uint                                            port_ = 1234;
-	boost::asio::ip::tcp::socket socket_;
+	std::shared_ptr<Data>          data_;
+	std::shared_ptr<Logger>        logger_;
+	uint                           port_ = 1234;
+	boost::asio::ip::tcp::socket   socket_;
 	boost::asio::ip::tcp::acceptor acceptor_;
-	bool                                            ws_mode_           = true;
-	bool                                            allow_control_all_ = false;
-	bool                                            shutdown_          = false;
+	bool                           ws_mode_           = true;
+	bool                           allow_control_all_ = false;
+	bool                           shutdown_          = false;
 };
 
 } // namespace llsfrb::websocket

@@ -33,7 +33,13 @@ namespace llsfrb::websocket {
 class Backend
 {
 public:
-	Backend(Logger *logger, std::shared_ptr<CLIPS::Environment> env, fawkes::Mutex &env_mutex, boost::asio::io_service &io_service, uint port, bool ws_mode = true, bool allow_control_all = false);
+	Backend(Logger                             *logger,
+	        std::shared_ptr<CLIPS::Environment> env,
+	        fawkes::Mutex                      &env_mutex,
+	        boost::asio::io_service            &io_service,
+	        uint                                port,
+	        bool                                ws_mode           = true,
+	        bool                                allow_control_all = false);
 
 	~Backend();
 

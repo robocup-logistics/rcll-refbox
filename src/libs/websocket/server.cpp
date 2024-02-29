@@ -88,9 +88,9 @@ Server::handle_accept(const boost::system::error_code &error, boost::asio::ip::t
 		}
 
 		logger_->log_info("Websocket", "new client connected");
-    } else {
+	} else {
 		logger_->log_warn("Websocket", "Connection to Client failed");
-    }
+	}
 }
 
 void
@@ -118,6 +118,5 @@ Server::operator()()
 {
 	do_accept();
 }
-
 
 } // namespace llsfrb::websocket
