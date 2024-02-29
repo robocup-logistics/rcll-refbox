@@ -39,7 +39,6 @@
 
 #include "clips_logger.h"
 #include "msgs/ProductColor.pb.h"
-#include "rest-api/clips-rest-api/clips-rest-api.h"
 
 #include <config/yaml.h>
 #include <core/threading/mutex.h>
@@ -53,9 +52,9 @@
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
-#include <rest-api/webview_server.h>
 #include <utils/system/argparser.h>
-#include <webview/rest_api_manager.h>
+
+#include <fstream>
 
 #ifndef __has_include
 static_assert(false, "__has_include not supported");
@@ -292,26 +291,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	nnresolver        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
 
-	try {
-		clips_rest_api_ = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
-
-		rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
-		rest_api_manager_->register_api(clips_rest_api_.get());
-
-		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
-		                                                           rest_api_manager_,
-		                                                           std::move(nnresolver),
-		                                                           service_publisher,
-		                                                           service_browser,
-		                                                           config_.get(),
-		                                                           logger_.get());
-		rest_api_thread_->start();
-
-	} catch (Exception &e) {
-		logger_->log_info("RefBox", "Could not start RESTapi");
-		logger_->log_error("Exception: ", e.what());
-	}
-
 	// gather all yaml files that one could choose from
 	std::vector<std::string> all_yaml_files;
 	for (const auto &p : fs::recursive_directory_iterator(CONFDIR)) {
@@ -335,10 +314,6 @@ LLSFRefBox::~LLSFRefBox()
 {
 	timer_.cancel();
 
-	rest_api_thread_->cancel();
-	rest_api_thread_->join();
-
-	rest_api_manager_->unregister_api(clips_rest_api_.get());
 #ifdef HAVE_AVAHI
 	avahi_thread_->cancel();
 	avahi_thread_->join();

@@ -250,9 +250,6 @@ private: // members
 	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;
 	std::unique_ptr<fawkes::NetworkService> refbox_service_;
 #endif
-	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
-	std::unique_ptr<WebviewServer>                 rest_api_thread_;
-	std::unique_ptr<ClipsRestApi>                  clips_rest_api_;
 
 #ifdef HAVE_MONGODB
 	bool                                cfg_mongodb_enabled_;
