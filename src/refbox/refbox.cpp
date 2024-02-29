@@ -190,7 +190,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		logger_->add_logger(new FileLogger(logfile.c_str(), log_level_));
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
-	clips_ = std::make_unique<CLIPS::Environment>();
+	clips_ = std::make_shared<CLIPS::Environment>();
 	setup_clips();
 
 	std::stringstream refbox_call;
@@ -202,10 +202,13 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 #ifdef HAVE_WEBSOCKETS
 	//launch websocket backend and add websocket logger
-	backend_ = new websocket::Backend(logger_.get(), clips_.get(), clips_mutex_);
-	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
-	                config_->get_bool("/llsfrb/websocket/ws-mode"),
-	                config_->get_bool("/llsfrb/websocket/allow-control-all"));
+	backend_ = new websocket::Backend(logger_.get(),
+	                                  clips_,
+	                                  clips_mutex_,
+	                                  io_service_,
+	                                  config_->get_uint("/llsfrb/websocket/port"),
+	                                  config_->get_bool("/llsfrb/websocket/ws-mode"),
+	                                  config_->get_bool("/llsfrb/websocket/allow-control-all"));
 	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
 #endif
 	mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
@@ -350,8 +353,16 @@ LLSFRefBox::~LLSFRefBox()
 
 		finalize_clips_logger(clips_->cobj());
 	}
-
 	mps_placing_generator_.reset();
+#ifdef HAVE_WEBSOCKETS
+	delete backend_;
+#endif
+	logger_.reset();
+	clips_logger_.reset();
+	config_.reset();
+	clips_.reset();
+	mps_.clear();
+	pb_comm_.reset();
 
 	// Delete all global objects allocated by libprotobuf
 }

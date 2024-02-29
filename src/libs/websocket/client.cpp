@@ -331,9 +331,9 @@ Client::disconnect()
 {
 	if (active) {
 		active = false;
-		close();
-		logger_->log_info("Websocket", "client disconnected");
 	}
+	close();
+	logger_->log_info("Websocket", "client disconnected");
 }
 
 /**

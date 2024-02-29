@@ -39,15 +39,20 @@
 
 namespace llsfrb::websocket {
 
+Data::~Data()
+{
+}
 /**
  * @brief Construct a new Data:: Data object
  *
  * @param logger_ logger to be used
  */
-Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex)
+Data::Data(std::shared_ptr<Logger>             logger,
+           std::shared_ptr<CLIPS::Environment> env,
+           fawkes::Mutex                      &env_mutex)
 : logger_(logger), env_mutex_(env_mutex)
 {
-	env_ = std::shared_ptr<CLIPS::Environment>(env);
+	env_ = env;
 
 	logger_->log_info("Websocket", "loading JSON schemas for command validation");
 
@@ -155,6 +160,21 @@ Data::log_push(rapidjson::Document &d)
 	log_cv.notify_one();
 }
 
+void
+Data::reset_clients()
+{
+	for (auto &client : clients) {
+		client.reset();
+	}
+	clients.clear();
+}
+
+void
+Data::shutdown()
+{
+	shutdown_ = true;
+	log_cv.notify_one();
+}
 /**
  * @brief check if log queue is empty
  *
@@ -175,7 +195,7 @@ void
 Data::log_wait()
 {
 	std::unique_lock<std::mutex> lock(log_mu);
-	while (log_empty()) //loop to avoid spurious wake-ups
+	while (!shutdown_ && log_empty()) //loop to avoid spurious wake-ups
 	{
 		log_cv.wait(lock);
 	}

@@ -119,7 +119,7 @@ private: // methods
 	CLIPS::Value  clips_config_path_exists(std::string path);
 	CLIPS::Value  clips_config_get_bool(std::string path);
 	CLIPS::Value  clips_config_get_int(std::string path);
-	void  clips_add_machine(const std::string &machine_name);
+	void          clips_add_machine(const std::string &machine_name);
 
 	bool mutex_future_ready(const std::string &name);
 
@@ -224,7 +224,7 @@ private: // members
 	std::shared_ptr<mps_placing_clips::MPSPlacingGenerator> mps_placing_generator_;
 
 	fawkes::Mutex                                                       clips_mutex_;
-	std::unique_ptr<CLIPS::Environment>                                 clips_;
+	std::shared_ptr<CLIPS::Environment>                                 clips_;
 	std::unordered_map<std::string, std::unique_ptr<mps_comm::Machine>> mps_;
 	std::unique_ptr<protobuf_clips::ClipsProtobufCommunicator>          pb_comm_;
 	std::map<long int, CLIPS::Fact::pointer>                            clips_msg_facts_;

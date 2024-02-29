@@ -44,7 +44,10 @@ class Client; // forward declaration
 class Data
 {
 public:
-	Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex);
+	Data(std::shared_ptr<Logger>             logger,
+	     std::shared_ptr<CLIPS::Environment> env,
+	     fawkes::Mutex                      &env_mutex);
+	~Data();
 	std::string                                   log_pop();
 	void                                          log_push(std::string log);
 	void                                          log_push(rapidjson::Document &d);
@@ -154,6 +157,9 @@ public:
 	                                              rapidjson::Document::AllocatorType &,
 	                                              CLIPS::Fact::pointer));
 
+	void shutdown();
+	void reset_clients();
+
 private:
 	std::shared_ptr<Logger>                    logger_;
 	std::mutex                                 log_mu;
@@ -164,6 +170,8 @@ private:
 	std::shared_ptr<CLIPS::Environment>        env_;
 	fawkes::Mutex                             &env_mutex_;
 	std::shared_ptr<rapidjson::SchemaDocument> load_schema(std::string path);
+
+	bool shutdown_ = false;
 };
 
 } // namespace llsfrb::websocket
