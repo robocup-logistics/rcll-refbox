@@ -137,7 +137,6 @@
 	(bind ?m-end (str-index "/" (sub-string ?m-start (length$ ?p) ?p)))
     (bind ?m-end (- (+ ?m-start ?m-end) 2))
     (bind ?machine-name (sym-cat (sub-string ?m-start ?m-end ?p)))
-    (printout warn "Re-initialize " ?machine-name crlf)
     (if (not (do-for-fact ((?m machine)) (and (eq ?m:name ?machine-name) (member$ ?m:state (create$ IDLE READY-AT-OUTPUT)))
       (reconfigure-machine ?machine-name)
       (mps-reset ?machine-name)

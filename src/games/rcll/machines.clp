@@ -17,15 +17,6 @@
   (mps-reset (str-cat ?m))
 )
 
-
-(defrule machine-init
-  (init)
-  =>
-  (delayed-do-for-all-facts ((?machine machine)) TRUE
-    (mps-reset ?machine:name)
-  )
-)
-
 (defrule machine-meta-init
   (declare (salience ?*PRIORITY-HIGH*))
   (machine (name ?n) (mtype ?type))
