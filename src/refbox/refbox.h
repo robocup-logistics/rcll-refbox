@@ -97,7 +97,8 @@ public:
 
 	int run();
 
-	void handle_signal(const boost::system::error_code &error, int signum);
+	void                 handle_signal(const boost::system::error_code &error, int signum);
+	static constexpr int RESTART_CODE = 42;
 
 private: // methods
 	void read_config(int argc, char **argv);
@@ -260,6 +261,7 @@ private: // members
 	mongocxx::client                    client_;
 	mongocxx::database                  database_;
 #endif
+	int return_code_ = 0;
 };
 
 } // end of namespace llsfrb

@@ -354,7 +354,6 @@ LLSFRefBox::~LLSFRefBox()
 	mps_placing_generator_.reset();
 
 	// Delete all global objects allocated by libprotobuf
-	google::protobuf::ShutdownProtobufLibrary();
 }
 
 /** Read yaml configurations based on given command line options.
@@ -2099,6 +2098,15 @@ LLSFRefBox::handle_signal(const boost::system::error_code &error, int signum)
 {
 	timer_.cancel();
 	io_service_.stop();
+	if (!error) {
+		if (signum == SIGUSR1) {
+			return_code_ = LLSFRefBox::RESTART_CODE;
+		} else {
+			return_code_ = 0;
+		}
+	} else {
+		return_code_ = 1;
+	}
 }
 
 /** Run the application.
@@ -2109,7 +2117,7 @@ LLSFRefBox::run()
 {
 #if BOOST_ASIO_VERSION >= 100601
 	// Construct a signal set registered for process termination.
-	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
+	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM, SIGUSR1);
 
 	// Start an asynchronous wait for one of the signals to occur.
 	signals.async_wait(boost::bind(&LLSFRefBox::handle_signal,
@@ -2123,7 +2131,11 @@ LLSFRefBox::run()
 
 	start_timer();
 	io_service_.run();
-	return 0;
+	if (return_code_ != LLSFRefBox::RESTART_CODE) {
+		google::protobuf::ShutdownProtobufLibrary();
+	}
+
+	return return_code_;
 }
 
 #ifdef HAVE_WEBSOCKETS
