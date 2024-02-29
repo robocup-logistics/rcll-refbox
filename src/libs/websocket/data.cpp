@@ -68,6 +68,7 @@ Data::Data(std::shared_ptr<Logger>             logger,
 	                              "set_teamname",
 	                              "set_confval",
 	                              "set_preset",
+	                              "reset",
 	                              "reset_machine_by_team",
 	                              "add_points_team"};
 
