@@ -505,6 +505,13 @@
 	(slot time-fact-string (type STRING))
 )
 
+(deftemplate public-pb-conf
+  (slot path (type STRING))
+  (slot type (type SYMBOL))
+  (slot mapped-to (type STRING))
+  (slot value)
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg

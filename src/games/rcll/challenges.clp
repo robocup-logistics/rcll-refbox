@@ -429,3 +429,73 @@
 		                "that was not marked as 'remaining', ignoring" crlf)
 	)
 )
+
+(defrule challenges-sync-config-with-global-field-width
+  ?cv <- (confval (path "/llsfrb/challenges/field/width") (value ?v&:(neq  ?v ?*FIELD-WIDTH*)))
+  =>
+  (modify ?cv (value ?*FIELD-WIDTH*))
+)
+
+(defrule challenges-sync-config-with-global-field-height
+  ?cv <- (confval (path "/llsfrb/challenges/field/height") (value ?v&:(neq  ?v ?*FIELD-HEIGHT*)))
+  =>
+  (modify ?cv (value ?*FIELD-HEIGHT*))
+)
+
+(defrule challenges-sync-config-with-global-field-mirrored
+  ?cv <- (confval (path "/llsfrb/challenges/field/mirrored") (value ?v&:(neq  ?v ?*FIELD-MIRRORED*)))
+  =>
+  (modify ?cv (value ?*FIELD-MIRRORED*))
+)
+
+(defrule challenges-add-pb-conf-field-width
+  (confval (path ?p&"/llsfrb/challenges/field/width") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "field_width") (value ?v))
+  )
+)
+
+(defrule challenges-add-pb-conf-field-height
+  (confval (path ?p&"/llsfrb/challenges/field/height") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "field_height") (value ?v))
+  )
+)
+
+(defrule challenges-add-pb-conf-field-mirrored
+  (confval (path ?p&"/llsfrb/challenges/field/mirrored") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "field_mirrored") (value ?v))
+  )
+)
+
+(defrule challenges-add-pb-conf-challenge-name
+  (confval (path ?p&"/llsfrb/challenges/name") (type ?t) (value ?v))
+  (not (public-pb-conf (path ?p) (value ?v)))
+  =>
+  (do-for-all-facts ((?old-pb-conf public-pb-conf)) (eq ?old-pb-conf:path ?p)
+    (retract ?old-pb-conf)
+  )
+  (bind ?type (confval-to-pb-type ?t))
+  (assert (public-pb-conf (path ?p) (type ?type)
+    (mapped-to "challenge_name") (value ?v))
+  )
+)

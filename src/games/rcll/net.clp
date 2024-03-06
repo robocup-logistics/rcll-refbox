@@ -19,6 +19,24 @@
 		         (if (> ?*VERSION-MICRO* 0) then (str-cat "." ?*VERSION-MICRO*) else "")
 		)
 	)
+  (do-for-all-facts ((?pb-conf public-pb-conf)) TRUE
+     (bind ?conf (pb-create "llsf_msgs.ConfigValue"))
+     (pb-set-field ?conf "name" ?pb-conf:mapped-to)
+     (pb-set-field ?conf "type" ?pb-conf:type)
+     (if (eq ?pb-conf:type INTEGER) then
+       (pb-set-field ?conf "integer_value" ?pb-conf:value)
+     )
+     (if (eq ?pb-conf:type FLOAT) then
+       (pb-set-field ?conf "float_value" ?pb-conf:value)
+     )
+     (if (eq ?pb-conf:type STRING) then
+       (pb-set-field ?conf "string_value" ?pb-conf:value)
+     )
+     (if (eq ?pb-conf:type BOOLEAN) then
+       (pb-set-field ?conf "boolean_value" ?pb-conf:value)
+     )
+      (pb-add-list ?vi "configuration" ?conf)
+  )
   (return ?vi)
 )
 
@@ -655,6 +673,11 @@
     (bind ?rotation (fact-slot-value ?mf rotation))
 
     (pb-set-field ?m "name" (fact-slot-value ?mf name))
+    (bind ?tag-ids (tag-ids-from-machine-name (fact-slot-value ?mf name)))
+    (if ?tag-ids then
+      (pb-set-field ?m "input_tag" (nth$ 1 ?tag-ids))
+      (pb-set-field ?m "output_tag" (nth$ 2 ?tag-ids))
+    )
     (pb-set-field ?m "type" ?mtype)
     (pb-set-field ?m "team_color" (fact-slot-value ?mf team))
     (if (and (any-factp ((?gs gamestate)) (or (eq ?gs:phase SETUP) (eq ?gs:phase PRODUCTION)))
