@@ -69,23 +69,17 @@
 	(assert (challenges-initiaized))
 )
 
-(deffunction challenges-init-field (?width ?height ?mirror)
+(deffunction challenges-init-field (?width ?height)
 	(bind ?free (create$))
 	; all possible fields
 	(loop-for-count (?x 1 ?width)
 		(loop-for-count (?y 1 ?height)
-			(bind ?free (append$ ?free (sym-cat M_Z ?x ?y)))
-			(if ?mirror then
-				(bind ?free (append$ ?free (sym-cat C_Z ?x ?y)))
-			)
+			(bind ?free (append$ ?free (sym-cat Z ?x ?y)))
 		)
 	)
 	(bind ?occupied (create$))
 	(loop-for-count (?x (- ?width 2) ?width)
-			(bind ?occupied (append$ ?occupied (sym-cat M_Z ?x 1)))
-			(if ?mirror then
-				(bind ?occupied (append$ ?occupied (sym-cat C_Z ?x 1)))
-			)
+			(bind ?occupied (append$ ?occupied (sym-cat Z ?x 1)))
 	)
 	(do-for-all-facts ((?m machine)) TRUE
 		(if (neq ?m:zone TBD) then
@@ -126,30 +120,25 @@
 	(challenges-field (free-zones $?free) (occupied-zones $?occupied))
 	(not (challenges-route))
 =>
-	(bind ?mirror (config-get-bool "/llsfrb/challenges/field/mirror"))
 	(loop-for-count (?r 1 ?routes)
 		(bind ?route-candidates (randomize$ ?free) 1 ?points)
 		(bind ?route (create$))
-		(bind ?route-mirror (create$))
 		(loop-for-count (?r 1 ?points)
 			(bind ?zone (nth$ 1 ?route-candidates))
 			(bind ?route-candidates (delete$ ?route-candidates 1 1))
-			(if ?mirror then
-				(bind ?mirror-zone (member$ (mirror-zone ?zone) ?route-candidates))
-				(if ?mirror-zone then
-					(bind ?route-candidates (delete$ ?route-candidates ?mirror-zone ?mirror-zone))
-					(bind ?route-mirror (append$ ?route-mirror (mirror-zone ?zone)))
-				)
-				 else
-					(bind ?route-mirror (append$ ?route ?zone))
-			)
 			(bind ?route (append$ ?route ?zone))
 		)
-		(assert (challenges-route (id ?r) (way-points ?route) (remaining ?route)
+		(bind ?c-route (create$))
+		(bind ?m-route (create$))
+		(foreach ?waypoint ?route
+			(bind ?m-route (append$ ?m-route (sym-cat M_ ?waypoint)))
+			(bind ?c-route (append$ ?c-route (sym-cat C_ ?waypoint)))
+		)
+		(assert (challenges-route (id ?r) (way-points ?m-route) (remaining ?m-route)
 		        (team-color MAGENTA)))
 		(printout t "Route MAGENTA created" crlf)
-		(assert (challenges-route (id ?r) (way-points ?route-mirror)
-		        (remaining ?route-mirror) (team-color CYAN)))
+		(assert (challenges-route (id ?r) (way-points ?c-route)
+		        (remaining ?c-route) (team-color CYAN)))
 		(printout t "Route CYAN created" crlf)
 	)
 )
@@ -317,10 +306,10 @@
 	)
 	(if (eq ?m-positions RANDOM)
 	 then
-		(machine-retrieve-generated-mps ?mirror)
-		(challenges-init-field ?width ?height ?mirror)
+		(machine-retrieve-generated-mps)
+		(challenges-init-field ?width ?height)
 	 else
-		(challenges-init-field ?width ?height ?mirror)
+		(challenges-init-field ?width ?height)
 		(delayed-do-for-all-facts ((?m machine)) (eq ?m:zone TBD)
 			(printout t ?m:name " not set in mongodb log, skipping" crlf)
 			(retract ?m)
@@ -395,7 +384,8 @@
 	(challenges-route (id ?r-id) (team-color ?col) (remaining $?zones&:(member$ (pose-to-zone ?x ?y) ?zones)))
 	(not (challenges-zone-visit (robot-number ?n) (team-color ?col)))
 	(not (challenges-zone-visit (team-color ?col) (route-id ?r-id)))
-	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+	(gamestate (phase PRODUCTION) (state RUNNING))
+	(time-info (game-time ?gt))
 =>
 	(assert (challenges-zone-visit (route-id ?r-id) (team-color ?col)
 	(robot-number ?n) (visited-zone (pose-to-zone ?x ?y)) (visit-start ?gt)))
@@ -404,13 +394,15 @@
 	(robot (number ?n) (team-color ?col) (pose ?x ?y ?z) (state ACTIVE))
 	?zv <- (challenges-zone-visit (robot-number ?n) (team-color ?col)
 	         (visited-zone ?zone&:(neq ?zone (pose-to-zone ?x ?y))))
-	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+	(gamestate (phase PRODUCTION) (state RUNNING))
+	(time-info (game-time ?gt))
 =>
 	(retract ?zv)
 )
 
 (defrule challenges-zone-visit-success
-	(gamestate (game-time ?gt) (phase PRODUCTION) (state RUNNING))
+	(gamestate (phase PRODUCTION) (state RUNNING))
+	(time-info (game-time ?gt))
 	?route <- (challenges-route (team-color ?col) (id ?r-id)
 	  (remaining $?remaining) (reached $?reached))
 	?zv <- (challenges-zone-visit (team-color ?col) (route-id ?r-id)

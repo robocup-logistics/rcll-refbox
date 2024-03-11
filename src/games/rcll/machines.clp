@@ -99,9 +99,9 @@
 	(return (if (eq ?prefix "C") then CYAN else MAGENTA))
 )
 
-(deffunction machine-retrieve-generated-mps (?mirror)
+(deffunction machine-retrieve-generated-mps ()
 	(bind ?machines (mps-generator-get-generated-field))
-	(delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team MAGENTA) (eq ?m:zone TBD))
+	(delayed-do-for-all-facts ((?m machine)) (and (eq ?m:team CYAN) (eq ?m:zone TBD))
 		(if (member$ ?m:name ?machines)
 		 then
 			(bind ?zone (nth$ (+ (member$ ?m:name ?machines) 1) ?machines))
@@ -114,17 +114,11 @@
 		)
 	)
 	; Mirror machines for other team
-	(delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team MAGENTA)                 ; for each MAGENTA
-		(do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team CYAN))  ; get the CYAN
-		(if ?mirror then
+	(delayed-do-for-all-facts ((?mm machine)) (eq ?mm:team CYAN)
+		(do-for-fact ((?mc machine)) (and (eq ?mm:name (mirror-name ?mc:name)) (eq ?mc:team MAGENTA))
 			(modify ?mc
 			  (zone (mirror-zone ?mm:zone))
 			  (rotation (mirror-orientation ?mm:mtype ?mm:zone ?mm:rotation))
-			)
-		 else
-			(modify ?mc
-			  (zone ?mm:zone)
-			  (rotation ?mm:rotation))
 			)
 		)
 	)
@@ -142,27 +136,28 @@
 	)
 	; randomly assigned machines to zones using the external generator
 	(bind ?zones-magenta ?*MACHINE-ZONES-MAGENTA*)
-	(machine-retrieve-generated-mps ?*FIELD-MIRRORED*)
+	(machine-retrieve-generated-mps)
 
+	(if ?*FIELD-MIRRORED* then
+		; Swap machines
+		(bind ?machines-to-swap
+		(create$ (str-cat "RS" (random 1 2)) (str-cat "CS" (random 1 2))))
+		(foreach ?ms ?machines-to-swap
+			(do-for-fact ((?m-cyan machine) (?m-magenta machine))
+			    (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
+			         (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
 
-  ; Swap machines
-	(bind ?machines-to-swap
-    (create$ (str-cat "RS" (random 1 2)) (str-cat "CS" (random 1 2))))
-	(foreach ?ms ?machines-to-swap
-		(do-for-fact ((?m-cyan machine) (?m-magenta machine))
-		    (and (eq ?m-cyan:team CYAN) (eq ?m-cyan:name (sym-cat C- ?ms))
-		         (eq ?m-magenta:team MAGENTA) (eq ?m-magenta:name (sym-cat M- ?ms)))
+			  (printout t "Swapping " ?m-cyan:name " with " ?m-magenta:name crlf)
 
-		  (printout t "Swapping " ?m-cyan:name " with " ?m-magenta:name crlf)
-
-		  (bind ?z-cyan ?m-cyan:zone)
-		  (bind ?r-cyan ?m-cyan:rotation)
-		  (bind ?z-magenta ?m-magenta:zone)
-		  (bind ?r-magenta ?m-magenta:rotation)
-		  (modify ?m-cyan    (zone ?z-magenta) (rotation ?r-magenta))
-		  (modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
+			  (bind ?z-cyan ?m-cyan:zone)
+			  (bind ?r-cyan ?m-cyan:rotation)
+			  (bind ?z-magenta ?m-magenta:zone)
+			  (bind ?r-magenta ?m-magenta:rotation)
+			  (modify ?m-cyan    (zone ?z-magenta) (rotation ?r-magenta))
+			  (modify ?m-magenta (zone ?z-cyan) (rotation ?r-cyan))
+			)
 		)
-  )
+	)
 )
 
 (deffunction machine-randomize-machine-setup ()
