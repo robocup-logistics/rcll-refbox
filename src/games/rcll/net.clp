@@ -822,7 +822,7 @@
 )
 
 (defrule net-broadcast-MachineInfo-on-state-change
-  (declare (salience ?*PRIORITY-HIGH*))
+  (declare (salience ?*PRIORITY_HIGH*))
   (time $?now)
   (gamestate (phase PRODUCTION))
   ?sf <- (signal (type machine-info-bc) (seq ?seq) (count ?count))

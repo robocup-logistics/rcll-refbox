@@ -24,21 +24,21 @@
 (load* (resolve-file machine-lights.clp))
 
 (defrule load-webshop-on-demand
-  (declare (salience ?*PRIORITY-HIGH*))
+  (declare (salience ?*PRIORITY_HIGH*))
   (confval (path "/llsfrb/webshop/enable") (type ?BOOL) (value TRUE))
   =>
   (load* (resolve-file webshop.clp))
 )
 
 (defrule load-simulation-on-demand
-  (declare (salience ?*PRIORITY-HIGH*))
+  (declare (salience ?*PRIORITY_HIGH*))
   (confval (path "/llsfrb/simulation/enable") (type ?BOOL) (value TRUE))
   =>
   (load* (resolve-file simulation.clp))
 )
 
 (defrule load-challenges-on-demand
-  (declare (salience ?*PRIORITY-HIGH*))
+  (declare (salience ?*PRIORITY_HIGH*))
   (confval (path "/llsfrb/challenges/enable") (type ?BOOL) (value TRUE))
   =>
   (load* (resolve-file challenges.clp))
@@ -110,7 +110,7 @@
 )
 
 (defrule retract-reset-game
-  (declare (salience ?*PRIORITY-CLEANUP*))
+  (declare (salience ?*PRIORITY_CLEANUP*))
   ?rf <- (reset-game)
   =>
   (retract ?rf)

@@ -106,7 +106,7 @@
 )
 
 (defrule announce-loading-done
-  (declare (salience ?*PRIORITY-LAST*))
+  (declare (salience ?*PRIORITY_LAST*))
   (init)
   =>
   (printout t "RefBox loaded and ready to run" crlf)

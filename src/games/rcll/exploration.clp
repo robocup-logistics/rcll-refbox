@@ -75,7 +75,7 @@
 )
 
 (defrule exploration-report-incoming-cleanup
-	(declare (salience ?*PRIORITY-CLEANUP*))
+	(declare (salience ?*PRIORITY_CLEANUP*))
 	?ei <- (exploration-report (rtype INCOMING))
 	=>
 	(retract ?ei)

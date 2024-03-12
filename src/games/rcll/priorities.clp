@@ -8,9 +8,9 @@
 ;---------------------------------------------------------------------------
 
 (defglobal
-  ?*PRIORITY-FIRST*   =  5000
-  ?*PRIORITY-HIGHER*  =  1000
-  ?*PRIORITY-HIGH*    =   500
-  ?*PRIORITY-CLEANUP* = -4000
-  ?*PRIORITY-LAST*    = -5000
+  ?*PRIORITY_FIRST*   =  5000
+  ?*PRIORITY_HIGHER*  =  1000
+  ?*PRIORITY_HIGH*    =   500
+  ?*PRIORITY_CLEANUP* = -4000
+  ?*PRIORITY_LAST*    = -5000
 )

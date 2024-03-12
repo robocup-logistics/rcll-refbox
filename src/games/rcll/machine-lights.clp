@@ -19,7 +19,7 @@
 ; Read the full text in the LICENSE.GPL file in the doc directory.
 ;
 (defrule machine-lights-assert-missing-ml-fact
-	(declare (salience ?*PRIORITY-HIGH*))
+	(declare (salience ?*PRIORITY_HIGH*))
 	(machine (name ?name))
 	(not (machine-lights (name ?name)))
 	=>
@@ -27,7 +27,7 @@
 )
 
 (defrule machine-lights-retract-ml-fact-no-machine
-	(declare (salience ?*PRIORITY-HIGH*))
+	(declare (salience ?*PRIORITY_HIGH*))
 	?ml <- (machine-lights (name ?name))
 	(not (machine (name ?name)))
 	=>
@@ -35,7 +35,7 @@
 )
 
 (defrule machine-lights-init
-	(declare (salience ?*PRIORITY-HIGH*))
+	(declare (salience ?*PRIORITY_HIGH*))
 	?gf <- (gamestate (phase ?PHASE) (prev-phase SETUP))
 	?ti <- (time-info)
 	=>

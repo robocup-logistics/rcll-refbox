@@ -15,7 +15,7 @@
 	?*RING2-STATION* = 5
 	?*STORAGE-STATION* = 6
 	?*DELIVERY-STATION* = 7
-	?*PRIORITY-CHALLENGE-OVERRIDE* = 100
+	?*PRIORITY_CHALLENGE-OVERRIDE* = 100
 	?*FIELD-WIDTH*  = (config-get-int "/llsfrb/challenges/field/width")
 	?*FIELD-HEIGHT* = (config-get-int "/llsfrb/challenges/field/height")
 	?*VISIT-ZONE-DURATION* = (config-get-int "/llsfrb/challenges/publish-routes/pause-duration")
@@ -42,7 +42,7 @@
 )
 
 (defrule challenges-print-essential-info
-	(declare (salience (- ?*PRIORITY-HIGH* 1)))
+	(declare (salience (- ?*PRIORITY_HIGH* 1)))
 	(finalize)
 	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value ?routes-enabled))
 	(confval (path "/llsfrb/challenges/publish-routes/num-points") (type UINT) (value ?points))
@@ -113,7 +113,7 @@
 
 (defrule challenges-create-routes
 " Create some routes with waypoints in the field as a navigation challenge "
-	(declare (salience ?*PRIORITY-CHALLENGE-OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/challenges/publish-routes/num-points") (type UINT) (value ?points))
 	(confval (path "/llsfrb/challenges/publish-routes/num-routes") (type UINT) (value ?routes))
@@ -145,7 +145,7 @@
 
 (defrule challenges-configure-machine-ground-truth
 " Send the ground truth for machine positions only for specified phases "
-	(declare (salience ?*PRIORITY-CHALLENGE-OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/send-mps-ground-truth") (is-list TRUE) (list-value $?gt))
 	?s <- (send-mps-positions (phases $?old-phases&:(neq ?old-phases (type-cast-list ?gt SYMBOL))))
 =>
@@ -154,7 +154,7 @@
 
 (defrule challenges-customize-orders
 " Delete all existing orders and then load orders from configuration "
-	(declare (salience ?*PRIORITY-CHALLENGE-OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/orders/customize") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/challenges/production-time") (type UINT) (value ?max-time))
 =>
@@ -192,7 +192,7 @@
 
 (defrule challenges-configure-machines
 " adjust the machines placed on the field "
-	(declare (salience ?*PRIORITY-CHALLENGE-OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/machines") (is-list TRUE) (list-value $?machines))
 	(confval (path "/llsfrb/challenges/field/width") (type UINT) (value ?x))
 	(confval (path "/llsfrb/challenges/field/height") (type UINT) (value ?y))
@@ -254,7 +254,7 @@
 )
 
 (defrule challenges-reset-field-back-to-setup
-	(declare (salience ?*PRIORITY-CHALLENGE-OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(gamestate (phase SETUP) (prev-phase PRODUCTION|POST_GAME|EXPLORATION))
 	(not (challanges-reset-back-in-setup))
 	=>
@@ -272,7 +272,7 @@
 )
 
 (defrule challenges-parameterize
-	(declare (salience ?*PRIORITY-CHALLENGE-OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	?gp <- (game-parameters (machine-positions ?m-positions&~PENDING)
 	                        (machine-setup ?m-setup&~PENDING)

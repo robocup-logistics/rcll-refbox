@@ -406,7 +406,7 @@
 )
 
 (defrule game-update-gametime-points
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
   ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (points $?old-points)
 		    (state RUNNING))
@@ -429,7 +429,7 @@
 )
 
 (defrule game-update-last-time
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
   (or (gamestate (phase ~PRODUCTION&~EXPLORATION&~SETUP))
       (gamestate (state ~RUNNING)))
@@ -595,7 +595,7 @@
 )
 
 (defrule game-goto-post-game
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
   ?gs <- (gamestate (phase POST_GAME) (prev-phase ~POST_GAME))
   =>
   (modify ?gs (prev-phase POST_GAME) (end-time (now)))
@@ -617,7 +617,7 @@
 )
 
 (defrule game-quit-after-finalize
-  (declare (salience ?*PRIORITY-HIGH*))
+  (declare (salience ?*PRIORITY_HIGH*))
   (gamestate (phase POST_GAME))
   (finalize)
   =>
@@ -626,7 +626,7 @@
 
 (defrule game-over-on-finalize
 	"Switch to post-game if the refbox is stopped"
-	(declare (salience ?*PRIORITY-HIGH*))
+	(declare (salience ?*PRIORITY_HIGH*))
 	(finalize)
 	?gs <- (gamestate (phase ~POST_GAME))
 	=>
@@ -742,7 +742,7 @@
 )
 
 (defrule game-create-first-machine-history
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
 	?m <- (machine (name ?n) (state ?s))
 	(or ?mf <- (bs-meta (name ?n))
 	    ?mf <- (rs-meta (name ?n))
@@ -761,7 +761,7 @@
 )
 
 (defrule game-create-next-machine-history
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
 	?m <- (machine (name ?n) (state ?s))
 	?hist <- (machine-history (name ?n) (state ?s-last&:(neq ?s ?s-last))
 	           (time $?last) (is-latest TRUE))
@@ -793,7 +793,7 @@
 )
 
 (defrule game-create-next-gamestate-history
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
 	?gsh <- (gamestate-history (is-latest TRUE) (state ?state)
 	  (phase ?phase) (over-time ?ot) )
 	?gs <- (gamestate (state ?curr-state) (phase ?curr-phase) (over-time ?curr-ot))
@@ -834,7 +834,7 @@
 )
 
 (defrule game-create-next-robot-history
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
 	?rh <- (robot-history (state ?s) (warning-sent ?ws) (has-pose ?hp)
       (number ?n) (team ?t) (team-color ?tc) (pose $?pose)
       (maintenance-start-time ?mst) (maintenance-cycles ?mc)
@@ -864,7 +864,7 @@
 )
 
 (defrule game-create-next-shelf-slot-history
-  (declare (salience ?*PRIORITY-FIRST*))
+  (declare (salience ?*PRIORITY_FIRST*))
     ?hf <- (shelf-slot-history (shelf ?shelf) (slot ?slot) (name ?name) (is-filled ?filled) (description  ?desc) (is-latest TRUE))
     ?sf <- (machine-ss-shelf-slot (position ?shelf ?slot) (name ?name) (is-filled ?new-filled) (description  ?new-desc))
 	(test (or (neq ?filled ?new-filled) (neq ?desc ?new-desc)))
@@ -884,7 +884,7 @@
 )
 
 (defrule game-print-machine-history
-	(declare (salience ?*PRIORITY-HIGHER*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(finalize)
 	=>
 	; machine history
@@ -897,7 +897,7 @@
 )
 
 (defrule game-print-gamestates-from-mongodb-report
-	(declare (salience ?*PRIORITY-HIGHER*))
+	(declare (salience ?*PRIORITY_HIGHER*))
 	(finalize)
 	=>
 	(bind ?history (find-all-facts ((?h gamestate-history)) TRUE))
