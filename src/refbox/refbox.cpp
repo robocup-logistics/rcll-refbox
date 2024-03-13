@@ -39,7 +39,6 @@
 
 #include "clips_logger.h"
 #include "msgs/ProductColor.pb.h"
-#include "rest-api/clips-rest-api/clips-rest-api.h"
 
 #include <config/yaml.h>
 #include <core/threading/mutex.h>
@@ -53,16 +52,16 @@
 #include <mps_placing_clips/mps_placing_clips.h>
 #include <protobuf_clips/communicator.h>
 #include <protobuf_comm/peer.h>
-#include <rest-api/webview_server.h>
 #include <utils/system/argparser.h>
-#include <webview/rest_api_manager.h>
+
+#include <fstream>
 
 #ifndef __has_include
 static_assert(false, "__has_include not supported");
 #else
 #	if __cplusplus >= 201703L && __has_include(<filesystem>)
 #		include <filesystem>
-namespace fs    = std::filesystem;
+namespace fs = std::filesystem;
 #	elif __has_include(<experimental/filesystem>)
 #		include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
@@ -190,144 +189,27 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 		logger_->add_logger(new FileLogger(logfile.c_str(), log_level_));
 	} catch (fawkes::Exception &e) {
 	} // ignored, use default
-	clips_ = std::make_unique<CLIPS::Environment>();
+	clips_ = std::make_shared<CLIPS::Environment>();
 	setup_clips();
 
-	cfg_machine_assignment_ = ASSIGNMENT_2014;
-	try {
-		std::string m_ass_str = config_->get_string("/llsfrb/game/machine-assignment");
-		if (m_ass_str == "2013") {
-			cfg_machine_assignment_ = ASSIGNMENT_2013;
-		} else if (m_ass_str == "2014") {
-			cfg_machine_assignment_ = ASSIGNMENT_2014;
-		} else {
-			logger_->log_warn("RefBox", "Invalid machine assignment '%s', using 2014", m_ass_str.c_str());
-			cfg_machine_assignment_ = ASSIGNMENT_2014;
-		}
-	} catch (fawkes::Exception &e) {
-	} // ignored, use default
 	std::stringstream refbox_call;
 	for (int i = 0; i < argc; ++i)
 		refbox_call << " " << argv[i];
 	logger_->log_info("RefBox", "%s", refbox_call.str().c_str());
-	logger_->log_info("RefBox",
-	                  "Using %s machine assignment",
-	                  (cfg_machine_assignment_ == ASSIGNMENT_2013) ? "2013" : "2014");
 
 	setup_protobuf_comm();
 
 #ifdef HAVE_WEBSOCKETS
 	//launch websocket backend and add websocket logger
-	backend_ = new websocket::Backend(logger_.get(), clips_.get(), clips_mutex_);
-	backend_->start(config_->get_uint("/llsfrb/websocket/port"),
-	                config_->get_bool("/llsfrb/websocket/ws-mode"),
-	                config_->get_bool("/llsfrb/websocket/allow-control-all"));
+	backend_ = new websocket::Backend(logger_.get(),
+	                                  clips_,
+	                                  clips_mutex_,
+	                                  io_service_,
+	                                  config_->get_uint("/llsfrb/websocket/port"),
+	                                  config_->get_bool("/llsfrb/websocket/ws-mode"),
+	                                  config_->get_bool("/llsfrb/websocket/allow-control-all"));
 	logger_->add_logger(new WebsocketLogger(backend_->get_data(), log_level_));
 #endif
-
-	try {
-		if (config_->get_bool("/llsfrb/mps/enable")) {
-			std::string prefix = "/llsfrb/mps/stations/";
-
-			std::set<std::string> mps_configs;
-			std::set<std::string> ignored_mps_configs;
-
-			std::unique_ptr<Configuration::ValueIterator> i(config_->search(prefix.c_str()));
-			while (i->next()) {
-				std::string cfg_name = std::string(i->path()).substr(prefix.length());
-				cfg_name             = cfg_name.substr(0, cfg_name.find("/"));
-
-				if ((mps_configs.find(cfg_name) == mps_configs.end())
-				    && (ignored_mps_configs.find(cfg_name) == ignored_mps_configs.end())) {
-					std::string cfg_prefix = prefix + cfg_name + "/";
-
-					printf("Config: %s  prefix %s\n", cfg_name.c_str(), cfg_prefix.c_str());
-
-					bool active = true;
-					try {
-						active = config_->get_bool((cfg_prefix + "active").c_str());
-					} catch (Exception &e) {
-					} // ignored, assume enabled
-
-					if (active) {
-						std::string  mpstype = config_->get_string((cfg_prefix + "type").c_str());
-						std::string  mpsip   = config_->get_string((cfg_prefix + "host").c_str());
-						unsigned int port    = config_->get_uint((cfg_prefix + "port").c_str());
-
-						std::string connection_string = "plc";
-						try {
-							// common setting for all machines
-							connection_string = config_->get_string("/llsfrb/mps/connection");
-						} catch (Exception &e) {
-						}
-						try {
-							// machine-specific setting
-							connection_string = config_->get_string((cfg_prefix + "connection").c_str());
-						} catch (Exception &e) {
-						}
-
-						std::string log_path = "";
-						try {
-							log_path = config_->get_string("/llsfrb/log/mps_dir");
-						} catch (Exception &e) {
-						}
-
-						if (log_path != "") {
-							stdfs::create_directory(log_path);
-							std::string log_suffix = cfg_name + ".log";
-							try {
-								log_suffix = config_->get_string((cfg_prefix + "/log_file").c_str());
-							} catch (Exception &e) {
-							}
-							log_path += "/" + log_suffix;
-						}
-
-						MachineFactory mps_factory(config_);
-						auto           mps = mps_factory.create_machine(
-              cfg_name, mpstype, mpsip, port, log_path, connection_string);
-						mps->register_ready_callback([this, cfg_name](bool ready) {
-							fawkes::MutexLocker clips_lock(&clips_mutex_);
-							clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
-							                      cfg_name.c_str(),
-							                      ready ? "TRUE" : "FALSE");
-						});
-						mps->register_busy_callback([this, cfg_name](bool busy) {
-							fawkes::MutexLocker clips_lock(&clips_mutex_);
-							clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
-							                      cfg_name.c_str(),
-							                      busy ? "TRUE" : "FALSE");
-						});
-						mps->register_barcode_callback([this, cfg_name](unsigned long barcode) {
-							fawkes::MutexLocker clips_lock(&clips_mutex_);
-							clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)",
-							                      cfg_name.c_str(),
-							                      barcode);
-						});
-						if (mpstype == "RS") {
-							RingStation *rs = dynamic_cast<RingStation *>(mps.get());
-							if (!rs) {
-								throw Exception("Expected MPS %s to be of type RingStation", cfg_name.c_str());
-							}
-							rs->register_slide_callback([this, cfg_name](unsigned int counter) {
-								fawkes::MutexLocker clips_lock(&clips_mutex_);
-								clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
-								                      cfg_name.c_str(),
-								                      counter);
-							});
-						}
-						mps_[cfg_name] = std::move(mps);
-						mps_configs.insert(cfg_name);
-					} else {
-						ignored_mps_configs.insert(cfg_name);
-					}
-				}
-			}
-			logger_->log_info("RefBox", "Connected to all machines");
-		}
-	} catch (Exception &e) {
-		throw;
-	}
-
 	mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
 	  new mps_placing_clips::MPSPlacingGenerator(clips_.get(), clips_mutex_));
 
@@ -409,24 +291,21 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	nnresolver        = std::make_unique<fawkes::NetworkNameResolver>();
 #endif
 
-	try {
-		clips_rest_api_ = std::make_unique<ClipsRestApi>(clips_.get(), clips_mutex_, logger_.get());
-
-		rest_api_manager_ = std::make_shared<WebviewRestApiManager>();
-		rest_api_manager_->register_api(clips_rest_api_.get());
-
-		rest_api_thread_ = std::make_unique<llsfrb::WebviewServer>(false,
-		                                                           rest_api_manager_,
-		                                                           std::move(nnresolver),
-		                                                           service_publisher,
-		                                                           service_browser,
-		                                                           config_.get(),
-		                                                           logger_.get());
-		rest_api_thread_->start();
-
-	} catch (Exception &e) {
-		logger_->log_info("RefBox", "Could not start RESTapi");
-		logger_->log_error("Exception: ", e.what());
+	// gather all yaml files that one could choose from
+	std::vector<std::string> all_yaml_files;
+	for (const auto &p : fs::recursive_directory_iterator(CONFDIR)) {
+		if (fs::is_regular_file(p.path()) && p.path().extension() == ".yaml") {
+			all_yaml_files.push_back(p.path().string());
+			std::string relative_path = "";
+			try {
+				relative_path = p.path().parent_path().string().substr(std::strlen(CONFDIR) + 1);
+			} catch (const std::out_of_range &) {
+			}
+			std::string filename = p.path().stem().string();
+			clips_->assert_fact_f("(cfg-preset (category \"%s\") (preset \"%s\"))",
+			                      relative_path.c_str(),
+			                      filename.c_str());
+		}
 	}
 }
 
@@ -435,10 +314,6 @@ LLSFRefBox::~LLSFRefBox()
 {
 	timer_.cancel();
 
-	rest_api_thread_->cancel();
-	rest_api_thread_->join();
-
-	rest_api_manager_->unregister_api(clips_rest_api_.get());
 #ifdef HAVE_AVAHI
 	avahi_thread_->cancel();
 	avahi_thread_->join();
@@ -453,11 +328,18 @@ LLSFRefBox::~LLSFRefBox()
 
 		finalize_clips_logger(clips_->cobj());
 	}
-
 	mps_placing_generator_.reset();
+#ifdef HAVE_WEBSOCKETS
+	delete backend_;
+#endif
+	logger_.reset();
+	clips_logger_.reset();
+	config_.reset();
+	clips_.reset();
+	mps_.clear();
+	pb_comm_.reset();
 
 	// Delete all global objects allocated by libprotobuf
-	google::protobuf::ShutdownProtobufLibrary();
 }
 
 /** Read yaml configurations based on given command line options.
@@ -642,12 +524,6 @@ LLSFRefBox::setup_clips()
 		clips_->evaluate("(watch facts)");
 	}
 
-	bool simulation = false;
-	try {
-		simulation = config_->get_bool("/llsfrb/simulation/enabled");
-	} catch (Exception &e) {
-	} // ignore, use default
-
 	init_clips_logger(clips_->cobj(), logger_.get(), clips_logger_.get());
 
 	std::string defglobal_ver =
@@ -681,54 +557,73 @@ LLSFRefBox::setup_clips()
 	                     sigc::slot<void, CLIPS::Values, CLIPS::Values>(
 	                       sigc::mem_fun(*this, &LLSFRefBox::clips_print_fact_list)));
 
-	if (!simulation) {
-		clips_->add_function("mps-move-conveyor",
-		                     sigc::slot<void, std::string, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_move_conveyor)));
-		clips_->add_function("mps-cs-retrieve-cap",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_retrieve_cap)));
-		clips_->add_function("mps-cs-mount-cap",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_mount_cap)));
-		clips_->add_function("mps-bs-dispense",
-		                     sigc::slot<void, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
+	clips_->add_function("mps-move-conveyor",
+	                     sigc::slot<void, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_move_conveyor)));
+	clips_->add_function("mps-cs-retrieve-cap",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_retrieve_cap)));
+	clips_->add_function("mps-cs-mount-cap",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_cs_mount_cap)));
+	clips_->add_function("mps-bs-dispense",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_bs_dispense)));
 
-		clips_->add_function("mps-set-light",
-		                     sigc::slot<void, std::string, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
-		clips_->add_function("mps-set-lights",
-		                     sigc::slot<void, std::string, std::string, std::string, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
-		clips_->add_function("mps-reset-lights",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_lights)));
-		clips_->add_function("mps-ds-process",
-		                     sigc::slot<void, std::string, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
-		clips_->add_function("mps-rs-mount-ring",
-		                     sigc::slot<void, std::string, int, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
-		clips_->add_function("mps-reset",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
-		clips_->add_function("mps-reset-base-counter",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
-		clips_->add_function("mps-deliver",
-		                     sigc::slot<void, std::string>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
-		clips_->add_function("mps-ss-retrieve",
-		                     sigc::slot<void, std::string, int, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_retrieve)));
-		clips_->add_function("mps-ss-store",
-		                     sigc::slot<void, std::string, int, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_store)));
-		clips_->add_function("mps-ss-relocate",
-		                     sigc::slot<void, std::string, int, int, int, int>(
-		                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_relocate)));
-	}
+	clips_->add_function("mps-set-light",
+	                     sigc::slot<void, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_light)));
+	clips_->add_function("mps-set-lights",
+	                     sigc::slot<void, std::string, std::string, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_set_lights)));
+	clips_->add_function("mps-reset-lights",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_lights)));
+	clips_->add_function("mps-ds-process",
+	                     sigc::slot<void, std::string, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ds_process)));
+	clips_->add_function("mps-rs-mount-ring",
+	                     sigc::slot<void, std::string, int, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_rs_mount_ring)));
+	clips_->add_function("mps-reset",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset)));
+	clips_->add_function("mps-reset-base-counter",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_reset_base_counter)));
+	clips_->add_function("mps-deliver",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_deliver)));
+	clips_->add_function("mps-ss-retrieve",
+	                     sigc::slot<void, std::string, int, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_retrieve)));
+	clips_->add_function("mps-ss-store",
+	                     sigc::slot<void, std::string, int, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_store)));
+	clips_->add_function("mps-ss-relocate",
+	                     sigc::slot<void, std::string, int, int, int, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_mps_ss_relocate)));
+	clips_->add_function("config-update-float",
+	                     sigc::slot<void, std::string, float>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_float)));
+	clips_->add_function("config-update-uint",
+	                     sigc::slot<void, std::string, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_uint)));
+
+	clips_->add_function("config-update-int",
+	                     sigc::slot<void, std::string, int>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_int)));
+
+	clips_->add_function("config-update-bool",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_bool)));
+
+	clips_->add_function("config-update-string",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_config_update_string)));
+	clips_->add_function("reconfigure-machine",
+	                     sigc::slot<void, std::string>(
+	                       sigc::mem_fun(*this, &LLSFRefBox::clips_add_machine)));
 
 	clips_->signal_periodic().connect(sigc::mem_fun(*this, &LLSFRefBox::handle_clips_periodic));
 }
@@ -914,52 +809,101 @@ LLSFRefBox::clips_load_config(std::string cfg_prefix)
 {
 	std::shared_ptr<Configuration::ValueIterator> v(config_->search(cfg_prefix.c_str()));
 	while (v->next()) {
-		std::string type  = "";
-		std::string value = v->get_as_string();
-
-		if (v->is_uint())
-			type = "UINT";
-		else if (v->is_int())
-			type = "INT";
-		else if (v->is_float())
-			type = "FLOAT";
-		else if (v->is_bool()) {
-			type  = "BOOL";
-			value = v->get_bool() ? "TRUE" : "FALSE";
-		} else if (v->is_string()) {
-			type = "STRING";
-			if (!v->is_list()) {
-				value = std::string("\"") + value + "\"";
-			}
-		} else {
-			logger_->log_warn("RefBox",
-			                  "Config value at '%s' of unknown type '%s'",
-			                  v->path(),
-			                  v->type());
-		}
-
-		if (v->is_list()) {
-			//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
-			//       v->path(), type.c_str(), value.c_str());
-			clips_->assert_fact_f("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
-			                      v->path(),
-			                      type.c_str(),
-			                      value.c_str());
-		} else {
-			//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (value %s))",
-			//       v->path(), type.c_str(), value.c_str());
-			clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
-			                      v->path(),
-			                      type.c_str(),
-			                      value.c_str());
-		}
+		clips_assert_confval(v);
 	}
 }
 
+void
+LLSFRefBox::clips_assert_confval(std::shared_ptr<Configuration::ValueIterator> v)
+{
+	std::string type  = "";
+	std::string value = v->get_as_string();
+
+	if (v->is_uint())
+		type = "UINT";
+	else if (v->is_int())
+		type = "INT";
+	else if (v->is_float())
+		type = "FLOAT";
+	else if (v->is_bool()) {
+		type  = "BOOL";
+		value = v->get_bool() ? "TRUE" : "FALSE";
+	} else if (v->is_string()) {
+		type = "STRING";
+		if (!v->is_list()) {
+			value = std::string("\"") + value + "\"";
+		}
+	} else {
+		logger_->log_warn("RefBox", "Config value at '%s' of unknown type '%s'", v->path(), v->type());
+	}
+	CLIPS::Fact::pointer fact = clips_->get_facts();
+	while (fact) {
+		if (fact->get_template()->name() == "confval") {
+			try {
+				if (fact->slot_value("path")[0].as_string() == v->path()) {
+					fact->retract();
+					break;
+				}
+			} catch (Exception &e) {
+				logger_->log_error("RefBox", "can't access path slot of confval fact");
+			}
+		}
+		fact = fact->next();
+	}
+
+	if (v->is_list()) {
+		//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
+		//       v->path(), type.c_str(), value.c_str());
+		clips_->assert_fact_f("(confval (path \"%s\") (type %s) (is-list TRUE) (list-value %s))",
+		                      v->path(),
+		                      type.c_str(),
+		                      value.c_str());
+	} else {
+		//logger_->log_info("RefBox", "(confval (path \"%s\") (type %s) (value %s))",
+		//       v->path(), type.c_str(), value.c_str());
+		clips_->assert_fact_f("(confval (path \"%s\") (type %s) (value %s))",
+		                      v->path(),
+		                      type.c_str(),
+		                      value.c_str());
+	}
+}
 CLIPS::Value
 LLSFRefBox::clips_config_path_exists(std::string path)
 {
 	return CLIPS::Value(config_->exists(path.c_str()) ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
+}
+
+void
+LLSFRefBox::clips_config_update_float(std::string path, float f)
+{
+	config_->set_float(path.c_str(), f);
+}
+void
+LLSFRefBox::clips_config_update_uint(std::string path, int i)
+{
+	config_->set_uint(path.c_str(), i);
+}
+
+void
+LLSFRefBox::clips_config_update_int(std::string path, int i)
+{
+	config_->set_int(path.c_str(), i);
+}
+
+void
+LLSFRefBox::clips_config_update_bool(std::string path, std::string b)
+{
+	if (b == "FALSE") {
+		config_->set_bool(path.c_str(), false);
+	} else {
+		config_->set_bool(path.c_str(), true);
+	}
+}
+
+void
+LLSFRefBox::clips_config_update_string(std::string path, std::string s)
+{
+	config_->set_string(path.c_str(), s);
 }
 
 CLIPS::Value
@@ -2049,6 +1993,88 @@ LLSFRefBox::handle_timer(const boost::system::error_code &error)
 	}
 }
 
+void
+LLSFRefBox::clips_add_machine(const std::string &machine_name)
+{
+	std::string cfg_prefix = "/llsfrb/mps/stations/" + machine_name + "/";
+	auto        old_mps    = mps_.find(machine_name);
+	if (old_mps != mps_.end()) {
+		old_mps->second.reset();
+	}
+	bool active = true;
+	try {
+		active = config_->get_bool((cfg_prefix + "active").c_str());
+	} catch (Exception &e) {
+	} // ignored, assume enabled
+
+	if (active) {
+		std::string  mpstype = config_->get_string((cfg_prefix + "type").c_str());
+		std::string  mpsip   = config_->get_string((cfg_prefix + "host").c_str());
+		unsigned int port    = config_->get_uint((cfg_prefix + "port").c_str());
+
+		std::string connection_string = "plc";
+		try {
+			// common setting for all machines
+			connection_string = config_->get_string("/llsfrb/mps/connection");
+		} catch (Exception &e) {
+		}
+		try {
+			// machine-specific setting
+			connection_string = config_->get_string((cfg_prefix + "connection").c_str());
+		} catch (Exception &e) {
+		}
+
+		std::string log_path = "";
+		try {
+			log_path = config_->get_string("/llsfrb/log/mps_dir");
+		} catch (Exception &e) {
+		}
+
+		if (log_path != "") {
+			stdfs::create_directory(log_path);
+			std::string log_suffix = machine_name + ".log";
+			try {
+				log_suffix = config_->get_string((cfg_prefix + "/log_file").c_str());
+			} catch (Exception &e) {
+			}
+			log_path += "/" + log_suffix;
+		}
+
+		MachineFactory mps_factory(config_);
+		auto           mps =
+		  mps_factory.create_machine(machine_name, mpstype, mpsip, port, log_path, connection_string);
+		mps->register_ready_callback([this, machine_name](bool ready) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
+			                      machine_name.c_str(),
+			                      ready ? "TRUE" : "FALSE");
+		});
+		mps->register_busy_callback([this, machine_name](bool busy) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
+			                      machine_name.c_str(),
+			                      busy ? "TRUE" : "FALSE");
+		});
+		mps->register_barcode_callback([this, machine_name](unsigned long barcode) {
+			fawkes::MutexLocker clips_lock(&clips_mutex_);
+			clips_->assert_fact_f("(mps-status-feedback %s BARCODE %u)", machine_name.c_str(), barcode);
+		});
+		if (mpstype == "RS") {
+			RingStation *rs = dynamic_cast<RingStation *>(mps.get());
+			if (!rs) {
+				throw Exception("Expected MPS %s to be of type RingStation", machine_name.c_str());
+			}
+			rs->register_slide_callback([this, machine_name](unsigned int counter) {
+				fawkes::MutexLocker clips_lock(&clips_mutex_);
+				clips_->assert_fact_f("(mps-status-feedback %s SLIDE-COUNTER %u)",
+				                      machine_name.c_str(),
+				                      counter);
+			});
+		}
+		mps_[machine_name] = std::move(mps);
+	}
+}
+
 /** Handle operating system signal.
  * @param error error code
  * @param signum signal number
@@ -2058,6 +2084,15 @@ LLSFRefBox::handle_signal(const boost::system::error_code &error, int signum)
 {
 	timer_.cancel();
 	io_service_.stop();
+	if (!error) {
+		if (signum == SIGUSR1) {
+			return_code_ = LLSFRefBox::RESTART_CODE;
+		} else {
+			return_code_ = 0;
+		}
+	} else {
+		return_code_ = 1;
+	}
 }
 
 /** Run the application.
@@ -2068,7 +2103,7 @@ LLSFRefBox::run()
 {
 #if BOOST_ASIO_VERSION >= 100601
 	// Construct a signal set registered for process termination.
-	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM);
+	boost::asio::signal_set signals(io_service_, SIGINT, SIGTERM, SIGUSR1);
 
 	// Start an asynchronous wait for one of the signals to occur.
 	signals.async_wait(boost::bind(&LLSFRefBox::handle_signal,
@@ -2076,13 +2111,17 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::error,
 	                               boost::asio::placeholders::signal_number));
 #else
-	g_refbox          = this;
+	g_refbox = this;
 	signal(SIGINT, llsfrb::handle_signal);
 #endif
 
 	start_timer();
 	io_service_.run();
-	return 0;
+	if (return_code_ != LLSFRefBox::RESTART_CODE) {
+		google::protobuf::ShutdownProtobufLibrary();
+	}
+
+	return return_code_;
 }
 
 #ifdef HAVE_WEBSOCKETS
@@ -2105,6 +2144,10 @@ LLSFRefBox::setup_clips_websocket()
 	clips_->add_function("ws-create-GameState",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_game_state)));
+	clips_->add_function("ws-create-CfgPreset",
+	                     sigc::slot<void, std::string, std::string>(
+	                       sigc::mem_fun(*(backend_->get_data()),
+	                                     &websocket::Data::log_push_cfg_preset)));
 	clips_->add_function("ws-create-TimeInfo",
 	                     sigc::slot<void>(sigc::mem_fun(*(backend_->get_data()),
 	                                                    &websocket::Data::log_push_time_info)));
@@ -2154,6 +2197,24 @@ LLSFRefBox::setup_clips_websocket()
 	                                                    &websocket::Data::log_push_known_teams)));
 
 	//define functions that set facts in the CLIPS environment to control the refbox
+	backend_->get_data()->clips_set_cfg_preset = [this](const std::string &category,
+	                                                    const std::string &preset) {
+		std::string cfg_file = std::string(CONFDIR) + "/" + category + "/" + preset + ".yaml";
+		if (fs::exists(fs::path(cfg_file))) {
+			YamlConfiguration tmp_config = YamlConfiguration(CONFDIR);
+			tmp_config.load(cfg_file.c_str());
+			std::shared_ptr<Configuration::ValueIterator> v(tmp_config.search("/"));
+			fawkes::MutexLocker                           clips_lock(&clips_mutex_);
+			while (v->next()) {
+				clips_assert_confval(v);
+			}
+		} else {
+			logger_->log_error("Websocket",
+			                   "Received invalid config preset (%s, %s)",
+			                   category.c_str(),
+			                   preset.c_str());
+		}
+	};
 	backend_->get_data()->clips_set_gamestate = [this](std::string state_string) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(net-SetGameState %s)", state_string.c_str());
@@ -2165,6 +2226,84 @@ LLSFRefBox::setup_clips_websocket()
 	backend_->get_data()->clips_randomize_field = [this]() {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(net-RandomizeField)");
+	};
+	backend_->get_data()->clips_set_confval = [this](std::string path, std::string value) {
+		std::string type = config_->get_type(path);
+		if (type == "string") {
+			config_->set_string(path.c_str(), value);
+		} else if (type == "bool") {
+			if (value == "true") {
+				config_->set_bool(path.c_str(), true);
+			} else if (value == "false") {
+				config_->set_bool(path.c_str(), false);
+			} else {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected true or false",
+				                   value.c_str(),
+				                   path.c_str());
+				return;
+			}
+		} else if (type == "float") {
+			try {
+				float num = std::stof(value);
+				config_->set_float(path.c_str(), num);
+			} catch (std::exception &e) {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected float %s",
+				                   value.c_str(),
+				                   path.c_str(),
+				                   e.what());
+				return;
+			}
+		} else if (type == "unsigned int") {
+			try {
+				unsigned int num = std::stoul(value, nullptr, 10);
+				config_->set_uint(path.c_str(), num);
+			} catch (std::exception &e) {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected uint %s",
+				                   value.c_str(),
+				                   path.c_str(),
+				                   e.what());
+				return;
+			}
+		} else if (type == "int") {
+			try {
+				int num = std::stoi(value);
+				config_->set_int(path.c_str(), num);
+			} catch (std::exception &e) {
+				logger_->log_error("Websocket",
+				                   "Received unexpected value %s for %s, expected int",
+				                   value.c_str(),
+				                   path.c_str());
+				return;
+			}
+		} else {
+			logger_->log_error("Websocket",
+			                   "Setting of type %s via frontend is not supported",
+			                   type.c_str());
+		}
+		fawkes::MutexLocker  clips_lock(&clips_mutex_);
+		CLIPS::Fact::pointer fact = clips_->get_facts();
+		while (fact) {
+			if (fact->get_template()->name() == "confval") {
+				try {
+					if (fact->slot_value("path")[0].as_string() == path) {
+						fact->retract();
+						break;
+					}
+				} catch (Exception &e) {
+					logger_->log_error("Websocket", "can't access path slot of confval fact");
+				}
+			}
+			fact = fact->next();
+		}
+		std::shared_ptr<Configuration::ValueIterator> v(config_->search(path.c_str()));
+		if (v->valid()) {
+			clips_assert_confval(v);
+		} else {
+			logger_->log_error("Websocket", "Failed to find config ", path.c_str());
+		}
 	};
 	backend_->get_data()->clips_set_teamname = [this](std::string color_string,
 	                                                  std::string name_string) {

@@ -629,7 +629,7 @@ void
 YamlConfiguration::write_host_file()
 {
 	if (host_file_ == "") {
-		throw fawkes::Exception("YamlConfig: no host config file specified");
+		return;
 	}
 	if (mutex->try_lock()) {
 		try {
@@ -1095,7 +1095,11 @@ YamlConfiguration::search(const char *path)
 	try {
 		std::shared_ptr<YamlConfigurationNode>                        n = root_->find(tmp_path.c_str());
 		std::map<std::string, std::shared_ptr<YamlConfigurationNode>> nodes;
-		n->enum_leafs(nodes, tmp_path);
+		if (n->has_children()) {
+			n->enum_leafs(nodes, tmp_path);
+		} else {
+			nodes[tmp_path] = n;
+		}
 		return new YamlValueIterator(nodes);
 	} catch (fawkes::Exception &e) {
 		return new YamlValueIterator();

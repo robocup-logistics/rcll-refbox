@@ -39,15 +39,20 @@
 
 namespace llsfrb::websocket {
 
+Data::~Data()
+{
+}
 /**
  * @brief Construct a new Data:: Data object
  *
  * @param logger_ logger to be used
  */
-Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex)
+Data::Data(std::shared_ptr<Logger>             logger,
+           std::shared_ptr<CLIPS::Environment> env,
+           fawkes::Mutex                      &env_mutex)
 : logger_(logger), env_mutex_(env_mutex)
 {
-	env_ = std::shared_ptr<CLIPS::Environment>(env);
+	env_ = env;
 
 	logger_->log_info("Websocket", "loading JSON schemas for command validation");
 
@@ -61,6 +66,9 @@ Data::Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mute
 	                              "set_order_delivered",
 	                              "set_robot_maintenance",
 	                              "set_teamname",
+	                              "set_confval",
+	                              "set_preset",
+	                              "reset",
 	                              "reset_machine_by_team",
 	                              "add_points_team"};
 
@@ -153,6 +161,21 @@ Data::log_push(rapidjson::Document &d)
 	log_cv.notify_one();
 }
 
+void
+Data::reset_clients()
+{
+	for (auto &client : clients) {
+		client.reset();
+	}
+	clients.clear();
+}
+
+void
+Data::shutdown()
+{
+	shutdown_ = true;
+	log_cv.notify_one();
+}
 /**
  * @brief check if log queue is empty
  *
@@ -173,7 +196,7 @@ void
 Data::log_wait()
 {
 	std::unique_lock<std::mutex> lock(log_mu);
-	while (log_empty()) //loop to avoid spurious wake-ups
+	while (!shutdown_ && log_empty()) //loop to avoid spurious wake-ups
 	{
 		log_cv.wait(lock);
 	}
@@ -587,6 +610,35 @@ Data::log_push_game_state()
 }
 
 /**
+ * @brief Gets the cfg-prefix fact from CLIPS and pushes it to the send queue
+ *
+ */
+void
+Data::log_push_cfg_preset(const std::string &category, const std::string &preset)
+{
+	MutexLocker lock(&env_mutex_);
+
+	std::vector<CLIPS::Fact::pointer> facts = {};
+	CLIPS::Fact::pointer              fact  = env_->get_facts();
+	while (fact) {
+		if (match(fact, "cfg-preset")) {
+			try {
+				if (get_value<std::string>(fact, "category") == category
+				    && get_value<std::string>(fact, "preset") == preset) {
+					facts.push_back(fact);
+					break;
+				}
+			} catch (Exception &e) {
+				logger_->log_error("Websocket", "can't access value(s) of fact of type robot");
+			}
+		}
+		fact = fact->next();
+	}
+	auto doc = pack_facts_to_doc("cfg-prefix", facts, &Data::get_cfg_preset_fact<rapidjson::Value>);
+	log_push(doc);
+}
+
+/**
  * @brief Gets the time-info fact from CLIPS and pushes it to the send queue
  *
  */
@@ -722,6 +774,37 @@ Data::on_connect_workpiece_info()
 	for (const auto &f : facts) {
 		auto doc =
 		  pack_facts_to_doc("workpiece", {f}, &Data::get_workpiece_info_fact<rapidjson::Value>);
+		;
+		rapidjson::StringBuffer                    buffer;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+		doc.Accept(writer);
+		messages << buffer.GetString() << "\n";
+	}
+	// Return the accumulated messages as a single string
+	return messages.str();
+}
+
+/**
+ * @brief Create a string of a JSON array containing the data of all current cfg preset facts
+ *
+ * @return std::string
+ */
+std::string
+Data::on_connect_cfg_preset()
+{
+	MutexLocker                       lock(&env_mutex_);
+	std::vector<CLIPS::Fact::pointer> facts = {};
+	// get machine facts pointers
+	CLIPS::Fact::pointer fact = env_->get_facts();
+	while (fact) {
+		if (match(fact, "cfg-preset")) {
+			facts.push_back(fact);
+		}
+		fact = fact->next();
+	}
+	std::ostringstream messages;
+	for (const auto &f : facts) {
+		auto doc = pack_facts_to_doc("cfg-preset", {f}, &Data::get_cfg_preset_fact<rapidjson::Value>);
 		;
 		rapidjson::StringBuffer                    buffer;
 		rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -1442,6 +1525,28 @@ Data::get_config_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fa
 		clips_to_json(fact, "value", json_string, alloc);
 		(*o).AddMember("value", json_string, alloc);
 	}
+}
+
+/**
+ * @brief Gets data of a cfg-preset fact and packs into into a rapidjson object
+ *
+ * @tparam T
+ * @param o
+ * @param alloc
+ * @param fact
+ */
+template <class T>
+void
+Data::get_cfg_preset_fact(T                                  *o,
+                          rapidjson::Document::AllocatorType &alloc,
+                          CLIPS::Fact::pointer                fact)
+{
+	rapidjson::Value json_string;
+	//value fields
+	clips_to_json(fact, "category", json_string, alloc);
+	(*o).AddMember("category", json_string, alloc);
+	clips_to_json(fact, "preset", json_string, alloc);
+	(*o).AddMember("preset", json_string, alloc);
 }
 
 /**

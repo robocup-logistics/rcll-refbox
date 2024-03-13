@@ -260,6 +260,12 @@ Client::receive_thread()
 					if (strcmp(msgs["command"].GetString(), "set_gamestate") == 0) {
 						data_->clips_set_gamestate(msgs["state"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "set_confval") == 0) {
+						data_->clips_set_confval(msgs["path"].GetString(), msgs["value"].GetString());
+					}
+					if (strcmp(msgs["command"].GetString(), "reset") == 0) {
+						kill(getpid(), SIGUSR1);
+					}
 					if (strcmp(msgs["command"].GetString(), "set_gamephase") == 0) {
 						data_->clips_set_gamephase(msgs["phase"].GetString());
 					}
@@ -277,6 +283,9 @@ Client::receive_thread()
 					}
 					if (strcmp(msgs["command"].GetString(), "set_order_delivered") == 0) {
 						data_->clips_set_order_delivered(msgs["color"].GetString(), msgs["order_id"].GetInt());
+					}
+					if (strcmp(msgs["command"].GetString(), "set_preset") == 0) {
+						data_->clips_set_cfg_preset(msgs["category"].GetString(), msgs["preset"].GetString());
 					}
 					if (strcmp(msgs["command"].GetString(), "set_machine_state") == 0) {
 						data_->clips_production_set_machine_state(msgs["mname"].GetString(),
@@ -325,9 +334,9 @@ Client::disconnect()
 {
 	if (active) {
 		active = false;
-		close();
-		logger_->log_info("Websocket", "client disconnected");
 	}
+	close();
+	logger_->log_info("Websocket", "client disconnected");
 }
 
 /**
@@ -344,6 +353,7 @@ Client::on_connect_update()
 	send(data_->on_connect_known_teams());
 	send(data_->on_connect_game_state());
 	send(data_->on_connect_config());
+	send(data_->on_connect_cfg_preset());
 	send(data_->on_connect_agent_task_info());
 
 	if (gamestate == "RUNNING" || gamestate == "PAUSED") {

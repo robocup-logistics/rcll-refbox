@@ -105,6 +105,10 @@ ClipsProtobufCommunicator::~ClipsProtobufCommunicator()
 		delete c.second;
 	}
 	clients_.clear();
+	for (auto p : peers_) {
+		delete p.second;
+	}
+	peers_.clear();
 
 	delete message_register_;
 	delete server_;

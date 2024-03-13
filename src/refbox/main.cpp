@@ -51,8 +51,10 @@ main(int argc, char **argv)
 #ifdef HAVE_MONGODB
 	mongocxx::instance mongodb_instance{};
 #endif
-	LLSFRefBox llsfrb(argc, argv);
-	int        rv = llsfrb.run();
-
-	return rv;
+	int restart = LLSFRefBox::RESTART_CODE;
+	while (restart == LLSFRefBox::RESTART_CODE) {
+		LLSFRefBox llsfrb(argc, argv);
+		restart = llsfrb.run();
+	}
+	return restart;
 }

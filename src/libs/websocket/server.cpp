@@ -43,13 +43,67 @@ namespace llsfrb::websocket {
  * @param data_ptr pointer to Data object that is used for this session
  * @param logger_ logger used by the backend
  */
-Server::Server(std::shared_ptr<Data> data, std::shared_ptr<Logger> logger)
-: data_(data), logger_(logger)
+Server::Server(std::shared_ptr<Data>    data,
+               std::shared_ptr<Logger>  logger,
+               boost::asio::io_service &io_service,
+               uint                     port,
+               bool                     ws_mode,
+               bool                     allow_control_all)
+: data_(data),
+  logger_(logger),
+  socket_(io_service),
+  acceptor_(io_service, tcp::endpoint(tcp::v4(), port_)),
+  ws_mode_(ws_mode),
+  allow_control_all_(allow_control_all)
 {
 }
 
-Server::Server()
+void
+Server::shutdown()
 {
+	shutdown_ = true;
+	acceptor_.close();
+}
+
+void
+Server::handle_accept(const boost::system::error_code &error, boost::asio::ip::tcp::socket &socket)
+{
+	if (!error) {
+		//client can send control command if allow_control_all_ is set or it is the localhost
+		bool client_can_send =
+		  (allow_control_all_ || socket.remote_endpoint().address().to_string() == "127.0.0.1");
+
+		if (ws_mode_) {
+			// websocket approach
+			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket =
+			  std::make_shared<boost::beast::websocket::stream<tcp::socket>>(std::move(socket));
+			std::shared_ptr<Client> client =
+			  std::make_shared<ClientWS>(web_socket, logger_, data_, client_can_send);
+			data_->clients_add(client);
+		} else {
+			// socket approach
+			std::shared_ptr<Client> client = std::make_shared<ClientS>(
+			  std::make_shared<tcp::socket>(std::move(socket)), logger_, data_, client_can_send);
+			data_->clients_add(client);
+		}
+
+		logger_->log_info("Websocket", "new client connected");
+	} else {
+		logger_->log_warn("Websocket", "Connection to Client failed");
+	}
+}
+
+void
+Server::do_accept()
+{
+	boost::asio::ip::tcp::endpoint endpoint = tcp::endpoint(tcp::v4(), port_);
+	acceptor_.async_accept(endpoint,
+	                       [&](const boost::system::error_code &error,
+	                           boost::asio::ip::tcp::socket     peer) {
+		                       if (!error)
+			                       handle_accept(error, peer);
+		                       do_accept();
+	                       });
 }
 
 /**
@@ -62,50 +116,7 @@ Server::Server()
 void
 Server::operator()()
 {
-	// listen for new connection
-	boost::asio::io_service io_service;
-	tcp::acceptor           acceptor_(io_service, tcp::endpoint(tcp::v4(), port_));
-
-	// acceptor loop
-	while (true) {
-		std::shared_ptr<tcp::socket> socket = std::make_shared<tcp::socket>(io_service);
-		acceptor_.accept(*socket);
-
-		//client can send control command if allow_control_all_ is set or it is the localhost
-		bool client_can_send =
-		  (allow_control_all_ || (*socket).remote_endpoint().address().to_string() == "127.0.0.1");
-
-		if (ws_mode_) {
-			// websocket approach
-			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket =
-			  std::make_shared<boost::beast::websocket::stream<tcp::socket>>(std::move(*socket));
-			std::shared_ptr<Client> client =
-			  std::make_shared<ClientWS>(web_socket, logger_, data_, client_can_send);
-			data_->clients_add(client);
-		} else {
-			// socket approach
-			std::shared_ptr<Client> client =
-			  std::make_shared<ClientS>(socket, logger_, data_, client_can_send);
-			data_->clients_add(client);
-		}
-
-		logger_->log_info("Websocket", "new client connected");
-	}
-}
-
-/**
- * @brief Configure the servers port and mode prior to start. 
- * 
- * @param port port on which the server runs on
- * @param ws_mode true if websocket only mode
- * @param allow_control_all if true, devices with not local host ip addresses can send control commands
- */
-void
-Server::configure(uint port, bool ws_mode = true, bool allow_control_all = false)
-{
-	port_              = port;
-	ws_mode_           = ws_mode;
-	allow_control_all_ = allow_control_all;
+	do_accept();
 }
 
 } // namespace llsfrb::websocket

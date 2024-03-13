@@ -44,34 +44,40 @@ class Client; // forward declaration
 class Data
 {
 public:
-	Data(std::shared_ptr<Logger> logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex);
-	std::string                                      log_pop();
-	void                                             log_push(std::string log);
-	void                                             log_push(rapidjson::Document &d);
-	bool                                             log_empty();
-	void                                             log_wait();
-	void                                             clients_add(std::shared_ptr<Client> client);
-	void                                             clients_send_all(std::string msg);
-	void                                             clients_send_all(rapidjson::Document &d);
-	void                                             log_push_attention_message(std::string text,
-	                                                                            std::string team,
-	                                                                            int         time_to_display,
-	                                                                            float       game_time);
-	std::function<void(std::string)>                 clips_set_gamestate;
-	std::function<void(std::string)>                 clips_set_gamephase;
-	std::function<void()>                            clips_randomize_field;
-	std::function<void(std::string, std::string)>    clips_set_teamname;
-	std::function<void(int, bool, int, std::string)> clips_confirm_delivery;
-	std::function<void(std::string, int)>            clips_set_order_delivered;
-	std::function<void(std::string)>                 clips_production_machine_add_base;
-	std::function<void(std::string, std::string)>    clips_production_set_machine_state;
-	std::function<void(int, std::string, bool)>      clips_robot_set_robot_maintenance;
-	std::function<void(std::string, std::string)>    clips_production_reset_machine_by_team;
+	Data(std::shared_ptr<Logger>             logger,
+	     std::shared_ptr<CLIPS::Environment> env,
+	     fawkes::Mutex                      &env_mutex);
+	~Data();
+	std::string                                   log_pop();
+	void                                          log_push(std::string log);
+	void                                          log_push(rapidjson::Document &d);
+	bool                                          log_empty();
+	void                                          log_wait();
+	void                                          clients_add(std::shared_ptr<Client> client);
+	void                                          clients_send_all(std::string msg);
+	void                                          clients_send_all(rapidjson::Document &d);
+	void                                          log_push_attention_message(std::string text,
+	                                                                         std::string team,
+	                                                                         int         time_to_display,
+	                                                                         float       game_time);
+	std::function<void(std::string)>              clips_set_gamestate;
+	std::function<void(std::string)>              clips_set_gamephase;
+	std::function<void(std::string, std::string)> clips_set_confval;
+	std::function<void(const std::string &, const std::string &)> clips_set_cfg_preset;
+	std::function<void()>                                         clips_randomize_field;
+	std::function<void(std::string, std::string)>                 clips_set_teamname;
+	std::function<void(int, bool, int, std::string)>              clips_confirm_delivery;
+	std::function<void(std::string, int)>                         clips_set_order_delivered;
+	std::function<void(std::string)>                              clips_production_machine_add_base;
+	std::function<void(std::string, std::string)>                 clips_production_set_machine_state;
+	std::function<void(int, std::string, bool)>                   clips_robot_set_robot_maintenance;
+	std::function<void(std::string, std::string)> clips_production_reset_machine_by_team;
 	std::function<void(int, std::string, float, std::string, std::string)> clips_add_points_team;
 	bool        match(CLIPS::Fact::pointer &fact, std::string tmpl_name);
 	void        log_push_points();
 	void        log_push_config(std::string path);
 	void        log_push_ring_spec();
+	void        log_push_cfg_preset(const std::string &category, const std::string &preset);
 	void        log_push_game_state();
 	void        log_push_time_info();
 	void        log_push_robot_info(int number, std::string name);
@@ -88,6 +94,7 @@ public:
 	std::string on_connect_workpiece_info();
 	std::string on_connect_robot_info();
 	std::string on_connect_game_state();
+	std::string on_connect_cfg_preset();
 	std::string on_connect_ring_spec();
 	std::string on_connect_points();
 	std::string on_connect_config();
@@ -120,6 +127,9 @@ public:
 	void
 	get_ring_spec_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
+	void
+	get_cfg_preset_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
+	template <class T>
 	void get_points_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
 	template <class T>
 	void get_config_fact(T *o, rapidjson::Document::AllocatorType &alloc, CLIPS::Fact::pointer fact);
@@ -147,6 +157,9 @@ public:
 	                                              rapidjson::Document::AllocatorType &,
 	                                              CLIPS::Fact::pointer));
 
+	void shutdown();
+	void reset_clients();
+
 private:
 	std::shared_ptr<Logger>                    logger_;
 	std::mutex                                 log_mu;
@@ -157,6 +170,8 @@ private:
 	std::shared_ptr<CLIPS::Environment>        env_;
 	fawkes::Mutex                             &env_mutex_;
 	std::shared_ptr<rapidjson::SchemaDocument> load_schema(std::string path);
+
+	bool shutdown_ = false;
 };
 
 } // namespace llsfrb::websocket

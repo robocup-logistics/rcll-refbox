@@ -13,19 +13,22 @@
 #
 #*****************************************************************************
 
-
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BASEDIR)/etc/buildsys/gcc.mk
 include $(BUILDSYSDIR)/boost.mk
 
 #define the boost libs we need
-BOOST_LIBS_WEBSOCKET = asio beast 
+BOOST_LIBS_WEBSOCKET = asio beast
 HAVE_WEBSOCKET = $(call boost-have-libs,$(BOOST_LIBS_WEBSOCKET))
 
 #needs include for this
 ifeq ($(HAVE_WEBSOCKET),1)
   CFLAGS_WEBSOCKET = $(call boost-libs-cflags,$(BOOST_LIBS_WEBSOCKET)) -DHAVE_WEBSOCKETS
-  LDFLAGS_WEBSOCKET = $(call boost-libs-ldflags,$(BOOST_LIBS_WEBSOCKET)) 
+  LDFLAGS_WEBSOCKET = $(call boost-libs-ldflags,$(BOOST_LIBS_WEBSOCKET))
   LIBS_WEBSOCKET = llsfrbwebsocket
-	
-endif 
+
+endif
+
+ifneq ($(PKGCONFIG),)
+  HAVE_RAPIDJSON := $(if $(shell $(PKGCONFIG) --exists 'RapidJSON'; echo $${?/1/}),1,0)
+endif

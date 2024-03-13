@@ -512,6 +512,11 @@
   (slot value)
 )
 
+(deftemplate cfg-preset
+  (slot category (type STRING))
+  (slot preset (type STRING))
+)
+
 ; Machine directions in LLSF arena frame when looking from bird's eye perspective
 (defglobal
   ?*M-EAST*   = (* (/ 3.0 2.0) (pi))   ; 270 deg or -90 deg

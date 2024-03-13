@@ -87,7 +87,7 @@ OpcUaMachine::dispatch_command_queue()
 			auto instruction = command_queue_.front();
 			command_queue_.pop();
 			lock.unlock();
-			while (!send_instruction(instruction)) {
+			while (!shutdown_ && !send_instruction(instruction)) {
 				reconnect();
 			};
 			lock.lock();
@@ -98,7 +98,7 @@ OpcUaMachine::dispatch_command_queue()
 				// there was no instruction in the queue, send heartbeat to ensure the
 				// connection is healthy and reconnect if it is not
 				lock.unlock();
-				while (!send_instruction(std::make_tuple(COMMAND_NOTHING, 0, 0, 1, 0, 0))) {
+				while (!shutdown_ && !send_instruction(std::make_tuple(COMMAND_NOTHING, 0, 0, 1, 0, 0))) {
 					reconnect();
 				}
 				lock.lock();
@@ -178,14 +178,13 @@ OpcUaMachine::connect()
 
 OpcUaMachine::~OpcUaMachine()
 {
-	std::unique_lock<std::mutex> lock(command_queue_mutex_);
 	shutdown_ = true;
-	lock.unlock();
 	queue_condition_.notify_all();
 	if (worker_thread_.joinable()) {
 		worker_thread_.join();
 	}
 	disconnect();
+	spdlog::drop(name_);
 }
 
 void

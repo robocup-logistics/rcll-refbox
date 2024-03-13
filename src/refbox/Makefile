@@ -22,7 +22,6 @@ include $(BUILDSYSDIR)/boost.mk
 include $(BUILDCONFDIR)/mongodb_log/mongodb.mk
 include $(BUILDCONFDIR)/netcomm/netcomm.mk
 include $(BUILDCONFDIR)/websocket/websocket.mk
-include $(BUILDCONFDIR)/webview/webview.mk
 
 CFLAGS += -Wno-deprecated-declarations
 
@@ -34,18 +33,18 @@ HAVE_BOOST_LIBS_OPT = $(call boost-have-libs,$(OPT_BOOST_LIBS))
 
 LIBS_llsf_refbox = stdc++ stdc++fs llsfrbcore llsfrbconfig llsfrblogging llsfrbnetcomm \
 		   llsfrbutils llsf_protobuf_clips mps_comm \
-		   llsf_mps_placing_clips llsfrbwebview llsfrbrestapi
+		   llsf_mps_placing_clips
 
 OBJS_llsf_refbox = main.o refbox.o clips_logger.o
 
-ifeq ($(HAVE_CPP17)$(HAVE_PROTOBUF)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS)$(HAVE_WEBVIEW),11111)
+ifeq ($(HAVE_CPP17)$(HAVE_PROTOBUF)$(HAVE_CLIPS)$(HAVE_BOOST_LIBS),1111)
   OBJS_all =	$(OBJS_llsf_refbox)
   BINS_all =	$(BINDIR)/llsf-refbox
 
   CFLAGS  += $(CFLAGS_PROTOBUF) $(CFLAGS_CLIPS) $(CFLAGS_CPP17) \
-	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS)) $(CFLAGS_WEBVIEW)
+	     $(call boost-libs-cflags,$(REQ_BOOST_LIBS))
   LDFLAGS += $(LDFLAGS_PROTOBUF) $(LDFLAGS_CLIPS) \
-	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS)) $(LDFLAGS_WEBVIEW)
+	     $(call boost-libs-ldflags,$(REQ_BOOST_LIBS))
   #MANPAGES_all =  $(MANDIR)/man1/llsf-refbox.1
 
   ifeq ($(HAVE_AVAHI),1)
@@ -85,9 +84,6 @@ else
   ifneq ($(HAVE_WEBSOCKET),1)
     WARN_TARGETS_WEBSOCKET = $(foreach l,$(BOOST_LIBS_WEBSOCKET),$(if $(call boost-have-lib,$l),, warning_boost_$l))
   endif
-  ifneq ($(HAVE_WEBVIEW),1)
-  WARN_TARGETS += warning_webview
-  endif
 endif
 
 
@@ -102,8 +98,6 @@ warning_clips:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (clipsmm not found)"
 warning_mongodb:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Omitting MongoDB logging support$(TNORMAL) (MongoDB not found)"
-warning_webview:
-	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build RCLL RefBox$(TNORMAL) (no webview support)"
 $(WARN_TARGETS_BOOST): warning_boost_%:
 	$(SILENT)echo -e "$(INDENT_PRINT)--> $(TRED)Cannot build protobuf_comm library$(TNORMAL) (Boost library $* not found)"
 $(WARN_TARGETS_WEBSOCKET):

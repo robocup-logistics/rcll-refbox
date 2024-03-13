@@ -8,14 +8,14 @@
 ;---------------------------------------------------------------------------
 
 (defglobal
-	?*BASE_STATION* = 1
-	?*CAP1_STATION* = 2
-	?*CAP2_STATION* = 3
-	?*RING1_STATION* = 4
-	?*RING2_STATION* = 5
-	?*STORAGE_STATION* = 6
-	?*DELIVERY_STATION* = 7
-	?*PRIORITY_CHALLENGE_OVERRIDE* = 100
+	?*BASE-STATION* = 1
+	?*CAP1-STATION* = 2
+	?*CAP2-STATION* = 3
+	?*RING1-STATION* = 4
+	?*RING2-STATION* = 5
+	?*STORAGE-STATION* = 6
+	?*DELIVERY-STATION* = 7
+	?*PRIORITY_CHALLENGE-OVERRIDE* = 100
 	?*FIELD-WIDTH*  = (config-get-int "/llsfrb/challenges/field/width")
 	?*FIELD-HEIGHT* = (config-get-int "/llsfrb/challenges/field/height")
 	?*VISIT-ZONE-DURATION* = (config-get-int "/llsfrb/challenges/publish-routes/pause-duration")
@@ -98,13 +98,13 @@
 
 (deffunction machine-to-id (?mps)
 	(switch ?mps
-		(case BS then (return ?*BASE_STATION*))
-		(case CS1 then (return ?*CAP1_STATION*))
-		(case CS2 then (return ?*CAP2_STATION*))
-		(case RS1 then (return ?*RING1_STATION*))
-		(case RS2 then (return ?*RING2_STATION*))
-		(case SS then (return ?*STORAGE_STATION*))
-		(case DS then (return ?*DELIVERY_STATION*))
+		(case BS then (return ?*BASE-STATION*))
+		(case CS1 then (return ?*CAP1-STATION*))
+		(case CS2 then (return ?*CAP2-STATION*))
+		(case RS1 then (return ?*RING1-STATION*))
+		(case RS2 then (return ?*RING2-STATION*))
+		(case SS then (return ?*STORAGE-STATION*))
+		(case DS then (return ?*DELIVERY-STATION*))
 	)
 	(printout error "machine-to-id: unsupported machine: "
 	  ?mps " Expected BS|CS1|CS2|RS1|RS2|SS|DS" crlf)
@@ -113,7 +113,7 @@
 
 (defrule challenges-create-routes
 " Create some routes with waypoints in the field as a navigation challenge "
-	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/publish-routes/enable") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/challenges/publish-routes/num-points") (type UINT) (value ?points))
 	(confval (path "/llsfrb/challenges/publish-routes/num-routes") (type UINT) (value ?routes))
@@ -145,7 +145,7 @@
 
 (defrule challenges-configure-machine-ground-truth
 " Send the ground truth for machine positions only for specified phases "
-	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/send-mps-ground-truth") (is-list TRUE) (list-value $?gt))
 	?s <- (send-mps-positions (phases $?old-phases&:(neq ?old-phases (type-cast-list ?gt SYMBOL))))
 =>
@@ -154,7 +154,7 @@
 
 (defrule challenges-customize-orders
 " Delete all existing orders and then load orders from configuration "
-	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/orders/customize") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/challenges/production-time") (type UINT) (value ?max-time))
 =>
@@ -192,7 +192,7 @@
 
 (defrule challenges-configure-machines
 " adjust the machines placed on the field "
-	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(confval (path "/llsfrb/challenges/machines") (is-list TRUE) (list-value $?machines))
 	(confval (path "/llsfrb/challenges/field/width") (type UINT) (value ?x))
 	(confval (path "/llsfrb/challenges/field/height") (type UINT) (value ?y))
@@ -200,13 +200,13 @@
 	(game-parameters (is-parameterized FALSE) (machine-setup RANDOM))
 	(not (machine-generation-triggered))
 =>
-	(foreach ?m (create$ ?*BASE_STATION*
-	                     ?*CAP1_STATION*
-	                     ?*CAP2_STATION*
-	                     ?*RING1_STATION*
-	                     ?*RING2_STATION*
-	                     ?*STORAGE_STATION*
-	                     ?*DELIVERY_STATION*)
+	(foreach ?m (create$ ?*BASE-STATION*
+	                     ?*CAP1-STATION*
+	                     ?*CAP2-STATION*
+	                     ?*RING1-STATION*
+	                     ?*RING2-STATION*
+	                     ?*STORAGE-STATION*
+	                     ?*DELIVERY-STATION*)
 		(mps-generator-remove-machine ?m)
 	)
 	(foreach ?m ?machines
@@ -254,7 +254,7 @@
 )
 
 (defrule challenges-reset-field-back-to-setup
-	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(gamestate (phase SETUP) (prev-phase PRODUCTION|POST_GAME|EXPLORATION))
 	(not (challanges-reset-back-in-setup))
 	=>
@@ -272,7 +272,7 @@
 )
 
 (defrule challenges-parameterize
-	(declare (salience ?*PRIORITY_CHALLENGE_OVERRIDE*))
+	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	?gp <- (game-parameters (machine-positions ?m-positions&~PENDING)
 	                        (machine-setup ?m-setup&~PENDING)

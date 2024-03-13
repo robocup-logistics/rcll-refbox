@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/set_preset.json",
+    "type": "object",
+    "title": "Config Update Schema",
+    "description": "Schema for requesting a config preset",
+    "required": ["category", "preset"],
+    "properties": {
+        "category": {
+            "type": "string",
+            "description": "The category of the preset"
+        },
+        "preset": {
+            "description": "The preset to load.",
+            "type": "string"
+        }
+    }
+}
+
