@@ -621,7 +621,7 @@
   (gamestate (phase POST_GAME))
   (finalize)
   =>
-  (exit)
+  (halt)
 )
 
 (defrule game-over-on-finalize

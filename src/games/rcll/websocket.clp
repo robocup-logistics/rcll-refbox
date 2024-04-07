@@ -38,10 +38,17 @@
 )
 
 (defrule ws-update-confval
-  "send udpate of gamestate whenever the gamestate fact changes"
+  "send udpate of gamestate whenever the confval fact changes"
   (confval (path ?path))
   =>
   (ws-create-Config ?path)
+)
+
+(defrule ws-update-cfg-preset
+  "send udpate of gamestate whenever the cfg-preset fact changes"
+  (cfg-preset (category ?c) (preset ?p))
+  =>
+  (ws-create-CfgPreset ?c ?p)
 )
 
 (defrule ws-update-time-info
@@ -143,6 +150,7 @@
     ws-update-points
     ws-update-ringspec
     ws-update-known-teams
+    ws-update-cfg-preset
   ))
   (foreach ?r ?ws-rules
     (unwatch rules ?r)

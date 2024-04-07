@@ -34,32 +34,44 @@ namespace llsfrb::websocket {
  *  Construct a new Backend object with assigned data and server.
  * 
  * @param logger_ logger used by the backend
- */
-Backend::Backend(Logger *logger, CLIPS::Environment *env, fawkes::Mutex &env_mutex)
-{
-	logger_ = std::shared_ptr<Logger>(logger);
-	data_   = std::make_shared<Data>(logger_, env, env_mutex);
-	server_ = Server(data_, logger_);
-}
-
-/**
- * @brief Launches (web-)socket server thread and backend thread.
- * 
+ * @param env_ clips environment for callbacks
+ * @param env_mutex mutext to coordinate env access
+ * @param io_service io_service to use
  * @param port tcp port of the websocket server
  * @param ws_mode true if websocket only mode is activated
  * @param allow_control_all if this is set, devices with not local host ip addresses can send control commands
  */
-void
-Backend::start(uint port, bool ws_mode, bool allow_control_all)
+Backend::Backend(Logger                             *logger,
+                 std::shared_ptr<CLIPS::Environment> env,
+                 fawkes::Mutex                      &env_mutex,
+                 boost::asio::io_service            &io_service,
+                 uint                                port,
+                 bool                                ws_mode,
+                 bool                                allow_control_all)
+: logger_(logger),
+  data_(std::make_shared<Data>(logger_, env, env_mutex)),
+  server_(data_, logger_, io_service, port, ws_mode, allow_control_all)
 {
-	//configure server
-	server_.configure(port, ws_mode, allow_control_all);
 	// launch server thread
-	server_t_ = std::thread(&Server::operator(), server_);
+	server_t_ = std::thread(std::bind(&Server::operator(), &server_));
 	logger_->log_info("Websocket", "(web-)socket-server started");
 	// launch backend thread
 	backend_t_ = std::thread(&Backend::operator(), this);
 	logger_->log_info("Websocket", "backend started");
+}
+
+Backend::~Backend()
+{
+	shutdown_ = true;
+	data_->shutdown();
+	server_.shutdown();
+	if (backend_t_.joinable()) {
+		backend_t_.join();
+	}
+	if (server_t_.joinable()) {
+		server_t_.join();
+	}
+	data_.reset();
 }
 
 /**
@@ -74,9 +86,12 @@ Backend::operator()()
 {
 	// message queue handler -> consumer
 	bool msgs_running = true;
-	while (msgs_running) {
+	while (!shutdown_ && msgs_running) {
 		// block until new message available
 		data_->log_wait();
+		if (shutdown_) {
+			break;
+		}
 
 		// notified -> get current value from the queue
 		std::string log = data_->log_pop();

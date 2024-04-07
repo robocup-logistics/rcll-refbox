@@ -95,9 +95,6 @@ MultiLogger::MultiLogger(Logger *logger)
 MultiLogger::~MultiLogger()
 {
 	data->loggers.lock();
-	for (data->logit = data->loggers.begin(); data->logit != data->loggers.end(); ++data->logit) {
-		delete (*data->logit);
-	}
 	data->loggers.clear();
 	data->loggers.unlock();
 	delete data;

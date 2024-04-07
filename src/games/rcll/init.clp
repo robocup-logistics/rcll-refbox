@@ -8,14 +8,14 @@
 ;---------------------------------------------------------------------------
 
 (defglobal
-  ?*CLIPS_DIRS* = (get-clips-dirs)
+  ?*CLIPS-DIRS* = (get-clips-dirs)
   ?*DEBUG* = 2  ;debug levels: 0 ~ none, 1 ~ minimal, 2 ~ more, 3 ~ maximum
-  ?*CONFIG_PREFIXES* = (create$ "/llsfrb")
+  ?*CONFIG-PREFIXES* = (create$ "/llsfrb")
   ?*START-TIME* = (now)
 )
 
 (deffunction resolve-file (?file)
-  (foreach ?d ?*CLIPS_DIRS*
+  (foreach ?d ?*CLIPS-DIRS*
 	   (bind ?fn (str-cat ?d ?file))
 	   (if (open ?fn file-clips-tmp)
 	    then
@@ -46,7 +46,7 @@
 (defrule load-config
   (init)
   =>
-  (foreach ?p ?*CONFIG_PREFIXES*
+  (foreach ?p ?*CONFIG-PREFIXES*
     (load-config ?p)
   )
   (foreach ?global (get-defglobal-list)
@@ -83,7 +83,7 @@
       )
       (bind ?global-val ?formatted-string)
     )
-    (str-assert (str-cat "(confval (path \"/llsfrb/globals/" (snake-case ?global) "\")"
+    (str-assert (str-cat "(confval (path \"/llsfrb/globals/" (lowcase ?global) "\")"
     " (type " ?type ") (is-list " ?is-list ") (" ?val-slot-name " " ?global-val"))"))
     )
   (assert (config-loaded))

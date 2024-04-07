@@ -38,6 +38,7 @@
 #ifndef __LLSF_REFBOX_REFBOX_H_
 #define __LLSF_REFBOX_REFBOX_H_
 
+#include <config/yaml.h>
 #include <core/threading/mutex.h>
 #include <core/threading/mutex_locker.h>
 #include <core/threading/thread_list.h>
@@ -96,7 +97,8 @@ public:
 
 	int run();
 
-	void handle_signal(const boost::system::error_code &error, int signum);
+	void                 handle_signal(const boost::system::error_code &error, int signum);
+	static constexpr int RESTART_CODE = 42;
 
 private: // methods
 	void read_config(int argc, char **argv);
@@ -117,6 +119,7 @@ private: // methods
 	CLIPS::Value  clips_config_path_exists(std::string path);
 	CLIPS::Value  clips_config_get_bool(std::string path);
 	CLIPS::Value  clips_config_get_int(std::string path);
+	void          clips_add_machine(const std::string &machine_name);
 
 	bool mutex_future_ready(const std::string &name);
 
@@ -179,6 +182,12 @@ private: // methods
 	void clips_mps_reset_base_counter(std::string machine);
 	void clips_mps_deliver(std::string machine);
 
+	void clips_config_update_float(std::string path, float f);
+	void clips_config_update_uint(std::string path, int i);
+	void clips_config_update_int(std::string path, int i);
+	void clips_config_update_bool(std::string path, std::string b);
+	void clips_config_update_string(std::string path, std::string s);
+
 	std::string clips_value_to_string(const CLIPS::Value &v);
 
 	void handle_server_client_msg(protobuf_comm::ProtobufStreamServer::ClientID client,
@@ -215,7 +224,7 @@ private: // members
 	std::shared_ptr<mps_placing_clips::MPSPlacingGenerator> mps_placing_generator_;
 
 	fawkes::Mutex                                                       clips_mutex_;
-	std::unique_ptr<CLIPS::Environment>                                 clips_;
+	std::shared_ptr<CLIPS::Environment>                                 clips_;
 	std::unordered_map<std::string, std::unique_ptr<mps_comm::Machine>> mps_;
 	std::unique_ptr<protobuf_clips::ClipsProtobufCommunicator>          pb_comm_;
 	std::map<long int, CLIPS::Fact::pointer>                            clips_msg_facts_;
@@ -235,13 +244,12 @@ private: // members
 	void                setup_clips_websocket();
 #endif
 
+	void clips_assert_confval(std::shared_ptr<Configuration::ValueIterator> v);
+
 #ifdef HAVE_AVAHI
 	std::shared_ptr<fawkes::AvahiThread>    avahi_thread_;
 	std::unique_ptr<fawkes::NetworkService> refbox_service_;
 #endif
-	std::shared_ptr<fawkes::WebviewRestApiManager> rest_api_manager_;
-	std::unique_ptr<WebviewServer>                 rest_api_thread_;
-	std::unique_ptr<ClipsRestApi>                  clips_rest_api_;
 
 #ifdef HAVE_MONGODB
 	bool                                cfg_mongodb_enabled_;
@@ -250,6 +258,7 @@ private: // members
 	mongocxx::client                    client_;
 	mongocxx::database                  database_;
 #endif
+	int return_code_ = 0;
 };
 
 } // end of namespace llsfrb

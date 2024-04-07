@@ -19,8 +19,11 @@ BASEDIR = ../../..
 include $(BASEDIR)/etc/buildsys/config.mk
 include $(BASEDIR)/etc/buildsys/gcc.mk
 include $(BUILDSYSDIR)/boost.mk
-include $(LIBSRCDIR)/webview/webview.mk
 include $(BUILDSYSDIR)/clips.mk
+
+ifneq ($(PKGCONFIG),)
+  HAVE_RAPIDJSON := $(if $(shell $(PKGCONFIG) --exists 'RapidJSON'; echo $${?/1/}),1,0)
+endif
 
 REQ_BOOST_LIBS = asio beast 
 HAVE_BOOST_LIBS = $(call boost-have-libs,$(REQ_BOOST_LIBS))
