@@ -25,7 +25,7 @@ read -p "Are you sure? [Yy]" -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-	mongo rcll --eval 'db.game_report.drop()'
+	mongosh rcll --eval 'db.game_report.drop()'
 else
 	echo "abort"
 fi
