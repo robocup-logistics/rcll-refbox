@@ -979,7 +979,7 @@
 (defrule net-send-VersionInfo
   (time $?now)
   ?sf <- (signal (type version-info) (seq ?seq)
-		 (count ?count&:(< ?count ?*BC-VERSIONINFO-COUNT*))
+		 (count ?count)
 		 (time $?t&:(timeout ?now ?t ?*BC-VERSIONINFO-PERIOD*)))
   (network-peer (group PUBLIC) (id ?peer-id-public))
   =>
