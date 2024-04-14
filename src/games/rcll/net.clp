@@ -691,6 +691,13 @@
       then
         (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
         (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
+      else
+        (if (any-factp ((?er exploration-report))
+                       (and (eq (fact-slot-value ?mf name) ?er:name)
+                            (eq ?er:correctly-reported TRUE))) then
+          (if (neq ?zone TBD) then (pb-set-field ?m "zone" (fact-slot-value ?mf zone)))
+          (if (neq ?rotation -1) then (pb-set-field ?m "rotation" (fact-slot-value ?mf rotation)))
+        )
     )
     (pb-set-field ?m "state" (fact-slot-value ?mf state))
 
