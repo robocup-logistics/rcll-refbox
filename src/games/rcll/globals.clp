@@ -35,7 +35,7 @@
   ?*BC-ORDERINFO-BURST-COUNT* = 10
   ; How often and in what period should the version information
   ; be send over the network when a new peer is detected?
-  ?*BC-VERSIONINFO-PERIOD* = 0.5
+  ?*BC-VERSIONINFO-PERIOD* = 5.0
   ?*BC-VERSIONINFO-COUNT* = 10
   ; Minimum and maximum machine down times, actual value will be
   ; chosen randomly from this range
