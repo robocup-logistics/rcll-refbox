@@ -236,13 +236,13 @@
 			(bind ?color (sym-cat (sub-string (+ (length$ ?spec-prefix) 1)
 			                                  (length$ ?spec:path)
 			                                  ?spec:path)))
-
 			(do-for-fact ((?rs ring-spec)) (eq ?rs:color ?color) (retract ?rs))
 
 			(assert (ring-spec (color ?color) (req-bases ?spec:value)))
 		)
 	)
 	(mps-generator-set-field ?x ?y)
+	(mps-generator-start)
 	(assert (machine-generation-triggered))
 )
 
