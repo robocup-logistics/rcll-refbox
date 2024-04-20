@@ -83,7 +83,7 @@
 	)
 	(do-for-all-facts ((?m machine)) TRUE
 		(if (neq ?m:zone TBD) then
-			(bind ?occupied (append$ ?occupied ?m:zone))
+			(bind ?occupied (append$ ?occupied (sym-cat (sub-string 3 5 ?m:zone))))
 		)
 	)
 	; remove occupied zones
