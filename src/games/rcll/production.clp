@@ -222,7 +222,7 @@
   (gamestate (phase PRODUCTION) (state RUNNING))
   (time-info (game-time ?gt))
   ?mf <- (machine (name ?name) (state DOWN) (proc-start ?proc-start) (prev-state ?prev-state&~DOWN)
-		  (down-period $?dp&:(<= (nth$ 2 ?dp) ?gt)))
+		  (down-period $?dp&:(< (nth$ 2 ?dp) ?gt)))
   =>
 	(printout t "Machine " ?name " is up again" crlf)
 	(modify ?mf (state ?prev-state) (proc-start (+ ?proc-start (- (nth$ 2 ?dp) (nth$ 1 ?dp)))))
