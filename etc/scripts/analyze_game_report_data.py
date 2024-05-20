@@ -140,14 +140,14 @@ def load_data(mongodb_uri,
                 machine_point = ""
                 shelf_id = ""
                 for p in range(math.floor(len(task["task_parameters"])/2)):
-                    if task["task_parameters"][p*2] == "waypoint":
-                        waypoint = task["task_parameters"][p*2+1]
-                    elif task["task_parameters"][p*2] == "machine_id":
-                        machine_id = task["task_parameters"][p*2+1]
-                    elif task["task_parameters"][p*2] == "machine_point":
-                        machine_point = task["task_parameters"][p*2+1]
-                    elif task["task_parameters"][p*2] == "shelf_number":
-                        shelf_id = task["task_parameters"][p*2+1]
+                    if "waypoint" in task["task_parameters"]:
+                        waypoint = task["task_parameters"]["waypoint"]
+                    elif "machine_id" in task["task_parameters"]:
+                        machine_id = task["task_parameters"]["machine_id"]
+                    elif "machine_point" in task["task_parameters"]:
+                        machine_point = task["task_parameters"]["machine_point"]
+                    elif "shelf_number" in task["task_parameters"]:
+                        shelf_id = task["task_parameters"]["shelf_number"]
                 a_task = AgentTask(task["robot_id"],
                                    task["start_time"],
                                    task["end_time"],
@@ -162,7 +162,7 @@ def load_data(mongodb_uri,
                                    task["unknown_action"],
                                    task["successful"],
                                    task["base_color"],
-                                   task["ring_color"],
+                                   task["ring_colors"],
                                    task["cap_color"])
                 if task["team_color"] == "CYAN":
                     cyan_agent_tasks.append(a_task)
