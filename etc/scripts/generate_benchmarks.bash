@@ -66,14 +66,15 @@ do
 			                                     --cfg-custom ${tmpconfig} \
 			                                     --dump-cfg &>/dev/null &
 			sleep 1
-			${LLSF_REFBOX_DIR}/bin/./rcll-refbox-instruct -p PRE_GAME -s RUNNING -c Carologistics &>/dev/null
-			sleep 2
-			${LLSF_REFBOX_DIR}/bin/./rcll-refbox-instruct -p PRODUCTION &>/dev/null
+			${LLSF_REFBOX_DIR}/bin/./rcll-refbox-instruct -p PRE_GAME -s RUNNING -c Carologistics &>/dev/null &
 			sleep 5
-			${LLSF_REFBOX_DIR}/bin/./rcll-refbox-instruct -p POST_GAME &>/dev/null
+			${LLSF_REFBOX_DIR}/bin/./rcll-refbox-instruct -p PRODUCTION &>/dev/null &
+			sleep 3
+			${LLSF_REFBOX_DIR}/bin/./rcll-refbox-instruct -p POST_GAME &>/dev/null &
 			sleep 1
 			killall -15 llsf-refbox  &>/dev/null &
 			sleep 1
+			killall -9 llsf-refbox  &>/dev/null &
 			DOC_COUNT=$(mongosh rcll --eval "db.game_report.countDocuments({\"report_name\": \"${NAME_PREFIX}_${i}\"})" --quiet)
 		done
 		echo "Created report for ${NAME_PREFIX}_${i}"
