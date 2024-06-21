@@ -225,7 +225,7 @@
 		  (down-period $?dp&:(< (nth$ 2 ?dp) ?gt)))
   =>
 	(printout t "Machine " ?name " is up again" crlf)
-	(modify ?mf (state ?prev-state) (proc-start (+ ?proc-start (- (nth$ 2 ?dp) (nth$ 1 ?dp)))))
+	(modify ?mf (state ?prev-state))
   (assert (send-machine-update))
 )
 
