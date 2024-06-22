@@ -266,3 +266,22 @@
 		(modify ?m (desired-lights ?lights))
   )
 )
+
+(defrule machine-SetMachinePose
+  ?m-fact <- (machine (name ?name) (zone ?old-zone) (rotation ?old-rotation))
+  ?cmd <- (production-SetMachinePose ?str-name&:(eq ?name (sym-cat ?str-name)) ?rotation ?str-zone)
+  =>
+  (printout t "Moving " ?str-name " from " ?old-zone ", " ?old-rotation " to " ?str-zone ", " ?rotation crlf)
+  (bind ?new-zone (sym-cat ?str-zone))
+  (bind ?new-rotation ?rotation)
+  (if (neq ?new-zone ?old-zone) then
+    (delayed-do-for-all-facts ((?m machine)) (eq ?m:zone ?new-zone)
+      (printout t "Swapping with " ?m:name crlf)
+      (modify ?m (zone ?old-zone))
+    )
+  )
+  (modify ?m-fact (zone ?new-zone)
+    (rotation ?new-rotation)
+  )
+  (retract ?cmd)
+)
