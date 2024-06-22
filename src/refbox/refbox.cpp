@@ -1837,7 +1837,7 @@ LLSFRefBox::clips_bson_get(void *bson, std::string field_name)
 
 	switch (element->type()) {
 	case bsoncxx::type::k_double: return CLIPS::Value(element->get_double());
-	case bsoncxx::type::k_utf8: return CLIPS::Value(element->get_utf8().value.to_string());
+	case bsoncxx::type::k_utf8: return CLIPS::Value(element->get_string().value.to_string());
 	case bsoncxx::type::k_bool:
 		return CLIPS::Value(element->get_bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
 	case bsoncxx::type::k_null: return CLIPS::Value("nil", CLIPS::TYPE_SYMBOL);
@@ -1888,7 +1888,7 @@ LLSFRefBox::clips_bson_get_array(void *bson, std::string field_name)
 		switch (element->type()) {
 		case bsoncxx::type::k_double: rv.push_back(CLIPS::Value(element->get_double())); break;
 		case bsoncxx::type::k_utf8:
-			rv.push_back(CLIPS::Value(element->get_utf8().value.to_string()));
+			rv.push_back(CLIPS::Value(element->get_string().value.to_string()));
 			break;
 		case bsoncxx::type::k_bool:
 			CLIPS::Value(element->get_bool() ? "TRUE" : "FALSE", CLIPS::TYPE_SYMBOL);
