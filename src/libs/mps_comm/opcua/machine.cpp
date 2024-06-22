@@ -30,6 +30,10 @@
 #	include <spdlog/sinks/stdout_sinks.h>
 #endif
 
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+
 #include <chrono>
 #include <iostream>
 #include <pthread.h>
@@ -238,39 +242,78 @@ OpcUaMachine::initLogger(const std::string &log_path)
 }
 
 bool
-OpcUaMachine::reconnect()
+OpcUaMachine::probeIpAndPort(const std::string &ip, int port)
 {
-	disconnect();
-	try {
-		OpcUa::EndpointDescription endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
-		logger->info("Connecting to: {}", endpoint.EndpointUrl);
+	int                sockfd;
+	struct sockaddr_in serv_addr;
 
-		client = std::make_unique<OpcUa::UaClient>(logger);
-		client->Connect(endpoint);
-		connected_ = true;
-	} catch (const std::exception &exc) {
-		logger->error("OPC UA connection error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
-		return false;
-	} catch (...) {
-		logger->error("Unknown error.");
+	// Create socket
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		std::cerr << "Socket creation error" << std::endl;
 		return false;
 	}
 
-	try {
-		nodeBasic = OpcUtils::getBasicNode(client.get(), simulation_);
-		nodeIn    = OpcUtils::getInNode(client.get(), simulation_);
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port   = htons(port);
 
-		for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
-			registerNodes[i] = OpcUtils::getNode(client.get(), (OpcUtils::MPSRegister)i, simulation_);
-		subscribe(SUB_REGISTERS, simulation_);
-		identify();
-		update_callbacks();
-		return true;
-	} catch (const std::exception &exc) {
-		logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
+	// Convert IP address from text to binary form
+	if (inet_pton(AF_INET, ip.c_str(), &serv_addr.sin_addr) <= 0) {
+		std::cerr << "Invalid address/Address not supported" << std::endl;
+		close(sockfd);
 		return false;
-	} catch (...) {
-		logger->error("Unknown error.");
+	}
+
+	// Try to connect
+	if (::connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+		std::cout << "Connection to " << ip << ":" << port << " failed" << std::endl;
+		close(sockfd);
+		return false;
+	}
+
+	// Connection successful
+	close(sockfd);
+	return true;
+}
+
+bool
+OpcUaMachine::reconnect()
+{
+	disconnect();
+	if (probeIpAndPort(ip_, port_)) {
+		try {
+			OpcUa::EndpointDescription endpoint = OpcUtils::getEndpoint(ip_.c_str(), port_);
+			logger->info("Connecting to: {}", endpoint.EndpointUrl);
+
+			client = std::make_unique<OpcUa::UaClient>(logger);
+			client->Connect(endpoint);
+			connected_ = true;
+		} catch (const std::exception &exc) {
+			logger->error("OPC UA connection error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
+			return false;
+		} catch (...) {
+			logger->error("Unknown error.");
+			return false;
+		}
+
+		try {
+			nodeBasic = OpcUtils::getBasicNode(client.get(), simulation_);
+			nodeIn    = OpcUtils::getInNode(client.get(), simulation_);
+
+			for (int i = 0; i < OpcUtils::MPSRegister::LAST; i++)
+				registerNodes[i] = OpcUtils::getNode(client.get(), (OpcUtils::MPSRegister)i, simulation_);
+			subscribe(SUB_REGISTERS, simulation_);
+			identify();
+			update_callbacks();
+			return true;
+		} catch (const std::exception &exc) {
+			logger->error("Node path error: {} (@{}:{})", exc.what(), __FILE__, __LINE__);
+			return false;
+		} catch (...) {
+			logger->error("Unknown error.");
+			return false;
+		}
+	} else {
+		logger->error("Endpoint unreachable: {}:{}", ip_.c_str(), port_);
 		return false;
 	}
 }

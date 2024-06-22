@@ -123,6 +123,7 @@ protected:
 	void cancelAllSubscriptions(bool log = false);
 	// Print the final subscription values
 	void printFinalSubscribtions();
+	bool probeIpAndPort(const std::string &ip, int port);
 
 	const Station     machine_type_;
 	const std::string ip_;
