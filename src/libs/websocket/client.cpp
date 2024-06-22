@@ -293,6 +293,11 @@ Client::receive_thread()
 						data_->clips_production_set_machine_state(msgs["mname"].GetString(),
 						                                          msgs["state"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "set_machine_pose") == 0) {
+						data_->clips_set_machine_pose(msgs["name"].GetString(),
+						                              msgs["rotation"].GetInt(),
+						                              msgs["zone"].GetString());
+					}
 					if (strcmp(msgs["command"].GetString(), "machine_add_base") == 0) {
 						data_->clips_production_machine_add_base(msgs["mname"].GetString());
 					}

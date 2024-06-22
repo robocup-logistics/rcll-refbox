@@ -2329,6 +2329,14 @@ LLSFRefBox::setup_clips_websocket()
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(production-MachineAddBase %s)", mname.c_str());
 	};
+	backend_->get_data()->clips_set_machine_pose =
+	  [this](std::string name, int rotation, std::string zone) {
+		  fawkes::MutexLocker clips_lock(&clips_mutex_);
+		  clips_->assert_fact_f("(production-SetMachinePose %s %i %s)",
+		                        name.c_str(),
+		                        rotation,
+		                        zone.c_str());
+	  };
 	backend_->get_data()->clips_production_set_machine_state = [this](std::string mname,
 	                                                                  std::string state) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
