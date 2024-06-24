@@ -317,6 +317,74 @@ Client::receive_thread()
 						                             msgs["phase"].GetString(),
 						                             msgs["reason"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "instruct_bs") == 0) {
+						std::ostringstream command;
+						command << "rcll-prepare-machine " << msgs["team_name"].GetString() << " "
+						        << msgs["machine"].GetString() << " " << msgs["side"].GetString() << " "
+						        << msgs["base_color"].GetString();
+						int result = std::system(command.str().c_str());
+						// Check the result
+						if (result != 0) {
+							logger_->log_error("Websocket",
+							                   "Command %s failed with code %i",
+							                   command.str().c_str(),
+							                   result);
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_rs") == 0) {
+						std::ostringstream command;
+						command << "rcll-prepare-machine " << msgs["team_name"].GetString() << " "
+						        << msgs["machine"].GetString() << " " << msgs["ring_color"].GetString();
+						int result = std::system(command.str().c_str());
+						// Check the result
+						if (result != 0) {
+							logger_->log_error("Websocket",
+							                   "Command %s failed with code %i",
+							                   command.str().c_str(),
+							                   result);
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_cs") == 0) {
+						std::ostringstream command;
+						command << "rcll-prepare-machine " << msgs["team_name"].GetString() << " "
+						        << msgs["machine"].GetString() << " " << msgs["operation"].GetString();
+						int result = std::system(command.str().c_str());
+						// Check the result
+						if (result != 0) {
+							logger_->log_error("Websocket",
+							                   "Command %s failed with code %i",
+							                   command.str().c_str(),
+							                   result);
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_ds") == 0) {
+						std::ostringstream command;
+						command << "rcll-prepare-machine " << msgs["team_name"].GetString() << " "
+						        << msgs["machine"].GetString() << " " << msgs["order"].GetInt();
+						int result = std::system(command.str().c_str());
+						// Check the result
+						if (result != 0) {
+							logger_->log_error("Websocket",
+							                   "Command %s failed with code %i",
+							                   command.str().c_str(),
+							                   result);
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_ss") == 0) {
+						std::ostringstream command;
+						command << "rcll-prepare-machine " << msgs["team_name"].GetString() << " "
+						        << msgs["machine"].GetString() << " " << msgs["operation"].GetString() << " "
+						        << msgs["shelf"].GetInt() << " " << msgs["slot"].GetInt();
+						int result = std::system(command.str().c_str());
+						// Check the result
+						if (result != 0) {
+							logger_->log_error("Websocket",
+							                   "Command %s failed with code %i",
+							                   command.str().c_str(),
+							                   result);
+						}
+					}
+					logger_->log_debug("Websocket", "got %s", msgs["command"].GetString());
 				}
 			} else {
 				logger_->log_error("Websocket", "malformed message received, won't be processed");
