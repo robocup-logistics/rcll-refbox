@@ -23,7 +23,7 @@
 
 #include "mqtt_utils.h"
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -79,4 +79,4 @@ MqttUtils::BuildTopic(std::string name, std::string target_register, bool in)
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

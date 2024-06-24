@@ -25,7 +25,7 @@
 #include "../delivery_station.h"
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class OpcUaDeliveryStation : public virtual OpcUaMachine, public virtual DeliveryStation
@@ -45,4 +45,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

@@ -24,7 +24,7 @@
 
 #include <sstream>
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -63,4 +63,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

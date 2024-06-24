@@ -34,7 +34,7 @@ namespace fawkes {
 class Mutex;
 }
 
-namespace llsfrb {
+namespace rcll {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
@@ -121,6 +121,6 @@ private:
 	unsigned int          __max_num_entries;
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

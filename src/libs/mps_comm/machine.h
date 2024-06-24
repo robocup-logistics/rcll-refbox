@@ -25,7 +25,7 @@
 #include <functional>
 #include <string>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class Machine
@@ -65,4 +65,4 @@ protected:
 	const std::string name_;
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

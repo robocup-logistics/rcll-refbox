@@ -47,7 +47,7 @@
 #include <queue>
 #include <regex>
 #include <unistd.h>
-namespace llsfrb {
+namespace rcll {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
@@ -1120,4 +1120,4 @@ YamlConfiguration::query(const char *path) const
 	return root_->find(pel_q);
 }
 
-} // end namespace llsfrb
+} // end namespace rcll

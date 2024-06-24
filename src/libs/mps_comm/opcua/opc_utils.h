@@ -24,7 +24,7 @@
 #include <opc/ua/node.h>
 #include <opc/ua/subscription.h>
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -212,4 +212,4 @@ public:
 	static bool browseServer(OpcUa::UaClient *client, std::shared_ptr<spdlog::logger> logger);
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

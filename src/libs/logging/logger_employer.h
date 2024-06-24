@@ -24,7 +24,7 @@
 #ifndef __LOGGING_LOGGER_EMPLOYER_H_
 #define __LOGGING_LOGGER_EMPLOYER_H_
 
-namespace llsfrb {
+namespace rcll {
 
 class Logger;
 
@@ -54,6 +54,6 @@ public:
 	virtual void remove_logger(Logger *logger) = 0;
 };
 
-} // namespace llsfrb
+} // namespace rcll
 
 #endif

@@ -29,7 +29,7 @@
 #include <chrono>
 #include <thread>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 MockupMachine::MockupMachine(const std::string &name, float exec_speed)
@@ -118,4 +118,4 @@ MockupMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 	queue_condition_.notify_one();
 }
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

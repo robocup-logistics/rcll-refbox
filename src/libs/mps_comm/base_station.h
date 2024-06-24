@@ -24,7 +24,7 @@
 
 #include <msgs/ProductColor.pb.h>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class BaseStation : public virtual Machine
@@ -34,4 +34,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

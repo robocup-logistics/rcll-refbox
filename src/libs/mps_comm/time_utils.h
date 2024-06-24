@@ -25,7 +25,7 @@
 #pragma once
 #include <ctime>
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -36,4 +36,4 @@ namespace mps_comm {
 void timespec_diff(struct timespec *start, struct timespec *stop, struct timespec *result);
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

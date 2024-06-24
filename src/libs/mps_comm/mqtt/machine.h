@@ -42,7 +42,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class MachineFactory;
@@ -125,4 +125,4 @@ protected:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

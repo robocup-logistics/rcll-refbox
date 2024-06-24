@@ -46,7 +46,7 @@ extern "C" {
 #include <clips/clips.h>
 }
 
-namespace llsfrb {
+namespace rcll {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
@@ -189,4 +189,4 @@ finalize_clips_logger(void *env)
 
 /// @endcond
 
-} // end of namespace llsfrb
+} // end of namespace rcll

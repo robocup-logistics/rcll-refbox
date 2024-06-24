@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -69,4 +69,4 @@ MqttStorageStation::relocate(unsigned int shelf,
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

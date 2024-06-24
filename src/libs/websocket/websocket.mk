@@ -25,7 +25,7 @@ HAVE_WEBSOCKET = $(call boost-have-libs,$(BOOST_LIBS_WEBSOCKET))
 ifeq ($(HAVE_WEBSOCKET),1)
   CFLAGS_WEBSOCKET = $(call boost-libs-cflags,$(BOOST_LIBS_WEBSOCKET)) -DHAVE_WEBSOCKETS
   LDFLAGS_WEBSOCKET = $(call boost-libs-ldflags,$(BOOST_LIBS_WEBSOCKET))
-  LIBS_WEBSOCKET = llsfrbwebsocket
+  LIBS_WEBSOCKET = rcllwebsocket
 
 endif
 

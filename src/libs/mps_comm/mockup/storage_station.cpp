@@ -26,7 +26,7 @@
 
 #include <chrono>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 MockupStorageStation::MockupStorageStation(const std::string &name, float exec_speed)
@@ -69,4 +69,4 @@ MockupStorageStation::storage_op()
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

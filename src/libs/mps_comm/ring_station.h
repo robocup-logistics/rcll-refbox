@@ -23,7 +23,7 @@
 #include "machine.h"
 #include "msgs/ProductColor.pb.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class RingStation : public virtual Machine
@@ -33,4 +33,4 @@ public:
 	virtual void register_slide_callback(std::function<void(unsigned int)>)  = 0;
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

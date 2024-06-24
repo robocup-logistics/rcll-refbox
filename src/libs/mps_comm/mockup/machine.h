@@ -27,7 +27,7 @@
 #include <future>
 #include <queue>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class MockupMachine : public virtual Machine
@@ -61,4 +61,4 @@ protected:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

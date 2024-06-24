@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <ctime>
 
-namespace llsfrb {
+namespace rcll {
 
 class Mutex;
 
@@ -79,6 +79,6 @@ private:
 	fawkes::Mutex *mutex;
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

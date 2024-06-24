@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-namespace llsfrb {
+namespace rcll {
 
 class ConfigurationException : public fawkes::Exception
 {
@@ -434,6 +434,6 @@ public:
 	/// @endcond
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

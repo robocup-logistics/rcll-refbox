@@ -21,7 +21,7 @@
 #pragma once
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class CapStation : public virtual Machine
@@ -31,4 +31,4 @@ public:
 	virtual void mount_cap()    = 0;
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

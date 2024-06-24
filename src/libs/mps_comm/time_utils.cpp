@@ -23,7 +23,7 @@
 
 #include "time_utils.h"
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -47,4 +47,4 @@ timespec_diff(struct timespec *start, struct timespec *stop, struct timespec *re
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

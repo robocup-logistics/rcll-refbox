@@ -21,7 +21,7 @@
 
 #include "opc_utils.h"
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -100,4 +100,4 @@ protected:
 	}
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

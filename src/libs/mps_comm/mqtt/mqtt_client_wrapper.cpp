@@ -29,7 +29,7 @@
 #endif
 #include <spdlog/logger.h>
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -181,4 +181,4 @@ mqtt_client_wrapper::register_slide_callback(std::function<void(unsigned int)> c
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

@@ -23,7 +23,7 @@
 #include "../storage_station.h"
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class MockupStorageStation : public virtual MockupMachine, public virtual StorageStation
@@ -42,4 +42,4 @@ private:
 	void storage_op();
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

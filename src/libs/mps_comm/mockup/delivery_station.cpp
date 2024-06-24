@@ -26,7 +26,7 @@
 
 #include <chrono>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 MockupDeliveryStation::MockupDeliveryStation(const std::string &name, float exec_speed)
@@ -49,4 +49,4 @@ MockupDeliveryStation::deliver_product(int slot)
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

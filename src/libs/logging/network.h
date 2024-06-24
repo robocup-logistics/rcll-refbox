@@ -30,7 +30,7 @@ namespace protobuf_comm {
 class ProtobufStreamServer;
 }
 
-namespace llsfrb {
+namespace rcll {
 
 class NetworkLogger : public Logger
 {
@@ -86,6 +86,6 @@ private:
 	protobuf_comm::ProtobufStreamServer *pb_server_;
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

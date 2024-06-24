@@ -30,7 +30,7 @@
 #include <boost/format.hpp>
 #include <ctime>
 
-namespace llsfrb {
+namespace rcll {
 
 class Mutex;
 
@@ -93,6 +93,6 @@ private:
 	                                                bool                 exception = false);
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

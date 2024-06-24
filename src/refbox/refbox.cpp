@@ -125,14 +125,14 @@ using namespace protobuf_comm;
 using namespace protobuf_clips;
 using namespace llsf_utils;
 using namespace fawkes;
-using namespace llsfrb::mps_comm;
+using namespace rcll::mps_comm;
 
 #ifdef HAVE_MONGODB
 using bsoncxx::builder::basic::document;
 using bsoncxx::builder::basic::kvp;
 #endif
 
-namespace llsfrb {
+namespace rcll {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
@@ -950,7 +950,7 @@ LLSFRefBox::clips_mps_reset(std::string machine)
 {
 	logger_->log_info("MPS", "Resetting machine %s", machine.c_str());
 
-	llsfrb::mps_comm::Machine *station;
+	rcll::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -981,7 +981,7 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 {
 	logger_->log_info("MPS", "Delivering on %s", machine.c_str());
 
-	llsfrb::mps_comm::Machine *station;
+	rcll::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -992,8 +992,8 @@ LLSFRefBox::clips_mps_deliver(std::string machine)
 		return;
 	}
 	auto fut = std::async(std::launch::async, [this, station, machine] {
-		station->conveyor_move(llsfrb::mps_comm::Machine::ConveyorDirection::FORWARD,
-		                       llsfrb::mps_comm::Machine::MPSSensor::OUTPUT);
+		station->conveyor_move(rcll::mps_comm::Machine::ConveyorDirection::FORWARD,
+		                       rcll::mps_comm::Machine::MPSSensor::OUTPUT);
 		MutexLocker lock(&clips_mutex_);
 		clips_->assert_fact_f("(mps-feedback mps-deliver success %s)", machine.c_str());
 		return true;
@@ -1073,29 +1073,29 @@ LLSFRefBox::clips_mps_move_conveyor(std::string machine,
                                     std::string goal_position,
                                     std::string conveyor_direction /*= "FORWARD"*/)
 {
-	llsfrb::mps_comm::Machine *station;
+	rcll::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
 		logger_->log_error("MPS", "Invalid station %s", machine.c_str());
 		return;
 	}
-	llsfrb::mps_comm::Machine::MPSSensor goal;
+	rcll::mps_comm::Machine::MPSSensor goal;
 	if (goal_position == "INPUT") {
-		goal = llsfrb::mps_comm::Machine::MPSSensor::INPUT;
+		goal = rcll::mps_comm::Machine::MPSSensor::INPUT;
 	} else if (goal_position == "MIDDLE") {
-		goal = llsfrb::mps_comm::Machine::MPSSensor::MIDDLE;
+		goal = rcll::mps_comm::Machine::MPSSensor::MIDDLE;
 	} else if (goal_position == "OUTPUT") {
-		goal = llsfrb::mps_comm::Machine::MPSSensor::OUTPUT;
+		goal = rcll::mps_comm::Machine::MPSSensor::OUTPUT;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor position %s", goal_position.c_str());
 		return;
 	}
-	llsfrb::mps_comm::Machine::ConveyorDirection direction;
+	rcll::mps_comm::Machine::ConveyorDirection direction;
 	if (conveyor_direction == "FORWARD") {
-		direction = llsfrb::mps_comm::Machine::ConveyorDirection::FORWARD;
+		direction = rcll::mps_comm::Machine::ConveyorDirection::FORWARD;
 	} else if (conveyor_direction == "BACKWARD") {
-		direction = llsfrb::mps_comm::Machine::ConveyorDirection::BACKWARD;
+		direction = rcll::mps_comm::Machine::ConveyorDirection::BACKWARD;
 	} else {
 		logger_->log_error("MPS", "Unknown conveyor direction %s", conveyor_direction.c_str());
 		return;
@@ -1178,7 +1178,7 @@ LLSFRefBox::clips_mps_set_light(std::string machine, std::string color, std::str
 	//logger_->log_info("MPS", "Set light %s: %s to %s",
 	//		    machine.c_str(), color.c_str(), state.c_str());
 
-	llsfrb::mps_comm::Machine *station;
+	rcll::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -1229,7 +1229,7 @@ LLSFRefBox::clips_mps_set_lights(std::string machine,
 void
 LLSFRefBox::clips_mps_reset_lights(std::string machine)
 {
-	llsfrb::mps_comm::Machine *station;
+	rcll::mps_comm::Machine *station;
 	try {
 		station = mps_.at(machine).get();
 	} catch (std::out_of_range &e) {
@@ -2114,7 +2114,7 @@ LLSFRefBox::run()
 	                               boost::asio::placeholders::signal_number));
 #else
 	g_refbox = this;
-	signal(SIGINT, llsfrb::handle_signal);
+	signal(SIGINT, rcll::handle_signal);
 #endif
 
 	start_timer();
@@ -2376,4 +2376,4 @@ LLSFRefBox::setup_clips_websocket()
 
 #endif
 
-} // end of namespace llsfrb
+} // end of namespace rcll

@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 const std::vector<OpcUtils::MPSRegister>
@@ -67,4 +67,4 @@ OpcUaRingStation::register_slide_callback(std::function<void(unsigned int)> call
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

@@ -28,7 +28,7 @@
 #include <string>
 #include <thread>
 
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 
 /**
  * @brief Construct a new Backend::Backend object
@@ -116,4 +116,4 @@ Backend::get_data()
 	return data_;
 }
 
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket

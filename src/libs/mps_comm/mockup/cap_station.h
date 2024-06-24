@@ -23,7 +23,7 @@
 #include "../cap_station.h"
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 class MockupCapStation : public virtual MockupMachine, public virtual CapStation
 {
@@ -38,4 +38,4 @@ private:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

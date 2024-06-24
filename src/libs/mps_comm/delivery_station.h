@@ -22,7 +22,7 @@
 
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class DeliveryStation : public virtual Machine
@@ -31,4 +31,4 @@ public:
 	virtual void deliver_product(int slot) = 0;
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

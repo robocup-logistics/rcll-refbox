@@ -35,7 +35,7 @@
 
 using boost::asio::ip::tcp;
 
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 
 /**
  * @brief Construct a new Server::Server object
@@ -121,4 +121,4 @@ Server::operator()()
 	do_accept();
 }
 
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket

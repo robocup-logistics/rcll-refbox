@@ -79,7 +79,7 @@ class WebviewRestApiManager;
 class MongoDBLogProtobuf;
 #endif
 
-namespace llsfrb {
+namespace rcll {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
@@ -261,6 +261,6 @@ private: // members
 	int return_code_ = 0;
 };
 
-} // end of namespace llsfrb
+} // end of namespace rcll
 
 #endif

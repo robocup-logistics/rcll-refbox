@@ -25,7 +25,7 @@
 #include "../ring_station.h"
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class OpcUaRingStation : public virtual OpcUaMachine, public virtual RingStation
@@ -44,4 +44,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

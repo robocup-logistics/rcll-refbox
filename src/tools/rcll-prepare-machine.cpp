@@ -69,7 +69,7 @@ ProtobufBroadcastPeer *peer_public_  = NULL;
 ProtobufBroadcastPeer *peer_team_    = NULL;
 bool                   crypto_setup_ = false;
 
-llsfrb::Configuration *config_;
+rcll::Configuration *config_;
 
 void
 signal_handler(const boost::system::error_code &error, int signum)
@@ -284,7 +284,7 @@ main(int argc, char **argv)
 		exit(-1);
 	}
 
-	config_ = new llsfrb::YamlConfiguration(CONFDIR);
+	config_ = new rcll::YamlConfiguration(CONFDIR);
 	config_->load("config_generated.yaml");
 
 	if (config_->exists("/llsfrb/comm/public-peer/send-port")

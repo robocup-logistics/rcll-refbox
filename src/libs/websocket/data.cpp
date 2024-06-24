@@ -39,7 +39,7 @@
 
 #define BUFFER_SIZE 65536
 
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 
 Data::~Data()
 {
@@ -1646,4 +1646,4 @@ Data::get_gamestate()
 	return "";
 }
 
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket

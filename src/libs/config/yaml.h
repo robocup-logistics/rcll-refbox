@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 
-namespace llsfrb {
+namespace rcll {
 
 class YamlConfigurationNode;
 
@@ -206,6 +206,6 @@ private:
 	char *userconfdir_;
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

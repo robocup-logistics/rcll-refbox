@@ -23,7 +23,7 @@
 #include "../delivery_station.h"
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class MockupDeliveryStation : public virtual MockupMachine, public virtual DeliveryStation
@@ -35,4 +35,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

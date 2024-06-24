@@ -27,7 +27,7 @@
 #include "mqtt_callback.h"
 #include "mqtt_client_wrapper.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class MqttRingStation : public virtual MqttMachine, public virtual RingStation
@@ -44,4 +44,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

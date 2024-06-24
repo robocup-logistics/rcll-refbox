@@ -38,7 +38,7 @@
 #include <vector>
 
 using namespace fawkes;
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 class Client; // forward declaration
 
 class Data
@@ -174,6 +174,6 @@ private:
 	bool shutdown_ = false;
 };
 
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket
 
 #endif
