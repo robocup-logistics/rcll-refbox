@@ -1,0 +1,34 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "instruct_ds command schema",
+    "description": "This command instructs the ds.",
+    "default": {},
+    "examples": [
+        {
+            "team_name": "Carologistics",
+            "machine": "C-DS",
+            "order": 1
+        }
+    ],
+    "required": [
+        "team_name",
+        "machine",
+        "order"
+    ],
+    "properties": {
+        "team_name": {
+            "type": "string",
+            "description": "The name of the team that controls the machine."
+        },
+        "machine": {
+            "type": "string",
+            "description": "The name of the machine."
+        },
+        "order": {
+            "type": "number",
+            "description": "Order to deliver."
+        }
+    }
+}
