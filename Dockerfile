@@ -60,7 +60,7 @@ RUN mkdir -p build
 WORKDIR /buildenv/build
 
 # Run CMake to configure the project
-RUN cmake -DCONFDIR=/etc/refbox -DSHAREDIR=/usr/local/share/refbox ..
+RUN cmake -DCONFDIR=/etc/rcll-refbox -DSHAREDIR=/usr/local/share/rcll-refbox ..
 
 # Build the project
 RUN make -j
@@ -90,7 +90,7 @@ RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && 
 COPY --from=buildenv /usr/local/bin /usr/local/bin/
 COPY --from=buildenv /usr/local/lib64 /usr/local/lib64/
 COPY --from=buildenv /usr/local/share /usr/local/share/
-COPY --from=buildenv /etc/refbox /etc/refbox/
+COPY --from=buildenv /etc/rcll-refbox /etc/rcll-refbox/
 COPY --from=buildenv /buildenv/requires.txt /
 RUN echo /usr/local/lib64 > /etc/ld.so.conf.d/local.conf && /sbin/ldconfig
 RUN dnf install -y --nodocs $(cat /requires.txt) && dnf clean all && rm /requires.txt
