@@ -3,7 +3,7 @@ version: 2
 jobs:
   build_fedora:
     docker:
-      - image: fedora:39
+      - image: fedora:40
     steps:
       - checkout:
       - run:
@@ -15,6 +15,8 @@ jobs:
             dnf -y copr enable tavie/paho-mqtt-cpp && \
             dnf -y copr enable tavie/mongo-cxx-driver && \
             dnf install -y --nodocs \
+              utf8proc-devel \
+              libbson-devel \
               apr-util-devel \
               avahi-devel \
               boost-devel \
@@ -46,10 +48,23 @@ jobs:
               cmake \
               paho-c-devel \
               paho-mqtt-cpp \
+              python3-pip \
+              mongo-c-driver-devel \
               paho-mqtt-cpp-devel && \
+              pip3 install pre-commit && \
               git submodule update --init --recursive
-      - run: make quick-check
-      - run: make all FAIL_ON_WARNING=1
+      - run:
+          name: Install Pre-Commit Hooks
+          command: pre-commit install
+      - run:
+          name: Run Pre-Commit Checks
+          command: pre-commit run --all-files
+      - run:
+          name: Configure CMake
+          command: mkdir -p build && cd build && cmake ..
+      - run:
+          name: Build All Targets
+          command: cd build && cmake --build .
 workflows:
   version: 2
   build:

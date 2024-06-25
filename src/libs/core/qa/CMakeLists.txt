@@ -1,4 +1,5 @@
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qa)
 add_executable(qa_core_mutex_count qa_mutex_count.cpp)
 target_link_libraries(qa_core_mutex_count stdc++ refbox-core)
 

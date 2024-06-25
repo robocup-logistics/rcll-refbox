@@ -1,4 +1,3 @@
-
 add_library(refbox-utils SHARED
     llsf/machines.cpp
     time/time.cpp
@@ -20,6 +19,10 @@ endif()
 if(LINUX)
     target_link_libraries(refbox-utils dl pthread)
 endif()
+install(DIRECTORY . DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/refbox-utils FILES_MATCHING PATTERN "*.h")
 install(TARGETS refbox-utils
-        LIBRARY DESTINATION lib
-        PUBLIC_HEADER DESTINATION include/refbox-utils)
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)

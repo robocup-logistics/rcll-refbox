@@ -6,57 +6,42 @@ find_library(GECODE_LIBRARIES NAMES
 find_package(ProtobufComm REQUIRED)
 pkg_search_module(CLIPSMM REQUIRED clipsmm-1.0)
 pkg_search_module(LIBMHD REQUIRED libmicrohttpd)
-# find_package(LibMicroHTTPD REQUIRED)
 
-include_directories(${CLIPSMM_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_BINARY_DIR}/)
-include_directories(${GECODE_INCLUDE_DIRS})
-# include_directories(${LIBMICROHTTPD_INCLUDE_DIR})
-include_directories(${LIBMHD_INCLUDE_DIRS})
-
-include_directories(/home/timwendt/rcll-refbox/build/src/)
-include_directories(/home/timwendt/rcll-refbox/build/src/libs/logging/llsf_log_msgs)
-
+# include_directories(${GECODE_INCLUDE_DIRS})
 
 pkg_search_module(AVAHI REQUIRED avahi-client)
 
-if(AVAHI_FOUND)
-    message(STATUS "Found Avahi: ${AVAHI_LIBRARIES}")
-    add_definitions(${CFLAGS_AVAHI})
-    include_directories(${AVAHI_INCLUDE_DIRS})
-    link_directories(${AVAHI_LIBRARY_DIRS})
-    set(LIBS_AVAHI ${AVAHI_LIBRARIES})
-else()
-    message(WARNING "Avahi not found: mDNS/DNS-SD support will be omitted")
-    set(OMIT_OBJECTS "dns-sd/%")
-endif()
-
 add_executable(refbox main.cpp clips_logger.cpp
     refbox.cpp)
+target_include_directories(refbox PRIVATE ${LIBMHD_INCLUDE_DIRS})
+target_include_directories(refbox  PRIVATE ${CLIPSMM_INCLUDE_DIRS})
 
 target_link_libraries(refbox
-  msgs
-  protobuf_clips
+  refbox-protobuf-clips
   refbox-utils
   refbox-netcomm
-  mps_comm
-  refbox_mps_placing_clips
-  refbox-webview
-  mongodb-log
+  refbox-mps-comm
+  refbox-mps-placing-clips
+  refbox-mongodb-log
   protobuf_comm
 gecodeminimodel gecodedriver gecodesearch gecodesupport gecodekernel gecodeint
-  refbox-rest-api
   refbox-config
-  refbox-logging)
+  refbox-logging
+  rcll-protobuf-msgs)
 target_link_libraries(refbox ${PROTOBUF_LIBRARIES} ${GECODE_LIBRARIES})
 target_link_libraries(refbox ${PROTOBUFCOMM_LIBRARIES} )
 target_link_libraries(refbox stdc++)
 
-# target_link_libraries(refbox ${LIBMICROHTTPD_LIBRARIES})
+target_compile_options(refbox PRIVATE -DHAVE_WEBSOCKETS)
+target_compile_options(refbox PRIVATE -DHAVE_MONGODB)
+target_compile_options(refbox PRIVATE -DHAVE_AVAHI)
+
 target_link_libraries(refbox ${LIBMHD_LIBRARIES})
 
 target_link_libraries(refbox ${AVAHI_LIBRARIES})
 set_target_properties(refbox PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+)
+install(TARGETS refbox
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

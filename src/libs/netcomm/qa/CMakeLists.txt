@@ -34,7 +34,7 @@ if(AVAHI_FOUND)
     # target_link_libraries(qa_netcomm_avahi_resolver refbox-netcomm refbox-util ${Avahi_LIBRARIES})
 endif()
 
-add_library(qa_netcomm_socket_typeof qa_socket_typeof.cpp)
+add_library(qa_netcomm_socket_typeof SHARED qa_socket_typeof.cpp)
 target_link_libraries(qa_netcomm_socket_typeof refbox-netcomm)
 
 # add_library(qa_netcomm_worldinfo_msgsizes qa_worldinfo_msgsizes.cpp)

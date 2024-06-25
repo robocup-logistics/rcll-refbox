@@ -60,7 +60,13 @@ target_link_libraries(refbox-netcomm stdc++ m refbox-core refbox-utils)
 if(USE_AVAHI)
   target_link_libraries(refbox-netcomm ${AVAHI_LIBRARIES})
 endif()
-install(TARGETS refbox-netcomm LIBRARY DESTINATION ${LIBDIR})
+install(DIRECTORY . DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/refbox-netcomm FILES_MATCHING PATTERN "*.h")
+install(TARGETS refbox-netcomm
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 include_directories(qa)
 add_subdirectory(qa)

@@ -25,22 +25,16 @@ add_library(refbox-core SHARED
     exceptions/system.cpp
     plugin.cpp)
 
-target_link_libraries(refbox-core pthread stdc++ m mps_comm)
+target_link_libraries(refbox-core pthread stdc++ m)
 
-if(NOT APPLE)
-  target_link_libraries(refbox-core rt)
-endif()
+target_link_libraries(refbox-core rt)
 
+target_compile_definitions(refbox-core PRIVATE HAVE_EXECINFO)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-  find_path(EXECINFO_INCLUDE_DIR execinfo.h)
-  if(EXECINFO_INCLUDE_DIR)
-    target_link_libraries(refbox-core execinfo)
-    target_compile_definitions(refbox-core PRIVATE HAVE_EXECINFO)
-  else()
-    message(WARNING "LLSF RefBox Core lib built without backtrace support (FreeBSD: devel/libexecinfo not installed)")
-  endif()
-else()
-  target_compile_definitions(refbox-core PRIVATE HAVE_EXECINFO)
-endif()
-
+install(DIRECTORY . DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/refbox-core FILES_MATCHING PATTERN "*.h")
+install(TARGETS refbox-core
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
