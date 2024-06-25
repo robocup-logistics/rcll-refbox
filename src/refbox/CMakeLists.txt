@@ -45,3 +45,12 @@ set_target_properties(refbox PROPERTIES
 install(TARGETS refbox
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# create symlink for backwards compatibility
+add_custom_command(
+    TARGET refbox POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink $<TARGET_FILE:refbox> $<TARGET_FILE_DIR:refbox>/llsf-refbox
+    COMMENT "Creating symlink llsf-refbox -> refbox"
+)
+add_custom_target(llfs-refbox_symlink ALL DEPENDS refbox COMMENT "target to create symlink for old executable name")
+install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink refbox ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/llsf-refbox)")
