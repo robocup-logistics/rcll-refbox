@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  example_mutex_sync.cpp - example application for using mutexes
  *                           to synchronize several threads to a given point
@@ -30,8 +32,8 @@
 
 #include <iostream>
 #include <string>
-#include <vector>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 using namespace fawkes;
@@ -39,7 +41,7 @@ using namespace fawkes;
 /** Small example hread serializing with other threads using a wait condition.
  * Run the program and see them printing out numbers serialized.
  *
- * NOTE: This can be done more easily by using ThreadList and Threads in 
+ * NOTE: This can be done more easily by using ThreadList and Threads in
  * wait-for-wakeup mode! This is just a demonstration to improve understanding
  * of sync constructs.
  */

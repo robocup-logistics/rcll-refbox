@@ -68,7 +68,7 @@ public:
 
 	/** Constructor that takes ownership.
    *
-   * This takes ownership of @a cpp_object, so it will be deleted when the 
+   * This takes ownership of @a cpp_object, so it will be deleted when the
    * last LockPtr is deleted, for instance when it goes out of scope.
    * @param cpp_object C++ object to take ownership of
    */
@@ -167,7 +167,7 @@ public:
 
 	/** Static cast to derived class.
    *
-   * Like the dynamic cast; the notation is 
+   * Like the dynamic cast; the notation is
    * @code
    *   ptr_derived = LockPtr<Derived>::cast_static(ptr_base);
    * @endcode

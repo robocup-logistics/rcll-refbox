@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  facts.clp - LLSF RefBox CLIPS - facts specification
 ;

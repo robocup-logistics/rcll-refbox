@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  read_write_lock.cpp - Read Write Lock
  *

@@ -182,7 +182,7 @@ private:
 	bool do_erase_browsers;
 	bool do_reset_groups;
 
-	AvahiSimplePoll	                *simple_poll;
+	AvahiSimplePoll                  *simple_poll;
 	AvahiClient                      *client;
 	AvahiClientState                  client_state;
 	const static std::chrono::seconds wait_on_init_failure;

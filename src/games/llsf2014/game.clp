@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  game.clp - LLSF RefBox CLIPS game maintenance
 ;
@@ -21,7 +23,7 @@
   )
 
   ; reset all down periods
-  ;(printout t "Resetting down periods" crlf) 
+  ;(printout t "Resetting down periods" crlf)
   (delayed-do-for-all-facts ((?m machine)) TRUE
     (modify ?m (down-period (deftemplate-slot-default-value machine down-period)))
   )
@@ -63,7 +65,7 @@
   =>
   (retract ?gf)
 )
-  
+
 (defrule game-reset-done
   (declare (salience -10000))
   ?gf <- (game-reset)
@@ -145,9 +147,9 @@
      then ; final machine is down for at least half of the order time, reduce it
       (printout t "Order " ?order:id " and down-time " ?machine:name
 		" overlap too large: " ?order-downtime-overlap-ratio crlf)
-      (printout t "M1 downtime: " 
+      (printout t "M1 downtime: "
 		  (time-sec-format ?down-start) " to " (time-sec-format ?down-end) crlf)
-      (printout t "Order time:  " 
+      (printout t "Order time:  "
 		  (time-sec-format ?order-start) " to " (time-sec-format ?order-end) crlf)
       (if (and (> ?order-end ?down-start) (<= ?order-end ?down-end))
        then

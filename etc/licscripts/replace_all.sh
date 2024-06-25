@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 DIRS="$@"
 
 for d in $DIRS; do
@@ -9,4 +11,3 @@ for d in $DIRS; do
 		find $d -name "*.$ext" -exec ./replace_license.pl {} \;
 	done
 done
-

@@ -1,3 +1,5 @@
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  client.cpp - class to manage connected frontend clients
  *
@@ -42,7 +44,7 @@ namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new ClientWS::ClientWS object
- * 
+ *
  * @param socket Established WebSocket socket shared pointer user for this client
  */
 ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> socket,
@@ -71,7 +73,7 @@ ClientWS::ClientWS(std::shared_ptr<boost::beast::websocket::stream<tcp::socket>>
 
 /**
  * @brief Destroy the ClientWS:: ClientWS object
- * 
+ *
  */
 ClientWS::~ClientWS()
 {
@@ -80,14 +82,14 @@ ClientWS::~ClientWS()
 }
 
 /**
- * @brief Send string message to client 
- * 
- *  Thread-safe WebSocket send function, sends a given string message with a trailing newline to the client. 
- * 
- * @param msg 
+ * @brief Send string message to client
+ *
+ *  Thread-safe WebSocket send function, sends a given string message with a trailing newline to the client.
+ *
+ * @param msg
  * @return true send successful
  * @return false send unsuccessful (connection probably broken)
- * @param logger_ Logger instance to be used 
+ * @param logger_ Logger instance to be used
  */
 bool
 ClientWS::send(std::string msg)
@@ -113,9 +115,9 @@ ClientWS::send(std::string msg)
 
 /**
  * @brief Blocking receive function, returns received message
- * 
- *  Function waits for incoming string message and returns it once it is received.  
- * 
+ *
+ *  Function waits for incoming string message and returns it once it is received.
+ *
  * @return std::string received message
  */
 std::string
@@ -132,7 +134,7 @@ ClientWS::read()
 
 /**
  * @brief WebSocket implementation for close
- * 
+ *
  */
 void
 ClientWS::close()
@@ -142,9 +144,9 @@ ClientWS::close()
 
 /**
  * @brief Construct a new ClientS::ClientS object
- * 
+ *
  * @param socket TCP socket over which client communication happens
- * @param logger Logger instance to be used 
+ * @param logger Logger instance to be used
  * @param data Data instance to be used
  * @param can_send sets if the connected client's incoming commands are processed
  */
@@ -164,7 +166,7 @@ ClientS::ClientS(std::shared_ptr<tcp::socket> socket,
 
 /**
  * @brief Destroy the ClientS::ClientS object
- * 
+ *
  */
 ClientS::~ClientS()
 {
@@ -173,10 +175,10 @@ ClientS::~ClientS()
 }
 
 /**
- * @brief Send string message to client 
- * 
- *  Thread-safe TCP socket send function, sends a given string message with a trailing newline to the client. 
- * 
+ * @brief Send string message to client
+ *
+ *  Thread-safe TCP socket send function, sends a given string message with a trailing newline to the client.
+ *
  * @param msg message to be sent
  * @return true send was successful
  * @return false send was unsuccessful
@@ -205,9 +207,9 @@ ClientS::send(std::string msg)
 
 /**
  * @brief Blocking receive function, returns received message
- * 
- *  Function waits for incoming string message and returns it once it is received. 
- * 
+ *
+ *  Function waits for incoming string message and returns it once it is received.
+ *
  * @return std::string received message
  */
 std::string
@@ -224,7 +226,7 @@ ClientS::read()
 
 /**
  * @brief TCP-Socket implementation for close
- * 
+ *
  */
 void
 ClientS::close()
@@ -234,7 +236,7 @@ ClientS::close()
 
 /**
  * @brief Handles incoming message requests
- * 
+ *
  */
 void
 Client::receive_thread()
@@ -327,7 +329,7 @@ Client::receive_thread()
 
 /**
  * @brief Disconnects client by closing connection and stopping receive thread
- * 
+ *
  */
 void
 Client::disconnect()
@@ -341,7 +343,7 @@ Client::disconnect()
 
 /**
  * @brief Send the current fact base to a freshly connected client
- * 
+ *
  */
 void
 Client::on_connect_update()

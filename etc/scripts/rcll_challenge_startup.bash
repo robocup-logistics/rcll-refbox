@@ -1,4 +1,6 @@
 #! /bin/bash
+# Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 #
 # rcll_challenge_startup.bash start and configure the refbox to play challenges
 #

@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  workpieces.clp - LLSF RefBox CLIPS workpiece rules
 ;

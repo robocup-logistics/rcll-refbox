@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  thread_collector.pp - Fawkes thread collector interface
  *                       based on previous ThreadManager

@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  resolver_thread.cpp - Fawkes network name resolver thread
  *
@@ -146,14 +148,14 @@ NetworkNameResolverThread::resolve_name_immediately(const char       *name,
 
 #ifdef HAVE_AVAHI
 	// resolve names in .local domain with Avahi if available
-	char	     *n = (char *)name + strlen(name) - 6; // 6 == strlen(".local")
+	char       *n = (char *)name + strlen(name) - 6; // 6 == strlen(".local")
 	const char *f = strstr(name, ".local");
 	if (__avahi_thread && f && (f == n)) {
 		__avahi_thread->resolve_name(name, this);
 		/*
   } else {
     printf("NOT ordering avahi_thread lookup\n");
-    if ( ! avahi_thread ) 
+    if ( ! avahi_thread )
       printf("No avahi resolver\n");
     if ( ! f ) {
       printf(".local not found\n");

@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  time.c - A time class
  *
@@ -525,7 +527,7 @@ Time::operator+=(const double sec)
 
 /** -= operator.
  * @param t the other time
- * @return reference to this instance  after subtraction 
+ * @return reference to this instance  after subtraction
  */
 Time &
 Time::operator-=(const Time &t)
@@ -536,7 +538,7 @@ Time::operator-=(const Time &t)
 
 /** -= operator.
  * @param sec seconds to subtract
- * @return reference to this instance  after subtraction 
+ * @return reference to this instance  after subtraction
  */
 Time &
 Time::operator-=(const double sec)
@@ -547,7 +549,7 @@ Time::operator-=(const double sec)
 
 /** -= operator.
  * @param usec microseconds to subtract
- * @return reference to this instance after subtraction 
+ * @return reference to this instance after subtraction
  */
 Time &
 Time::operator-=(const long int usec)

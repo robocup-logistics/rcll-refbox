@@ -1,3 +1,5 @@
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  server.cpp - class to provide server functionality to handle incoming connections
  *
@@ -37,9 +39,9 @@ namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new Server::Server object
- * 
+ *
  *  Constructs a new Server object and assigns the used backend data pointer.
- * 
+ *
  * @param data_ptr pointer to Data object that is used for this session
  * @param logger_ logger used by the backend
  */
@@ -109,9 +111,9 @@ Server::do_accept()
 /**
  * @brief Runs the Socket/Websocket Server
  *  This operator runs the socket or websocket server (currently based on WS_MODE predef).
- *  It launches an endless accepting loop, that accepts new connections and creates the 
- *  necessary objects required by the backend to work with them. 
- * 
+ *  It launches an endless accepting loop, that accepts new connections and creates the
+ *  necessary objects required by the backend to work with them.
+ *
  */
 void
 Server::operator()()

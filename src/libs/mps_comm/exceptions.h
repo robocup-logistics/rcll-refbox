@@ -38,7 +38,7 @@ namespace mps_comm {
 class timeout_exception : public std::runtime_error
 {
 public:
-	timeout_exception(const std::string &msg) : std::runtime_error(msg){};
+	timeout_exception(const std::string &msg) : std::runtime_error(msg) {};
 };
 
 } // namespace mps_comm

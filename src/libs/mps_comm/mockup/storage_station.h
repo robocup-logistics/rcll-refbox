@@ -36,7 +36,7 @@ public:
 	              unsigned int slot,
 	              unsigned int target_shelf,
 	              unsigned int target_slot) override;
-	void identify() override{};
+	void identify() override {};
 
 private:
 	void storage_op();

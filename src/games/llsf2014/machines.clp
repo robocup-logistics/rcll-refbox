@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  machines.clp - LLSF RefBox CLIPS machine processing
 ;
@@ -21,7 +23,7 @@
   (modify ?mf (actual-lights ?dl))
   (foreach ?color (create$ RED YELLOW GREEN)
     (if (member$ (sym-cat ?color "-ON") ?dl)
-    then 
+    then
       (sps-set-signal (str-cat ?m) ?color "ON")
     else
       (if (member$ (sym-cat ?color "-BLINK") ?dl)
@@ -207,7 +209,7 @@
       )
       (bind ?candidates (subseq$ (randomize$ ?candidates) 1 ?*MACHINE-SWAP-PLAY-OFFS-NUM*))
       (printout t "Candidates: " ?candidates crlf)
-      
+
       (delayed-do-for-all-facts ((?m-cyan machine) (?m-magenta machine))
         (and (eq ?m-cyan:team CYAN) (eq ?m-magenta:team MAGENTA)
 	     (member$ ?m-cyan:name ?candidates)

@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  string_conversions.cpp - string conversions
  *
@@ -72,7 +74,7 @@ StringConversions::to_lower(std::string str)
 std::string
 StringConversions::to_string(const unsigned int i)
 {
-	char	     *tmp;
+	char       *tmp;
 	std::string rv;
 	if (asprintf(&tmp, "%u", i) == -1) {
 		throw OutOfMemoryException(
@@ -90,7 +92,7 @@ StringConversions::to_string(const unsigned int i)
 std::string
 StringConversions::to_string(const int i)
 {
-	char	     *tmp;
+	char       *tmp;
 	std::string rv;
 	if (asprintf(&tmp, "%i", i) == -1) {
 		throw OutOfMemoryException("StringConversions::tostring(const int): asprintf() failed");
@@ -107,7 +109,7 @@ StringConversions::to_string(const int i)
 std::string
 StringConversions::to_string(const long int i)
 {
-	char	     *tmp;
+	char       *tmp;
 	std::string rv;
 	if (asprintf(&tmp, "%li", i) == -1) {
 		throw OutOfMemoryException("StringConversions::tostring(const long int): asprintf() failed");
@@ -124,7 +126,7 @@ StringConversions::to_string(const long int i)
 std::string
 StringConversions::to_string(const float f)
 {
-	char	     *tmp;
+	char       *tmp;
 	std::string rv;
 	if (asprintf(&tmp, "%f", f) == -1) {
 		throw OutOfMemoryException("StringConversions::tostring(const float): asprintf() failed");
@@ -141,7 +143,7 @@ StringConversions::to_string(const float f)
 std::string
 StringConversions::to_string(const double d)
 {
-	char	     *tmp;
+	char       *tmp;
 	std::string rv;
 	if (asprintf(&tmp, "%f", d) == -1) {
 		throw OutOfMemoryException("StringConversions::tostring(const double d): asprintf() failed");

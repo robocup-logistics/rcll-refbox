@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  exploration.clp - LLSF RefBox CLIPS exploration phase rules
 ;
@@ -91,7 +93,7 @@
             (if (eq ?machine:mtype ?type)
             then ; correct report
 	      (printout t "Correct report: " ?name " of type " ?type ". "
-			"Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf) 
+			"Awarding " ?*EXPLORATION-CORRECT-REPORT-POINTS* " points" crlf)
 	      (assert (points (points ?*EXPLORATION-CORRECT-REPORT-POINTS*)
 			      (phase EXPLORATION) (team ?team) (game-time ?game-time)
 			      (reason (str-cat "Correct exploration report for "

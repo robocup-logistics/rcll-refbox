@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  example_mutx_count.cpp - Example for counting with multiple threads and
  *                           protecting the count variable with a mutex
@@ -24,9 +26,8 @@
 #include <core/threading/mutex.h>
 #include <core/threading/thread.h>
 
-#include <unistd.h>
-
 #include <iostream>
+#include <unistd.h>
 
 //  By default do not include examples in API documentation
 /// @cond EXAMPLES
@@ -107,7 +108,7 @@ private:
 	string        s;
 	bool          sl;
 	unsigned int  slt;
-	Mutex	      *m;
+	Mutex        *m;
 	unsigned int *mc;
 	unsigned int *nmc;
 };

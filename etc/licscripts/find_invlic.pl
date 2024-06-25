@@ -84,8 +84,8 @@ sub check_file()
       return;
     }
   }
-  if ( ! $use_known_files or any { $_ =~ File::Spec->rel2abs($entry) } @known_files) { 
-    #if ( ! $use_known_files or File::Spec->rel2abs($entry) ~~ known_files) { 
+  if ( ! $use_known_files or any { $_ =~ File::Spec->rel2abs($entry) } @known_files) {
+    #if ( ! $use_known_files or File::Spec->rel2abs($entry) ~~ known_files) {
     printf("** File %s did NOT match any license\n", $File::Find::dir . "/" . $entry);
     $ok = 0;
   } else {
@@ -94,4 +94,3 @@ sub check_file()
 }
 
 exit($ok ? 0 : 1);
-

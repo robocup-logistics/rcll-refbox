@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  thread_list.cpp - Thread list
  *
@@ -144,10 +146,10 @@ ThreadList &
 ThreadList::operator=(const ThreadList &tl)
 {
 	LockList<Thread *>::operator=(tl);
-	__name                      = strdup(tl.__name);
-	__sealed                    = tl.__sealed;
-	__finalize_mutex            = new Mutex();
-	__wnw_barrier               = NULL;
+	__name           = strdup(tl.__name);
+	__sealed         = tl.__sealed;
+	__finalize_mutex = new Mutex();
+	__wnw_barrier    = NULL;
 	if (tl.__wnw_barrier != NULL)
 		update_barrier();
 

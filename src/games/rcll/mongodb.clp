@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  mongodb.clp - LLSF RefBox CLIPS MongoDB logging
 ;
@@ -845,4 +847,3 @@
 		(modify ?gp (machine-positions RANDOM))
 	)
 )
-

@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  file.cpp - Fawkes file logger
  *
@@ -39,12 +41,12 @@ namespace llsfrb {
 /** @class FileLogger <logging/file.h>
  * Interface for logging to a specified file.
  * The FileLogger will pipe all output into the given file. The
- * output will be prepended by a single character which determines the 
+ * output will be prepended by a single character which determines the
  * type of output (E for error, W for warning, etc.).
  *
  */
 
-/** Constructor. 
+/** Constructor.
  * @param filename_pattern the name of the log-file, $time will be replaced by a timestamp
  * @param log_level minimum log level
  */

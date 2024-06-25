@@ -1,3 +1,5 @@
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  net.clp - LLSF RefBox CLIPS network handling
 ;

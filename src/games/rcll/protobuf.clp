@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  protobuf.clp - protobuf message templates
 ;
@@ -80,4 +82,3 @@
 ;   =>
 ;   (if (debug 2) then (printout t "Client " ?id " disconnected" crlf))
 ; )
-

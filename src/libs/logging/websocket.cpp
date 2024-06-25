@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  websocket.cpp - Refbox websocket logger
  *
@@ -39,12 +41,12 @@ namespace llsfrb {
 /** @class WebsocketLogger <logging/websocket.h>
  * Interface for logging to connected (tcp-)/(web-)socket clients using the websocket backend.
  * The WebsocketLogger will put messages into the message queue of the websocket backend. The
- * messages will then be sent to the connected clients by the backend in order. The sent 
+ * messages will then be sent to the connected clients by the backend in order. The sent
  * messages will be formatted as JSON messages with corresponding metadata.
  *
- * Graphical displaying is managed by the connected client, given the metadata sent with 
+ * Graphical displaying is managed by the connected client, given the metadata sent with
  * the log messages that are similar to the information provided by the ConsoleLogger.
- * Most interaction and metadata is based on the ConsoleLogger. 
+ * Most interaction and metadata is based on the ConsoleLogger.
  *
  * @author Daniel Swoboda
  */
@@ -69,7 +71,7 @@ WebsocketLogger::~WebsocketLogger()
 
 /**
  * @brief Creates std::string out of format cstr and va_list
- * 
+ *
  * @param format format string
  * @param va argument list
  * @return std::string resulting string
@@ -77,7 +79,7 @@ WebsocketLogger::~WebsocketLogger()
 std::string
 WebsocketLogger::formatter(const char *format, va_list va)
 {
-	char	     *tmp;
+	char       *tmp;
 	std::string str_message;
 	if (vasprintf(&tmp, format, va) != -1) {
 		str_message = std::string(tmp);
@@ -88,7 +90,7 @@ WebsocketLogger::formatter(const char *format, va_list va)
 
 /**
  * @brief Creates std::string out of format cstr and argument cstr
- * 
+ *
  * @param format format string
  * @param text argument
  * @return std::string resulting string
@@ -96,7 +98,7 @@ WebsocketLogger::formatter(const char *format, va_list va)
 std::string
 WebsocketLogger::formatter(const char *format, const char *text)
 {
-	char	     *tmp;
+	char       *tmp;
 	std::string str_message;
 	if (asprintf(&tmp, format, text) != -1) {
 		str_message = std::string(tmp);
@@ -107,10 +109,10 @@ WebsocketLogger::formatter(const char *format, const char *text)
 
 /**
  * @brief creates a log rapidjson document for client consumption
- * 
+ *
  * @param d rapidjson document to be filled
- * @param component cstr, affected component 
- * @param level string, level of the log 
+ * @param component cstr, affected component
+ * @param level string, level of the log
  * @param time string, time of the log
  * @param message string, log message
  * @param exception bool, optional, true if message is exception
@@ -148,10 +150,10 @@ WebsocketLogger::build_document(rapidjson::Document *d,
 
 /**
  * @brief creates a log rapidjson document for client consumption with multiple content messages
- * 
+ *
  * @param d rapidjson document to be filled
- * @param component cstr, affected component 
- * @param level string, level of the log 
+ * @param component cstr, affected component
+ * @param level string, level of the log
  * @param time string, time of the log
  * @param messages rapidjson value object, array of messages
  * @param exception bool, optional, true if message is exception

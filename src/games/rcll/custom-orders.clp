@@ -1,3 +1,5 @@
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;-- force activate custom-orders
 (defrule load-custom-order
   (not (custom-order))

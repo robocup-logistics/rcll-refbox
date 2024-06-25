@@ -31,7 +31,7 @@ class MockupDeliveryStation : public virtual MockupMachine, public virtual Deliv
 public:
 	MockupDeliveryStation(const std::string &name, float exec_speed);
 	void deliver_product(int slot) override;
-	void identify() override{};
+	void identify() override {};
 };
 
 } // namespace mps_comm

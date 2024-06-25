@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  mutex.cpp - implementation of mutex, based on pthreads
  *
@@ -54,7 +56,7 @@ namespace fawkes {
  */
 
 /** Constructor.
- * @param type mutex type 
+ * @param type mutex type
  */
 Mutex::Mutex(Type type)
 {

@@ -31,7 +31,7 @@ public:
 	MockupCapStation(const std::string &name, float exec_speed);
 	void retrieve_cap() override;
 	void mount_cap() override;
-	void identify() override{};
+	void identify() override {};
 
 private:
 	void cap_op();

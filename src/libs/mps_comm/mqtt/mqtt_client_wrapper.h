@@ -46,10 +46,7 @@ namespace mps_comm {
 #endif
 
 // when printing recursively, indent is used to make the hirarchy more visible
-#define logIndent(i)                \
-	{                                 \
-		i * 2, (i + 1) * 2, (i + 2) * 2 \
-	}
+#define logIndent(i) {i * 2, (i + 1) * 2, (i + 2) * 2}
 
 using Instruction =
   std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
