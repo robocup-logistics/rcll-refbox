@@ -21,7 +21,7 @@
  *  Read the full text in the LICENSE.GPL_WRE file in the doc directory.
  */
 
-#include <logging/llsf_log_msgs/LogMessage.pb.h>
+#include <llsf_log_msgs/LogMessage.pb.h>
 #include <logging/network.h>
 #include <netinet/in.h>
 #include <protobuf_comm/server.h>
