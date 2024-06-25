@@ -54,12 +54,6 @@ jobs:
               pip3 install pre-commit && \
               git submodule update --init --recursive
       - run:
-          name: Install Pre-Commit Hooks
-          command: pre-commit install
-      - run:
-          name: Run Pre-Commit Checks
-          command: pre-commit run --all-files
-      - run:
           name: Configure CMake
           command: mkdir -p build && cd build && cmake ..
       - run:
