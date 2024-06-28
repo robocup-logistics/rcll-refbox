@@ -63,7 +63,7 @@ WORKDIR /buildenv/build
 RUN cmake -DCONFDIR=/etc/rcll-refbox -DSHAREDIR=/usr/local/share/rcll-refbox -DBINDIR=/usr/local/bin ..
 
 # Build the project
-RUN make -j
+RUN make -j4
 
 # Run tests if needed (optional)
 # RUN make test
