@@ -242,6 +242,15 @@ void
 Client::receive_thread()
 {
 	rapidjson::Document msgs;
+	// Check for existence of rcll-prepare-machine tool for websocket prepare
+	std::string prepare_machine_loc       = std::string(BINDIR) + "/rcll-prepare-machine";
+	bool        prepare_machine_supported = access(prepare_machine_loc.c_str(), X_OK) == 0;
+	std::string prepare_machine_command   = std::string(BINDIR) + "/./rcll-prepare-machine ";
+	if (!prepare_machine_supported) {
+		logger_->log_error(
+		  "Websocket",
+		  "Could not find rcll-prepare-machine at %s, machine instructions per websocket ar disabled");
+	}
 
 	while (active) {
 		try {
@@ -293,6 +302,11 @@ Client::receive_thread()
 						data_->clips_production_set_machine_state(msgs["mname"].GetString(),
 						                                          msgs["state"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "set_machine_pose") == 0) {
+						data_->clips_set_machine_pose(msgs["name"].GetString(),
+						                              msgs["rotation"].GetInt(),
+						                              msgs["zone"].GetString());
+					}
 					if (strcmp(msgs["command"].GetString(), "machine_add_base") == 0) {
 						data_->clips_production_machine_add_base(msgs["mname"].GetString());
 					}
@@ -312,16 +326,104 @@ Client::receive_thread()
 						                             msgs["phase"].GetString(),
 						                             msgs["reason"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "instruct_bs") == 0) {
+						if (prepare_machine_supported) {
+							std::ostringstream command;
+							command << prepare_machine_command << msgs["team_name"].GetString() << " "
+							        << msgs["machine"].GetString() << " " << msgs["side"].GetString() << " "
+							        << msgs["base_color"].GetString();
+							int result = std::system(command.str().c_str());
+							// Check the result
+							if (result != 0) {
+								logger_->log_error("Websocket",
+								                   "Command %s failed with code %i",
+								                   command.str().c_str(),
+								                   result);
+							}
+						} else {
+							logger_->log_warn("Websocket", "Machine instructions per websocket ar disabled");
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_rs") == 0) {
+						if (prepare_machine_supported) {
+							std::ostringstream command;
+							command << prepare_machine_command << msgs["team_name"].GetString() << " "
+							        << msgs["machine"].GetString() << " " << msgs["ring_color"].GetString();
+							int result = std::system(command.str().c_str());
+							// Check the result
+							if (result != 0) {
+								logger_->log_error("Websocket",
+								                   "Command %s failed with code %i",
+								                   command.str().c_str(),
+								                   result);
+							}
+						} else {
+							logger_->log_warn("Websocket", "Machine instructions per websocket ar disabled");
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_cs") == 0) {
+						if (prepare_machine_supported) {
+							std::ostringstream command;
+							command << prepare_machine_command << msgs["team_name"].GetString() << " "
+							        << msgs["machine"].GetString() << " " << msgs["operation"].GetString();
+							int result = std::system(command.str().c_str());
+							// Check the result
+							if (result != 0) {
+								logger_->log_error("Websocket",
+								                   "Command %s failed with code %i",
+								                   command.str().c_str(),
+								                   result);
+							}
+						} else {
+							logger_->log_warn("Websocket", "Machine instructions per websocket ar disabled");
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_ds") == 0) {
+						if (prepare_machine_supported) {
+							std::ostringstream command;
+							command << prepare_machine_command << msgs["team_name"].GetString() << " "
+							        << msgs["machine"].GetString() << " " << msgs["order"].GetInt();
+							int result = std::system(command.str().c_str());
+							// Check the result
+							if (result != 0) {
+								logger_->log_error("Websocket",
+								                   "Command %s failed with code %i",
+								                   command.str().c_str(),
+								                   result);
+							}
+						} else {
+							logger_->log_warn("Websocket", "Machine instructions per websocket ar disabled");
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "instruct_ss") == 0) {
+						if (prepare_machine_supported) {
+							std::ostringstream command;
+							command << prepare_machine_command << msgs["team_name"].GetString() << " "
+							        << msgs["machine"].GetString() << " " << msgs["operation"].GetString() << " "
+							        << msgs["shelf"].GetInt() << " " << msgs["slot"].GetInt();
+							int result = std::system(command.str().c_str());
+							// Check the result
+							if (result != 0) {
+								logger_->log_error("Websocket",
+								                   "Command %s failed with code %i",
+								                   command.str().c_str(),
+								                   result);
+							}
+						} else {
+							logger_->log_warn("Websocket", "Machine instructions per websocket ar disabled");
+						}
+					}
+					logger_->log_debug("Websocket", "got %s", msgs["command"].GetString());
 				}
 			} else {
 				logger_->log_error("Websocket", "malformed message received, won't be processed");
 			}
 
 		} catch (std::exception &e) {
-			logger_->log_error("Websocket", "caught exception while receiving. %s", e.what());
+			logger_->log_debug("Websocket", "caught exception while receiving. %s", e.what());
 			disconnect();
 		} catch (...) {
-			logger_->log_error("Websocket", "caught unknown exception while receiving");
+			logger_->log_debug("Websocket", "caught unknown exception while receiving");
 			disconnect();
 		}
 	}

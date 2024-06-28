@@ -21,14 +21,20 @@
 # *****************************************************************************
 
 cmake_minimum_required(VERSION 3.21)
-project(rcll-refbox)
+
+# Set own default if none is specified
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build" FORCE)
+endif()
 
 # Project name and version
 project(rcll-refbox VERSION 1.0 DESCRIPTION "rcll-refbox" LANGUAGES CXX)
 include(GNUInstallDirs)
 set(CONFDIR ${CMAKE_SOURCE_DIR}/cfg CACHE STRING "destination of configuration files")
 set(SHAREDIR ${CMAKE_SOURCE_DIR}/src CACHE STRING "destination of assets needed during runtime")
+set(BINDIR ${CMAKE_SOURCE_DIR}/bin CACHE STRING "destination of binaries")
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib64")
+
 # Function to check and update submodules
 function(update_submodules)
   # Read the .gitmodules file
@@ -72,7 +78,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_definitions(-DBASEDIR="${CMAKE_SOURCE_DIR}")
-add_definitions(-DBINDIR="${PROJECT_SOURCE_DIR}/bin")
+add_definitions(-DBINDIR="${BINDIR}")
 add_definitions(-DLIBDIR="${CMAKE_SOURCE_DIR}/lib")
 add_definitions(-DPLUGINDIR="${CMAKE_SOURCE_DIR}/plugins")
 add_definitions(-DIFACEDIR="${CMAKE_SOURCE_DIR}/lib/interfaces")

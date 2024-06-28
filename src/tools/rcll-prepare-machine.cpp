@@ -318,8 +318,18 @@ main(int argc, char **argv)
 		                                       &message_register /*, crypto_key, cipher*/);
 	}
 
-	boost::asio::io_service io_service;
-
+	boost::asio::io_service     io_service;
+	int                         ret_code = 0;
+	boost::asio::deadline_timer timer(io_service);
+	timer.expires_from_now(boost::posix_time::seconds(10));
+	timer.async_wait([&io_service, &ret_code](const boost::system::error_code &error) {
+		if (!error) {
+			std::cout << "Timeout reached, stopping io_service." << std::endl;
+			ret_code = 408;
+			quit     = true;
+			io_service.stop();
+		}
+	});
 	printf("Waiting for beacon from refbox...\n");
 
 	peer_public_->signal_received().connect(handle_message);
@@ -349,4 +359,5 @@ main(int argc, char **argv)
 
 	// Delete all global objects allocated by libprotobuf
 	google::protobuf::ShutdownProtobufLibrary();
+	return ret_code;
 }

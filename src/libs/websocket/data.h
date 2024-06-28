@@ -69,6 +69,7 @@ public:
 	std::function<void(int, bool, int, std::string)>              clips_confirm_delivery;
 	std::function<void(std::string, int)>                         clips_set_order_delivered;
 	std::function<void(std::string)>                              clips_production_machine_add_base;
+	std::function<void(std::string, int, std::string)>            clips_set_machine_pose;
 	std::function<void(std::string, std::string)>                 clips_production_set_machine_state;
 	std::function<void(int, std::string, bool)>                   clips_robot_set_robot_maintenance;
 	std::function<void(std::string, std::string)> clips_production_reset_machine_by_team;
