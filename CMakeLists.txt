@@ -21,7 +21,11 @@
 # *****************************************************************************
 
 cmake_minimum_required(VERSION 3.21)
-project(rcll-refbox)
+
+# Set own default if none is specified
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build" FORCE)
+endif()
 
 # Project name and version
 project(rcll-refbox VERSION 1.0 DESCRIPTION "rcll-refbox" LANGUAGES CXX)
@@ -30,6 +34,7 @@ set(CONFDIR ${CMAKE_SOURCE_DIR}/cfg CACHE STRING "destination of configuration f
 set(SHAREDIR ${CMAKE_SOURCE_DIR}/src CACHE STRING "destination of assets needed during runtime")
 set(BINDIR ${CMAKE_SOURCE_DIR}/bin CACHE STRING "destination of binaries")
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib64")
+
 # Function to check and update submodules
 function(update_submodules)
   # Read the .gitmodules file
