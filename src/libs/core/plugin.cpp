@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  plugin.cpp - Interface for a Fawkes plugin, some method have a base
  *               implementation that can be overridden in special situations.

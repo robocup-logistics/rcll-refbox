@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  utils.clp - CLIPS agent utility functions
 ;
@@ -28,7 +30,7 @@
 )
 
 (deffunction pick-random$ (?list)
-  (return (nth$ (random 1 (length$ ?list)) ?list)) 
+  (return (nth$ (random 1 (length$ ?list)) ?list))
 )
 
 (deffunction is-even-int (?num)

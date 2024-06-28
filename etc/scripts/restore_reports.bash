@@ -1,4 +1,6 @@
 #! /bin/bash
+# Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 #
 # restore_reports.bash restore a mongo dump from an archive
 #

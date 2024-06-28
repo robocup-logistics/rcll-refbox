@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  facts.clp - LLSF RefBox CLIPS - facts specification
 ;
@@ -138,8 +140,8 @@
 (deftemplate delivery-period
   (multislot delivery-gates (type SYMBOL) (allowed-values D1 D2 D3 D4 D5 D6) (cardinality 2 2))
   (multislot period (type INTEGER) (cardinality 2 2))
-)  
- 
+)
+
 (deftemplate product-delivered
   (slot game-time (type FLOAT))
   (slot production-time (type FLOAT))

@@ -1,4 +1,6 @@
 #! /bin/bash
+# Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 #
 # drop_reports.bash dropsa all stored game reports, use with caution
 #

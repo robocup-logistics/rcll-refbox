@@ -1,9 +1,11 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  clock.cpp - A central clock
  *
  *  Created: Sun Jun 03 00:23:59 2007
- *  Copyright  2007       Daniel Beck 
+ *  Copyright  2007       Daniel Beck
  *             2007-2008  Tim Niemueller [www.niemueller.de]
  *
  ****************************************************************************/
@@ -78,7 +80,7 @@ Clock::finalize()
 }
 
 /** Register an external time source.
- * 
+ *
  * @param ts a pointer to the external time source
  * @param make_default if true, this time source is made the default
  * timesource which means that for every call of get_time() the time

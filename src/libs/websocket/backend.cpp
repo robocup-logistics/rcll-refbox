@@ -1,3 +1,5 @@
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  backend.cpp - class to provide backend functionality for webfrontend
  *
@@ -30,9 +32,9 @@ namespace llsfrb::websocket {
 
 /**
  * @brief Construct a new Backend::Backend object
- * 
+ *
  *  Construct a new Backend object with assigned data and server.
- * 
+ *
  * @param logger_ logger used by the backend
  * @param env_ clips environment for callbacks
  * @param env_mutex mutext to coordinate env access
@@ -76,10 +78,10 @@ Backend::~Backend()
 
 /**
  * @brief Operator runs the backend in the current thread
- * 
- *  This operator runs the webfrontend backend; works 
- *  through the message queue. 
- * 
+ *
+ *  This operator runs the webfrontend backend; works
+ *  through the message queue.
+ *
  */
 void
 Backend::operator()()
@@ -102,11 +104,11 @@ Backend::operator()()
 
 /**
  * @brief Returns the address of the data pointer used by the backend.
- * 
+ *
  *  This method returns the address of the data pointer created by the backend,
- *  thus it can be used for communication with the connected clients. 
- * 
- * @return Data* 
+ *  thus it can be used for communication with the connected clients.
+ *
+ * @return Data*
  */
 std::shared_ptr<Data>
 Backend::get_data()

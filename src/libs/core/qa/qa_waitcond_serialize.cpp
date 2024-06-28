@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  example_waitcond_serialize.cpp - example application for using condition
  *                                   variables to serialize threads

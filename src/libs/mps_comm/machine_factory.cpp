@@ -1,3 +1,5 @@
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  machine_factory.cpp - Create MPS machine instances
  *
@@ -34,7 +36,7 @@
 
 namespace llsfrb {
 namespace mps_comm {
-MachineFactory::MachineFactory(std::shared_ptr<Configuration> config) : config_(config){};
+MachineFactory::MachineFactory(std::shared_ptr<Configuration> config) : config_(config) {};
 
 std::unique_ptr<Machine>
 MachineFactory::create_machine(const std::string &name,

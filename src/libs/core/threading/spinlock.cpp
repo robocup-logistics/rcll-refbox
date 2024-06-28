@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  spinlock.h - Spinlock
  *
@@ -100,7 +102,7 @@ Spinlock::lock()
 		throw Exception(err, "Failed to aquire lock for thread %s", Thread::current_thread()->name());
 	}
 #else
-	bool  locked = false;
+	bool locked = false;
 	while (!locked) {
 		locked = spinlock_data->mutex.try_lock();
 	}

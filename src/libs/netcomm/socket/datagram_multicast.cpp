@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  datagram_multicast.cpp - Fawkes datagram multicast socket (UDP)
  *

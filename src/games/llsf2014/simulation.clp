@@ -1,3 +1,5 @@
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ; ---------------------------------------------------------------------------
 ;  simulation.clp - LLSF RefBox CLIPS rules for working with a simulation
 

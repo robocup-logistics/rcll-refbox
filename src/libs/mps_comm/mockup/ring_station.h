@@ -31,8 +31,8 @@ class MockupRingStation : public virtual MockupMachine, public virtual RingStati
 public:
 	MockupRingStation(const std::string &name, float exec_speed);
 	void mount_ring(unsigned int, llsf_msgs::RingColor) override;
-	void register_slide_callback(std::function<void(unsigned int)> callback) override{};
-	void identify() override{};
+	void register_slide_callback(std::function<void(unsigned int)> callback) override {};
+	void identify() override {};
 };
 
 } // namespace mps_comm

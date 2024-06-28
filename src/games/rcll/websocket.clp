@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  websocket.clp - RCLL RefBox CLIPS fact monitoring for websocket clients
 ;

@@ -37,10 +37,10 @@ public:
 	~MockupMachine() override;
 	void         set_light(llsf_msgs::LightColor color,
 	                       llsf_msgs::LightState state = llsf_msgs::ON,
-	                       unsigned short        time  = 0) override{};
+	                       unsigned short        time  = 0) override {};
 	void         conveyor_move(ConveyorDirection direction, MPSSensor sensor) override;
-	void         reset_light() override{};
-	void         reset() override{};
+	void         reset_light() override {};
+	void         reset() override {};
 	void         register_busy_callback(std::function<void(bool)>) override;
 	void         register_ready_callback(std::function<void(bool)>) override;
 	void         register_barcode_callback(std::function<void(unsigned long)>) override;

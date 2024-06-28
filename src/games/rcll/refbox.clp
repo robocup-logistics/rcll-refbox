@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  refbox.clp - LLSF RefBox CLIPS main file
 ;
@@ -130,4 +132,3 @@
   (modify ?gf (state WAIT_START))
   (modify ?ti (last-time (now)))
 )
-

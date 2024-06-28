@@ -1,4 +1,6 @@
 #! /bin/bash
+# Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 #
 # build_c1_r1.bash fakes a series of agent tasks for 2 bots to build a C1
 #

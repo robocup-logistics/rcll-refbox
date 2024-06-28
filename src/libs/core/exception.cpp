@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  exception.cpp - basic exception
  *
@@ -165,7 +167,7 @@ Exception::Exception(const char *format, ...) throw()
 /** Constructor.
  * Constructs a new exception with the given message and errno value. This
  * is particularly handy when throwing the exception after a function failed
- * that returns an error code in errno. 
+ * that returns an error code in errno.
  * @param errno error number
  * @param format The format of the primary message. Supports the same
  * arguments as append(). The message is copied and not just referenced.

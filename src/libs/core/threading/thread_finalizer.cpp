@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  thread_finalizer.cpp - Thread finalizer interface
  *
@@ -77,7 +79,7 @@ CannotFinalizeThreadException::CannotFinalizeThreadException(Exception &e) : Exc
  * @param thread thread to prepare finalization for
  * @return true if nothing prevents finalization, false otherwise
  * @see Thread::prepare_finalize()
- * 
+ *
  *
  * @fn void ThreadFinalizer::finalize(Thread *thread) = 0
  * Finalize a thread.

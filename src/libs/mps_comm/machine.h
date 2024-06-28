@@ -40,11 +40,11 @@ public:
 
 	enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
 	enum MPSSensor { INPUT = 1, MIDDLE = 2, OUTPUT = 3 };
-	Machine(){};
+	Machine() {};
 	Machine(const std::string &name) : name_(name)
 	{
 	}
-	virtual ~Machine(){};
+	virtual ~Machine() {};
 
 	virtual void set_light(llsf_msgs::LightColor color,
 	                       llsf_msgs::LightState state = llsf_msgs::ON,

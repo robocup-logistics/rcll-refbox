@@ -1,4 +1,6 @@
 
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
  *  config.cpp - Fawkes configuration interface
  *
@@ -42,7 +44,7 @@ namespace llsfrb {
  * Loads configuration data, or opens a file, depending on the implementation. After
  * this call access to all other methods shall be possible.
  * @param file_path path of the configuration file.
- * 
+ *
  *
  * @fn void Configuration::copy(Configuration *copyconf)
  * Copies all values from the given configuration.
@@ -51,32 +53,32 @@ namespace llsfrb {
  * created, but values existent in current config but not in the copied config
  * will remain unchanged.
  * @param copyconf configuration to copy
- * 
+ *
  * @fn bool Configuration::exists(const char *path)
  * Check if a given value exists.
  * @param path path to value
  * @return true if the value exists, false otherwise
- * 
+ *
  * @fn bool Configuration::is_float(const char *path)
  * Check if a value is of type float
  * @param path path to value
  * @return true if the value exists and is of type float
- * 
+ *
  * @fn bool Configuration::is_uint(const char *path)
  * Check if a value is of type unsigned int
  * @param path path to value
  * @return true if the value exists and is of type unsigned int
- * 
+ *
  * @fn bool Configuration::is_int(const char *path)
  * Check if a value is of type int
  * @param path path to value
  * @return true if the value exists and is of type int
- * 
+ *
  * @fn bool Configuration::is_bool(const char *path)
  * Check if a value is of type bool
  * @param path path to value
  * @return true if the value exists and is of type bool
- * 
+ *
  * @fn bool Configuration::is_string(const char *path)
  * Check if a value is of type string
  * @param path path to value
@@ -86,32 +88,32 @@ namespace llsfrb {
  * Check if a value is a list.
  * @param path path to value
  * @return true if the value exists and is a list
- * 
+ *
  * @fn bool Configuration::is_default(const char *path)
  * Check if a value was read from the default config.
  * @param path path to value
  * @return true if the value exists and is only stored in the default config
- * 
+ *
  * @fn float Configuration::get_float(const char *path)
  * Get value from configuration which is of type float
  * @param path path to value
  * @return value
- * 
+ *
  * @fn unsigned int Configuration::get_uint(const char *path)
  * Get value from configuration which is of type unsigned int
  * @param path path to value
  * @return value
- * 
+ *
  * @fn int Configuration::get_int(const char *path)
  * Get value from configuration which is of type int
  * @param path path to value
  * @return value
- * 
+ *
  * @fn bool Configuration::get_bool(const char *path)
  * Get value from configuration which is of type bool
  * @param path path to value
  * @return value
- * 
+ *
  * @fn std::string Configuration::get_string(const char *path)
  * Get value from configuration which is of type string
  * @param path path to value
@@ -121,22 +123,22 @@ namespace llsfrb {
  * Get list of values from configuration which is of type float
  * @param path path to value
  * @return value
- * 
+ *
  * @fn std::vector<unsigned int> Configuration::get_uints(const char *path)
  * Get list of values from configuration which is of type unsigned int
  * @param path path to value
  * @return value
- * 
+ *
  * @fn std::vector<int> Configuration::get_ints(const char *path)
  * Get list of values from configuration which is of type int
  * @param path path to value
  * @return value
- * 
+ *
  * @fn std::vector<bool> Configuration::get_bools(const char *path)
  * Get list of values from configuration which is of type bool
  * @param path path to value
  * @return value
- * 
+ *
  * @fn std::vector<std::string> Configuration::get_strings(const char *path)
  * Get list of values from configuration which is of type string
  * @param path path to value
@@ -242,27 +244,27 @@ namespace llsfrb {
  * @exception ConfigEntryNotFoundException shall be thrown if value does not exist
  * @exception ConfigurationException shall be thrown on any other error
  *
- * 
+ *
  * @fn void Configuration::set_float(const char *path, float f)
  * Set new value in configuration of type float
  * @param path path to value
  * @param f new float value
- * 
+ *
  * @fn void Configuration::set_uint(const char *path, unsigned int uint)
  * Set new value in configuration of type unsigned int
  * @param path path to value
  * @param uint new unsigned int value
- * 
+ *
  * @fn void Configuration::set_int(const char *path, int i)
  * Set new value in configuration of type int
  * @param path path to value
  * @param i new int value
- * 
+ *
  * @fn void Configuration::set_bool(const char *path, bool b)
  * Set new value in configuration of type bool
  * @param path path to value
  * @param b new bool value
- * 
+ *
  * @fn void Configuration::set_string(const char *path, std::string &s)
  * Set new value in configuration of type string
  * @param path path to value
@@ -278,22 +280,22 @@ namespace llsfrb {
  * Set new value in configuration of type float
  * @param path path to value
  * @param f new float values
- * 
+ *
  * @fn void Configuration::set_uints(const char *path, std::vector<unsigned int> &uint)
  * Set new value in configuration of type unsigned int
  * @param path path to value
  * @param uint new unsigned int values
- * 
+ *
  * @fn void Configuration::set_ints(const char *path, std::vector<int> &i)
  * Set new value in configuration of type int
  * @param path path to value
  * @param i new int values
- * 
+ *
  * @fn void Configuration::set_bools(const char *path, std::vector<bool> &b)
  * Set new value in configuration of type bool
  * @param path path to value
  * @param b new bool values
- * 
+ *
  * @fn void Configuration::set_strings(const char *path, std::vector<std::string> &s)
  * Set new value in configuration of type string
  * @param path path to value
@@ -326,22 +328,22 @@ namespace llsfrb {
  * Set new default value in configuration of type float
  * @param path path to value
  * @param f new float value
- * 
+ *
  * @fn void Configuration::set_default_uint(const char *path, unsigned int uint)
  * Set new default value in configuration of type unsigned int
  * @param path path to value
  * @param uint new unsigned int value
- * 
+ *
  * @fn void Configuration::set_default_int(const char *path, int i)
  * Set new default value in configuration of type int
  * @param path path to value
  * @param i new int value
- * 
+ *
  * @fn void Configuration::set_default_bool(const char *path, bool b)
  * Set new default value in configuration of type bool
  * @param path path to value
  * @param b new bool value
- * 
+ *
  * @fn void Configuration::set_default_string(const char *path, std::string &s)
  * Set new default value in configuration of type string
  * @param path path to value
@@ -566,19 +568,19 @@ CouldNotOpenConfigException::CouldNotOpenConfigException(const char *format, ...
  * @fn std::vector<float> Configuration::ValueIterator::get_floats() const
  * Get list of values from configuration which is of type float
  * @return value
- * 
+ *
  * @fn std::vector<unsigned int> Configuration::ValueIterator::get_uints() const
  * Get list of values from configuration which is of type unsigned int
  * @return value
- * 
+ *
  * @fn std::vector<int> Configuration::ValueIterator::get_ints() const
  * Get list of values from configuration which is of type int
  * @return value
- * 
+ *
  * @fn std::vector<bool> Configuration::ValueIterator::get_bools() const
  * Get list of values from configuration which is of type bool
  * @return value
- * 
+ *
  * @fn std::vector<std::string> Configuration::ValueIterator::get_strings() const
  * Get list of values from configuration which is of type string
  * @return value

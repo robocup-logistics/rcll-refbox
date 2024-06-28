@@ -431,7 +431,7 @@ order (big-endian).
       \parbox{0.6\width}{\centering (Protocol buffer message
         identified by component ID and message type)}} \\
     \skippedwords \\
-    \wordbox[lrb]{1}{} 
+    \wordbox[lrb]{1}{}
   \end{rightwordgroup}
 
   \end{bytefield}
@@ -456,7 +456,7 @@ definition, e.g. 2000 and 1 for a beacon signal message.
       \bitbox{8}{\hyperlink{cipher}{cipher $> 0$\\\tiny 0x02 for AES-128-CBC}} &
       \bitbox{8}{\hyperlink{reserved-2}{\vphantom{p}reserved = 0}} &
       \bitbox{8}{\hyperlink{reserved-3}{\vphantom{p}reserved = 0}} \\
-      
+
       \wordbox{1}{\hyperlink{payload-size}{payload size}}
     \end{rightwordgroup} \\
 
@@ -476,10 +476,10 @@ definition, e.g. 2000 and 1 for a beacon signal message.
         \parbox{0.6\width}{\centering (Protocol buffer message
           identified by component ID and message type)}} \\
       \skippedwords \\
-      \wordbox[lrb]{1}{} 
+      \wordbox[lrb]{1}{}
     \end{rightwordgroup}
     \end{leftwordgroup}
- 
+
   \end{bytefield}
   \caption{Packet layout diagram for encrypted message}
   \label{fig:encrypted-packet}
@@ -558,7 +558,7 @@ message.
 \begin{figure}
   \vspace{-3mm}
   \centering
-    
+
   \tikzstyle{NW}=[outer sep=0,anchor=north west,minimum height=0.8cm]
   \tikzstyle{R}=[minimum width=3.2cm,minimum height=1cm,draw=black!50,fill=blue!20,text width=3cm]
   \tikzstyle{G}=[outer sep=0,anchor=south west, minimum width=4.8cm,
@@ -575,7 +575,7 @@ message.
     \draw [>=*,->] (refbox.east |- 0,1) -- +(3,0) coordinate (cyan-end)
     node[above,pos=0.5,text width=2.5cm]{\scriptsize Encrypted Team\\[-.4em]
       Channel -- Cyan} ;
-    
+
     \draw [>=*,->] (refbox.east |- 0,0) -- +(3,0)
     node[above,pos=0.5,text width=2.5cm]{\scriptsize Plaintext Public\\[-.4em]
       Channel};
@@ -594,7 +594,7 @@ message.
   \end{tikzpicture}
 
   \caption{Communication channels and groups of the referee box}
-  \label{fig:comm-groups}  
+  \label{fig:comm-groups}
 \vspace{-3mm}
 \end{figure}
 The refbox differentiates a total of four communication groups. These
@@ -985,7 +985,7 @@ situations may be necessary, e.g. to fix problems.
   the production phase over the team-private channel. At the beginning
   of the phase, the message is sent at a $0.5$\,sec period for
   15\,sec. Afterwards the message is sent every 2\,sec.
- 
+
   \medskip
   Both, the MachineInfo and Machine message types feature a team
   color. The team color on the latter is \emph{always} set. For the

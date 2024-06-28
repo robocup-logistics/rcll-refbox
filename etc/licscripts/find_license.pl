@@ -30,4 +30,3 @@ foreach $licfile (@LIC_FILES) {
 
 printf("** File %s did NOT match any license\n", $FILE);
 exit(1);
-

@@ -1,4 +1,6 @@
 
+; Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 ;---------------------------------------------------------------------------
 ;  production.clp - LLSF RefBox CLIPS production phase rules
 ;
@@ -457,7 +459,7 @@
   (gamestate (phase PRODUCTION))
   =>
   (retract ?pf) ; message will be destroyed after rule completes
-  ;(printout t "Removing from Machine " (pb-field-value ?p "machine_name") crlf) 
+  ;(printout t "Removing from Machine " (pb-field-value ?p "machine_name") crlf)
   (do-for-fact ((?machine machine))
 	       (eq ?machine:name (sym-cat (pb-field-value ?p "machine_name")))
     (bind ?puck-id (pb-field-value ?p "puck_id"))
@@ -546,7 +548,7 @@
   (retract ?uf)
   (printout t "Updating " ?m "|" ?mtype " load from " ?old-lw " to " ?new-lw crlf)
   (bind ?new-lw-size (length$ ?new-lw))
-  
+
   (if (= ?new-lw-size (length$ ?inputs))
    then ; production at this machine is complete
     (modify ?mf (state IDLE) (loaded-with)  (desired-lights GREEN-ON)
@@ -569,6 +571,4 @@
    then ; partial input, more pucks required to complete
     (modify ?mf (state WAITING) (loaded-with ?new-lw) (desired-lights YELLOW-ON))
   )
-) 
-
-
+)

@@ -30,7 +30,7 @@ class MockupBaseStation : public virtual MockupMachine, public virtual BaseStati
 public:
 	MockupBaseStation(const std::string &name, float exec_time);
 	void get_base(llsf_msgs::BaseColor slot) override;
-	void identify() override{};
+	void identify() override {};
 };
 } // namespace mps_comm
 } // namespace llsfrb

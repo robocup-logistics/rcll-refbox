@@ -64,7 +64,7 @@ public:
 
 private:
 	// may not be instantiated!
-	StringConversions(){};
+	StringConversions() {};
 };
 
 } // end namespace fawkes
