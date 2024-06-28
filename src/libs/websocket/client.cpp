@@ -420,10 +420,10 @@ Client::receive_thread()
 			}
 
 		} catch (std::exception &e) {
-			logger_->log_error("Websocket", "caught exception while receiving. %s", e.what());
+			logger_->log_debug("Websocket", "caught exception while receiving. %s", e.what());
 			disconnect();
 		} catch (...) {
-			logger_->log_error("Websocket", "caught unknown exception while receiving");
+			logger_->log_debug("Websocket", "caught unknown exception while receiving");
 			disconnect();
 		}
 	}
