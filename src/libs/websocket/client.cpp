@@ -124,25 +124,10 @@ std::string
 ClientWS::read()
 {
 	const std::lock_guard<std::mutex> lock(rd_mu);
-	std::string                       data;
-	try {
-		boost::asio::streambuf    buf;
-		boost::system::error_code ec;
 
-		socket->read(buf, ec);
-		data = boost::asio::buffer_cast<const char *>(buf.data());
-
-		// Check for errors
-		if (ec) {
-			logger_->log_error("Websocket", "Error reading from socket: %s", ec.message().c_str());
-			// Handle the error as necessary
-		} else {
-			data = boost::asio::buffer_cast<const char *>(buf.data());
-		}
-	} catch (...) {
-		logger_->log_error("Websocket", "Unknown exception caught while reading from socket.");
-		// Handle the exception as necessary
-	}
+	boost::asio::streambuf buf;
+	socket->read(buf);
+	std::string data = boost::asio::buffer_cast<const char *>(buf.data());
 
 	return data;
 }
@@ -154,17 +139,7 @@ ClientWS::read()
 void
 ClientWS::close()
 {
-	try {
-		if (socket && socket->is_open()) {
-			socket->next_layer().close();
-		}
-	} catch (const boost::system::system_error &e) {
-		logger_->log_error("Websocket", "boost::exception caught while closing socket: %s", e.what());
-	} catch (const std::exception &e) {
-		logger_->log_error("Websocket", "std::exception caught while closing socket: %s", e.what());
-	} catch (...) {
-		logger_->log_error("Websocket", "Unknown exception caught while closing socket");
-	}
+	socket->next_layer().close();
 }
 
 /**
