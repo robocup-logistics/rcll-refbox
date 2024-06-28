@@ -24,6 +24,8 @@
 #include <core/threading/mutex.h>
 #include <core/threading/thread.h>
 
+#include <unistd.h>
+
 #include <iostream>
 
 //  By default do not include examples in API documentation
