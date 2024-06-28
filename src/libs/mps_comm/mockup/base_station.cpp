@@ -24,7 +24,7 @@
 
 #include "durations.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 MockupBaseStation::MockupBaseStation(const std::string &name, float exec_speed)
 : MockupMachine(name, exec_speed)
@@ -45,4 +45,4 @@ MockupBaseStation::get_base(llsf_msgs::BaseColor color)
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

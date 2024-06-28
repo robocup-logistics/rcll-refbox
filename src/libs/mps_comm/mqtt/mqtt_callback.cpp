@@ -23,7 +23,7 @@
 
 #include "mqtt_callback.h"
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -178,4 +178,4 @@ mqtt_callback::register_slide_callback(std::function<void(unsigned int)> callbac
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

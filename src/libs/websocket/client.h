@@ -33,7 +33,7 @@
 #include <mutex>
 #include <string>
 
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 class Data; // forward declaration
 
 class Client
@@ -87,5 +87,5 @@ public:
 private:
 	std::shared_ptr<boost::asio::ip::tcp::socket> socket;
 };
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket
 #endif

@@ -26,7 +26,7 @@
 
 #include <boost/asio.hpp>
 
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 
 class Server
 {
@@ -56,6 +56,6 @@ private:
 	bool                           shutdown_          = false;
 };
 
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket
 
 #endif

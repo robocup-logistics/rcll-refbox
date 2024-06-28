@@ -45,7 +45,7 @@
 #include <string>
 #include <thread>
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -535,4 +535,4 @@ OpcUaMachine::identify()
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

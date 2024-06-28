@@ -44,7 +44,7 @@
 #	include <mongocxx/instance.hpp>
 #endif
 
-using namespace llsfrb;
+using namespace rcll;
 
 int
 main(int argc, char **argv)
@@ -55,8 +55,8 @@ main(int argc, char **argv)
 #endif
 	int restart = LLSFRefBox::RESTART_CODE;
 	while (restart == LLSFRefBox::RESTART_CODE) {
-		LLSFRefBox llsfrb(argc, argv);
-		restart = llsfrb.run();
+		LLSFRefBox rcll(argc, argv);
+		restart = rcll.run();
 	}
 	return restart;
 }

@@ -23,7 +23,7 @@
 
 #include "opc_utils.h"
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -912,4 +912,4 @@ OpcUtils::browseServer(OpcUa::UaClient *client, std::shared_ptr<spdlog::logger> 
   return node;
 }*/
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

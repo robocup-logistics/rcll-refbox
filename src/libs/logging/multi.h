@@ -27,7 +27,7 @@
 #include <logging/logger.h>
 #include <logging/logger_employer.h>
 
-namespace llsfrb {
+namespace rcll {
 
 class MultiLoggerData;
 
@@ -87,6 +87,6 @@ private:
 	MultiLoggerData *data;
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

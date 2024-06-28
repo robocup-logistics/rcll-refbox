@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -56,4 +56,4 @@ OpcUaDeliveryStation::deliver_product(int slot)
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

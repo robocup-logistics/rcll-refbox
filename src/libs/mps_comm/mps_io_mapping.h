@@ -25,7 +25,7 @@
 
 #include "core/exception.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };
@@ -135,4 +135,4 @@ enum Timeout {
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

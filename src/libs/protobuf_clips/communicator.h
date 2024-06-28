@@ -56,11 +56,11 @@ class ClipsProtobufCommunicator
 public:
 	ClipsProtobufCommunicator(CLIPS::Environment *env,
 	                          fawkes::Mutex      &env_mutex,
-	                          llsfrb::Logger     *logger = NULL);
+	                          rcll::Logger       *logger = NULL);
 	ClipsProtobufCommunicator(CLIPS::Environment       *env,
 	                          fawkes::Mutex            &env_mutex,
 	                          std::vector<std::string> &proto_path,
-	                          llsfrb::Logger           *logger = NULL);
+	                          rcll::Logger             *logger = NULL);
 	~ClipsProtobufCommunicator();
 
 	void enable_server(int port);
@@ -205,7 +205,7 @@ private:
 	CLIPS::Environment *clips_;
 	fawkes::Mutex      &clips_mutex_;
 
-	llsfrb::Logger *logger_;
+	rcll::Logger *logger_;
 
 	protobuf_comm::MessageRegister      *message_register_;
 	protobuf_comm::ProtobufStreamServer *server_;

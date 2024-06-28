@@ -95,7 +95,7 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
 int
 main(int argc, char **argv)
 {
-	llsfrb::Configuration *config = new llsfrb::YamlConfiguration(CONFDIR);
+	rcll::Configuration *config = new rcll::YamlConfiguration(CONFDIR);
 	config->load("config_generated.yaml");
 
 	ProtobufBroadcastPeer *peer;

@@ -21,7 +21,7 @@
 #pragma once
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class StorageStation : public virtual Machine
@@ -35,4 +35,4 @@ public:
 	                      unsigned int target_slot)              = 0;
 };
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

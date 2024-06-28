@@ -34,7 +34,7 @@
 
 #include <core/exception.h>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 MachineFactory::MachineFactory(std::shared_ptr<Configuration> config) : config_(config) {};
 
@@ -134,4 +134,4 @@ MachineFactory::create_machine(const std::string &name,
 	                        name.c_str());
 }
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

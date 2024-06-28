@@ -26,7 +26,7 @@
 
 #include <chrono>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 MockupRingStation::MockupRingStation(const std::string &name, float exec_speed)
@@ -48,4 +48,4 @@ MockupRingStation::mount_ring(unsigned int, llsf_msgs::RingColor)
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

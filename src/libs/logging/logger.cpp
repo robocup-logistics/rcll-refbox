@@ -25,7 +25,7 @@
 
 #include <logging/logger.h>
 
-namespace llsfrb {
+namespace rcll {
 
 /** @class Logger <logging/logger.h>
  * Interface for logging.
@@ -376,4 +376,4 @@ Logger::tlog(LogLevel level, struct timeval *t, const char *component, fawkes::E
 	}
 }
 
-} // end namespace llsfrb
+} // end namespace rcll

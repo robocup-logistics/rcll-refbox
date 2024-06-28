@@ -27,7 +27,7 @@
 
 #include <iostream>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 MqttRingStation::MqttRingStation(const std::string &name,
@@ -53,4 +53,4 @@ MqttRingStation::register_slide_callback(std::function<void(unsigned int)> callb
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

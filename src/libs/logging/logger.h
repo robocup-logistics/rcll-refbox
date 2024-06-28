@@ -29,7 +29,7 @@
 
 #include <cstdarg>
 
-namespace llsfrb {
+namespace rcll {
 
 class Logger
 {
@@ -109,6 +109,6 @@ protected:
 	LogLevel log_level;
 };
 
-} // end namespace llsfrb
+} // end namespace rcll
 
 #endif

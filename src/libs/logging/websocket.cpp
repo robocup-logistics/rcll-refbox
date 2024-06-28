@@ -36,7 +36,7 @@
 
 using namespace fawkes;
 
-namespace llsfrb {
+namespace rcll {
 
 /** @class WebsocketLogger <logging/websocket.h>
  * Interface for logging to connected (tcp-)/(web-)socket clients using the websocket backend.
@@ -707,4 +707,4 @@ WebsocketLogger::vtlog_error(struct timeval *t,
 	}
 }
 
-} // end namespace llsfrb
+} // end namespace rcll

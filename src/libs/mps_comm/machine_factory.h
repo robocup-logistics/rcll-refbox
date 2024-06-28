@@ -27,7 +27,7 @@
 #include <memory>
 #include <string>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 class MachineFactory
 {
@@ -46,4 +46,4 @@ private:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

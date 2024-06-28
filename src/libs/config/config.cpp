@@ -27,7 +27,7 @@
 
 #include <cstring>
 
-namespace llsfrb {
+namespace rcll {
 
 /** @class Configuration <config/config.h>
  * Interface for configuration handling.
@@ -696,4 +696,4 @@ Configuration::get_strings_or_defaults(const char                     *path,
 	}
 }
 
-} // end namespace llsfrb
+} // end namespace rcll

@@ -40,7 +40,7 @@
 
 using boost::asio::ip::tcp;
 
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 
 /**
  * @brief Construct a new ClientWS::ClientWS object
@@ -372,4 +372,4 @@ Client::on_connect_update()
 		send(data_->on_connect_ring_spec());
 	}
 }
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket

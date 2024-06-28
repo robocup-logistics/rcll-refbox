@@ -39,7 +39,7 @@
 
 #include <string>
 
-namespace llsfrb {
+namespace rcll {
 #if 0 /* just to make Emacs auto-indent happy */
 }
 #endif
@@ -69,6 +69,6 @@ extern void finalize_clips_logger(void *env);
 
 /// @endcond
 
-} // end of namespace llsfrb
+} // end of namespace rcll
 
 #endif

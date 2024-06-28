@@ -28,7 +28,7 @@
 #include <clipsmm.h>
 
 using namespace fawkes;
-namespace llsfrb::websocket {
+namespace rcll::websocket {
 
 class Backend
 {
@@ -55,6 +55,6 @@ private:
 	bool                    shutdown_ = false;
 };
 
-} // namespace llsfrb::websocket
+} // namespace rcll::websocket
 
 #endif

@@ -31,7 +31,7 @@
 
 #include <time.h>
 
-namespace llsfrb {
+namespace rcll {
 
 /// @cond INTERNALS
 class MultiLoggerData
@@ -654,4 +654,4 @@ MultiLogger::vtlog_error(struct timeval *t, const char *component, const char *f
 	data->mutex->unlock();
 }
 
-} // end namespace llsfrb
+} // end namespace rcll

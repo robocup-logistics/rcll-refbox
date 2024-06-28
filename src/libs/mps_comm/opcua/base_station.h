@@ -26,7 +26,7 @@
 #include "../base_station.h"
 #include "machine.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class OpcUaBaseStation : public virtual OpcUaMachine, public virtual BaseStation
@@ -42,4 +42,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

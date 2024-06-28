@@ -27,7 +27,7 @@
 #include "machine.h"
 #include "mqtt_utils.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
@@ -43,4 +43,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

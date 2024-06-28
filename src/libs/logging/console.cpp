@@ -34,7 +34,7 @@
 
 using namespace fawkes;
 
-namespace llsfrb {
+namespace rcll {
 
 /** @class ConsoleLogger <logging/console.h>
  * Interface for logging to stderr.
@@ -483,4 +483,4 @@ ConsoleLogger::vtlog_error(struct timeval *t, const char *component, const char 
 	}
 }
 
-} // end namespace llsfrb
+} // end namespace rcll

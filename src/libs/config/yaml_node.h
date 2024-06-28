@@ -45,7 +45,7 @@
 #include <stack>
 #include <unistd.h>
 
-namespace llsfrb {
+namespace rcll {
 
 /// @cond INTERNALS
 
@@ -1142,6 +1142,6 @@ private:
 
 /// @endcond
 
-} // namespace llsfrb
+} // namespace rcll
 
 #endif

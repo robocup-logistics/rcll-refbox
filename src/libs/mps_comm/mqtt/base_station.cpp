@@ -28,7 +28,7 @@
 
 #include <iostream>
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 MqttBaseStation::MqttBaseStation(const std::string &name,
@@ -44,12 +44,12 @@ void
 MqttBaseStation::get_base(llsf_msgs::BaseColor color)
 {
 	//lock_guard<mutex> g(lock_);
-	llsfrb::mps_comm::BaseColor color_sps;
+	rcll::mps_comm::BaseColor color_sps;
 	;
 	switch (color) {
-	case llsf_msgs::BASE_RED: color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_RED; break;
-	case llsf_msgs::BASE_BLACK: color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_BLACK; break;
-	case llsf_msgs::BASE_SILVER: color_sps = llsfrb::mps_comm::BaseColor::BASE_COLOR_SILVER; break;
+	case llsf_msgs::BASE_RED: color_sps = rcll::mps_comm::BaseColor::BASE_COLOR_RED; break;
+	case llsf_msgs::BASE_BLACK: color_sps = rcll::mps_comm::BaseColor::BASE_COLOR_BLACK; break;
+	case llsf_msgs::BASE_SILVER: color_sps = rcll::mps_comm::BaseColor::BASE_COLOR_SILVER; break;
 	default: throw fawkes::Exception("Unexpected base color (%lu)", color);
 	}
 
@@ -57,4 +57,4 @@ MqttBaseStation::get_base(llsf_msgs::BaseColor color)
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

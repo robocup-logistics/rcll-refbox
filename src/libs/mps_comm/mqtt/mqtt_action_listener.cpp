@@ -23,7 +23,7 @@
 
 #include "mqtt_action_listener.h"
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -61,4 +61,4 @@ mqtt_action_listener::~mqtt_action_listener()
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

@@ -24,7 +24,7 @@
 
 #include "durations.h"
 
-namespace llsfrb {
+namespace rcll {
 namespace mps_comm {
 
 MockupCapStation::MockupCapStation(const std::string &name, float exec_speed)
@@ -58,4 +58,4 @@ MockupCapStation::cap_op()
 }
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll

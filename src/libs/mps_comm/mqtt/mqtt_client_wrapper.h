@@ -36,7 +36,7 @@
 #	include <spdlog/sinks/stdout_sinks.h>
 #endif
 
-namespace llsfrb {
+namespace rcll {
 #if 0
 }
 #endif
@@ -77,4 +77,4 @@ public:
 };
 
 } // namespace mps_comm
-} // namespace llsfrb
+} // namespace rcll
