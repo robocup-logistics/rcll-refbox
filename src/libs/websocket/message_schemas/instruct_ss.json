@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "instruct_ss command schema",
+    "description": "This command instructs the storage station.",
+    "default": {},
+    "examples": [
+        {
+            "team_name": "Carologistics",
+            "machine": "C-RS1",
+            "operation": "RETRIEVE",
+            "shelf": 1,
+            "slot": 1
+        }
+    ],
+    "required": [
+        "team_name",
+        "machine",
+        "operation",
+        "shelf",
+        "slot"
+    ],
+    "properties": {
+        "team_name": {
+            "type": "string",
+            "description": "The name of the team that controls the machine."
+        },
+        "machine": {
+            "type": "string",
+            "description": "The name of the machine."
+        },
+        "operation": {
+            "type": "string",
+            "description": "Operation to perform (STORE | RETRIEVE)."
+        },
+        "shelf": {
+            "type": "number",
+            "description": "Target shelf number."
+        },
+        "slot": {
+            "type": "number",
+            "description": "Target slot number."
+        }
+    }
+}
