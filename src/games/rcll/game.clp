@@ -283,6 +283,7 @@
   "start the solver"
   (time-info (game-time ?gt))
   ?mg <- (machine-generation (state NOT-STARTED))
+  (gamestate (phase SETUP|EXPLORATION|PRODUCTION))
   (game-parameters (is-parameterized FALSE) (machine-positions RANDOM))
   =>
   (printout t "starting the solver for the generation of the machine positions" crlf)
