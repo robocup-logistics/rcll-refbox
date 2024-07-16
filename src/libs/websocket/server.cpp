@@ -75,21 +75,26 @@ Server::handle_accept(const boost::system::error_code &error, boost::asio::ip::t
 		bool client_can_send =
 		  (allow_control_all_ || socket.remote_endpoint().address().to_string() == "127.0.0.1");
 
-		if (ws_mode_) {
-			// websocket approach
-			std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket =
-			  std::make_shared<boost::beast::websocket::stream<tcp::socket>>(std::move(socket));
-			std::shared_ptr<Client> client =
-			  std::make_shared<ClientWS>(web_socket, logger_, data_, client_can_send);
-			data_->clients_add(client);
-		} else {
-			// socket approach
-			std::shared_ptr<Client> client = std::make_shared<ClientS>(
-			  std::make_shared<tcp::socket>(std::move(socket)), logger_, data_, client_can_send);
-			data_->clients_add(client);
-		}
+		try {
+			if (ws_mode_) {
+				// websocket approach
+				std::shared_ptr<boost::beast::websocket::stream<tcp::socket>> web_socket =
+				  std::make_shared<boost::beast::websocket::stream<tcp::socket>>(std::move(socket));
+				std::shared_ptr<Client> client =
+				  std::make_shared<ClientWS>(web_socket, logger_, data_, client_can_send);
+				data_->clients_add(client);
+			} else {
+				// socket approach
+				std::shared_ptr<Client> client = std::make_shared<ClientS>(
+				  std::make_shared<tcp::socket>(std::move(socket)), logger_, data_, client_can_send);
+				data_->clients_add(client);
+			}
 
-		logger_->log_info("Websocket", "new client connected");
+			logger_->log_info("Websocket", "new client connected");
+		} catch (const std::exception &e) {
+			// Handle the exception, log an error message, etc.
+			logger_->log_error("Websocket", "Failed to accept client connection: %s", e.what());
+		}
 	} else {
 		logger_->log_warn("Websocket", "Connection to Client failed");
 	}
