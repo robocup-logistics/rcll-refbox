@@ -257,18 +257,16 @@
 
 (defrule challenges-reset-field-back-to-setup
 	(declare (salience ?*PRIORITY_CHALLENGE-OVERRIDE*))
-	(gamestate (phase SETUP) (prev-phase PRODUCTION|POST_GAME|EXPLORATION))
+	?gs <- (gamestate (phase SETUP) (prev-phase ~PRE_GAME))
+	?ti <- (time-info)
 	(not (challanges-reset-back-in-setup))
 	=>
-	(delayed-do-for-all-facts ((?machine machine)) TRUE
-	  (if (eq ?machine:mtype RS) then (mps-reset-base-counter (str-cat ?machine:name)))
-	  (modify ?machine (productions 0) (state IDLE) (operation-mode RETRIEVE_CAP)
-	             (current-operation STORE)
-	             (proc-start 0.0))
-	)
 	(delayed-do-for-all-facts ((?ml machine-lights)) TRUE
 	  (modify ?ml (desired-lights GREEN-ON YELLOW-ON RED-ON))
 	)
+	(modify ?gs (prev-phase PRE_GAME) (state WAIT_START))
+	(modify ?ti (game-time 0.0))
+	(game-restart)
 	(delayed-do-for-all-facts ((?r challenges-route)) (retract ?r))
 	(assert (challanges-reset-back-in-setup))
 )
