@@ -43,27 +43,46 @@
   "If the challange mode is enabled, synchronize overlapping configs"
   (confval (path "/llsfrb/challenges/enable") (type BOOL) (value TRUE))
   ?cv <- (confval (path "/llsfrb/game/field/width") (value ?v))
+  ?cv2 <- (confval (path "/llsfrb/globals/field-width") (value ?v2))
   (confval (path "/llsfrb/challenges/field/width") (value ?new-v&:(neq ?v ?new-v)))
   =>
   (modify ?cv (value ?new-v))
+  (modify ?cv2 (value ?new-v))
 )
 
 (defrule config-sync-config-with-challenges-height
   "If the challange mode is enabled, synchronize overlapping configs"
   (confval (path "/llsfrb/challenges/enable") (type BOOL) (value TRUE))
   ?cv <- (confval (path "/llsfrb/game/field/height") (value ?v))
+  ?cv2 <- (confval (path "/llsfrb/globals/field-height") (value ?v2))
   (confval (path "/llsfrb/challenges/field/height") (value ?new-v&:(neq ?v ?new-v)))
   =>
   (modify ?cv (value ?new-v))
+  (modify ?cv2 (value ?new-v))
+)
+
+(defrule config-sync-config-with-challenges-mirror
+  "If the challange mode is enabled, synchronize overlapping configs
+   Current configs have a bug as mirroring is called mirror, keep this rule for now.
+  "
+  (confval (path "/llsfrb/challenges/enable") (type BOOL) (value TRUE))
+  ?cv <- (confval (path "/llsfrb/game/field/mirrored") (value ?v))
+  ?cv2 <- (confval (path "/llsfrb/globals/field-mirrored") (value ?v2))
+  (confval (path "/llsfrb/challenges/field/mirror") (value ?new-v&:(neq ?v ?new-v)))
+  =>
+  (modify ?cv (value ?new-v))
+  (modify ?cv2 (value ?new-v))
 )
 
 (defrule config-sync-config-with-challenges-mirrored
   "If the challange mode is enabled, synchronize overlapping configs"
   (confval (path "/llsfrb/challenges/enable") (type BOOL) (value TRUE))
   ?cv <- (confval (path "/llsfrb/game/field/mirrored") (value ?v))
+  ?cv2 <- (confval (path "/llsfrb/globals/field-mirrored") (value ?v2))
   (confval (path "/llsfrb/challenges/field/mirrored") (value ?new-v&:(neq ?v ?new-v)))
   =>
   (modify ?cv (value ?new-v))
+  (modify ?cv2 (value ?new-v))
 )
 
 ; Some of the globals actually directly resemble a config value.
