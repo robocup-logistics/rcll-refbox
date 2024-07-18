@@ -295,6 +295,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 
 	// gather all yaml files that one could choose from
 	std::vector<std::string> all_yaml_files;
+	fawkes::MutexLocker      clips_lock(&clips_mutex_);
 	for (const auto &p : fs::recursive_directory_iterator(CONFDIR)) {
 		if (fs::is_regular_file(p.path()) && p.path().extension() == ".yaml") {
 			all_yaml_files.push_back(p.path().string());
