@@ -88,9 +88,9 @@
 
 (defrule ws-update-robot
   "send update of a robot, whenever the robot fact changes"
-  ?sf <- (robot (number ?number) (name ?name))
+  ?sf <- (robot (number ?number) (name ?name) (team ?team))
   =>
-  (ws-create-RobotInfo ?number ?name)
+  (ws-create-RobotInfo ?number ?name ?team)
 )
 
 (defrule ws-update-agent-task
