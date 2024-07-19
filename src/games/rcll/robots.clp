@@ -128,7 +128,7 @@
         )
       )
     else
-      (bind ?maint-time (- ?ctime ?robot:maintenance-start-time))
+      (bind ?maint-time (- ?game-time ?robot:maintenance-start-time))
       (if (<= ?maint-time (+ ?*MAINTENANCE-ALLOWED-TIME* ?*MAINTENANCE-GRACE-TIME*))
       then
         (printout t "Robot " ?robot:number " back from maintenance" crlf)
