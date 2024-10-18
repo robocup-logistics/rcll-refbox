@@ -25,7 +25,6 @@
 
 #include "../base_station.h"
 #include "machine.h"
-#include "mqtt_utils.h"
 
 namespace rcll {
 namespace mps_comm {

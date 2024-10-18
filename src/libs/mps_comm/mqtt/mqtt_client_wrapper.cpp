@@ -38,12 +38,18 @@ namespace mps_comm {
 }
 #endif
 
+//TODO MAKE CONFIG VALUE
+#define QOS 2
+#define TOPIC_PREFIX "MPS"
+#define MQTT_DELAY 20
+
 mqtt_client_wrapper::mqtt_client_wrapper(const std::string              &client_id,
                                          std::shared_ptr<spdlog::logger> logger,
                                          std::string                     broker_address_)
 {
 	logger_               = logger;
 	name_                 = client_id;
+	command_topic		  = TOPIC_PREFIX + std::string("/") + name_ + "/Command";
 	connected             = false;
 	broker_address        = broker_address_;
 	std::string full_name = "Refbox_" + name_;
@@ -72,11 +78,11 @@ mqtt_client_wrapper::mqtt_client_wrapper(const std::string              &client_
 			return;
 		}
 	}
-	SubscribeToTopic(MqttUtils::TOPIC_PREFIX + "/" + name_ + "/In/Status/Ready");
-	SubscribeToTopic(MqttUtils::TOPIC_PREFIX + "/" + name_ + "/In/Status/Busy");
+	SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/Status");
+	SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/Barcode");
 	if (name_ == "C-RS1" || name_ == "C-RS2" || name_ == "M-RS1" || name_ == "M-RS2") {
 		logger_->info("Subscribing to the slidecounter!");
-		SubscribeToTopic(MqttUtils::TOPIC_PREFIX + "/" + name_ + "/In/" + MqttUtils::registers[5]);
+		SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/SlideCount");
 	}
 	connected = true;
 }
@@ -87,16 +93,16 @@ mqtt_client_wrapper::SetNodeValue(std::string topic, std::string value)
 	try {
 		logger_->info("Setting node value for {} to {}", topic, value);
 		mqtt::message_ptr pubmsg = mqtt::make_message(topic, value);
-		pubmsg->set_qos(MqttUtils::QOS);
+		pubmsg->set_qos(QOS);
 		cli->publish(pubmsg)->wait_for(std::chrono::seconds(10));
 	} catch (const mqtt::exception &exc) {
 		logger_->error("ERROR: Unable to publish to MQTT server: '{}' {}",
 		               broker_address,
 		               exc.to_string());
-		std::this_thread::sleep_for(MqttUtils::mqtt_delay_);
+		std::this_thread::sleep_for(std::chrono::milliseconds(MQTT_DELAY));
 		return false;
 	}
-	std::this_thread::sleep_for(MqttUtils::mqtt_delay_);
+	std::this_thread::sleep_for(std::chrono::milliseconds(MQTT_DELAY));
 	return true;
 }
 
@@ -105,7 +111,7 @@ mqtt_client_wrapper::SubscribeToTopic(std::string topic)
 {
 	try {
 		logger_->info("Subscribing to topic [{}]", topic);
-		cli->subscribe(topic, MqttUtils::QOS, nullptr, *subListener_)
+		cli->subscribe(topic, QOS, nullptr, *subListener_)
 		  ->wait_for(std::chrono::seconds(5));
 	} catch (const mqtt::exception &exc) {
 		logger_->error("ERROR: Unable to Subscribe to MQTT topic: '{}' {}", topic, exc.to_string());
@@ -126,34 +132,12 @@ mqtt_client_wrapper::~mqtt_client_wrapper()
 }
 
 bool
-mqtt_client_wrapper::dispatch_command(Instruction command)
+mqtt_client_wrapper::dispatch_command(std::string command)
 {
 	std::lock_guard<std::mutex> lock(client_mutex);
-	bool                        in = std::get<0>(command) < 100 ? false : true;
 	logger_->info("Starting dispatch of command");
-	//ACTION ID with command value
-	if (!SetNodeValue(MqttUtils::BuildTopic(name_, MqttUtils::registers[0], in),
-	                  std::to_string(std::get<0>(command))))
+	if (!SetNodeValue(command_topic, command))
 		return false;
-	// DATA0 with payload 1
-	if (!SetNodeValue(MqttUtils::BuildTopic(name_, MqttUtils::registers[2], in),
-	                  std::to_string(std::get<1>(command))))
-		return false;
-	// DATA1 with payload 2
-	if (!SetNodeValue(MqttUtils::BuildTopic(name_, MqttUtils::registers[3], in),
-	                  std::to_string(std::get<2>(command))))
-		return false;
-	// Enabled with payload 3
-	if (!SetNodeValue(
-	      MqttUtils::BuildTopic(name_, MqttUtils::registers[6] + "/" + MqttUtils::bits[2], in),
-	      std::to_string((bool)std::get<5>(command))))
-		return false;
-	// Enabled with payload 4
-	if (!SetNodeValue(
-	      MqttUtils::BuildTopic(name_, MqttUtils::registers[6] + "/" + MqttUtils::bits[3], in),
-	      std::to_string((bool)std::get<4>(command))))
-		return false;
-
 	logger_->info("Finished dispatch of command successful");
 	return true;
 }

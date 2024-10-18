@@ -24,8 +24,7 @@
 #include "storage_station.h"
 
 #include "../mps_io_mapping.h"
-
-#include <iostream>
+#include <string>
 
 namespace rcll {
 #if 0
@@ -48,13 +47,19 @@ MqttStorageStation::MqttStorageStation(const std::string &name,
 void
 MqttStorageStation::retrieve(unsigned int shelf, unsigned int slot)
 {
-	enqueue_instruction(Operation::OPERATION_RETRIEVE + machine_type_, shelf, slot);
+	if (shelf > 5 || slot > 7) {
+		throw std::runtime_error("Shelf or Slot out of Range!");
+	}
+	enqueue_instruction("RETRIEVE " + std::to_string(shelf) + "," + std::to_string(slot));
 }
 
 void
 MqttStorageStation::store(unsigned int shelf, unsigned int slot)
 {
-	enqueue_instruction(Operation::OPERATION_STORE + machine_type_, shelf, slot);
+	if (shelf > 5 || slot > 7) {
+		throw std::runtime_error("Shelf or Slot out of Range!");
+	}
+	enqueue_instruction("STORE " + std::to_string(shelf) + "," + std::to_string(slot));
 }
 
 void
@@ -63,9 +68,15 @@ MqttStorageStation::relocate(unsigned int shelf,
                              unsigned int target_shelf,
                              unsigned int target_slot)
 {
-	enqueue_instruction(Operation::OPERATION_RELOCATE + machine_type_,
-	                    (shelf * 10) + slot,
-	                    (target_shelf * 10) + target_slot);
+	if (shelf > 5 || slot > 7) {
+		throw std::runtime_error("Shelf or Slot out of Range!");
+	}
+	if (target_shelf > 5 || target_slot > 7) {
+		throw std::runtime_error("Target-Shelf or Target-Slot out of Range!");
+	}
+
+	enqueue_instruction("RELOCATE " + std::to_string(shelf) + "," + std::to_string(slot)
+						+ " " + std::to_string(target_shelf) + "," + std::to_string(target_slot));
 }
 
 } // namespace mps_comm

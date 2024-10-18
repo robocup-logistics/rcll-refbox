@@ -27,20 +27,16 @@
 #include "mqtt_action_listener.h"
 #include "mqtt_callback.h"
 #include "mqtt_client_wrapper.h"
-#include "mqtt_utils.h"
 
 #include <spdlog/spdlog.h>
 
 #include <boost/any.hpp>
-#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <string>
 #include <thread>
 #include <tuple>
-#include <unordered_map>
-#include <vector>
 
 namespace rcll {
 namespace mps_comm {
@@ -49,9 +45,6 @@ class MachineFactory;
 
 class MqttMachine : public virtual Machine
 {
-	using Instruction =
-	  std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
-
 	friend class MachineFactory;
 
 public:
@@ -93,12 +86,7 @@ public:
 	mqtt_client_wrapper            *mqtt_client_;
 
 protected:
-	void enqueue_instruction(unsigned short command,
-	                         unsigned short payload1 = 0,
-	                         unsigned short payload2 = 0,
-	                         int            timeout  = 0,
-	                         unsigned char  status   = 1,
-	                         unsigned char  error    = 0);
+	void enqueue_instruction(std::string command);
 	void dispatch_command_queue();
 
 	// Initialize logger; If log_path is empty, the logs are redirected to
@@ -115,7 +103,7 @@ protected:
 
 	std::mutex              command_mutex_;
 	std::condition_variable queue_condition_;
-	std::queue<Instruction> command_queue_;
+	std::queue<std::string> command_queue_;
 	std::thread             worker_thread_;
 	std::thread             dispatcher_thread_;
 

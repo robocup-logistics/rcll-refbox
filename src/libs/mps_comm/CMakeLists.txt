@@ -27,7 +27,6 @@ if(PahoMqttCpp_FOUND)
   target_sources(refbox-mps-comm PRIVATE
     mqtt/machine.cpp
     mqtt/base_station.cpp
-    mqtt/mqtt_utils.cpp
     mqtt/mqtt_callback.cpp
     mqtt/mqtt_action_listener.cpp
     mqtt/mqtt_client_wrapper.cpp

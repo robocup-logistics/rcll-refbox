@@ -21,7 +21,6 @@
 
 #pragma once
 #include "mqtt_action_listener.h"
-#include "mqtt_utils.h"
 
 #include <mqtt/async_client.h>
 #include <spdlog/logger.h>
@@ -79,12 +78,15 @@ class mqtt_callback : public virtual mqtt::callback, public virtual mqtt::iactio
 
 	void delivery_complete(mqtt::delivery_token_ptr token) override;
 
-	std::unordered_map<std::string, std::function<void(unsigned int)>> callbacks_;
+	std::function<void(unsigned int)> callback_barcode;
+	std::function<void(unsigned int)> callback_busy;
+	std::function<void(unsigned int)> callback_ready;
+	std::function<void(unsigned int)> callback_slide;
 
 public:
-	void register_busy_callback(std::function<void(bool)> callback);
-	void register_ready_callback(std::function<void(bool)> callback);
-	void register_barcode_callback(std::function<void(unsigned long)> callback);
+    void register_barcode_callback(std::function<void(unsigned long)> callback);
+    void register_busy_callback(std::function<void(bool)> callback);
+    void register_ready_callback(std::function<void(bool)> callback);
 	void register_slide_callback(std::function<void(unsigned int)> callback);
 
 	mqtt_callback(mqtt::async_client             &cli,

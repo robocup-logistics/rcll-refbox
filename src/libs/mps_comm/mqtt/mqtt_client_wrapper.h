@@ -22,7 +22,6 @@
 #pragma once
 #include "mqtt_action_listener.h"
 #include "mqtt_callback.h"
-#include "mqtt_utils.h"
 
 #include <mqtt/async_client.h>
 
@@ -54,6 +53,7 @@ using Instruction =
 class mqtt_client_wrapper
 {
 	std::string                     name_;
+	std::string 				   command_topic;
 	mqtt::async_client             *cli;
 	mqtt_action_listener           *subListener_;
 	mqtt_callback                  *callback_handler;
@@ -69,7 +69,7 @@ public:
 	~mqtt_client_wrapper();
 	bool SetNodeValue(std::string topic, std::string value);
 	void SubscribeToTopic(std::string topic);
-	bool dispatch_command(Instruction command);
+	bool dispatch_command(std::string command);
 	void register_busy_callback(std::function<void(bool)> callback);
 	void register_ready_callback(std::function<void(bool)> callback);
 	void register_barcode_callback(std::function<void(unsigned long)> callback);

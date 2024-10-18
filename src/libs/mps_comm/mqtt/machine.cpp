@@ -25,6 +25,7 @@
 
 #include "../exceptions.h"
 #include "../time_utils.h"
+#include "msgs/MachineCommands.pb.h"
 
 #if HAVE_SYSTEM_SPDLOG
 #	include <spdlog/sinks/basic_file_sink.h>
@@ -32,11 +33,7 @@
 #endif
 
 #include <chrono>
-#include <iostream>
 #include <pthread.h>
-#include <signal.h>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -100,22 +97,17 @@ MqttMachine::dispatch_command_queue()
 }
 
 void
-MqttMachine::enqueue_instruction(unsigned short command,
-                                 unsigned short payload1,
-                                 unsigned short payload2,
-                                 int            timeout,
-                                 unsigned char  status,
-                                 unsigned char  error)
+MqttMachine::enqueue_instruction(std::string command)
 {
 	std::lock_guard<std::mutex> lock(command_queue_mutex_);
-	command_queue_.push(std::make_tuple(command, payload1, payload2, timeout, status, error));
+	command_queue_.push(command);
 	//logger->info("Enqueued a instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 }
 
 void
 MqttMachine::reset()
 {
-	enqueue_instruction(Command::COMMAND_SET_TYPE, machine_type_ / 100);
+	enqueue_instruction("RESET");
 }
 
 MqttMachine::~MqttMachine()
@@ -129,28 +121,37 @@ MqttMachine::set_light(llsf_msgs::LightColor color,
                        llsf_msgs::LightState state,
                        unsigned short        time)
 {
-	LightColor m_color = LIGHT_COLOR_RESET;
+	std::string m_color;
 	switch (color) {
-	case llsf_msgs::LightColor::RED: m_color = LightColor::LIGHT_COLOR_RED; break;
-	case llsf_msgs::LightColor::YELLOW: m_color = LightColor::LIGHT_COLOR_YELLOW; break;
-	case llsf_msgs::LightColor::GREEN: m_color = LightColor::LIGHT_COLOR_GREEN; break;
+		case llsf_msgs::LightColor::RED: m_color = "RED"; break;
+		case llsf_msgs::LightColor::YELLOW: m_color = "YELLOW"; break;
+		case llsf_msgs::LightColor::GREEN: m_color = "GREEN"; break;
 	}
-	unsigned short int plc_state = LightState::LIGHT_STATE_OFF;
+
+	std::string m_state;
 	switch (state) {
-	case llsf_msgs::ON: plc_state = LightState::LIGHT_STATE_ON; break;
-	case llsf_msgs::OFF: plc_state = LightState::LIGHT_STATE_OFF; break;
-	case llsf_msgs::BLINK: plc_state = LightState::LIGHT_STATE_BLINK; break;
+		case llsf_msgs::ON: m_state = "ON"; break;
+		case llsf_msgs::OFF: m_state = "OFF"; break;
+		case llsf_msgs::BLINK: m_state = "BLINK"; break;
 	}
-	enqueue_instruction(m_color, plc_state, time);
+	enqueue_instruction("LIGHT " + m_color + " " + m_state);
 }
 
 void
 MqttMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 {
-	enqueue_instruction(Command::COMMAND_MOVE_CONVEYOR + machine_type_,
-	                    sensor,
-	                    direction,
-	                    Timeout::TIMEOUT_BAND);
+	std::string m_direction;
+	switch(direction) {
+		case ConveyorDirection::FORWARD: m_direction = "TO_OUTPUT"; break;
+		case ConveyorDirection::BACKWARD: m_direction = "TO_INPUT"; break;
+	}
+	std::string m_sensor;
+	switch(sensor) {
+		case MPSSensor::INPUT: m_sensor = "IN"; break;
+		case MPSSensor::MIDDLE: m_sensor = "MID"; break;
+		case MPSSensor::OUTPUT: m_sensor = "OUT"; break;
+	}
+	enqueue_instruction("MOVE_CONVEYOR " + m_direction + " " + m_sensor);
 }
 
 void
