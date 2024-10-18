@@ -1,5 +1,5 @@
 /***************************************************************************
- *  base_station.h - MQTT communication with the BS
+ *  cap_station.h - MQTT_LEGACY communication with the CS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -19,26 +19,35 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// This file contains the BaseStation class.
-// At a base station a robot can pick up a base
+// This file contains the implementation of a cap station.
+// A cap station can be used, to mount caps on top of things.
 #pragma once
 
-#include "../base_station.h"
+#include "../cap_station.h"
 #include "machine.h"
 
 namespace rcll {
+#if 0
+}
+#endif
 namespace mps_comm {
+#if 0
+}
+#endif
 
-class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
+class MqttLegacyCapStation : public virtual MqttLegacyMachine, public virtual CapStation
 {
 public:
-	MqttBaseStation(const std::string &name,
-	                const std::string &ip,
-	                unsigned short     port,
-	                const std::string &log_path = "",
-	                ConnectionMode     mode     = MQTT);
+	MqttLegacyCapStation(const std::string &name,
+	               const std::string &ip,
+	               unsigned short     port,
+	               const std::string &log_path = "",
+	               ConnectionMode     mode     = MQTTLEGACY);
 
-	void get_base(llsf_msgs::BaseColor slot) override;
+	virtual ~MqttLegacyCapStation();
+
+	void retrieve_cap() override;
+	void mount_cap() override;
 };
 
 } // namespace mps_comm

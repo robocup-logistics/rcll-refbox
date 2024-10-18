@@ -1,5 +1,5 @@
 /***************************************************************************
- *  base_station.h - MQTT communication with the BS
+ *  delivery_station.h - MQTT_LEGACY communication with the DS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -19,26 +19,29 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// This file contains the BaseStation class.
-// At a base station a robot can pick up a base
+// This file implements the delivery station
 #pragma once
 
-#include "../base_station.h"
+#include "../delivery_station.h"
 #include "machine.h"
 
 namespace rcll {
 namespace mps_comm {
 
-class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
+class MqttLegacyDeliveryStation : public virtual MqttLegacyMachine, public virtual DeliveryStation
 {
 public:
-	MqttBaseStation(const std::string &name,
-	                const std::string &ip,
-	                unsigned short     port,
-	                const std::string &log_path = "",
-	                ConnectionMode     mode     = MQTT);
+	MqttLegacyDeliveryStation(const std::string &name,
+	                    const std::string &ip,
+	                    unsigned short     port,
+	                    const std::string &log_path = "",
+	                    ConnectionMode     mode     = MQTTLEGACY);
+	virtual ~MqttLegacyDeliveryStation();
 
-	void get_base(llsf_msgs::BaseColor slot) override;
+	// Send command to deliver a product
+	// slot is between 1 and 3
+	// Deprecated
+	void deliver_product(int slot);
 };
 
 } // namespace mps_comm

@@ -59,7 +59,7 @@ void
 mqtt_callback::on_failure(const mqtt::token &tok)
 {
 	logger_->info("Connection attempt failed");
-	if (++nretry_ > MqttUtils::N_RETRY_ATTEMPTS)
+	if (++nretry_ > MQTT_RETRY_COUNT)
 		exit(1);
 	reconnect();
 }
@@ -91,61 +91,56 @@ mqtt_callback::connection_lost(const std::string &cause)
 void
 mqtt_callback::message_arrived(mqtt::const_message_ptr msg)
 {
-	//std::cout << "Message arrived" << std::endl;
-	//std::cout << "\ttopic: '" << msg->get_topic() << "'" << std::endl;
-	//std::cout << "\tpayload: '" << msg->to_string() << "'\n" << std::endl;
-
 	std::string topic = msg->get_topic();
 	std::string value = msg->to_string();
-	switch (MqttUtils::ParseTopic(topic)) {
-	case Topic::BasicNodes_Busy:
-		//std::cout << "MPS sent a BasicBusy update with value " << value << std::endl;
-		logger_->info("Received an updated for Basic/Busy with value " + value);
-		break;
-	case Topic::BasicNodes_Ready:
-		//std::cout << "MPS sent a BasicEnabled update with value " << value << std::endl;
-		logger_->info("Received an updated for Basic/Ready with value " + value);
-		break;
-	case Topic::InNodes_Busy: {
-		//std::cout << "MPS sent a InBusy update with value [" << value << "]" << std::endl;
-		logger_->info("Received an updated for In/Busy with value " + value);
-		bool val = false;
-		if (boost::algorithm::to_lower_copy(value).compare("true") == 0) {
-			val = true;
-		}
-		if (callbacks_[MqttUtils::bits[0]]) {
-			callbacks_[MqttUtils::bits[0]](val);
+
+	size_t pos = topic.find_last_of('/');
+    // Extract the substring after the last '/'
+    std::string topic_name = topic.substr(pos + 1);
+
+	if(topic_name == "Status") {
+		logger_->info("Received an Status with value " + value);
+		bool ready = false;
+		bool busy = false;
+		if (value == "READY") {
+			ready = true;
+			busy = false;
+		} else if(value == "BUSY") {
+			ready = false;
+			busy = true;
+		} else if(value == "ERROR") {
+			ready = false;
+			busy = false;
+		} else if(value == "DISABLED") {
+			ready = false;
+			busy = false;
 		} else {
-			logger_->info("Received something but no callback registered ");
+			logger_->error("Unknown status value");
 		}
-		break;
-	}
-	case Topic::InNodes_Ready: {
-		//std::cout << "MPS sent a InEnabled update with value [" << value << "]" << std::endl;
-		logger_->info("Received an updated for In/Ready with value " + value);
-		bool val = false;
-		if (boost::algorithm::to_lower_copy(value).compare("true") == 0) {
-			val = true;
-		}
-		if (callbacks_[MqttUtils::bits[1]]) {
-			callbacks_[MqttUtils::bits[1]](val);
-		} else {
-			logger_->info("Received something but no callback registered ");
-		}
-		break;
-	}
-	case Topic::InNodes_Sldcnt: {
+
+		if (callback_ready)
+			std::thread([this, ready]() {
+				callback_ready(ready);
+			}).detach();
+		if (callback_busy)
+			std::thread([this, busy]() {
+				callback_busy(busy);
+			}).detach();
+
+	} else if(topic_name == "SlideCount"){
 		logger_->info("MPS sent a InSlideCnt update with value [{}]", value);
 		unsigned int count = std::stoul(value);
-		if (callbacks_[MqttUtils::registers[5]]) {
-			callbacks_[MqttUtils::registers[5]](count);
-		} else {
-			logger_->info("Received something but no callback registered ");
-		}
-		// TODO maybe fix and use this instead with std::any in the map std::any_cast <int (*) (int)> (mapIter->second) (5)
-		break;
+		if (callback_slide)
+			std::thread([this, count]() {
+				callback_slide(count);
+			}).detach();
 	}
-	default: logger_->info("Not a known topic");
+	else if(topic_name == "Barcode") {
+		logger_->info("MPS sent a Barcode update with value [{}]", value);
+		if(callback_barcode)
+			callback_barcode(std::stoul(value));
+	} else {
+		logger_->info("Not a known topic");
 	}
 }
 
@@ -155,26 +150,27 @@ mqtt_callback::delivery_complete(mqtt::delivery_token_ptr token)
 }
 
 void
-mqtt_callback::register_busy_callback(std::function<void(bool)> callback)
+mqtt_callback::register_ready_callback(std::function<void(bool)> callback)
 {
-	callbacks_[MqttUtils::bits[0]] = callback;
+	callback_ready = callback;
 }
 
 void
-mqtt_callback::register_ready_callback(std::function<void(bool)> callback)
+mqtt_callback::register_busy_callback(std::function<void(bool)> callback)
 {
-	callbacks_[MqttUtils::bits[1]] = callback;
+	callback_busy = callback;
 }
 
 void
 mqtt_callback::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
-	callbacks_[MqttUtils::registers[1]] = callback;
+	callback_barcode = callback;
 }
+
 void
 mqtt_callback::register_slide_callback(std::function<void(unsigned int)> callback)
 {
-	callbacks_[MqttUtils::registers[5]] = callback;
+	callback_slide = callback;
 }
 
 } // namespace mps_comm

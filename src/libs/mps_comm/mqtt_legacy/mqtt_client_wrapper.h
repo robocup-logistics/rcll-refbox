@@ -1,5 +1,5 @@
 /***************************************************************************
- *  mqtt_client_wrapper.h -MQTT client wrapper
+ *  mqtt_client_wrapper.h -MQTT_LEGACY client wrapper
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -22,6 +22,7 @@
 #pragma once
 #include "mqtt_action_listener.h"
 #include "mqtt_callback.h"
+#include "mqtt_utils.h"
 
 #include <mqtt/async_client.h>
 
@@ -50,30 +51,25 @@ namespace mps_comm {
 using Instruction =
   std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
 
-class mqtt_client_wrapper
+class mqtt_legacy_client_wrapper
 {
 	std::string                     name_;
-	std::string 				   command_topic;
 	mqtt::async_client             *cli;
-	mqtt_action_listener           *subListener_;
-	mqtt_callback                  *callback_handler;
+	mqtt_legacy_action_listener           *subListener_;
+	mqtt_legacy_callback                  *callback_handler;
 	std::shared_ptr<spdlog::logger> logger_;
 	std::string                     broker_address;
 	std::mutex                      client_mutex;
 
-	const int QOS = 2;
-	const std::string TOPIC_PREFIX = "MPS";
-	const int MQTT_DELAY = 20;
-
 public:
 	std::atomic<bool> connected;
-	mqtt_client_wrapper(const std::string              &client_id,
+	mqtt_legacy_client_wrapper(const std::string              &client_id,
 	                    std::shared_ptr<spdlog::logger> logger,
 	                    std::string                     broker_address_);
-	~mqtt_client_wrapper();
+	~mqtt_legacy_client_wrapper();
 	bool SetNodeValue(std::string topic, std::string value);
 	void SubscribeToTopic(std::string topic);
-	bool dispatch_command(std::string command);
+	bool dispatch_command(Instruction command);
 	void register_busy_callback(std::function<void(bool)> callback);
 	void register_ready_callback(std::function<void(bool)> callback);
 	void register_barcode_callback(std::function<void(unsigned long)> callback);

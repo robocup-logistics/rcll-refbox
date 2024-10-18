@@ -1,7 +1,7 @@
 // Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
 
 /***************************************************************************
- *  mqtt_client_wrapper.cpp -MQTT client wrapper
+ *  mqtt_client_wrapper.cpp -MQTT_LEGACY client wrapper
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -38,24 +38,23 @@ namespace mps_comm {
 }
 #endif
 
-mqtt_client_wrapper::mqtt_client_wrapper(const std::string              &client_id,
+mqtt_legacy_client_wrapper::mqtt_legacy_client_wrapper(const std::string              &client_id,
                                          std::shared_ptr<spdlog::logger> logger,
                                          std::string                     broker_address_)
 {
 	logger_               = logger;
 	name_                 = client_id;
-	command_topic		  = TOPIC_PREFIX + std::string("/") + name_ + "/Command";
 	connected             = false;
 	broker_address        = broker_address_;
 	std::string full_name = "Refbox_" + name_;
 	cli                   = new mqtt::async_client(broker_address, full_name);
-	subListener_          = new mqtt_action_listener(name_, logger_);
+	subListener_          = new mqtt_legacy_action_listener(name_, logger_);
 	mqtt::connect_options connOpts;
-	connOpts.set_clean_session(true);
+	connOpts.set_clean_session(false);
 	connOpts.set_keep_alive_interval(std::chrono::seconds(1200));
 	// Install the callback(s) before connecting.
 	//connOpts.set_keep_alive_interval(0);
-	callback_handler = new mqtt_callback(*cli, connOpts, logger_);
+	callback_handler = new mqtt_legacy_callback(*cli, connOpts, logger_);
 	cli->set_callback(*callback_handler);
 	std::lock_guard<std::mutex> lock(client_mutex);
 	// Start the connection.
@@ -73,40 +72,40 @@ mqtt_client_wrapper::mqtt_client_wrapper(const std::string              &client_
 			return;
 		}
 	}
-	SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/Status");
-	SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/Barcode");
+	SubscribeToTopic(MqttLegacyUtils::TOPIC_PREFIX + "/" + name_ + "/In/Status/Ready");
+	SubscribeToTopic(MqttLegacyUtils::TOPIC_PREFIX + "/" + name_ + "/In/Status/Busy");
 	if (name_ == "C-RS1" || name_ == "C-RS2" || name_ == "M-RS1" || name_ == "M-RS2") {
 		logger_->info("Subscribing to the slidecounter!");
-		SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/SlideCount");
+		SubscribeToTopic(MqttLegacyUtils::TOPIC_PREFIX + "/" + name_ + "/In/" + MqttLegacyUtils::registers[5]);
 	}
 	connected = true;
 }
 
 bool
-mqtt_client_wrapper::SetNodeValue(std::string topic, std::string value)
+mqtt_legacy_client_wrapper::SetNodeValue(std::string topic, std::string value)
 {
 	try {
 		logger_->info("Setting node value for {} to {}", topic, value);
 		mqtt::message_ptr pubmsg = mqtt::make_message(topic, value);
-		pubmsg->set_qos(QOS);
+		pubmsg->set_qos(MqttLegacyUtils::QOS);
 		cli->publish(pubmsg)->wait_for(std::chrono::seconds(10));
 	} catch (const mqtt::exception &exc) {
 		logger_->error("ERROR: Unable to publish to MQTT server: '{}' {}",
 		               broker_address,
 		               exc.to_string());
-		std::this_thread::sleep_for(std::chrono::milliseconds(MQTT_DELAY));
+		std::this_thread::sleep_for(MqttLegacyUtils::mqtt_legacy_delay_);
 		return false;
 	}
-	std::this_thread::sleep_for(std::chrono::milliseconds(MQTT_DELAY));
+	std::this_thread::sleep_for(MqttLegacyUtils::mqtt_legacy_delay_);
 	return true;
 }
 
 void
-mqtt_client_wrapper::SubscribeToTopic(std::string topic)
+mqtt_legacy_client_wrapper::SubscribeToTopic(std::string topic)
 {
 	try {
 		logger_->info("Subscribing to topic [{}]", topic);
-		cli->subscribe(topic, QOS, nullptr, *subListener_)
+		cli->subscribe(topic, MqttLegacyUtils::QOS, nullptr, *subListener_)
 		  ->wait_for(std::chrono::seconds(5));
 	} catch (const mqtt::exception &exc) {
 		logger_->error("ERROR: Unable to Subscribe to MQTT topic: '{}' {}", topic, exc.to_string());
@@ -114,7 +113,7 @@ mqtt_client_wrapper::SubscribeToTopic(std::string topic)
 	}
 }
 
-mqtt_client_wrapper::~mqtt_client_wrapper()
+mqtt_legacy_client_wrapper::~mqtt_legacy_client_wrapper()
 {
 	try {
 		logger_->info("Disconnecting from the MQTT server...");
@@ -127,34 +126,56 @@ mqtt_client_wrapper::~mqtt_client_wrapper()
 }
 
 bool
-mqtt_client_wrapper::dispatch_command(std::string command)
+mqtt_legacy_client_wrapper::dispatch_command(Instruction command)
 {
 	std::lock_guard<std::mutex> lock(client_mutex);
+	bool                        in = std::get<0>(command) < 100 ? false : true;
 	logger_->info("Starting dispatch of command");
-	if (!SetNodeValue(command_topic, command))
+	//ACTION ID with command value
+	if (!SetNodeValue(MqttLegacyUtils::BuildTopic(name_, MqttLegacyUtils::registers[0], in),
+	                  std::to_string(std::get<0>(command))))
 		return false;
+	// DATA0 with payload 1
+	if (!SetNodeValue(MqttLegacyUtils::BuildTopic(name_, MqttLegacyUtils::registers[2], in),
+	                  std::to_string(std::get<1>(command))))
+		return false;
+	// DATA1 with payload 2
+	if (!SetNodeValue(MqttLegacyUtils::BuildTopic(name_, MqttLegacyUtils::registers[3], in),
+	                  std::to_string(std::get<2>(command))))
+		return false;
+	// Enabled with payload 3
+	if (!SetNodeValue(
+	      MqttLegacyUtils::BuildTopic(name_, MqttLegacyUtils::registers[6] + "/" + MqttLegacyUtils::bits[2], in),
+	      std::to_string((bool)std::get<5>(command))))
+		return false;
+	// Enabled with payload 4
+	if (!SetNodeValue(
+	      MqttLegacyUtils::BuildTopic(name_, MqttLegacyUtils::registers[6] + "/" + MqttLegacyUtils::bits[3], in),
+	      std::to_string((bool)std::get<4>(command))))
+		return false;
+
 	logger_->info("Finished dispatch of command successful");
 	return true;
 }
 void
-mqtt_client_wrapper::register_busy_callback(std::function<void(bool)> callback)
+mqtt_legacy_client_wrapper::register_busy_callback(std::function<void(bool)> callback)
 {
 	callback_handler->register_busy_callback(callback);
 }
 
 void
-mqtt_client_wrapper::register_ready_callback(std::function<void(bool)> callback)
+mqtt_legacy_client_wrapper::register_ready_callback(std::function<void(bool)> callback)
 {
 	callback_handler->register_ready_callback(callback);
 }
 
 void
-mqtt_client_wrapper::register_barcode_callback(std::function<void(unsigned long)> callback)
+mqtt_legacy_client_wrapper::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
 	callback_handler->register_barcode_callback(callback);
 }
 void
-mqtt_client_wrapper::register_slide_callback(std::function<void(unsigned int)> callback)
+mqtt_legacy_client_wrapper::register_slide_callback(std::function<void(unsigned int)> callback)
 {
 	callback_handler->register_slide_callback(callback);
 }

@@ -1,5 +1,5 @@
 /***************************************************************************
- *  mqtt_callbacks.h -MQTT communication callbacks
+ *  mqtt_callbacks.h -MQTT_LEGACY communication callbacks
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -21,6 +21,7 @@
 
 #pragma once
 #include "mqtt_action_listener.h"
+#include "mqtt_utils.h"
 
 #include <mqtt/async_client.h>
 #include <spdlog/logger.h>
@@ -39,7 +40,7 @@ namespace mps_comm {
 // when printing recursively, indent is used to make the hirarchy more visible
 #define logIndent(i) {i * 2, (i + 1) * 2, (i + 2) * 2}
 
-class mqtt_callback : public virtual mqtt::callback, public virtual mqtt::iaction_listener
+class mqtt_legacy_callback : public virtual mqtt::callback, public virtual mqtt::iaction_listener
 
 {
 	// Counter for the number of connection retries
@@ -50,9 +51,7 @@ class mqtt_callback : public virtual mqtt::callback, public virtual mqtt::iactio
 	// Options to use if we need to reconnect
 	mqtt::connect_options &connOpts_;
 	// An action listener to display the result of actions.
-	mqtt_action_listener subListener_;
-
-	const int MQTT_RETRY_COUNT = 5;
+	mqtt_legacy_action_listener subListener_;
 
 	// This deomonstrates manually reconnecting to the broker by calling
 	// connect() again. This is a possibility for an application that keeps
@@ -80,24 +79,21 @@ class mqtt_callback : public virtual mqtt::callback, public virtual mqtt::iactio
 
 	void delivery_complete(mqtt::delivery_token_ptr token) override;
 
-	std::function<void(unsigned int)> callback_barcode;
-	std::function<void(unsigned int)> callback_busy;
-	std::function<void(unsigned int)> callback_ready;
-	std::function<void(unsigned int)> callback_slide;
+	std::unordered_map<std::string, std::function<void(unsigned int)>> callbacks_;
 
 public:
-    void register_barcode_callback(std::function<void(unsigned long)> callback);
-    void register_busy_callback(std::function<void(bool)> callback);
-    void register_ready_callback(std::function<void(bool)> callback);
+	void register_busy_callback(std::function<void(bool)> callback);
+	void register_ready_callback(std::function<void(bool)> callback);
+	void register_barcode_callback(std::function<void(unsigned long)> callback);
 	void register_slide_callback(std::function<void(unsigned int)> callback);
 
-	mqtt_callback(mqtt::async_client             &cli,
+	mqtt_legacy_callback(mqtt::async_client             &cli,
 	              mqtt::connect_options          &connOpts,
 	              std::shared_ptr<spdlog::logger> logger);
 
 	//: nretry_(0), cli_(cli), connOpts_(connOpts), subListener_("Subscription") {};
 
-	~mqtt_callback();
+	~mqtt_legacy_callback();
 };
 
 } // namespace mps_comm

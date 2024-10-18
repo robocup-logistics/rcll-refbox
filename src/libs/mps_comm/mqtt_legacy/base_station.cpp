@@ -1,7 +1,7 @@
 // Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
 
 /***************************************************************************
- *  base_station.cpp - MQTT communication with the BS
+ *  base_station.cpp - MQTT_Legay communication with the BS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -31,27 +31,29 @@
 namespace rcll {
 namespace mps_comm {
 
-MqttBaseStation::MqttBaseStation(const std::string &name,
+MqttLegacyBaseStation::MqttLegacyBaseStation(const std::string &name,
                                  const std::string &ip,
                                  unsigned short     port,
                                  const std::string &log_path,
                                  ConnectionMode     mode)
-: Machine(name), MqttMachine(name, Station::STATION_BASE, ip, port, log_path, mode)
+: Machine(name), MqttLegacyMachine(name, Station::STATION_BASE, ip, port, log_path, mode)
 {
 }
 
 void
-MqttBaseStation::get_base(llsf_msgs::BaseColor color)
+MqttLegacyBaseStation::get_base(llsf_msgs::BaseColor color)
 {
-	std::string m_color;
+	//lock_guard<mutex> g(lock_);
+	rcll::mps_comm::BaseColor color_sps;
+	;
 	switch (color) {
-		case llsf_msgs::BASE_RED: m_color = "RED"; break;
-		case llsf_msgs::BASE_BLACK: m_color = "BLACK"; break;
-		case llsf_msgs::BASE_SILVER: m_color = "SILVER"; break;
-		default: throw fawkes::Exception("Unexpected base color (%lu)", color);
+	case llsf_msgs::BASE_RED: color_sps = rcll::mps_comm::BaseColor::BASE_COLOR_RED; break;
+	case llsf_msgs::BASE_BLACK: color_sps = rcll::mps_comm::BaseColor::BASE_COLOR_BLACK; break;
+	case llsf_msgs::BASE_SILVER: color_sps = rcll::mps_comm::BaseColor::BASE_COLOR_SILVER; break;
+	default: throw fawkes::Exception("Unexpected base color (%lu)", color);
 	}
 
-	enqueue_instruction("GET_BASE " + m_color);
+	enqueue_instruction(machine_type_ + Operation::OPERATION_GET_BASE, color_sps);
 }
 
 } // namespace mps_comm

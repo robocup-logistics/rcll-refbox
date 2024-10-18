@@ -25,18 +25,19 @@
 
 #include "../base_station.h"
 #include "machine.h"
+#include "mqtt_utils.h"
 
 namespace rcll {
 namespace mps_comm {
 
-class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
+class MqttLegacyBaseStation : public virtual MqttLegacyMachine, public virtual BaseStation
 {
 public:
-	MqttBaseStation(const std::string &name,
+	MqttLegacyBaseStation(const std::string &name,
 	                const std::string &ip,
 	                unsigned short     port,
 	                const std::string &log_path = "",
-	                ConnectionMode     mode     = MQTT);
+	                ConnectionMode     mode     = MQTTLEGACY);
 
 	void get_base(llsf_msgs::BaseColor slot) override;
 };
