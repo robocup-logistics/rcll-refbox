@@ -5,11 +5,11 @@ and I am not willing to Implement something that's not documented and not human 
 
 ### New MQTT Setup (for legacy support checkout fdefaa48f6f05cadb):
 ```
-/MPS/{NAME}/Command //The refbox only sends here it's commands
-/MPS/{NAME}/Status //The refbox can read the status here
-/MPS/{NAME}/Barcode //The refbox can read the last scanned Barcode here
-/MPS/{NAME}/SlideCount //The refbox can read the SlideCount on Ringstations here
-/MPS/{NAME}/Sensors/... //(OPTIONAL) here can sensors be published for debugging and logging purposes not to be used by refbox directly
+MPS/{NAME}/Command //The refbox only sends here it's commands
+MPS/{NAME}/Status //The refbox can read the status here
+MPS/{NAME}/Barcode //The refbox can read the last scanned Barcode here
+MPS/{NAME}/SlideCount //The refbox can read the SlideCount on Ringstations here
+MPS/{NAME}/Sensors/... //(OPTIONAL) here can sensors be published for debugging and logging purposes not to be used by refbox directly
 ```
 
 #### The only valid names are:
