@@ -94,10 +94,6 @@ mqtt_callback::connection_lost(const std::string &cause)
 void
 mqtt_callback::message_arrived(mqtt::const_message_ptr msg)
 {
-	//std::cout << "Message arrived" << std::endl;
-	//std::cout << "\ttopic: '" << msg->get_topic() << "'" << std::endl;
-	//std::cout << "\tpayload: '" << msg->to_string() << "'\n" << std::endl;
-
 	std::string topic = msg->get_topic();
 	std::string value = msg->to_string();
 
@@ -126,16 +122,21 @@ mqtt_callback::message_arrived(mqtt::const_message_ptr msg)
 		}
 
 		if (callback_ready)
-			callback_ready(ready);
+			std::thread([this, ready]() {
+				callback_ready(ready);
+			}).detach();
 		if (callback_busy)
-			callback_busy(busy);
+			std::thread([this, busy]() {
+				callback_busy(busy);
+			}).detach();
 
 	} else if(topic_name == "SlideCount"){
 		logger_->info("MPS sent a InSlideCnt update with value [{}]", value);
 		unsigned int count = std::stoul(value);
 		if (callback_slide)
-			callback_slide(count);
-		// TODO maybe fix and use this instead with std::any in the map std::any_cast <int (*) (int)> (mapIter->second) (5)
+			std::thread([this, count]() {
+				callback_slide(count);
+			}).detach();
 	}
 	else if(topic_name == "Barcode") {
 		logger_->info("MPS sent a Barcode update with value [{}]", value);

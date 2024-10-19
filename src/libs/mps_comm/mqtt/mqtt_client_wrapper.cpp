@@ -56,7 +56,7 @@ mqtt_client_wrapper::mqtt_client_wrapper(const std::string              &client_
 	cli                   = new mqtt::async_client(broker_address, full_name);
 	subListener_          = new mqtt_action_listener(name_, logger_);
 	mqtt::connect_options connOpts;
-	connOpts.set_clean_session(false);
+	connOpts.set_clean_session(true);
 	connOpts.set_keep_alive_interval(std::chrono::seconds(1200));
 	// Install the callback(s) before connecting.
 	//connOpts.set_keep_alive_interval(0);

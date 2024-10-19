@@ -23,10 +23,6 @@
 
 #include "./machine.h"
 
-#include "../exceptions.h"
-#include "../time_utils.h"
-#include "msgs/MachineCommands.pb.h"
-
 #if HAVE_SYSTEM_SPDLOG
 #	include <spdlog/sinks/basic_file_sink.h>
 #	include <spdlog/sinks/stdout_sinks.h>

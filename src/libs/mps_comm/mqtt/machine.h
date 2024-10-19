@@ -101,7 +101,6 @@ protected:
 
 	bool shutdown_;
 
-	std::mutex              command_mutex_;
 	std::condition_variable queue_condition_;
 	std::queue<std::string> command_queue_;
 	std::thread             worker_thread_;
