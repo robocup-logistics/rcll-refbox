@@ -1,7 +1,7 @@
 // Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
 
 /***************************************************************************
- *  base_station.cpp - MQTT communication with the BS
+ *  cap_station.cpp - MQTT_LEGACY communication with the CS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -21,37 +21,46 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-#include "base_station.h"
+#include "cap_station.h"
 
 #include "../mps_io_mapping.h"
-#include "core/exception.h"
 
 #include <iostream>
 
 namespace rcll {
+#if 0
+}
+#endif
 namespace mps_comm {
+#if 0
+}
+#endif
 
-MqttBaseStation::MqttBaseStation(const std::string &name,
-                                 const std::string &ip,
-                                 unsigned short     port,
-                                 const std::string &log_path,
-                                 ConnectionMode     mode)
-: Machine(name), MqttMachine(name, Station::STATION_BASE, ip, port, log_path, mode)
+MqttLegacyCapStation::MqttLegacyCapStation(const std::string &name,
+                               const std::string &ip,
+                               unsigned short     port,
+                               const std::string &log_path,
+                               ConnectionMode     mode)
+: Machine(name), MqttLegacyMachine(name, Station::STATION_CAP, ip, port, log_path, mode)
+{
+}
+
+MqttLegacyCapStation::~MqttLegacyCapStation()
 {
 }
 
 void
-MqttBaseStation::get_base(llsf_msgs::BaseColor color)
+MqttLegacyCapStation::retrieve_cap()
 {
-	std::string m_color;
-	switch (color) {
-		case llsf_msgs::BASE_RED: m_color = "RED"; break;
-		case llsf_msgs::BASE_BLACK: m_color = "BLACK"; break;
-		case llsf_msgs::BASE_SILVER: m_color = "SILVER"; break;
-		default: throw fawkes::Exception("Unexpected base color (%lu)", color);
-	}
+	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
+	                    Operation::OPERATION_CAP_RETRIEVE);
+}
 
-	enqueue_instruction("GET_BASE " + m_color);
+void
+MqttLegacyCapStation::mount_cap()
+{
+	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
+	                    Operation::OPERATION_CAP_MOUNT);
 }
 
 } // namespace mps_comm

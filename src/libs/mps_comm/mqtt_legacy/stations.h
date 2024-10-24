@@ -1,5 +1,5 @@
 /***************************************************************************
- *  base_station.h - MQTT communication with the BS
+ *  stations.h - All MQTT_LEGACY MPS stations
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -19,27 +19,10 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// This file contains the BaseStation class.
-// At a base station a robot can pick up a base
 #pragma once
 
-#include "../base_station.h"
-#include "machine.h"
-
-namespace rcll {
-namespace mps_comm {
-
-class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
-{
-public:
-	MqttBaseStation(const std::string &name,
-	                const std::string &ip,
-	                unsigned short     port,
-	                const std::string &log_path = "",
-	                ConnectionMode     mode     = MQTT);
-
-	void get_base(llsf_msgs::BaseColor slot) override;
-};
-
-} // namespace mps_comm
-} // namespace rcll
+#include "base_station.h"
+#include "cap_station.h"
+#include "delivery_station.h"
+#include "ring_station.h"
+#include "storage_station.h"

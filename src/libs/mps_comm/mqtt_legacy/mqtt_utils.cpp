@@ -1,7 +1,7 @@
 // Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
 
 /***************************************************************************
- *  mqtt_utils.cpp - MQTT utility definitions
+ *  mqtt_utils.cpp - MQTT_LEGACY utility definitions
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -33,7 +33,7 @@ namespace mps_comm {
 #endif
 
 Topic
-MqttUtils::ParseTopic(std::string topic)
+MqttLegacyUtils::ParseTopic(std::string topic)
 {
 	bool in       = false;
 	bool basic    = false;
@@ -46,13 +46,13 @@ MqttUtils::ParseTopic(std::string topic)
 	if (topic.find("/Basic/") != std::string::npos) {
 		basic = true;
 	}
-	if (topic.find("/" + MqttUtils::bits[0]) != std::string::npos) {
+	if (topic.find("/" + MqttLegacyUtils::bits[0]) != std::string::npos) {
 		busy = true;
 	}
-	if (topic.find("/" + MqttUtils::bits[1]) != std::string::npos) {
+	if (topic.find("/" + MqttLegacyUtils::bits[1]) != std::string::npos) {
 		ready = true;
 	}
-	if (topic.find("/" + MqttUtils::registers[5]) != std::string::npos) {
+	if (topic.find("/" + MqttLegacyUtils::registers[5]) != std::string::npos) {
 		slidecnt = true;
 	}
 
@@ -70,7 +70,7 @@ MqttUtils::ParseTopic(std::string topic)
 }
 
 std::string
-MqttUtils::BuildTopic(std::string name, std::string target_register, bool in)
+MqttLegacyUtils::BuildTopic(std::string name, std::string target_register, bool in)
 {
 	std::stringstream s;
 	s << TOPIC_PREFIX << "/" << name << "/" << (in ? folders[0] : folders[1]) << "/"

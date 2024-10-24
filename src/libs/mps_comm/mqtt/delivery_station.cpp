@@ -52,7 +52,14 @@ MqttDeliveryStation::~MqttDeliveryStation()
 void
 MqttDeliveryStation::deliver_product(int slot)
 {
-	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
+    std::string m_slot;
+    switch (slot) {
+        case 0: m_slot = "SLOT0"; break;
+        case 1: m_slot = "SLOT1"; break;
+        case 2: m_slot = "SLOT2"; break;
+        default: throw std::runtime_error("Invalid slot number");
+    }
+	enqueue_instruction("DELIVER " + m_slot);
 }
 
 } // namespace mps_comm

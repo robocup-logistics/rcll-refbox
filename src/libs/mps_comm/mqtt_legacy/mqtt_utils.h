@@ -1,5 +1,5 @@
 /***************************************************************************
- *  mqtt_utils.h - MQTT utility definitions
+ *  mqtt_utils.h - MQTT_LEGACY utility definitions
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -44,7 +44,7 @@ enum Topic {
 	BasicNodes_Busy  = 5,
 };
 
-class MqttUtils
+class MqttLegacyUtils
 {
 public:
 	const inline static std::string              TOPIC_PREFIX = "MPS";
@@ -56,7 +56,7 @@ public:
 	  {"Busy", "Ready", "Error", "Enable", "unused0", "unused1", "inSensor", "outSensor"};
 	const inline static int                       N_RETRY_ATTEMPTS = 5;
 	const inline static int                       QOS              = 2;
-	const inline static std::chrono::milliseconds mqtt_delay_{20};
+	const inline static std::chrono::milliseconds mqtt_legacy_delay_{20};
 
 	static Topic       ParseTopic(std::string topic);
 	static std::string BuildTopic(std::string name, std::string target_register, bool in);

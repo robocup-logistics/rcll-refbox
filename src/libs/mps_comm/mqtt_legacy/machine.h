@@ -1,5 +1,5 @@
 /***************************************************************************
- *  machine.h - MQTT communication with an MPS
+ *  machine.h - MQTT_LEGACY communication with an MPS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -27,35 +27,42 @@
 #include "mqtt_action_listener.h"
 #include "mqtt_callback.h"
 #include "mqtt_client_wrapper.h"
+#include "mqtt_utils.h"
 
 #include <spdlog/spdlog.h>
 
 #include <boost/any.hpp>
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <string>
 #include <thread>
 #include <tuple>
+#include <unordered_map>
+#include <vector>
 
 namespace rcll {
 namespace mps_comm {
 
 class MachineFactory;
 
-class MqttMachine : public virtual Machine
+class MqttLegacyMachine : public virtual Machine
 {
+	using Instruction =
+	  std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
+
 	friend class MachineFactory;
 
 public:
-	MqttMachine(const std::string &name,
+	MqttLegacyMachine(const std::string &name,
 	            Station            machine_type,
 	            const std::string &ip,
 	            unsigned short     port,
 	            const std::string &log_path = "",
-	            ConnectionMode              = MQTT);
+	            ConnectionMode              = MQTTLEGACY);
 
-	~MqttMachine() override;
+	~MqttLegacyMachine() override;
 
 	// Set the light of specified color to specified state
 	// color: 1 - 3, state 0 - 2
@@ -83,10 +90,15 @@ public:
 	const Station                   machine_type_;
 	std::mutex                      command_queue_mutex_;
 	std::mutex                      client_mutex_;
-	mqtt_client_wrapper            *mqtt_client_;
+	mqtt_legacy_client_wrapper            *mqtt_legacy_client_;
 
 protected:
-	void enqueue_instruction(std::string command);
+	void enqueue_instruction(unsigned short command,
+	                         unsigned short payload1 = 0,
+	                         unsigned short payload2 = 0,
+	                         int            timeout  = 0,
+	                         unsigned char  status   = 1,
+	                         unsigned char  error    = 0);
 	void dispatch_command_queue();
 
 	// Initialize logger; If log_path is empty, the logs are redirected to
@@ -101,8 +113,9 @@ protected:
 
 	bool shutdown_;
 
+	std::mutex              command_mutex_;
 	std::condition_variable queue_condition_;
-	std::queue<std::string> command_queue_;
+	std::queue<Instruction> command_queue_;
 	std::thread             worker_thread_;
 	std::thread             dispatcher_thread_;
 

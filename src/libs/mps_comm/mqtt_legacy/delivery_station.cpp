@@ -1,5 +1,7 @@
+// Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
+
 /***************************************************************************
- *  base_station.h - MQTT communication with the BS
+ *  delivery_station.cpp - MQTT_LEGACY communication with the DS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -19,27 +21,39 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// This file contains the BaseStation class.
-// At a base station a robot can pick up a base
-#pragma once
+#include "delivery_station.h"
 
-#include "../base_station.h"
-#include "machine.h"
+#include "../mps_io_mapping.h"
+
+#include <iostream>
 
 namespace rcll {
+#if 0
+}
+#endif
 namespace mps_comm {
+#if 0
+}
+#endif
 
-class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
+MqttLegacyDeliveryStation::MqttLegacyDeliveryStation(const std::string &name,
+                                         const std::string &ip,
+                                         unsigned short     port,
+                                         const std::string &log_path,
+                                         ConnectionMode     mode)
+: Machine(name), MqttLegacyMachine(name, Station::STATION_DELIVERY, ip, port, log_path, mode)
 {
-public:
-	MqttBaseStation(const std::string &name,
-	                const std::string &ip,
-	                unsigned short     port,
-	                const std::string &log_path = "",
-	                ConnectionMode     mode     = MQTT);
+}
 
-	void get_base(llsf_msgs::BaseColor slot) override;
-};
+MqttLegacyDeliveryStation::~MqttLegacyDeliveryStation()
+{
+}
+
+void
+MqttLegacyDeliveryStation::deliver_product(int slot)
+{
+	enqueue_instruction(machine_type_ | Operation::OPERATION_DELIVER, slot);
+}
 
 } // namespace mps_comm
 } // namespace rcll

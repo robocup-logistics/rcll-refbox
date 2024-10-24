@@ -1,7 +1,7 @@
 // Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
 
 /***************************************************************************
- *  storage_station.cpp - MQTT communication with the SS
+ *  storage_station.cpp - MQTT_LEGACY communication with the SS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -24,7 +24,8 @@
 #include "storage_station.h"
 
 #include "../mps_io_mapping.h"
-#include <string>
+
+#include <iostream>
 
 namespace rcll {
 #if 0
@@ -35,48 +36,36 @@ namespace mps_comm {
 }
 #endif
 
-MqttStorageStation::MqttStorageStation(const std::string &name,
+MqttLegacyStorageStation::MqttLegacyStorageStation(const std::string &name,
                                        const std::string &ip,
                                        unsigned short     port,
                                        const std::string &log_path,
                                        ConnectionMode     mode)
-: Machine(name), MqttMachine(name, Station::STATION_STORAGE, ip, port, log_path, mode)
+: Machine(name), MqttLegacyMachine(name, Station::STATION_STORAGE, ip, port, log_path, mode)
 {
 }
 
 void
-MqttStorageStation::retrieve(unsigned int shelf, unsigned int slot)
+MqttLegacyStorageStation::retrieve(unsigned int shelf, unsigned int slot)
 {
-	if (shelf > 5 || slot > 7) {
-		throw std::runtime_error("Shelf or Slot out of Range!");
-	}
-	enqueue_instruction("RETRIEVE " + std::to_string(shelf) + "," + std::to_string(slot));
+	enqueue_instruction(Operation::OPERATION_RETRIEVE + machine_type_, shelf, slot);
 }
 
 void
-MqttStorageStation::store(unsigned int shelf, unsigned int slot)
+MqttLegacyStorageStation::store(unsigned int shelf, unsigned int slot)
 {
-	if (shelf > 5 || slot > 7) {
-		throw std::runtime_error("Shelf or Slot out of Range!");
-	}
-	enqueue_instruction("STORE " + std::to_string(shelf) + "," + std::to_string(slot));
+	enqueue_instruction(Operation::OPERATION_STORE + machine_type_, shelf, slot);
 }
 
 void
-MqttStorageStation::relocate(unsigned int shelf,
+MqttLegacyStorageStation::relocate(unsigned int shelf,
                              unsigned int slot,
                              unsigned int target_shelf,
                              unsigned int target_slot)
 {
-	if (shelf > 5 || slot > 7) {
-		throw std::runtime_error("Shelf or Slot out of Range!");
-	}
-	if (target_shelf > 5 || target_slot > 7) {
-		throw std::runtime_error("Target-Shelf or Target-Slot out of Range!");
-	}
-
-	enqueue_instruction("RELOCATE " + std::to_string(shelf) + "," + std::to_string(slot)
-						+ " " + std::to_string(target_shelf) + "," + std::to_string(target_slot));
+	enqueue_instruction(Operation::OPERATION_RELOCATE + machine_type_,
+	                    (shelf * 10) + slot,
+	                    (target_shelf * 10) + target_slot);
 }
 
 } // namespace mps_comm

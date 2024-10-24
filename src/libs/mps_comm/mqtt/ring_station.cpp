@@ -42,8 +42,14 @@ MqttRingStation::MqttRingStation(const std::string &name,
 void
 MqttRingStation::mount_ring(unsigned int feeder, llsf_msgs::RingColor color)
 {
-	uint16_t payload2 = color;
-	enqueue_instruction(Operation::OPERATION_MOUNT_RING + machine_type_, feeder, payload2);
+	std::string m_feeder;
+	switch(feeder) {
+		case 0:	m_feeder = "RING0"; break;
+		case 1: m_feeder = "RING1";	break;
+		default: throw std::runtime_error("Invalid feeder number");
+
+	}
+	enqueue_instruction("MOUNT_RING " + m_feeder);
 }
 
 void
