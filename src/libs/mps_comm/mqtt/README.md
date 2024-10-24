@@ -3,7 +3,7 @@ I (@techtasie) took the freedome in rewriting the way the refbox comunicates
 with a MPS over MQTT. Since I need to Implement it in Codesys for our MPS 
 and I am not willing to Implement something that's not documented and not human readable.
 
-### New MQTT Setup (for legacy support checkout fdefaa48f6f05cadb):
+### New MQTT Setup (for legacy support use type "mqtt_legacy"):
 ```
 MPS/{NAME}/Command //The refbox only sends here it's commands
 MPS/{NAME}/Status //The refbox can read the status here

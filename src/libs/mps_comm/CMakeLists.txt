@@ -35,6 +35,18 @@ if(PahoMqttCpp_FOUND)
     mqtt/ring_station.cpp
     mqtt/storage_station.cpp
   )
+  target_sources(refbox-mps-comm PRIVATE
+    mqtt_legacy/machine.cpp
+    mqtt_legacy/base_station.cpp
+    mqtt_legacy/mqtt_utils.cpp
+    mqtt_legacy/mqtt_callback.cpp
+    mqtt_legacy/mqtt_action_listener.cpp
+    mqtt_legacy/mqtt_client_wrapper.cpp
+    mqtt_legacy/cap_station.cpp
+    mqtt_legacy/delivery_station.cpp
+    mqtt_legacy/ring_station.cpp
+    mqtt_legacy/storage_station.cpp
+  )
   target_link_libraries(refbox-mps-comm PRIVATE ${PAHO_MQTT_C_LIBRARIES} ${PAHO_MQTT_CPP_LIBRARIES}  paho-mqttpp3 paho-mqtt3as)
 else()
   message(WARNING "Build without MQTT support (paho-cpp(-devel) missing")
