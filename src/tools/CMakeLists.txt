@@ -60,3 +60,9 @@ target_link_libraries(rcll-workpiece PRIVATE ${TOOL_DEPS})
 install(TARGETS rcll-workpiece
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+add_executable(rcll-proto-rebroadcaster rcll-proto-rebroadcaster.cpp)
+target_link_libraries(rcll-proto-rebroadcaster PRIVATE refbox-core refbox-utils refbox-config refbox-protobuf-rebroadcaster ProtobufComm::protobuf_comm)
+install(TARGETS rcll-proto-rebroadcaster
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
