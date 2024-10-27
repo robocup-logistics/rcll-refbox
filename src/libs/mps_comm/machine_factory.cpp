@@ -30,6 +30,7 @@
 
 #ifdef HAVE_MQTT
 #	include "mqtt/stations.h"
+#	include "mqtt_legacy/stations.h"
 #endif
 
 #include <core/exception.h>
@@ -119,6 +120,32 @@ MachineFactory::create_machine(const std::string &name,
 			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 		} else if (type == "SS") {
 			return std::make_unique<MqttStorageStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else {
+			throw fawkes::Exception(
+			  "Unexpected machine type '%s' for machine '%s' and connection mode '%s'",
+			  type.c_str(),
+			  name.c_str(),
+			  connection_mode.c_str());
+		}
+	}
+	if (connection_mode == "mqtt_legacy") {
+		std::unique_ptr<MqttLegacyMachine> mps;
+		if (type == "BS") {
+			mps = std::make_unique<MqttLegacyBaseStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+			return std::move(mps);
+		} else if (type == "CS") {
+			return std::make_unique<MqttLegacyCapStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else if (type == "DS") {
+			return std::make_unique<MqttLegacyDeliveryStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else if (type == "RS") {
+			return std::make_unique<MqttLegacyRingStation>(
+			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
+		} else if (type == "SS") {
+			return std::make_unique<MqttLegacyStorageStation>(
 			  name, ip, port, log_path, MqttMachine::ConnectionMode::MQTT);
 		} else {
 			throw fawkes::Exception(

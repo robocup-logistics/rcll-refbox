@@ -52,15 +52,13 @@ MqttCapStation::~MqttCapStation()
 void
 MqttCapStation::retrieve_cap()
 {
-	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
-	                    Operation::OPERATION_CAP_RETRIEVE);
+	enqueue_instruction("CAP_ACTION RETRIEVE");
 }
 
 void
 MqttCapStation::mount_cap()
 {
-	enqueue_instruction(Operation::OPERATION_CAP_ACTION + machine_type_,
-	                    Operation::OPERATION_CAP_MOUNT);
+	enqueue_instruction("CAP_ACTION MOUNT");
 }
 
 } // namespace mps_comm

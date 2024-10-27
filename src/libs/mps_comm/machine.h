@@ -36,6 +36,7 @@ public:
 		SIMULATION,
 		PLC,
 		MQTT,
+		MQTTLEGACY,
 	};
 
 	enum ConveyorDirection { FORWARD = 1, BACKWARD = 2 };

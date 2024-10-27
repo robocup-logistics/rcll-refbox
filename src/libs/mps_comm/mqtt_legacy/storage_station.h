@@ -1,5 +1,5 @@
 /***************************************************************************
- *  base_station.h - MQTT communication with the BS
+ *  storage_station.h - MQTT_LEGACY communication with the SS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -19,26 +19,31 @@
  *  Read the full text in the LICENSE.GPL file in the doc directory.
  */
 
-// This file contains the BaseStation class.
-// At a base station a robot can pick up a base
+// Storage Station
+// The storage station can be used to store products.
+// It will not work as intended, because protocols do not match yet.
 #pragma once
 
-#include "../base_station.h"
+#include "../storage_station.h"
 #include "machine.h"
 
 namespace rcll {
 namespace mps_comm {
 
-class MqttBaseStation : public virtual MqttMachine, public virtual BaseStation
+class MqttLegacyStorageStation : public virtual MqttLegacyMachine, public virtual StorageStation
 {
 public:
-	MqttBaseStation(const std::string &name,
-	                const std::string &ip,
-	                unsigned short     port,
-	                const std::string &log_path = "",
-	                ConnectionMode     mode     = MQTT);
-
-	void get_base(llsf_msgs::BaseColor slot) override;
+	MqttLegacyStorageStation(const std::string &name,
+	                   const std::string &ip,
+	                   unsigned short     port,
+	                   const std::string &log_path = "",
+	                   ConnectionMode     mode     = MQTTLEGACY);
+	void retrieve(unsigned int shelf, unsigned int slot) override;
+	void store(unsigned int shelf, unsigned int slot) override;
+	void relocate(unsigned int shelf,
+	              unsigned int slot,
+	              unsigned int target_shelf,
+	              unsigned int target_slot) override;
 };
 
 } // namespace mps_comm

@@ -1,7 +1,7 @@
 // Licensed under GPLv2. See LICENSE file. Copyright TC of the RoboCup Logistics League
 
 /***************************************************************************
- *  machine.cpp - MQTT communication with an MPS
+ *  machine.cpp - MQTT_LEGACY communication with an MPS
  *
  *  Created: Thu 21 Feb 2023 13:29:11 CET 13:29
  *  Copyright  2023  Dominik Lampel <lampel@student.tugraz.at>
@@ -23,13 +23,20 @@
 
 #include "./machine.h"
 
+#include "../exceptions.h"
+#include "../time_utils.h"
+
 #if HAVE_SYSTEM_SPDLOG
 #	include <spdlog/sinks/basic_file_sink.h>
 #	include <spdlog/sinks/stdout_sinks.h>
 #endif
 
 #include <chrono>
+#include <iostream>
 #include <pthread.h>
+#include <signal.h>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -44,7 +51,7 @@ namespace mps_comm {
 using Instruction =
   std::tuple<unsigned short, unsigned short, unsigned short, int, unsigned char, unsigned char>;
 
-MqttMachine::MqttMachine(const std::string &name,
+MqttLegacyMachine::MqttLegacyMachine(const std::string &name,
                          Station            machine_type,
                          const std::string &ip,
                          unsigned short     port,
@@ -62,21 +69,21 @@ MqttMachine::MqttMachine(const std::string &name,
 	initLogger(log_path);
 	auto broker = std::string("tcp://" + ip_ + ":" + std::to_string(port_));
 	logger->info("Connecting to {}", broker);
-	mqtt_client_               = new mqtt_client_wrapper(client_id_, logger, broker);
+	mqtt_legacy_client_               = new mqtt_legacy_client_wrapper(client_id_, logger, broker);
 	subscribed_                = false;
 	start_sending_instructions = false;
 	running                    = true;
 
-	//worker_thread_ = std::thread(&MqttMachine::client_keep_alive, this);
-	dispatcher_thread_ = std::thread(&MqttMachine::dispatch_command_queue, this);
+	//worker_thread_ = std::thread(&MqttLegacyMachine::client_keep_alive, this);
+	dispatcher_thread_ = std::thread(&MqttLegacyMachine::dispatch_command_queue, this);
 }
 
 void
-MqttMachine::dispatch_command_queue()
+MqttLegacyMachine::dispatch_command_queue()
 {
 	while (running) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
-		if (!mqtt_client_->connected) {
+		if (!mqtt_legacy_client_->connected) {
 			continue;
 		}
 		command_queue_mutex_.lock();
@@ -85,7 +92,7 @@ MqttMachine::dispatch_command_queue()
 			std::this_thread::sleep_for(std::chrono::milliseconds(180));
 			continue;
 		}
-		if (mqtt_client_->dispatch_command(command_queue_.front())) {
+		if (mqtt_legacy_client_->dispatch_command(command_queue_.front())) {
 			command_queue_.pop();
 		}
 		command_queue_mutex_.unlock();
@@ -93,71 +100,67 @@ MqttMachine::dispatch_command_queue()
 }
 
 void
-MqttMachine::enqueue_instruction(std::string command)
+MqttLegacyMachine::enqueue_instruction(unsigned short command,
+                                 unsigned short payload1,
+                                 unsigned short payload2,
+                                 int            timeout,
+                                 unsigned char  status,
+                                 unsigned char  error)
 {
 	std::lock_guard<std::mutex> lock(command_queue_mutex_);
-	command_queue_.push(command);
+	command_queue_.push(std::make_tuple(command, payload1, payload2, timeout, status, error));
 	//logger->info("Enqueued a instruction {} {} {} {} {} {}", command, payload1, payload2, timeout, status, error);
 }
 
 void
-MqttMachine::reset()
+MqttLegacyMachine::reset()
 {
-	enqueue_instruction("RESET");
+	enqueue_instruction(Command::COMMAND_SET_TYPE, machine_type_ / 100);
 }
 
-MqttMachine::~MqttMachine()
+MqttLegacyMachine::~MqttLegacyMachine()
 {
-	delete mqtt_client_;
+	delete mqtt_legacy_client_;
 	spdlog::drop(name_);
 }
 
 void
-MqttMachine::set_light(llsf_msgs::LightColor color,
+MqttLegacyMachine::set_light(llsf_msgs::LightColor color,
                        llsf_msgs::LightState state,
                        unsigned short        time)
 {
-	std::string m_color;
+	LightColor m_color = LIGHT_COLOR_RESET;
 	switch (color) {
-		case llsf_msgs::LightColor::RED: m_color = "RED"; break;
-		case llsf_msgs::LightColor::YELLOW: m_color = "YELLOW"; break;
-		case llsf_msgs::LightColor::GREEN: m_color = "GREEN"; break;
+	case llsf_msgs::LightColor::RED: m_color = LightColor::LIGHT_COLOR_RED; break;
+	case llsf_msgs::LightColor::YELLOW: m_color = LightColor::LIGHT_COLOR_YELLOW; break;
+	case llsf_msgs::LightColor::GREEN: m_color = LightColor::LIGHT_COLOR_GREEN; break;
 	}
-
-	std::string m_state;
+	unsigned short int plc_state = LightState::LIGHT_STATE_OFF;
 	switch (state) {
-		case llsf_msgs::ON: m_state = "ON"; break;
-		case llsf_msgs::OFF: m_state = "OFF"; break;
-		case llsf_msgs::BLINK: m_state = "BLINK"; break;
+	case llsf_msgs::ON: plc_state = LightState::LIGHT_STATE_ON; break;
+	case llsf_msgs::OFF: plc_state = LightState::LIGHT_STATE_OFF; break;
+	case llsf_msgs::BLINK: plc_state = LightState::LIGHT_STATE_BLINK; break;
 	}
-	enqueue_instruction("LIGHT " + m_color + " " + m_state);
+	enqueue_instruction(m_color, plc_state, time);
 }
 
 void
-MqttMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
+MqttLegacyMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 {
-	std::string m_direction;
-	switch(direction) {
-		case ConveyorDirection::FORWARD: m_direction = "TO_OUTPUT"; break;
-		case ConveyorDirection::BACKWARD: m_direction = "TO_INPUT"; break;
-	}
-	std::string m_sensor;
-	switch(sensor) {
-		case MPSSensor::INPUT: m_sensor = "IN"; break;
-		case MPSSensor::MIDDLE: m_sensor = "MID"; break;
-		case MPSSensor::OUTPUT: m_sensor = "OUT"; break;
-	}
-	enqueue_instruction("MOVE_CONVEYOR " + m_direction + " " + m_sensor);
+	enqueue_instruction(Command::COMMAND_MOVE_CONVEYOR + machine_type_,
+	                    sensor,
+	                    direction,
+	                    Timeout::TIMEOUT_BAND);
 }
 
 void
-MqttMachine::reset_light()
+MqttLegacyMachine::reset_light()
 {
 	set_light(llsf_msgs::LightColor::RED, llsf_msgs::OFF);
 }
 
 void
-MqttMachine::initLogger(const std::string &log_path)
+MqttLegacyMachine::initLogger(const std::string &log_path)
 {
 	if (log_path.empty()) {
 		// stdout redirected logging
@@ -172,25 +175,25 @@ MqttMachine::initLogger(const std::string &log_path)
 }
 
 void
-MqttMachine::register_busy_callback(std::function<void(bool)> callback)
+MqttLegacyMachine::register_busy_callback(std::function<void(bool)> callback)
 {
-	mqtt_client_->register_busy_callback(callback);
+	mqtt_legacy_client_->register_busy_callback(callback);
 }
 
 void
-MqttMachine::register_ready_callback(std::function<void(bool)> callback)
+MqttLegacyMachine::register_ready_callback(std::function<void(bool)> callback)
 {
-	mqtt_client_->register_ready_callback(callback);
+	mqtt_legacy_client_->register_ready_callback(callback);
 }
 
 void
-MqttMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
+MqttLegacyMachine::register_barcode_callback(std::function<void(unsigned long)> callback)
 {
-	mqtt_client_->register_barcode_callback(callback);
+	mqtt_legacy_client_->register_barcode_callback(callback);
 }
 
 void
-MqttMachine::identify()
+MqttLegacyMachine::identify()
 {
 }
 
