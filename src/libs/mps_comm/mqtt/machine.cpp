@@ -67,7 +67,6 @@ MqttMachine::MqttMachine(const std::string &name,
 	start_sending_instructions = false;
 	running                    = true;
 
-	//worker_thread_ = std::thread(&MqttMachine::client_keep_alive, this);
 	dispatcher_thread_ = std::thread(&MqttMachine::dispatch_command_queue, this);
 }
 
@@ -108,6 +107,8 @@ MqttMachine::reset()
 
 MqttMachine::~MqttMachine()
 {
+	running = false;
+	dispatcher_thread_.join();
 	delete mqtt_client_;
 	spdlog::drop(name_);
 }

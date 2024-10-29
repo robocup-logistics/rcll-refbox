@@ -44,8 +44,8 @@ MqttRingStation::mount_ring(unsigned int feeder, llsf_msgs::RingColor color)
 {
 	std::string m_feeder;
 	switch(feeder) {
-		case 0:	m_feeder = "RING0"; break;
-		case 1: m_feeder = "RING1";	break;
+		case 1:	m_feeder = "RING1"; break;
+		case 2: m_feeder = "RING2";	break;
 		default: throw std::runtime_error("Invalid feeder number");
 
 	}
