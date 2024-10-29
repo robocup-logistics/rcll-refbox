@@ -929,7 +929,7 @@
 	               (broken-since ?bs&~0.0&:(timeout-sec ?gt ?bs ?*BROKEN-DOWN-TIME*)))
 	=>
 	(printout t "Machine " ?n " recovered" crlf)
-	(modify ?m (state IDLE) (broken-since 0.0))
+	(modify ?m (state IDLE) (broken-since 0.0) (task nil) (broken-reason ""))
 	(assert (send-machine-update))
 	(do-for-fact ((?meta rs-meta)) (eq ?meta:name ?n)
 		(modify ?meta (bases-used ?meta:bases-added))
