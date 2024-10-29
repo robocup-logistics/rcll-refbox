@@ -103,7 +103,6 @@ protected:
 
 	std::condition_variable queue_condition_;
 	std::queue<std::string> command_queue_;
-	std::thread             worker_thread_;
 	std::thread             dispatcher_thread_;
 
 	bool simulation_;

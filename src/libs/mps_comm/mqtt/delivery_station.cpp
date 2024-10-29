@@ -54,9 +54,9 @@ MqttDeliveryStation::deliver_product(int slot)
 {
     std::string m_slot;
     switch (slot) {
-        case 0: m_slot = "SLOT0"; break;
         case 1: m_slot = "SLOT1"; break;
         case 2: m_slot = "SLOT2"; break;
+        case 3: m_slot = "SLOT3"; break;
         default: throw std::runtime_error("Invalid slot number");
     }
 	enqueue_instruction("DELIVER " + m_slot);
