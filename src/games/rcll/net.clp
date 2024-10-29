@@ -215,97 +215,104 @@
     (bind ?robot-id (pb-field-value ?at "robot_id"))
 
     ; if agent task does not exist, create one
-    (if (not (any-factp ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
+    (do-for-fact ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
                                                         (eq ?agent-task:task-id ?task-id)
-                                                        (eq ?agent-task:robot-id ?robot-id)))) then
-      (printout ?*AGENT-TASK-ROUTER* "create agent-task" crlf)
-      ; bind task infos
-      (bind ?task-type nil)
-      (bind ?task-parameters (create$ waypoint nil))
-      (if (pb-has-field ?at "move") then
-        (bind ?t (pb-field-value ?at "move"))
-        (bind ?task-type MOVE)
-        (bind ?machine-point nil)
-        (if (pb-has-field ?t "machine_point") then
-          (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
-        (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
-                                        machine-point ?machine-point))
+                                                        (eq ?agent-task:robot-id ?robot-id))
+      (if (eq ?agent-task:processed FALSE) then
+        (printout ?*AGENT-TASK-ROUTER* "delete old agent-task" crlf)
+        (retract ?agent-task)
+       else
+        (printout ?*AGENT-TASK-ROUTER* "received task (team " ?team-color " robot " ?robot-id " task " ?task-id ") that is already processed, ignoring" crlf)
+        (return)
       )
-      (if (pb-has-field ?at "retrieve") then
-        (bind ?t (pb-field-value ?at "retrieve"))
-        (bind ?task-type RETRIEVE)
-        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
-                                        machine-point (sym-cat (pb-field-value ?t "machine_point"))))
-      )
-      (if (pb-has-field ?at "deliver") then
-        (bind ?t (pb-field-value ?at "deliver"))
-        (bind ?task-type DELIVER)
-        (bind ?machine-point nil)
-        (if (pb-has-field ?t "machine_point") then
-          (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
-        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
-                                        machine-point ?machine-point))
-      )
-      (if (pb-has-field ?at "buffer") then
-        (bind ?t (pb-field-value ?at "buffer"))
-        (bind ?task-type BUFFER)
-        (bind ?shelf-nr 0)
-        (if (pb-has-field ?t "shelf_number") then
-          (bind ?shelf-nr (pb-field-value ?t "shelf_number")))
-        (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
-                                        shelf-number ?shelf-nr))
-      )
-      (if (pb-has-field ?at "explore_machine") then
-        (bind ?t (pb-field-value ?at "explore_machine"))
-        (bind ?task-type EXPLORE_MACHINE)
-        (bind ?machine-id nil)
-        (bind ?machine-point nil)
-        (if (pb-has-field ?t "machine_id") then
-          (bind ?machine-id (pb-field-value ?t "machine_id")))
-        (if (pb-has-field ?t "machine_point") then
-          (bind ?machine-point (pb-field-value ?t "machine_point")))
-        (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
-                                        machine-id ?machine-id
-                                        machine-point ?machine-point))
-      )
-
-      ; bind wp description
-      (bind ?base-color nil)
-      (bind $?ring-color (create$))
-      (bind ?cap-color nil)
-      (if (pb-has-field ?at "workpiece_description") then
-        (bind ?wp-desc (pb-field-value ?at "workpiece_description"))
-        (bind ?base-color (pb-field-value ?wp-desc "base_color"))
-        (bind $?ring-color (pb-field-list ?wp-desc "ring_colors"))
-        (if (pb-has-field ?wp-desc "cap_color") then
-          (bind ?cap-color (pb-field-value ?wp-desc "cap_color")))
-      )
-
-      (bind ?order-id nil)
-      (if (pb-has-field ?at "order_id") then
-        (bind ?order-id (pb-field-value ?at "order_id"))
-      )
-
-      (bind ?successful TRUE)
-      (if (pb-has-field ?at "successful") then
-        (bind ?order-id (pb-field-value ?at "successful"))
-      )
-
-      (assert (agent-task (task-type ?task-type)
-                          (task-parameters ?task-parameters)
-                          (task-id ?task-id)
-                          (robot-id ?robot-id)
-                          (team-color ?team-color)
-                          (start-time ?gt)
-                          (end-time 0.0)
-                          (order-id ?order-id)
-                          (successful ?successful)
-                          (processed FALSE)
-                          (base-color ?base-color)
-                          (ring-colors $?ring-color)
-                          (cap-color ?cap-color)))
-      (printout ?*AGENT-TASK-ROUTER* "agent-task: " ?task-type ?task-parameters crlf)
     )
+    (printout ?*AGENT-TASK-ROUTER* "create agent-task" crlf)
+    ; bind task infos
+    (bind ?task-type nil)
+    (bind ?task-parameters (create$ waypoint nil))
+    (if (pb-has-field ?at "move") then
+      (bind ?t (pb-field-value ?at "move"))
+      (bind ?task-type MOVE)
+      (bind ?machine-point nil)
+      (if (pb-has-field ?t "machine_point") then
+        (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+      (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
+                                      machine-point ?machine-point))
+    )
+    (if (pb-has-field ?at "retrieve") then
+      (bind ?t (pb-field-value ?at "retrieve"))
+      (bind ?task-type RETRIEVE)
+      (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
+                                      machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+    )
+    (if (pb-has-field ?at "deliver") then
+      (bind ?t (pb-field-value ?at "deliver"))
+      (bind ?task-type DELIVER)
+      (bind ?machine-point nil)
+      (if (pb-has-field ?t "machine_point") then
+        (bind ?machine-point (sym-cat (pb-field-value ?t "machine_point"))))
+      (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
+                                      machine-point ?machine-point))
+    )
+    (if (pb-has-field ?at "buffer") then
+      (bind ?t (pb-field-value ?at "buffer"))
+      (bind ?task-type BUFFER)
+      (bind ?shelf-nr 0)
+      (if (pb-has-field ?t "shelf_number") then
+        (bind ?shelf-nr (pb-field-value ?t "shelf_number")))
+      (bind ?task-parameters (create$ machine-id (sym-cat (pb-field-value ?t "machine_id"))
+                                      shelf-number ?shelf-nr))
+    )
+    (if (pb-has-field ?at "explore_machine") then
+      (bind ?t (pb-field-value ?at "explore_machine"))
+      (bind ?task-type EXPLORE_MACHINE)
+      (bind ?machine-id nil)
+      (bind ?machine-point nil)
+      (if (pb-has-field ?t "machine_id") then
+        (bind ?machine-id (pb-field-value ?t "machine_id")))
+      (if (pb-has-field ?t "machine_point") then
+        (bind ?machine-point (pb-field-value ?t "machine_point")))
+      (bind ?task-parameters (create$ waypoint (sym-cat (pb-field-value ?t "waypoint"))
+                                      machine-id ?machine-id
+                                      machine-point ?machine-point))
+    )
+
+    ; bind wp description
+    (bind ?base-color nil)
+    (bind $?ring-color (create$))
+    (bind ?cap-color nil)
+    (if (pb-has-field ?at "workpiece_description") then
+      (bind ?wp-desc (pb-field-value ?at "workpiece_description"))
+      (bind ?base-color (pb-field-value ?wp-desc "base_color"))
+      (bind $?ring-color (pb-field-list ?wp-desc "ring_colors"))
+      (if (pb-has-field ?wp-desc "cap_color") then
+        (bind ?cap-color (pb-field-value ?wp-desc "cap_color")))
+    )
+
+    (bind ?order-id nil)
+    (if (pb-has-field ?at "order_id") then
+      (bind ?order-id (pb-field-value ?at "order_id"))
+    )
+
+    (bind ?successful TRUE)
+    (if (pb-has-field ?at "successful") then
+      (bind ?order-id (pb-field-value ?at "successful"))
+    )
+
+    (assert (agent-task (task-type ?task-type)
+                        (task-parameters ?task-parameters)
+                        (task-id ?task-id)
+                        (robot-id ?robot-id)
+                        (team-color ?team-color)
+                        (start-time ?gt)
+                        (end-time 0.0)
+                        (order-id ?order-id)
+                        (successful ?successful)
+                        (processed FALSE)
+                        (base-color ?base-color)
+                        (ring-colors $?ring-color)
+                        (cap-color ?cap-color)))
+    (printout ?*AGENT-TASK-ROUTER* "agent-task: " ?task-type ?task-parameters crlf)
 
     ; check if end time and succesful flag are set
     (progn$ (?ft (pb-field-list ?p "finished_tasks"))
