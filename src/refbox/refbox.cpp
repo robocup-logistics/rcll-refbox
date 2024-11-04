@@ -48,7 +48,6 @@
 #include <logging/console.h>
 #include <logging/file.h>
 #include <logging/multi.h>
-#include <logging/network.h>
 #include <mps_comm/machine_factory.h>
 #include <mps_comm/stations.h>
 #include <mps_placing_clips/mps_placing_clips.h>
@@ -214,8 +213,6 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 #endif
 	mps_placing_generator_ = std::shared_ptr<mps_placing_clips::MPSPlacingGenerator>(
 	  new mps_placing_clips::MPSPlacingGenerator(clips_.get(), clips_mutex_));
-
-	logger_->add_logger(new NetworkLogger(pb_comm_->server(), log_level_));
 
 #ifdef HAVE_WEBSOCKETS
 	setup_clips_websocket();
