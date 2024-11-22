@@ -2153,7 +2153,7 @@ LLSFRefBox::setup_clips_websocket()
 	                                                    &websocket::Data::log_push_time_info)));
 
 	clips_->add_function("ws-create-RobotInfo",
-	                     sigc::slot<void, int, std::string>(
+	                     sigc::slot<void, int, std::string, std::string>(
 	                       sigc::mem_fun(*(backend_->get_data()),
 	                                     &websocket::Data::log_push_robot_info)));
 	clips_->add_function("ws-create-AgentTaskInfo",
