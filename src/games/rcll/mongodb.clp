@@ -435,7 +435,7 @@
 			; for some reason clips crashes, if the meta-fact-name is passed
 			; on-the-fly. Therefore, store it via bind first.
 			(bind ?meta-fact-name (sym-cat (lowcase ?m-type) -meta))
-			(bind ?machine-meta-facts (find-fact ((?m ?meta-fact-name)) (eq ?m-name ?m-name)))
+			(bind ?machine-meta-facts (find-fact ((?m ?meta-fact-name)) (eq ?m-name ?m:name)))
 			(if ?machine-meta-facts then
 			  (bind ?meta-fact (nth$ 1 ?machine-meta-facts))
 			)
