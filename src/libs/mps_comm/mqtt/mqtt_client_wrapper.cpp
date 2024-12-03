@@ -74,6 +74,7 @@ mqtt_client_wrapper::mqtt_client_wrapper(const std::string              &client_
 		}
 	}
 	SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/Status");
+	SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/WP-Sensor");
 	SubscribeToTopic(TOPIC_PREFIX + std::string("/") + name_ + "/Barcode");
 	if (name_ == "C-RS1" || name_ == "C-RS2" || name_ == "M-RS1" || name_ == "M-RS2") {
 		logger_->info("Subscribing to the slidecounter!");

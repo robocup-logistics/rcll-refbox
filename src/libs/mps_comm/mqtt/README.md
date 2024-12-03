@@ -5,6 +5,7 @@ This MQTT setup is intended to be used with the MPS using Codesys. Compared to "
 ```
 MPS/{NAME}/Command //The refbox only sends here it's commands
 MPS/{NAME}/Status //The refbox can read the status here
+MPS/{NAME}/WP-Sensor //The refbox reads wheather or not a wp is on the output of a mps (for bs also input or output)
 MPS/{NAME}/Barcode //The refbox can read the last scanned Barcode here
 MPS/{NAME}/SlideCount //The refbox can read the SlideCount on Ringstations here
 MPS/{NAME}/Sensors/... //(OPTIONAL) here can sensors be published for debugging and logging purposes not to be used by refbox directly
@@ -23,7 +24,13 @@ A integer that counts up every time the sensor is activated
 
 ##### The only valid Status are:
 ```
-Status = {DISABLED, ERROR, READY, BUSSY}
+Status = {IDLE, BUSY} // IDLE mean machine has nothing to do, BUSY means that the machine is physically busy with processing an intruction
+```
+
+#### The only avalid WP-Sensor are:
+
+```
+WP-Sensor = {EMPTY, WP} //For bs input or output for any other machine just if there is a wp at the ouput
 ```
 
 #### A valid command looks like this:
