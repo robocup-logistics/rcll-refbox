@@ -119,7 +119,7 @@ mqtt_callback::message_arrived(mqtt::const_message_ptr msg)
 		bool ready = false;
 		if (value == "WP") {
 			ready = true;
-		} else if (value == "EMPTY") {
+		} else if (value == "NoWP") {
 			ready = false;
 		} else {
 			logger_->error("Unknown WP-Sensor value");
