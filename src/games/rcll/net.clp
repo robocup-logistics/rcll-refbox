@@ -213,12 +213,14 @@
     (bind ?team-color (pb-field-value ?at "team_color"))
     (bind ?task-id (pb-field-value ?at "task_id"))
     (bind ?robot-id (pb-field-value ?at "robot_id"))
+    (bind ?start-time ?gt)
 
     ; if agent task does not exist, create one
     (do-for-fact ((?agent-task agent-task)) (and (eq ?agent-task:team-color ?team-color)
                                                         (eq ?agent-task:task-id ?task-id)
                                                         (eq ?agent-task:robot-id ?robot-id))
       (if (eq ?agent-task:processed FALSE) then
+        (bind ?start-time ?agent-task:start-time)
         (printout ?*AGENT-TASK-ROUTER* "delete old agent-task" crlf)
         (retract ?agent-task)
        else
@@ -304,7 +306,7 @@
                         (task-id ?task-id)
                         (robot-id ?robot-id)
                         (team-color ?team-color)
-                        (start-time ?gt)
+                        (start-time ?start-time)
                         (end-time 0.0)
                         (order-id ?order-id)
                         (successful ?successful)
