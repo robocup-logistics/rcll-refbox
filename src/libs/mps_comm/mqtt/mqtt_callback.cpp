@@ -100,31 +100,34 @@ mqtt_callback::message_arrived(mqtt::const_message_ptr msg)
 
 	if(topic_name == "Status") {
 		logger_->info("Received an Status with value " + value);
-		bool ready = false;
 		bool busy = false;
-		if (value == "READY") {
-			ready = true;
+		if (value == "IDLE") {
 			busy = false;
 		} else if(value == "BUSY") {
-			ready = false;
 			busy = true;
-		} else if(value == "ERROR") {
-			ready = false;
-			busy = false;
-		} else if(value == "DISABLED") {
-			ready = false;
-			busy = false;
 		} else {
 			logger_->error("Unknown status value");
+		}
+
+		if (callback_busy)
+			std::thread([this, busy]() {
+				callback_busy(busy);
+			}).detach();
+
+	} else if (topic_name == "WP-Sensor") {
+		logger_->info("MPS sent a WP-Sensor update with value [{}]", value);
+		bool ready = false;
+		if (value == "WP") {
+			ready = true;
+		} else if (value == "NoWP") {
+			ready = false;
+		} else {
+			logger_->error("Unknown WP-Sensor value");
 		}
 
 		if (callback_ready)
 			std::thread([this, ready]() {
 				callback_ready(ready);
-			}).detach();
-		if (callback_busy)
-			std::thread([this, busy]() {
-				callback_busy(busy);
 			}).detach();
 
 	} else if(topic_name == "SlideCount"){
