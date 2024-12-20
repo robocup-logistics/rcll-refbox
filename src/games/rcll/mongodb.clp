@@ -544,18 +544,41 @@
 	(assert (mongodb-phase-change))
 )
 
+(defrule mongodb-config-store-to-update
+" Initialize a new report when the store-to-report field changes."
+	(declare (salience ?*PRIORITY_HIGH*))
+	(not (mongodb-new-report))
+	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	(mongodb-game-report (start $?stime) (name ?other&:(neq ?report-name ?other)))
+	=>
+	(assert (mongodb-new-report))
+)
+
 (defrule mongodb-start-new-report
 " After restarting a game, a new report should be created"
 	(declare (salience ?*PRIORITY_HIGH*))
 	?t <- (mongodb-new-report)
 	(game-parameters (is-parameterized TRUE))
-	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
-	     (prev-phase PRE_GAME|SETUP) (start-time $?stime) (end-time $?etime))
+	(gamestate (teams $?teams&:(neq ?teams (create$ "" ""))) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
+	(mongodb-game-report)
 	=>
+	(printout t "Initializing new game report" crlf)
 	(retract ?t)
 	(delayed-do-for-all-facts ((?hist machine-history)) TRUE
 	  (retract ?hist)
+	)
+	(delayed-do-for-all-facts ((?hist shelf-slot-history)) TRUE
+	  (retract ?hist)
+	)
+	(delayed-do-for-all-facts ((?hist robot-history)) TRUE
+	  (retract ?hist)
+	)
+	(delayed-do-for-all-facts ((?hist gamestate-history)) TRUE
+	  (retract ?hist)
+	)
+	(delayed-do-for-all-facts ((?gr mongodb-game-report)) TRUE
+	  (retract ?gr)
 	)
 	(mongodb-init-report ?teams ?stime ?etime ?report-name)
 )
@@ -566,7 +589,7 @@
 	(gamestate (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (prev-phase PRE_GAME) (phase ~PRE_GAME) (start-time $?stime) (end-time $?etime))
 	(confval (path "/llsfrb/game/store-to-report") (type STRING) (value ?report-name))
-	(not (mongodb-game-report (start $?stime) (name ?report-name)))
+	(not (mongodb-game-report))
 	=>
 	(mongodb-init-report ?teams ?stime ?etime ?report-name)
 )
