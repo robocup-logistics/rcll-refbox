@@ -252,6 +252,7 @@
 )
 
 (defrule game-init-parameterization-from-config
+	(gamestate (phase ~PRE_GAME))
 	?gt <- (game-parameters (is-initialized FALSE))
 	(confval (path "/llsfrb/game/random-field") (type BOOL) (value ?random-field))
 	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value ?random-machine-setup))
