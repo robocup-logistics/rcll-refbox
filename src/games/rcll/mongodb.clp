@@ -746,6 +746,7 @@
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/restore-gamestate/enable") (type BOOL) (value TRUE))
 	(confval (path "/llsfrb/game/restore-gamestate/phase") (type STRING) (value ?p))
+	(game-parameters (is-initialized TRUE))
 	=>
 	(bind ?success FALSE)
 	(bind ?t-doc (mongodb-retrieve-report ?report-name))
@@ -771,7 +772,7 @@
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/default-storage") (type BOOL) (value FALSE))
-	?gp <- (game-parameters (storage-status PENDING))
+	?gp <- (game-parameters (storage-status PENDING) (is-initialized TRUE))
 	=>
 	(printout t "Loading storage from database" crlf)
 	(if (mongodb-load-all-facts-from-game-report ?report-name
@@ -792,7 +793,7 @@
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/random-orders") (type BOOL) (value FALSE))
-	?gp <- (game-parameters (orders PENDING))
+	?gp <- (game-parameters (orders PENDING) (is-initialized TRUE))
 	=>
 	(printout t "Loading orders from database" crlf)
 	(if (mongodb-load-all-facts-from-game-report ?report-name
@@ -819,7 +820,7 @@
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
 	(confval (path "/llsfrb/game/random-machine-setup") (type BOOL) (value FALSE))
-	?gp <- (game-parameters (machine-setup PENDING))
+	?gp <- (game-parameters (machine-setup PENDING) (is-initialized TRUE))
 	=>
 	(printout t "Loading machine setup from database" crlf)
 	(if (and (mongodb-load-all-facts-from-game-report ?report-name
@@ -852,7 +853,7 @@
 	(gamestate (phase SETUP|EXPLORATION|PRODUCTION) (prev-phase PRE_GAME))
 	(not (confval (path "/llsfrb/game/random-field") (type BOOL) (value TRUE)))
 	(confval (path "/llsfrb/game/load-from-report") (type STRING) (value ?report-name))
-	?gp <- (game-parameters (machine-positions PENDING))
+	?gp <- (game-parameters (machine-positions PENDING) (is-initialized TRUE))
 	?mg <- (machine-generation (state NOT-STARTED))
 	=>
 	(modify ?mg (state FINISHED))
