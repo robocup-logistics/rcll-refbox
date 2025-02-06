@@ -293,8 +293,7 @@
 							        (text (str-cat "Prepare received for machine that has no meta information: " ?mname))))
 						)
 					 else
-						(if (eq ?m:state READY-AT-OUTPUT) then
-							(modify ?m (state BROKEN)))
+						(printout t "Ignoring prepare for " ?mname " (should be IDLE, is " ?m:state")" crlf)
 					)
 				)
 			)
