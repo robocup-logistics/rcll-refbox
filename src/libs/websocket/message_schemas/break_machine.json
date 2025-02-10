@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "break_machine command schema",
+    "description": "This command resetes a machine.",
+    "default": {},
+    "examples": [
+        {
+            "machine": "C-BS"
+        }
+    ],
+    "required": [
+        "machine"
+    ],
+    "properties": {
+        "machine": {
+            "type": "string",
+            "description": "The name of the machine."
+        }
+    }
+}

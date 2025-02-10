@@ -67,10 +67,12 @@ Data::Data(std::shared_ptr<Logger>             logger,
 	                              "instruct_rs",
 	                              "instruct_ds",
 	                              "instruct_ss",
+	                              "break_machine",
 	                              "set_gamephase",
 	                              "set_gamestate",
 	                              "set_machine_pose",
 	                              "set_machine_state",
+	                              "set_machine_work_status",
 	                              "set_order_delivered",
 	                              "set_robot_maintenance",
 	                              "set_teamname",
@@ -1087,10 +1089,16 @@ Data::get_machine_info_fact(T                                  *o,
 	(*o).AddMember("mtype", json_string, alloc);
 	clips_to_json(fact, "state", json_string, alloc);
 	(*o).AddMember("state", json_string, alloc);
+	clips_to_json(fact, "mps-busy", json_string, alloc);
+	(*o).AddMember("mps_busy", json_string, alloc);
+	clips_to_json(fact, "mps-ready", json_string, alloc);
+	(*o).AddMember("mps_ready", json_string, alloc);
 	clips_to_json(fact, "zone", json_string, alloc);
 	(*o).AddMember("zone", json_string, alloc);
 	clips_to_json(fact, "rotation", json_string, alloc);
 	(*o).AddMember("rotation", json_string, alloc);
+	clips_to_json(fact, "referee-required", json_string, alloc);
+	(*o).AddMember("referee_required", json_string, alloc);
 
 	CLIPS::Fact::pointer meta_fact = env_->get_facts();
 	while (meta_fact) {

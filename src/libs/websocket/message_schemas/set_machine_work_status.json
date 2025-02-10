@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/set_machine_work_status.json",
+    "type": "object",
+    "title": "Machine Work Status Update Schema",
+    "description": "Schema for injecting feedback of a machine directly.",
+    "required": ["name", "busy", "ready"],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "The name of the machine."
+        },
+        "busy": {
+            "type": "boolean",
+            "description": "The switch to indicate whether the machine is busy."
+        },
+        "ready": {
+            "type": "boolean",
+            "description": "The switch to toggle to/from READY-AT-OUTPUT (given busy is FALSE)."
+        }
+    }
+}
