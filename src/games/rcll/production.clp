@@ -337,7 +337,7 @@
 ; **** MPS status feedback processing
 (defrule production-mps-feedback-state-ready
 	?m <- (machine (name ?n))
-  ?mps-status <- (mps-status-feedback ?n READY ?ready)
+	?mps-status <- (mps-status-feedback ?n READY ?ready)
 	=>
 	(retract ?mps-status)
 	(modify ?m (mps-ready ?ready))
@@ -345,7 +345,7 @@
 
 (defrule production-mps-feedback-state-busy
 	?m <- (machine (name ?n))
-  ?mps-status <- (mps-status-feedback ?n BUSY ?busy)
+	?mps-status <- (mps-status-feedback ?n BUSY ?busy)
 	=>
 	(retract ?mps-status)
 	(modify ?m (mps-busy ?busy))
@@ -952,19 +952,51 @@
 	(assert (send-machine-update))
 )
 
+(defrule production-potential-timeout-while-processing
+  "The machine got stuck while processing the workpiece. Set it to BROKEN.
+	 This may be caused by a machine failure or by a misplaced workpiece."
+  (gamestate (state RUNNING) (phase PRODUCTION))
+  (time-info (game-time ?gt))
+  ?m <- (machine (name ?n) (state ?state&:(member$ ?state (create$ PROCESSING PROCESSED)))
+        (proc-start ?start&:(timeout-sec ?gt ?start ?*PROCESSING-WAIT-TILL-WARNING*)))
+  (not (machine-warning-sent ?n ?state))
+	=>
+	(assert (attention-message (text (str-cat "Please check " ?n))))
+	(assert (machine-warning-sent ?n ?state))
+)
+
+(defrule production-timeout-warning-cleared
+  ?mws <- (machine-warning-sent ?n ?state)
+  (machine (name ?n) (state ~?state))
+  =>
+  (retract ?mws)
+)
+
+(defrule production-timeout-request-cleared
+  ?m <- (machine (name ?n) (state IDLE) (referee-required TRUE))
+  =>
+  (modify ?m (referee-required FALSE))
+)
+
 (defrule production-timeout-while-processing
   "The machine got stuck while processing the workpiece. Set it to BROKEN.
 	 This may be caused by a machine failure or by a misplaced workpiece."
   (gamestate (state RUNNING) (phase PRODUCTION))
   (time-info (game-time ?gt))
-  ?m <- (machine (name ?n) (state PROCESSING|PROCESSED)
+  ?m <- (machine (name ?n) (state ?state&:(member$ ?state (create$ PREPARED PROCESSING PROCESSED))) (referee-required FALSE)
         (proc-start ?start&:(timeout-sec ?gt ?start ?*PROCESSING-WAIT-TILL-RESET*)))
 	=>
-	(printout error "Machine " ?n " timed out while processing" crlf)
-	(modify ?m (state BROKEN) (task nil)
-	           (broken-reason (str-cat "MPS " ?n " timed out while processing")))
-	(assert (send-machine-update))
-	(mps-reset (str-cat ?n))
+	(modify ?m (referee-required TRUE))
+)
+
+(defrule prodiction-machine-broken-by-referee
+  ?m <- (machine (name ?name))
+  ?rm <- (reset-machine ?name)
+  =>
+  (retract ?rm)
+  (modify ?m (state BROKEN) (task nil) (broken-reason (str-cat "MPS reset by referee")))
+  (assert (send-machine-update))
+  (mps-reset (str-cat ?name))
 )
 
 (defrule production-pb-recv-SetMachineState
@@ -989,7 +1021,7 @@
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
     (modify ?m (state ?state))
   )
-	(assert (send-machine-update))
+  (assert (send-machine-update))
 )
 
 (defrule production-pb-recv-MachineAddBase

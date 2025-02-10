@@ -53,7 +53,8 @@
   ; How long to wait after prepare before the MPS gets resetted
   ?*PREPARE-WAIT-TILL-RESET* = 45
   ; How long to wait before resetting a machine that is processing
-  ?*PROCESSING-WAIT-TILL-RESET* = 90
+  ?*PROCESSING-WAIT-TILL-RESET* = 20
+  ?*PROCESSING-WAIT-TILL-WARNING* = 10
   ?*PREPARE-WAIT-TILL-PROCESSING* = 5
   ?*PROCESS-TIME-SS* = 5
   ?*SS-MAX-SHELF* = 5 ; min value is 0

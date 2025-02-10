@@ -58,6 +58,8 @@
 
   (slot idle-since (type FLOAT))
   (slot wait-for-product-since (type FLOAT))
+  ; when something unexpected happens during usage that cannot be resolved automatically. this flag is set to indicate required action to the referee
+  (slot referee-required (type SYMBOL) (allowed-values FALSE TRUE) (default FALSE))
 )
 
 (deftemplate machine-lights
