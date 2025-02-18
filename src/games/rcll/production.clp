@@ -26,7 +26,7 @@
 		(bind ?color (sym-cat (pb-field-value ?prepmsg "color")))
 		(printout t "Prepared " ?mname " (side: " ?side ", color: " ?color ")" crlf)
 		(modify ?meta (current-side ?side) (current-base-color ?color))
-		(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+		(modify ?m (state PREPARED) (proc-start ?gt))
 	 else
 		(modify ?m (state BROKEN)
 		(broken-reason (str-cat "Prepare received for " ?mname " without data")))
@@ -41,13 +41,13 @@
 		(if (not (do-for-fact ((?order order)) (eq ?order:id ?order-id)
 			(printout t "Prepared " ?mname " (order: " ?order-id ")" crlf)
 			(modify ?meta (order-id ?order-id) (gate ?order:delivery-gate))
-			(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+			(modify ?m (state PREPARED) (proc-start ?gt))
 			))
 		 then
 			(if (eq (pb-field-value ?prepmsg "order_id") 0) then
 				(printout t "Prepared " ?mname " to consume product not belonging to any order (id 0)" crlf)
 				(modify ?meta (order-id ?order-id) (gate 1))
-				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+				(modify ?m (state PREPARED) (proc-start ?gt))
 			 else
 				(modify ?m (state BROKEN)
 				  (broken-reason (str-cat "Prepare received for " ?mname " with invalid order ID")))
@@ -87,7 +87,7 @@
 				(if (fact-slot-value ?filled-status is-filled)
 				 then
 					(printout t "Prepared " ?mname " to RETRIEVE (" ?shelf "," ?slot ")" crlf)
-					(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+					(modify ?m (state PREPARED) (proc-start ?gt))
 					(modify ?meta (current-operation ?operation)
 					              (current-shelf-slot ?shelf ?slot)
 					              (current-wp-description ?description))
@@ -106,7 +106,7 @@
 						            " with STORE operation for occupied shelf slot (" ?shelf ", " ?slot ")")))
 					 else
 						(printout t "Prepared " ?mname " to STORE (" ?shelf "," ?slot ")" crlf)
-						(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+						(modify ?m (state PREPARED) (proc-start ?gt))
 						(modify ?meta (current-operation ?operation)
 						              (current-shelf-slot ?shelf ?slot)
 						              (current-wp-description ?new-description))
@@ -143,7 +143,7 @@
 		(if (member$ ?ring-color (fact-slot-value ?meta available-colors))
 		 then
 			(printout t "Prepared " ?mname " (ring color: " ?ring-color ")" crlf)
-			(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+			(modify ?m (state PREPARED) (proc-start ?gt))
 			(modify ?meta (current-ring-color ?ring-color))
 		 else
 			(modify ?m (state BROKEN)
@@ -167,7 +167,7 @@
 			 then
 				(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
 				(modify ?meta (operation-mode ?cs-op))
-				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+				(modify ?m (state PREPARED) (proc-start ?gt))
 			 else
 				(modify ?m (state BROKEN)
 				           (broken-reason (str-cat "Prepare received for " ?mname ": "
@@ -178,7 +178,7 @@
 			 then
 				(printout t "Prepared " ?mname " (" ?cs-op ")" crlf)
 				(modify ?meta (operation-mode ?cs-op))
-				(modify ?m (state PREPARED) (wait-for-product-since ?gt))
+				(modify ?m (state PREPARED) (proc-start ?gt))
 			 else
 				(modify ?m (state BROKEN)
 				           (broken-reason (str-cat "Prepare received for " ?mname
@@ -223,7 +223,7 @@
 (defrule production-machine-up
   (gamestate (phase PRODUCTION) (state RUNNING))
   (time-info (game-time ?gt))
-  ?mf <- (machine (name ?name) (state DOWN) (proc-start ?proc-start) (prev-state ?prev-state&~DOWN)
+  ?mf <- (machine (name ?name) (state DOWN) (prev-state ?prev-state&~DOWN)
 		  (down-period $?dp&:(< (nth$ 2 ?dp) ?gt)))
   =>
 	(printout t "Machine " ?name " is up again" crlf)
@@ -380,7 +380,7 @@
 	(bs-meta (name ?n) (current-base-color ?color))
   =>
   (printout t "Machine " ?n " dispensing " ?color " base" crlf)
-	(modify ?m (state PROCESSING) (proc-start ?gt) (task DISPENSE) (mps-busy WAIT))
+  (modify ?m (state PROCESSING) (proc-start ?gt) (task DISPENSE) (mps-busy WAIT))
   (mps-bs-dispense (str-cat ?n) (str-cat ?color))
   (assert (send-machine-update))
 )
@@ -396,7 +396,7 @@
 	(printout t "Machine " ?n " moving base to " ?side crlf)
 	(assert (product-processed (at-machine ?n) (mtype BS) (team ?team)
 	                           (game-time ?gt) (base-color ?current-base-color)))
-	(modify ?m (task MOVE-OUT) (state PROCESSED) (mps-busy WAIT))
+	(modify ?m (task MOVE-OUT) (proc-start ?gt) (state PROCESSED) (mps-busy WAIT))
 	(if (eq ?side INPUT)
 	 then
 		(mps-move-conveyor (str-cat ?n) "INPUT" "BACKWARD")
@@ -485,8 +485,8 @@
 	(printout t "Machine " ?n ": move to output" crlf)
 	(assert (product-processed (at-machine ?n) (mtype RS) (team ?team)
 		                       (game-time ?gt) (ring-color ?ring-color)))
-	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
-  (assert (send-machine-update))
+	(modify ?m (state PROCESSED) (proc-start ?gt) (task MOVE-OUT) (mps-busy WAIT))
+	(assert (send-machine-update))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 )
 
@@ -581,7 +581,7 @@
 		(assert (product-processed (at-machine ?n) (mtype CS)
 		                           (team ?team) (game-time ?gt)))
 	)
-	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
+	(modify ?m (state PROCESSED) (proc-start ?gt) (task MOVE-OUT) (mps-busy WAIT))
 	(assert (send-machine-update))
 	(modify ?cs-meta (has-retrieved (eq ?cs-op RETRIEVE_CAP)))
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
@@ -596,7 +596,7 @@
 	(or (workpiece-tracking (enabled FALSE))
 	    (workpiece (at-machine ?n) (state AVAILABLE)))
 	=>
-	(modify ?m (state READY-AT-OUTPUT) (task nil))
+	(modify ?m (proc-start ?gt) (state READY-AT-OUTPUT) (task nil))
 	(assert (send-machine-update))
 )
 
@@ -620,7 +620,7 @@
 	=>
   (printout t "Machine " ?n " processing consumption" crlf)
 	(assert (send-machine-update))
-	(modify ?m (state PROCESSING) (proc-start ?gt) (wait-for-product-since ?gt)
+	(modify ?m (state PROCESSING) (proc-start ?gt)
 	  (task DELIVER) (mps-busy WAIT))
   (mps-ds-process (str-cat ?n) ?gate)
 )
@@ -636,7 +636,7 @@
 	=>
   (printout t "Machine " ?n " processing to gate " ?gate " for order " ?order crlf)
 	(assert (send-machine-update))
-	(modify ?m (state PROCESSING) (proc-start ?gt) (wait-for-product-since ?gt)
+	(modify ?m (state PROCESSING) (proc-start ?gt)
 	  (task DELIVER) (mps-busy WAIT))
   (mps-ds-process (str-cat ?n) ?gate)
 )
@@ -699,8 +699,7 @@
 	(bind ?o-slot (nth$ 2 ?o))
 	(printout t ?n " position (" ?shelf "," ?slot ") in not accessible, relocate "
 	            "(" ?shelf "," ?front-slot") to (" ?o-shelf "," ?o-slot ")" crlf)
-	(modify ?m (task RELOCATE) (proc-start ?gt) (state PROCESSING) (mps-busy WAIT)
-	               (wait-for-product-since ?gt))
+	(modify ?m (task RELOCATE) (proc-start ?gt) (state PROCESSING) (mps-busy WAIT))
 	(modify ?s (move-to ?o-shelf ?o-slot))
 	(mps-ss-relocate (str-cat ?n) ?shelf ?front-slot ?o-shelf ?o-slot)
 )
@@ -751,8 +750,7 @@
 		            "(" (nth$ 1 ?front-pos)"," (nth$ 2 ?front-pos) ") to "
 		            "(" (nth$ 1 ?free-pos) "," (nth$ 2 ?free-pos) ")" crlf)
 		(printout t  ?n " has to make  (" ?shelf "," ?slot ") accessible" crlf)
-		(modify ?m (state PROCESSING) (proc-start ?gt) (task RELOCATE) (mps-busy WAIT)
-		           (wait-for-product-since ?gt))
+		(modify ?m (state PROCESSING) (proc-start ?gt) (task RELOCATE) (mps-busy WAIT))
 		(modify ?front (move-to ?free-pos))
 		(mps-ss-relocate (str-cat ?n) (nth$ 1 ?front-pos) (nth$ 2 ?front-pos)
 		                                (nth$ 1 ?free-pos) (nth$ 2 ?free-pos))
@@ -781,7 +779,7 @@
 	                             (num-payments ?np)
 	                             (last-payed ?lp))
 	=>
-	(modify ?m (task nil) (wait-for-product-since ?gt))
+	(modify ?m (task nil) (proc-start ?gt))
 	(modify ?s (is-filled FALSE) (move-to (create$ ) ) (description ""))
 	(modify ?t (is-filled TRUE) (num-payments ?np) (last-payed ?lp)
 	           (description ?description))
@@ -832,7 +830,7 @@
 	?s <- (machine-ss-shelf-slot (name ?n) (position ?shelf ?slot) (is-filled TRUE))
 	=>
 	(printout t "Machine " ?n ": move to output" crlf)
-	(modify ?m (state PROCESSED) (task MOVE-OUT) (mps-busy WAIT))
+	(modify ?m (state PROCESSED) (proc-start ?gt) (task MOVE-OUT) (mps-busy WAIT))
 	; TODO: Is this the correct side?
 	(mps-move-conveyor (str-cat ?n) "OUTPUT" "FORWARD")
 	(ss-update-accessible-slots ?n ?shelf ?slot TRUE)
@@ -938,26 +936,12 @@
 	)
 )
 
-(defrule production-prepared-but-no-input
-  "The machine has been prepared but has never received a workpiece. Set it to BROKEN."
-  (gamestate (state RUNNING) (phase PRODUCTION))
-  (time-info (game-time ?gt))
-  ?m <- (machine (name ?n) (mtype ?type&~BS) (state ?state
-	                 &:(or (and (eq ?type DS) (eq ?state PROCESSING))
-	                       (and (neq ?type DS) (eq ?state PREPARED))))
-	               (wait-for-product-since ?ws&:(timeout-sec ?gt ?ws ?*PREPARE-WAIT-TILL-RESET*)))
-  =>
-  (modify ?m (state BROKEN)
-             (broken-reason (str-cat "MPS " ?n " prepared, but no product fed in time")))
-	(assert (send-machine-update))
-)
-
-(defrule production-potential-timeout-while-processing
+(defrule production-potential-timeout-while-machine-operation
   "The machine got stuck while processing the workpiece. Set it to BROKEN.
 	 This may be caused by a machine failure or by a misplaced workpiece."
   (gamestate (state RUNNING) (phase PRODUCTION))
   (time-info (game-time ?gt))
-  ?m <- (machine (name ?n) (state ?state&:(member$ ?state (create$ PROCESSING PROCESSED)))
+  ?m <- (machine (name ?n) (state ?state&:(member$ ?state (create$ PREPARED PROCESSING PROCESSED)))
         (proc-start ?start&:(timeout-sec ?gt ?start ?*PROCESSING-WAIT-TILL-WARNING*)))
   (not (machine-warning-sent ?n ?state))
 	=>
@@ -978,7 +962,7 @@
   (modify ?m (referee-required FALSE))
 )
 
-(defrule production-timeout-while-processing
+(defrule production-timeout-while-machine-operation
   "The machine got stuck while processing the workpiece. Set it to BROKEN.
 	 This may be caused by a machine failure or by a misplaced workpiece."
   (gamestate (state RUNNING) (phase PRODUCTION))
@@ -1019,7 +1003,7 @@
   (retract ?cmd)
   (printout t "Received state " ?state " for machine " ?mname crlf)
   (do-for-fact ((?m machine)) (eq ?m:name ?mname)
-    (modify ?m (state ?state))
+    (modify ?m (proc-start ?gt) (idle-since ?gt) (state ?state))
   )
   (assert (send-machine-update))
 )
