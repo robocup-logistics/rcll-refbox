@@ -155,8 +155,7 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
 		for (int i = 0; i < mi->machines_size(); ++i) {
 			const Machine &m = mi->machines(i);
 			printf("  %s, state: %s\n", m.name().c_str(), m.state().c_str());
-			if (0 == machine_name_.compare(m.name())
-			    && (m.state() == "PREPARED" || m.state() == "PROCESSING" || m.state() == "PROCESSED")) {
+			if (0 == machine_name_.compare(m.name()) && (m.state() != "IDLE")) {
 				quit = true;
 				raise(SIGINT);
 			}
