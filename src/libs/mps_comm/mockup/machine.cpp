@@ -109,11 +109,6 @@ MockupMachine::conveyor_move(ConveyorDirection direction, MPSSensor sensor)
 		                              + std::max(min_operation_duration_,
 		                                         round<milliseconds>(duration_band_mid_to_output_
 		                                                             / exec_speed_))));
-		queue_.push(
-		  std::make_tuple([this] { callback_ready_(false); },
-		                  system_clock::now()
-		                    + std::max(min_operation_duration_,
-		                               round<milliseconds>(duration_ready_at_output_ / exec_speed_))));
 	}
 	queue_condition_.notify_one();
 }

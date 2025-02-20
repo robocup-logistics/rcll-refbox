@@ -33,7 +33,6 @@ inline const std::chrono::milliseconds duration_cap_op_{17500};
 inline const std::chrono::milliseconds                      duration_storage_op_{17500};
 inline const std::chrono::milliseconds                      duration_ring_mount_{17308};
 inline const std::chrono::milliseconds                      duration_base_dispense_{1100};
-inline const std::chrono::milliseconds                      duration_ready_at_output_{15000};
 inline const std::array<const std::chrono::milliseconds, 3> duration_ds_slots{
   std::chrono::milliseconds{3746},
   std::chrono::milliseconds{4746},

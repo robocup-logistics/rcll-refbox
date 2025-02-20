@@ -1058,3 +1058,20 @@
 	  ?*PRODUCTION-POINTS-SS-PER-STORED-VOLUME*
 	  ?gt ?team)
 )
+
+(defrule production-mockup-ready-at-output-timeout
+" Fake a ready feedback for mockup machines.
+  Moved explicitly to CLIPS to avoid interference with DOWN machines.
+"
+  (or
+   (confval (path ?p1&:(eq ?p1 (str-cat"/llsfrb/mps/mockup-ready-at-output-trigger"))) (value "timeout"))
+   (not (confval (path ?p2&:(eq ?p2 (str-cat"/llsfrb/mps/mockup-ready-at-output-trigger")))))
+  )
+  (time-info (game-time ?gt))
+  (machine (name ?mname) (state READY-AT-OUTPUT) (mps-ready TRUE)
+    (proc-start ?start&:(timeout-sec ?gt ?start ?*MOCKUP-READY-AT-OUTPUT-TIMEOUT*)))
+  (confval (path ?p3&:(eq ?p3 (str-cat"/llsfrb/mps/stations/" ?mname "/connection")))
+    (type STRING) (is-list FALSE) (value "mockup"))
+ =>
+  (assert (mps-status-feedback ?mname READY FALSE))
+)
