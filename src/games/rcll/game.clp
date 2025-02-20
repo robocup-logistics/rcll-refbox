@@ -412,8 +412,7 @@
 (defrule game-update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  ?gf <- (gamestate (phase SETUP|EXPLORATION|PRODUCTION) (points $?old-points)
-		    (state RUNNING))
+  ?gf <- (gamestate (points $?old-points))
   ?ti <- (time-info (game-time ?game-time) (cont-time ?cont-time)
 		    (last-time $?last-time&:(neq ?last-time ?now)))
   ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
