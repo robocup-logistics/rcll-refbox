@@ -1075,3 +1075,12 @@
  =>
   (assert (mps-status-feedback ?mname READY FALSE))
 )
+
+(defrule production-skip-referee-confirmation-broken
+  ?m <- (machine (referee-required TRUE))
+  (confval (path "/llsfrb/auto-break-machines")
+           (type BOOL) (value TRUE))
+  =>
+  (printout warn "Automatically breaking machine due to automatic referee setting" crlf)
+  (modify ?m (state BROKEN) (referee-required FALSE))
+)
