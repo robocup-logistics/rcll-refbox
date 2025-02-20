@@ -304,8 +304,8 @@ Client::receive_thread()
 						                              msgs["rotation"].GetInt(),
 						                              msgs["zone"].GetString());
 					}
-					if (strcmp(msgs["command"].GetString(), "machine_add_base") == 0) {
-						data_->clips_production_machine_add_base(msgs["mname"].GetString());
+					if (strcmp(msgs["command"].GetString(), "add_payment_rs") == 0) {
+						data_->clips_production_machine_add_base(msgs["machine"].GetString());
 					}
 					if (strcmp(msgs["command"].GetString(), "set_robot_maintenance") == 0) {
 						data_->clips_robot_set_robot_maintenance(msgs["robot_number"].GetInt(),

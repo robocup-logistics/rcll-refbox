@@ -408,18 +408,26 @@
 (defrule production-rs-insufficient-bases
   "The RS has been prepared but it does not have sufficient additional material; switch to BROKEN."
   (gamestate (state RUNNING) (phase PRODUCTION))
-  (time-info (game-time ?gt))
   ?m <- (machine (name ?n) (mtype RS) (state PREPARED))
   (rs-meta (name ?n) (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
   (ring-spec (color ?ring-color)
 	     (req-bases ?req-bases&:(> ?req-bases (- ?ba ?bu))))
 	(confval (path ?p&:(eq ?p (str-cat"/llsfrb/mps/stations/" ?n "/connection")))
 	         (type STRING) (is-list FALSE) (value ~"mockup"))
+  (not (referee-for-missing-payment ?n ?ring-color ?ba ?bu))
   =>
-  (modify ?m (state BROKEN)
-	  (broken-reason (str-cat ?n ": insufficient bases ("
-				  (- ?ba ?bu) " < " ?req-bases ")")))
-  (assert (send-machine-update))
+  (assert (referee-for-missing-payment ?n ?ring-color ?ba ?bu))
+  ; wait for referee to confirm broken machine
+  (modify ?m (referee-required TRUE)
+    (broken-reason (str-cat ?n ": insufficient bases ("(- ?ba ?bu) " < " ?req-bases ")")))
+)
+
+(defrule production-rs-cleanup-referee-for-missing-payment
+  (rs-meta (name ?n) (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
+  ?r-f <- (referee-for-missing-payment ?n ?ring-color ?ba2 ?bu2)
+  (test (or (neq ?ba2 ?ba) (neq ?bu2 ?bu)))
+  =>
+  (retract ?r-f)
 )
 
 (defrule production-rs-ignore-insufficient-bases
@@ -428,7 +436,6 @@
    payed beforehand, but no mps feedback was received. Hence, simulate the
    feedback once."
   (gamestate (state RUNNING) (phase PRODUCTION))
-  (time-info (game-time ?gt))
   (machine (name ?n) (mtype RS) (state PREPARED))
   (rs-meta (name ?n) (slide-counter ?mps-counter)
            (current-ring-color ?ring-color) (bases-added ?ba) (bases-used ?bu))
@@ -468,7 +475,7 @@
   (ring-spec (color ?ring-color) (req-bases ?req-bases))
 	=>
 	(printout t "Machine " ?n ": mount ring" crlf)
-	(modify ?m (state PROCESSING) (proc-start ?gt) (task MOUNT-RING) (mps-busy WAIT))
+	(modify ?m (state PROCESSING) (proc-start ?gt) (task MOUNT-RING) (mps-busy WAIT) (broken-reason ""))
 	(modify ?meta (bases-used (+ ?bu ?req-bases)))
   (mps-rs-mount-ring (str-cat ?n) (member$ ?ring-color ?ring-colors) (str-cat ?ring-color))
   (assert (send-machine-update))

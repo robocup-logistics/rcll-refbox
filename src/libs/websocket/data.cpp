@@ -60,7 +60,7 @@ Data::Data(std::shared_ptr<Logger>             logger,
 
 	std::string base_path      = std::string(SHAREDIR);
 	std::string schema_names[] = {"confirm_delivery",
-	                              "machine_add_base",
+	                              "add_payment_rs",
 	                              "randomize_field",
 	                              "instruct_bs",
 	                              "instruct_cs",
