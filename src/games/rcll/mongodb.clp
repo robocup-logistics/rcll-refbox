@@ -636,7 +636,7 @@
 (defrule mongodb-game-report-new-phase-update
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(time $?now)
-	(gamestate (phase ?p) (state RUNNING)
+	(gamestate (phase ?p) (state PAUSED|RUNNING)
 	     (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (start-time $?stime) (end-time $?etime))
 	?pc <- (mongodb-phase-change (registered-phases $?phases&:(not (member$ ?p ?phases))))
