@@ -977,7 +977,7 @@
   ?m <- (machine (name ?n) (state ?state&:(member$ ?state (create$ PREPARED PROCESSING PROCESSED))) (referee-required FALSE)
         (proc-start ?start&:(timeout-sec ?gt ?start ?*PROCESSING-WAIT-TILL-RESET*)))
 	=>
-	(modify ?m (referee-required TRUE) (broken-reason (str-cat "Stuck in state " ?state " for > " ?*PROCESSING-WAIT-TILL-RESET*)))
+	(modify ?m (referee-required TRUE) (broken-reason (str-cat "Stuck in state " ?state " for > " ?*PROCESSING-WAIT-TILL-RESET* "s")))
 )
 
 (defrule prodiction-machine-broken-by-referee
