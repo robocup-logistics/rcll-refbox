@@ -247,9 +247,11 @@
 		; message received for a team over the wrong channel, deny
 		(assert (attention-message (team ?group)
 		        (text (str-cat "Invalid prepare for team " ?team " of team " ?group))))
+			(printout warn Invalid prepare for team " ?team " of team " ?group" crlf)
 	 else
 		(if (not (any-factp ((?m machine)) (and (eq ?m:name ?mname) (eq ?m:team ?team))))
 		 then
+			(printout warn "Prepare received for invalid machine " ?mname " of team " ?team crlf)
 			(assert (attention-message (team ?team)
 			        (text (str-cat "Prepare received for invalid machine " ?mname))))
 		 else
@@ -293,7 +295,7 @@
 							        (text (str-cat "Prepare received for machine that has no meta information: " ?mname))))
 						)
 					 else
-						(printout t "Ignoring prepare for " ?mname " (should be IDLE, is " ?m:state")" crlf)
+						(printout debug "Ignoring prepare for " ?mname " (should be IDLE, is " ?m:state")" crlf)
 					)
 				)
 			)
