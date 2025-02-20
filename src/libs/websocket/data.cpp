@@ -1093,6 +1093,8 @@ Data::get_machine_info_fact(T                                  *o,
 	(*o).AddMember("mps_busy", json_string, alloc);
 	clips_to_json(fact, "mps-ready", json_string, alloc);
 	(*o).AddMember("mps_ready", json_string, alloc);
+	clips_to_json(fact, "broken-reason", json_string, alloc);
+	(*o).AddMember("broken_reason", json_string, alloc);
 	clips_to_json(fact, "zone", json_string, alloc);
 	(*o).AddMember("zone", json_string, alloc);
 	clips_to_json(fact, "rotation", json_string, alloc);

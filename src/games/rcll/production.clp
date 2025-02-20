@@ -937,7 +937,7 @@
 )
 
 (defrule production-potential-timeout-while-machine-operation
-  "The machine got stuck while processing the workpiece. Set it to BROKEN.
+  "The machine got stuck while processing the workpiece. Consult referee.
 	 This may be caused by a machine failure or by a misplaced workpiece."
   (gamestate (state RUNNING) (phase PRODUCTION))
   (time-info (game-time ?gt))
@@ -959,7 +959,7 @@
 (defrule production-timeout-request-cleared
   ?m <- (machine (name ?n) (state IDLE) (referee-required TRUE))
   =>
-  (modify ?m (referee-required FALSE))
+  (modify ?m (referee-required FALSE) (broken-reason ""))
 )
 
 (defrule production-timeout-while-machine-operation
@@ -970,7 +970,7 @@
   ?m <- (machine (name ?n) (state ?state&:(member$ ?state (create$ PREPARED PROCESSING PROCESSED))) (referee-required FALSE)
         (proc-start ?start&:(timeout-sec ?gt ?start ?*PROCESSING-WAIT-TILL-RESET*)))
 	=>
-	(modify ?m (referee-required TRUE))
+	(modify ?m (referee-required TRUE) (broken-reason (str-cat "Stuck in state " ?state " for > " ?*PROCESSING-WAIT-TILL-RESET*)))
 )
 
 (defrule prodiction-machine-broken-by-referee
