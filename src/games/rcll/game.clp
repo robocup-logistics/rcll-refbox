@@ -612,12 +612,8 @@
            (eq ?cfg:value "mockup"))
     (printout warn "Please add points for remaining bases in slide of "
                    (str-cat ?m:name) " manually." crlf))
-  (if (any-factp ((?pd referee-confirmation)) TRUE) then
-    (assert (attention-message (text "Game ended, please confirm deliveries!")))
-    (assert (postgame-for-unconfirmed-deliveries))
-  else
-    (game-summary)
-  )
+  (assert (attention-message (text "Game ended, please confirm deliveries!")))
+  (assert (postgame-for-unconfirmed-deliveries))
 )
 
 (defrule game-quit-after-finalize
