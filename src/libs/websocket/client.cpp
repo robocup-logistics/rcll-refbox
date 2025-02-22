@@ -294,13 +294,18 @@ Client::receive_thread()
 						data_->clips_production_set_machine_state(msgs["mname"].GetString(),
 						                                          msgs["state"].GetString());
 					}
+					if (strcmp(msgs["command"].GetString(), "set_machine_work_status") == 0) {
+						data_->clips_production_set_machine_work_status(msgs["name"].GetString(),
+						                                                msgs["busy"].GetBool(),
+						                                                msgs["ready"].GetBool());
+					}
 					if (strcmp(msgs["command"].GetString(), "set_machine_pose") == 0) {
 						data_->clips_set_machine_pose(msgs["name"].GetString(),
 						                              msgs["rotation"].GetInt(),
 						                              msgs["zone"].GetString());
 					}
-					if (strcmp(msgs["command"].GetString(), "machine_add_base") == 0) {
-						data_->clips_production_machine_add_base(msgs["mname"].GetString());
+					if (strcmp(msgs["command"].GetString(), "add_payment_rs") == 0) {
+						data_->clips_production_machine_add_base(msgs["machine"].GetString());
 					}
 					if (strcmp(msgs["command"].GetString(), "set_robot_maintenance") == 0) {
 						data_->clips_robot_set_robot_maintenance(msgs["robot_number"].GetInt(),
@@ -317,6 +322,9 @@ Client::receive_thread()
 						                             msgs["game_time"].GetFloat(),
 						                             msgs["phase"].GetString(),
 						                             msgs["reason"].GetString());
+					}
+					if (strcmp(msgs["command"].GetString(), "break_machine") == 0) {
+						data_->clips_reset_machine(msgs["machine"].GetString());
 					}
 					if (strcmp(msgs["command"].GetString(), "instruct_bs") == 0) {
 						if (prepare_machine_supported) {

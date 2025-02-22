@@ -60,17 +60,19 @@ Data::Data(std::shared_ptr<Logger>             logger,
 
 	std::string base_path      = std::string(SHAREDIR);
 	std::string schema_names[] = {"confirm_delivery",
-	                              "machine_add_base",
+	                              "add_payment_rs",
 	                              "randomize_field",
 	                              "instruct_bs",
 	                              "instruct_cs",
 	                              "instruct_rs",
 	                              "instruct_ds",
 	                              "instruct_ss",
+	                              "break_machine",
 	                              "set_gamephase",
 	                              "set_gamestate",
 	                              "set_machine_pose",
 	                              "set_machine_state",
+	                              "set_machine_work_status",
 	                              "set_order_delivered",
 	                              "set_robot_maintenance",
 	                              "set_teamname",
@@ -1087,24 +1089,32 @@ Data::get_machine_info_fact(T                                  *o,
 	(*o).AddMember("mtype", json_string, alloc);
 	clips_to_json(fact, "state", json_string, alloc);
 	(*o).AddMember("state", json_string, alloc);
+	clips_to_json(fact, "mps-busy", json_string, alloc);
+	(*o).AddMember("mps_busy", json_string, alloc);
+	clips_to_json(fact, "mps-ready", json_string, alloc);
+	(*o).AddMember("mps_ready", json_string, alloc);
+	clips_to_json(fact, "broken-reason", json_string, alloc);
+	(*o).AddMember("broken_reason", json_string, alloc);
 	clips_to_json(fact, "zone", json_string, alloc);
 	(*o).AddMember("zone", json_string, alloc);
 	clips_to_json(fact, "rotation", json_string, alloc);
 	(*o).AddMember("rotation", json_string, alloc);
+	clips_to_json(fact, "referee-required", json_string, alloc);
+	(*o).AddMember("referee_required", json_string, alloc);
 
 	CLIPS::Fact::pointer meta_fact = env_->get_facts();
 	while (meta_fact) {
 		if (match(meta_fact, "cs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			clips_to_json(fact, "operation-mode", json_string, alloc);
+			clips_to_json(meta_fact, "operation-mode", json_string, alloc);
 			(*o).AddMember("operation_mode", json_string, alloc);
-			clips_to_json(fact, "has-retrieved", json_string, alloc);
+			clips_to_json(meta_fact, "has-retrieved", json_string, alloc);
 			(*o).AddMember("has_retrieved", json_string, alloc);
 			break;
 		}
 		if (match(meta_fact, "rs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			clips_to_json(fact, "current-ring-color", json_string, alloc);
+			clips_to_json(meta_fact, "current-ring-color", json_string, alloc);
 			(*o).AddMember("current_ring_color", json_string, alloc);
 			rapidjson::Value ring_array(rapidjson::kArrayType);
 			ring_array.Reserve(get_values(meta_fact, "available-colors").size(), alloc);
@@ -1114,22 +1124,23 @@ Data::get_machine_info_fact(T                                  *o,
 				ring_array.PushBack(v, alloc);
 			}
 			(*o).AddMember("available_colors", ring_array, alloc);
-			clips_to_json(fact, "bases-added", json_string, alloc);
+			clips_to_json(meta_fact, "bases-added", json_string, alloc);
 			(*o).AddMember("bases_added", json_string, alloc);
-			clips_to_json(fact, "bases-used", json_string, alloc);
+			clips_to_json(meta_fact, "bases-used", json_string, alloc);
 			(*o).AddMember("bases_used", json_string, alloc);
+			break;
 		}
 		if (match(meta_fact, "bs-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			clips_to_json(fact, "current-side", json_string, alloc);
+			clips_to_json(meta_fact, "current-side", json_string, alloc);
 			(*o).AddMember("current_side", json_string, alloc);
-			clips_to_json(fact, "current-base-color", json_string, alloc);
+			clips_to_json(meta_fact, "current-base-color", json_string, alloc);
 			(*o).AddMember("current_base_color", json_string, alloc);
 			break;
 		}
 		if (match(meta_fact, "ds-meta")
 		    && get_value<std::string>(fact, "name") == get_value<std::string>(meta_fact, "name")) {
-			clips_to_json(fact, "order-id", json_string, alloc);
+			clips_to_json(meta_fact, "order-id", json_string, alloc);
 			(*o).AddMember("order_id", json_string, alloc);
 			break;
 		}

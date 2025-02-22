@@ -2340,6 +2340,16 @@ LLSFRefBox::setup_clips_websocket()
 		fawkes::MutexLocker clips_lock(&clips_mutex_);
 		clips_->assert_fact_f("(production-SetMachineState %s %s)", mname.c_str(), state.c_str());
 	};
+	backend_->get_data()->clips_production_set_machine_work_status =
+	  [this](std::string mname, bool busy, bool ready) {
+		  fawkes::MutexLocker clips_lock(&clips_mutex_);
+		  clips_->assert_fact_f("(mps-status-feedback %s BUSY %s)",
+		                        mname.c_str(),
+		                        busy ? "TRUE" : "FALSE");
+		  clips_->assert_fact_f("(mps-status-feedback %s READY %s)",
+		                        mname.c_str(),
+		                        ready ? "TRUE" : "FALSE");
+	  };
 	backend_->get_data()->clips_robot_set_robot_maintenance =
 	  [this](int robot_number, std::string team_color, bool maintenance) {
 		  fawkes::MutexLocker clips_lock(&clips_mutex_);
@@ -2348,6 +2358,10 @@ LLSFRefBox::setup_clips_websocket()
 		                        team_color.c_str(),
 		                        maintenance ? "TRUE" : "FALSE");
 	  };
+	backend_->get_data()->clips_reset_machine = [this](std::string machine_name) {
+		fawkes::MutexLocker clips_lock(&clips_mutex_);
+		clips_->assert_fact_f("(reset-machine %s)", machine_name.c_str());
+	};
 	backend_->get_data()->clips_production_reset_machine_by_team = [this](std::string machine_name,
 	                                                                      std::string team_color) {
 		fawkes::MutexLocker clips_lock(&clips_mutex_);

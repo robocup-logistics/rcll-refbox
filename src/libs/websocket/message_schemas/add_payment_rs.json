@@ -2,18 +2,18 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "http://example.com/example.json",
     "type": "object",
-    "title": "machine_add_base command schema",
+    "title": "add_payment_rs command schema",
     "description": "This command can be used to add bases to machines given the name.",
     "default": {},
     "examples": [
         {
-            "command": "machine_add_base",
-            "mname": ""
+            "command": "add_payment_rs",
+            "machine": ""
         }
     ],
     "required": [
         "command",
-        "mname"
+        "machine"
     ],
     "additionalProperties": true,
     "properties": {
@@ -22,15 +22,15 @@
             "type": "string",
             "default": "",
             "examples": [
-                "machine_add_base"
+                "add_payment_rs"
             ]
         },
         "mname": {
-            "$id": "#/properties/mname",
+            "$id": "#/properties/machine",
             "type": "string",
             "default": "",
             "examples": [
-                ""
+                "M-RS1"
             ]
         }
     }

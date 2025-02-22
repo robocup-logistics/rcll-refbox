@@ -61,6 +61,12 @@ llsfrb:
   # unnecessary. 'Automatic' confirmation grants all delivery requests.
   auto-confirm-delivery: true
 
+  # Any malfunctioning machine requires referee intervention.
+  # In perfect simulation this might be tedious and
+  # unnecessary. 'Automatic' handling will set each machine to BROKEN
+  # thus assuming user-error.
+  auto-break-machines: true
+
   webshop:
     enable: false
 

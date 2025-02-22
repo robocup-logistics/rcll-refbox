@@ -158,7 +158,7 @@
 	(bind ?m-end (str-index "/" (sub-string ?m-start (length$ ?p) ?p)))
     (bind ?m-end (- (+ ?m-start ?m-end) 2))
     (bind ?machine-name (sym-cat (sub-string ?m-start ?m-end ?p)))
-    (if (not (do-for-fact ((?m machine)) (and (eq ?m:name ?machine-name) (member$ ?m:state (create$ IDLE READY-AT-OUTPUT)))
+    (if (not (do-for-fact ((?m machine)) (eq ?m:name ?machine-name)
       (reconfigure-machine ?machine-name)
       (mps-reset ?machine-name)
     )) then

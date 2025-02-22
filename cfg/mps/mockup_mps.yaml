@@ -6,6 +6,13 @@
 llsfrb:
   mps:
     enable: true
+    # trigger has two options:
+    #  timeout: after a fixed timeout READY-AT-OUTPUT switches to IDLE
+    #  auto: after a successful agent-task message retrieving
+    #    the workpiece the state changes to IDLE.
+    #    Alternatively, if barcode tracking detects the
+    #    workpiece elsewhere
+    mockup-ready-at-output-trigger: timeout
     stations:
       C-BS:
         active: true
