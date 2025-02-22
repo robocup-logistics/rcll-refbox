@@ -52,28 +52,32 @@ using namespace protobuf_comm;
 using namespace llsf_msgs;
 using namespace fawkes;
 
-static bool            quit = false;
-std::string            machine_name_;
-std::string            machine_type_;
-llsf_msgs::MachineSide bs_side_;
-llsf_msgs::BaseColor   bs_color_;
-int                    ds_order_id_;
-llsf_msgs::SSOp        ss_op_;
-unsigned int           ss_shelf_;
-unsigned int           ss_slot_;
-llsf_msgs::RingColor   rs_ring_color_;
-llsf_msgs::CSOp        cs_operation_;
-std::string            team_name_;
-Team                   team_color_;
-ProtobufBroadcastPeer *peer_public_  = NULL;
-ProtobufBroadcastPeer *peer_team_    = NULL;
-bool                   crypto_setup_ = false;
+static bool                 quit = false;
+std::string                 machine_name_;
+std::string                 machine_type_;
+llsf_msgs::MachineSide      bs_side_;
+llsf_msgs::BaseColor        bs_color_;
+int                         ds_order_id_;
+llsf_msgs::SSOp             ss_op_;
+unsigned int                ss_shelf_;
+unsigned int                ss_slot_;
+llsf_msgs::RingColor        rs_ring_color_;
+llsf_msgs::CSOp             cs_operation_;
+std::string                 team_name_;
+Team                        team_color_;
+ProtobufBroadcastPeer      *peer_public_  = NULL;
+ProtobufBroadcastPeer      *peer_team_    = NULL;
+bool                        crypto_setup_ = false;
+boost::asio::io_service     io_service;
+boost::asio::deadline_timer timer(io_service);
 
 rcll::Configuration *config_;
 
 void
 signal_handler(const boost::system::error_code &error, int signum)
 {
+	timer.cancel();
+	io_service.stop();
 	if (!error) {
 		quit = true;
 	}
@@ -151,10 +155,9 @@ handle_message(boost::asio::ip::udp::endpoint            &sender,
 		for (int i = 0; i < mi->machines_size(); ++i) {
 			const Machine &m = mi->machines(i);
 			printf("  %s, state: %s\n", m.name().c_str(), m.state().c_str());
-			if (0 == machine_name_.compare(m.name())
-			    && (m.state() == "PREPARED" || m.state() == "PROCESSING" || m.state() == "PROCESSED")) {
-				raise(SIGINT);
+			if (0 == machine_name_.compare(m.name()) && (m.state() != "IDLE")) {
 				quit = true;
+				raise(SIGINT);
 			}
 		}
 	}
@@ -318,11 +321,9 @@ main(int argc, char **argv)
 		                                       &message_register /*, crypto_key, cipher*/);
 	}
 
-	boost::asio::io_service     io_service;
-	int                         ret_code = 0;
-	boost::asio::deadline_timer timer(io_service);
+	int ret_code = 0;
 	timer.expires_from_now(boost::posix_time::seconds(10));
-	timer.async_wait([&io_service, &ret_code](const boost::system::error_code &error) {
+	timer.async_wait([&ret_code](const boost::system::error_code &error) {
 		if (!error) {
 			std::cout << "Timeout reached, stopping io_service." << std::endl;
 			ret_code = 408;
