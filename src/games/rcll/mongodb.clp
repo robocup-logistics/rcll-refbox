@@ -636,7 +636,7 @@
 (defrule mongodb-game-report-new-phase-update
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(time $?now)
-	(gamestate (phase ?p) (state RUNNING)
+	(gamestate (phase ?p) (state PAUSED|RUNNING)
 	     (teams $?teams&:(neq ?teams (create$ "" "")))
 	     (start-time $?stime) (end-time $?etime))
 	?pc <- (mongodb-phase-change (registered-phases $?phases&:(not (member$ ?p ?phases))))
@@ -648,7 +648,7 @@
 )
 
 
-(defrule mongodb-game-report-update
+(defrule mongodb-game-report-update-running
 	(declare (salience ?*PRIORITY_HIGHER*))
 	(time $?now)
 	(gamestate (state RUNNING)
@@ -656,9 +656,28 @@
 	     (start-time $?stime) (end-time $?etime)
 	     (points $?points))
 	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name)
-	     (last-updated $?last-updated&:(or
-	       (neq $?points $?gr-points)
-	       (timeout $?now $?last-updated ?*MONGODB-REPORT-UPDATE-FREQUENCY*))))
+	     (last-updated $?last-updated&:
+	       (timeout $?now $?last-updated ?*MONGODB-REPORT-UPDATE-FREQUENCY*)))
+	=>
+	(modify ?gr (points $?points) (last-updated $?now))
+	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)
+)
+
+(defrule mongodb-game-report-update-post-game-points
+" Specifically useful to update the points in POST_GAME.
+  Actually redundant given the report also saves on finalize,
+  but just to be sure also update ad-hoc.
+  This also hopefully avoids mistakes if the report is dumped before
+  the refbox is closed.
+"
+	(declare (salience ?*PRIORITY_HIGHER*))
+	(time $?now)
+	(gamestate
+	     (teams $?teams&:(neq ?teams (create$ "" "")))
+	     (start-time $?stime) (end-time $?etime)
+	     (points $?points))
+	?gr <- (mongodb-game-report (points $?gr-points) (name ?report-name)
+	     (last-updated $?last-updated&:(neq $?points $?gr-points)))
 	=>
 	(modify ?gr (points $?points) (last-updated $?now))
 	(mongodb-write-game-report (mongodb-create-game-report ?teams ?stime ?etime ?report-name) ?stime ?report-name)

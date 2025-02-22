@@ -173,7 +173,7 @@
 
 (defrule order-delivery-confirmation-referee-confirmed-simulate-tracking
   ?gf <- (gamestate (phase PRODUCTION|POST_GAME))
-  ?rf <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  (referee-confirmation (process-id ?id) (state CONFIRMED))
   ?pf <- (product-processed (id ?id) (team ?team) (order ?order) (confirmed FALSE)
                             (workpiece 0) (game-time ?delivery-time))
   ?of <- (order (id ?order) (active TRUE))
@@ -182,7 +182,17 @@
   =>
   (bind ?wp-id (workpiece-simulate-tracking ?order ?team ?delivery-time))
   (modify ?pf (workpiece ?wp-id) (confirmed TRUE))
-  (retract ?rf)
+)
+
+(defrule order-delivery-confirmation-referee-confirmed-points-done
+  (declare (salience ?*PRIORITY_HIGHER*))
+  (gamestate (phase PRODUCTION|POST_GAME))
+  ?rc <- (referee-confirmation (process-id ?id) (state CONFIRMED))
+  (product-processed (id ?id) (team ?team) (order ?order) (confirmed TRUE))
+  ?of <- (order (id ?order) (active TRUE))
+  (not (product-processed (order ?order) (confirmed TRUE) (scored FALSE)))
+  =>
+  (retract ?rc)
 )
 
 (defrule order-delivery-confirmation-referee-confirmed-DS-read-fail-recovery
