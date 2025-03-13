@@ -276,7 +276,7 @@
                (modify ?pd (base-color ?order-base) (order ?order) (confirmed TRUE))
                (bind ?base-needs-rectify FALSE)
   )
-  (if (neq ?workpiece-base ?order-base) then
+  (if (or ?base-needs-rectify (neq ?workpiece-base ?order-base)) then
     (printout t "Rectifying workpiece " ?workpiece-id ": operation at BS [" ?workpiece-base
                  "->" ?order-base "]"  crlf)
     (if ?base-needs-rectify
@@ -335,7 +335,7 @@
                (modify ?pd (cap-color ?order-cap) (confirmed TRUE) (scored FALSE))
                (bind ?cap-needs-rectify FALSE)
   )
-  (if (neq ?workpiece-cap ?order-cap) then
+  (if (or ?cap-needs-rectify (neq ?workpiece-cap ?order-cap)) then
     (printout t "Rectifying workpiece " ?workpiece-id ": operation at CS [" ?workpiece-cap
                  "->" ?order-cap "]"  crlf)
     (if ?cap-needs-rectify then
@@ -395,7 +395,7 @@
             (modify ?pd (ring-color ?order-ring) (confirmed TRUE))
             (bind ?ring-needs-rectify FALSE)
     )
-    (if (neq ?workpiece-ring ?order-ring) then
+    (if (or ?ring-needs-rectify (neq ?workpiece-ring ?order-ring)) then
       (printout t "Rectifying workpiece " ?workpiece-id ": operation at RS [" ?workpiece-ring
                   "->" ?order-ring "]"  crlf)
       (if ?ring-needs-rectify
