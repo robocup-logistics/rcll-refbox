@@ -489,6 +489,7 @@
                 (cap-color ?cap-color)
                 (base-color ?base-color)
                 (ring-colors $?ring-colors))
+  (rectified ?wp-id)
    =>
   (printout t "Workpiece " ?wp-id  " verified for order " ?order crlf)
   (modify ?pf (confirmed TRUE))
