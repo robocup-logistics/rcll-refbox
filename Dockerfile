@@ -86,7 +86,8 @@ RUN   dnf update -y --refresh && dnf install -y --nodocs 'dnf-command(copr)' && 
       dnf -y copr enable tavie/clips_protobuf && \
       dnf -y copr enable tavie/paho-mqtt-cpp && \
       dnf -y copr enable tavie/mongo-cxx-driver && \
-      dnf install -y --nodocs paho-c paho-c-devel paho-mqtt-cpp paho-mqtt-cpp-devel
+      dnf install -y --nodocs paho-c paho-c-devel paho-mqtt-cpp \
+     	 paho-mqtt-cpp-devel python3-scapy libpcap # Scapy for refbox_locator
 COPY --from=buildenv /usr/local/bin /usr/local/bin/
 COPY --from=buildenv /usr/local/lib64 /usr/local/lib64/
 COPY --from=buildenv /usr/local/share /usr/local/share/
