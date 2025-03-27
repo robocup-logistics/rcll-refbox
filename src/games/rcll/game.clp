@@ -412,7 +412,7 @@
 (defrule game-update-gametime-points
   (declare (salience ?*PRIORITY_FIRST*))
   (time $?now)
-  ?gf <- (gamestate (points $?old-points))
+  ?gf <- (gamestate (points $?old-points) (state ?game-state))
   ?ti <- (time-info (game-time ?game-time) (cont-time ?cont-time)
 		    (last-time $?last-time&:(neq ?last-time ?now)))
   ?st <- (sim-time (enabled ?sts) (estimate ?ste) (now $?sim-time)
@@ -422,10 +422,12 @@
   =>
   (bind ?points-cyan (game-calc-points CYAN))
   (bind ?points-magenta (game-calc-points MAGENTA))
-  (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
-  (bind ?timediff (* (time-diff-sec ?now ?last-time) ?speedup))
-  (modify ?ti (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
-    (last-time ?now))
+  (if (eq ?game-state RUNNING) then
+    (bind ?now (get-time ?sts ?ste ?now ?sim-time ?lrt ?rtf))
+    (bind ?timediff (* (time-diff-sec ?now ?last-time) ?speedup))
+    (modify ?ti (game-time (+ ?game-time ?timediff)) (cont-time (+ ?cont-time ?timediff))
+      (last-time ?now))
+  )
   (if (neq ?old-points (create$ ?points-cyan ?points-magenta)) then
     (modify ?gf (points ?points-cyan ?points-magenta))
   )
