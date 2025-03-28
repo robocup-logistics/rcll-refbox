@@ -557,7 +557,7 @@ Data::log_push_order_info_via_delivery(int delivery_id)
  *
  */
 void
-Data::log_push_robot_info(int number, std::string name)
+Data::log_push_robot_info(int number, std::string name, std::string team)
 {
 	MutexLocker lock(&env_mutex_);
 
@@ -567,6 +567,7 @@ Data::log_push_robot_info(int number, std::string name)
 		if (match(fact, "robot")) {
 			try {
 				if (get_value<int64_t>(fact, "number") == number
+				    && get_value<std::string>(fact, "team") == team
 				    && get_value<std::string>(fact, "name") == name) {
 					facts.push_back(fact);
 				}

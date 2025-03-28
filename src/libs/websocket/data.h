@@ -83,7 +83,7 @@ public:
 	void        log_push_cfg_preset(const std::string &category, const std::string &preset);
 	void        log_push_game_state();
 	void        log_push_time_info();
-	void        log_push_robot_info(int number, std::string name);
+	void        log_push_robot_info(int number, std::string name, std::string team);
 	void        log_push_agent_task_info(int tid, int rid);
 	void        log_push_order_info(int id);
 	void        log_push_machine_info(std::string name);
