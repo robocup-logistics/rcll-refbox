@@ -18,7 +18,7 @@
 
 (deffunction randomize-ring-colors (?complexity ?ring-colors)
   (bind ?order-ring-colors (create$))
-  (bind ?choices (create$ 1 2 3 4))
+  (bind ?choices (create$ 1 2 3))
   (bind ?ring1-choice (pick-random$ ?choices))
   (bind ?ring2-choice (pick-random$ (delete$ ?choices ?ring1-choice ?ring1-choice)))
   (bind ?ring3-choice (pick-random$ (delete$ ?choices ?ring2-choice ?ring2-choice)))
@@ -39,6 +39,8 @@
   (do-for-all-facts ((?rs ring-spec)) TRUE
     (bind ?ring-colors (append$ ?ring-colors ?rs:color))
   )
+  (bind ?orange-index (member$ RING_ORANGE ?ring-colors))
+  (bind ?ring-colors (delete$ ?ring-colors ?orange-index ?orange-index))
   (bind ?ring-colors (randomize$ ?ring-colors))
 
   (bind ?low-complexity (create$ C0 C1))
