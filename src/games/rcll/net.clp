@@ -298,7 +298,7 @@
 
     (bind ?successful TRUE)
     (if (pb-has-field ?at "successful") then
-      (bind ?order-id (pb-field-value ?at "successful"))
+      (bind ?successful (pb-field-value ?at "successful"))
     )
 
     (assert (agent-task (task-type ?task-type)
