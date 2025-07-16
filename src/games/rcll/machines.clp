@@ -285,3 +285,29 @@
   )
   (retract ?cmd)
 )
+
+(defrule machine-remove-machine-from-game
+(declare (salience ?*PRIORITY_FIRST*))
+  ?m <- (machine (name ?name) (mtype ?t))
+  (confval (path ?p&:(eq ?p (str-cat "/llsfrb/mps/stations/" ?name "/active"))) (type BOOL) (value FALSE))
+  =>
+  (retract ?m)
+  (mps-generator-remove-machine (machine-to-id ?t))
+)
+
+(defrule machine-add-machine-to-game
+(declare (salience ?*PRIORITY_FIRST*))
+  (confval (path ?p) (type BOOL) (value TRUE))
+  (not (machine (name ?name&:(not (str-index ?name ?p)))))
+  =>
+  (bind ?end-index (- (str-index "/active" ?p) 1))
+  (bind ?start-index (+ (str-index "stations/" ?p) 9))
+  (bind ?m-name (sym-cat (sub-string ?start-index ?end-index ?p)))
+  (bind ?color-index (sub-string 1 1 ?m-name))
+  (bind ?type (sym-cat (sub-string 3 (str-length ?m-name) ?m-name)))
+
+  (bind ?team CYAN)
+  (if (eq ?color-index "M") then (bind ?team MAGENTA))
+  (assert (machine (name ?m-name) (team ?team) (mtype ?type)))
+  (mps-generator-add-machine (machine-to-id ?type))
+)
