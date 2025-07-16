@@ -10,13 +10,6 @@
 ;---------------------------------------------------------------------------
 
 (defglobal
-	?*BASE-STATION* = 1
-	?*CAP1-STATION* = 2
-	?*CAP2-STATION* = 3
-	?*RING1-STATION* = 4
-	?*RING2-STATION* = 5
-	?*STORAGE-STATION* = 6
-	?*DELIVERY-STATION* = 7
 	?*PRIORITY_CHALLENGE-OVERRIDE* = 100
 	?*FIELD-WIDTH*  = (config-get-int "/llsfrb/challenges/field/width")
 	?*FIELD-HEIGHT* = (config-get-int "/llsfrb/challenges/field/height")
@@ -96,21 +89,6 @@
 		)
 	)
 	(assert (challenges-field (free-zones ?free) (occupied-zones ?occupied)))
-)
-
-(deffunction machine-to-id (?mps)
-	(switch ?mps
-		(case BS then (return ?*BASE-STATION*))
-		(case CS1 then (return ?*CAP1-STATION*))
-		(case CS2 then (return ?*CAP2-STATION*))
-		(case RS1 then (return ?*RING1-STATION*))
-		(case RS2 then (return ?*RING2-STATION*))
-		(case SS then (return ?*STORAGE-STATION*))
-		(case DS then (return ?*DELIVERY-STATION*))
-	)
-	(printout error "machine-to-id: unsupported machine: "
-	  ?mps " Expected BS|CS1|CS2|RS1|RS2|SS|DS" crlf)
-	(return 0)
 )
 
 (defrule challenges-create-routes
