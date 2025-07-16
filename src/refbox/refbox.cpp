@@ -196,7 +196,7 @@ LLSFRefBox::LLSFRefBox(int argc, char **argv)
 	std::stringstream refbox_call;
 	for (int i = 0; i < argc; ++i)
 		refbox_call << " " << argv[i];
-	logger_->log_info("RefBox", "%s", refbox_call.str().c_str());
+	logger_->log_info("RefBox", "%s (%i args)", refbox_call.str().c_str(), argc);
 
 	setup_protobuf_comm();
 
