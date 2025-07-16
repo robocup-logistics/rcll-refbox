@@ -517,3 +517,18 @@
   (if (eq ?machine-name M-SS) then (return (create$ 242 241)))
   (return FALSE)
 )
+
+(deffunction machine-to-id (?mps)
+	(switch ?mps
+		(case BS then (return ?*BASE-STATION*))
+		(case CS1 then (return ?*CAP1-STATION*))
+		(case CS2 then (return ?*CAP2-STATION*))
+		(case RS1 then (return ?*RING1-STATION*))
+		(case RS2 then (return ?*RING2-STATION*))
+		(case SS then (return ?*STORAGE-STATION*))
+		(case DS then (return ?*DELIVERY-STATION*))
+	)
+	(printout error "machine-to-id: unsupported machine: "
+	  ?mps " Expected BS|CS1|CS2|RS1|RS2|SS|DS" crlf)
+	(return 0)
+)

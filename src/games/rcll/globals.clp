@@ -182,4 +182,13 @@
   ?*AGENT-TASK-ROUTER*  = debug
 
   ?*MOCKUP-READY-AT-OUTPUT-TIMEOUT* = 15
+
+  ; index notation for mps generation
+  ?*BASE-STATION* = 1
+  ?*CAP1-STATION* = 2
+  ?*CAP2-STATION* = 3
+  ?*RING1-STATION* = 4
+  ?*RING2-STATION* = 5
+  ?*STORAGE-STATION* = 6
+  ?*DELIVERY-STATION* = 7
 )
