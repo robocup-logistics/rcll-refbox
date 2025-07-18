@@ -8,3 +8,15 @@ llsfrb:
     teams: [Carologistics]
     crypto-keys:
       Carologistics: randomkey
+  # Robot communication ports for each team
+  robot-comm:
+    Carologistics:
+      robot-1:
+        recv-port: !udp-port 2116
+        send-port: !udp-port 2126
+      robot-2:
+        recv-port: !udp-port 2117
+        send-port: !udp-port 2127
+      robot-3:
+        recv-port: !udp-port 2118
+        send-port: !udp-port 2128

@@ -66,3 +66,9 @@ target_link_libraries(rcll-proto-rebroadcaster PRIVATE refbox-core refbox-utils 
 install(TARGETS rcll-proto-rebroadcaster
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+add_executable(rcll-agent-task-client rcll-agent-task-client.cpp)
+target_link_libraries(rcll-agent-task-client PRIVATE ${TOOL_DEPS})
+install(TARGETS rcll-agent-task-client
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
