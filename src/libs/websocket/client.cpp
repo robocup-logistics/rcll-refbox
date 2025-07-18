@@ -244,6 +244,17 @@ Client::receive_thread()
 		  "Could not find rcll-prepare-machine at %s, machine instructions per websocket ar disabled");
 	}
 
+	// Check for existence of rcll-agent-task-client tool for websocket agent tasks
+	std::string agent_task_loc       = std::string(BINDIR) + "/rcll-agent-task-client";
+	bool        agent_task_supported = access(agent_task_loc.c_str(), X_OK) == 0;
+	std::string agent_task_command   = std::string(BINDIR) + "/./rcll-agent-task-client ";
+	if (!agent_task_supported) {
+		logger_->log_error(
+		  "Websocket",
+		  "Could not find rcll-agent-task-client at %s, agent task instructions per websocket are disabled",
+		  agent_task_loc.c_str());
+	}
+
 	while (active) {
 		try {
 			std::string input = read();
@@ -411,6 +422,34 @@ Client::receive_thread()
 							}
 						} else {
 							logger_->log_warn("Websocket", "Machine instructions per websocket ar disabled");
+						}
+					}
+					if (strcmp(msgs["command"].GetString(), "agent_task") == 0) {
+						if (agent_task_supported) {
+							std::ostringstream command;
+							command << agent_task_command << msgs["team_name"].GetString() << " "
+							        << msgs["robot_id"].GetInt() << " " << msgs["task_id"].GetInt() << " "
+							        << msgs["operation"].GetString() << " " << msgs["target"].GetString();
+							
+							// Add optional POI if present
+							if (msgs.HasMember("poi") && msgs["poi"].IsString()) {
+								command << " " << msgs["poi"].GetString();
+							}
+							
+							int result = std::system(command.str().c_str());
+							// Check the result
+							if (result != 0) {
+								logger_->log_error("Websocket",
+								                   "Agent task command %s failed with code %i",
+								                   command.str().c_str(),
+								                   result);
+							} else {
+								logger_->log_info("Websocket",
+								                  "Agent task command executed successfully: %s",
+								                  command.str().c_str());
+							}
+						} else {
+							logger_->log_warn("Websocket", "Agent task instructions per websocket are disabled");
 						}
 					}
 					logger_->log_debug("Websocket", "got %s", msgs["command"].GetString());
